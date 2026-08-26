@@ -1027,6 +1027,20 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             moduleSlug: "saude",
           },
           {
+            slug: "saude_fisioterapia_atendimento_jogo",
+            label: "Atendimento de jogo",
+            href: "/dashboard/saude/fisioterapia/atendimento-jogo",
+            icon: Activity,
+            moduleSlug: "saude",
+          },
+          {
+            slug: "saude_fisioterapia_avaliacoes",
+            label: "Avaliações",
+            href: "/dashboard/saude/fisioterapia/avaliacoes",
+            icon: ClipboardList,
+            moduleSlug: "saude",
+          },
+          {
             slug: "saude_fisioterapia_relatorios",
             label: "Relatórios",
             icon: BarChart3,

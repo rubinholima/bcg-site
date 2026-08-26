@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Activity, Loader2, Plus, Users } from "lucide-react";
+import { Activity, Loader2, Plus, Users, Trophy, ClipboardCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -153,6 +153,18 @@ export default function FisioterapiaPage() {
           <p className="mt-1 text-muted-foreground">Atendimentos, mapa corporal e evolução até a alta.</p>
         </div>
         <div className="flex flex-wrap gap-2 sm:justify-end">
+          <Button asChild variant="outline" className="min-h-[44px]">
+            <Link href="/dashboard/saude/fisioterapia/atendimento-jogo">
+              <Trophy className="mr-2 h-4 w-4" />
+              Atendimento de jogo
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="min-h-[44px]">
+            <Link href="/dashboard/saude/fisioterapia/avaliacoes">
+              <ClipboardCheck className="mr-2 h-4 w-4" />
+              Avaliações
+            </Link>
+          </Button>
           <Button asChild variant="outline" className="min-h-[44px]">
             <Link href="/dashboard/saude/fisioterapia/recovery-grupo">
               <Users className="mr-2 h-4 w-4" />

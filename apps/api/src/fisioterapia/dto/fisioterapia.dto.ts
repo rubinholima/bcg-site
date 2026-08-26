@@ -402,3 +402,240 @@ export class AddPhysioEvolutionDto {
   @Max(10)
   painScore?: number;
 }
+
+export class CreatePhysioGameAttendanceDto {
+  @IsString()
+  tenantId!: string;
+
+  @IsString()
+  playerId!: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsString()
+  gameDate!: string;
+
+  @IsIn(['concentracao', 'pre_jogo', 'primeiro_tempo', 'intervalo', 'segundo_tempo', 'pos_jogo'])
+  phase!: string;
+
+  @IsIn(['tratamento', 'preparo_preventivo'])
+  careCategory!: string;
+
+  @IsString()
+  procedureKey!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  procedureLabel?: string;
+
+  @IsOptional()
+  @IsIn(['estabilizar', 'proteger', 'reforcar_musculatura', 'limitar_movimento'])
+  treatmentReason?: string;
+
+  @IsString()
+  bodyLocation!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  bodyLocationLabel?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsString()
+  staffId?: string;
+
+  @IsOptional()
+  @IsString()
+  staffName?: string;
+}
+
+export class UpdatePhysioGameAttendanceDto {
+  @IsOptional()
+  @IsIn(['concentracao', 'pre_jogo', 'primeiro_tempo', 'intervalo', 'segundo_tempo', 'pos_jogo'])
+  phase?: string;
+
+  @IsOptional()
+  @IsIn(['tratamento', 'preparo_preventivo'])
+  careCategory?: string;
+
+  @IsOptional()
+  @IsString()
+  procedureKey?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  procedureLabel?: string;
+
+  @IsOptional()
+  @IsIn(['estabilizar', 'proteger', 'reforcar_musculatura', 'limitar_movimento'])
+  treatmentReason?: string | null;
+
+  @IsOptional()
+  @IsString()
+  bodyLocation?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  bodyLocationLabel?: string | null;
+
+  @IsOptional()
+  @IsString()
+  notes?: string | null;
+
+  @IsOptional()
+  @IsString()
+  staffId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  staffName?: string | null;
+}
+
+export class PhysioEvaluationTestDto {
+  @IsString()
+  testType!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  testTypeLabel?: string;
+
+  @IsString()
+  bodyLocation!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  bodyLocationLabel?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  score?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class CreatePhysioPlayerEvaluationDto {
+  @IsString()
+  tenantId!: string;
+
+  @IsString()
+  playerId!: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsIn(['pre_temporada', 'inter_temporada', 'pos_temporada', 'desligamento'])
+  context!: string;
+
+  @IsOptional()
+  @IsString()
+  finalObservations?: string;
+
+  @IsOptional()
+  @IsIn(['aprovado', 'reprovado'])
+  outcome?: string;
+
+  @IsOptional()
+  @IsString()
+  evaluatedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  staffId?: string;
+
+  @IsOptional()
+  @IsString()
+  staffName?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioEvaluationTestDto)
+  tests!: PhysioEvaluationTestDto[];
+}
+
+export class CreatePhysioPlayerEvaluationBatchDto {
+  @IsString()
+  tenantId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  playerIds!: string[];
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsIn(['pre_temporada', 'inter_temporada', 'pos_temporada', 'desligamento'])
+  context!: string;
+
+  @IsOptional()
+  @IsString()
+  finalObservations?: string;
+
+  @IsOptional()
+  @IsIn(['aprovado', 'reprovado'])
+  outcome?: string;
+
+  @IsOptional()
+  @IsString()
+  evaluatedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  staffId?: string;
+
+  @IsOptional()
+  @IsString()
+  staffName?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioEvaluationTestDto)
+  tests!: PhysioEvaluationTestDto[];
+}
+
+export class UpdatePhysioPlayerEvaluationDto {
+  @IsOptional()
+  @IsIn(['pre_temporada', 'inter_temporada', 'pos_temporada', 'desligamento'])
+  context?: string;
+
+  @IsOptional()
+  @IsString()
+  finalObservations?: string | null;
+
+  @IsOptional()
+  @IsIn(['aprovado', 'reprovado'])
+  outcome?: string | null;
+
+  @IsOptional()
+  @IsString()
+  evaluatedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  staffId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  staffName?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioEvaluationTestDto)
+  tests?: PhysioEvaluationTestDto[];
+}

@@ -4,10 +4,27 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, Plus } from "lucide-react";
 import { api } from "@/lib/api";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PhysioBodyMap } from "@/components/dashboard/fisioterapia/PhysioBodyMap";
-import type { PhysioSession } from "@/types/fisioterapia";
+import type {
+  PhysioGameAttendance,
+  PhysioPlayerEvaluation,
+  PhysioSession,
+} from "@/types/fisioterapia";
+import {
+  labelFromMap,
+  PHYSIO_EVAL_BODY_LOCATION_LABEL,
+  PHYSIO_EVAL_CONTEXT_LABEL,
+  PHYSIO_EVAL_OUTCOME_LABEL,
+  PHYSIO_EVAL_TEST_TYPE_LABEL,
+  PHYSIO_GAME_BODY_LOCATION_LABEL,
+  PHYSIO_GAME_CARE_CATEGORY_LABEL,
+  PHYSIO_GAME_PHASE_LABEL,
+  PHYSIO_GAME_PROCEDURE_LABEL,
+  PHYSIO_GAME_TREATMENT_REASON_LABEL,
+} from "@/lib/physio-game-evaluation-labels";
 import { cn } from "@/lib/utils";
 
 export function PlayerPhysioSection({
@@ -18,17 +35,31 @@ export function PlayerPhysioSection({
   tenantId: string;
 }) {
   const [sessions, setSessions] = useState<PhysioSession[]>([]);
+  const [gameAttendances, setGameAttendances] = useState<PhysioGameAttendance[]>([]);
+  const [evaluations, setEvaluations] = useState<PhysioPlayerEvaluation[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get<PhysioSession[]>(
-        `/fisioterapia/sessions?playerId=${encodeURIComponent(playerId)}&status=all`,
-      );
-      setSessions(Array.isArray(data) ? data : []);
+      const [sessionsRes, gameRes, evalRes] = await Promise.all([
+        api.get<PhysioSession[]>(
+          `/fisioterapia/sessions?playerId=${encodeURIComponent(playerId)}&status=all`,
+        ),
+        api.get<PhysioGameAttendance[]>(
+          `/fisioterapia/game-attendances?playerId=${encodeURIComponent(playerId)}`,
+        ),
+        api.get<PhysioPlayerEvaluation[]>(
+          `/fisioterapia/evaluations?playerId=${encodeURIComponent(playerId)}`,
+        ),
+      ]);
+      setSessions(Array.isArray(sessionsRes.data) ? sessionsRes.data : []);
+      setGameAttendances(Array.isArray(gameRes.data) ? gameRes.data : []);
+      setEvaluations(Array.isArray(evalRes.data) ? evalRes.data : []);
     } catch {
       setSessions([]);
+      setGameAttendances([]);
+      setEvaluations([]);
     } finally {
       setLoading(false);
     }
@@ -88,7 +119,7 @@ export function PlayerPhysioSection({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Histórico</CardTitle>
+            <CardTitle className="text-base">Histórico clínico</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {loading ? (
@@ -148,6 +179,82 @@ export function PlayerPhysioSection({
                     </span>
                   </div>
                 </Link>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Atendimentos de jogo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {loading ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : gameAttendances.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">Nenhum registro de jogo.</p>
+            ) : (
+              gameAttendances.slice(0, 8).map((row) => (
+                <div key={row.id} className="rounded-lg border border-border/60 p-3 text-sm">
+                  <p className="font-medium">
+                    {formatDateDayMonYear(row.gameDate)}
+                    {" · "}
+                    {PHYSIO_GAME_PHASE_LABEL[row.phase] ?? row.phase}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {PHYSIO_GAME_CARE_CATEGORY_LABEL[row.careCategory] ?? row.careCategory}
+                    {" · "}
+                    {labelFromMap(PHYSIO_GAME_PROCEDURE_LABEL, row.procedureKey, row.procedureLabel)}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {labelFromMap(PHYSIO_GAME_BODY_LOCATION_LABEL, row.bodyLocation, row.bodyLocationLabel)}
+                    {row.treatmentReason
+                      ? ` · ${PHYSIO_GAME_TREATMENT_REASON_LABEL[row.treatmentReason] ?? row.treatmentReason}`
+                      : ""}
+                  </p>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Avaliações</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {loading ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : evaluations.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">Nenhuma avaliação registrada.</p>
+            ) : (
+              evaluations.slice(0, 8).map((ev) => (
+                <div key={ev.id} className="rounded-lg border border-border/60 p-3 text-sm">
+                  <p className="font-medium">
+                    {PHYSIO_EVAL_CONTEXT_LABEL[ev.context] ?? ev.context}
+                    {" · "}
+                    {formatDateDayMonYear(ev.evaluatedAt)}
+                  </p>
+                  {ev.tests.slice(0, 3).map((t, i) => (
+                    <p key={i} className="text-muted-foreground">
+                      {labelFromMap(PHYSIO_EVAL_TEST_TYPE_LABEL, t.testType, t.testTypeLabel)}
+                      {" · "}
+                      {labelFromMap(PHYSIO_EVAL_BODY_LOCATION_LABEL, t.bodyLocation, t.bodyLocationLabel)}
+                      {t.score ? ` · ${t.score}` : ""}
+                    </p>
+                  ))}
+                  {ev.outcome ? (
+                    <p className={ev.outcome === "reprovado" ? "text-destructive" : "text-emerald-400"}>
+                      {PHYSIO_EVAL_OUTCOME_LABEL[ev.outcome] ?? ev.outcome}
+                    </p>
+                  ) : null}
+                </div>
               ))
             )}
           </CardContent>

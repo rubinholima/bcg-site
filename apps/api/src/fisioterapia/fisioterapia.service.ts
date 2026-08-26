@@ -14,13 +14,19 @@ import {
 import {
   AddPhysioEvolutionDto,
   CreatePhysioDiagnosisDto,
+  CreatePhysioGameAttendanceDto,
   CreatePhysioGroupSessionDto,
+  CreatePhysioPlayerEvaluationBatchDto,
+  CreatePhysioPlayerEvaluationDto,
   CreatePhysioSessionDto,
   CreatePhysioTreatmentDto,
+  PhysioEvaluationTestDto,
   PhysioSessionDiagnosisItemDto,
   PhysioSessionRegionDto,
   PhysioSessionTreatmentItemDto,
+  UpdatePhysioGameAttendanceDto,
   UpdatePhysioGroupSessionDto,
+  UpdatePhysioPlayerEvaluationDto,
   UpdatePhysioSessionDto,
 } from './dto/fisioterapia.dto';
 import {
@@ -1313,5 +1319,325 @@ export class FisioterapiaService implements OnModuleInit {
         staffName: s.staffName,
       })),
     };
+  }
+
+  private normalizePhysioDateKey(value: string): string {
+    const key = value.trim().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+      throw new BadRequestException('Data inválida. Use AAAA-MM-DD.');
+    }
+    return key;
+  }
+
+  private async assertPlayerInTenant(playerId: string, tenantId: string) {
+    const player = await this.prisma.player.findUnique({
+      where: { id: playerId },
+      select: { id: true, tenantId: true, category: true, name: true },
+    });
+    if (!player || player.tenantId !== tenantId) {
+      throw new NotFoundException('Atleta não encontrado neste clube.');
+    }
+    return player;
+  }
+
+  private gameAttendanceInclude = {
+    player: {
+      select: { id: true, name: true, category: true, photoUrl: true },
+    },
+    tenant: { select: { id: true, name: true, slug: true } },
+  } satisfies Prisma.PhysioGameAttendanceInclude;
+
+  private evaluationInclude = {
+    player: {
+      select: { id: true, name: true, category: true, photoUrl: true },
+    },
+    tenant: { select: { id: true, name: true, slug: true } },
+    tests: { orderBy: { sortOrder: 'asc' as const } },
+  } satisfies Prisma.PhysioPlayerEvaluationInclude;
+
+  async listGameAttendances(
+    filters: {
+      tenantId?: string;
+      category?: string;
+      playerId?: string;
+      from?: string;
+      to?: string;
+      gameDate?: string;
+    },
+    allowed: string[] | null,
+  ) {
+    const where: Prisma.PhysioGameAttendanceWhereInput = {};
+    if (filters.tenantId) {
+      this.assertTenant(allowed, filters.tenantId);
+      where.tenantId = filters.tenantId;
+    } else if (allowed !== null) {
+      where.tenantId = { in: allowed };
+    }
+    if (filters.category) where.category = filters.category;
+    if (filters.playerId) where.playerId = filters.playerId;
+    if (filters.gameDate) where.gameDate = this.normalizePhysioDateKey(filters.gameDate);
+    if (filters.from || filters.to) {
+      where.gameDate = {};
+      if (filters.from) where.gameDate.gte = this.normalizePhysioDateKey(filters.from);
+      if (filters.to) where.gameDate.lte = this.normalizePhysioDateKey(filters.to);
+    }
+    return this.prisma.physioGameAttendance.findMany({
+      where,
+      orderBy: [{ gameDate: 'desc' }, { createdAt: 'desc' }],
+      include: this.gameAttendanceInclude,
+      take: 500,
+    });
+  }
+
+  async findGameAttendance(id: string, allowed: string[] | null) {
+    const row = await this.prisma.physioGameAttendance.findUnique({
+      where: { id },
+      include: this.gameAttendanceInclude,
+    });
+    if (!row) throw new NotFoundException('Atendimento de jogo não encontrado.');
+    this.assertTenant(allowed, row.tenantId);
+    return row;
+  }
+
+  async createGameAttendance(
+    dto: CreatePhysioGameAttendanceDto,
+    allowed: string[] | null,
+    userId?: string,
+  ) {
+    this.assertTenant(allowed, dto.tenantId);
+    const player = await this.assertPlayerInTenant(dto.playerId, dto.tenantId);
+    const gameDate = this.normalizePhysioDateKey(dto.gameDate);
+    if (dto.careCategory === 'tratamento' && !dto.treatmentReason?.trim()) {
+      throw new BadRequestException('Informe o motivo do tratamento.');
+    }
+    return this.prisma.physioGameAttendance.create({
+      data: {
+        tenantId: dto.tenantId,
+        playerId: dto.playerId,
+        category: dto.category?.trim() || player.category,
+        gameDate,
+        phase: dto.phase,
+        careCategory: dto.careCategory,
+        procedureKey: dto.procedureKey.trim(),
+        procedureLabel: dto.procedureLabel?.trim() || null,
+        treatmentReason:
+          dto.careCategory === 'tratamento' ? dto.treatmentReason?.trim() || null : null,
+        bodyLocation: dto.bodyLocation.trim(),
+        bodyLocationLabel: dto.bodyLocationLabel?.trim() || null,
+        notes: dto.notes?.trim() || null,
+        staffId: dto.staffId?.trim() || null,
+        staffName: dto.staffName?.trim() || null,
+        createdByUserId: userId ?? null,
+      },
+      include: this.gameAttendanceInclude,
+    });
+  }
+
+  async updateGameAttendance(
+    id: string,
+    dto: UpdatePhysioGameAttendanceDto,
+    allowed: string[] | null,
+  ) {
+    const current = await this.findGameAttendance(id, allowed);
+    const careCategory = dto.careCategory ?? current.careCategory;
+    if (careCategory === 'tratamento') {
+      const reason =
+        dto.treatmentReason !== undefined ? dto.treatmentReason : current.treatmentReason;
+      if (!reason?.trim()) {
+        throw new BadRequestException('Informe o motivo do tratamento.');
+      }
+    }
+    return this.prisma.physioGameAttendance.update({
+      where: { id },
+      data: {
+        ...(dto.phase != null && { phase: dto.phase }),
+        ...(dto.careCategory != null && { careCategory: dto.careCategory }),
+        ...(dto.procedureKey != null && { procedureKey: dto.procedureKey.trim() }),
+        ...(dto.procedureLabel !== undefined && {
+          procedureLabel: dto.procedureLabel?.trim() || null,
+        }),
+        ...(dto.treatmentReason !== undefined && {
+          treatmentReason:
+            careCategory === 'tratamento' ? dto.treatmentReason?.trim() || null : null,
+        }),
+        ...(dto.bodyLocation != null && { bodyLocation: dto.bodyLocation.trim() }),
+        ...(dto.bodyLocationLabel !== undefined && {
+          bodyLocationLabel: dto.bodyLocationLabel?.trim() || null,
+        }),
+        ...(dto.notes !== undefined && { notes: dto.notes?.trim() || null }),
+        ...(dto.staffId !== undefined && { staffId: dto.staffId?.trim() || null }),
+        ...(dto.staffName !== undefined && { staffName: dto.staffName?.trim() || null }),
+      },
+      include: this.gameAttendanceInclude,
+    });
+  }
+
+  async deleteGameAttendance(id: string, allowed: string[] | null) {
+    await this.findGameAttendance(id, allowed);
+    await this.prisma.physioGameAttendance.delete({ where: { id } });
+  }
+
+  private mapEvaluationTests(tests: PhysioEvaluationTestDto[]) {
+    if (!tests?.length) {
+      throw new BadRequestException('Informe ao menos um teste na avaliação.');
+    }
+    return tests.map((t, index) => ({
+      testType: t.testType.trim(),
+      testTypeLabel: t.testTypeLabel?.trim() || null,
+      bodyLocation: t.bodyLocation.trim(),
+      bodyLocationLabel: t.bodyLocationLabel?.trim() || null,
+      score: t.score?.trim() || null,
+      notes: t.notes?.trim() || null,
+      sortOrder: index,
+    }));
+  }
+
+  async listPlayerEvaluations(
+    filters: {
+      tenantId?: string;
+      category?: string;
+      playerId?: string;
+      context?: string;
+      from?: string;
+      to?: string;
+    },
+    allowed: string[] | null,
+  ) {
+    const where: Prisma.PhysioPlayerEvaluationWhereInput = {};
+    if (filters.tenantId) {
+      this.assertTenant(allowed, filters.tenantId);
+      where.tenantId = filters.tenantId;
+    } else if (allowed !== null) {
+      where.tenantId = { in: allowed };
+    }
+    if (filters.category) where.category = filters.category;
+    if (filters.playerId) where.playerId = filters.playerId;
+    if (filters.context) where.context = filters.context;
+    if (filters.from || filters.to) {
+      where.evaluatedAt = {};
+      if (filters.from) where.evaluatedAt.gte = new Date(`${this.normalizePhysioDateKey(filters.from)}T00:00:00-03:00`);
+      if (filters.to) where.evaluatedAt.lte = new Date(`${this.normalizePhysioDateKey(filters.to)}T23:59:59-03:00`);
+    }
+    return this.prisma.physioPlayerEvaluation.findMany({
+      where,
+      orderBy: [{ evaluatedAt: 'desc' }, { createdAt: 'desc' }],
+      include: this.evaluationInclude,
+      take: 500,
+    });
+  }
+
+  async findPlayerEvaluation(id: string, allowed: string[] | null) {
+    const row = await this.prisma.physioPlayerEvaluation.findUnique({
+      where: { id },
+      include: this.evaluationInclude,
+    });
+    if (!row) throw new NotFoundException('Avaliação não encontrada.');
+    this.assertTenant(allowed, row.tenantId);
+    return row;
+  }
+
+  async createPlayerEvaluation(
+    dto: CreatePhysioPlayerEvaluationDto,
+    allowed: string[] | null,
+    userId?: string,
+  ) {
+    this.assertTenant(allowed, dto.tenantId);
+    const player = await this.assertPlayerInTenant(dto.playerId, dto.tenantId);
+    const tests = this.mapEvaluationTests(dto.tests);
+    const evaluatedAt = dto.evaluatedAt?.trim()
+      ? new Date(dto.evaluatedAt)
+      : new Date();
+    return this.prisma.physioPlayerEvaluation.create({
+      data: {
+        tenantId: dto.tenantId,
+        playerId: dto.playerId,
+        category: dto.category?.trim() || player.category,
+        context: dto.context,
+        finalObservations: dto.finalObservations?.trim() || null,
+        outcome: dto.outcome ?? null,
+        evaluatedAt,
+        staffId: dto.staffId?.trim() || null,
+        staffName: dto.staffName?.trim() || null,
+        createdByUserId: userId ?? null,
+        tests: { create: tests },
+      },
+      include: this.evaluationInclude,
+    });
+  }
+
+  async createPlayerEvaluationBatch(
+    dto: CreatePhysioPlayerEvaluationBatchDto,
+    allowed: string[] | null,
+    userId?: string,
+  ) {
+    this.assertTenant(allowed, dto.tenantId);
+    const playerIds = [...new Set(dto.playerIds.map((id) => id.trim()).filter(Boolean))];
+    if (playerIds.length === 0) {
+      throw new BadRequestException('Selecione ao menos um atleta.');
+    }
+    const tests = this.mapEvaluationTests(dto.tests);
+    const evaluatedAt = dto.evaluatedAt?.trim()
+      ? new Date(dto.evaluatedAt)
+      : new Date();
+    const created: Awaited<ReturnType<typeof this.createPlayerEvaluation>>[] = [];
+    for (const playerId of playerIds) {
+      const player = await this.assertPlayerInTenant(playerId, dto.tenantId);
+      created.push(
+        await this.prisma.physioPlayerEvaluation.create({
+          data: {
+            tenantId: dto.tenantId,
+            playerId,
+            category: dto.category?.trim() || player.category,
+            context: dto.context,
+            finalObservations: dto.finalObservations?.trim() || null,
+            outcome: dto.outcome ?? null,
+            evaluatedAt,
+            staffId: dto.staffId?.trim() || null,
+            staffName: dto.staffName?.trim() || null,
+            createdByUserId: userId ?? null,
+            tests: { create: tests },
+          },
+          include: this.evaluationInclude,
+        }),
+      );
+    }
+    return { created: created.length, evaluations: created };
+  }
+
+  async updatePlayerEvaluation(
+    id: string,
+    dto: UpdatePhysioPlayerEvaluationDto,
+    allowed: string[] | null,
+  ) {
+    await this.findPlayerEvaluation(id, allowed);
+    const evaluatedAt =
+      dto.evaluatedAt != null ? new Date(dto.evaluatedAt) : undefined;
+    return this.prisma.$transaction(async (tx) => {
+      if (dto.tests) {
+        await tx.physioPlayerEvaluationTest.deleteMany({ where: { evaluationId: id } });
+        await tx.physioPlayerEvaluationTest.createMany({
+          data: this.mapEvaluationTests(dto.tests).map((t) => ({ ...t, evaluationId: id })),
+        });
+      }
+      return tx.physioPlayerEvaluation.update({
+        where: { id },
+        data: {
+          ...(dto.context != null && { context: dto.context }),
+          ...(dto.finalObservations !== undefined && {
+            finalObservations: dto.finalObservations?.trim() || null,
+          }),
+          ...(dto.outcome !== undefined && { outcome: dto.outcome ?? null }),
+          ...(evaluatedAt != null && { evaluatedAt }),
+          ...(dto.staffId !== undefined && { staffId: dto.staffId?.trim() || null }),
+          ...(dto.staffName !== undefined && { staffName: dto.staffName?.trim() || null }),
+        },
+        include: this.evaluationInclude,
+      });
+    });
+  }
+
+  async deletePlayerEvaluation(id: string, allowed: string[] | null) {
+    await this.findPlayerEvaluation(id, allowed);
+    await this.prisma.physioPlayerEvaluation.delete({ where: { id } });
   }
 }

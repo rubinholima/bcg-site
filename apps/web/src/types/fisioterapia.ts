@@ -278,3 +278,84 @@ export interface PhysioReportsDashboard {
     staffName: string | null;
   }>;
 }
+
+export interface PhysioGameAttendance {
+  id: string;
+  tenantId: string;
+  playerId: string;
+  category: string | null;
+  gameDate: string;
+  phase: string;
+  careCategory: string;
+  procedureKey: string;
+  procedureLabel: string | null;
+  treatmentReason: string | null;
+  bodyLocation: string;
+  bodyLocationLabel: string | null;
+  notes: string | null;
+  staffId: string | null;
+  staffName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  player?: { id: string; name: string; category: string | null; photoUrl: string | null };
+  tenant?: { id: string; name: string; slug: string };
+}
+
+export interface CreatePhysioGameAttendancePayload {
+  tenantId: string;
+  playerId: string;
+  category?: string;
+  gameDate: string;
+  phase: string;
+  careCategory: string;
+  procedureKey: string;
+  procedureLabel?: string;
+  treatmentReason?: string;
+  bodyLocation: string;
+  bodyLocationLabel?: string;
+  notes?: string;
+  staffId?: string;
+  staffName?: string;
+}
+
+export interface PhysioEvaluationTest {
+  id?: string;
+  testType: string;
+  testTypeLabel?: string | null;
+  bodyLocation: string;
+  bodyLocationLabel?: string | null;
+  score?: string | null;
+  notes?: string | null;
+  sortOrder?: number;
+}
+
+export interface PhysioPlayerEvaluation {
+  id: string;
+  tenantId: string;
+  playerId: string;
+  category: string | null;
+  context: string;
+  finalObservations: string | null;
+  outcome: string | null;
+  evaluatedAt: string;
+  staffId: string | null;
+  staffName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  tests: PhysioEvaluationTest[];
+  player?: { id: string; name: string; category: string | null; photoUrl: string | null };
+  tenant?: { id: string; name: string; slug: string };
+}
+
+export interface CreatePhysioPlayerEvaluationBatchPayload {
+  tenantId: string;
+  playerIds: string[];
+  category?: string;
+  context: string;
+  finalObservations?: string;
+  outcome?: string;
+  evaluatedAt?: string;
+  staffId?: string;
+  staffName?: string;
+  tests: PhysioEvaluationTest[];
+}

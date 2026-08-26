@@ -20,11 +20,16 @@ import { FisioterapiaService } from './fisioterapia.service';
 import {
   AddPhysioEvolutionDto,
   CreatePhysioDiagnosisDto,
+  CreatePhysioGameAttendanceDto,
   CreatePhysioGroupSessionDto,
+  CreatePhysioPlayerEvaluationBatchDto,
+  CreatePhysioPlayerEvaluationDto,
   CreatePhysioSessionDto,
   CreatePhysioTreatmentDto,
   SetPhysioDispositionDto,
+  UpdatePhysioGameAttendanceDto,
   UpdatePhysioGroupSessionDto,
+  UpdatePhysioPlayerEvaluationDto,
   UpdatePhysioSessionDto,
 } from './dto/fisioterapia.dto';
 
@@ -249,6 +254,145 @@ export class FisioterapiaController {
   ) {
     const allowed = await this.allowedTenants(req);
     return this.service.deleteGroupSession(id, allowed);
+  }
+
+  @Get('game-attendances')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async listGameAttendances(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+    @Query('playerId') playerId?: string,
+    @Query('gameDate') gameDate?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.listGameAttendances(
+      { tenantId, category, playerId, gameDate, from, to },
+      allowed,
+    );
+  }
+
+  @Get('game-attendances/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async getGameAttendance(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.findGameAttendance(id, allowed);
+  }
+
+  @Post('game-attendances')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async createGameAttendance(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() dto: CreatePhysioGameAttendanceDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.createGameAttendance(dto, allowed, req.user.sub);
+  }
+
+  @Patch('game-attendances/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async updateGameAttendance(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: UpdatePhysioGameAttendanceDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.updateGameAttendance(id, dto, allowed);
+  }
+
+  @Delete('game-attendances/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async removeGameAttendance(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.deleteGameAttendance(id, allowed);
+  }
+
+  @Get('evaluations')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async listPlayerEvaluations(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+    @Query('playerId') playerId?: string,
+    @Query('context') context?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.listPlayerEvaluations(
+      { tenantId, category, playerId, context, from, to },
+      allowed,
+    );
+  }
+
+  @Post('evaluations/batch')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async createPlayerEvaluationBatch(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() dto: CreatePhysioPlayerEvaluationBatchDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.createPlayerEvaluationBatch(dto, allowed, req.user.sub);
+  }
+
+  @Get('evaluations/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async getPlayerEvaluation(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.findPlayerEvaluation(id, allowed);
+  }
+
+  @Post('evaluations')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async createPlayerEvaluation(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() dto: CreatePhysioPlayerEvaluationDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.createPlayerEvaluation(dto, allowed, req.user.sub);
+  }
+
+  @Patch('evaluations/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async updatePlayerEvaluation(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: UpdatePhysioPlayerEvaluationDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.updatePlayerEvaluation(id, dto, allowed);
+  }
+
+  @Delete('evaluations/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async removePlayerEvaluation(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.deletePlayerEvaluation(id, allowed);
   }
 
   @Get('reports/dashboard')

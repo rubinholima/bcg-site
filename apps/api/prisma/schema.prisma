@@ -141,6 +141,8 @@ model Tenant {
   psychologySessions  PsychologySession[]
   physioSessions      PhysioSession[]
   physioGroupSessions PhysioGroupSession[]
+  physioGameAttendances PhysioGameAttendance[]
+  physioPlayerEvaluations PhysioPlayerEvaluation[]
   psychologySupportMaterials PsychologySupportMaterial[]
   footballActivitySpaces FootballActivitySpace[]
   events                Event[]
@@ -1103,6 +1105,8 @@ model Player {
   travelParticipations TravelParticipant[]
   scoutingProspects    ScoutingProspect[]
   physioSessions       PhysioSession[]
+  physioGameAttendances PhysioGameAttendance[]
+  physioPlayerEvaluations PhysioPlayerEvaluation[]
   fmfMatchStats        FmfPlayerMatchStat[]
   coachMatchPlayerRatings CoachMatchReportPlayerRating[]
   coachTeamReportPlayerActions CoachTeamReportPlayerAction[]
@@ -3074,6 +3078,76 @@ model PhysioGroupSession {
   updatedAt       DateTime @updatedAt
   @@index([tenantId, sessionDate])
   @@index([tenantId, category])
+}
+
+/// Atendimento fisioterapêutico em dia de jogo (por fase e atleta)
+model PhysioGameAttendance {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId          String
+  player            Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  category          String?
+  gameDate          String   // YYYY-MM-DD
+  /// concentracao | pre_jogo | primeiro_tempo | intervalo | segundo_tempo | pos_jogo
+  phase             String
+  /// tratamento | preparo_preventivo
+  careCategory      String
+  /// botinha | bandagem_elastica | bandagem_estabilizacao | outro
+  procedureKey      String
+  procedureLabel    String?
+  /// estabilizar | proteger | reforcar_musculatura | limitar_movimento
+  treatmentReason   String?
+  /// tornozelo | joelho | adutor | quadril | outro
+  bodyLocation      String
+  bodyLocationLabel String?
+  notes             String?  @db.Text
+  staffId           String?
+  staffName         String?
+  createdByUserId   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@index([tenantId, gameDate])
+  @@index([playerId, gameDate])
+  @@index([tenantId, category, gameDate])
+}
+
+/// Avaliação fisioterapêutica do atleta (pré/inter/pós temporada, desligamento)
+model PhysioPlayerEvaluation {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId          String
+  player            Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  category          String?
+  /// pre_temporada | inter_temporada | pos_temporada | desligamento
+  context           String
+  finalObservations String?  @db.Text
+  /// aprovado | reprovado
+  outcome           String?
+  evaluatedAt       DateTime @default(now())
+  staffId           String?
+  staffName         String?
+  createdByUserId   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  tests             PhysioPlayerEvaluationTest[]
+  @@index([tenantId, context])
+  @@index([playerId, evaluatedAt])
+}
+
+model PhysioPlayerEvaluationTest {
+  id                String   @id @default(cuid())
+  evaluationId      String
+  evaluation        PhysioPlayerEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  testType          String
+  testTypeLabel     String?
+  bodyLocation      String
+  bodyLocationLabel String?
+  score             String?
+  notes             String?  @db.Text
+  sortOrder         Int      @default(0)
+  @@index([evaluationId])
 }
 
 /// Diagnóstico clínico categorizado por região (seed + cadastro dinâmico pelo fisio)
