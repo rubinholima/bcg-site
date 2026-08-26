@@ -60,6 +60,8 @@ import {
   type DimensionFormState,
   SCOUTING_STAGES,
   SCOUTING_PRIORITIES,
+  SCOUTING_EVALUATION_OUTCOMES,
+  SCOUTING_RATING_SCALE,
   SCOUTING_SOURCES,
   COMPETITION_LEVELS,
   CONTRACT_SITUATIONS,
@@ -78,8 +80,12 @@ import {
   stageBadgeClass,
   priorityBadgeClass,
   type CaptacaoMapData,
+  formatScoutingRating,
+  labelForEvaluationOutcome,
+  type SchedulerNotification,
 } from "@/lib/captacao-types";
 import { CaptacaoFieldMode } from "@/components/dashboard/futebol/CaptacaoFieldMode";
+import { CaptacaoReportDetailDialog } from "@/components/dashboard/futebol/CaptacaoReportDetailDialog";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/scout-geolocation";
 
 const CaptacaoScoutMap = dynamic(
@@ -153,6 +159,7 @@ export function CaptacaoHub() {
   const [loadingScoutDetail, setLoadingScoutDetail] = useState(false);
   const [mapData, setMapData] = useState<CaptacaoMapData | null>(null);
   const [mapScoutId, setMapScoutId] = useState<string | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
   const [scoutForm, setScoutForm] = useState({
     name: "",
@@ -175,7 +182,8 @@ export function CaptacaoHub() {
     positionPlayed: "",
     observationType: "ao_vivo",
     recommendation: "continuar",
-    overallRating: "3",
+    evaluationOutcome: "pendente",
+    overallRating: "6",
     strengths: "",
     weaknesses: "",
     risks: "",
@@ -367,17 +375,26 @@ export function CaptacaoHub() {
     }
   }
 
+  function openSchedulerWhatsApp(notification?: SchedulerNotification | null) {
+    if (!notification?.whatsappUrl) return;
+    window.open(notification.whatsappUrl, "_blank", "noopener,noreferrer");
+  }
+
   async function handleCreateProspect(e: React.FormEvent) {
     e.preventDefault();
     if (!effectiveTenantId) return;
     setSaving(true);
     setError(null);
     try {
-      await api.post("/captacao/prospects", {
-        tenantId: effectiveTenantId,
-        ...prospectForm,
-        scoutId: prospectForm.scoutId || undefined,
-      });
+      const { data } = await api.post<{ schedulerNotification?: SchedulerNotification }>(
+        "/captacao/prospects",
+        {
+          tenantId: effectiveTenantId,
+          ...prospectForm,
+          scoutId: prospectForm.scoutId || undefined,
+        },
+      );
+      openSchedulerWhatsApp(data?.schedulerNotification);
       setProspectForm({ ...EMPTY_PROSPECT });
       setTab("pipeline");
       await loadAll();
@@ -408,27 +425,32 @@ export function CaptacaoHub() {
           /* relatório sem GPS se usuário negar */
         }
       }
-      await api.post("/captacao/reports", {
-        tenantId: effectiveTenantId,
-        prospectId: reportForm.prospectId,
-        scoutId: reportForm.scoutId,
-        matchName: reportForm.matchName || undefined,
-        matchDate: reportForm.matchDate || undefined,
-        competition: reportForm.competition || undefined,
-        minutesObserved: reportForm.minutesObserved
-          ? Number(reportForm.minutesObserved)
-          : undefined,
-        positionPlayed: reportForm.positionPlayed || undefined,
-        observationType: reportForm.observationType,
-        recommendation: reportForm.recommendation,
-        overallRating: Number(reportForm.overallRating),
-        ...dimensions,
-        ...geo,
-        strengths: reportForm.strengths || undefined,
-        weaknesses: reportForm.weaknesses || undefined,
-        risks: reportForm.risks || undefined,
-        scoutNotes: reportForm.scoutNotes || undefined,
-      });
+      const { data } = await api.post<{ schedulerNotification?: SchedulerNotification }>(
+        "/captacao/reports",
+        {
+          tenantId: effectiveTenantId,
+          prospectId: reportForm.prospectId,
+          scoutId: reportForm.scoutId,
+          matchName: reportForm.matchName || undefined,
+          matchDate: reportForm.matchDate || undefined,
+          competition: reportForm.competition || undefined,
+          minutesObserved: reportForm.minutesObserved
+            ? Number(reportForm.minutesObserved)
+            : undefined,
+          positionPlayed: reportForm.positionPlayed || undefined,
+          observationType: reportForm.observationType,
+          recommendation: reportForm.recommendation,
+          evaluationOutcome: reportForm.evaluationOutcome,
+          overallRating: reportForm.overallRating ? Number(reportForm.overallRating) : undefined,
+          ...dimensions,
+          ...geo,
+          strengths: reportForm.strengths || undefined,
+          weaknesses: reportForm.weaknesses || undefined,
+          risks: reportForm.risks || undefined,
+          scoutNotes: reportForm.scoutNotes || undefined,
+        },
+      );
+      openSchedulerWhatsApp(data?.schedulerNotification);
       setReportForm({
         prospectId: "",
         scoutId: "",
@@ -439,7 +461,8 @@ export function CaptacaoHub() {
         positionPlayed: "",
         observationType: "ao_vivo",
         recommendation: "continuar",
-        overallRating: "3",
+        evaluationOutcome: "pendente",
+        overallRating: "6",
         strengths: "",
         weaknesses: "",
         risks: "",
@@ -737,7 +760,14 @@ export function CaptacaoHub() {
                           key={p.id}
                           className="rounded-md border border-border bg-background p-2 text-sm"
                         >
-                          <p className="font-semibold">{p.name}</p>
+                          <p className="font-semibold">
+                            <Link
+                              href={`/dashboard/futebol/captacao/prospects/${p.id}${effectiveTenantId ? `?tenantId=${effectiveTenantId}` : ""}`}
+                              className="hover:underline"
+                            >
+                              {p.name}
+                            </Link>
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             {getPositionLabel(p.position) || "—"} · {p.currentClub ?? "Sem clube"}
                           </p>
@@ -1173,31 +1203,55 @@ export function CaptacaoHub() {
                         <TableHead>Data</TableHead>
                         <TableHead>Atleta</TableHead>
                         <TableHead>Captador</TableHead>
+                        <TableHead>Categoria</TableHead>
                         <TableHead>Nota</TableHead>
+                        <TableHead>T/T/F/C</TableHead>
+                        <TableHead>Encaminh.</TableHead>
                         <TableHead>Recomendação</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {reports.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          <TableCell colSpan={8} className="text-center text-muted-foreground">
                             Nenhum relatório ainda.
                           </TableCell>
                         </TableRow>
                       ) : (
                         reports.map((r) => (
-                          <TableRow key={r.id}>
+                          <TableRow
+                            key={r.id}
+                            className="cursor-pointer hover:bg-muted/30"
+                            onClick={() => setSelectedReportId(r.id)}
+                          >
                             <TableCell className="text-sm">
                               {formatDateDayMonYear(r.reportDate)}
                             </TableCell>
                             <TableCell>
                               <p className="font-medium">{r.prospect?.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {r.prospect?.currentClub}
+                                {r.prospect?.currentClub} · {getPositionLabel(r.prospect?.position) || "—"}
                               </p>
+                              {r.prospect?.agentPhone ? (
+                                <p className="text-xs text-muted-foreground">Agente: {r.prospect.agentPhone}</p>
+                              ) : null}
                             </TableCell>
                             <TableCell>{r.scout?.name}</TableCell>
-                            <TableCell>{r.overallRating?.toFixed(1) ?? "—"}</TableCell>
+                            <TableCell className="text-xs">{r.prospect?.targetCategory ?? "—"}</TableCell>
+                            <TableCell>{formatScoutingRating(r.overallRating)}</TableCell>
+                            <TableCell className="text-xs tabular-nums">
+                              {[
+                                r.technicalRating,
+                                r.tacticalRating,
+                                r.physicalRating,
+                                r.cognitiveRating,
+                              ]
+                                .map((v) => (v != null ? v.toFixed(1) : "—"))
+                                .join(" / ")}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {labelForEvaluationOutcome(r.evaluationOutcome ?? r.prospect?.evaluationOutcome ?? "pendente")}
+                            </TableCell>
                             <TableCell className="text-sm uppercase">
                               {labelForRecommendation(r.recommendation)}
                             </TableCell>
@@ -1573,20 +1627,34 @@ export function CaptacaoHub() {
                       </Select>
                     </div>
                     <div>
-                      <Label>Nota geral (1–5)</Label>
-                      <Select
+                      <Label>Nota geral (0–10)</Label>
+                      <Input
+                        type="number"
+                        min={SCOUTING_RATING_SCALE.min}
+                        max={SCOUTING_RATING_SCALE.max}
+                        step={SCOUTING_RATING_SCALE.step}
+                        className="text-foreground"
                         value={reportForm.overallRating}
+                        onChange={(e) =>
+                          setReportForm((f) => ({ ...f, overallRating: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Encaminhamento</Label>
+                      <Select
+                        value={reportForm.evaluationOutcome}
                         onValueChange={(v) =>
-                          setReportForm((f) => ({ ...f, overallRating: v }))
+                          setReportForm((f) => ({ ...f, evaluationOutcome: v }))
                         }
                       >
                         <SelectTrigger className="text-foreground">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {[1, 2, 3, 4, 5].map((n) => (
-                            <SelectItem key={n} value={String(n)}>
-                              {n}
+                          {SCOUTING_EVALUATION_OUTCOMES.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1624,8 +1692,20 @@ export function CaptacaoHub() {
                       />
                     </div>
                     <div className="sm:col-span-2">
+                      <Label>Observação descritiva</Label>
+                      <Textarea
+                        className="text-foreground"
+                        rows={4}
+                        placeholder="Relato completo da observação"
+                        value={reportForm.scoutNotes}
+                        onChange={(e) =>
+                          setReportForm((f) => ({ ...f, scoutNotes: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
                       <p className="mb-3 text-sm font-semibold text-foreground">
-                        Avaliação por dimensão (nota 1–5)
+                        Avaliação por dimensão (nota 0–10)
                       </p>
                       <div className="space-y-4">
                         {Object.entries(REPORT_DIMENSIONS).map(([dimKey, dim]) => (
@@ -1641,33 +1721,27 @@ export function CaptacaoHub() {
                                 <div key={area.key} className="space-y-1">
                                   <Label className="text-xs">{area.label}</Label>
                                   <div className="flex gap-2">
-                                    <Select
-                                      value={dimensionEvals[dimKey]?.[area.key]?.rating || "none"}
-                                      onValueChange={(v) =>
+                                    <Input
+                                      type="number"
+                                      min={SCOUTING_RATING_SCALE.min}
+                                      max={SCOUTING_RATING_SCALE.max}
+                                      step={SCOUTING_RATING_SCALE.step}
+                                      className="h-9 w-20 text-foreground"
+                                      placeholder="0–10"
+                                      value={dimensionEvals[dimKey]?.[area.key]?.rating ?? ""}
+                                      onChange={(e) =>
                                         setDimensionEvals((prev) => ({
                                           ...prev,
                                           [dimKey]: {
                                             ...prev[dimKey],
                                             [area.key]: {
                                               ...prev[dimKey]?.[area.key],
-                                              rating: v === "none" ? "" : v,
+                                              rating: e.target.value,
                                             },
                                           },
                                         }))
                                       }
-                                    >
-                                      <SelectTrigger className="h-9 w-20 text-foreground">
-                                        <SelectValue placeholder="Nota" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="none">—</SelectItem>
-                                        {[1, 2, 3, 4, 5].map((n) => (
-                                          <SelectItem key={n} value={String(n)}>
-                                            {n}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                    />
                                     <Input
                                       placeholder="Obs. rápida"
                                       className="h-9 flex-1 text-foreground text-xs"
@@ -1700,16 +1774,6 @@ export function CaptacaoHub() {
                         value={reportForm.weaknesses}
                         onChange={(e) =>
                           setReportForm((f) => ({ ...f, weaknesses: e.target.value }))
-                        }
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <Label>Notas do captador</Label>
-                      <Textarea
-                        className="text-foreground"
-                        value={reportForm.scoutNotes}
-                        onChange={(e) =>
-                          setReportForm((f) => ({ ...f, scoutNotes: e.target.value }))
                         }
                       />
                     </div>
@@ -1839,6 +1903,12 @@ export function CaptacaoHub() {
           )}
         </>
       )}
+
+      <CaptacaoReportDetailDialog
+        reportId={selectedReportId}
+        tenantId={effectiveTenantId}
+        onClose={() => setSelectedReportId(null)}
+      />
     </>
   );
 }

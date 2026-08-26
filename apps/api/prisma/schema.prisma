@@ -2743,6 +2743,16 @@ model ScoutingProspect {
   supervisorNotes   String?  @db.Text
   /** pendente | em_andamento | concluido — fluxo jurídico após cadastro */
   legalStatus       String?  @default("pendente")
+  /** pendente | aprovado | para_teste — encaminhamento para avaliação */
+  evaluationOutcome String?  @default("pendente")
+  /** Notas agregadas 0–10 (último relatório) */
+  technicalRating   Float?
+  tacticalRating    Float?
+  physicalRating    Float?
+  cognitiveRating   Float?
+  /** Observação descritiva completa (perfil do observado) */
+  descriptiveObservation String? @db.Text
+  schedulerNotifiedAt DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   reports           ScoutingReport[]
@@ -2777,7 +2787,14 @@ model ScoutingReport {
   tactical          Json?
   physical          Json?
   mental            Json?
+  /** Médias 0–10 por dimensão */
+  technicalRating   Float?
+  tacticalRating    Float?
+  physicalRating    Float?
+  cognitiveRating   Float?
   overallRating     Float?
+  /** pendente | aprovado | para_teste */
+  evaluationOutcome String?  @default("pendente")
   recommendation    String
   strengths         String?  @db.Text
   weaknesses        String?  @db.Text

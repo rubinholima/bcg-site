@@ -26,6 +26,16 @@ export const CAPTACAO_ONLY_STAGES = [
   'negociacao',
 ] as const;
 
+export const SCOUTING_EVALUATION_OUTCOMES = [
+  { value: 'pendente', label: 'Pendente' },
+  { value: 'aprovado', label: 'Aprovado' },
+  { value: 'para_teste', label: 'Para teste / try-out' },
+] as const;
+
+export type ScoutingEvaluationOutcome = (typeof SCOUTING_EVALUATION_OUTCOMES)[number]['value'];
+
+export const SCOUTING_RATING_SCALE = { min: 0, max: 10, step: 0.5 } as const;
+
 export const SCOUTING_PRIORITIES = [
   { value: 'alta', label: 'Alta' },
   { value: 'media', label: 'Média' },
@@ -105,16 +115,19 @@ export const REPORT_DIMENSIONS = {
     ],
   },
   mental: {
-    label: 'Mental / comportamento',
+    label: 'Cognitivo',
     areas: [
-      { key: 'concentration', label: 'Concentração' },
+      { key: 'concentration', label: 'Concentração / foco' },
       { key: 'competitiveness', label: 'Competitividade' },
-      { key: 'confidence', label: 'Confiança' },
-      { key: 'coachability', label: 'Coachability / aprendizado' },
-      { key: 'leadership', label: 'Liderança / comunicação' },
+      { key: 'confidence', label: 'Confiança / tomada de risco' },
+      { key: 'coachability', label: 'Aprendizado / coachability' },
+      { key: 'leadership', label: 'Leitura de jogo / comunicação' },
     ],
   },
 } as const;
+
+/** Alias UI — dimensão cognitiva mapeia para `mental` na API */
+export const COGNITIVE_DIMENSION_KEY = 'mental';
 
 export type ScoutingStage = (typeof SCOUTING_STAGES)[number]['value'];
 export type ScoutingPriority = (typeof SCOUTING_PRIORITIES)[number]['value'];
@@ -229,21 +242,39 @@ export interface ScoutingProspect {
   competition?: string | null;
   competitionLevel?: string | null;
   contractSituation?: string | null;
+  contractEndDate?: string | null;
+  preferredFoot?: string | null;
+  height?: number | null;
+  weight?: number | null;
   agentName?: string | null;
+  agentPhone?: string | null;
+  agentEmail?: string | null;
   source?: string | null;
+  sourceDetails?: string | null;
   targetCategory?: string | null;
   overallRating?: number | null;
+  technicalRating?: number | null;
+  tacticalRating?: number | null;
+  physicalRating?: number | null;
+  cognitiveRating?: number | null;
+  evaluationOutcome?: ScoutingEvaluationOutcome | null;
+  descriptiveObservation?: string | null;
   recommendation?: string | null;
+  strengths?: string | null;
+  weaknesses?: string | null;
+  risks?: string | null;
+  notes?: string | null;
   observationCount: number;
   lastObservedAt?: string | null;
   scoutId?: string | null;
-  scout?: { id: string; name: string } | null;
+  scout?: { id: string; name: string; phone?: string | null; email?: string | null } | null;
   playerId?: string | null;
   player?: { id: string; name: string; photoUrl?: string | null } | null;
   supervisorApprovedAt?: string | null;
   supervisorApprovedBy?: string | null;
   supervisorNotes?: string | null;
   legalStatus?: string | null;
+  reports?: ScoutingReportDetail[];
   _count?: { reports: number };
 }
 
@@ -252,10 +283,44 @@ export interface ScoutingReport {
   reportDate: string;
   recommendation: string;
   overallRating?: number | null;
+  technicalRating?: number | null;
+  tacticalRating?: number | null;
+  physicalRating?: number | null;
+  cognitiveRating?: number | null;
+  evaluationOutcome?: ScoutingEvaluationOutcome | null;
   matchName?: string | null;
+  matchDate?: string | null;
+  competition?: string | null;
+  minutesObserved?: number | null;
+  positionPlayed?: string | null;
   observationType?: string | null;
-  prospect?: { id: string; name: string; position?: string | null; currentClub?: string | null };
-  scout?: { id: string; name: string };
+  strengths?: string | null;
+  weaknesses?: string | null;
+  risks?: string | null;
+  scoutNotes?: string | null;
+  technical?: Record<string, DimensionEval> | null;
+  tactical?: Record<string, DimensionEval> | null;
+  physical?: Record<string, DimensionEval> | null;
+  mental?: Record<string, DimensionEval> | null;
+  prospect?: Partial<ScoutingProspect>;
+  scout?: { id: string; name: string; phone?: string | null };
+}
+
+export type ScoutingReportDetail = ScoutingReport;
+
+export interface SchedulerNotification {
+  phone: string;
+  message: string;
+  whatsappUrl: string;
+}
+
+export function labelForEvaluationOutcome(value: string): string {
+  return SCOUTING_EVALUATION_OUTCOMES.find((o) => o.value === value)?.label ?? value;
+}
+
+export function formatScoutingRating(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  return `${value.toFixed(1)}/10`;
 }
 
 export interface CaptacaoStats {

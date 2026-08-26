@@ -182,6 +182,13 @@ export class CaptacaoController {
     return this.service.findReports(tenantId, prospectId, scoutId);
   }
 
+  @Get('reports/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  findReport(@Param('id') id: string) {
+    return this.service.findReport(id);
+  }
+
   @Post('reports')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('futebol_captacao')

@@ -123,4 +123,12 @@ export class CreateProspectDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  evaluationOutcome?: string;
+
+  @IsOptional()
+  @IsString()
+  descriptiveObservation?: string;
 }

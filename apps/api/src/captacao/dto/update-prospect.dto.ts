@@ -121,4 +121,12 @@ export class UpdateProspectDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  evaluationOutcome?: string;
+
+  @IsOptional()
+  @IsString()
+  descriptiveObservation?: string;
 }

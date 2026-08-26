@@ -12,6 +12,17 @@ import { UpdateProspectDto } from './dto/update-prospect.dto';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ScoutLocationPingDto, ScoutTrackingDto } from './dto/scout-location.dto';
 import { ApproveProspectDto, PromoteProspectDto } from './dto/approve-prospect.dto';
+import {
+  SCOUTING_EVALUATION_OUTCOMES,
+  type ScoutingEvaluationOutcome,
+} from './captacao.constants';
+import {
+  buildSchedulerNotificationMessage,
+  buildWhatsAppNotifyUrl,
+  computeReportDimensionRatings,
+  mergeDescriptiveObservation,
+  resolveStageFromOutcome,
+} from './captacao-scouting.util';
 
 const ACTIVE_STAGES = [
   'identificado',
@@ -21,9 +32,93 @@ const ACTIVE_STAGES = [
   'negociacao',
 ];
 
+const prospectListSelect = {
+  id: true,
+  name: true,
+  position: true,
+  birthDate: true,
+  nationality: true,
+  currentClub: true,
+  competition: true,
+  competitionLevel: true,
+  contractSituation: true,
+  contractEndDate: true,
+  agentName: true,
+  agentPhone: true,
+  agentEmail: true,
+  targetCategory: true,
+  priority: true,
+  stage: true,
+  evaluationOutcome: true,
+  overallRating: true,
+  technicalRating: true,
+  tacticalRating: true,
+  physicalRating: true,
+  cognitiveRating: true,
+  descriptiveObservation: true,
+  preferredFoot: true,
+  height: true,
+  weight: true,
+  source: true,
+  scoutId: true,
+} as const;
+
 @Injectable()
 export class CaptacaoService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private normalizeEvaluationOutcome(value?: string | null): ScoutingEvaluationOutcome {
+    if (
+      value &&
+      SCOUTING_EVALUATION_OUTCOMES.includes(value as ScoutingEvaluationOutcome)
+    ) {
+      return value as ScoutingEvaluationOutcome;
+    }
+    return 'pendente';
+  }
+
+  private buildSchedulerNotification(input: {
+    prospect: {
+      name: string;
+      position?: string | null;
+      currentClub?: string | null;
+      targetCategory?: string | null;
+      priority?: string | null;
+      evaluationOutcome?: string | null;
+    };
+    scoutName?: string | null;
+    overallRating?: number | null;
+    technicalRating?: number | null;
+    tacticalRating?: number | null;
+    physicalRating?: number | null;
+    cognitiveRating?: number | null;
+    matchName?: string | null;
+    recommendation?: string | null;
+    prospectId: string;
+  }) {
+    const message = buildSchedulerNotificationMessage({
+      prospectName: input.prospect.name,
+      position: input.prospect.position,
+      currentClub: input.prospect.currentClub,
+      targetCategory: input.prospect.targetCategory,
+      priority: input.prospect.priority,
+      evaluationOutcome: input.prospect.evaluationOutcome,
+      scoutName: input.scoutName,
+      overallRating: input.overallRating,
+      technicalRating: input.technicalRating,
+      tacticalRating: input.tacticalRating,
+      physicalRating: input.physicalRating,
+      cognitiveRating: input.cognitiveRating,
+      matchName: input.matchName,
+      recommendation: input.recommendation,
+      dashboardUrl: `/dashboard/futebol/captacao/prospects/${input.prospectId}`,
+    });
+    return {
+      phone: '33984133636',
+      message,
+      whatsappUrl: buildWhatsAppNotifyUrl(message),
+    };
+  }
 
   async getStats(tenantId?: string) {
     const where: Prisma.ScoutingProspectWhereInput = tenantId
@@ -407,12 +502,13 @@ export class CaptacaoService {
   async createProspect(dto: CreateProspectDto) {
     if (!dto.tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
     if (!dto.name?.trim()) throw new BadRequestException('Nome obrigatório');
-    return this.prisma.scoutingProspect.create({
+    const evaluationOutcome = this.normalizeEvaluationOutcome(dto.evaluationOutcome);
+    const prospect = await this.prisma.scoutingProspect.create({
       data: {
         tenantId: dto.tenantId,
         playerId: dto.playerId || null,
         scoutId: dto.scoutId || null,
-        stage: dto.stage || 'identificado',
+        stage: resolveStageFromOutcome(evaluationOutcome, dto.stage || 'identificado'),
         priority: dto.priority || 'media',
         name: dto.name.trim(),
         birthDate: dto.birthDate || null,
@@ -438,11 +534,26 @@ export class CaptacaoService {
         risks: dto.risks || null,
         profileLinks: dto.profileLinks ?? undefined,
         notes: dto.notes || null,
+        evaluationOutcome,
+        descriptiveObservation: dto.descriptiveObservation?.trim() || null,
       },
       include: {
         scout: { select: { id: true, name: true } },
       },
     });
+
+    const schedulerNotification = this.buildSchedulerNotification({
+      prospect,
+      scoutName: prospect.scout?.name,
+      prospectId: prospect.id,
+    });
+
+    await this.prisma.scoutingProspect.update({
+      where: { id: prospect.id },
+      data: { schedulerNotifiedAt: new Date() },
+    });
+
+    return { ...prospect, schedulerNotification };
   }
 
   async updateProspect(id: string, dto: UpdateProspectDto) {
@@ -496,6 +607,12 @@ export class CaptacaoService {
         ...(dto.risks !== undefined && { risks: dto.risks || null }),
         ...(dto.profileLinks !== undefined && { profileLinks: dto.profileLinks }),
         ...(dto.notes !== undefined && { notes: dto.notes || null }),
+        ...(dto.evaluationOutcome !== undefined && {
+          evaluationOutcome: this.normalizeEvaluationOutcome(dto.evaluationOutcome),
+        }),
+        ...(dto.descriptiveObservation !== undefined && {
+          descriptiveObservation: dto.descriptiveObservation?.trim() || null,
+        }),
       },
     });
   }
@@ -518,13 +635,28 @@ export class CaptacaoService {
       where,
       orderBy: { reportDate: 'desc' },
       include: {
-        prospect: {
-          select: { id: true, name: true, position: true, currentClub: true },
-        },
-        scout: { select: { id: true, name: true } },
+        prospect: { select: prospectListSelect },
+        scout: { select: { id: true, name: true, phone: true } },
       },
-      take: 100,
+      take: 200,
     });
+  }
+
+  async findReport(id: string) {
+    const report = await this.prisma.scoutingReport.findUnique({
+      where: { id },
+      include: {
+        prospect: {
+          include: {
+            scout: { select: { id: true, name: true, phone: true, email: true } },
+            player: { select: { id: true, name: true, photoUrl: true } },
+          },
+        },
+        scout: { select: { id: true, name: true, phone: true, email: true } },
+      },
+    });
+    if (!report) throw new NotFoundException('Relatório não encontrado');
+    return report;
   }
 
   async createReport(dto: CreateReportDto) {
@@ -549,6 +681,23 @@ export class CaptacaoService {
     ) {
       locationLabel = await this.reverseGeocode(dto.latitude, dto.longitude);
     }
+
+    const mentalPayload =
+      dto.cognitive != null
+        ? (dto.cognitive as Prisma.InputJsonValue)
+        : dto.mental != null
+          ? (dto.mental as Prisma.InputJsonValue)
+          : undefined;
+
+    const dimensionRatings = computeReportDimensionRatings({
+      technical: dto.technical,
+      tactical: dto.tactical,
+      physical: dto.physical,
+      mental: dto.mental,
+      cognitive: dto.cognitive,
+    });
+
+    const evaluationOutcome = this.normalizeEvaluationOutcome(dto.evaluationOutcome);
 
     const report = await this.prisma.scoutingReport.create({
       data: {
@@ -575,11 +724,10 @@ export class CaptacaoService {
           dto.physical != null
             ? (dto.physical as Prisma.InputJsonValue)
             : undefined,
-        mental:
-          dto.mental != null
-            ? (dto.mental as Prisma.InputJsonValue)
-            : undefined,
+        mental: mentalPayload,
+        ...dimensionRatings,
         overallRating: dto.overallRating ?? null,
+        evaluationOutcome,
         recommendation: dto.recommendation,
         strengths: dto.strengths || null,
         weaknesses: dto.weaknesses || null,
@@ -591,7 +739,7 @@ export class CaptacaoService {
       },
       include: {
         scout: { select: { id: true, name: true } },
-        prospect: { select: { id: true, name: true } },
+        prospect: { select: prospectListSelect },
       },
     });
 
@@ -606,6 +754,21 @@ export class CaptacaoService {
       });
     }
 
+    const descriptiveObservation = mergeDescriptiveObservation({
+      scoutNotes: dto.scoutNotes,
+      strengths: dto.strengths,
+      weaknesses: dto.weaknesses,
+      risks: dto.risks,
+    });
+
+    let nextStage = prospect.stage;
+    if (dto.recommendation === 'contratar' && prospect.stage === 'identificado') {
+      nextStage = 'prioridade';
+    } else if (prospect.stage === 'identificado') {
+      nextStage = 'em_observacao';
+    }
+    nextStage = resolveStageFromOutcome(evaluationOutcome, nextStage);
+
     await this.prisma.scoutingProspect.update({
       where: { id: dto.prospectId },
       data: {
@@ -617,16 +780,35 @@ export class CaptacaoService {
         weaknesses: dto.weaknesses || prospect.weaknesses,
         risks: dto.risks || prospect.risks,
         scoutId: dto.scoutId,
-        stage:
-          dto.recommendation === 'contratar' && prospect.stage === 'identificado'
-            ? 'prioridade'
-            : prospect.stage === 'identificado'
-              ? 'em_observacao'
-              : prospect.stage,
+        evaluationOutcome,
+        technicalRating: dimensionRatings.technicalRating ?? prospect.technicalRating,
+        tacticalRating: dimensionRatings.tacticalRating ?? prospect.tacticalRating,
+        physicalRating: dimensionRatings.physicalRating ?? prospect.physicalRating,
+        cognitiveRating: dimensionRatings.cognitiveRating ?? prospect.cognitiveRating,
+        descriptiveObservation: descriptiveObservation ?? prospect.descriptiveObservation,
+        stage: nextStage,
+        schedulerNotifiedAt: new Date(),
       },
     });
 
-    return report;
+    const schedulerNotification = this.buildSchedulerNotification({
+      prospect: {
+        name: prospect.name,
+        position: prospect.position,
+        currentClub: prospect.currentClub,
+        targetCategory: prospect.targetCategory,
+        priority: prospect.priority,
+        evaluationOutcome,
+      },
+      scoutName: report.scout?.name,
+      overallRating: dto.overallRating ?? null,
+      ...dimensionRatings,
+      matchName: dto.matchName,
+      recommendation: dto.recommendation,
+      prospectId: dto.prospectId,
+    });
+
+    return { ...report, schedulerNotification };
   }
 
   // ─── Supervisor → cadastro do clube ───────────────────────────────────────

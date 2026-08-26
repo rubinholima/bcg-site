@@ -75,8 +75,16 @@ export class CreateReportDto {
   mental?: Record<string, DimensionEvalDto>;
 
   @IsOptional()
+  @IsObject()
+  cognitive?: Record<string, DimensionEvalDto>;
+
+  @IsOptional()
   @IsNumber()
   overallRating?: number;
+
+  @IsOptional()
+  @IsString()
+  evaluationOutcome?: string;
 
   @IsString()
   recommendation!: string;
