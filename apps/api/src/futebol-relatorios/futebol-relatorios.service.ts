@@ -87,6 +87,7 @@ import {
 } from '../fmf-scraper/fmf-scraper.presets';
 import {
   buildDisciplineGrid,
+  buildStaffDisciplineGrid,
   collectDisciplineParticipantIds,
   enrichDisciplineStatsFromUnresolved,
   inferPrimaryCompetitionFromReports,
@@ -106,6 +107,7 @@ import {
   aggregateStaffDisciplineRows,
   parseStaffCardsFromOccurrences,
 } from './fmf-staff-cards.util';
+import { staffRoleLabel } from '../psychology-sessions/psychology-care-person.util';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
   DEFAULT_PRESS_KIT_REFEREE_ROLES,
@@ -2127,7 +2129,9 @@ export class FutebolRelatoriosService {
     nextRound: CartoesSuspensaoReportDto['nextRound'];
     rounds: CartoesSuspensaoReportDto['rounds'];
     players: CartoesSuspensaoReportDto['players'];
+    staff: CartoesSuspensaoReportDto['staff'];
     totals: CartoesSuspensaoReportDto['totals'];
+    staffTotals: CartoesSuspensaoReportDto['staffTotals'];
   }> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: input.tenantId },
@@ -2360,6 +2364,33 @@ export class FutebolRelatoriosService {
       friendlyMatchIds,
     });
 
+    const staffCandidates = await this.loadTechnicalStaffForDiscipline(
+      input.tenantId,
+      referenceCategory,
+    );
+    const staffGrid = buildStaffDisciplineGrid({
+      matches: disciplineMatches.map((row) => ({
+        id: row.id,
+        round: row.round,
+        matchDate: row.matchDate,
+        homeTeam: row.homeTeam,
+        awayTeam: row.awayTeam,
+        homeScore: row.homeScore,
+        awayScore: row.awayScore,
+        occurrencesText: row.occurrencesText,
+        playerStats: row.playerStats,
+      })),
+      staff: staffCandidates.map((member) => ({
+        id: member.id,
+        name: member.name,
+        roleLabel: staffRoleLabel(member.role),
+      })),
+      clubName,
+      aliases,
+      nextMatchDate,
+      friendlyMatchIds,
+    });
+
     let nextRound = grid.nextRound;
     if (!nextRound && upcomingTravel) {
       nextRound = {
@@ -2382,7 +2413,9 @@ export class FutebolRelatoriosService {
         sourceUrl: sourceUrlByMatchId.get(round.matchId) ?? null,
       })),
       players: grid.players,
+      staff: staffGrid.staff,
       totals: grid.totals,
+      staffTotals: staffGrid.staffTotals,
     };
   }
 
@@ -2756,7 +2789,9 @@ export class FutebolRelatoriosService {
           ? (categoryLabels[player.squadCategory] ?? player.squadCategory)
           : null,
       })),
+      staff: seasonGrid.staff,
       totals: seasonGrid.totals,
+      staffTotals: seasonGrid.staffTotals,
       generatedAt: new Date().toISOString(),
     };
   }

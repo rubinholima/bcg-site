@@ -980,7 +980,17 @@ function sumulaSeasonGridSection(data: SumulaCartoesReportDto): string {
     nextRound: grid.nextRound,
     rounds: grid.rounds,
     players: grid.players,
+    staff: [],
     totals: grid.totals,
+    staffTotals: {
+      yellowByRound: [],
+      redByRound: [],
+      yellowCards: 0,
+      redCards: 0,
+      matchCount: 0,
+      avgYellowPerMatch: 0,
+      avgRedPerMatch: 0,
+    },
     generatedAt: data.generatedAt,
   };
 
@@ -2162,6 +2172,54 @@ function cartoesSuspensaoColumnCount(roundCount: number): number {
   return 5 + roundCount + 1;
 }
 
+function cartoesSuspensaoStaffRows(data: CartoesSuspensaoReportDto): string {
+  const staff = data.staff ?? [];
+  if (staff.length === 0) {
+    return `<tr><td colspan="${cartoesSuspensaoColumnCount(data.rounds.length)}" class="empty">Nenhum membro da comissão técnica cadastrado</td></tr>`;
+  }
+  return staff
+    .map((member) => {
+      const rowClass = member.unavailable ? "row-unavailable" : "";
+      const cells = member.roundCells.map((code) => cartoesSuspensaoDisciplineCell(code)).join("");
+      return `<tr class="${rowClass}">
+        <td class="num">${member.num}</td>
+        <td class="left">${escapeHtml(member.name)} <span class="muted">(${escapeHtml(member.roleLabel)})</span></td>
+        <td class="num">${member.yellowCardsTotal}</td>
+        <td class="num">${member.redCardsTotal}</td>
+        ${cells}
+        ${cartoesSuspensaoNextRoundCell(member.nextRoundCell ?? "")}
+      </tr>`;
+    })
+    .join("");
+}
+
+function cartoesSuspensaoStaffTotalsRow(data: CartoesSuspensaoReportDto): string {
+  const totals = data.staffTotals;
+  if (!totals) return "";
+  const yellowCells = totals.yellowByRound
+    .map((n) => `<td class="num">${n}</td>`)
+    .join("");
+  const redCells = totals.redByRound
+    .map((n) => `<td class="num">${n}</td>`)
+    .join("");
+  return `
+    <tr class="totals-row">
+      <td colspan="2" class="left"><strong>Total C. Amarelos — comissão</strong></td>
+      <td class="num"><strong>${totals.yellowCards}</strong></td>
+      <td></td>
+      ${yellowCells}
+      <td></td>
+    </tr>
+    <tr class="totals-row">
+      <td colspan="2" class="left"><strong>Total C. Vermelhos — comissão</strong></td>
+      <td></td>
+      <td class="num"><strong>${totals.redCards}</strong></td>
+      ${redCells}
+      <td></td>
+    </tr>
+  `;
+}
+
 function cartoesSuspensaoPlayerRows(data: CartoesSuspensaoReportDto): string {
   if (data.players.length === 0) {
     return `<tr><td colspan="${cartoesSuspensaoColumnCount(data.rounds.length)}" class="empty">Nenhum atleta no elenco atual</td></tr>`;
@@ -2265,6 +2323,33 @@ export function buildCartoesSuspensaoPrintHtml(
         · Média C.V/Jogo: <strong>${data.totals.avgRedPerMatch}</strong>
         · Total de jogos: <strong>${data.totals.matchCount}</strong>
       </p>
+    </section>
+    <section class="section">
+      <h2 class="section-title">Comissão técnica</h2>
+      <table class="discipline-table">
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Profissional</th>
+            <th>C.A</th>
+            <th>C.V</th>
+            ${cartoesSuspensaoRoundHeaders(data.rounds)}
+            ${cartoesSuspensaoNextRoundHeader(data)}
+          </tr>
+        </thead>
+        <tbody>
+          ${cartoesSuspensaoStaffRows(data)}
+          ${cartoesSuspensaoStaffTotalsRow(data)}
+        </tbody>
+      </table>
+      ${
+        data.staffTotals
+          ? `<p class="summary-line">
+        Média C.A/Jogo (comissão): <strong>${data.staffTotals.avgYellowPerMatch}</strong>
+        · Média C.V/Jogo (comissão): <strong>${data.staffTotals.avgRedPerMatch}</strong>
+      </p>`
+          : ""
+      }
     </section>
     ${officialSumulaLinksPrintSection(data.rounds)}
   `;

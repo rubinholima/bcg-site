@@ -5,6 +5,7 @@ import {
   isLoanedSportsSituation,
 } from '../common/sports-situation.util';
 import { FRIENDLY_CHAMPIONSHIP_NAME } from '../futebol-agenda/friendly-match.util';
+import { parseStaffCardsFromOccurrences } from './fmf-staff-cards.util';
 
 /** Códigos por rodada — espelham o relatório operacional do clube (Mineiro). */
 export type DisciplineCellCode = 'AT' | 'AV' | 'AM' | 'V' | 'VM' | 'P' | 'SA' | 'ST' | '';
@@ -38,6 +39,26 @@ export type DisciplinePlayerRow = {
   /** Categoria do cadastro quando diferente da planilha (subida). */
   squadCategory: string | null;
   playedUp: boolean;
+};
+
+export type DisciplineStaffRow = {
+  num: number;
+  staffId: string;
+  name: string;
+  roleLabel: string;
+  roundCells: DisciplineCellCode[];
+  nextRoundCell: NextRoundDisciplineCode;
+  yellowCardsTotal: number;
+  redCardsTotal: number;
+  unavailable: boolean;
+  unavailableReason: string | null;
+  aptoForNextRound: boolean;
+};
+
+export type StaffDisciplineInput = {
+  id: string;
+  name: string;
+  roleLabel: string;
 };
 
 export type DisciplineGridResult = {
@@ -705,5 +726,303 @@ export function buildDisciplineGrid(input: {
           ),
         }
       : null,
+  };
+}
+
+type StaffMatchCards = {
+  yellowCards: number;
+  redCards: number;
+  manual: boolean;
+};
+
+function staffDisciplineKey(staffId: string | null, name: string): string {
+  return staffId?.trim() || `name:${normalizeName(name)}`;
+}
+
+function staffCardsForMatch(
+  text: string | null | undefined,
+  staff: StaffDisciplineInput[],
+): Map<string, StaffMatchCards> {
+  const parsed = parseStaffCardsFromOccurrences(
+    text,
+    staff.map((member) => ({ id: member.id, name: member.name, role: member.roleLabel })),
+  );
+  const map = new Map<string, StaffMatchCards>();
+  for (const card of parsed) {
+    const key = staffDisciplineKey(card.staffId, card.name);
+    const current = map.get(key) ?? { yellowCards: 0, redCards: 0, manual: false };
+    current.yellowCards += card.yellowCards;
+    current.redCards += card.redCards;
+    if (card.excerpt && occurrenceIsManual(card.excerpt)) current.manual = true;
+    map.set(key, current);
+  }
+  return map;
+}
+
+function isStaffExpulsion(cards: StaffMatchCards): boolean {
+  return cards.redCards > 0 || cards.yellowCards >= 2;
+}
+
+function applyStaffMatchDisciplineCards(input: {
+  cards: StaffMatchCards;
+  state: PlayerRoundState;
+  staffKey: string;
+  yellowTotals: Map<string, number>;
+  redTotals: Map<string, number>;
+}): DisciplineCellCode {
+  const { cards, state, staffKey, yellowTotals, redTotals } = input;
+  if (cards.yellowCards <= 0 && cards.redCards <= 0) return '';
+
+  if (isStaffExpulsion(cards)) {
+    if (cards.yellowCards > 0) {
+      yellowTotals.set(staffKey, (yellowTotals.get(staffKey) ?? 0) + cards.yellowCards);
+      state.yellowAccum += cards.yellowCards;
+    }
+    if (cards.redCards > 0) {
+      redTotals.set(staffKey, (redTotals.get(staffKey) ?? 0) + cards.redCards);
+    }
+    const code =
+      cards.redCards > 0
+        ? cards.manual
+          ? 'VM'
+          : 'V'
+        : cards.yellowCards > 0
+          ? cards.manual
+            ? 'AM'
+            : 'AV'
+          : 'V';
+    state.suspensionRoundsLeft = 1;
+    state.pendurado = false;
+    return code;
+  }
+
+  if (cards.yellowCards > 0) {
+    yellowTotals.set(staffKey, (yellowTotals.get(staffKey) ?? 0) + cards.yellowCards);
+    state.yellowAccum += cards.yellowCards;
+    const code = cards.manual ? 'AM' : 'AV';
+    if (state.yellowAccum >= 3) {
+      state.suspensionRoundsLeft = 1;
+      state.yellowAccum = 0;
+      state.pendurado = false;
+    } else if (state.yellowAccum >= 2) {
+      state.pendurado = true;
+    }
+    return code;
+  }
+
+  return '';
+}
+
+function resolveFriendlyStaffDisciplineCellCode(
+  cards: StaffMatchCards | undefined,
+  pendingCode: DisciplineCellCode,
+): DisciplineCellCode {
+  if (!cards || (cards.yellowCards <= 0 && cards.redCards <= 0)) return pendingCode;
+  if (isStaffExpulsion(cards)) {
+    return cards.redCards > 0
+      ? cards.manual
+        ? 'VM'
+        : 'V'
+      : cards.yellowCards > 0
+        ? cards.manual
+          ? 'AM'
+          : 'AV'
+        : 'V';
+  }
+  if (cards.yellowCards > 0) return cards.manual ? 'AM' : 'AV';
+  return pendingCode;
+}
+
+function compareDisciplineStaff(a: DisciplineStaffRow, b: DisciplineStaffRow): number {
+  const rankDiff = disciplinePlayerSortRank(a as DisciplinePlayerRow) - disciplinePlayerSortRank(b as DisciplinePlayerRow);
+  if (rankDiff !== 0) return rankDiff;
+  return a.name.localeCompare(b.name, 'pt-BR');
+}
+
+export function mergeDisciplineStaffList(
+  roster: StaffDisciplineInput[],
+  matches: MatchInput[],
+): StaffDisciplineInput[] {
+  const byKey = new Map<string, StaffDisciplineInput>();
+  for (const member of roster) {
+    byKey.set(member.id, member);
+  }
+  const candidates = roster.map((member) => ({
+    id: member.id,
+    name: member.name,
+    role: member.roleLabel,
+  }));
+  for (const match of matches) {
+    for (const card of parseStaffCardsFromOccurrences(match.occurrencesText, candidates)) {
+      const key = staffDisciplineKey(card.staffId, card.name);
+      if (byKey.has(key)) continue;
+      byKey.set(key, {
+        id: key,
+        name: card.name,
+        roleLabel: card.roleLabel ?? 'Comissão técnica',
+      });
+    }
+  }
+  return [...byKey.values()];
+}
+
+export function collectDisciplineStaffParticipantKeys(
+  matches: MatchInput[],
+  staff: StaffDisciplineInput[],
+): string[] {
+  const keys = new Set<string>();
+  for (const match of matches) {
+    for (const [key] of staffCardsForMatch(match.occurrencesText, staff)) {
+      keys.add(key);
+    }
+  }
+  return [...keys];
+}
+
+/** Planilha disciplinar da comissão técnica — mesmas regras de pendurado (2A) e suspensão (3A/vermelho). */
+export function buildStaffDisciplineGrid(input: {
+  matches: MatchInput[];
+  staff: StaffDisciplineInput[];
+  clubName: string;
+  aliases: string[];
+  nextMatchDate?: string | null;
+  friendlyMatchIds?: ReadonlySet<string>;
+}): {
+  staff: DisciplineStaffRow[];
+  staffTotals: DisciplineGridResult['totals'];
+} {
+  const sortedMatches = [...input.matches].sort(
+    (a, b) => a.matchDate.getTime() - b.matchDate.getTime() || (a.round ?? 0) - (b.round ?? 0),
+  );
+
+  const disciplineStaff = mergeDisciplineStaffList(input.staff, sortedMatches);
+
+  const states = new Map(
+    disciplineStaff.map((member) => [member.id, initPlayerState({
+      id: member.id,
+      name: member.name,
+      jerseyNumber: null,
+      position: null,
+      status: 'available',
+      statusDetails: null,
+      yellowCards: null,
+      redCards: null,
+      registrationProfile: null,
+    })]),
+  );
+  const roundCells = new Map<string, DisciplineCellCode[]>(
+    disciplineStaff.map((member) => [member.id, Array(sortedMatches.length).fill('' as DisciplineCellCode)]),
+  );
+  const yellowTotals = new Map(disciplineStaff.map((member) => [member.id, 0]));
+  const redTotals = new Map(disciplineStaff.map((member) => [member.id, 0]));
+  const yellowByRound = Array(sortedMatches.length).fill(0);
+  const redByRound = Array(sortedMatches.length).fill(0);
+
+  sortedMatches.forEach((match, roundIndex) => {
+    const isFriendly = input.friendlyMatchIds?.has(match.id) ?? false;
+    const cardsByStaff = staffCardsForMatch(match.occurrencesText, disciplineStaff);
+
+    for (const cards of cardsByStaff.values()) {
+      yellowByRound[roundIndex] += cards.yellowCards;
+      redByRound[roundIndex] += cards.redCards;
+    }
+
+    for (const member of disciplineStaff) {
+      const state = states.get(member.id)!;
+      const cells = roundCells.get(member.id)!;
+      const cards = cardsByStaff.get(staffDisciplineKey(member.id, member.name));
+
+      if (isFriendly) {
+        let pending: DisciplineCellCode = '';
+        if (state.stjdRoundsLeft > 0) pending = 'ST';
+        else if (state.suspensionRoundsLeft > 0) pending = 'SA';
+        else if (state.pendurado) pending = 'P';
+        cells[roundIndex] = resolveFriendlyStaffDisciplineCellCode(cards, pending);
+        continue;
+      }
+
+      let pendingCode: DisciplineCellCode = '';
+      if (state.stjdRoundsLeft > 0) {
+        pendingCode = 'ST';
+        state.stjdRoundsLeft -= 1;
+      } else if (state.suspensionRoundsLeft > 0) {
+        pendingCode = 'SA';
+        state.suspensionRoundsLeft -= 1;
+        state.pendurado = false;
+      } else if (state.pendurado) {
+        pendingCode = 'P';
+        state.pendurado = false;
+      }
+
+      let code: DisciplineCellCode = pendingCode;
+      if (cards && (cards.yellowCards > 0 || cards.redCards > 0)) {
+        const actionCode = applyStaffMatchDisciplineCards({
+          cards,
+          state,
+          staffKey: member.id,
+          yellowTotals,
+          redTotals,
+        });
+        if (actionCode) code = actionCode;
+      }
+
+      cells[roundIndex] = code;
+
+      if (
+        state.stjdRoundsLeft === 0 &&
+        state.suspensionRoundsLeft === 0 &&
+        state.yellowAccum >= 2
+      ) {
+        state.pendurado = true;
+      }
+    }
+  });
+
+  const matchCount = sortedMatches.length;
+  const staffRows: DisciplineStaffRow[] = disciplineStaff
+    .map((member, index) => {
+      const state = states.get(member.id)!;
+      const cells = roundCells.get(member.id) ?? [];
+      let unavailableReason: string | null = null;
+      if (state.stjdRoundsLeft > 0) {
+        unavailableReason = state.stjdReason ?? 'Suspensão STJD/TDJ';
+      } else if (state.suspensionRoundsLeft > 0) {
+        unavailableReason = 'Suspensão automática (cartão vermelho ou 3º amarelo)';
+      }
+      const unavailable = state.stjdRoundsLeft > 0 || state.suspensionRoundsLeft > 0;
+      return {
+        num: index + 1,
+        staffId: member.id,
+        name: member.name,
+        roleLabel: member.roleLabel,
+        roundCells: cells,
+        nextRoundCell: resolveNextRoundCell(state),
+        yellowCardsTotal: yellowTotals.get(member.id) ?? 0,
+        redCardsTotal: redTotals.get(member.id) ?? 0,
+        unavailable,
+        unavailableReason,
+        aptoForNextRound: !unavailable,
+      };
+    })
+    .sort(compareDisciplineStaff)
+    .map((row, index) => ({ ...row, num: index + 1 }));
+
+  return {
+    staff: staffRows,
+    staffTotals: {
+      yellowByRound,
+      redByRound,
+      yellowCards: yellowByRound.reduce((a, b) => a + b, 0),
+      redCards: redByRound.reduce((a, b) => a + b, 0),
+      matchCount,
+      avgYellowPerMatch:
+        matchCount > 0
+          ? Math.round((yellowByRound.reduce((a, b) => a + b, 0) / matchCount) * 100) / 100
+          : 0,
+      avgRedPerMatch:
+        matchCount > 0
+          ? Math.round((redByRound.reduce((a, b) => a + b, 0) / matchCount) * 100) / 100
+          : 0,
+    },
   };
 }

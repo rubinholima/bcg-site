@@ -1,5 +1,6 @@
 import {
   buildDisciplineGrid,
+  buildStaffDisciplineGrid,
   collectDisciplineParticipantIds,
   enrichDisciplineStatsFromUnresolved,
   findPlayerStatForMatch,
@@ -545,5 +546,76 @@ describe('normalizeCompetitionKey / primary competition', () => {
       { competition: 'SUB 15 - 1ª DIVISÃO - 2026' },
     ]);
     expect(primary).toBe('SUB 15 - 1ª DIVISÃO - 2026');
+  });
+});
+
+describe('buildStaffDisciplineGrid', () => {
+  it('marca comissão pendurada após 2 amarelos e suspende no 3º', () => {
+    const staff = [{ id: 'tec1', name: 'João Técnico', roleLabel: 'Técnico' }];
+    const baseMatch = {
+      homeTeam: 'Boston City',
+      awayTeam: 'NAC',
+      homeScore: 1,
+      awayScore: 0,
+      playerStats: [],
+    };
+
+    const afterTwo = buildStaffDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      nextMatchDate: '2026-08-24',
+      staff,
+      matches: [
+        {
+          id: 'm1',
+          round: 1,
+          matchDate: new Date('2026-08-10T12:00:00Z'),
+          ...baseMatch,
+          occurrencesText: 'Cartão amarelo para o técnico João Técnico',
+        },
+        {
+          id: 'm2',
+          round: 2,
+          matchDate: new Date('2026-08-17T12:00:00Z'),
+          ...baseMatch,
+          occurrencesText: 'Advertência ao técnico João Técnico',
+        },
+      ],
+    });
+
+    expect(afterTwo.staff[0]?.yellowCardsTotal).toBe(2);
+    expect(afterTwo.staff[0]?.nextRoundCell).toBe('P');
+
+    const afterThree = buildStaffDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      nextMatchDate: '2026-08-31',
+      staff,
+      matches: [
+        {
+          id: 'm1',
+          round: 1,
+          matchDate: new Date('2026-08-10T12:00:00Z'),
+          ...baseMatch,
+          occurrencesText: 'Cartão amarelo para o técnico João Técnico',
+        },
+        {
+          id: 'm2',
+          round: 2,
+          matchDate: new Date('2026-08-17T12:00:00Z'),
+          ...baseMatch,
+          occurrencesText: 'Advertência ao técnico João Técnico',
+        },
+        {
+          id: 'm3',
+          round: 3,
+          matchDate: new Date('2026-08-24T12:00:00Z'),
+          ...baseMatch,
+          occurrencesText: 'Cartão amarelo para o técnico João Técnico',
+        },
+      ],
+    });
+
+    expect(afterThree.staff[0]?.nextRoundCell).toBe('S');
   });
 });

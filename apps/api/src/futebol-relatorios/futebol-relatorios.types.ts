@@ -352,6 +352,20 @@ export type CartoesSuspensaoPlayerDto = {
   playedUp: boolean;
 };
 
+export type CartoesSuspensaoStaffDto = {
+  num: number;
+  staffId: string;
+  name: string;
+  roleLabel: string;
+  roundCells: Array<'AT' | 'AV' | 'AM' | 'V' | 'VM' | 'P' | 'SA' | 'ST' | ''>;
+  nextRoundCell: 'P' | 'S' | '';
+  yellowCardsTotal: number;
+  redCardsTotal: number;
+  unavailable: boolean;
+  unavailableReason: string | null;
+  aptoForNextRound: boolean;
+};
+
 export type CartoesSuspensaoReportDto = {
   tenant: {
     id: string;
@@ -374,7 +388,17 @@ export type CartoesSuspensaoReportDto = {
   } | null;
   rounds: CartoesSuspensaoRoundDto[];
   players: CartoesSuspensaoPlayerDto[];
+  staff: CartoesSuspensaoStaffDto[];
   totals: {
+    yellowByRound: number[];
+    redByRound: number[];
+    yellowCards: number;
+    redCards: number;
+    matchCount: number;
+    avgYellowPerMatch: number;
+    avgRedPerMatch: number;
+  };
+  staffTotals: {
     yellowByRound: number[];
     redByRound: number[];
     yellowCards: number;
