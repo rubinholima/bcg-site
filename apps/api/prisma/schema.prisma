@@ -1106,6 +1106,7 @@ model Player {
   fmfMatchStats        FmfPlayerMatchStat[]
   coachMatchPlayerRatings CoachMatchReportPlayerRating[]
   coachTeamReportPlayerActions CoachTeamReportPlayerAction[]
+  coachTeamReportPlayerEvaluations CoachTeamReportPlayerEvaluation[]
   coachTrainingPlayerEntries CoachTrainingPlayerEntry[]
   physiologyAssessments      PhysiologyAssessment[]
   physiologyHydrations       PhysiologyHydration[]
@@ -3420,6 +3421,10 @@ model CoachTeamReport {
   tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   category           String?
   periodType         String   // geral | mensal | trimestral
+  /** Temporada (ano) da avaliação trimestral obrigatória. */
+  season             Int?
+  /** Janela fixa: fevereiro | julho | setembro | fim_temporada */
+  periodKey          String?
   periodStart        DateTime?
   periodEnd          DateTime?
   generalDescription String?  @db.Text
@@ -3430,12 +3435,31 @@ model CoachTeamReport {
   staff              TechnicalStaff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
   sentAt             DateTime?
   playerActions      CoachTeamReportPlayerAction[]
+  playerEvaluations  CoachTeamReportPlayerEvaluation[]
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  @@unique([tenantId, category, season, periodKey])
   @@index([tenantId, category])
   @@index([tenantId, periodType])
   @@index([tenantId, status])
+  @@index([tenantId, season, periodKey])
   @@index([staffId])
+}
+
+/** Avaliação trimestral obrigatória por atleta — vinculada ao Player. */
+model CoachTeamReportPlayerEvaluation {
+  id               String          @id @default(cuid())
+  reportId         String
+  report           CoachTeamReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  playerId         String
+  player           Player          @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  gamesCount       Int             @default(0)
+  gamesMinutes     Int             @default(0)
+  trainingMinutes  Int             @default(0)
+  avgMatchRating   Float?
+  coachFinalRating Float?
+  @@unique([reportId, playerId])
+  @@index([playerId])
 }
 
 model CoachTeamReportPlayerAction {

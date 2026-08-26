@@ -40,12 +40,32 @@ export const COACH_REPORT_STATUS = ['rascunho', 'finalizado'] as const;
 
 export const COACH_TEAM_REPORT_PERIOD = ['geral', 'mensal', 'trimestral'] as const;
 
+export const COACH_TEAM_REPORT_PERIOD_KEYS = [
+  'fevereiro',
+  'julho',
+  'setembro',
+  'fim_temporada',
+] as const;
+
 export const COACH_TEAM_REPORT_STATUS = ['rascunho', 'enviado'] as const;
 
 export const COACH_TEAM_PLAYER_ACTION = ['dispensa', 'promocao'] as const;
 
 export const coachTeamReportInclude = {
   playerActions: {
+    include: {
+      player: {
+        select: {
+          id: true,
+          name: true,
+          jerseyNumber: true,
+          category: true,
+          registrationProfile: true,
+        },
+      },
+    },
+  },
+  playerEvaluations: {
     include: {
       player: {
         select: {

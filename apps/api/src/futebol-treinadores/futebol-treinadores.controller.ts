@@ -287,6 +287,30 @@ export class FutebolTreinadoresController {
     );
   }
 
+  @Get('team-reports/evaluation-draft')
+  @TeamReportReadAccess()
+  getTeamReportEvaluationDraft(
+    @Query('tenantId') tenantId: string,
+    @Query('season') seasonRaw: string,
+    @Query('periodKey') periodKey: string,
+    @Query('category') category?: string,
+    @Query('reportId') reportId?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+    const season = Number(seasonRaw);
+    if (!Number.isFinite(season) || season < 2000) {
+      throw new BadRequestException('season inválida');
+    }
+    if (!periodKey?.trim()) throw new BadRequestException('periodKey é obrigatório');
+    return this.service.getTeamReportEvaluationDraft(
+      tenantId.trim(),
+      season,
+      periodKey.trim(),
+      category?.trim() || undefined,
+      reportId?.trim() || undefined,
+    );
+  }
+
   @Get('team-reports/summary')
   @TeamReportReadAccess()
   getTeamReportSummary(
@@ -306,13 +330,18 @@ export class FutebolTreinadoresController {
     @Query('category') category?: string,
     @Query('periodType') periodType?: string,
     @Query('status') status?: string,
+    @Query('season') seasonRaw?: string,
+    @Query('periodKey') periodKey?: string,
   ) {
     if (!tenantId?.trim()) return [];
+    const season = seasonRaw ? Number(seasonRaw) : undefined;
     return this.service.listTeamReports(
       tenantId.trim(),
       category?.trim() || undefined,
       periodType?.trim() || undefined,
       status?.trim() || undefined,
+      season && Number.isFinite(season) ? season : undefined,
+      periodKey?.trim() || undefined,
     );
   }
 
@@ -334,6 +363,8 @@ export class FutebolTreinadoresController {
       tenantId,
       category: typeof body.category === 'string' ? body.category : null,
       periodType,
+      season: typeof body.season === 'number' ? body.season : Number(body.season) || null,
+      periodKey: typeof body.periodKey === 'string' ? body.periodKey : null,
       periodStart: typeof body.periodStart === 'string' ? body.periodStart : null,
       periodEnd: typeof body.periodEnd === 'string' ? body.periodEnd : null,
       generalDescription:
@@ -347,6 +378,16 @@ export class FutebolTreinadoresController {
             playerId: string;
             actionType: string;
             reason?: string | null;
+          }>)
+        : undefined,
+      playerEvaluations: Array.isArray(body.playerEvaluations)
+        ? (body.playerEvaluations as Array<{
+            playerId: string;
+            gamesCount?: number;
+            gamesMinutes?: number;
+            trainingMinutes?: number;
+            avgMatchRating?: number | null;
+            coachFinalRating?: number | null;
           }>)
         : undefined,
     });

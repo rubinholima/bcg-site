@@ -337,13 +337,56 @@ export const COACH_TEAM_PERIOD_TYPES = [
   { value: "trimestral", label: "Trimestral" },
 ] as const;
 
+export const COACH_TEAM_PERIOD_KEYS = [
+  { value: "fevereiro", label: "Fevereiro" },
+  { value: "julho", label: "Julho" },
+  { value: "setembro", label: "Setembro" },
+  { value: "fim_temporada", label: "Fim da temporada" },
+] as const;
+
+export type CoachTeamReportPeriodKey = (typeof COACH_TEAM_PERIOD_KEYS)[number]["value"];
+
 export type CoachTeamReportPeriod = (typeof COACH_TEAM_PERIOD_TYPES)[number]["value"];
+
+export type CoachTeamReportPlayerEvaluation = {
+  id?: string;
+  playerId: string;
+  gamesCount: number;
+  gamesMinutes: number;
+  trainingMinutes: number;
+  avgMatchRating: number | null;
+  coachFinalRating: number | null;
+  player?: {
+    id: string;
+    name: string;
+    jerseyNumber: number | null;
+    category: string | null;
+    registrationProfile?: unknown;
+  };
+};
+
+export type CoachTeamEvaluationDraft = {
+  season: number;
+  periodKey: CoachTeamReportPeriodKey;
+  periodStart: string;
+  periodEnd: string;
+  players: Array<
+    CoachTeamReportPlayerEvaluation & {
+      name: string;
+      jerseyNumber: number | null;
+      category: string | null;
+      periodicAverage: number | null;
+    }
+  >;
+};
 
 export type CoachTeamReport = {
   id: string;
   tenantId: string;
   category: string | null;
   periodType: CoachTeamReportPeriod;
+  season: number | null;
+  periodKey: CoachTeamReportPeriodKey | null;
   periodStart: string | null;
   periodEnd: string | null;
   generalDescription: string | null;
@@ -365,6 +408,7 @@ export type CoachTeamReport = {
       registrationProfile?: unknown;
     };
   }>;
+  playerEvaluations: CoachTeamReportPlayerEvaluation[];
 };
 
 export type CoachTeamReportSummary = {
@@ -380,4 +424,9 @@ export type CoachTeamReportSummary = {
   } | null;
   dispensasIndicadas: number;
   promocoesIndicadas: number;
+  quarterlyPeriods?: Array<{
+    periodKey: CoachTeamReportPeriodKey;
+    status: "pendente" | "rascunho" | "enviado";
+    reportId: string | null;
+  }>;
 };
