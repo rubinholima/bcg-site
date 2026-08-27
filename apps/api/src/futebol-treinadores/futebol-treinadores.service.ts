@@ -151,6 +151,7 @@ export class FutebolTreinadoresService {
       select: {
         id: true,
         name: true,
+        photoUrl: true,
         jerseyNumber: true,
         yellowCards: true,
         redCards: true,
@@ -331,6 +332,7 @@ export class FutebolTreinadoresService {
       players: players.map((p) => ({
         id: p.id,
         name: getPlayerListDisplayName(p),
+        photoUrl: p.photoUrl,
         jerseyNumber: p.jerseyNumber,
         category: p.category,
         inTreatment: treatmentIds.has(p.id),

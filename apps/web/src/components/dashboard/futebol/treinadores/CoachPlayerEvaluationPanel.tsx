@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Save, Send } from "lucide-react";
+import Image from "next/image";
+import { Loader2, Save, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { api } from "@/lib/api";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
+import { getPublicImageUrl } from "@/lib/media-url";
 import type {
   CoachContextResponse,
   CoachPlayerEvaluation,
@@ -23,6 +25,8 @@ import {
   COACH_PLAYER_EVALUATION_SCORE_SECTIONS,
   COACH_PLAYER_FINAL_RESULT_OPTIONS,
   COACH_TEAM_PERIOD_KEYS,
+  coachPlayerClassificationFromPercentage,
+  coachPlayerPercentageFromAverage,
   type CoachTeamReportPeriodKey,
 } from "@/lib/treinadores-types";
 
@@ -125,6 +129,7 @@ export function CoachPlayerEvaluationPanel({
     classification: string | null;
   }>({ overallAverage: null, percentage: null, classification: null });
   const [history, setHistory] = useState<CoachPlayerEvaluation[]>([]);
+  const [periodicAverage, setPeriodicAverage] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
@@ -135,6 +140,26 @@ export function CoachPlayerEvaluationPanel({
 
   const selectedPlayer = players.find((p) => p.id === playerId);
   const readOnly = status === "concluido";
+
+  const playerPhotoUrl = useMemo(() => {
+    const raw =
+      selectedPlayer?.photoUrl ??
+      history.find((row) => row.playerId === playerId)?.player?.photoUrl ??
+      null;
+    return raw ? getPublicImageUrl(raw) : null;
+  }, [selectedPlayer?.photoUrl, history, playerId]);
+
+  const historyByPeriod = useMemo(() => {
+    const map = new Map<string, CoachPlayerEvaluation>();
+    for (const row of history) map.set(row.periodKey, row);
+    return map;
+  }, [history]);
+
+  const consolidatedPercentage = coachPlayerPercentageFromAverage(periodicAverage);
+  const consolidatedClassification =
+    consolidatedPercentage != null
+      ? coachPlayerClassificationFromPercentage(consolidatedPercentage)
+      : null;
 
   const playerOptions = useMemo(
     () =>
@@ -161,7 +186,7 @@ export function CoachPlayerEvaluationPanel({
         api.get<{ stats: CoachPlayerEvaluationStats }>(
           `/futebol-treinadores/player-evaluations/stats?tenantId=${tenantId}&playerId=${playerId}&season=${season}&periodKey=${periodKey}`,
         ),
-        api.get<{ evaluations: CoachPlayerEvaluation[] }>(
+        api.get<{ evaluations: CoachPlayerEvaluation[]; periodicAverage: number | null }>(
           `/futebol-treinadores/player-evaluations/history/${playerId}?season=${season}`,
         ),
       ]);
@@ -178,9 +203,13 @@ export function CoachPlayerEvaluationPanel({
       });
       setStats(statsData?.stats ?? null);
       setHistory(Array.isArray(historyData?.evaluations) ? historyData.evaluations : []);
+      setPeriodicAverage(
+        typeof historyData?.periodicAverage === "number" ? historyData.periodicAverage : null,
+      );
     } catch {
       setStats(null);
       setHistory([]);
+      setPeriodicAverage(null);
     } finally {
       setLoading(false);
     }
@@ -195,6 +224,7 @@ export function CoachPlayerEvaluationPanel({
       setFinalResult("");
       setStats(null);
       setHistory([]);
+      setPeriodicAverage(null);
       return;
     }
     void loadExisting();
@@ -289,64 +319,162 @@ export function CoachPlayerEvaluationPanel({
         <CardHeader>
           <CardTitle>Avaliação individual do jogador</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-2">
-            <Label>Temporada</Label>
-            <Input
-              type="number"
-              min={2000}
-              max={2100}
-              value={season}
-              disabled={readOnly}
-              onChange={(e) => setSeason(Number(e.target.value) || currentYear)}
-            />
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Temporada</Label>
+              <Input
+                type="number"
+                min={2000}
+                max={2100}
+                value={season}
+                disabled={readOnly}
+                onChange={(e) => setSeason(Number(e.target.value) || currentYear)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Período</Label>
+              <NativeSelectField
+                value={periodKey}
+                disabled={readOnly}
+                onChange={(e) => setPeriodKey(e.target.value as CoachTeamReportPeriodKey)}
+                options={COACH_TEAM_PERIOD_KEYS.map((p) => ({ value: p.value, label: p.label }))}
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Atleta</Label>
+              <NativeSelectField
+                value={playerId}
+                disabled={readOnly}
+                onChange={(e) => setPlayerId(e.target.value)}
+                placeholder="Selecione o atleta"
+                options={playerOptions}
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Período</Label>
-            <NativeSelectField
-              value={periodKey}
-              disabled={readOnly}
-              onChange={(e) => setPeriodKey(e.target.value as CoachTeamReportPeriodKey)}
-              options={COACH_TEAM_PERIOD_KEYS.map((p) => ({ value: p.value, label: p.label }))}
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Atleta</Label>
-            <NativeSelectField
-              value={playerId}
-              disabled={readOnly}
-              onChange={(e) => setPlayerId(e.target.value)}
-              placeholder="Selecione o atleta"
-              options={playerOptions}
-            />
-          </div>
+
+          {selectedPlayer ? (
+            <div className="space-y-4 border-t border-border/60 pt-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div className="relative mx-auto h-28 w-28 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted sm:mx-0">
+                  {playerPhotoUrl ? (
+                    <Image
+                      src={playerPhotoUrl}
+                      alt={getPlayerListDisplayName(selectedPlayer)}
+                      fill
+                      className="object-cover object-[center_20%]"
+                      sizes="112px"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                      <User className="h-10 w-10" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-1 text-center sm:text-left">
+                  <p className="text-lg font-semibold">{getPlayerListDisplayName(selectedPlayer)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedPlayer.jerseyNumber != null ? `#${selectedPlayer.jerseyNumber} · ` : ""}
+                    {getCategoryLabel(selectedPlayer.category ?? category ?? "", "pt", fixtureCategories)}
+                    {" · "}
+                    Temporada {season}
+                  </p>
+                  {computed.percentage != null && periodKey ? (
+                    <p className="text-sm">
+                      Período atual ({COACH_TEAM_PERIOD_KEYS.find((p) => p.value === periodKey)?.label}):{" "}
+                      média {computed.overallAverage?.toFixed(2) ?? "—"} · {computed.percentage.toFixed(2)}% ·{" "}
+                      {COACH_PLAYER_CLASSIFICATION_LABEL[computed.classification ?? ""] ?? "—"}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-lg border border-border/60 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Resultado consolidado
+                    </p>
+                    {consolidatedPercentage != null ? (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-2xl font-semibold tabular-nums">
+                          {consolidatedPercentage.toFixed(1)}%
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Média {periodicAverage?.toFixed(2) ?? "—"} ·{" "}
+                          {COACH_PLAYER_CLASSIFICATION_LABEL[consolidatedClassification ?? ""] ?? "—"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Média dos períodos concluídos na temporada
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Nenhuma avaliação concluída nesta temporada.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="rounded-lg border border-border/60 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Resultados individuais
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      {COACH_TEAM_PERIOD_KEYS.map((period) => {
+                        const row = historyByPeriod.get(period.value);
+                        const isCurrent = period.value === periodKey;
+                        const pct =
+                          row?.percentage ?? coachPlayerPercentageFromAverage(row?.overallAverage ?? null);
+                        const classification =
+                          row?.classification ??
+                          (pct != null ? coachPlayerClassificationFromPercentage(pct) : null);
+                        const finalLabel = row?.finalResult
+                          ? COACH_PLAYER_FINAL_RESULT_OPTIONS.find((o) => o.value === row.finalResult)?.label ??
+                            row.finalResult
+                          : null;
+
+                        return (
+                          <div
+                            key={period.value}
+                            className={`flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm ${
+                              isCurrent ? "border-primary/40 bg-primary/5" : "border-border/50"
+                            }`}
+                          >
+                            <span className="font-medium">{period.label}</span>
+                            {row?.status === "concluido" && pct != null ? (
+                              <span className="text-muted-foreground tabular-nums">
+                                {row.overallAverage?.toFixed(2) ?? "—"} · {pct.toFixed(1)}% ·{" "}
+                                {COACH_PLAYER_CLASSIFICATION_LABEL[classification ?? ""] ?? "—"}
+                                {finalLabel ? ` · ${finalLabel}` : ""}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {row?.status === "rascunho"
+                                  ? "Rascunho"
+                                  : isCurrent && status !== "pendente"
+                                    ? status === "concluido"
+                                      ? "Concluído"
+                                      : "Em andamento"
+                                    : "Pendente"}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
-      {selectedPlayer ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-1">
-              <p className="text-lg font-semibold">{getPlayerListDisplayName(selectedPlayer)}</p>
-              <p className="text-sm text-muted-foreground">
-                Categoria cadastro: {getCategoryLabel(selectedPlayer.category ?? category ?? "", "pt", fixtureCategories)}
-                {" · "}
-                Temporada {season}
-                {" · "}
-                {COACH_TEAM_PERIOD_KEYS.find((p) => p.value === periodKey)?.label}
-              </p>
-              {computed.percentage != null ? (
-                <p className="text-sm">
-                  Média {computed.overallAverage?.toFixed(2) ?? "—"} · {computed.percentage.toFixed(2)}% ·{" "}
-                  {COACH_PLAYER_CLASSIFICATION_LABEL[computed.classification ?? ""] ?? "—"}
-                </p>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {loading ? (
+      {loading && playerId ? (
         <div className="flex justify-center py-10">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -422,30 +550,6 @@ export function CoachPlayerEvaluationPanel({
               ) : null}
             </CardContent>
           </Card>
-
-          {history.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Histórico na temporada</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {history.map((row) => (
-                  <div key={row.id} className="rounded-lg border border-border/60 p-3 text-sm">
-                    <p className="font-medium">
-                      {COACH_TEAM_PERIOD_KEYS.find((p) => p.value === row.periodKey)?.label}
-                      {" · "}
-                      {row.status}
-                    </p>
-                    <p className="text-muted-foreground">
-                      Média {row.overallAverage?.toFixed(2) ?? "—"} · {row.percentage?.toFixed(2) ?? "—"}% ·{" "}
-                      {COACH_PLAYER_CLASSIFICATION_LABEL[row.classification ?? ""] ?? "—"}
-                      {row.finalResult ? ` · ${COACH_PLAYER_FINAL_RESULT_OPTIONS.find((o) => o.value === row.finalResult)?.label ?? row.finalResult}` : ""}
-                    </p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ) : null}
         </>
       ) : null}
 

@@ -54,6 +54,7 @@ export type CoachLastRoundMatch = {
 export type CoachContextPlayer = {
   id: string;
   name: string;
+  photoUrl?: string | null;
   jerseyNumber: number | null;
   category: string | null;
   inTreatment: boolean;
@@ -522,6 +523,18 @@ export const COACH_PLAYER_CLASSIFICATION_LABEL: Record<string, string> = {
   estadual: "Estadual",
   nao_pro: "Non-Pro",
 };
+
+export function coachPlayerPercentageFromAverage(average: number | null | undefined): number | null {
+  if (average == null || !Number.isFinite(average)) return null;
+  return average * 20;
+}
+
+export function coachPlayerClassificationFromPercentage(percentage: number): string {
+  if (percentage >= 90) return "internacional_elite";
+  if (percentage >= 80) return "nacional_elite";
+  if (percentage >= 60) return "estadual";
+  return "nao_pro";
+}
 
 export const COACH_PLAYER_FINAL_RESULT_OPTIONS = [
   { value: "aprovado", label: "Aprovado" },
