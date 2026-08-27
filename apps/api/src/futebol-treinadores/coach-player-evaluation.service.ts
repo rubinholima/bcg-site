@@ -14,7 +14,7 @@ import {
   buildCategorySortOrderMap,
   buildIndividualPlayerPeriodStats,
   isValidPlayerEvaluationPeriodKey,
-  resolvePlayerEvaluationPeriod,
+  resolvePlayerEvaluationCumulativeRange,
   validatePlayerEvaluationSubmit,
   type CoachTeamReportPeriodKey,
 } from './coach-player-evaluation.util';
@@ -120,7 +120,7 @@ export class CoachPlayerEvaluationService {
     });
     if (!player) throw new NotFoundException('Atleta não encontrado');
 
-    const range = resolvePlayerEvaluationPeriod(season, periodKey);
+    const cumulativeRange = resolvePlayerEvaluationCumulativeRange(season, periodKey);
     const categorySortOrder = await this.loadCategorySortOrder();
 
     const [fmfStats, travelsRaw, coachMatchReports, trainingSessions] = await Promise.all([
@@ -130,8 +130,8 @@ export class CoachPlayerEvaluationService {
           match: {
             tenantId,
             matchDate: {
-              gte: new Date(`${range.start}T00:00:00-03:00`),
-              lte: new Date(`${range.end}T23:59:59-03:00`),
+              gte: new Date(`${cumulativeRange.start}T00:00:00-03:00`),
+              lte: new Date(`${cumulativeRange.end}T23:59:59-03:00`),
             },
           },
         },
@@ -149,8 +149,8 @@ export class CoachPlayerEvaluationService {
           tenantId,
           status: { notIn: ['rascunho', 'cancelado'] },
           matchDate: {
-            gte: new Date(`${range.start}T00:00:00-03:00`),
-            lte: new Date(`${range.end}T23:59:59-03:00`),
+            gte: new Date(`${cumulativeRange.start}T00:00:00-03:00`),
+            lte: new Date(`${cumulativeRange.end}T23:59:59-03:00`),
           },
           participants: { some: { playerId, personType: 'player' } },
         },
@@ -202,7 +202,7 @@ export class CoachPlayerEvaluationService {
         where: {
           tenantId,
           status: 'finalizado',
-          sessionDate: { gte: range.start, lte: range.end },
+          sessionDate: { gte: cumulativeRange.start, lte: cumulativeRange.end },
           playerEntries: { some: { playerId } },
         },
         select: {
@@ -223,8 +223,8 @@ export class CoachPlayerEvaluationService {
       tenantId,
       playerId,
       playerCategory: player.category,
-      from: range.start,
-      to: range.end,
+      from: cumulativeRange.start,
+      to: cumulativeRange.end,
       categorySortOrder,
       fmfStats: fmfStats.map((row) => ({
         matchId: row.match.id,
@@ -264,7 +264,7 @@ export class CoachPlayerEvaluationService {
     });
 
     return {
-      ...range,
+      ...cumulativeRange,
       playerCategory: player.category,
       stats,
     };
@@ -303,7 +303,7 @@ export class CoachPlayerEvaluationService {
     });
     if (!player) throw new NotFoundException('Atleta não encontrado');
 
-    const range = resolvePlayerEvaluationPeriod(
+    const cumulativeRange = resolvePlayerEvaluationCumulativeRange(
       input.season,
       input.periodKey as CoachTeamReportPeriodKey,
     );
@@ -348,8 +348,8 @@ export class CoachPlayerEvaluationService {
       category: input.category,
       season: input.season,
       periodKey: input.periodKey,
-      periodStart: range.start,
-      periodEnd: range.end,
+      periodStart: cumulativeRange.start,
+      periodEnd: cumulativeRange.end,
       status,
       ...statsPayload.stats,
       ...parsedScores,

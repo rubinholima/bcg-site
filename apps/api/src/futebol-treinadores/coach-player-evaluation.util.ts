@@ -3,6 +3,7 @@ import {
 } from '../common/category-subida.util';
 import {
   COACH_TEAM_REPORT_PERIOD_KEYS,
+  type CoachTeamEvaluationPeriodRange,
   type CoachTeamReportPeriodKey,
   dateKeyInRange,
   resolveQuarterlyPeriodRange,
@@ -514,6 +515,20 @@ export function resolvePlayerEvaluationPeriod(
   periodKey: CoachTeamReportPeriodKey,
 ) {
   return resolveQuarterlyPeriodRange(season, periodKey);
+}
+
+/** Acumulado season-to-date: início do ano calendário até o fim da janela do período avaliativo. */
+export function resolvePlayerEvaluationCumulativeRange(
+  season: number,
+  periodKey: CoachTeamReportPeriodKey,
+): CoachTeamEvaluationPeriodRange {
+  const evaluationWindow = resolveQuarterlyPeriodRange(season, periodKey);
+  return {
+    periodKey,
+    season,
+    start: `${season}-01-01`,
+    end: evaluationWindow.end,
+  };
 }
 
 export function isValidPlayerEvaluationPeriodKey(value: string): value is CoachTeamReportPeriodKey {

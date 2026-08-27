@@ -71,6 +71,21 @@ function emptyScores(): ScoreState {
   return scores;
 }
 
+function statsFromEvaluation(row: CoachPlayerEvaluation | null): CoachPlayerEvaluationStats | null {
+  if (!row) return null;
+  return {
+    gamesListed: row.gamesListed,
+    gamesPlayed: row.gamesPlayed,
+    gamesStarted: row.gamesStarted,
+    gamesListedHigherCategory: row.gamesListedHigherCategory,
+    gamesPlayedHigherCategory: row.gamesPlayedHigherCategory,
+    matchMinutes: row.matchMinutes,
+    trainingMinutes: row.trainingMinutes,
+    goals: row.goals,
+    assists: row.assists,
+  };
+}
+
 function scoresFromEvaluation(row: CoachPlayerEvaluation | null): ScoreState {
   const scores = emptyScores();
   if (!row) return scores;
@@ -310,7 +325,11 @@ export function CoachPlayerEvaluationPanel({
         percentage: existing?.percentage ?? null,
         classification: existing?.classification ?? null,
       });
-      setStats(statsData?.stats ?? null);
+      if (existing?.status === "concluido") {
+        setStats(statsFromEvaluation(existing));
+      } else {
+        setStats(statsData?.stats ?? null);
+      }
       setHistory(Array.isArray(historyData?.evaluations) ? historyData.evaluations : []);
       setPeriodicAverage(
         typeof historyData?.periodicAverage === "number" ? historyData.periodicAverage : null,
@@ -588,13 +607,14 @@ export function CoachPlayerEvaluationPanel({
               {stats ? (
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Participação no período</CardTitle>
+                    <CardTitle className="text-base">Desempenho acumulado na temporada</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="mb-4 text-xs text-muted-foreground">
-                      Dados automáticos do atleta no intervalo {COACH_TEAM_PERIOD_KEYS.find((p) => p.value === periodKey)?.label} / {season}.
+                      Dados automáticos acumulados do início da temporada até{" "}
+                      {COACH_TEAM_PERIOD_KEYS.find((p) => p.value === periodKey)?.label} / {season}.
                     </p>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3">
                       <ParticipationStat label="Jogos disputados" value={stats.gamesPlayed} />
                       <ParticipationStat label="Minutos jogados" value={stats.matchMinutes} />
                       <ParticipationStat label="Titularidades" value={stats.gamesStarted} />
@@ -602,7 +622,14 @@ export function CoachPlayerEvaluationPanel({
                       <ParticipationStat label="Assistências" value={stats.assists} />
                       <ParticipationStat label="Convocações" value={stats.gamesListed} />
                       <ParticipationStat label="Minutos de treino" value={stats.trainingMinutes} />
-                      <ParticipationStat label="Jogos cat. superior" value={stats.gamesPlayedHigherCategory} />
+                      <ParticipationStat
+                        label="Convocações cat. superior"
+                        value={stats.gamesListedHigherCategory}
+                      />
+                      <ParticipationStat
+                        label="Jogos cat. superior"
+                        value={stats.gamesPlayedHigherCategory}
+                      />
                     </div>
                   </CardContent>
                 </Card>

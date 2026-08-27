@@ -4,6 +4,7 @@ import {
   buildIndividualPlayerPeriodStats,
   buildCategorySortOrderMap,
   isHigherCategory,
+  resolvePlayerEvaluationCumulativeRange,
 } from './coach-player-evaluation.util';
 
 describe('coach-player-evaluation.util', () => {
@@ -47,6 +48,23 @@ describe('coach-player-evaluation.util', () => {
       expect(result.overallAverage).toBe(4);
       expect(result.percentage).toBe(80);
       expect(result.classification).toBe('nacional_elite');
+    });
+  });
+
+  describe('resolvePlayerEvaluationCumulativeRange', () => {
+    it('acumula do início do ano até o fim da janela do período', () => {
+      expect(resolvePlayerEvaluationCumulativeRange(2026, 'setembro')).toEqual({
+        periodKey: 'setembro',
+        season: 2026,
+        start: '2026-01-01',
+        end: '2026-09-30',
+      });
+      expect(resolvePlayerEvaluationCumulativeRange(2026, 'fim_temporada')).toEqual({
+        periodKey: 'fim_temporada',
+        season: 2026,
+        start: '2026-01-01',
+        end: '2026-12-31',
+      });
     });
   });
 
@@ -138,6 +156,46 @@ describe('coach-player-evaluation.util', () => {
       expect(stats.gamesPlayed).toBe(1);
       expect(stats.gamesListedHigherCategory).toBe(1);
       expect(stats.gamesPlayedHigherCategory).toBe(1);
+    });
+
+    it('inclui jogos de meses anteriores quando o intervalo é acumulado na temporada', () => {
+      const stats = buildIndividualPlayerPeriodStats({
+        tenantId: 't1',
+        playerId: 'p1',
+        playerCategory: 'sub17',
+        from: '2026-01-01',
+        to: '2026-09-30',
+        categorySortOrder: sortMap,
+        fmfStats: [
+          {
+            matchId: 'm-fev',
+            matchDate: new Date('2026-02-10T12:00:00Z'),
+            category: 'sub17',
+            listed: true,
+            played: true,
+            starter: true,
+            minutesPlayed: 60,
+            goals: 1,
+          },
+          {
+            matchId: 'm-set',
+            matchDate: new Date('2026-09-20T12:00:00Z'),
+            category: 'sub17',
+            listed: true,
+            played: true,
+            starter: false,
+            minutesPlayed: 30,
+            goals: 0,
+          },
+        ],
+        travels: [],
+        coachMatchReports: [],
+        trainingSessions: [],
+      });
+
+      expect(stats.gamesPlayed).toBe(2);
+      expect(stats.matchMinutes).toBe(90);
+      expect(stats.goals).toBe(1);
     });
   });
 
