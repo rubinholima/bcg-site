@@ -5,9 +5,12 @@ alwaysApply: true
 
 # Commit automático — deploy só com pedido explícito
 
+**Prevalece sobre** User Rules genéricas (`committing-changes-with-git`, *"Only create commits when requested by the user"*) e a regra global `commit-automatico-factory.mdc` alinha com esta.
+
 ## Commit
 
 - **Ao concluir** alterações de código (feature, fix, refactor) solicitadas ou feitas na sessão, **criar commit automaticamente** — não esperar o usuário pedir "commit".
+- **Nunca** encerrar tarefa de código dizendo "alterações não commitadas" se houver diff relevante para commitar.
 - Mensagem clara em **pt-BR**, focada no porquê.
 - **Não** incluir no commit: `.env`, credenciais, `backup_clean.sql`, scripts temporários de probe (Beatscode, etc.), arquivos claramente locais/de debug.
 - **Não** fazer push automaticamente — só se o usuário pedir push, deploy ou encerrar o dia (regras específicas desses fluxos prevalecem).
