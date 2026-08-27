@@ -165,6 +165,7 @@ model Tenant {
   communicationTemplates       CommunicationTemplate[]
   coachMatchReports            CoachMatchReport[]
   coachTeamReports             CoachTeamReport[]
+  coachPlayerEvaluations       CoachPlayerEvaluation[]
   coachTrainingSessions        CoachTrainingSession[]
   coachTrainingPlanTemplates   CoachTrainingPlanTemplate[]
   coachMatchStatOverrides      CoachMatchStatOverride[]
@@ -1111,6 +1112,7 @@ model Player {
   coachMatchPlayerRatings CoachMatchReportPlayerRating[]
   coachTeamReportPlayerActions CoachTeamReportPlayerAction[]
   coachTeamReportPlayerEvaluations CoachTeamReportPlayerEvaluation[]
+  coachPlayerEvaluations           CoachPlayerEvaluation[]
   coachTrainingPlayerEntries CoachTrainingPlayerEntry[]
   physiologyAssessments      PhysiologyAssessment[]
   physiologyHydrations       PhysiologyHydration[]
@@ -3517,6 +3519,7 @@ model CoachMatchReportPlayerRating {
   playerId         String
   player           Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
   rating           Float?
+  assists          Int      @default(0)
   individualReport String?  @db.Text
   isMatchBest      Boolean  @default(false)
   @@unique([reportId, playerId])
@@ -3601,6 +3604,71 @@ model CoachTeamReportPlayerAction {
   reason     String?  @db.Text
   @@unique([reportId, playerId])
   @@index([playerId])
+}
+
+/** Avaliação individual trimestral por atleta — fluxo independente do relatório da equipe. */
+model CoachPlayerEvaluation {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId    String
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  category    String
+  season      Int
+  periodKey   String
+  periodStart String
+  periodEnd   String
+  status      String   @default("pendente")
+  gamesListed                 Int @default(0)
+  gamesPlayed                 Int @default(0)
+  gamesStarted                Int @default(0)
+  gamesListedHigherCategory   Int @default(0)
+  gamesPlayedHigherCategory   Int @default(0)
+  matchMinutes                Int @default(0)
+  trainingMinutes             Int @default(0)
+  goals                       Int @default(0)
+  assists                     Int @default(0)
+  techIndividualSkill         Float?
+  techBilaterality            Float?
+  techNonDominantLeg          Float?
+  techAverage                 Float?
+  tacCollective               Float?
+  tacIndividual               Float?
+  tacGameVision               Float?
+  tacDecisionMaking           Float?
+  tacAverage                  Float?
+  physStrength                Float?
+  physSpeed                   Float?
+  physPotential               Float?
+  physMaturity                Float?
+  physAverage                 Float?
+  behEmotionalControl         Float?
+  behPersonality              Float?
+  behDetermination            Float?
+  behIntelligence             Float?
+  behAverage                  Float?
+  offBuildUp                  Float?
+  offOrganization             Float?
+  offPositioning              Float?
+  offAverage                  Float?
+  defOrganization             Float?
+  defRecovery                 Float?
+  defPositioning              Float?
+  defAverage                  Float?
+  competitiveness             Float?
+  overallAverage              Float?
+  percentage                  Float?
+  classification              String?
+  technicalAssessment         String? @db.Text
+  finalResult                 String?
+  authorUserId                String?
+  staffId                     String?
+  submittedAt                 DateTime?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  @@unique([tenantId, season, category, playerId, periodKey])
+  @@index([tenantId, category, season])
+  @@index([playerId, season])
 }
 
 // ─── Jogos (Depto Futebol) — ocorrências e anexos por partida ───────────────

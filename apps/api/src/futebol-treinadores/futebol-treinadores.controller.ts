@@ -16,6 +16,7 @@ import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule, TeamReportReadAccess } from '../auth/require-module.decorator';
 import { FutebolTreinadoresService } from './futebol-treinadores.service';
+import { CoachPlayerEvaluationService } from './coach-player-evaluation.service';
 
 type AuthedRequest = Request & { user: CognitoJwtPayload };
 
@@ -23,7 +24,10 @@ type AuthedRequest = Request & { user: CognitoJwtPayload };
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('futebol_treinadores')
 export class FutebolTreinadoresController {
-  constructor(private readonly service: FutebolTreinadoresService) {}
+  constructor(
+    private readonly service: FutebolTreinadoresService,
+    private readonly playerEvaluationService: CoachPlayerEvaluationService,
+  ) {}
 
   @Get('context')
   @TeamReportReadAccess()
@@ -125,6 +129,7 @@ export class FutebolTreinadoresController {
         ? (body.playerRatings as Array<{
             playerId: string;
             rating?: number | null;
+            assists?: number | null;
             individualReport?: string | null;
           }>)
         : undefined,
@@ -401,5 +406,114 @@ export class FutebolTreinadoresController {
   @Delete('team-reports/:id')
   deleteTeamReport(@Param('id') id: string) {
     return this.service.deleteTeamReport(id);
+  }
+
+  @Get('player-evaluations/summary')
+  @TeamReportReadAccess()
+  getPlayerEvaluationSummary(
+    @Query('tenantId') tenantId: string,
+    @Query('category') category: string,
+    @Query('season') seasonRaw: string,
+  ) {
+    if (!tenantId?.trim() || !category?.trim()) {
+      throw new BadRequestException('tenantId e category são obrigatórios');
+    }
+    const season = Number(seasonRaw);
+    if (!Number.isFinite(season)) throw new BadRequestException('season inválida');
+    return this.playerEvaluationService.getSummary(tenantId.trim(), category.trim(), season);
+  }
+
+  @Get('player-evaluations/stats')
+  getPlayerEvaluationStats(
+    @Query('tenantId') tenantId: string,
+    @Query('playerId') playerId: string,
+    @Query('season') seasonRaw: string,
+    @Query('periodKey') periodKey: string,
+  ) {
+    if (!tenantId?.trim() || !playerId?.trim() || !periodKey?.trim()) {
+      throw new BadRequestException('tenantId, playerId e periodKey são obrigatórios');
+    }
+    const season = Number(seasonRaw);
+    if (!Number.isFinite(season)) throw new BadRequestException('season inválida');
+    return this.playerEvaluationService.getStats(
+      tenantId.trim(),
+      playerId.trim(),
+      season,
+      periodKey.trim(),
+    );
+  }
+
+  @Get('player-evaluations/history/:playerId')
+  getPlayerEvaluationHistory(
+    @Param('playerId') playerId: string,
+    @Query('season') seasonRaw: string,
+  ) {
+    const season = Number(seasonRaw);
+    if (!Number.isFinite(season)) throw new BadRequestException('season inválida');
+    return this.playerEvaluationService.getHistory(playerId, season);
+  }
+
+  @Get('player-evaluations')
+  @TeamReportReadAccess()
+  listPlayerEvaluations(
+    @Query('tenantId') tenantId: string,
+    @Query('category') category?: string,
+    @Query('season') seasonRaw?: string,
+    @Query('periodKey') periodKey?: string,
+    @Query('playerId') playerId?: string,
+    @Query('status') status?: string,
+  ) {
+    if (!tenantId?.trim()) return [];
+    const season = seasonRaw ? Number(seasonRaw) : undefined;
+    return this.playerEvaluationService.list({
+      tenantId: tenantId.trim(),
+      category: category?.trim(),
+      season: season && Number.isFinite(season) ? season : undefined,
+      periodKey: periodKey?.trim(),
+      playerId: playerId?.trim(),
+      status: status?.trim(),
+    });
+  }
+
+  @Get('player-evaluations/:id')
+  @TeamReportReadAccess()
+  getPlayerEvaluation(@Param('id') id: string) {
+    return this.playerEvaluationService.findOne(id);
+  }
+
+  @Post('player-evaluations')
+  upsertPlayerEvaluation(@Req() req: AuthedRequest, @Body() body: Record<string, unknown>) {
+    const tenantId = typeof body.tenantId === 'string' ? body.tenantId.trim() : '';
+    const playerId = typeof body.playerId === 'string' ? body.playerId.trim() : '';
+    const category = typeof body.category === 'string' ? body.category.trim() : '';
+    const periodKey = typeof body.periodKey === 'string' ? body.periodKey.trim() : '';
+    const season = Number(body.season);
+    if (!tenantId || !playerId || !category || !periodKey || !Number.isFinite(season)) {
+      throw new BadRequestException('tenantId, playerId, category, season e periodKey são obrigatórios');
+    }
+    const scores =
+      body.scores && typeof body.scores === 'object' && !Array.isArray(body.scores)
+        ? (body.scores as Record<string, number | null | undefined>)
+        : {};
+    return this.playerEvaluationService.upsert({
+      id: typeof body.id === 'string' ? body.id : undefined,
+      tenantId,
+      playerId,
+      category,
+      season,
+      periodKey,
+      authorUserId: req.user?.sub,
+      staffId: typeof body.staffId === 'string' ? body.staffId : null,
+      technicalAssessment:
+        typeof body.technicalAssessment === 'string' ? body.technicalAssessment : null,
+      finalResult: typeof body.finalResult === 'string' ? body.finalResult : null,
+      submit: body.submit === true,
+      scores,
+    });
+  }
+
+  @Post('player-evaluations/:id/submit')
+  submitPlayerEvaluation(@Param('id') id: string) {
+    return this.playerEvaluationService.submit(id);
   }
 }

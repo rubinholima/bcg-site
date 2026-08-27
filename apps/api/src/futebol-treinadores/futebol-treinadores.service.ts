@@ -386,6 +386,7 @@ export class FutebolTreinadoresService {
     playerRatings?: Array<{
       playerId: string;
       rating?: number | null;
+      assists?: number | null;
       individualReport?: string | null;
     }>;
     attachments?: Array<{
@@ -461,6 +462,7 @@ export class FutebolTreinadoresService {
         const normalized = input.playerRatings.map((r) => ({
           playerId: r.playerId,
           rating: clampRating(r.rating),
+          assists: Math.max(0, Math.trunc(Number(r.assists ?? 0) || 0)),
           individualReport: r.individualReport?.trim() || null,
         }));
         const bestFlags = computeMatchBestFlags(normalized);
@@ -469,6 +471,7 @@ export class FutebolTreinadoresService {
             reportId: report.id,
             playerId: r.playerId,
             rating: r.rating,
+            assists: r.assists,
             individualReport: r.individualReport,
             isMatchBest: bestFlags[i] ?? false,
           })),
@@ -1099,21 +1102,8 @@ export class FutebolTreinadoresService {
     }
 
     if (status === 'enviado' && periodKey) {
-      const squad = await this.loadSquadPlayersForEvaluation(
-        input.tenantId,
-        input.category ?? undefined,
-      );
-      const validationError = validateQuarterlyTeamReportSubmit({
-        periodKey,
-        generalDescription: input.generalDescription,
-        playerEvaluations: (input.playerEvaluations ?? []).map((e) => ({
-          playerId: e.playerId,
-          coachFinalRating: e.coachFinalRating,
-        })),
-        squadPlayerIds: squad.map((p) => p.id),
-      });
-      if (validationError) {
-        throw new BadRequestException(validationError);
+      if (!input.generalDescription?.trim()) {
+        throw new BadRequestException('A descrição do período é obrigatória.');
       }
     }
 
@@ -1189,23 +1179,8 @@ export class FutebolTreinadoresService {
 
   async submitTeamReport(id: string) {
     const row = await this.getTeamReport(id);
-    if (row.periodKey) {
-      const squad = await this.loadSquadPlayersForEvaluation(
-        row.tenantId,
-        row.category ?? undefined,
-      );
-      const validationError = validateQuarterlyTeamReportSubmit({
-        periodKey: row.periodKey,
-        generalDescription: row.generalDescription,
-        playerEvaluations: row.playerEvaluations.map((e) => ({
-          playerId: e.playerId,
-          coachFinalRating: e.coachFinalRating,
-        })),
-        squadPlayerIds: squad.map((p) => p.id),
-      });
-      if (validationError) {
-        throw new BadRequestException(validationError);
-      }
+    if (row.periodKey && !row.generalDescription?.trim()) {
+      throw new BadRequestException('A descrição do período é obrigatória.');
     }
     return this.prisma.coachTeamReport.update({
       where: { id },

@@ -136,6 +136,7 @@ export type CoachMatchReport = {
   playerRatings: Array<{
     playerId: string;
     rating: number | null;
+    assists?: number | null;
     individualReport: string | null;
     isMatchBest?: boolean;
     player?: {
@@ -430,3 +431,141 @@ export type CoachTeamReportSummary = {
     reportId: string | null;
   }>;
 };
+
+export type CoachPlayerEvaluationStats = {
+  gamesListed: number;
+  gamesPlayed: number;
+  gamesStarted: number;
+  gamesListedHigherCategory: number;
+  gamesPlayedHigherCategory: number;
+  matchMinutes: number;
+  trainingMinutes: number;
+  goals: number;
+  assists: number;
+};
+
+export type CoachPlayerEvaluation = {
+  id: string;
+  tenantId: string;
+  playerId: string;
+  category: string;
+  season: number;
+  periodKey: CoachTeamReportPeriodKey;
+  periodStart: string;
+  periodEnd: string;
+  status: "pendente" | "rascunho" | "concluido";
+  gamesListed: number;
+  gamesPlayed: number;
+  gamesStarted: number;
+  gamesListedHigherCategory: number;
+  gamesPlayedHigherCategory: number;
+  matchMinutes: number;
+  trainingMinutes: number;
+  goals: number;
+  assists: number;
+  techIndividualSkill: number | null;
+  techBilaterality: number | null;
+  techNonDominantLeg: number | null;
+  techAverage: number | null;
+  tacCollective: number | null;
+  tacIndividual: number | null;
+  tacGameVision: number | null;
+  tacDecisionMaking: number | null;
+  tacAverage: number | null;
+  physStrength: number | null;
+  physSpeed: number | null;
+  physPotential: number | null;
+  physMaturity: number | null;
+  physAverage: number | null;
+  behEmotionalControl: number | null;
+  behPersonality: number | null;
+  behDetermination: number | null;
+  behIntelligence: number | null;
+  behAverage: number | null;
+  offBuildUp: number | null;
+  offOrganization: number | null;
+  offPositioning: number | null;
+  offAverage: number | null;
+  defOrganization: number | null;
+  defRecovery: number | null;
+  defPositioning: number | null;
+  defAverage: number | null;
+  competitiveness: number | null;
+  overallAverage: number | null;
+  percentage: number | null;
+  classification: string | null;
+  technicalAssessment: string | null;
+  finalResult: string | null;
+  player?: CoachContextPlayer & { photoUrl?: string | null };
+};
+
+export const COACH_PLAYER_CLASSIFICATION_LABEL: Record<string, string> = {
+  internacional_elite: "Internacional Elite",
+  nacional_elite: "Nacional Elite",
+  estadual: "Estadual",
+  nao_pro: "Non-Pro",
+};
+
+export const COACH_PLAYER_FINAL_RESULT_OPTIONS = [
+  { value: "aprovado", label: "Aprovado" },
+  { value: "manter", label: "Manter" },
+  { value: "reprovado", label: "Reprovado" },
+] as const;
+
+export const COACH_PLAYER_EVALUATION_SCORE_SECTIONS = [
+  {
+    title: "Dimensão técnica",
+    fields: [
+      { key: "techIndividualSkill", label: "Habilidade individual" },
+      { key: "techBilaterality", label: "Bilateralidade" },
+      { key: "techNonDominantLeg", label: "Uso da perna não dominante" },
+    ],
+  },
+  {
+    title: "Dimensão tática",
+    fields: [
+      { key: "tacCollective", label: "Tática coletiva" },
+      { key: "tacIndividual", label: "Tática individual" },
+      { key: "tacGameVision", label: "Visão de jogo" },
+      { key: "tacDecisionMaking", label: "Tomada de decisão" },
+    ],
+  },
+  {
+    title: "Dimensão física",
+    fields: [
+      { key: "physStrength", label: "Força" },
+      { key: "physSpeed", label: "Velocidade" },
+      { key: "physPotential", label: "Potencial" },
+      { key: "physMaturity", label: "Nível de maturidade" },
+    ],
+  },
+  {
+    title: "Dimensão comportamental",
+    fields: [
+      { key: "behEmotionalControl", label: "Controle emocional" },
+      { key: "behPersonality", label: "Personalidade" },
+      { key: "behDetermination", label: "Vontade / determinação" },
+      { key: "behIntelligence", label: "Inteligência" },
+    ],
+  },
+  {
+    title: "Análise ofensiva",
+    fields: [
+      { key: "offBuildUp", label: "Participação na saída de bola" },
+      { key: "offOrganization", label: "Organização ofensiva" },
+      { key: "offPositioning", label: "Posicionamento ofensivo" },
+    ],
+  },
+  {
+    title: "Análise defensiva",
+    fields: [
+      { key: "defOrganization", label: "Organização defensiva" },
+      { key: "defRecovery", label: "Recuperação / retorno defensivo" },
+      { key: "defPositioning", label: "Posicionamento defensivo" },
+    ],
+  },
+  {
+    title: "Competitividade",
+    fields: [{ key: "competitiveness", label: "Competitividade" }],
+  },
+] as const;

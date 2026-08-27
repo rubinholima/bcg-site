@@ -34,6 +34,7 @@ type PlayerRatingDraft = {
   name: string;
   jerseyNumber: number | null;
   rating: string;
+  assists: string;
   individualReport: string;
 };
 
@@ -109,6 +110,7 @@ function emptyDraft(players: CoachContextPlayer[]): PlayerRatingDraft[] {
     name: getPlayerListDisplayName(p),
     jerseyNumber: p.jerseyNumber,
     rating: "",
+    assists: "",
     individualReport: "",
   }));
 }
@@ -231,6 +233,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
           return {
             ...p,
             rating: row?.rating != null ? String(row.rating) : "",
+            assists: row?.assists != null ? String(row.assists) : "",
             individualReport: row?.individualReport ?? "",
           };
         }),
@@ -292,6 +295,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
         playerRatings: playerRatings.map((p) => ({
           playerId: p.playerId,
           rating: p.rating === "" ? null : Number(p.rating),
+          assists: p.assists === "" ? 0 : Number(p.assists),
           individualReport: p.individualReport || null,
         })),
         attachments: attachments.filter((a) => a.fileUrl.trim()),
@@ -543,6 +547,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
                     <TableHead className="w-14 text-center">#</TableHead>
                     <TableHead>Atleta</TableHead>
                     <TableHead className="w-24 text-center">Nota</TableHead>
+                    <TableHead className="w-24 text-center">Assist.</TableHead>
                     <TableHead className="min-w-[180px]">Obs.</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -575,6 +580,21 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
                           onChange={(e) => {
                             const next = [...playerRatings];
                             next[idx] = { ...p, rating: e.target.value };
+                            setPlayerRatings(next);
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={1}
+                          placeholder="0"
+                          className="h-9 text-center"
+                          value={p.assists}
+                          onChange={(e) => {
+                            const next = [...playerRatings];
+                            next[idx] = { ...p, assists: e.target.value };
                             setPlayerRatings(next);
                           }}
                         />

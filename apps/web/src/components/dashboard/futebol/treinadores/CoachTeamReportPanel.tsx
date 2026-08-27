@@ -326,12 +326,6 @@ export function CoachTeamReportPanel({
     if (!generalDescription.trim()) {
       return "A descrição do período é obrigatória.";
     }
-    const missing = playerEvaluations.filter(
-      (p) => p.coachFinalRating == null || Number.isNaN(Number(p.coachFinalRating)),
-    );
-    if (missing.length > 0) {
-      return `Preencha a nota final do treinador para todos os atletas (${missing.length} pendente${missing.length > 1 ? "s" : ""}).`;
-    }
     return null;
   };
 
@@ -365,15 +359,6 @@ export function CoachTeamReportPanel({
             actionType: a.actionType,
             reason: a.reason || null,
           })),
-        playerEvaluations: playerEvaluations.map((p) => ({
-          playerId: p.playerId,
-          gamesCount: p.gamesCount,
-          gamesMinutes: p.gamesMinutes,
-          trainingMinutes: p.trainingMinutes,
-          avgMatchRating: p.avgMatchRating,
-          coachFinalRating:
-            p.coachFinalRating == null ? null : Number(p.coachFinalRating),
-        })),
       };
       const { data } = await api.post<CoachTeamReport>("/futebol-treinadores/team-reports", payload);
       if (data?.id) setSelectedId(data.id);
@@ -386,8 +371,8 @@ export function CoachTeamReportPanel({
         open: true,
         title: submit ? "Enviado" : "Salvo",
         message: submit
-          ? "Avaliação trimestral enviada ao diretor de futebol."
-          : "Avaliação trimestral salva.",
+          ? "Relatório da equipe enviado ao diretor de futebol."
+          : "Relatório da equipe salvo.",
       });
     } catch (e) {
       setFeedback({
@@ -639,23 +624,8 @@ export function CoachTeamReportPanel({
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-base">Avaliação trimestral</CardTitle>
-            {!readOnly && status !== "enviado" ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={draftLoading}
-                onClick={() => loadEvaluationDraft({ reportId: selectedId || undefined })}
-              >
-                {draftLoading ? (
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="mr-1 h-4 w-4" />
-                )}
-                Atualizar dados
-              </Button>
-            ) : null}
+            <CardTitle className="text-base">Relatório da equipe</CardTitle>
+            {!readOnly && status !== "enviado" ? null : null}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -714,85 +684,6 @@ export function CoachTeamReportPanel({
                 placeholder="Obrigatória ao enviar"
                 onChange={(e) => setGeneralDescription(e.target.value)}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Atletas</Label>
-              <div className="overflow-x-auto rounded-lg border border-border/60">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-10 text-center">#</TableHead>
-                      <TableHead>Atleta</TableHead>
-                      <TableHead className="text-center">Jogos</TableHead>
-                      <TableHead className="text-center">Min jogos</TableHead>
-                      <TableHead className="text-center">Min treino</TableHead>
-                      <TableHead className="text-center">Média jogo</TableHead>
-                      <TableHead className="text-center">Nota final *</TableHead>
-                      <TableHead className="text-center">Média periódica</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {draftLoading && playerEvaluations.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground">
-                          <Loader2 className="mx-auto h-5 w-5 animate-spin" />
-                        </TableCell>
-                      </TableRow>
-                    ) : playerEvaluations.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-sm text-muted-foreground">
-                          Nenhum atleta no elenco.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      playerEvaluations.map((row, idx) => (
-                        <TableRow key={row.playerId}>
-                          <TableCell className="text-center tabular-nums">{row.jerseyNumber ?? "—"}</TableCell>
-                          <TableCell className="min-w-[120px]">{row.name}</TableCell>
-                          <TableCell className="text-center tabular-nums">{row.gamesCount}</TableCell>
-                          <TableCell className="text-center tabular-nums">{row.gamesMinutes}</TableCell>
-                          <TableCell className="text-center tabular-nums">{row.trainingMinutes}</TableCell>
-                          <TableCell className="text-center tabular-nums">
-                            {formatRating(row.avgMatchRating)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {readOnly || status === "enviado" ? (
-                              formatRating(
-                                typeof row.coachFinalRating === "number"
-                                  ? row.coachFinalRating
-                                  : row.coachFinalRating != null
-                                    ? Number(row.coachFinalRating)
-                                    : null,
-                              )
-                            ) : (
-                              <Input
-                                type="number"
-                                min={0}
-                                max={5}
-                                step={0.1}
-                                className="mx-auto w-20 text-center tabular-nums"
-                                value={row.coachFinalRating ?? ""}
-                                onChange={(e) => {
-                                  const next = [...playerEvaluations];
-                                  next[idx] = {
-                                    ...row,
-                                    coachFinalRating: e.target.value === "" ? null : Number(e.target.value),
-                                  };
-                                  setPlayerEvaluations(next);
-                                }}
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center tabular-nums">
-                            {formatRating(row.periodicAverage)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
             </div>
 
             <div className="space-y-2">
