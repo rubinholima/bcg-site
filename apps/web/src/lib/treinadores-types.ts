@@ -55,6 +55,11 @@ export type CoachContextPlayer = {
   id: string;
   name: string;
   photoUrl?: string | null;
+  birthDate?: string | null;
+  height?: number | null;
+  weight?: number | null;
+  preferredFoot?: string | null;
+  position?: string | null;
   jerseyNumber: number | null;
   category: string | null;
   inTreatment: boolean;
