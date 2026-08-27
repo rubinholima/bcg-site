@@ -32,6 +32,14 @@ import {
   UpdatePhysioTransitionEntryDto,
 } from './dto/fisioterapia.dto';
 import {
+  enrichGameAttendanceRow,
+  gameAttendanceItemsToJson,
+  resolveGameBodyLocationsInput,
+  resolveGameProceduresInput,
+  validateGameBodyLocationItems,
+  validateGameProcedureItems,
+} from './physio-game-attendance.util';
+import {
   computeDurationMinutes,
 } from './physio-transition.constants';
 import {
@@ -1408,7 +1416,7 @@ export class FisioterapiaService implements OnModuleInit {
       orderBy: [{ gameDate: 'desc' }, { createdAt: 'desc' }],
       include: this.gameAttendanceInclude,
       take: 500,
-    });
+    }).then((rows) => rows.map(enrichGameAttendanceRow));
   }
 
   async findGameAttendance(id: string, allowed: string[] | null) {
@@ -1418,7 +1426,7 @@ export class FisioterapiaService implements OnModuleInit {
     });
     if (!row) throw new NotFoundException('Atendimento de jogo não encontrado.');
     this.assertTenant(allowed, row.tenantId);
-    return row;
+    return enrichGameAttendanceRow(row);
   }
 
   async createGameAttendance(
@@ -1432,27 +1440,31 @@ export class FisioterapiaService implements OnModuleInit {
     if (dto.careCategory === 'tratamento' && !dto.treatmentReason?.trim()) {
       throw new BadRequestException('Informe o motivo do tratamento.');
     }
-    return this.prisma.physioGameAttendance.create({
-      data: {
-        tenantId: dto.tenantId,
-        playerId: dto.playerId,
-        category: dto.category?.trim() || player.category,
-        gameDate,
-        phase: dto.phase,
-        careCategory: dto.careCategory,
-        procedureKey: dto.procedureKey.trim(),
-        procedureLabel: dto.procedureLabel?.trim() || null,
-        treatmentReason:
-          dto.careCategory === 'tratamento' ? dto.treatmentReason?.trim() || null : null,
-        bodyLocation: dto.bodyLocation.trim(),
-        bodyLocationLabel: dto.bodyLocationLabel?.trim() || null,
-        notes: dto.notes?.trim() || null,
-        staffId: dto.staffId?.trim() || null,
-        staffName: dto.staffName?.trim() || null,
-        createdByUserId: userId ?? null,
-      },
-      include: this.gameAttendanceInclude,
-    });
+    const procedures = resolveGameProceduresInput(dto);
+    const bodyLocations = resolveGameBodyLocationsInput(dto);
+    validateGameProcedureItems(procedures);
+    validateGameBodyLocationItems(bodyLocations);
+    const itemsJson = gameAttendanceItemsToJson(procedures, bodyLocations);
+    return this.prisma.physioGameAttendance
+      .create({
+        data: {
+          tenantId: dto.tenantId,
+          playerId: dto.playerId,
+          category: dto.category?.trim() || player.category,
+          gameDate,
+          phase: dto.phase,
+          careCategory: dto.careCategory,
+          ...itemsJson,
+          treatmentReason:
+            dto.careCategory === 'tratamento' ? dto.treatmentReason?.trim() || null : null,
+          notes: dto.notes?.trim() || null,
+          staffId: dto.staffId?.trim() || null,
+          staffName: dto.staffName?.trim() || null,
+          createdByUserId: userId ?? null,
+        },
+        include: this.gameAttendanceInclude,
+      })
+      .then(enrichGameAttendanceRow);
   }
 
   async updateGameAttendance(
@@ -1469,29 +1481,53 @@ export class FisioterapiaService implements OnModuleInit {
         throw new BadRequestException('Informe o motivo do tratamento.');
       }
     }
-    return this.prisma.physioGameAttendance.update({
-      where: { id },
-      data: {
-        ...(dto.phase != null && { phase: dto.phase }),
-        ...(dto.careCategory != null && { careCategory: dto.careCategory }),
-        ...(dto.procedureKey != null && { procedureKey: dto.procedureKey.trim() }),
-        ...(dto.procedureLabel !== undefined && {
-          procedureLabel: dto.procedureLabel?.trim() || null,
-        }),
-        ...(dto.treatmentReason !== undefined && {
-          treatmentReason:
-            careCategory === 'tratamento' ? dto.treatmentReason?.trim() || null : null,
-        }),
-        ...(dto.bodyLocation != null && { bodyLocation: dto.bodyLocation.trim() }),
-        ...(dto.bodyLocationLabel !== undefined && {
-          bodyLocationLabel: dto.bodyLocationLabel?.trim() || null,
-        }),
-        ...(dto.notes !== undefined && { notes: dto.notes?.trim() || null }),
-        ...(dto.staffId !== undefined && { staffId: dto.staffId?.trim() || null }),
-        ...(dto.staffName !== undefined && { staffName: dto.staffName?.trim() || null }),
-      },
-      include: this.gameAttendanceInclude,
-    });
+
+    const hasProcedurePatch =
+      dto.procedures !== undefined || dto.procedureKey !== undefined || dto.procedureLabel !== undefined;
+    const hasLocationPatch =
+      dto.bodyLocations !== undefined ||
+      dto.bodyLocation !== undefined ||
+      dto.bodyLocationLabel !== undefined;
+
+    let itemsJson: ReturnType<typeof gameAttendanceItemsToJson> | null = null;
+    if (hasProcedurePatch || hasLocationPatch) {
+      const procedures = hasProcedurePatch
+        ? resolveGameProceduresInput({
+            procedures: dto.procedures,
+            procedureKey: dto.procedureKey,
+            procedureLabel: dto.procedureLabel ?? undefined,
+          })
+        : current.procedures;
+      const bodyLocations = hasLocationPatch
+        ? resolveGameBodyLocationsInput({
+            bodyLocations: dto.bodyLocations,
+            bodyLocation: dto.bodyLocation,
+            bodyLocationLabel: dto.bodyLocationLabel ?? undefined,
+          })
+        : current.bodyLocations;
+      validateGameProcedureItems(procedures);
+      validateGameBodyLocationItems(bodyLocations);
+      itemsJson = gameAttendanceItemsToJson(procedures, bodyLocations);
+    }
+
+    return this.prisma.physioGameAttendance
+      .update({
+        where: { id },
+        data: {
+          ...(dto.phase != null && { phase: dto.phase }),
+          ...(dto.careCategory != null && { careCategory: dto.careCategory }),
+          ...(itemsJson ?? {}),
+          ...(dto.treatmentReason !== undefined && {
+            treatmentReason:
+              careCategory === 'tratamento' ? dto.treatmentReason?.trim() || null : null,
+          }),
+          ...(dto.notes !== undefined && { notes: dto.notes?.trim() || null }),
+          ...(dto.staffId !== undefined && { staffId: dto.staffId?.trim() || null }),
+          ...(dto.staffName !== undefined && { staffName: dto.staffName?.trim() || null }),
+        },
+        include: this.gameAttendanceInclude,
+      })
+      .then(enrichGameAttendanceRow);
   }
 
   async deleteGameAttendance(id: string, allowed: string[] | null) {

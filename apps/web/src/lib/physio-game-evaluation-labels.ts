@@ -17,9 +17,18 @@ export const PHYSIO_GAME_PROCEDURE_LABEL: Record<string, string> = {
   bandagem_elastica: "Bandagem elástica",
   bandagem_estabilizacao: "Bandagem de estabilização",
   taping: "Taping",
+  vendagem_funcional: "Vendagem funcional",
   crioterapia: "Crioterapia",
+  compressa_gelada: "Compressa gelada",
+  aquecimento_local: "Aquecimento local",
   mobilizacao: "Mobilização",
   alongamento: "Alongamento",
+  massagem: "Massagem",
+  liberacao_miofascial: "Liberação miofascial",
+  eletroterapia: "Eletroterapia",
+  exercicio_terapeutico: "Exercício terapêutico",
+  drenagem: "Drenagem",
+  ventosa: "Ventosa",
   outro: "Outro",
 };
 
@@ -35,6 +44,14 @@ export const PHYSIO_GAME_BODY_LOCATION_LABEL: Record<string, string> = {
   joelho: "Joelho",
   adutor: "Adutor",
   quadril: "Quadril",
+  panturrilha: "Panturrilha",
+  quadriceps: "Quadríceps",
+  isquiotibiais: "Isquiotibiais",
+  ombro: "Ombro",
+  punho: "Punho",
+  pe: "Pé",
+  lombar: "Lombar",
+  cervical: "Cervical",
   outro: "Outro",
 };
 
@@ -74,4 +91,22 @@ export const PHYSIO_EVAL_OUTCOME_LABEL: Record<string, string> = {
 export function labelFromMap(map: Record<string, string>, key: string, custom?: string | null) {
   if (key === "outro" && custom?.trim()) return custom.trim();
   return map[key] ?? custom ?? key;
+}
+
+export function formatGameProcedureList(
+  items: Array<{ procedureKey: string; procedureLabel?: string | null }>,
+  map: Record<string, string> = PHYSIO_GAME_PROCEDURE_LABEL,
+) {
+  return items
+    .map((item) => labelFromMap(map, item.procedureKey, item.procedureLabel))
+    .join(" · ");
+}
+
+export function formatGameBodyLocationList(
+  items: Array<{ bodyLocation: string; bodyLocationLabel?: string | null }>,
+  map: Record<string, string> = PHYSIO_GAME_BODY_LOCATION_LABEL,
+) {
+  return items
+    .map((item) => labelFromMap(map, item.bodyLocation, item.bodyLocationLabel))
+    .join(" · ");
 }

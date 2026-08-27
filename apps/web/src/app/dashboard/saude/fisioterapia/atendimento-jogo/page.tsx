@@ -3,7 +3,7 @@
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Trophy, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Trophy, Trash2, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -24,13 +24,16 @@ import {
 import type {
   CreatePhysioGameAttendancePayload,
   PhysioGameAttendance,
+  PhysioGameBodyLocationItem,
+  PhysioGameProcedureItem,
   PhysioGroupAttendanceRow,
 } from "@/types/fisioterapia";
 import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { isFootballKind } from "@/lib/home-data";
 import {
-  labelFromMap,
+  formatGameBodyLocationList,
+  formatGameProcedureList,
   PHYSIO_GAME_BODY_LOCATION_LABEL,
   PHYSIO_GAME_CARE_CATEGORY_LABEL,
   PHYSIO_GAME_PHASE_LABEL,
@@ -47,6 +50,17 @@ const PROCEDURES = Object.keys(PHYSIO_GAME_PROCEDURE_LABEL);
 const REASONS = Object.keys(PHYSIO_GAME_TREATMENT_REASON_LABEL);
 const BODY_LOCATIONS = Object.keys(PHYSIO_GAME_BODY_LOCATION_LABEL);
 
+type ProcedureRow = PhysioGameProcedureItem & { id: string };
+type BodyLocationRow = PhysioGameBodyLocationItem & { id: string };
+
+function newProcedureRow(): ProcedureRow {
+  return { id: crypto.randomUUID(), procedureKey: "bandagem_elastica", procedureLabel: "" };
+}
+
+function newBodyLocationRow(): BodyLocationRow {
+  return { id: crypto.randomUUID(), bodyLocation: "tornozelo", bodyLocationLabel: "" };
+}
+
 export default function PhysioGameAttendancePage() {
   const { canAccessModule, loading: authLoading } = useAuth();
   const { categories: allCats } = useFixtureCategories();
@@ -57,11 +71,9 @@ export default function PhysioGameAttendancePage() {
   const [phase, setPhase] = useState("pre_jogo");
   const [playerId, setPlayerId] = useState("");
   const [careCategory, setCareCategory] = useState("preparo_preventivo");
-  const [procedureKey, setProcedureKey] = useState("bandagem_elastica");
-  const [procedureLabel, setProcedureLabel] = useState("");
+  const [procedures, setProcedures] = useState<ProcedureRow[]>(() => [newProcedureRow()]);
+  const [bodyLocations, setBodyLocations] = useState<BodyLocationRow[]>(() => [newBodyLocationRow()]);
   const [treatmentReason, setTreatmentReason] = useState("proteger");
-  const [bodyLocation, setBodyLocation] = useState("tornozelo");
-  const [bodyLocationLabel, setBodyLocationLabel] = useState("");
   const [notes, setNotes] = useState("");
   const [staffId, setStaffId] = useState("");
   const [staffList, setStaffList] = useState<StaffOpt[]>([]);
@@ -166,23 +178,45 @@ export default function PhysioGameAttendancePage() {
       });
       return;
     }
-    if (procedureKey === "outro" && !procedureLabel.trim()) {
-      setFeedback({
-        open: true,
-        title: "Procedimento",
-        message: "Descreva o procedimento realizado.",
-        variant: "warning",
-      });
-      return;
+    for (const item of procedures) {
+      if (!item.procedureKey) {
+        setFeedback({
+          open: true,
+          title: "Procedimento",
+          message: "Selecione todos os procedimentos.",
+          variant: "warning",
+        });
+        return;
+      }
+      if (item.procedureKey === "outro" && !item.procedureLabel?.trim()) {
+        setFeedback({
+          open: true,
+          title: "Procedimento",
+          message: "Descreva o procedimento quando selecionar Outro.",
+          variant: "warning",
+        });
+        return;
+      }
     }
-    if (bodyLocation === "outro" && !bodyLocationLabel.trim()) {
-      setFeedback({
-        open: true,
-        title: "Local",
-        message: "Informe o local do procedimento.",
-        variant: "warning",
-      });
-      return;
+    for (const item of bodyLocations) {
+      if (!item.bodyLocation) {
+        setFeedback({
+          open: true,
+          title: "Local",
+          message: "Selecione todos os locais.",
+          variant: "warning",
+        });
+        return;
+      }
+      if (item.bodyLocation === "outro" && !item.bodyLocationLabel?.trim()) {
+        setFeedback({
+          open: true,
+          title: "Local",
+          message: "Especifique o local quando selecionar Outro.",
+          variant: "warning",
+        });
+        return;
+      }
     }
 
     const payload: CreatePhysioGameAttendancePayload = {
@@ -192,22 +226,26 @@ export default function PhysioGameAttendancePage() {
       gameDate,
       phase,
       careCategory,
-      procedureKey,
-      bodyLocation,
+      procedures: procedures.map(({ procedureKey, procedureLabel }) => ({
+        procedureKey,
+        procedureLabel: procedureKey === "outro" ? procedureLabel?.trim() : undefined,
+      })),
+      bodyLocations: bodyLocations.map(({ bodyLocation, bodyLocationLabel }) => ({
+        bodyLocation,
+        bodyLocationLabel: bodyLocation === "outro" ? bodyLocationLabel?.trim() : undefined,
+      })),
       staffId: staffId || undefined,
       staffName: selectedStaff?.name,
       notes: notes.trim() || undefined,
     };
-    if (procedureKey === "outro") payload.procedureLabel = procedureLabel.trim();
-    if (bodyLocation === "outro") payload.bodyLocationLabel = bodyLocationLabel.trim();
     if (careCategory === "tratamento") payload.treatmentReason = treatmentReason;
 
     setSaving(true);
     try {
       await api.post("/fisioterapia/game-attendances", payload);
       setNotes("");
-      setProcedureLabel("");
-      setBodyLocationLabel("");
+      setProcedures([newProcedureRow()]);
+      setBodyLocations([newBodyLocationRow()]);
       await loadRows();
       setFeedback({
         open: true,
@@ -326,20 +364,6 @@ export default function PhysioGameAttendancePage() {
               ))}
             </NativeSelect>
           </div>
-          <div className="grid gap-2">
-            <Label>Procedimento *</Label>
-            <NativeSelect value={procedureKey} onChange={(e) => setProcedureKey(e.target.value)}>
-              {PROCEDURES.map((p) => (
-                <option key={p} value={p}>{PHYSIO_GAME_PROCEDURE_LABEL[p]}</option>
-              ))}
-            </NativeSelect>
-          </div>
-          {procedureKey === "outro" ? (
-            <div className="grid gap-2 sm:col-span-2">
-              <Label>Descreva o procedimento *</Label>
-              <Input value={procedureLabel} onChange={(e) => setProcedureLabel(e.target.value)} />
-            </div>
-          ) : null}
           {careCategory === "tratamento" ? (
             <div className="grid gap-2 sm:col-span-2">
               <Label>Motivo do tratamento *</Label>
@@ -350,20 +374,136 @@ export default function PhysioGameAttendancePage() {
               </NativeSelect>
             </div>
           ) : null}
-          <div className="grid gap-2">
-            <Label>Local *</Label>
-            <NativeSelect value={bodyLocation} onChange={(e) => setBodyLocation(e.target.value)}>
-              {BODY_LOCATIONS.map((l) => (
-                <option key={l} value={l}>{PHYSIO_GAME_BODY_LOCATION_LABEL[l]}</option>
-              ))}
-            </NativeSelect>
-          </div>
-          {bodyLocation === "outro" ? (
-            <div className="grid gap-2">
-              <Label>Especifique o local *</Label>
-              <Input value={bodyLocationLabel} onChange={(e) => setBodyLocationLabel(e.target.value)} />
+          <div className="space-y-3 sm:col-span-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label>Procedimentos *</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-h-[44px]"
+                onClick={() => setProcedures((prev) => [...prev, newProcedureRow()])}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Adicionar
+              </Button>
             </div>
-          ) : null}
+            {procedures.map((item, index) => (
+              <div key={item.id} className="grid gap-2 rounded-lg border border-border/60 p-3 sm:grid-cols-2">
+                <div className="flex items-center justify-between sm:col-span-2">
+                  <span className="text-xs text-muted-foreground">Procedimento {index + 1}</span>
+                  {procedures.length > 1 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 text-destructive"
+                      onClick={() => setProcedures((prev) => prev.filter((p) => p.id !== item.id))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
+                <div className="grid gap-2 sm:col-span-2">
+                  <NativeSelect
+                    value={item.procedureKey}
+                    onChange={(e) =>
+                      setProcedures((prev) =>
+                        prev.map((p) =>
+                          p.id === item.id
+                            ? { ...p, procedureKey: e.target.value, procedureLabel: "" }
+                            : p,
+                        ),
+                      )
+                    }
+                  >
+                    {PROCEDURES.map((p) => (
+                      <option key={p} value={p}>{PHYSIO_GAME_PROCEDURE_LABEL[p]}</option>
+                    ))}
+                  </NativeSelect>
+                </div>
+                {item.procedureKey === "outro" ? (
+                  <div className="grid gap-2 sm:col-span-2">
+                    <Label>Descreva o procedimento *</Label>
+                    <Input
+                      value={item.procedureLabel ?? ""}
+                      onChange={(e) =>
+                        setProcedures((prev) =>
+                          prev.map((p) =>
+                            p.id === item.id ? { ...p, procedureLabel: e.target.value } : p,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <div className="space-y-3 sm:col-span-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label>Locais *</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-h-[44px]"
+                onClick={() => setBodyLocations((prev) => [...prev, newBodyLocationRow()])}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Adicionar
+              </Button>
+            </div>
+            {bodyLocations.map((item, index) => (
+              <div key={item.id} className="grid gap-2 rounded-lg border border-border/60 p-3 sm:grid-cols-2">
+                <div className="flex items-center justify-between sm:col-span-2">
+                  <span className="text-xs text-muted-foreground">Local {index + 1}</span>
+                  {bodyLocations.length > 1 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 text-destructive"
+                      onClick={() => setBodyLocations((prev) => prev.filter((l) => l.id !== item.id))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
+                <NativeSelect
+                  value={item.bodyLocation}
+                  onChange={(e) =>
+                    setBodyLocations((prev) =>
+                      prev.map((l) =>
+                        l.id === item.id
+                          ? { ...l, bodyLocation: e.target.value, bodyLocationLabel: "" }
+                          : l,
+                      ),
+                    )
+                  }
+                >
+                  {BODY_LOCATIONS.map((l) => (
+                    <option key={l} value={l}>{PHYSIO_GAME_BODY_LOCATION_LABEL[l]}</option>
+                  ))}
+                </NativeSelect>
+                {item.bodyLocation === "outro" ? (
+                  <div className="grid gap-2">
+                    <Label>Especifique o local *</Label>
+                    <Input
+                      value={item.bodyLocationLabel ?? ""}
+                      onChange={(e) =>
+                        setBodyLocations((prev) =>
+                          prev.map((l) =>
+                            l.id === item.id ? { ...l, bodyLocationLabel: e.target.value } : l,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
           <div className="grid gap-2">
             <Label>Fisioterapeuta</Label>
             <NativeSelect value={staffId} onChange={(e) => setStaffId(e.target.value)}>
@@ -412,9 +552,17 @@ export default function PhysioGameAttendancePage() {
                       {PHYSIO_GAME_CARE_CATEGORY_LABEL[row.careCategory] ?? row.careCategory}
                     </p>
                     <p>
-                      {labelFromMap(PHYSIO_GAME_PROCEDURE_LABEL, row.procedureKey, row.procedureLabel)}
+                      {formatGameProcedureList(
+                        row.procedures?.length
+                          ? row.procedures
+                          : [{ procedureKey: row.procedureKey, procedureLabel: row.procedureLabel }],
+                      )}
                       {" · "}
-                      {labelFromMap(PHYSIO_GAME_BODY_LOCATION_LABEL, row.bodyLocation, row.bodyLocationLabel)}
+                      {formatGameBodyLocationList(
+                        row.bodyLocations?.length
+                          ? row.bodyLocations
+                          : [{ bodyLocation: row.bodyLocation, bodyLocationLabel: row.bodyLocationLabel }],
+                      )}
                     </p>
                     {row.treatmentReason ? (
                       <p className="text-muted-foreground">

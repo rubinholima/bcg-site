@@ -285,6 +285,16 @@ export interface PhysioReportsDashboard {
   }>;
 }
 
+export interface PhysioGameProcedureItem {
+  procedureKey: string;
+  procedureLabel?: string | null;
+}
+
+export interface PhysioGameBodyLocationItem {
+  bodyLocation: string;
+  bodyLocationLabel?: string | null;
+}
+
 export interface PhysioGameAttendance {
   id: string;
   tenantId: string;
@@ -295,9 +305,11 @@ export interface PhysioGameAttendance {
   careCategory: string;
   procedureKey: string;
   procedureLabel: string | null;
+  procedures: PhysioGameProcedureItem[];
   treatmentReason: string | null;
   bodyLocation: string;
   bodyLocationLabel: string | null;
+  bodyLocations: PhysioGameBodyLocationItem[];
   notes: string | null;
   staffId: string | null;
   staffName: string | null;
@@ -314,11 +326,9 @@ export interface CreatePhysioGameAttendancePayload {
   gameDate: string;
   phase: string;
   careCategory: string;
-  procedureKey: string;
-  procedureLabel?: string;
+  procedures: PhysioGameProcedureItem[];
   treatmentReason?: string;
-  bodyLocation: string;
-  bodyLocationLabel?: string;
+  bodyLocations: PhysioGameBodyLocationItem[];
   notes?: string;
   staffId?: string;
   staffName?: string;

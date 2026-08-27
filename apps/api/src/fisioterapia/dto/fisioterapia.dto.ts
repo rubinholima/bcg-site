@@ -505,6 +505,26 @@ export class AddPhysioEvolutionDto {
   painScore?: number;
 }
 
+export class PhysioGameProcedureItemDto {
+  @IsString()
+  procedureKey!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  procedureLabel?: string;
+}
+
+export class PhysioGameBodyLocationItemDto {
+  @IsString()
+  bodyLocation!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  bodyLocationLabel?: string;
+}
+
 export class CreatePhysioGameAttendanceDto {
   @IsString()
   tenantId!: string;
@@ -525,8 +545,15 @@ export class CreatePhysioGameAttendanceDto {
   @IsIn(['tratamento', 'preparo_preventivo'])
   careCategory!: string;
 
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioGameProcedureItemDto)
+  procedures?: PhysioGameProcedureItemDto[];
+
+  @IsOptional()
   @IsString()
-  procedureKey!: string;
+  procedureKey?: string;
 
   @IsOptional()
   @IsString()
@@ -537,8 +564,15 @@ export class CreatePhysioGameAttendanceDto {
   @IsIn(['estabilizar', 'proteger', 'reforcar_musculatura', 'limitar_movimento'])
   treatmentReason?: string;
 
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioGameBodyLocationItemDto)
+  bodyLocations?: PhysioGameBodyLocationItemDto[];
+
+  @IsOptional()
   @IsString()
-  bodyLocation!: string;
+  bodyLocation?: string;
 
   @IsOptional()
   @IsString()
@@ -568,6 +602,12 @@ export class UpdatePhysioGameAttendanceDto {
   careCategory?: string;
 
   @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioGameProcedureItemDto)
+  procedures?: PhysioGameProcedureItemDto[];
+
+  @IsOptional()
   @IsString()
   procedureKey?: string;
 
@@ -579,6 +619,12 @@ export class UpdatePhysioGameAttendanceDto {
   @IsOptional()
   @IsIn(['estabilizar', 'proteger', 'reforcar_musculatura', 'limitar_movimento'])
   treatmentReason?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioGameBodyLocationItemDto)
+  bodyLocations?: PhysioGameBodyLocationItemDto[];
 
   @IsOptional()
   @IsString()

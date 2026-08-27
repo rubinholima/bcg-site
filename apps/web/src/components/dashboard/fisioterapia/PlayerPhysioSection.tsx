@@ -14,15 +14,15 @@ import type {
   PhysioSession,
 } from "@/types/fisioterapia";
 import {
+  formatGameBodyLocationList,
+  formatGameProcedureList,
   labelFromMap,
   PHYSIO_EVAL_BODY_LOCATION_LABEL,
   PHYSIO_EVAL_CONTEXT_LABEL,
   PHYSIO_EVAL_OUTCOME_LABEL,
   PHYSIO_EVAL_TEST_TYPE_LABEL,
-  PHYSIO_GAME_BODY_LOCATION_LABEL,
   PHYSIO_GAME_CARE_CATEGORY_LABEL,
   PHYSIO_GAME_PHASE_LABEL,
-  PHYSIO_GAME_PROCEDURE_LABEL,
   PHYSIO_GAME_TREATMENT_REASON_LABEL,
 } from "@/lib/physio-game-evaluation-labels";
 import { cn } from "@/lib/utils";
@@ -209,10 +209,18 @@ export function PlayerPhysioSection({
                   <p className="text-muted-foreground">
                     {PHYSIO_GAME_CARE_CATEGORY_LABEL[row.careCategory] ?? row.careCategory}
                     {" · "}
-                    {labelFromMap(PHYSIO_GAME_PROCEDURE_LABEL, row.procedureKey, row.procedureLabel)}
+                    {formatGameProcedureList(
+                      row.procedures?.length
+                        ? row.procedures
+                        : [{ procedureKey: row.procedureKey, procedureLabel: row.procedureLabel }],
+                    )}
                   </p>
                   <p className="text-muted-foreground">
-                    {labelFromMap(PHYSIO_GAME_BODY_LOCATION_LABEL, row.bodyLocation, row.bodyLocationLabel)}
+                    {formatGameBodyLocationList(
+                      row.bodyLocations?.length
+                        ? row.bodyLocations
+                        : [{ bodyLocation: row.bodyLocation, bodyLocationLabel: row.bodyLocationLabel }],
+                    )}
                     {row.treatmentReason
                       ? ` · ${PHYSIO_GAME_TREATMENT_REASON_LABEL[row.treatmentReason] ?? row.treatmentReason}`
                       : ""}
