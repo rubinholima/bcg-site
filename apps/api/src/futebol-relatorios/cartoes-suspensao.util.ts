@@ -5,7 +5,11 @@ import {
   isLoanedSportsSituation,
 } from '../common/sports-situation.util';
 import { FRIENDLY_CHAMPIONSHIP_NAME } from '../futebol-agenda/friendly-match.util';
-import { parseStaffCardsForMatch } from './fmf-staff-cards.util';
+import {
+  parseStaffCardsForMatch,
+  resolveOurTeamSide,
+  type StaffCardClubFilter,
+} from './fmf-staff-cards.util';
 import type { FmfStaffCardEventInput } from './fmf-staff-cards.util';
 
 /** Códigos por rodada — espelham o relatório operacional do clube (Mineiro). */
@@ -96,6 +100,7 @@ type MatchInput = {
     playerId: string;
     jerseyNumber: number | null;
     playerName: string;
+    cbfRegistration?: string | null;
     played: boolean;
     yellowCards: number;
     redCards: number;
@@ -309,10 +314,54 @@ export function collectDisciplineParticipantIds(
   return [...ids];
 }
 
+function ourSideCbfRegistrationsFromRawParsed(
+  rawParsed: unknown,
+  ourSide: 'home' | 'away',
+): Set<string> | null {
+  if (!rawParsed || typeof rawParsed !== 'object') return null;
+  const stats = (rawParsed as { stats?: unknown }).stats;
+  if (!Array.isArray(stats)) return null;
+  const set = new Set<string>();
+  for (const item of stats) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as { teamSide?: string; cbfRegistration?: string };
+    if (row.teamSide !== ourSide) continue;
+    const cbf = row.cbfRegistration?.trim();
+    if (cbf) set.add(cbf);
+  }
+  return set.size > 0 ? set : null;
+}
+
+/** Só cartões de atletas que atuaram pelo nosso clube na súmula (evita adversário com mesmo nome/CBF). */
+export function filterDisciplinePlayerStatsForOurClub<
+  T extends {
+    playerId: string;
+    cbfRegistration?: string | null;
+    yellowCards: number;
+    redCards: number;
+  },
+>(
+  stats: T[],
+  match: Pick<MatchInput, 'homeTeam' | 'awayTeam' | 'rawParsed'>,
+  clubName: string,
+  aliases: string[],
+): T[] {
+  const ourSide = resolveOurTeamSide(match.homeTeam, match.awayTeam, clubName, aliases);
+  if (!ourSide) return stats;
+  const ourCbfs = ourSideCbfRegistrationsFromRawParsed(match.rawParsed, ourSide);
+  if (!ourCbfs) return stats;
+  return stats.filter((stat) => {
+    const cbf = stat.cbfRegistration?.trim();
+    if (!cbf) return false;
+    return ourCbfs.has(cbf);
+  });
+}
+
 type DisciplineStatRow = {
   playerId: string;
   jerseyNumber: number | null;
   playerName: string;
+  cbfRegistration?: string | null;
   played: boolean;
   yellowCards: number;
   redCards: number;
@@ -374,6 +423,7 @@ export function enrichDisciplineStatsFromUnresolved(
       playerId,
       jerseyNumber: unresolved.jerseyNumber,
       playerName: unresolved.sourceName,
+      cbfRegistration: unresolved.cbfRegistration || null,
       played: unresolved.played,
       yellowCards: unresolved.yellowCards,
       redCards: unresolved.redCards,
@@ -743,14 +793,23 @@ function staffDisciplineKey(staffId: string | null, name: string): string {
 }
 
 function staffCardsForMatch(
-  match: Pick<MatchInput, 'occurrencesText' | 'staffCardEvents' | 'rawParsed'>,
+  match: Pick<MatchInput, 'occurrencesText' | 'staffCardEvents' | 'rawParsed' | 'homeTeam' | 'awayTeam'>,
   staff: StaffDisciplineInput[],
+  clubName: string,
+  aliases: string[],
 ): Map<string, StaffMatchCards> {
+  const clubFilter: StaffCardClubFilter = {
+    homeTeam: match.homeTeam,
+    awayTeam: match.awayTeam,
+    clubName,
+    aliases,
+  };
   const parsed = parseStaffCardsForMatch(
     {
       occurrencesText: match.occurrencesText,
       staffCardEvents: match.staffCardEvents,
       rawParsed: match.rawParsed,
+      clubFilter,
     },
     staff.map((member) => ({ id: member.id, name: member.name, role: member.roleLabel })),
   );
@@ -855,45 +914,20 @@ function disciplineStaffSortRank(row: DisciplineStaffRow): number {
 
 export function mergeDisciplineStaffList(
   roster: StaffDisciplineInput[],
-  matches: MatchInput[],
+  _matches: MatchInput[],
 ): StaffDisciplineInput[] {
-  const byKey = new Map<string, StaffDisciplineInput>();
-  for (const member of roster) {
-    byKey.set(member.id, member);
-  }
-  const candidates = roster.map((member) => ({
-    id: member.id,
-    name: member.name,
-    role: member.roleLabel,
-  }));
-  for (const match of matches) {
-    for (const card of parseStaffCardsForMatch(
-      {
-        occurrencesText: match.occurrencesText,
-        staffCardEvents: match.staffCardEvents,
-        rawParsed: match.rawParsed,
-      },
-      candidates,
-    )) {
-      const key = staffDisciplineKey(card.staffId, card.name);
-      if (byKey.has(key)) continue;
-      byKey.set(key, {
-        id: key,
-        name: card.name,
-        roleLabel: card.roleLabel ?? 'Comissão técnica',
-      });
-    }
-  }
-  return [...byKey.values()];
+  return [...roster];
 }
 
 export function collectDisciplineStaffParticipantKeys(
   matches: MatchInput[],
   staff: StaffDisciplineInput[],
+  clubName: string,
+  aliases: string[],
 ): string[] {
   const keys = new Set<string>();
   for (const match of matches) {
-    for (const [key] of staffCardsForMatch(match, staff)) {
+    for (const [key] of staffCardsForMatch(match, staff, clubName, aliases)) {
       keys.add(key);
     }
   }
@@ -941,7 +975,12 @@ export function buildStaffDisciplineGrid(input: {
 
   sortedMatches.forEach((match, roundIndex) => {
     const isFriendly = input.friendlyMatchIds?.has(match.id) ?? false;
-    const cardsByStaff = staffCardsForMatch(match, disciplineStaff);
+    const cardsByStaff = staffCardsForMatch(
+      match,
+      disciplineStaff,
+      input.clubName,
+      input.aliases,
+    );
 
     for (const cards of cardsByStaff.values()) {
       yellowByRound[roundIndex] += cards.yellowCards;

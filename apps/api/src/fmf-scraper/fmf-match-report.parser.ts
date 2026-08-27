@@ -32,6 +32,7 @@ export interface FmfStaffCardEvent {
   roleLabel: string;
   name: string;
   excerpt: string;
+  teamSide?: 'home' | 'away';
 }
 
 export interface ParsedFmfMatchReport {
@@ -251,13 +252,21 @@ function parseRoster(text: string): FmfReportRosterPlayer[] {
   return groups.flat();
 }
 
-function sideFromRow(row: string, homeTeam: string, awayTeam: string): 'home' | 'away' | null {
+export function inferFmfRowTeamSide(
+  row: string,
+  homeTeam: string,
+  awayTeam: string,
+): 'home' | 'away' | null {
   const normalized = normalize(row);
   const home = normalize(homeTeam);
   const away = normalize(awayTeam);
   if (home && normalized.includes(home)) return 'home';
   if (away && normalized.includes(away)) return 'away';
   return null;
+}
+
+function sideFromRow(row: string, homeTeam: string, awayTeam: string): 'home' | 'away' | null {
+  return inferFmfRowTeamSide(row, homeTeam, awayTeam);
 }
 
 function eventAbsoluteMinute(period: string, minute: number, firstHalfMinutes: number): number {
@@ -293,6 +302,8 @@ function parseStaffCardNameFromTail(tail: string): { roleLabel: string; name: st
 export function parseStaffCardEventsFromTimedRows(
   rows: string[],
   kind: 'yellow' | 'red',
+  homeTeam = '',
+  awayTeam = '',
 ): FmfStaffCardEvent[] {
   const out: FmfStaffCardEvent[] = [];
   for (const row of rows) {
@@ -302,11 +313,14 @@ export function parseStaffCardEventsFromTimedRows(
     if (/^\d+\b/.test(rest)) continue;
     const parsed = parseStaffCardNameFromTail(rest);
     if (!parsed) continue;
+    const teamSide =
+      homeTeam && awayTeam ? inferFmfRowTeamSide(row, homeTeam, awayTeam) ?? undefined : undefined;
     out.push({
       kind,
       roleLabel: parsed.roleLabel,
       name: parsed.name,
       excerpt: row.slice(0, 240),
+      ...(teamSide ? { teamSide } : {}),
     });
   }
   return out;
@@ -471,8 +485,8 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
   }
 
   const staffCardEvents: FmfStaffCardEvent[] = [
-    ...parseStaffCardEventsFromTimedRows(yellowCardRows, 'yellow'),
-    ...parseStaffCardEventsFromTimedRows(redCardRows, 'red'),
+    ...parseStaffCardEventsFromTimedRows(yellowCardRows, 'yellow', homeTeam, awayTeam),
+    ...parseStaffCardEventsFromTimedRows(redCardRows, 'red', homeTeam, awayTeam),
   ];
 
   for (const row of splitTimedRows(section(text, '\nSubstituições\n', '\nANT = Antes do Início'))) {

@@ -130,10 +130,13 @@ ANT = Antes do Início
         '42:00 2T 4 Joao Victor Machado De Oliveira - falta temerária; BOSTON',
       ],
       'yellow',
+      'BOSTON CITY FUTEBOL CLUBE SAF',
+      'NACIONAL',
     );
     expect(events).toHaveLength(1);
     expect(events[0]?.roleLabel).toBe('Técnico');
     expect(events[0]?.name).toBe('Adriano Dos Santos Almeida');
     expect(events[0]?.kind).toBe('yellow');
+    expect(events[0]?.teamSide).toBe('away');
   });
 });

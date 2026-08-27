@@ -90,6 +90,7 @@ import {
   buildStaffDisciplineGrid,
   collectDisciplineParticipantIds,
   enrichDisciplineStatsFromUnresolved,
+  filterDisciplinePlayerStatsForOurClub,
   inferPrimaryCompetitionFromReports,
   inferReferenceCategoryFromReports,
   isCurrentSquadPlayer,
@@ -1655,7 +1656,11 @@ export class FutebolRelatoriosService {
       if (!row) throw new NotFoundException('Súmula não encontrada');
       const enrichedRow = await this.enrichDisciplineMatchesStaffCards([row], staffCandidates);
       const matchRow = enrichedRow[0] ?? row;
-      const staffCardsResolved = await this.resolveStaffCardsForFmfRow(matchRow, staffCandidates);
+      const staffCardsResolved = await this.resolveStaffCardsForFmfRow(
+        matchRow,
+        staffCandidates,
+        { clubName: tenant.tradeName?.trim() || tenant.name, aliases },
+      );
       match = this.buildSumulaMatchDto(
         matchRow,
         tenant.name,
@@ -1800,7 +1805,10 @@ export class FutebolRelatoriosService {
           ? `${row.homeScore} x ${row.awayScore}`
           : '—';
       const matchLabel = `${formatBrDate(dateKey)} · ${row.homeTeam} ${score} ${row.awayTeam}`;
-      const cards = await this.resolveStaffCardsForFmfRow(row, input.staffCandidates);
+      const cards = await this.resolveStaffCardsForFmfRow(row, input.staffCandidates, {
+        clubName: input.clubName,
+        aliases: input.aliases,
+      });
       for (const card of cards) {
         parsedRows.push({ ...card, matchDate: dateKey, matchLabel });
       }
@@ -1824,21 +1832,32 @@ export class FutebolRelatoriosService {
 
   private async resolveStaffCardsForFmfRow(
     row: {
+      homeTeam: string;
+      awayTeam: string;
       occurrencesText: string | null;
       rawParsed: unknown;
       sourceUrl?: string | null;
       staffCardEvents?: FmfStaffCardEventInput[] | null;
     },
     staffCandidates: Array<{ id: string; name: string; role: string }>,
+    clubFilter?: { clubName: string; aliases: string[] } | null,
   ) {
-    let cards = parseStaffCardsForMatch(
-      {
-        occurrencesText: row.occurrencesText,
-        rawParsed: row.rawParsed,
-        staffCardEvents: row.staffCardEvents,
-      },
-      staffCandidates,
-    );
+    const parseInput = {
+      occurrencesText: row.occurrencesText,
+      rawParsed: row.rawParsed,
+      staffCardEvents: row.staffCardEvents,
+      ...(clubFilter
+        ? {
+            clubFilter: {
+              homeTeam: row.homeTeam,
+              awayTeam: row.awayTeam,
+              clubName: clubFilter.clubName,
+              aliases: clubFilter.aliases,
+            },
+          }
+        : {}),
+    };
+    let cards = parseStaffCardsForMatch(parseInput, staffCandidates);
     if (cards.length === 0 && row.sourceUrl?.trim()) {
       const fromPdf = await fetchStaffCardEventsFromSumulaUrl(row.sourceUrl);
       if (fromPdf.length > 0) {
@@ -1846,6 +1865,16 @@ export class FutebolRelatoriosService {
           {
             occurrencesText: row.occurrencesText,
             staffCardEvents: fromPdf,
+            ...(clubFilter
+              ? {
+                  clubFilter: {
+                    homeTeam: row.homeTeam,
+                    awayTeam: row.awayTeam,
+                    clubName: clubFilter.clubName,
+                    aliases: clubFilter.aliases,
+                  },
+                }
+              : {}),
           },
           staffCandidates,
         );
@@ -2087,6 +2116,7 @@ export class FutebolRelatoriosService {
             homeScore: true,
             awayScore: true,
             category: true,
+            rawParsed: true,
           },
         },
       },
@@ -2150,6 +2180,20 @@ export class FutebolRelatoriosService {
       ) {
         continue;
       }
+      const onOurSide = filterDisciplinePlayerStatsForOurClub(
+        [
+          {
+            playerId: stat.playerId,
+            cbfRegistration: stat.cbfRegistration,
+            yellowCards: stat.yellowCards,
+            redCards: stat.redCards,
+          },
+        ],
+        stat.match,
+        clubName,
+        aliases,
+      );
+      if (onOurSide.length === 0) continue;
       const current = byPlayer.get(stat.player.id) ?? {
         player: stat.player,
         yellowCards: 0,
@@ -2262,6 +2306,7 @@ export class FutebolRelatoriosService {
             playerId: true,
             jerseyNumber: true,
             playerName: true,
+            cbfRegistration: true,
             played: true,
             yellowCards: true,
             redCards: true,
@@ -2388,10 +2433,15 @@ export class FutebolRelatoriosService {
 
     const disciplineMatches = matches.map((row) => ({
       ...row,
-      playerStats: enrichDisciplineStatsFromUnresolved(
-        row.playerStats,
-        row.unresolvedPlayers,
-        resolveDisciplinePlayerId,
+      playerStats: filterDisciplinePlayerStatsForOurClub(
+        enrichDisciplineStatsFromUnresolved(
+          row.playerStats,
+          row.unresolvedPlayers,
+          resolveDisciplinePlayerId,
+        ),
+        row,
+        clubName,
+        aliases,
       ),
     }));
 

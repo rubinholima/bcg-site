@@ -1,3 +1,6 @@
+import { inferFmfRowTeamSide } from '../fmf-scraper/fmf-match-report.parser';
+import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
+
 export type StaffCardOccurrence = {
   staffId: string | null;
   name: string;
@@ -12,6 +15,14 @@ export type FmfStaffCardEventInput = {
   roleLabel: string;
   name: string;
   excerpt: string;
+  teamSide?: 'home' | 'away';
+};
+
+export type StaffCardClubFilter = {
+  homeTeam: string;
+  awayTeam: string;
+  clubName: string;
+  aliases?: string[];
 };
 
 type StaffCandidate = {
@@ -48,6 +59,46 @@ function normalize(value: string): string {
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
+}
+
+export function resolveOurTeamSide(
+  homeTeam: string,
+  awayTeam: string,
+  clubName: string,
+  aliases: string[] = [],
+): 'home' | 'away' | null {
+  if (isFmfTeamMatch(homeTeam, clubName, aliases)) return 'home';
+  if (isFmfTeamMatch(awayTeam, clubName, aliases)) return 'away';
+  return null;
+}
+
+function resolveStaffEventTeamSide(
+  event: FmfStaffCardEventInput,
+  homeTeam: string,
+  awayTeam: string,
+): 'home' | 'away' | null {
+  if (event.teamSide === 'home' || event.teamSide === 'away') return event.teamSide;
+  if (!homeTeam || !awayTeam) return null;
+  return inferFmfRowTeamSide(event.excerpt || `${event.roleLabel} ${event.name}`, homeTeam, awayTeam);
+}
+
+/** Mantém só cartões da comissão do nosso clube (disciplina / controle de cartões). */
+export function filterStaffCardEventsForOurClub(
+  events: FmfStaffCardEventInput[],
+  filter: StaffCardClubFilter,
+): FmfStaffCardEventInput[] {
+  const ourSide = resolveOurTeamSide(
+    filter.homeTeam,
+    filter.awayTeam,
+    filter.clubName,
+    filter.aliases ?? [],
+  );
+  if (!ourSide) return events;
+
+  return events.filter((event) => {
+    const side = resolveStaffEventTeamSide(event, filter.homeTeam, filter.awayTeam);
+    return side == null || side === ourSide;
+  });
 }
 
 function isStaffDisciplineLine(line: string): boolean {
@@ -103,10 +154,11 @@ export function parseStaffCardsFromOccurrences(
     if (!kind) continue;
 
     const member = matchStaffOnLine(line, staff);
+    if (!member) continue;
     out.push({
-      staffId: member?.id ?? null,
-      name: member?.name ?? line.slice(0, 120),
-      roleLabel: member ? staffRoleLabel(member.role) : null,
+      staffId: member.id,
+      name: member.name,
+      roleLabel: staffRoleLabel(member.role),
       yellowCards: kind === 'yellow' ? 1 : 0,
       redCards: kind === 'red' ? 1 : 0,
       excerpt: line,
@@ -134,37 +186,46 @@ function staffCardEventsToOccurrences(
   events: FmfStaffCardEventInput[],
   staff: StaffCandidate[],
 ): StaffCardOccurrence[] {
-  return events.map((ev) => {
+  const out: StaffCardOccurrence[] = [];
+  for (const ev of events) {
     const lookupLine = `${ev.roleLabel} ${ev.name}`;
     const member = matchStaffOnLine(lookupLine, staff) ?? matchStaffOnLine(ev.name, staff);
-    return {
-      staffId: member?.id ?? null,
-      name: member?.name ?? ev.name,
-      roleLabel: member ? staffRoleLabel(member.role) : ev.roleLabel,
+    if (!member) continue;
+    out.push({
+      staffId: member.id,
+      name: member.name,
+      roleLabel: staffRoleLabel(member.role),
       yellowCards: ev.kind === 'yellow' ? 1 : 0,
       redCards: ev.kind === 'red' ? 1 : 0,
       excerpt: ev.excerpt,
-    };
-  });
+    });
+  }
+  return out;
 }
 
 /**
  * Cartões da comissão — seção Cartões Amarelos/Vermelhos (padrão FMF) + Ocorrências/Observações.
+ * Com `clubFilter`, ignora cartões do adversário (controle disciplinar do tenant).
  */
 export function parseStaffCardsForMatch(
   input: {
     occurrencesText?: string | null;
     staffCardEvents?: FmfStaffCardEventInput[] | null;
     rawParsed?: unknown;
+    clubFilter?: StaffCardClubFilter | null;
   },
   staff: StaffCandidate[],
 ): StaffCardOccurrence[] {
   if (staff.length === 0) return [];
 
-  const fromEvents =
+  let fromEvents =
     input.staffCardEvents && input.staffCardEvents.length > 0
       ? input.staffCardEvents
       : extractStaffCardEventsFromRawParsed(input.rawParsed);
+
+  if (input.clubFilter) {
+    fromEvents = filterStaffCardEventsForOurClub(fromEvents, input.clubFilter);
+  }
 
   return [
     ...staffCardEventsToOccurrences(fromEvents, staff),
