@@ -847,7 +847,9 @@ export function CoachTeamReportPanel({
                     {playerEvaluations.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-muted-foreground text-sm">
-                          {draftLoading ? "Carregando estatísticas…" : "Nenhum atleta no elenco."}
+                          {draftLoading
+                            ? "Carregando estatísticas…"
+                            : "Nenhum atleta convocado neste mês."}
                         </TableCell>
                       </TableRow>
                     ) : (

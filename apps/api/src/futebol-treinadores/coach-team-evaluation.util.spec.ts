@@ -1,6 +1,7 @@
 import {
   buildMonthlyPeriodStatuses,
   buildPlayerEvaluationStats,
+  collectConvokedPlayerIdsInPeriod,
   isLowerCategory,
   isValidMonthlyPeriodKey,
   resolveMonthlyPeriodRange,
@@ -108,6 +109,39 @@ describe('coach-team-evaluation.util — mensal', () => {
     expect(isLowerCategory('sub14', 'sub17', map)).toBe(true);
     expect(isLowerCategory('sub17', 'sub17', map)).toBe(false);
     expect(isLowerCategory('sub20', 'sub17', map)).toBe(false);
+  });
+
+  it('collectConvokedPlayerIdsInPeriod — FMF listed e viagem', () => {
+    const ids = collectConvokedPlayerIdsInPeriod({
+      from: '2026-09-01',
+      to: '2026-09-30',
+      reportCategory: 'sub17',
+      squadPlayerIds: new Set(['p1', 'p2', 'p3']),
+      fmfListed: [
+        { playerId: 'p1', matchDate: new Date('2026-09-10T15:00:00Z') },
+        { playerId: 'p9', matchDate: new Date('2026-09-10T15:00:00Z') },
+      ],
+      travels: [
+        {
+          matchDate: new Date('2026-09-15T15:00:00Z'),
+          category: 'sub17',
+          categories: null,
+          status: 'confirmado',
+          participants: [
+            { playerId: 'p2', personType: 'player' },
+            { playerId: 'p3', personType: 'staff' },
+          ],
+        },
+        {
+          matchDate: new Date('2026-09-20T15:00:00Z'),
+          category: 'sub20',
+          categories: null,
+          status: 'confirmado',
+          participants: [{ playerId: 'p2', personType: 'player' }],
+        },
+      ],
+    });
+    expect([...ids].sort()).toEqual(['p1', 'p2']);
   });
 });
 

@@ -1,4 +1,5 @@
 import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
+import { travelMatchesCategoryFilter } from '../futebol-agenda/travel-categories.util';
 import { buildSquadPlayerPeriodMinutes } from './player-period-minutes.util';
 
 export const COACH_TEAM_REPORT_PERIOD_KEYS = [
@@ -230,6 +231,45 @@ export function buildCategorySortOrderMap(
   categories: Array<{ value: string; sortOrder: number }>,
 ): Map<string, number> {
   return new Map(categories.map((c) => [c.value, c.sortOrder]));
+}
+
+/** Atletas convocados/listados no período (FMF listed + viagem oficial), deduplicados. */
+export function collectConvokedPlayerIdsInPeriod(input: {
+  from: string;
+  to: string;
+  reportCategory?: string | null;
+  squadPlayerIds: Set<string>;
+  fmfListed: Array<{ playerId: string; matchDate: Date }>;
+  travels: Array<{
+    matchDate: Date;
+    category: string | null;
+    categories: unknown;
+    status: string;
+    participants: Array<{ playerId: string | null; personType: string }>;
+  }>;
+}): Set<string> {
+  const ids = new Set<string>();
+
+  for (const row of input.fmfListed) {
+    const dateKey = row.matchDate.toISOString().slice(0, 10);
+    if (!dateKeyInRange(dateKey, input.from, input.to)) continue;
+    if (input.squadPlayerIds.has(row.playerId)) ids.add(row.playerId);
+  }
+
+  for (const travel of input.travels) {
+    if (['rascunho', 'cancelado'].includes(travel.status)) continue;
+    const dateKey = travel.matchDate.toISOString().slice(0, 10);
+    if (!dateKeyInRange(dateKey, input.from, input.to)) continue;
+    if (!travelMatchesCategoryFilter(travel, input.reportCategory)) continue;
+    for (const participant of travel.participants) {
+      if (participant.personType !== 'player') continue;
+      const playerId = participant.playerId?.trim();
+      if (!playerId || !input.squadPlayerIds.has(playerId)) continue;
+      ids.add(playerId);
+    }
+  }
+
+  return ids;
 }
 
 export function dateKeyInRange(dateKey: string, from: string, to: string): boolean {

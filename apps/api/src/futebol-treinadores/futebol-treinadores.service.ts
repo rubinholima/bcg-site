@@ -54,6 +54,7 @@ import {
   buildCategorySortOrderMap,
   buildMonthlyPeriodStatuses,
   buildPlayerEvaluationStats,
+  collectConvokedPlayerIdsInPeriod,
   isLowerCategory,
   isValidMonthlyPeriodKey,
   resolveMonthlyPeriodRange,
@@ -882,8 +883,12 @@ export class FutebolTreinadoresService {
     const range = resolveMonthlyPeriodRange(periodKey);
     const players = await this.loadSquadPlayersForEvaluation(tenantId, category);
     const squadIds = players.map((p) => p.id);
+    const squadSet = new Set(squadIds);
+    const periodStartDate = new Date(`${range.start}T00:00:00.000Z`);
+    const periodEndDate = new Date(`${range.end}T23:59:59.999Z`);
 
-    const [matchReports, trainingSessions, fmfMatches, savedEvaluations] = await Promise.all([
+    const [matchReports, trainingSessions, fmfMatches, savedEvaluations, fmfListedStats, travelsRaw] =
+      await Promise.all([
       this.prisma.coachMatchReport.findMany({
         where: {
           tenantId,
@@ -952,6 +957,44 @@ export class FutebolTreinadoresService {
             },
           })
         : Promise.resolve([]),
+      this.prisma.fmfPlayerMatchStat.findMany({
+        where: {
+          listed: true,
+          playerId: squadIds.length > 0 ? { in: squadIds } : undefined,
+          match: {
+            tenantId,
+            ...(category ? { category } : {}),
+            matchDate: { gte: periodStartDate, lte: periodEndDate },
+          },
+        },
+        select: {
+          playerId: true,
+          match: { select: { matchDate: true } },
+        },
+      }),
+      this.prisma.travelLogistics.findMany({
+        where: {
+          tenantId,
+          status: { notIn: ['rascunho', 'cancelado'] },
+          matchDate: { gte: periodStartDate, lte: periodEndDate },
+          participants: {
+            some: {
+              personType: 'player',
+              playerId: squadIds.length > 0 ? { in: squadIds } : undefined,
+            },
+          },
+        },
+        select: {
+          matchDate: true,
+          category: true,
+          categories: true,
+          status: true,
+          participants: {
+            where: { personType: 'player' },
+            select: { playerId: true, personType: true },
+          },
+        },
+      }),
     ]);
 
     const linkedFmfIds = new Set(
@@ -975,10 +1018,26 @@ export class FutebolTreinadoresService {
       savedEvaluations.map((e) => [e.playerId, e.playerStrengths] as const),
     );
 
+    const convokedIds = collectConvokedPlayerIdsInPeriod({
+      from: range.start,
+      to: range.end,
+      reportCategory: category,
+      squadPlayerIds: squadSet,
+      fmfListed: fmfListedStats.map((row) => ({
+        playerId: row.playerId,
+        matchDate: row.match.matchDate,
+      })),
+      travels: travelsRaw,
+    });
+    const savedPlayerIds = new Set(savedEvaluations.map((e) => e.playerId));
+    const playersForReport = players.filter(
+      (p) => convokedIds.has(p.id) || savedPlayerIds.has(p.id),
+    );
+
     const playersStats = buildPlayerEvaluationStats({
       tenantId,
       reportCategory: category,
-      players,
+      players: playersForReport,
       from: range.start,
       to: range.end,
       matchReports,
