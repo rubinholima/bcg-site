@@ -51,10 +51,13 @@ import {
   normalizeOpponentBestPlayersInput,
 } from './coach-match-report.util';
 import {
+  buildCategorySortOrderMap,
+  buildMonthlyPeriodStatuses,
   buildPlayerEvaluationStats,
-  computePeriodicRatingsByPlayer,
+  isLowerCategory,
+  isValidMonthlyPeriodKey,
+  resolveMonthlyPeriodRange,
   resolveQuarterlyPeriodRange,
-  validateQuarterlyTeamReportSubmit,
   type CoachTeamReportPeriodKey,
 } from './coach-team-evaluation.util';
 
@@ -869,95 +872,87 @@ export class FutebolTreinadoresService {
 
   async getTeamReportEvaluationDraft(
     tenantId: string,
-    season: number,
     periodKey: string,
     category?: string,
     reportId?: string,
   ) {
-    if (
-      !COACH_TEAM_REPORT_PERIOD_KEYS.includes(
-        periodKey as (typeof COACH_TEAM_REPORT_PERIOD_KEYS)[number],
-      )
-    ) {
-      throw new BadRequestException('Janela trimestral inválida');
+    if (!isValidMonthlyPeriodKey(periodKey)) {
+      throw new BadRequestException('Mês inválido. Use o formato YYYY-MM.');
     }
-    const range = resolveQuarterlyPeriodRange(season, periodKey as CoachTeamReportPeriodKey);
+    const range = resolveMonthlyPeriodRange(periodKey);
     const players = await this.loadSquadPlayersForEvaluation(tenantId, category);
+    const squadIds = players.map((p) => p.id);
 
-    const [matchReports, trainingSessions, fmfMatches, savedEvaluations, periodicRows] =
-      await Promise.all([
-        this.prisma.coachMatchReport.findMany({
-          where: {
-            tenantId,
-            ...(category ? { category } : {}),
-          },
-          select: {
-            id: true,
-            matchDate: true,
-            status: true,
-            fmfMatchReportId: true,
-            playerRatings: { select: { playerId: true, rating: true } },
-            fmfMatchReport: {
-              select: {
-                matchDate: true,
-                playerStats: {
-                  select: { playerId: true, minutesPlayed: true, played: true },
-                },
+    const [matchReports, trainingSessions, fmfMatches, savedEvaluations] = await Promise.all([
+      this.prisma.coachMatchReport.findMany({
+        where: {
+          tenantId,
+          ...(category ? { category } : {}),
+        },
+        select: {
+          id: true,
+          matchDate: true,
+          status: true,
+          fmfMatchReportId: true,
+          travelLogisticsId: true,
+          playerRatings: { select: { playerId: true, rating: true } },
+          fmfMatchReport: {
+            select: {
+              id: true,
+              matchDate: true,
+              playerStats: {
+                select: { playerId: true, minutesPlayed: true, played: true },
               },
             },
           },
-        }),
-        this.prisma.coachTrainingSession.findMany({
-          where: {
-            tenantId,
-            ...(category ? { category } : {}),
+        },
+      }),
+      this.prisma.coachTrainingSession.findMany({
+        where: {
+          tenantId,
+          ...(category
+            ? { OR: [{ category }, { category: null }] }
+            : {}),
+        },
+        select: {
+          sessionDate: true,
+          status: true,
+          category: true,
+          startTime: true,
+          endTime: true,
+          activities: { select: { durationMinutes: true } },
+          playerEntries: {
+            where: squadIds.length > 0 ? { playerId: { in: squadIds } } : undefined,
+            select: { playerId: true, available: true },
           },
-          select: {
-            sessionDate: true,
-            status: true,
-            startTime: true,
-            endTime: true,
-            activities: { select: { durationMinutes: true } },
-            playerEntries: { select: { playerId: true, available: true } },
+        },
+      }),
+      this.prisma.fmfMatchReport.findMany({
+        where: {
+          tenantId,
+          ...(category ? { category } : {}),
+        },
+        select: {
+          id: true,
+          matchDate: true,
+          coachMatchReport: { select: { id: true, fmfMatchReportId: true } },
+          playerStats: {
+            select: { playerId: true, minutesPlayed: true, played: true },
           },
-        }),
-        this.prisma.fmfMatchReport.findMany({
-          where: {
-            tenantId,
-            ...(category ? { category } : {}),
-          },
-          select: {
-            id: true,
-            matchDate: true,
-            coachMatchReport: { select: { id: true } },
-            playerStats: {
-              select: { playerId: true, minutesPlayed: true, played: true },
+        },
+      }),
+      reportId
+        ? this.prisma.coachTeamReportPlayerEvaluation.findMany({
+            where: { reportId },
+            select: {
+              playerId: true,
+              coachFinalRating: true,
+              individualObservation: true,
+              playerStrengths: true,
             },
-          },
-        }),
-        reportId
-          ? this.prisma.coachTeamReportPlayerEvaluation.findMany({
-              where: { reportId },
-              select: { playerId: true, coachFinalRating: true },
-            })
-          : Promise.resolve([]),
-        this.prisma.coachTeamReportPlayerEvaluation.findMany({
-          where: {
-            report: {
-              tenantId,
-              ...(category ? { category } : {}),
-              season,
-              status: 'enviado',
-              periodKey: { not: null },
-            },
-          },
-          select: {
-            playerId: true,
-            coachFinalRating: true,
-            report: { select: { season: true, periodKey: true, status: true } },
-          },
-        }),
-      ]);
+          })
+        : Promise.resolve([]),
+    ]);
 
     const linkedFmfIds = new Set(
       matchReports.map((m) => m.fmfMatchReportId).filter((id): id is string => !!id),
@@ -965,6 +960,7 @@ export class FutebolTreinadoresService {
     const fmfOnlyMatches = fmfMatches
       .filter((m) => !m.coachMatchReport && !linkedFmfIds.has(m.id))
       .map((m) => ({
+        id: m.id,
         matchDate: m.matchDate,
         playerStats: m.playerStats,
       }));
@@ -972,30 +968,77 @@ export class FutebolTreinadoresService {
     const savedRatings = new Map<string, number | null>(
       savedEvaluations.map((e) => [e.playerId, e.coachFinalRating] as const),
     );
-    const periodicRatings = computePeriodicRatingsByPlayer(
-      periodicRows,
-      season,
-      periodKey as CoachTeamReportPeriodKey,
+    const savedObservations = new Map<string, string | null>(
+      savedEvaluations.map((e) => [e.playerId, e.individualObservation] as const),
+    );
+    const savedStrengths = new Map<string, string | null>(
+      savedEvaluations.map((e) => [e.playerId, e.playerStrengths] as const),
     );
 
     const playersStats = buildPlayerEvaluationStats({
+      tenantId,
+      reportCategory: category,
       players,
       from: range.start,
       to: range.end,
       matchReports,
-      fmfOnlyMatches,
+      fmfMatches: fmfOnlyMatches,
       trainingSessions,
       savedRatings,
-      periodicRatings,
+      savedObservations,
+      savedStrengths,
     });
 
     return {
-      season,
-      periodKey,
+      season: range.season,
+      periodKey: range.periodKey,
       periodStart: range.start,
       periodEnd: range.end,
       players: playersStats,
     };
+  }
+
+  async getPromotionCandidates(tenantId: string, coachCategory: string) {
+    const cat = coachCategory?.trim();
+    if (!cat) return [];
+
+    const fixtureCats = await this.prisma.fixtureCategory.findMany({
+      where: { active: true },
+      select: { value: true, sortOrder: true, labelPT: true },
+    });
+    const sortOrderMap = buildCategorySortOrderMap(fixtureCats);
+    const labelByValue = new Map(fixtureCats.map((c) => [c.value, c.labelPT]));
+
+    const playersRaw = await this.prisma.player.findMany({
+      where: { tenantId },
+      select: {
+        id: true,
+        name: true,
+        photoUrl: true,
+        jerseyNumber: true,
+        category: true,
+        registrationProfile: true,
+      },
+      orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
+    });
+
+    return playersRaw
+      .filter((p) => {
+        const profile = p.registrationProfile as { sports?: { situation?: string } } | null;
+        const situation = normalizeSportsSituation(profile?.sports?.situation);
+        if (isArchivedSportsSituation(situation) || isLoanedSportsSituation(situation)) {
+          return false;
+        }
+        return isLowerCategory(p.category, cat, sortOrderMap);
+      })
+      .map((p) => ({
+        id: p.id,
+        name: getPlayerListDisplayName(p),
+        photoUrl: p.photoUrl,
+        jerseyNumber: p.jerseyNumber,
+        category: p.category,
+        categoryLabel: p.category ? labelByValue.get(p.category) ?? p.category : null,
+      }));
   }
 
   async getTeamReport(id: string) {
@@ -1033,6 +1076,8 @@ export class FutebolTreinadoresService {
       trainingMinutes?: number;
       avgMatchRating?: number | null;
       coachFinalRating?: number | null;
+      individualObservation?: string | null;
+      playerStrengths?: string | null;
     }>;
   }) {
     if (
@@ -1043,15 +1088,17 @@ export class FutebolTreinadoresService {
       throw new BadRequestException('Tipo de período inválido');
     }
 
-    const periodKey =
-      input.periodKey &&
+    const periodKeyRaw = input.periodKey?.trim() ?? null;
+    const isMonthly = periodKeyRaw ? isValidMonthlyPeriodKey(periodKeyRaw) : false;
+    const isQuarterly =
+      periodKeyRaw &&
       COACH_TEAM_REPORT_PERIOD_KEYS.includes(
-        input.periodKey as (typeof COACH_TEAM_REPORT_PERIOD_KEYS)[number],
-      )
-        ? input.periodKey
-        : null;
+        periodKeyRaw as (typeof COACH_TEAM_REPORT_PERIOD_KEYS)[number],
+      );
 
-    const season = input.season ?? null;
+    const periodKey = isMonthly || isQuarterly ? periodKeyRaw : null;
+
+    let season = input.season ?? null;
 
     const status =
       input.status &&
@@ -1080,7 +1127,12 @@ export class FutebolTreinadoresService {
 
     let periodStart = parseDate(input.periodStart);
     let periodEnd = parseDate(input.periodEnd);
-    if (periodKey && season) {
+    if (isMonthly && periodKey) {
+      const range = resolveMonthlyPeriodRange(periodKey);
+      season = range.season;
+      periodStart = parseDate(range.start);
+      periodEnd = parseDate(range.end);
+    } else if (isQuarterly && periodKey && season) {
       const range = resolveQuarterlyPeriodRange(season, periodKey as CoachTeamReportPeriodKey);
       periodStart = parseDate(range.start);
       periodEnd = parseDate(range.end);
@@ -1110,7 +1162,7 @@ export class FutebolTreinadoresService {
     const data = {
       tenantId: input.tenantId,
       category: input.category ?? null,
-      periodType: periodKey ? 'trimestral' : input.periodType,
+      periodType: isMonthly ? 'mensal' : isQuarterly ? 'trimestral' : input.periodType,
       season,
       periodKey,
       periodStart,
@@ -1135,7 +1187,7 @@ export class FutebolTreinadoresService {
       const code = (err as { code?: string })?.code;
       if (code === 'P2002') {
         throw new BadRequestException(
-          'Já existe relatório trimestral para esta categoria e janela na temporada.',
+          'Já existe relatório para esta categoria e período na temporada.',
         );
       }
       throw err;
@@ -1169,6 +1221,8 @@ export class FutebolTreinadoresService {
             trainingMinutes: e.trainingMinutes ?? 0,
             avgMatchRating: clampRating(e.avgMatchRating),
             coachFinalRating: clampRating(e.coachFinalRating),
+            individualObservation: e.individualObservation?.trim() || null,
+            playerStrengths: e.playerStrengths?.trim() || null,
           })),
         });
       }
@@ -1229,8 +1283,24 @@ export class FutebolTreinadoresService {
       latestEnviado,
       dispensasIndicadas: actionCounts.dispensa ?? 0,
       promocoesIndicadas: actionCounts.promocao ?? 0,
+      monthlyPeriods: await this.buildMonthlyPeriodStatus(tenantId, category),
       quarterlyPeriods: await this.buildQuarterlyPeriodStatus(tenantId, category),
     };
+  }
+
+  private async buildMonthlyPeriodStatus(tenantId: string, category?: string) {
+    const season = new Date().getFullYear();
+    const reports = await this.prisma.coachTeamReport.findMany({
+      where: {
+        tenantId,
+        ...(category ? { category } : {}),
+        season,
+        periodType: 'mensal',
+        periodKey: { not: null },
+      },
+      select: { periodKey: true, status: true, id: true },
+    });
+    return buildMonthlyPeriodStatuses({ season, reports });
   }
 
   private async buildQuarterlyPeriodStatus(tenantId: string, category?: string) {

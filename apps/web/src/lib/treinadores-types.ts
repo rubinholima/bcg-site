@@ -357,6 +357,8 @@ export type CoachTeamReportPlayerEvaluation = {
   trainingMinutes: number;
   avgMatchRating: number | null;
   coachFinalRating: number | null;
+  individualObservation?: string | null;
+  playerStrengths?: string | null;
   player?: {
     id: string;
     name: string;
@@ -368,7 +370,7 @@ export type CoachTeamReportPlayerEvaluation = {
 
 export type CoachTeamEvaluationDraft = {
   season: number;
-  periodKey: CoachTeamReportPeriodKey;
+  periodKey: string;
   periodStart: string;
   periodEnd: string;
   players: Array<
@@ -376,10 +378,20 @@ export type CoachTeamEvaluationDraft = {
       name: string;
       jerseyNumber: number | null;
       category: string | null;
-      periodicAverage: number | null;
     }
   >;
 };
+
+export type CoachPromotionCandidate = {
+  id: string;
+  name: string;
+  photoUrl: string | null;
+  jerseyNumber: number | null;
+  category: string | null;
+  categoryLabel: string | null;
+};
+
+export type CoachTeamMonthlyReportStatus = "pendente" | "rascunho" | "enviado" | "atrasado";
 
 export type CoachTeamReport = {
   id: string;
@@ -387,7 +399,7 @@ export type CoachTeamReport = {
   category: string | null;
   periodType: CoachTeamReportPeriod;
   season: number | null;
-  periodKey: CoachTeamReportPeriodKey | null;
+  periodKey: CoachTeamReportPeriodKey | string | null;
   periodStart: string | null;
   periodEnd: string | null;
   generalDescription: string | null;
@@ -428,6 +440,11 @@ export type CoachTeamReportSummary = {
   quarterlyPeriods?: Array<{
     periodKey: CoachTeamReportPeriodKey;
     status: "pendente" | "rascunho" | "enviado";
+    reportId: string | null;
+  }>;
+  monthlyPeriods?: Array<{
+    periodKey: string;
+    status: CoachTeamMonthlyReportStatus;
     reportId: string | null;
   }>;
 };

@@ -296,24 +296,29 @@ export class FutebolTreinadoresController {
   @TeamReportReadAccess()
   getTeamReportEvaluationDraft(
     @Query('tenantId') tenantId: string,
-    @Query('season') seasonRaw: string,
     @Query('periodKey') periodKey: string,
     @Query('category') category?: string,
     @Query('reportId') reportId?: string,
   ) {
     if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
-    const season = Number(seasonRaw);
-    if (!Number.isFinite(season) || season < 2000) {
-      throw new BadRequestException('season inválida');
-    }
     if (!periodKey?.trim()) throw new BadRequestException('periodKey é obrigatório');
     return this.service.getTeamReportEvaluationDraft(
       tenantId.trim(),
-      season,
       periodKey.trim(),
       category?.trim() || undefined,
       reportId?.trim() || undefined,
     );
+  }
+
+  @Get('team-reports/promotion-candidates')
+  @TeamReportReadAccess()
+  getPromotionCandidates(
+    @Query('tenantId') tenantId: string,
+    @Query('category') category: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+    if (!category?.trim()) throw new BadRequestException('category é obrigatório');
+    return this.service.getPromotionCandidates(tenantId.trim(), category.trim());
   }
 
   @Get('team-reports/summary')
@@ -393,6 +398,8 @@ export class FutebolTreinadoresController {
             trainingMinutes?: number;
             avgMatchRating?: number | null;
             coachFinalRating?: number | null;
+            individualObservation?: string | null;
+            playerStrengths?: string | null;
           }>)
         : undefined,
     });

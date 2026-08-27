@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw, Save, Send, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { Loader2, Plus, Save, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,13 +30,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
+import { getPublicImageUrl } from "@/lib/media-url";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import type {
   CoachContextPlayer,
   CoachContextResponse,
+  CoachPromotionCandidate,
   CoachTeamEvaluationDraft,
+  CoachTeamMonthlyReportStatus,
   CoachTeamReport,
-  CoachTeamReportPeriodKey,
   CoachTeamReportPlayerEvaluation,
   CoachTeamReportSummary,
 } from "@/lib/treinadores-types";
@@ -45,6 +48,8 @@ type PlayerActionDraft = {
   playerId: string;
   name: string;
   jerseyNumber: number | null;
+  category: string | null;
+  photoUrl: string | null;
   actionType: "dispensa" | "promocao";
   reason: string;
 };
@@ -52,7 +57,6 @@ type PlayerActionDraft = {
 type EvaluationRow = CoachTeamReportPlayerEvaluation & {
   name: string;
   jerseyNumber: number | null;
-  periodicAverage: number | null;
 };
 
 interface Props {
@@ -65,15 +69,37 @@ interface Props {
   showSummary?: boolean;
 }
 
-function suggestPeriodKey(): CoachTeamReportPeriodKey {
-  const month = new Date().getMonth() + 1;
-  if (month <= 2) return "fevereiro";
-  if (month <= 7) return "julho";
-  if (month <= 9) return "setembro";
-  return "fim_temporada";
+const MONTHLY_KEY_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+function suggestMonthlyPeriodKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthlyPeriodLabel(periodKey: string): string {
+  if (!MONTHLY_KEY_RE.test(periodKey)) return periodKey;
+  const [year, month] = periodKey.split("-");
+  const names = [
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
+  ];
+  return `${names[Number(month) - 1] ?? month} ${year}`;
 }
 
 function periodLabel(report: CoachTeamReport) {
+  if (report.periodKey && MONTHLY_KEY_RE.test(report.periodKey)) {
+    return monthlyPeriodLabel(report.periodKey);
+  }
   if (report.periodKey) {
     const keyLabel =
       COACH_TEAM_PERIOD_KEYS.find((p) => p.value === report.periodKey)?.label ?? report.periodKey;
@@ -89,9 +115,30 @@ function periodLabel(report: CoachTeamReport) {
   return report.periodType;
 }
 
-function formatRating(value: number | null | undefined) {
-  if (value == null || Number.isNaN(value)) return "—";
-  return value.toFixed(1);
+function monthlyStatusLabel(status: CoachTeamMonthlyReportStatus) {
+  switch (status) {
+    case "enviado":
+      return "enviado";
+    case "rascunho":
+      return "rascunho";
+    case "atrasado":
+      return "atrasado";
+    default:
+      return "pendente";
+  }
+}
+
+function monthlyStatusTone(status: CoachTeamMonthlyReportStatus) {
+  switch (status) {
+    case "enviado":
+      return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
+    case "rascunho":
+      return "border-amber-500/40 bg-amber-500/10 text-amber-200";
+    case "atrasado":
+      return "border-red-500/40 bg-red-500/10 text-red-300";
+    default:
+      return "border-border/60 bg-muted/30 text-muted-foreground";
+  }
 }
 
 function draftToRows(draft: CoachTeamEvaluationDraft): EvaluationRow[] {
@@ -104,7 +151,8 @@ function draftToRows(draft: CoachTeamEvaluationDraft): EvaluationRow[] {
     trainingMinutes: p.trainingMinutes,
     avgMatchRating: p.avgMatchRating,
     coachFinalRating: p.coachFinalRating,
-    periodicAverage: p.periodicAverage,
+    individualObservation: p.individualObservation ?? null,
+    playerStrengths: p.playerStrengths ?? null,
   }));
 }
 
@@ -121,7 +169,6 @@ function evaluationsFromReport(data: CoachTeamReport, players: CoachContextPlaye
           })
         : ev.player?.name ?? "—",
       jerseyNumber: p?.jerseyNumber ?? ev.player?.jerseyNumber ?? null,
-      periodicAverage: null,
     };
   });
 }
@@ -138,12 +185,12 @@ export function CoachTeamReportPanel({
   const currentYear = new Date().getFullYear();
   const [reports, setReports] = useState<CoachTeamReport[]>([]);
   const [summary, setSummary] = useState<CoachTeamReportSummary | null>(null);
+  const [promotionCandidates, setPromotionCandidates] = useState<CoachPromotionCandidate[]>([]);
   const [loading, setLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedId, setSelectedId] = useState("");
-  const [season, setSeason] = useState(currentYear);
-  const [periodKey, setPeriodKey] = useState<CoachTeamReportPeriodKey>(suggestPeriodKey());
+  const [periodKey, setPeriodKey] = useState(suggestMonthlyPeriodKey());
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [generalDescription, setGeneralDescription] = useState("");
@@ -160,8 +207,12 @@ export function CoachTeamReportPanel({
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const players = useMemo(() => context?.players ?? [], [context?.players]);
+  const season = useMemo(() => {
+    if (MONTHLY_KEY_RE.test(periodKey)) return Number(periodKey.split("-")[0]);
+    return currentYear;
+  }, [periodKey, currentYear]);
 
-  const playerOptions = useMemo(
+  const dispensaOptions = useMemo(
     () =>
       players.map((p) => ({
         value: p.id,
@@ -170,13 +221,21 @@ export function CoachTeamReportPanel({
     [players],
   );
 
+  const promocaoOptions = useMemo(
+    () =>
+      promotionCandidates.map((p) => ({
+        value: p.id,
+        label: `${p.categoryLabel ?? p.category ?? "?"} · ${p.name}`,
+      })),
+    [promotionCandidates],
+  );
+
   const loadReports = useCallback(() => {
     if (!tenantId) return;
     setLoading(true);
     const params = new URLSearchParams({ tenantId });
     if (category) params.set("category", category);
     if (statusFilter !== "all") params.set("status", statusFilter);
-    params.set("periodType", "trimestral");
     api
       .get<CoachTeamReport[]>(`/futebol-treinadores/team-reports?${params}`)
       .then(({ data }) => setReports(Array.isArray(data) ? data : []))
@@ -194,17 +253,25 @@ export function CoachTeamReportPanel({
       .catch(() => setSummary(null));
   }, [tenantId, category]);
 
+  const loadPromotionCandidates = useCallback(() => {
+    if (!tenantId || !category) {
+      setPromotionCandidates([]);
+      return;
+    }
+    const params = new URLSearchParams({ tenantId, category });
+    api
+      .get<CoachPromotionCandidate[]>(`/futebol-treinadores/team-reports/promotion-candidates?${params}`)
+      .then(({ data }) => setPromotionCandidates(Array.isArray(data) ? data : []))
+      .catch(() => setPromotionCandidates([]));
+  }, [tenantId, category]);
+
   const loadEvaluationDraft = useCallback(
-    (opts?: { reportId?: string; nextSeason?: number; nextPeriodKey?: CoachTeamReportPeriodKey }) => {
+    (opts?: { reportId?: string; nextPeriodKey?: string }) => {
       if (!tenantId || readOnly) return;
-      const s = opts?.nextSeason ?? season;
       const pk = opts?.nextPeriodKey ?? periodKey;
+      if (!MONTHLY_KEY_RE.test(pk)) return;
       setDraftLoading(true);
-      const params = new URLSearchParams({
-        tenantId,
-        season: String(s),
-        periodKey: pk,
-      });
+      const params = new URLSearchParams({ tenantId, periodKey: pk });
       if (category) params.set("category", category);
       if (opts?.reportId) params.set("reportId", opts.reportId);
       api
@@ -221,6 +288,8 @@ export function CoachTeamReportPanel({
               return {
                 ...row,
                 coachFinalRating: existing?.coachFinalRating ?? row.coachFinalRating,
+                individualObservation: existing?.individualObservation ?? row.individualObservation,
+                playerStrengths: existing?.playerStrengths ?? row.playerStrengths,
               };
             });
           });
@@ -230,33 +299,32 @@ export function CoachTeamReportPanel({
         })
         .finally(() => setDraftLoading(false));
     },
-    [tenantId, category, season, periodKey, readOnly],
+    [tenantId, category, periodKey, readOnly],
   );
 
   useEffect(() => {
     loadReports();
     loadSummary();
-  }, [loadReports, loadSummary]);
+    loadPromotionCandidates();
+  }, [loadReports, loadSummary, loadPromotionCandidates]);
 
   const resetForm = () => {
-    const pk = suggestPeriodKey();
+    const pk = suggestMonthlyPeriodKey();
     setSelectedId("");
-    setSeason(currentYear);
     setPeriodKey(pk);
     setGeneralDescription("");
     setWeakPoints("");
     setStatus("rascunho");
     setPlayerActions([]);
     setPlayerEvaluations([]);
-    loadEvaluationDraft({ nextSeason: currentYear, nextPeriodKey: pk });
+    loadEvaluationDraft({ nextPeriodKey: pk });
   };
 
   useEffect(() => {
     if (!selectedId) return;
     api.get<CoachTeamReport>(`/futebol-treinadores/team-reports/${selectedId}`).then(({ data }) => {
       if (!data) return;
-      setSeason(data.season ?? currentYear);
-      setPeriodKey(data.periodKey ?? suggestPeriodKey());
+      setPeriodKey(data.periodKey ?? suggestMonthlyPeriodKey());
       setPeriodStart(data.periodStart ? data.periodStart.slice(0, 10) : "");
       setPeriodEnd(data.periodEnd ? data.periodEnd.slice(0, 10) : "");
       setGeneralDescription(data.generalDescription ?? "");
@@ -272,6 +340,8 @@ export function CoachTeamReportPanel({
               })
             : "",
           jerseyNumber: a.player?.jerseyNumber ?? null,
+          category: a.player?.category ?? null,
+          photoUrl: null,
           actionType: a.actionType,
           reason: a.reason ?? "",
         })),
@@ -279,43 +349,57 @@ export function CoachTeamReportPanel({
       if (data.playerEvaluations.length > 0) {
         setPlayerEvaluations(evaluationsFromReport(data, players));
       }
-      if (data.periodKey) {
-        loadEvaluationDraft({
-          reportId: data.id,
-          nextSeason: data.season ?? currentYear,
-          nextPeriodKey: data.periodKey,
-        });
+      if (data.periodKey && MONTHLY_KEY_RE.test(data.periodKey)) {
+        loadEvaluationDraft({ reportId: data.id, nextPeriodKey: data.periodKey });
       }
     });
-  }, [selectedId, players, currentYear, loadEvaluationDraft]);
+  }, [selectedId, players, loadEvaluationDraft]);
 
   useEffect(() => {
     if (selectedId || readOnly || !tenantId) return;
-    loadEvaluationDraft();
-  }, [selectedId, tenantId, category, season, periodKey, readOnly, loadEvaluationDraft]);
+    if (MONTHLY_KEY_RE.test(periodKey)) loadEvaluationDraft();
+  }, [selectedId, tenantId, category, periodKey, readOnly, loadEvaluationDraft]);
 
-  const handlePeriodKeyChange = (value: CoachTeamReportPeriodKey) => {
+  const handlePeriodKeyChange = (value: string) => {
     setPeriodKey(value);
     const existing = reports.find(
-      (r) => r.season === season && r.periodKey === value && r.status !== "enviado",
+      (r) => r.periodKey === value && r.periodType === "mensal" && r.status !== "enviado",
     );
-    if (existing) {
-      setSelectedId(existing.id);
-    } else {
+    if (existing) setSelectedId(existing.id);
+    else {
       setSelectedId("");
       setPlayerEvaluations([]);
     }
   };
 
   const addAction = (actionType: "dispensa" | "promocao") => {
-    const first = players.find((p) => !playerActions.some((a) => a.playerId === p.id));
+    if (actionType === "dispensa") {
+      const first = players.find((p) => !playerActions.some((a) => a.playerId === p.id));
+      if (!first) return;
+      setPlayerActions((prev) => [
+        ...prev,
+        {
+          playerId: first.id,
+          name: getPlayerListDisplayName(first),
+          jerseyNumber: first.jerseyNumber,
+          category: first.category,
+          photoUrl: null,
+          actionType,
+          reason: "",
+        },
+      ]);
+      return;
+    }
+    const first = promotionCandidates.find((p) => !playerActions.some((a) => a.playerId === p.id));
     if (!first) return;
     setPlayerActions((prev) => [
       ...prev,
       {
         playerId: first.id,
-        name: getPlayerListDisplayName(first),
+        name: first.name,
         jerseyNumber: first.jerseyNumber,
+        category: first.category,
+        photoUrl: first.photoUrl,
         actionType,
         reason: "",
       },
@@ -344,7 +428,7 @@ export function CoachTeamReportPanel({
         id: selectedId || undefined,
         tenantId,
         category: category || null,
-        periodType: "trimestral" as const,
+        periodType: "mensal" as const,
         season,
         periodKey,
         periodStart: periodStart || null,
@@ -359,6 +443,16 @@ export function CoachTeamReportPanel({
             actionType: a.actionType,
             reason: a.reason || null,
           })),
+        playerEvaluations: playerEvaluations.map((e) => ({
+          playerId: e.playerId,
+          gamesCount: e.gamesCount,
+          gamesMinutes: e.gamesMinutes,
+          trainingMinutes: e.trainingMinutes,
+          avgMatchRating: e.avgMatchRating,
+          coachFinalRating: e.coachFinalRating,
+          individualObservation: e.individualObservation || null,
+          playerStrengths: e.playerStrengths || null,
+        })),
       };
       const { data } = await api.post<CoachTeamReport>("/futebol-treinadores/team-reports", payload);
       if (data?.id) setSelectedId(data.id);
@@ -405,13 +499,13 @@ export function CoachTeamReportPanel({
 
   const dispensas = playerActions.filter((a) => a.actionType === "dispensa");
   const promocoes = playerActions.filter((a) => a.actionType === "promocao");
-
-  const quarterlyStatus = summary?.quarterlyPeriods ?? [];
+  const monthlyStatus = summary?.monthlyPeriods ?? [];
 
   const renderActionTable = (rows: PlayerActionDraft[], actionType: "dispensa" | "promocao") => {
     const indices = playerActions
       .map((a, i) => (a.actionType === actionType ? i : -1))
       .filter((i) => i >= 0);
+    const options = actionType === "dispensa" ? dispensaOptions : promocaoOptions;
 
     return (
       <div className="overflow-x-auto rounded-lg border border-border/60">
@@ -419,26 +513,48 @@ export function CoachTeamReportPanel({
           <TableHeader>
             <TableRow>
               <TableHead className="w-14 text-center">#</TableHead>
+              {actionType === "promocao" ? <TableHead className="w-12" /> : null}
               <TableHead>Atleta</TableHead>
-              <TableHead>Motivo</TableHead>
+              {actionType === "promocao" ? <TableHead>Categoria</TableHead> : null}
+              <TableHead>{actionType === "promocao" ? "Motivo / observação" : "Motivo"}</TableHead>
               {!readOnly ? <TableHead className="w-12" /> : null}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={readOnly ? 3 : 4} className="text-muted-foreground text-sm">
+                <TableCell
+                  colSpan={readOnly ? (actionType === "promocao" ? 4 : 3) : actionType === "promocao" ? 5 : 4}
+                  className="text-muted-foreground text-sm"
+                >
                   Nenhuma indicação.
                 </TableCell>
               </TableRow>
             ) : (
               rows.map((row, rowIdx) => {
                 const idx = indices[rowIdx];
+                const candidate = promotionCandidates.find((p) => p.id === row.playerId);
+                const photoUrl = candidate?.photoUrl ? getPublicImageUrl(candidate.photoUrl) : null;
                 return (
                   <TableRow key={`${actionType}-${row.playerId}-${idx}`}>
                     <TableCell className="text-center tabular-nums font-medium">
                       {row.jerseyNumber ?? "—"}
                     </TableCell>
+                    {actionType === "promocao" ? (
+                      <TableCell>
+                        {photoUrl ? (
+                          <Image
+                            src={photoUrl}
+                            alt=""
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+                    ) : null}
                     <TableCell>
                       {readOnly ? (
                         row.name
@@ -446,28 +562,50 @@ export function CoachTeamReportPanel({
                         <NativeSelectField
                           value={row.playerId}
                           onChange={(e) => {
-                            const player = players.find((p) => p.id === e.target.value);
-                            if (!player) return;
+                            if (actionType === "dispensa") {
+                              const player = players.find((p) => p.id === e.target.value);
+                              if (!player) return;
+                              const next = [...playerActions];
+                              next[idx] = {
+                                ...next[idx],
+                                playerId: player.id,
+                                name: getPlayerListDisplayName(player),
+                                jerseyNumber: player.jerseyNumber,
+                                category: player.category,
+                                photoUrl: null,
+                              };
+                              setPlayerActions(next);
+                              return;
+                            }
+                            const promo = promotionCandidates.find((p) => p.id === e.target.value);
+                            if (!promo) return;
                             const next = [...playerActions];
                             next[idx] = {
                               ...next[idx],
-                              playerId: player.id,
-                              name: getPlayerListDisplayName(player),
-                              jerseyNumber: player.jerseyNumber,
+                              playerId: promo.id,
+                              name: promo.name,
+                              jerseyNumber: promo.jerseyNumber,
+                              category: promo.category,
+                              photoUrl: promo.photoUrl,
                             };
                             setPlayerActions(next);
                           }}
-                          options={playerOptions}
+                          options={options}
                         />
                       )}
                     </TableCell>
+                    {actionType === "promocao" ? (
+                      <TableCell className="text-sm text-muted-foreground">
+                        {candidate?.categoryLabel ?? row.category ?? "—"}
+                      </TableCell>
+                    ) : null}
                     <TableCell>
                       {readOnly ? (
                         row.reason || "—"
                       ) : (
                         <Input
                           value={row.reason}
-                          placeholder="Motivo"
+                          placeholder={actionType === "promocao" ? "Motivo da recomendação" : "Motivo"}
                           onChange={(e) => {
                             const next = [...playerActions];
                             next[idx] = { ...next[idx], reason: e.target.value };
@@ -540,40 +678,31 @@ export function CoachTeamReportPanel({
         </div>
       ) : null}
 
-      {quarterlyStatus.length > 0 ? (
+      {monthlyStatus.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          {quarterlyStatus.map((q) => {
-            const label = COACH_TEAM_PERIOD_KEYS.find((p) => p.value === q.periodKey)?.label ?? q.periodKey;
-            const tone =
-              q.status === "enviado"
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                : q.status === "rascunho"
-                  ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
-                  : "border-border/60 bg-muted/30 text-muted-foreground";
-            return (
-              <button
-                key={q.periodKey}
-                type="button"
-                className={`rounded-full border px-3 py-1 text-xs font-medium ${tone}`}
-                onClick={() => {
-                  if (q.reportId) setSelectedId(q.reportId);
-                  else {
-                    setSelectedId("");
-                    setPeriodKey(q.periodKey);
-                  }
-                }}
-              >
-                {label}: {q.status === "enviado" ? "enviado" : q.status === "rascunho" ? "rascunho" : "pendente"}
-              </button>
-            );
-          })}
+          {monthlyStatus.map((m) => (
+            <button
+              key={m.periodKey}
+              type="button"
+              className={`rounded-full border px-3 py-1 text-xs font-medium ${monthlyStatusTone(m.status)}`}
+              onClick={() => {
+                if (m.reportId) setSelectedId(m.reportId);
+                else {
+                  setSelectedId("");
+                  setPeriodKey(m.periodKey);
+                }
+              }}
+            >
+              {monthlyPeriodLabel(m.periodKey)}: {monthlyStatusLabel(m.status)}
+            </button>
+          ))}
         </div>
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-base">Avaliações</CardTitle>
+            <CardTitle className="text-base">Relatórios</CardTitle>
             {!readOnly ? (
               <Button type="button" size="sm" variant="outline" onClick={resetForm}>
                 <Plus className="mr-1 h-4 w-4" />
@@ -593,7 +722,7 @@ export function CoachTeamReportPanel({
             {loading ? (
               <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
             ) : reports.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma avaliação ainda.</p>
+              <p className="text-sm text-muted-foreground">Nenhum relatório ainda.</p>
             ) : (
               reports.map((r) => (
                 <div
@@ -623,35 +752,31 @@ export function CoachTeamReportPanel({
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardHeader>
             <CardTitle className="text-base">Relatório da equipe</CardTitle>
-            {!readOnly && status !== "enviado" ? null : null}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
-                <Label>Temporada</Label>
-                <Input
-                  type="number"
-                  min={2000}
-                  max={2100}
-                  value={season}
-                  disabled={readOnly || status === "enviado"}
-                  onChange={(e) => setSeason(Number(e.target.value) || currentYear)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Janela</Label>
-                {readOnly ? (
+                <Label>Mês</Label>
+                {readOnly || status === "enviado" || !MONTHLY_KEY_RE.test(periodKey) ? (
                   <p className="text-sm">
-                    {COACH_TEAM_PERIOD_KEYS.find((p) => p.value === periodKey)?.label}
+                    {MONTHLY_KEY_RE.test(periodKey)
+                      ? monthlyPeriodLabel(periodKey)
+                      : periodLabel({
+                          periodKey,
+                          periodType: "trimestral",
+                          season,
+                          periodStart,
+                          periodEnd,
+                        } as CoachTeamReport)}
                   </p>
                 ) : (
-                  <NativeSelectField
+                  <Input
+                    type="month"
+                    className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
                     value={periodKey}
-                    disabled={status === "enviado"}
-                    onChange={(e) => handlePeriodKeyChange(e.target.value as CoachTeamReportPeriodKey)}
-                    options={COACH_TEAM_PERIOD_KEYS.map((p) => ({ value: p.value, label: p.label }))}
+                    onChange={(e) => handlePeriodKeyChange(e.target.value)}
                   />
                 )}
               </div>
@@ -672,6 +797,10 @@ export function CoachTeamReportPanel({
                   value={periodEnd}
                   disabled
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Temporada</Label>
+                <Input type="number" value={season} disabled />
               </div>
             </div>
 
@@ -698,6 +827,104 @@ export function CoachTeamReportPanel({
 
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
+                <Label>Atletas</Label>
+                {draftLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border/60">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 text-center">#</TableHead>
+                      <TableHead>Atleta</TableHead>
+                      <TableHead className="text-right">Min. jogo</TableHead>
+                      <TableHead className="text-right">Min. treino</TableHead>
+                      <TableHead className="w-24">Nota</TableHead>
+                      <TableHead className="min-w-[180px]">Observação</TableHead>
+                      <TableHead className="min-w-[160px]">Pontos fortes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {playerEvaluations.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-muted-foreground text-sm">
+                          {draftLoading ? "Carregando estatísticas…" : "Nenhum atleta no elenco."}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      playerEvaluations.map((row, idx) => (
+                        <TableRow key={row.playerId}>
+                          <TableCell className="text-center tabular-nums">{row.jerseyNumber ?? "—"}</TableCell>
+                          <TableCell className="font-medium">{row.name}</TableCell>
+                          <TableCell className="text-right tabular-nums">{row.gamesMinutes}</TableCell>
+                          <TableCell className="text-right tabular-nums">{row.trainingMinutes}</TableCell>
+                          <TableCell>
+                            {readOnly || status === "enviado" ? (
+                              row.coachFinalRating ?? "—"
+                            ) : (
+                              <Input
+                                type="number"
+                                min={0}
+                                max={5}
+                                step={0.1}
+                                className="h-9"
+                                value={row.coachFinalRating ?? ""}
+                                onChange={(e) => {
+                                  const val = e.target.value === "" ? null : Number(e.target.value);
+                                  setPlayerEvaluations((prev) => {
+                                    const next = [...prev];
+                                    next[idx] = { ...next[idx], coachFinalRating: val };
+                                    return next;
+                                  });
+                                }}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {readOnly || status === "enviado" ? (
+                              row.individualObservation || "—"
+                            ) : (
+                              <Textarea
+                                rows={2}
+                                className="min-h-[60px] text-sm"
+                                value={row.individualObservation ?? ""}
+                                onChange={(e) => {
+                                  setPlayerEvaluations((prev) => {
+                                    const next = [...prev];
+                                    next[idx] = { ...next[idx], individualObservation: e.target.value };
+                                    return next;
+                                  });
+                                }}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {readOnly || status === "enviado" ? (
+                              row.playerStrengths || "—"
+                            ) : (
+                              <Textarea
+                                rows={2}
+                                className="min-h-[60px] text-sm"
+                                value={row.playerStrengths ?? ""}
+                                onChange={(e) => {
+                                  setPlayerEvaluations((prev) => {
+                                    const next = [...prev];
+                                    next[idx] = { ...next[idx], playerStrengths: e.target.value };
+                                    return next;
+                                  });
+                                }}
+                              />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
                 <Label>Dispensas</Label>
                 {!readOnly && status !== "enviado" ? (
                   <Button type="button" size="sm" variant="outline" onClick={() => addAction("dispensa")}>
@@ -711,7 +938,7 @@ export function CoachTeamReportPanel({
 
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <Label>Promoções</Label>
+                <Label>Recomendações de subida (treinar com a categoria)</Label>
                 {!readOnly && status !== "enviado" ? (
                   <Button type="button" size="sm" variant="outline" onClick={() => addAction("promocao")}>
                     <Plus className="mr-1 h-4 w-4" />
@@ -764,7 +991,7 @@ export function CoachTeamReportPanel({
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir avaliação?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir relatório?</AlertDialogTitle>
             <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

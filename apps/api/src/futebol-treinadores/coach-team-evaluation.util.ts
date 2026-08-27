@@ -1,4 +1,5 @@
 import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
+import { buildSquadPlayerPeriodMinutes } from './player-period-minutes.util';
 
 export const COACH_TEAM_REPORT_PERIOD_KEYS = [
   'fevereiro',
@@ -40,6 +41,8 @@ export type CoachTeamEvaluationPlayerStats = {
   trainingMinutes: number;
   avgMatchRating: number | null;
   coachFinalRating: number | null;
+  individualObservation?: string | null;
+  playerStrengths?: string | null;
   periodicAverage: number | null;
 };
 
@@ -93,6 +96,142 @@ export function suggestQuarterlyPeriodKey(date = new Date()): CoachTeamReportPer
   return 'fim_temporada';
 }
 
+export const MONTHLY_PERIOD_KEY_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+export type CoachTeamMonthlyPeriodRange = {
+  periodKey: string;
+  season: number;
+  start: string;
+  end: string;
+};
+
+export type MonthlyReportStatus = 'pendente' | 'rascunho' | 'enviado' | 'atrasado';
+
+export function isValidMonthlyPeriodKey(value: string): boolean {
+  return MONTHLY_PERIOD_KEY_RE.test(value.trim());
+}
+
+export function resolveMonthlyPeriodRange(periodKey: string): CoachTeamMonthlyPeriodRange {
+  const key = periodKey.trim();
+  if (!isValidMonthlyPeriodKey(key)) {
+    throw new Error(`periodKey mensal inválido: ${periodKey}`);
+  }
+  const [yearRaw, monthRaw] = key.split('-');
+  const season = Number(yearRaw);
+  const month = Number(monthRaw);
+  const lastDay = lastDayOfMonth(season, month);
+  const mm = String(month).padStart(2, '0');
+  return {
+    periodKey: key,
+    season,
+    start: `${season}-${mm}-01`,
+    end: `${season}-${mm}-${String(lastDay).padStart(2, '0')}`,
+  };
+}
+
+export function suggestMonthlyPeriodKey(date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
+export function monthlyPeriodKeyLabel(periodKey: string): string {
+  if (!isValidMonthlyPeriodKey(periodKey)) return periodKey;
+  const [year, month] = periodKey.split('-');
+  const monthNames = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
+  ];
+  const idx = Number(month) - 1;
+  return `${monthNames[idx] ?? month} ${year}`;
+}
+
+export function isMonthlyPeriodEnded(periodKey: string, today = new Date()): boolean {
+  const range = resolveMonthlyPeriodRange(periodKey);
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const d = String(today.getDate()).padStart(2, '0');
+  const todayKey = `${y}-${m}-${d}`;
+  return todayKey > range.end;
+}
+
+export function resolveMonthlyReportStatus(input: {
+  periodKey: string;
+  reportStatus?: string | null;
+  today?: Date;
+}): MonthlyReportStatus {
+  if (input.reportStatus === 'enviado') return 'enviado';
+  if (input.reportStatus === 'rascunho') {
+    return isMonthlyPeriodEnded(input.periodKey, input.today) ? 'atrasado' : 'rascunho';
+  }
+  return isMonthlyPeriodEnded(input.periodKey, input.today) ? 'atrasado' : 'pendente';
+}
+
+export function listMonthlyPeriodKeysForSeason(season: number, upToMonth = 12): string[] {
+  const keys: string[] = [];
+  for (let m = 1; m <= upToMonth; m += 1) {
+    keys.push(`${season}-${String(m).padStart(2, '0')}`);
+  }
+  return keys;
+}
+
+export function buildMonthlyPeriodStatuses(input: {
+  season: number;
+  reports: Array<{ periodKey: string | null; status: string; id: string }>;
+  today?: Date;
+}): Array<{ periodKey: string; status: MonthlyReportStatus; reportId: string | null }> {
+  const today = input.today ?? new Date();
+  const currentMonth = today.getFullYear() === input.season ? today.getMonth() + 1 : 12;
+  const byKey = new Map(
+    input.reports
+      .filter((r) => r.periodKey && isValidMonthlyPeriodKey(r.periodKey))
+      .map((r) => [r.periodKey!, r]),
+  );
+
+  return listMonthlyPeriodKeysForSeason(input.season, currentMonth).map((periodKey) => {
+    const row = byKey.get(periodKey);
+    return {
+      periodKey,
+      status: resolveMonthlyReportStatus({
+        periodKey,
+        reportStatus: row?.status ?? null,
+        today,
+      }),
+      reportId: row?.id ?? null,
+    };
+  });
+}
+
+export function isLowerCategory(
+  playerCategory: string | null | undefined,
+  coachCategory: string | null | undefined,
+  sortOrderMap: Map<string, number>,
+): boolean {
+  const player = playerCategory?.trim();
+  const coach = coachCategory?.trim();
+  if (!player || !coach || player === coach) return false;
+  const playerOrder = sortOrderMap.get(player);
+  const coachOrder = sortOrderMap.get(coach);
+  if (playerOrder == null || coachOrder == null) return false;
+  return playerOrder < coachOrder;
+}
+
+export function buildCategorySortOrderMap(
+  categories: Array<{ value: string; sortOrder: number }>,
+): Map<string, number> {
+  return new Map(categories.map((c) => [c.value, c.sortOrder]));
+}
+
 export function dateKeyInRange(dateKey: string, from: string, to: string): boolean {
   const key = dateKey.slice(0, 10);
   return key >= from && key <= to;
@@ -134,8 +273,11 @@ type MatchReportRow = {
   id: string;
   matchDate: Date | null;
   status: string;
+  fmfMatchReportId?: string | null;
+  travelLogisticsId?: string | null;
   playerRatings: Array<{ playerId: string; rating: number | null }>;
   fmfMatchReport: {
+    id: string;
     matchDate: Date;
     playerStats: Array<{ playerId: string; minutesPlayed: number; played: boolean }>;
   } | null;
@@ -144,13 +286,15 @@ type MatchReportRow = {
 type TrainingSessionRow = {
   sessionDate: string;
   status: string;
+  category?: string | null;
   startTime: string | null;
   endTime: string | null;
   activities: Array<{ durationMinutes: number | null }>;
   playerEntries: Array<{ playerId: string; available: boolean }>;
 };
 
-type FmfOnlyMatchRow = {
+type FmfMatchRow = {
+  id: string;
   matchDate: Date;
   playerStats: Array<{ playerId: string; minutesPlayed: number; played: boolean }>;
 };
@@ -164,97 +308,46 @@ type PlayerRow = {
 };
 
 export function buildPlayerEvaluationStats(input: {
+  tenantId: string;
+  reportCategory?: string | null;
   players: PlayerRow[];
   from: string;
   to: string;
   matchReports: MatchReportRow[];
-  fmfOnlyMatches: FmfOnlyMatchRow[];
+  fmfMatches: FmfMatchRow[];
   trainingSessions: TrainingSessionRow[];
   savedRatings?: Map<string, number | null>;
-  periodicRatings?: Map<string, number[]>;
+  savedObservations?: Map<string, string | null>;
+  savedStrengths?: Map<string, string | null>;
 }): CoachTeamEvaluationPlayerStats[] {
-  const stats = new Map<
-    string,
-    {
-      gamesCount: number;
-      gamesMinutes: number;
-      trainingMinutes: number;
-      matchRatings: number[];
-    }
-  >();
-
-  for (const player of input.players) {
-    stats.set(player.id, {
-      gamesCount: 0,
-      gamesMinutes: 0,
-      trainingMinutes: 0,
-      matchRatings: [],
-    });
-  }
-
-  const matchIdsSeen = new Set<string>();
-
-  for (const report of input.matchReports) {
-    if (report.status !== 'finalizado') continue;
-    const dateKey = report.matchDate
-      ? report.matchDate.toISOString().slice(0, 10)
-      : report.fmfMatchReport?.matchDate.toISOString().slice(0, 10);
-    if (!dateKey || !dateKeyInRange(dateKey, input.from, input.to)) continue;
-
-    matchIdsSeen.add(report.id);
-
-    for (const rating of report.playerRatings) {
-      const row = stats.get(rating.playerId);
-      if (!row) continue;
-      if (rating.rating != null) {
-        row.matchRatings.push(rating.rating);
-      }
-    }
-
-    if (report.fmfMatchReport) {
-      for (const ps of report.fmfMatchReport.playerStats) {
-        const row = stats.get(ps.playerId);
-        if (!row || !ps.played) continue;
-        row.gamesCount += 1;
-        row.gamesMinutes += ps.minutesPlayed;
-      }
-    } else {
-      for (const rating of report.playerRatings) {
-        if (rating.rating == null) continue;
-        const row = stats.get(rating.playerId);
-        if (!row) continue;
-        row.gamesCount += 1;
-      }
-    }
-  }
-
-  for (const match of input.fmfOnlyMatches) {
-    const dateKey = match.matchDate.toISOString().slice(0, 10);
-    if (!dateKeyInRange(dateKey, input.from, input.to)) continue;
-    for (const ps of match.playerStats) {
-      const row = stats.get(ps.playerId);
-      if (!row || !ps.played) continue;
-      row.gamesCount += 1;
-      row.gamesMinutes += ps.minutesPlayed;
-    }
-  }
-
-  for (const session of input.trainingSessions) {
-    if (session.status !== 'finalizado') continue;
-    if (!dateKeyInRange(session.sessionDate, input.from, input.to)) continue;
-    const duration = sessionDurationMinutes(session);
-    for (const entry of session.playerEntries) {
-      if (!entry.available) continue;
-      const row = stats.get(entry.playerId);
-      if (!row) continue;
-      row.trainingMinutes += duration;
-    }
-  }
+  const squadIds = input.players.map((p) => p.id);
+  const minutesMap = buildSquadPlayerPeriodMinutes({
+    tenantId: input.tenantId,
+    squadPlayerIds: squadIds,
+    reportCategory: input.reportCategory,
+    from: input.from,
+    to: input.to,
+    fmfMatches: input.fmfMatches,
+    coachMatchReports: input.matchReports.map((r) => ({
+      id: r.id,
+      matchDate: r.matchDate,
+      status: r.status,
+      fmfMatchReportId: r.fmfMatchReportId ?? r.fmfMatchReport?.id ?? null,
+      travelLogisticsId: r.travelLogisticsId ?? null,
+      playerRatings: r.playerRatings,
+      fmfMatchReport: r.fmfMatchReport,
+    })),
+    trainingSessions: input.trainingSessions,
+  });
 
   return input.players
     .map((player) => {
-      const row = stats.get(player.id)!;
-      const periodic = input.periodicRatings?.get(player.id);
+      const row = minutesMap.get(player.id) ?? {
+        gamesCount: 0,
+        gamesMinutes: 0,
+        trainingMinutes: 0,
+        matchRatings: [],
+      };
       return {
         playerId: player.id,
         name: getPlayerListDisplayName(player),
@@ -265,7 +358,9 @@ export function buildPlayerEvaluationStats(input: {
         trainingMinutes: row.trainingMinutes,
         avgMatchRating: average(row.matchRatings),
         coachFinalRating: input.savedRatings?.get(player.id) ?? null,
-        periodicAverage: periodic && periodic.length > 0 ? average(periodic) : null,
+        individualObservation: input.savedObservations?.get(player.id) ?? null,
+        playerStrengths: input.savedStrengths?.get(player.id) ?? null,
+        periodicAverage: null,
       };
     })
     .sort((a, b) => {

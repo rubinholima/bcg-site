@@ -1,129 +1,177 @@
 import {
+  buildMonthlyPeriodStatuses,
   buildPlayerEvaluationStats,
-  computePeriodicRatingsByPlayer,
-  resolveQuarterlyPeriodRange,
-  sessionDurationMinutes,
-  suggestQuarterlyPeriodKey,
-  validateQuarterlyTeamReportSubmit,
+  isLowerCategory,
+  isValidMonthlyPeriodKey,
+  resolveMonthlyPeriodRange,
+  resolveMonthlyReportStatus,
+  buildCategorySortOrderMap,
 } from './coach-team-evaluation.util';
+import { buildSquadPlayerPeriodMinutes } from './player-period-minutes.util';
 
-describe('coach-team-evaluation.util', () => {
-  it('resolveQuarterlyPeriodRange — fevereiro', () => {
-    expect(resolveQuarterlyPeriodRange(2026, 'fevereiro')).toEqual({
-      periodKey: 'fevereiro',
-      season: 2026,
-      start: '2026-02-01',
-      end: '2026-02-28',
+describe('coach-team-evaluation.util — mensal', () => {
+  it('resolveMonthlyPeriodRange — fevereiro bissexto', () => {
+    expect(resolveMonthlyPeriodRange('2024-02')).toEqual({
+      periodKey: '2024-02',
+      season: 2024,
+      start: '2024-02-01',
+      end: '2024-02-29',
     });
   });
 
-  it('suggestQuarterlyPeriodKey', () => {
-    expect(suggestQuarterlyPeriodKey(new Date(2026, 1, 10))).toBe('fevereiro');
-    expect(suggestQuarterlyPeriodKey(new Date(2026, 7, 1))).toBe('setembro');
-    expect(suggestQuarterlyPeriodKey(new Date(2026, 10, 15))).toBe('fim_temporada');
+  it('resolveMonthlyPeriodRange — setembro', () => {
+    expect(resolveMonthlyPeriodRange('2026-09')).toEqual({
+      periodKey: '2026-09',
+      season: 2026,
+      start: '2026-09-01',
+      end: '2026-09-30',
+    });
   });
 
-  it('sessionDurationMinutes — start/end', () => {
+  it('isValidMonthlyPeriodKey', () => {
+    expect(isValidMonthlyPeriodKey('2026-08')).toBe(true);
+    expect(isValidMonthlyPeriodKey('2026-13')).toBe(false);
+    expect(isValidMonthlyPeriodKey('fevereiro')).toBe(false);
+  });
+
+  it('resolveMonthlyReportStatus — pendente, rascunho, enviado, atrasado', () => {
     expect(
-      sessionDurationMinutes({
-        startTime: '09:00',
-        endTime: '10:30',
-        activities: [],
+      resolveMonthlyReportStatus({
+        periodKey: '2026-09',
+        reportStatus: null,
+        today: new Date(2026, 8, 15),
       }),
-    ).toBe(90);
+    ).toBe('pendente');
+
+    expect(
+      resolveMonthlyReportStatus({
+        periodKey: '2026-08',
+        reportStatus: 'rascunho',
+        today: new Date(2026, 8, 15),
+      }),
+    ).toBe('atrasado');
+
+    expect(
+      resolveMonthlyReportStatus({
+        periodKey: '2026-09',
+        reportStatus: 'rascunho',
+        today: new Date(2026, 8, 15),
+      }),
+    ).toBe('rascunho');
+
+    expect(
+      resolveMonthlyReportStatus({
+        periodKey: '2026-08',
+        reportStatus: 'enviado',
+        today: new Date(2026, 8, 15),
+      }),
+    ).toBe('enviado');
+
+    expect(
+      resolveMonthlyReportStatus({
+        periodKey: '2026-07',
+        reportStatus: null,
+        today: new Date(2026, 8, 15),
+      }),
+    ).toBe('atrasado');
+
+    expect(
+      resolveMonthlyReportStatus({
+        periodKey: '2026-07',
+        reportStatus: 'rascunho',
+        today: new Date(2026, 8, 15),
+      }),
+    ).toBe('atrasado');
   });
 
-  it('buildPlayerEvaluationStats — jogos, treinos e média', () => {
-    const players = [
-      { id: 'p1', name: 'João', jerseyNumber: 10, category: 'Sub-17' },
-      { id: 'p2', name: 'Pedro', jerseyNumber: 7, category: 'Sub-17' },
-    ];
+  it('buildMonthlyPeriodStatuses', () => {
+    const rows = buildMonthlyPeriodStatuses({
+      season: 2026,
+      today: new Date(2026, 8, 15),
+      reports: [
+        { periodKey: '2026-08', status: 'enviado', id: 'r1' },
+        { periodKey: '2026-09', status: 'rascunho', id: 'r2' },
+      ],
+    });
+    expect(rows.find((r) => r.periodKey === '2026-08')?.status).toBe('enviado');
+    expect(rows.find((r) => r.periodKey === '2026-09')?.status).toBe('rascunho');
+    expect(rows.find((r) => r.periodKey === '2026-07')?.status).toBe('atrasado');
+    expect(rows.find((r) => r.periodKey === '2026-10')).toBeUndefined();
+  });
+
+  it('isLowerCategory via sortOrder', () => {
+    const map = buildCategorySortOrderMap([
+      { value: 'sub14', sortOrder: 1 },
+      { value: 'sub17', sortOrder: 2 },
+      { value: 'sub20', sortOrder: 3 },
+    ]);
+    expect(isLowerCategory('sub14', 'sub17', map)).toBe(true);
+    expect(isLowerCategory('sub17', 'sub17', map)).toBe(false);
+    expect(isLowerCategory('sub20', 'sub17', map)).toBe(false);
+  });
+});
+
+describe('buildPlayerEvaluationStats — minutos mensais', () => {
+  it('conta minutos com minutesPlayed > 0 sem played=true', () => {
     const stats = buildPlayerEvaluationStats({
-      players,
-      from: '2026-02-01',
-      to: '2026-02-28',
-      matchReports: [
+      tenantId: 't1',
+      reportCategory: 'sub17',
+      players: [{ id: 'p1', name: 'João', jerseyNumber: 10, category: 'sub17' }],
+      from: '2026-09-01',
+      to: '2026-09-30',
+      matchReports: [],
+      fmfMatches: [
         {
-          id: 'm1',
-          matchDate: new Date('2026-02-15T12:00:00Z'),
-          status: 'finalizado',
-          playerRatings: [
-            { playerId: 'p1', rating: 4 },
-            { playerId: 'p2', rating: 3 },
-          ],
-          fmfMatchReport: null,
+          id: 'fmf1',
+          matchDate: new Date('2026-09-10T15:00:00Z'),
+          playerStats: [{ playerId: 'p1', played: false, minutesPlayed: 45 }],
         },
       ],
-      fmfOnlyMatches: [],
       trainingSessions: [
         {
-          sessionDate: '2026-02-05',
+          sessionDate: '2026-09-05',
           status: 'finalizado',
+          category: 'sub17',
           startTime: '08:00',
           endTime: '09:30',
           activities: [],
-          playerEntries: [
-            { playerId: 'p1', available: true },
-            { playerId: 'p2', available: false },
-          ],
+          playerEntries: [{ playerId: 'p1', available: true }],
         },
       ],
     });
-
-    const p1 = stats.find((s) => s.playerId === 'p1');
-    const p2 = stats.find((s) => s.playerId === 'p2');
-    expect(p1?.gamesCount).toBe(1);
-    expect(p1?.avgMatchRating).toBe(4);
-    expect(p1?.trainingMinutes).toBe(90);
-    expect(p2?.trainingMinutes).toBe(0);
+    expect(stats[0]?.gamesMinutes).toBe(45);
+    expect(stats[0]?.trainingMinutes).toBe(90);
   });
+});
 
-  it('computePeriodicRatingsByPlayer', () => {
-    const map = computePeriodicRatingsByPlayer(
-      [
+describe('buildSquadPlayerPeriodMinutes — dedupe', () => {
+  it('não duplica jogo FMF + pós-jogo', () => {
+    const map = buildSquadPlayerPeriodMinutes({
+      tenantId: 't1',
+      squadPlayerIds: ['p1'],
+      reportCategory: 'sub17',
+      from: '2026-09-01',
+      to: '2026-09-30',
+      fmfMatches: [],
+      coachMatchReports: [
         {
-          playerId: 'p1',
-          coachFinalRating: 4,
-          report: { season: 2026, periodKey: 'fevereiro', status: 'enviado' },
-        },
-        {
-          playerId: 'p1',
-          coachFinalRating: 3,
-          report: { season: 2026, periodKey: 'julho', status: 'enviado' },
+          id: 'cr1',
+          matchDate: new Date('2026-09-10T15:00:00Z'),
+          status: 'finalizado',
+          fmfMatchReportId: 'fmf1',
+          travelLogisticsId: null,
+          playerRatings: [{ playerId: 'p1', rating: 4 }],
+          fmfMatchReport: {
+            id: 'fmf1',
+            matchDate: new Date('2026-09-10T15:00:00Z'),
+            playerStats: [{ playerId: 'p1', played: true, minutesPlayed: 70 }],
+          },
         },
       ],
-      2026,
-      'julho',
-    );
-    expect(map.get('p1')).toEqual([4, 3]);
-  });
-
-  it('validateQuarterlyTeamReportSubmit', () => {
-    expect(
-      validateQuarterlyTeamReportSubmit({
-        periodKey: null,
-        generalDescription: 'ok',
-        playerEvaluations: [],
-        squadPlayerIds: [],
-      }),
-    ).toContain('janela trimestral');
-
-    expect(
-      validateQuarterlyTeamReportSubmit({
-        periodKey: 'fevereiro',
-        generalDescription: '',
-        playerEvaluations: [{ playerId: 'p1', coachFinalRating: 4 }],
-        squadPlayerIds: ['p1'],
-      }),
-    ).toContain('descrição');
-
-    expect(
-      validateQuarterlyTeamReportSubmit({
-        periodKey: 'fevereiro',
-        generalDescription: 'Período positivo',
-        playerEvaluations: [{ playerId: 'p1', coachFinalRating: null }],
-        squadPlayerIds: ['p1'],
-      }),
-    ).toContain('nota final');
+      trainingSessions: [],
+    });
+    const row = map.get('p1');
+    expect(row?.gamesCount).toBe(1);
+    expect(row?.gamesMinutes).toBe(70);
   });
 });

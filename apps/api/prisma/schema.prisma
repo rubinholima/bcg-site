@@ -3590,6 +3590,8 @@ model CoachTeamReportPlayerEvaluation {
   trainingMinutes  Int             @default(0)
   avgMatchRating   Float?
   coachFinalRating Float?
+  individualObservation String?     @db.Text
+  playerStrengths       String?     @db.Text
   @@unique([reportId, playerId])
   @@index([playerId])
 }
