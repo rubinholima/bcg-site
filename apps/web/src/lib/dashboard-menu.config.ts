@@ -65,6 +65,7 @@ import {
   UserPlus,
   Video,
   Dumbbell,
+  UserCheck,
   FolderOpen,
   Server,
   Cable,
@@ -759,6 +760,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             label: "Relatório pós-jogo",
             href: "/dashboard/futebol/treinadores/pos-jogo",
             icon: FileText,
+            moduleSlug: "futebol_treinadores",
+          },
+          {
+            slug: "futebol_treinadores_avaliacao_jogador",
+            label: "Avaliação individual",
+            href: "/dashboard/futebol/treinadores/avaliacao-jogador",
+            icon: UserCheck,
             moduleSlug: "futebol_treinadores",
           },
           {
