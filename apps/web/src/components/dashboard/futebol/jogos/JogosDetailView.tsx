@@ -400,18 +400,17 @@ export function JogosDetailView({ gameKey }: Props) {
         {activeTab === "sumula" && detail.sumulaMatch ? (
             <div className="space-y-6">
               <OfficialFmfSumulaLink url={detail.sumulaMatch.sourceUrl} />
-              <SumulaRosterTable
-                title="Mandante"
-                teamName={detail.sumulaMatch.home.teamName}
-                score={detail.sumulaMatch.home.score}
-                players={detail.sumulaMatch.home.players}
-              />
-              <SumulaRosterTable
-                title="Visitante"
-                teamName={detail.sumulaMatch.away.teamName}
-                score={detail.sumulaMatch.away.score}
-                players={detail.sumulaMatch.away.players}
-              />
+              {[detail.sumulaMatch.home, detail.sumulaMatch.away]
+                .filter((team) => team.players.length > 0)
+                .map((team) => (
+                  <SumulaRosterTable
+                    key={team.teamName}
+                    title={team.teamName}
+                    teamName={team.teamName}
+                    score={team.score}
+                    players={team.players}
+                  />
+                ))}
             </div>
         ) : null}
 

@@ -853,10 +853,11 @@ function sumulaPlayerRows(players: SumulaCartoesMatchPlayer[]): string {
 }
 
 function sumulaTeamTable(title: string, team: SumulaCartoesMatchTeam): string {
+  if (team.players.length === 0) return "";
   const score = team.score != null ? String(team.score) : "—";
   return `
     <section class="section">
-      <h2 class="section-title">${escapeHtml(title)} — ${escapeHtml(team.teamName)} (${escapeHtml(score)})</h2>
+      <h2 class="section-title">${escapeHtml(title)} (${escapeHtml(score)})</h2>
       <table>
         <thead>
           <tr>
@@ -1050,7 +1051,7 @@ export function buildSumulaCartoesPrintHtml(
     : "";
 
   const sumulaBody = data.match
-    ? `${matchMeta}${sumulaTeamTable("Mandante", data.match.home)}${sumulaTeamTable("Visitante", data.match.away)}${sumulaStaffCardsSection(data.match)}`
+    ? `${matchMeta}${sumulaTeamTable(data.match.home.teamName, data.match.home)}${sumulaTeamTable(data.match.away.teamName, data.match.away)}${sumulaStaffCardsSection(data.match)}`
     : "";
 
   const disciplineBody = `${sumulaSeasonGridSection(data)}${sumulaStaffDisciplineSection(data)}`;

@@ -1988,9 +1988,18 @@ export class FutebolRelatoriosService {
       }>;
     } | null;
 
+    const ourSide: 'home' | 'away' = isFmfTeamMatch(row.homeTeam, tenantName, aliases)
+      ? 'home'
+      : 'away';
+
     const buildTeam = (side: 'home' | 'away'): SumulaCartoesMatchDto['home'] => {
       const teamName = side === 'home' ? row.homeTeam : row.awayTeam;
       const score = side === 'home' ? row.homeScore : row.awayScore;
+
+      if (side !== ourSide) {
+        return { teamName, score, players: [] };
+      }
+
       const rawPlayers = raw?.stats?.filter((p) => p.teamSide === side) ?? [];
 
       let players: SumulaCartoesMatchPlayerDto[];
@@ -2013,24 +2022,18 @@ export class FutebolRelatoriosService {
           })
           .sort((a, b) => (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999));
       } else {
-        const isHomeClub = isFmfTeamMatch(row.homeTeam, tenantName, aliases);
-        const ourSide: 'home' | 'away' = isHomeClub ? 'home' : 'away';
-        if (side !== ourSide) {
-          players = [];
-        } else {
-          players = row.playerStats.map((s) => ({
-            jerseyNumber: s.jerseyNumber ?? s.player?.jerseyNumber ?? null,
-            name: s.player?.name ?? s.playerName,
-            cbfRegistration: s.cbfRegistration,
-            starter: s.starter,
-            played: s.played,
-            minutesPlayed: s.minutesPlayed,
-            goals: s.goals,
-            yellowCards: s.yellowCards,
-            redCards: s.redCards,
-            playerId: s.playerId,
-          }));
-        }
+        players = row.playerStats.map((s) => ({
+          jerseyNumber: s.jerseyNumber ?? s.player?.jerseyNumber ?? null,
+          name: s.player?.name ?? s.playerName,
+          cbfRegistration: s.cbfRegistration,
+          starter: s.starter,
+          played: s.played,
+          minutesPlayed: s.minutesPlayed,
+          goals: s.goals,
+          yellowCards: s.yellowCards,
+          redCards: s.redCards,
+          playerId: s.playerId,
+        }));
       }
 
       return { teamName, score, players };

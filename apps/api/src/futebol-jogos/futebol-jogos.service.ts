@@ -584,8 +584,8 @@ export class FutebolJogosService {
       });
       sumulaMatch = report.match;
       if (report.match) {
-        const allPlayers = [...report.match.home.players, ...report.match.away.players];
-        disciplineForMatch = allPlayers
+        const ourPlayers = [...report.match.home.players, ...report.match.away.players];
+        disciplineForMatch = ourPlayers
           .filter((p) => p.yellowCards > 0 || p.redCards > 0)
           .map((p) => ({
             playerId: p.playerId ?? '',
