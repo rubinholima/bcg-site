@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsNumber,
   IsObject,
   IsOptional,
@@ -129,4 +130,11 @@ export class UpdateProspectDto {
   @IsOptional()
   @IsString()
   descriptiveObservation?: string;
+
+  @IsOptional()
+  needsLodging?: boolean;
+
+  @IsOptional()
+  @IsString()
+  presentationDate?: string;
 }

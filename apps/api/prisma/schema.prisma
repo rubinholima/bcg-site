@@ -2756,6 +2756,12 @@ model ScoutingProspect {
   cognitiveRating   Float?
   /** Observação descritiva completa (perfil do observado) */
   descriptiveObservation String? @db.Text
+  /** Precisa de alojamento para avaliação / try-out */
+  needsLodging          Boolean?
+  /** Data de apresentação no clube (quando não precisa alojar) */
+  presentationDate      String?
+  /** E-mail ao gerente enviado quando encaminhado como aprovado */
+  managerNotifiedAt     DateTime?
   schedulerNotifiedAt DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

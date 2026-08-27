@@ -120,4 +120,12 @@ export class CreateReportDto {
   @IsOptional()
   @IsBoolean()
   reverseGeocode?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  needsLodging?: boolean;
+
+  @IsOptional()
+  @IsString()
+  presentationDate?: string;
 }

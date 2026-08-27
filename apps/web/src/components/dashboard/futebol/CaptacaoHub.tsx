@@ -83,7 +83,9 @@ import {
   formatScoutingRating,
   labelForEvaluationOutcome,
   type SchedulerNotification,
+  type ManagerEmailNotification,
 } from "@/lib/captacao-types";
+import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { CaptacaoFieldMode } from "@/components/dashboard/futebol/CaptacaoFieldMode";
 import { CaptacaoReportDetailDialog } from "@/components/dashboard/futebol/CaptacaoReportDetailDialog";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/scout-geolocation";
@@ -184,11 +186,19 @@ export function CaptacaoHub() {
     recommendation: "continuar",
     evaluationOutcome: "pendente",
     overallRating: "6",
+    needsLodging: "" as "" | "sim" | "nao",
+    presentationDate: "",
     strengths: "",
     weaknesses: "",
     risks: "",
     scoutNotes: "",
   });
+  const [feedback, setFeedback] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: FeedbackVariant;
+  }>({ open: false, title: "", message: "", variant: "info" });
   const [dimensionEvals, setDimensionEvals] = useState<DimensionFormState>(() =>
     emptyDimensionEvals(),
   );
@@ -386,18 +396,20 @@ export function CaptacaoHub() {
     setSaving(true);
     setError(null);
     try {
-      const { data } = await api.post<{ schedulerNotification?: SchedulerNotification }>(
-        "/captacao/prospects",
-        {
-          tenantId: effectiveTenantId,
-          ...prospectForm,
-          scoutId: prospectForm.scoutId || undefined,
-        },
-      );
-      openSchedulerWhatsApp(data?.schedulerNotification);
+      await api.post("/captacao/prospects", {
+        tenantId: effectiveTenantId,
+        ...prospectForm,
+        scoutId: prospectForm.scoutId || undefined,
+      });
       setProspectForm({ ...EMPTY_PROSPECT });
       setTab("pipeline");
       await loadAll();
+      setFeedback({
+        open: true,
+        title: "Prospect cadastrado",
+        message: "Abra o perfil do atleta para registrar a avaliação com notas dos aspectos.",
+        variant: "success",
+      });
     } catch {
       setError("Erro ao cadastrar prospect.");
     } finally {
@@ -408,6 +420,19 @@ export function CaptacaoHub() {
   async function handleCreateReport(e: React.FormEvent) {
     e.preventDefault();
     if (!effectiveTenantId) return;
+    if (
+      reportForm.evaluationOutcome === "aprovado" &&
+      reportForm.needsLodging === "nao" &&
+      !reportForm.presentationDate
+    ) {
+      setFeedback({
+        open: true,
+        title: "Data de apresentação",
+        message: "Informe a data de apresentação quando o atleta não precisa de alojamento.",
+        variant: "warning",
+      });
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -425,32 +450,44 @@ export function CaptacaoHub() {
           /* relatório sem GPS se usuário negar */
         }
       }
-      const { data } = await api.post<{ schedulerNotification?: SchedulerNotification }>(
-        "/captacao/reports",
-        {
-          tenantId: effectiveTenantId,
-          prospectId: reportForm.prospectId,
-          scoutId: reportForm.scoutId,
-          matchName: reportForm.matchName || undefined,
-          matchDate: reportForm.matchDate || undefined,
-          competition: reportForm.competition || undefined,
-          minutesObserved: reportForm.minutesObserved
-            ? Number(reportForm.minutesObserved)
-            : undefined,
-          positionPlayed: reportForm.positionPlayed || undefined,
-          observationType: reportForm.observationType,
-          recommendation: reportForm.recommendation,
-          evaluationOutcome: reportForm.evaluationOutcome,
-          overallRating: reportForm.overallRating ? Number(reportForm.overallRating) : undefined,
-          ...dimensions,
-          ...geo,
-          strengths: reportForm.strengths || undefined,
-          weaknesses: reportForm.weaknesses || undefined,
-          risks: reportForm.risks || undefined,
-          scoutNotes: reportForm.scoutNotes || undefined,
-        },
-      );
-      openSchedulerWhatsApp(data?.schedulerNotification);
+      const { data } = await api.post<{
+        schedulerNotification?: SchedulerNotification | null;
+        managerEmail?: ManagerEmailNotification | null;
+      }>("/captacao/reports", {
+        tenantId: effectiveTenantId,
+        prospectId: reportForm.prospectId,
+        scoutId: reportForm.scoutId,
+        matchName: reportForm.matchName || undefined,
+        matchDate: reportForm.matchDate || undefined,
+        competition: reportForm.competition || undefined,
+        minutesObserved: reportForm.minutesObserved
+          ? Number(reportForm.minutesObserved)
+          : undefined,
+        positionPlayed: reportForm.positionPlayed || undefined,
+        observationType: reportForm.observationType,
+        recommendation: reportForm.recommendation,
+        evaluationOutcome: reportForm.evaluationOutcome,
+        overallRating: reportForm.overallRating ? Number(reportForm.overallRating) : undefined,
+        needsLodging:
+          reportForm.needsLodging === "sim"
+            ? true
+            : reportForm.needsLodging === "nao"
+              ? false
+              : undefined,
+        presentationDate:
+          reportForm.needsLodging === "nao" ? reportForm.presentationDate || undefined : undefined,
+        ...dimensions,
+        ...geo,
+        strengths: reportForm.strengths || undefined,
+        weaknesses: reportForm.weaknesses || undefined,
+        risks: reportForm.risks || undefined,
+        scoutNotes: reportForm.scoutNotes || undefined,
+      });
+
+      if (reportForm.evaluationOutcome === "para_teste") {
+        openSchedulerWhatsApp(data?.schedulerNotification);
+      }
+
       setReportForm({
         prospectId: "",
         scoutId: "",
@@ -463,6 +500,8 @@ export function CaptacaoHub() {
         recommendation: "continuar",
         evaluationOutcome: "pendente",
         overallRating: "6",
+        needsLodging: "",
+        presentationDate: "",
         strengths: "",
         weaknesses: "",
         risks: "",
@@ -472,6 +511,25 @@ export function CaptacaoHub() {
       setTab("relatorios");
       await loadAll();
       await loadMapData();
+
+      if (reportForm.evaluationOutcome === "aprovado") {
+        setFeedback({
+          open: true,
+          title: "Relatório salvo",
+          message: data.managerEmail?.sent
+            ? "E-mail enviado ao gerente para aprovação."
+            : (data.managerEmail?.error ??
+              "Não foi possível enviar o e-mail ao gerente. Verifique CAPTACAO_MANAGER_EMAIL no servidor."),
+          variant: data.managerEmail?.sent ? "success" : "warning",
+        });
+      } else if (reportForm.evaluationOutcome === "para_teste" && data?.schedulerNotification?.whatsappUrl) {
+        setFeedback({
+          open: true,
+          title: "Relatório salvo",
+          message: "WhatsApp aberto para agendar o teste.",
+          variant: "success",
+        });
+      }
     } catch {
       setError("Erro ao salvar relatório.");
     } finally {
@@ -1680,6 +1738,43 @@ export function CaptacaoHub() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div>
+                      <Label>Precisa de alojamento?</Label>
+                      <Select
+                        value={reportForm.needsLodging || "none"}
+                        onValueChange={(v) =>
+                          setReportForm((f) => ({
+                            ...f,
+                            needsLodging: v === "none" ? "" : (v as "sim" | "nao"),
+                            presentationDate: v === "nao" ? f.presentationDate : "",
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="text-foreground">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">—</SelectItem>
+                          <SelectItem value="sim">Sim</SelectItem>
+                          <SelectItem value="nao">Não</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {reportForm.needsLodging === "nao" &&
+                    reportForm.evaluationOutcome === "aprovado" ? (
+                      <div>
+                        <Label>Data de apresentação *</Label>
+                        <Input
+                          type="date"
+                          required
+                          className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                          value={reportForm.presentationDate}
+                          onChange={(e) =>
+                            setReportForm((f) => ({ ...f, presentationDate: e.target.value }))
+                          }
+                        />
+                      </div>
+                    ) : null}
                     <div className="sm:col-span-2">
                       <Label>Pontos fortes</Label>
                       <Textarea
@@ -1908,6 +2003,14 @@ export function CaptacaoHub() {
         reportId={selectedReportId}
         tenantId={effectiveTenantId}
         onClose={() => setSelectedReportId(null)}
+      />
+
+      <FeedbackModal
+        open={feedback.open}
+        onOpenChange={(open) => setFeedback((f) => ({ ...f, open }))}
+        title={feedback.title}
+        message={feedback.message}
+        variant={feedback.variant}
       />
     </>
   );

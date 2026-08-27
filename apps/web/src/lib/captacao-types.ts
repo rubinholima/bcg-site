@@ -274,6 +274,8 @@ export interface ScoutingProspect {
   supervisorApprovedBy?: string | null;
   supervisorNotes?: string | null;
   legalStatus?: string | null;
+  needsLodging?: boolean | null;
+  presentationDate?: string | null;
   reports?: ScoutingReportDetail[];
   _count?: { reports: number };
 }
@@ -312,6 +314,11 @@ export interface SchedulerNotification {
   phone: string;
   message: string;
   whatsappUrl: string;
+}
+
+export interface ManagerEmailNotification {
+  sent: boolean;
+  error?: string;
 }
 
 export function labelForEvaluationOutcome(value: string): string {

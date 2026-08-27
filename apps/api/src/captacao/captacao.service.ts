@@ -14,15 +14,19 @@ import { ScoutLocationPingDto, ScoutTrackingDto } from './dto/scout-location.dto
 import { ApproveProspectDto, PromoteProspectDto } from './dto/approve-prospect.dto';
 import {
   SCOUTING_EVALUATION_OUTCOMES,
+  CAPTACAO_MANAGER_EMAIL,
   type ScoutingEvaluationOutcome,
 } from './captacao.constants';
 import {
   buildSchedulerNotificationMessage,
   buildWhatsAppNotifyUrl,
+  buildManagerApprovalEmailText,
+  captacaoProspectProfileUrl,
   computeReportDimensionRatings,
   mergeDescriptiveObservation,
   resolveStageFromOutcome,
 } from './captacao-scouting.util';
+import { MailService } from '../common/mail.service';
 
 const ACTIVE_STAGES = [
   'identificado',
@@ -65,7 +69,10 @@ const prospectListSelect = {
 
 @Injectable()
 export class CaptacaoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+  ) {}
 
   private normalizeEvaluationOutcome(value?: string | null): ScoutingEvaluationOutcome {
     if (
@@ -118,6 +125,59 @@ export class CaptacaoService {
       message,
       whatsappUrl: buildWhatsAppNotifyUrl(message),
     };
+  }
+
+  private async notifyManagerForApproval(input: {
+    prospect: {
+      id: string;
+      tenantId: string;
+      name: string;
+      position?: string | null;
+      currentClub?: string | null;
+      targetCategory?: string | null;
+    };
+    scoutName?: string | null;
+    overallRating?: number | null;
+    technicalRating?: number | null;
+    tacticalRating?: number | null;
+    physicalRating?: number | null;
+    cognitiveRating?: number | null;
+    needsLodging?: boolean | null;
+    presentationDate?: string | null;
+  }): Promise<{ sent: boolean; error?: string }> {
+    const to = CAPTACAO_MANAGER_EMAIL;
+    if (!to) {
+      return { sent: false, error: 'CAPTACAO_MANAGER_EMAIL não configurado no servidor' };
+    }
+    const { subject, text } = buildManagerApprovalEmailText({
+      prospectName: input.prospect.name,
+      position: input.prospect.position,
+      currentClub: input.prospect.currentClub,
+      targetCategory: input.prospect.targetCategory,
+      scoutName: input.scoutName,
+      overallRating: input.overallRating,
+      technicalRating: input.technicalRating,
+      tacticalRating: input.tacticalRating,
+      physicalRating: input.physicalRating,
+      cognitiveRating: input.cognitiveRating,
+      needsLodging: input.needsLodging,
+      presentationDate: input.presentationDate,
+      profileUrl: captacaoProspectProfileUrl(input.prospect.id, input.prospect.tenantId),
+    });
+    return this.mail.sendMail({ to, subject, text });
+  }
+
+  private validateLodgingForOutcome(
+    evaluationOutcome: ScoutingEvaluationOutcome,
+    needsLodging?: boolean,
+    presentationDate?: string,
+  ) {
+    if (evaluationOutcome !== 'aprovado') return;
+    if (needsLodging === false && !presentationDate?.trim()) {
+      throw new BadRequestException(
+        'Informe a data de apresentação quando o atleta não precisa de alojamento.',
+      );
+    }
   }
 
   async getStats(tenantId?: string) {
@@ -542,18 +602,7 @@ export class CaptacaoService {
       },
     });
 
-    const schedulerNotification = this.buildSchedulerNotification({
-      prospect,
-      scoutName: prospect.scout?.name,
-      prospectId: prospect.id,
-    });
-
-    await this.prisma.scoutingProspect.update({
-      where: { id: prospect.id },
-      data: { schedulerNotifiedAt: new Date() },
-    });
-
-    return { ...prospect, schedulerNotification };
+    return prospect;
   }
 
   async updateProspect(id: string, dto: UpdateProspectDto) {
@@ -612,6 +661,10 @@ export class CaptacaoService {
         }),
         ...(dto.descriptiveObservation !== undefined && {
           descriptiveObservation: dto.descriptiveObservation?.trim() || null,
+        }),
+        ...(dto.needsLodging !== undefined && { needsLodging: dto.needsLodging }),
+        ...(dto.presentationDate !== undefined && {
+          presentationDate: dto.presentationDate || null,
         }),
       },
     });
@@ -698,6 +751,18 @@ export class CaptacaoService {
     });
 
     const evaluationOutcome = this.normalizeEvaluationOutcome(dto.evaluationOutcome);
+    this.validateLodgingForOutcome(
+      evaluationOutcome,
+      dto.needsLodging,
+      dto.presentationDate,
+    );
+
+    const needsLodging =
+      dto.needsLodging !== undefined ? dto.needsLodging : prospect.needsLodging;
+    const presentationDate =
+      needsLodging === false
+        ? (dto.presentationDate?.trim() || prospect.presentationDate)
+        : null;
 
     const report = await this.prisma.scoutingReport.create({
       data: {
@@ -786,29 +851,54 @@ export class CaptacaoService {
         physicalRating: dimensionRatings.physicalRating ?? prospect.physicalRating,
         cognitiveRating: dimensionRatings.cognitiveRating ?? prospect.cognitiveRating,
         descriptiveObservation: descriptiveObservation ?? prospect.descriptiveObservation,
+        needsLodging: needsLodging ?? null,
+        presentationDate: presentationDate ?? null,
         stage: nextStage,
-        schedulerNotifiedAt: new Date(),
+        ...(evaluationOutcome === 'para_teste' ? { schedulerNotifiedAt: new Date() } : {}),
+        ...(evaluationOutcome === 'aprovado' ? { managerNotifiedAt: new Date() } : {}),
       },
     });
 
-    const schedulerNotification = this.buildSchedulerNotification({
-      prospect: {
-        name: prospect.name,
-        position: prospect.position,
-        currentClub: prospect.currentClub,
-        targetCategory: prospect.targetCategory,
-        priority: prospect.priority,
-        evaluationOutcome,
-      },
-      scoutName: report.scout?.name,
-      overallRating: dto.overallRating ?? null,
-      ...dimensionRatings,
-      matchName: dto.matchName,
-      recommendation: dto.recommendation,
-      prospectId: dto.prospectId,
-    });
+    let schedulerNotification: ReturnType<CaptacaoService['buildSchedulerNotification']> | null =
+      null;
+    let managerEmail: { sent: boolean; error?: string } | null = null;
 
-    return { ...report, schedulerNotification };
+    if (evaluationOutcome === 'para_teste') {
+      schedulerNotification = this.buildSchedulerNotification({
+        prospect: {
+          name: prospect.name,
+          position: prospect.position,
+          currentClub: prospect.currentClub,
+          targetCategory: prospect.targetCategory,
+          priority: prospect.priority,
+          evaluationOutcome,
+        },
+        scoutName: report.scout?.name,
+        overallRating: dto.overallRating ?? null,
+        ...dimensionRatings,
+        matchName: dto.matchName,
+        recommendation: dto.recommendation,
+        prospectId: dto.prospectId,
+      });
+    } else if (evaluationOutcome === 'aprovado') {
+      managerEmail = await this.notifyManagerForApproval({
+        prospect: {
+          id: prospect.id,
+          tenantId: prospect.tenantId,
+          name: prospect.name,
+          position: prospect.position,
+          currentClub: prospect.currentClub,
+          targetCategory: prospect.targetCategory,
+        },
+        scoutName: report.scout?.name,
+        overallRating: dto.overallRating ?? dimensionRatings.technicalRating,
+        ...dimensionRatings,
+        needsLodging: needsLodging ?? null,
+        presentationDate: presentationDate ?? null,
+      });
+    }
+
+    return { ...report, schedulerNotification, managerEmail };
   }
 
   // ─── Supervisor → cadastro do clube ───────────────────────────────────────

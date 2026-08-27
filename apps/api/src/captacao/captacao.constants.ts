@@ -1,6 +1,10 @@
 /** Responsável pelo agendamento de avaliações (captação). */
 export const CAPTACAO_SCHEDULER_PHONE = '33984133636';
 
+/** Gerente que aprova prospects encaminhados (ex.: Odair) — env CAPTACAO_MANAGER_EMAIL */
+export const CAPTACAO_MANAGER_EMAIL =
+  process.env.CAPTACAO_MANAGER_EMAIL?.trim() || '';
+
 export const SCOUTING_EVALUATION_OUTCOMES = [
   'pendente',
   'aprovado',

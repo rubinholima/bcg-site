@@ -109,3 +109,68 @@ export function mergeDescriptiveObservation(input: {
   ].filter(Boolean);
   return parts.length ? parts.join('\n\n') : null;
 }
+
+export function buildManagerApprovalEmailText(input: {
+  prospectName: string;
+  position?: string | null;
+  currentClub?: string | null;
+  targetCategory?: string | null;
+  scoutName?: string | null;
+  overallRating?: number | null;
+  technicalRating?: number | null;
+  tacticalRating?: number | null;
+  physicalRating?: number | null;
+  cognitiveRating?: number | null;
+  needsLodging?: boolean | null;
+  presentationDate?: string | null;
+  profileUrl: string;
+}): { subject: string; text: string } {
+  const lodgingLine =
+    input.needsLodging === true
+      ? 'Precisa de alojamento: Sim'
+      : input.needsLodging === false
+        ? `Precisa de alojamento: Não${input.presentationDate ? ` · Apresentação: ${input.presentationDate.split('-').reverse().join('/')}` : ''}`
+        : null;
+
+  const text = [
+    'Olá,',
+    '',
+    'Um atleta foi encaminhado como APROVADO na captação e aguarda sua confirmação no dashboard.',
+    '',
+    `Atleta: ${input.prospectName}`,
+    input.position ? `Posição: ${input.position}` : null,
+    input.currentClub ? `Clube atual: ${input.currentClub}` : null,
+    input.targetCategory ? `Categoria alvo: ${input.targetCategory}` : null,
+    input.scoutName ? `Captador: ${input.scoutName}` : null,
+    input.overallRating != null ? `Nota geral: ${input.overallRating}/10` : null,
+    input.technicalRating != null ? `Técnico: ${input.technicalRating}/10` : null,
+    input.tacticalRating != null ? `Tático: ${input.tacticalRating}/10` : null,
+    input.physicalRating != null ? `Físico: ${input.physicalRating}/10` : null,
+    input.cognitiveRating != null ? `Cognitivo: ${input.cognitiveRating}/10` : null,
+    lodgingLine,
+    '',
+    `Abrir ficha e aprovar ou recusar: ${input.profileUrl}`,
+    '',
+    'Boston City Group — Captação',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return {
+    subject: `Captação — aprovar atleta: ${input.prospectName}`,
+    text,
+  };
+}
+
+function publicAppOrigin(): string {
+  return (
+    process.env.PUBLIC_APP_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    'https://www.bostoncitygroup.biz'
+  ).replace(/\/$/, '');
+}
+
+export function captacaoProspectProfileUrl(prospectId: string, tenantId?: string): string {
+  const qs = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : '';
+  return `${publicAppOrigin()}/dashboard/futebol/captacao/prospects/${prospectId}${qs}`;
+}
