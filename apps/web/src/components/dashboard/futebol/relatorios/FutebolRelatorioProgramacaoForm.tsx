@@ -39,7 +39,6 @@ const PROGRAMACAO_HIDE_TYPES = [
   "compromisso",
   "preparacao",
   "jogo",
-  "viagem",
   "outro",
 ] as const;
 

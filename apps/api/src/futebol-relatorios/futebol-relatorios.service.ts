@@ -654,6 +654,7 @@ export class FutebolRelatoriosService {
         .filter(Boolean),
     );
     excludeTypes.add('aniversario');
+    excludeTypes.add('viagem');
 
     const fixtureCats = await this.prisma.fixtureCategory.findMany({
       where: { active: true },
@@ -700,6 +701,7 @@ export class FutebolRelatoriosService {
 
     for (const item of items) {
       if (item.source === 'bch_booking') continue;
+      if (item.source === 'travel' && item.type !== 'jogo') continue;
       if (excludeTypes.has(item.type)) continue;
       if (isContractExpirationAgendaItem(item)) continue;
       const dateIso = resolveAgendaCalendarDateKey(item);
