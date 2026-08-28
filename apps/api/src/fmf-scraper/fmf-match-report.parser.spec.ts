@@ -3,6 +3,7 @@ import {
   joinWrappedFmfRosterLines,
   parseFmfMatchReportText,
   parseStaffCardEventsFromTimedRows,
+  parseStaffRoster,
 } from './fmf-match-report.parser';
 
 describe('extractFmfRosterFullName', () => {
@@ -138,5 +139,62 @@ ANT = Antes do Início
     expect(events[0]?.name).toBe('Adriano Dos Santos Almeida');
     expect(events[0]?.kind).toBe('yellow');
     expect(events[0]?.teamSide).toBe('away');
+    expect(events[0]?.clock).toBe('20:00');
+    expect(events[0]?.period).toBe('2T');
+  });
+
+  it('extrai staffRoster e eventos individuais', () => {
+    const text = `
+Competição: SUB 20 - 2026 Fase: FINAL Rodada: 1
+Jogo: NACIONAL X BOSTON CITY FUTEBOL CLUBE SAF
+Data: 01/08/2026 Hora: 15:00
+Resultado do Jogo
+1 x 1
+Arbitragem
+Início do 1º Tempo: 15:00
+Término do 1º Tempo: 15:45
+Início do 2º Tempo: 16:00
+Término do 2º Tempo: 16:45
+Relação de Jogadores
+Nº Apelido Nome Completo CBF
+1 Atleta Um Atleta Um 111111
+Nº Apelido Nome Completo CBF
+1 Atleta Dois Atleta Dois 222222
+Árbitro Principal
+Técnico: Guilherme Fontana
+Comissão Técnica
+Cronologia
+Técnico: Adriano Almeida
+Comissão Técnica
+Gols
+03:00 1T 1 NR Atleta Dois BOSTON CITY FUTEBOL CLUBE SAF
+Cartões Amarelos
+16:00 2T 1 Atleta Dois
+- falta;
+BOSTON CITY FUTEBOL CLUBE SAF
+Cartões Vermelhos
+Ocorrências / Observações
+Substituições
+ANT = Antes do Início
+`;
+    const parsed = parseFmfMatchReportText(text);
+    expect(parsed.staffRoster.length).toBeGreaterThanOrEqual(2);
+    expect(parsed.playerGoalEvents).toHaveLength(1);
+    expect(parsed.playerCardEvents).toHaveLength(1);
+  });
+
+  it('parseStaffRoster separa mandante e visitante', () => {
+    const chunk = `
+Técnico: Guilherme Fontana
+Massagista: Geraldo Alves
+Comissão Técnica
+Cronologia
+Técnico: Adriano Almeida
+Comissão Técnica
+Gols
+`;
+    const roster = parseStaffRoster(`Header\n${chunk}`);
+    expect(roster.some((r) => r.teamSide === 'home' && r.name.includes('Guilherme'))).toBe(true);
+    expect(roster.some((r) => r.teamSide === 'away' && r.name.includes('Adriano'))).toBe(true);
   });
 });

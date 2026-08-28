@@ -138,6 +138,7 @@ model Tenant {
   logisticsGuests       LogisticsGuest[]
   footballAgendaEntries FootballAgendaEntry[]
   fmfMatchReports       FmfMatchReport[]
+  matchOfficialEvents   MatchOfficialEvent[]
   psychologySessions  PsychologySession[]
   physioSessions      PhysioSession[]
   physioGroupSessions PhysioGroupSession[]
@@ -1109,6 +1110,7 @@ model Player {
   physioGameAttendances PhysioGameAttendance[]
   physioPlayerEvaluations PhysioPlayerEvaluation[]
   fmfMatchStats        FmfPlayerMatchStat[]
+  matchOfficialEvents  MatchOfficialEvent[]
   coachMatchPlayerRatings CoachMatchReportPlayerRating[]
   coachTeamReportPlayerActions CoachTeamReportPlayerAction[]
   coachTeamReportPlayerEvaluations CoachTeamReportPlayerEvaluation[]
@@ -1148,9 +1150,14 @@ model FmfMatchReport {
   unresolvedPlayers   Json?
   /** Texto bruto da seção Ocorrências / Observações da súmula FMF. */
   occurrencesText     String?  @db.Text
+  /** synced | warnings | unresolved | failed */
+  integrityStatus     String?
+  integrityCheckedAt  DateTime?
+  integritySummary    Json?
   importedAt          DateTime @default(now())
   updatedAt           DateTime @updatedAt
   playerStats         FmfPlayerMatchStat[]
+  matchOfficialEvents MatchOfficialEvent[]
   coachMatchReport    CoachMatchReport?
   coachStatOverride   CoachMatchStatOverride?
   matchIncidents      FootballMatchIncident[]
@@ -1159,6 +1166,46 @@ model FmfMatchReport {
   @@unique([tenantId, externalMatchId])
   @@index([tenantId, season, category])
   @@index([tenantId, matchDate])
+}
+
+/** Evento oficial normalizado de uma súmula FMF (gol, cartão, substituição, etc.). */
+model MatchOfficialEvent {
+  id                   String         @id @default(cuid())
+  tenantId             String
+  tenant               Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fmfMatchReportId     String
+  fmfMatchReport       FmfMatchReport @relation(fields: [fmfMatchReportId], references: [id], onDelete: Cascade)
+  factType             String
+  provenance           String         @default("fmf_official")
+  playerId             String?
+  player               Player?        @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  technicalStaffId     String?
+  technicalStaff       TechnicalStaff? @relation(fields: [technicalStaffId], references: [id], onDelete: SetNull)
+  /** resolved | unresolved | ambiguous */
+  resolutionStatus     String
+  resolutionReason     String?
+  sourceName           String?
+  sourceRegistration   String?
+  sourceJerseyNumber   Int?
+  relatedJerseyNumber  Int?
+  relatedPlayerId      String?
+  sourceRoleLabel      String?
+  sourceTeamSide       String?
+  minute               Int?
+  period               String?
+  goalType             String?
+  sourceExcerpt        String?        @db.Text
+  sourceSections       Json?
+  externalKey          String
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@unique([fmfMatchReportId, externalKey])
+  @@index([tenantId])
+  @@index([fmfMatchReportId])
+  @@index([playerId])
+  @@index([technicalStaffId])
+  @@index([factType])
 }
 
 /** Estatística oficial de um atleta em uma súmula FMF, sempre vinculada ao Player. */
@@ -1282,6 +1329,7 @@ model TechnicalStaff {
   coachMatchReports    CoachMatchReport[]
   coachTeamReports     CoachTeamReport[]
   coachTrainingSessions CoachTrainingSession[]
+  matchOfficialEvents   MatchOfficialEvent[]
   @@index([tenantId])
   @@index([jobRoleId])
   @@index([tenantId, role])

@@ -32,7 +32,57 @@ export interface FmfStaffCardEvent {
   roleLabel: string;
   name: string;
   excerpt: string;
+  clock: string;
+  period: string;
+  minute: number;
   teamSide?: 'home' | 'away';
+}
+
+/** Entrada oficial da comissão técnica (seção Comissão Técnica do PDF). */
+export interface FmfReportStaffRosterEntry {
+  teamSide: 'home' | 'away';
+  roleLabel: string;
+  name: string;
+  sourceExcerpt: string;
+}
+
+export interface FmfReportPlayerGoalEvent {
+  teamSide: 'home' | 'away';
+  jerseyNumber: number;
+  cbfRegistration: string | null;
+  sourceName: string | null;
+  goalType: 'normal' | 'penalty' | 'own_goal';
+  clock: string;
+  period: string;
+  minute: number;
+  excerpt: string;
+}
+
+export interface FmfReportPlayerCardEvent {
+  kind: 'yellow' | 'red';
+  teamSide: 'home' | 'away';
+  jerseyNumber: number;
+  cbfRegistration: string | null;
+  sourceName: string | null;
+  clock: string;
+  period: string;
+  minute: number;
+  excerpt: string;
+}
+
+/** Substituição oficial — um fato com jogador que sai e entra. */
+export interface FmfReportSubstitutionEvent {
+  teamSide: 'home' | 'away';
+  outJerseyNumber: number;
+  inJerseyNumber: number;
+  outCbfRegistration: string | null;
+  inCbfRegistration: string | null;
+  outSourceName: string | null;
+  inSourceName: string | null;
+  clock: string;
+  period: string;
+  absoluteMinute: number;
+  excerpt: string;
 }
 
 export interface ParsedFmfMatchReport {
@@ -52,6 +102,10 @@ export interface ParsedFmfMatchReport {
   totalMinutes: number;
   roster: FmfReportRosterPlayer[];
   stats: FmfReportPlayerStat[];
+  staffRoster: FmfReportStaffRosterEntry[];
+  playerGoalEvents: FmfReportPlayerGoalEvent[];
+  playerCardEvents: FmfReportPlayerCardEvent[];
+  substitutionEvents: FmfReportSubstitutionEvent[];
   staffCardEvents: FmfStaffCardEvent[];
   occurrencesText: string | null;
   occurrences: FmfReportOccurrence[];
@@ -320,10 +374,74 @@ export function parseStaffCardEventsFromTimedRows(
       roleLabel: parsed.roleLabel,
       name: parsed.name,
       excerpt: row.slice(0, 240),
+      clock: timed[1]!,
+      period: timed[2]!.toUpperCase(),
+      minute: Number(timed[1]!.split(':')[0]),
       ...(teamSide ? { teamSide } : {}),
     });
   }
   return out;
+}
+
+const STAFF_ROSTER_ROLE_PATTERN =
+  /^(T[eé]cnico|Auxiliar T[eé]cnico|M[eé]dico|Preparador F[ií]sico|Fisioterapeuta|Prep\.\s*de\s*Goleiros|Massagista|Fisiologista|Analista(?:\s+de\s+desempenho)?)\s*:\s*(.*)$/i;
+
+function normalizeStaffRoleLabel(raw: string): string {
+  const n = cleanLine(raw);
+  if (/^t[eé]cnico$/i.test(n)) return 'Técnico';
+  if (/^auxiliar/i.test(n)) return 'Auxiliar técnico';
+  if (/^m[eé]dico$/i.test(n)) return 'Médico';
+  if (/^preparador/i.test(n)) return 'Preparador físico';
+  if (/^fisioterapeuta$/i.test(n)) return 'Fisioterapeuta';
+  if (/^prep\.\s*de\s*goleiros/i.test(n)) return 'Treinador de goleiros';
+  if (/^massagista$/i.test(n)) return 'Massagista';
+  if (/^fisiologista$/i.test(n)) return 'Fisiologista';
+  if (/^analista/i.test(n)) return 'Analista de desempenho';
+  return n;
+}
+
+/** Relação oficial da comissão técnica (mandante = home, visitante = away). */
+export function parseStaffRoster(text: string): FmfReportStaffRosterEntry[] {
+  const golsIdx = text.indexOf('\nGols\n');
+  if (golsIdx < 0) return [];
+
+  const beforeGols = text.slice(0, golsIdx);
+  const blocks = beforeGols.split(/\nComiss[aã]o T[eé]cnica\n/i);
+  const entries: FmfReportStaffRosterEntry[] = [];
+
+  const parseBlock = (block: string, teamSide: 'home' | 'away') => {
+    for (const rawLine of block.split(/\r?\n/)) {
+      const line = cleanLine(rawLine);
+      if (!line || /^Cronologia$/i.test(line) || /^Titulares$/i.test(line)) continue;
+      if (/^FEDERA/i.test(line) || /^RELAT/i.test(line) || /^--\s*\d+/i.test(line)) continue;
+      const match = line.match(STAFF_ROSTER_ROLE_PATTERN);
+      if (!match) continue;
+      const name = cleanLine(match[2] ?? '');
+      if (name.length < 2) continue;
+      entries.push({
+        teamSide,
+        roleLabel: normalizeStaffRoleLabel(match[1]!),
+        name,
+        sourceExcerpt: line.slice(0, 240),
+      });
+    }
+  };
+
+  if (blocks.length >= 2) {
+    parseBlock(blocks[0]!, 'home');
+    parseBlock(blocks[1]!, 'away');
+  } else if (blocks.length === 1) {
+    const chunk = blocks[0]!;
+    const cronIdx = chunk.search(/\nCronologia\n/i);
+    if (cronIdx >= 0) {
+      parseBlock(chunk.slice(0, cronIdx), 'home');
+      parseBlock(chunk.slice(cronIdx), 'away');
+    } else {
+      parseBlock(chunk, 'home');
+    }
+  }
+
+  return entries;
 }
 
 function classifyOccurrenceKind(text: string): FmfReportOccurrence['kind'] {
@@ -425,7 +543,11 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
   const totalMinutes = effectiveFirst + effectiveSecond;
 
   const roster = parseRoster(text);
+  const staffRoster = parseStaffRoster(text);
   const stats = new Map<string, FmfReportPlayerStat>();
+  const playerGoalEvents: FmfReportPlayerGoalEvent[] = [];
+  const playerCardEvents: FmfReportPlayerCardEvent[] = [];
+  const substitutionEvents: FmfReportSubstitutionEvent[] = [];
   for (const player of roster) {
     stats.set(player.cbfRegistration, {
       ...player,
@@ -456,13 +578,28 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     if (!match) continue;
     const side = sideFromRow(row, homeTeam, awayTeam);
     if (!side) continue;
-    const player = findRoster(side, Number(match[3]));
+    const jersey = Number(match[3]);
+    const goalTypeRaw = match[4].toUpperCase();
+    const goalType =
+      goalTypeRaw === 'GC' ? 'own_goal' : goalTypeRaw === 'PN' ? 'penalty' : 'normal';
+    const player = findRoster(side, jersey);
+    playerGoalEvents.push({
+      teamSide: side,
+      jerseyNumber: jersey,
+      cbfRegistration: player?.cbfRegistration ?? null,
+      sourceName: player?.sourceName ?? null,
+      goalType,
+      clock: match[1]!,
+      period: match[2]!.toUpperCase(),
+      minute: Number(match[1]!.split(':')[0]),
+      excerpt: row.slice(0, 240),
+    });
     if (!player) continue;
-    if (match[4].toUpperCase() === 'GC') {
+    if (goalType === 'own_goal') {
       player.ownGoals += 1;
     } else {
       player.goals += 1;
-      if (match[4].toUpperCase() === 'PN') player.penaltyGoals += 1;
+      if (goalType === 'penalty') player.penaltyGoals += 1;
     }
   }
 
@@ -471,8 +608,21 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(\d+)\b/i);
     if (!match) continue;
     const side = sideFromRow(row, homeTeam, awayTeam);
-    const player = side ? findRoster(side, Number(match[3])) : undefined;
-    if (player) player.yellowCards += 1;
+    if (!side) continue;
+    const jersey = Number(match[3]);
+    const rosterPlayer = findRoster(side, jersey);
+    playerCardEvents.push({
+      kind: 'yellow',
+      teamSide: side,
+      jerseyNumber: jersey,
+      cbfRegistration: rosterPlayer?.cbfRegistration ?? null,
+      sourceName: rosterPlayer?.sourceName ?? null,
+      clock: match[1]!,
+      period: match[2]!.toUpperCase(),
+      minute: Number(match[1]!.split(':')[0]),
+      excerpt: row.slice(0, 240),
+    });
+    if (rosterPlayer) rosterPlayer.yellowCards += 1;
   }
 
   const redCardRows = splitTimedRows(section(text, '\nCartões Vermelhos\n', '\nOcorrências / Observações\n'));
@@ -480,8 +630,21 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(\d+)\b/i);
     if (!match) continue;
     const side = sideFromRow(row, homeTeam, awayTeam);
-    const player = side ? findRoster(side, Number(match[3])) : undefined;
-    if (player) player.redCards += 1;
+    if (!side) continue;
+    const jersey = Number(match[3]);
+    const rosterPlayer = findRoster(side, jersey);
+    playerCardEvents.push({
+      kind: 'red',
+      teamSide: side,
+      jerseyNumber: jersey,
+      cbfRegistration: rosterPlayer?.cbfRegistration ?? null,
+      sourceName: rosterPlayer?.sourceName ?? null,
+      clock: match[1]!,
+      period: match[2]!.toUpperCase(),
+      minute: Number(match[1]!.split(':')[0]),
+      excerpt: row.slice(0, 240),
+    });
+    if (rosterPlayer) rosterPlayer.redCards += 1;
   }
 
   const staffCardEvents: FmfStaffCardEvent[] = [
@@ -497,12 +660,27 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     if (playerMarkers.length < 2) continue;
     const side = sideFromRow(rest.slice(0, playerMarkers[0].index), homeTeam, awayTeam);
     if (!side) continue;
-    const entered = findRoster(side, Number(playerMarkers[0][1]));
-    const exited = findRoster(side, Number(playerMarkers[1][1]));
+    const inJersey = Number(playerMarkers[0][1]);
+    const outJersey = Number(playerMarkers[1][1]);
+    const entered = findRoster(side, inJersey);
+    const exited = findRoster(side, outJersey);
     const absoluteMinute = Math.min(
       totalMinutes,
       eventAbsoluteMinute(match[2], Number(match[1]), effectiveFirst),
     );
+    substitutionEvents.push({
+      teamSide: side,
+      outJerseyNumber: outJersey,
+      inJerseyNumber: inJersey,
+      outCbfRegistration: exited?.cbfRegistration ?? null,
+      inCbfRegistration: entered?.cbfRegistration ?? null,
+      outSourceName: exited?.sourceName ?? null,
+      inSourceName: entered?.sourceName ?? null,
+      clock: match[1]!,
+      period: match[2]!.toUpperCase(),
+      absoluteMinute,
+      excerpt: row.slice(0, 240),
+    });
     if (entered) {
       entered.played = true;
       entered.enteredMinute = absoluteMinute;
@@ -534,6 +712,10 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     totalMinutes,
     roster,
     stats: [...stats.values()],
+    staffRoster,
+    playerGoalEvents,
+    playerCardEvents,
+    substitutionEvents,
     staffCardEvents,
     occurrencesText,
     occurrences,
