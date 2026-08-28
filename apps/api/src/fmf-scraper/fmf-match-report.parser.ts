@@ -574,12 +574,12 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
   };
 
   for (const row of splitTimedRows(section(text, '\nGols\n', '\nCartões Amarelos\n'))) {
-    const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(\d+)\s+(NR|PN|GC|FT)\b/i);
+    const match = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(\d+)\s+(NR|PN|GC|FT)\b/i);
     if (!match) continue;
     const side = sideFromRow(row, homeTeam, awayTeam);
     if (!side) continue;
     const jersey = Number(match[3]);
-    const goalTypeRaw = match[4].toUpperCase();
+    const goalTypeRaw = match[4]!.toUpperCase();
     const goalType =
       goalTypeRaw === 'GC' ? 'own_goal' : goalTypeRaw === 'PN' ? 'penalty' : 'normal';
     const player = findRoster(side, jersey);
@@ -605,7 +605,7 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
 
   const yellowCardRows = splitTimedRows(section(text, '\nCartões Amarelos\n', '\nCartões Vermelhos\n'));
   for (const row of yellowCardRows) {
-    const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(\d+)\b/i);
+    const match = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(\d+)\b/i);
     if (!match) continue;
     const side = sideFromRow(row, homeTeam, awayTeam);
     if (!side) continue;
@@ -627,7 +627,7 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
 
   const redCardRows = splitTimedRows(section(text, '\nCartões Vermelhos\n', '\nOcorrências / Observações\n'));
   for (const row of redCardRows) {
-    const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(\d+)\b/i);
+    const match = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(\d+)\b/i);
     if (!match) continue;
     const side = sideFromRow(row, homeTeam, awayTeam);
     if (!side) continue;
@@ -653,20 +653,20 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
   ];
 
   for (const row of splitTimedRows(section(text, '\nSubstituições\n', '\nANT = Antes do Início'))) {
-    const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(.+)$/i);
+    const match = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(.+)$/i);
     if (!match) continue;
-    const rest = match[3];
+    const rest = match[3]!;
     const playerMarkers = [...rest.matchAll(/(\d+)\s*-\s*/g)];
     if (playerMarkers.length < 2) continue;
-    const side = sideFromRow(rest.slice(0, playerMarkers[0].index), homeTeam, awayTeam);
+    const side = sideFromRow(rest.slice(0, playerMarkers[0]!.index), homeTeam, awayTeam);
     if (!side) continue;
-    const inJersey = Number(playerMarkers[0][1]);
-    const outJersey = Number(playerMarkers[1][1]);
+    const inJersey = Number(playerMarkers[0]![1]);
+    const outJersey = Number(playerMarkers[1]![1]);
     const entered = findRoster(side, inJersey);
     const exited = findRoster(side, outJersey);
     const absoluteMinute = Math.min(
       totalMinutes,
-      eventAbsoluteMinute(match[2], Number(match[1]), effectiveFirst),
+      eventAbsoluteMinute(match[2]!, Number(match[1]!.split(':')[0]), effectiveFirst),
     );
     substitutionEvents.push({
       teamSide: side,

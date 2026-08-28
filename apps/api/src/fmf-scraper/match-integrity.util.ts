@@ -1,8 +1,20 @@
 import type { ParsedFmfMatchReport } from './fmf-match-report.parser';
 import type {
+  EventReconciliationOutcome,
   MatchIntegrityStatus,
   MatchIntegritySummary,
+  MatchReconciliationDetail,
 } from './match-official-event.types';
+import type { EventReconciliationRow } from './match-official-event.types';
+import { reconcileOfficialEvents } from './match-event-reconciliation.util';
+import {
+  buildRosterMessages,
+  reconcilePlayerRoster,
+  reconcileStaffRoster,
+} from './match-roster-reconciliation.util';
+import type { PlayerLinkPool } from './match-official-event.identity';
+import type { StaffDisciplineCandidate } from '../futebol-relatorios/fmf-staff-cards.util';
+import type { PersistedOfficialEvent } from './match-event-reconciliation.util';
 
 type PersistedEventCounts = {
   goals: number;
@@ -14,6 +26,7 @@ type PersistedEventCounts = {
   resolved: number;
   unresolved: number;
   ambiguous: number;
+  partial: number;
 };
 
 export function countSourceFacts(
@@ -49,74 +62,168 @@ export function countSourceFacts(
   };
 }
 
+export function buildEventCategoryCounts(rows: EventReconciliationRow[]): {
+  goals: ReturnType<typeof categoryBlock>;
+  yellowCards: ReturnType<typeof categoryBlock>;
+  redCards: ReturnType<typeof categoryBlock>;
+  substitutions: ReturnType<typeof categoryBlock>;
+  staffYellow: ReturnType<typeof categoryBlock>;
+  staffRed: ReturnType<typeof categoryBlock>;
+} {
+  const filter = (types: string[]) => rows.filter((r) => types.includes(r.factType));
+  return {
+    goals: categoryBlock(
+      filter(['PLAYER_GOAL', 'PLAYER_PENALTY_GOAL', 'PLAYER_OWN_GOAL']),
+    ),
+    yellowCards: categoryBlock(filter(['PLAYER_YELLOW_CARD'])),
+    redCards: categoryBlock(filter(['PLAYER_RED_CARD'])),
+    substitutions: categoryBlock(filter(['PLAYER_SUBSTITUTION'])),
+    staffYellow: categoryBlock(filter(['STAFF_YELLOW_CARD'])),
+    staffRed: categoryBlock(filter(['STAFF_RED_CARD'])),
+  };
+}
+
+function categoryBlock(rows: EventReconciliationRow[]) {
+  const source = rows.filter((r) => r.outcome !== 'stale' && r.outcome !== 'extra').length;
+  const persisted = rows.filter((r) => r.outcome !== 'missing').length;
+  return {
+    source,
+    persisted,
+    matched: rows.filter((r) => r.outcome === 'matched').length,
+    resolved: rows.filter((r) => r.outcome === 'matched').length,
+    unresolved: rows.filter((r) => r.outcome === 'unresolved').length,
+    ambiguous: rows.filter((r) => r.outcome === 'ambiguous').length,
+    missing: rows.filter((r) => r.outcome === 'missing').length,
+    drifted: rows.filter((r) => r.outcome === 'drifted').length,
+    stale: rows.filter((r) => r.outcome === 'stale').length,
+  };
+}
+
+export function buildReconciliationDetail(input: {
+  parsed: ParsedFmfMatchReport;
+  ourTeamSide: 'home' | 'away';
+  playerPool: PlayerLinkPool;
+  staffPool: StaffDisciplineCandidate[];
+  persisted: PersistedOfficialEvent[];
+  limitations?: string[];
+}): MatchReconciliationDetail {
+  const playerRoster = reconcilePlayerRoster({
+    parsed: input.parsed,
+    ourTeamSide: input.ourTeamSide,
+    playerPool: input.playerPool,
+  });
+  const staffRoster = reconcileStaffRoster({
+    parsed: input.parsed,
+    ourTeamSide: input.ourTeamSide,
+  });
+  const eventResult = reconcileOfficialEvents({
+    parsed: input.parsed,
+    ourTeamSide: input.ourTeamSide,
+    playerPool: input.playerPool,
+    staffPool: input.staffPool,
+    persisted: input.persisted,
+  });
+
+  const playerEvents = eventResult.rows.filter((r) => r.factType.startsWith('PLAYER_'));
+  const staffEvents = eventResult.rows.filter((r) => r.factType.startsWith('STAFF_'));
+  const messages = [
+    ...buildRosterMessages(playerRoster),
+    ...eventResult.rows
+      .map((r) => r.explain)
+      .filter((m): m is string => Boolean(m)),
+  ];
+
+  return {
+    roster: {
+      player: playerRoster,
+      staff: staffRoster,
+    },
+    events: {
+      player: playerEvents,
+      staff: staffEvents,
+      summary: eventResult.summary,
+    },
+    messages: [...new Set(messages)],
+    limitations: input.limitations ?? [],
+  };
+}
+
+/**
+ * Regras de integridade (Fase 3):
+ * - FAILED: fato oficial ausente, drift de conteúdo, evento stale/extra, ou parser não estruturou fatos suportados
+ * - UNRESOLVED: todos os fatos persistidos mas identidade incompleta/ambígua (inclui substituição partial)
+ * - WARNINGS: fatos ok mas limitações conhecidas do parser/fonte
+ * - SYNCED: fatos estruturalmente persistidos, reconciliação event-level matched, elenco resolvido
+ */
+export function resolveIntegrityStatusFromReconciliation(
+  detail: MatchReconciliationDetail,
+): MatchIntegrityStatus {
+  const s = detail.events.summary;
+  if (s.missing > 0 || s.drifted > 0 || s.stale > 0 || s.extra > 0) return 'failed';
+
+  const rosterIncomplete =
+    detail.roster.player.unresolved > 0 ||
+    detail.roster.player.ambiguous > 0 ||
+    detail.roster.player.source !== detail.roster.player.structured;
+
+  const eventsIncomplete = s.unresolved > 0 || s.ambiguous > 0;
+
+  if (rosterIncomplete || eventsIncomplete) return 'unresolved';
+  if (detail.limitations.length > 0) return 'warnings';
+  return 'synced';
+}
+
 export function buildIntegritySummary(input: {
   parsed: ParsedFmfMatchReport;
   ourTeamSide: 'home' | 'away';
   persisted: PersistedEventCounts;
   linkedPlayerCount: number;
   unresolvedPlayerRosterCount: number;
+  reconciliation?: MatchReconciliationDetail;
   limitations?: string[];
 }): MatchIntegritySummary {
   const source = countSourceFacts(input.parsed, input.ourTeamSide);
+  const eventCounts = input.reconciliation
+    ? buildEventCategoryCounts([
+        ...input.reconciliation.events.player,
+        ...input.reconciliation.events.staff,
+      ])
+    : null;
+
+  const playerRosterResolved = input.reconciliation?.roster.player.resolved ?? input.linkedPlayerCount;
+  const playerRosterUnresolved =
+    input.reconciliation?.roster.player.unresolved ?? input.unresolvedPlayerRosterCount;
+
   return {
     playerRoster: {
       source: source.playerRoster,
-      structured: source.playerRoster,
-      resolved: input.linkedPlayerCount,
-      unresolved: input.unresolvedPlayerRosterCount,
+      structured: input.reconciliation?.roster.player.structured ?? source.playerRoster,
+      resolved: playerRosterResolved,
+      unresolved: playerRosterUnresolved,
     },
     playerEvents: {
-      goals: {
-        source: source.playerGoals,
-        persisted: input.persisted.goals,
-        resolved: input.persisted.goals - input.persisted.unresolved,
-        unresolved: 0,
-        ambiguous: 0,
-      },
-      yellowCards: {
-        source: source.playerYellow,
-        persisted: input.persisted.yellowCards,
-        resolved: input.persisted.yellowCards,
-        unresolved: 0,
-        ambiguous: 0,
-      },
-      redCards: {
-        source: source.playerRed,
-        persisted: input.persisted.redCards,
-        resolved: input.persisted.redCards,
-        unresolved: 0,
-        ambiguous: 0,
-      },
-      substitutions: {
-        source: source.substitutions,
-        persisted: input.persisted.substitutions,
-        resolved: input.persisted.substitutions,
-        unresolved: 0,
-        ambiguous: 0,
-      },
+      goals: eventCounts?.goals ?? legacyEventBlock(source.playerGoals, input.persisted.goals),
+      yellowCards:
+        eventCounts?.yellowCards ?? legacyEventBlock(source.playerYellow, input.persisted.yellowCards),
+      redCards: eventCounts?.redCards ?? legacyEventBlock(source.playerRed, input.persisted.redCards),
+      substitutions:
+        eventCounts?.substitutions ?? legacyEventBlock(source.substitutions, input.persisted.substitutions),
     },
     staffRoster: {
       source: source.staffRoster,
-      structured: source.staffRoster,
+      structured: input.reconciliation?.roster.staff.structured ?? source.staffRoster,
     },
     staffEvents: {
-      yellowCards: {
-        source: source.staffYellow,
-        persisted: input.persisted.staffYellow,
-        resolved: input.persisted.staffYellow,
-        unresolved: Math.max(0, input.persisted.staffYellow - input.persisted.resolved),
-        ambiguous: input.persisted.ambiguous,
-      },
-      redCards: {
-        source: source.staffRed,
-        persisted: input.persisted.staffRed,
-        resolved: input.persisted.staffRed,
-        unresolved: 0,
-        ambiguous: 0,
-      },
+      yellowCards:
+        eventCounts?.staffYellow ?? legacyEventBlock(source.staffYellow, input.persisted.staffYellow),
+      redCards: eventCounts?.staffRed ?? legacyEventBlock(source.staffRed, input.persisted.staffRed),
     },
     limitations: input.limitations,
   };
+}
+
+function legacyEventBlock(source: number, persisted: number) {
+  return { source, persisted, resolved: persisted, unresolved: 0, ambiguous: 0 };
 }
 
 export function resolveIntegrityStatus(summary: MatchIntegritySummary): MatchIntegrityStatus {
@@ -152,11 +259,13 @@ export function countPersistedEvents(
     resolved: 0,
     unresolved: 0,
     ambiguous: 0,
+    partial: 0,
   };
   for (const ev of events) {
     if (ev.resolutionStatus === 'resolved') counts.resolved += 1;
     if (ev.resolutionStatus === 'unresolved') counts.unresolved += 1;
     if (ev.resolutionStatus === 'ambiguous') counts.ambiguous += 1;
+    if (ev.resolutionStatus === 'partial') counts.partial += 1;
     switch (ev.factType) {
       case 'PLAYER_GOAL':
       case 'PLAYER_PENALTY_GOAL':
@@ -183,4 +292,16 @@ export function countPersistedEvents(
     }
   }
   return counts;
+}
+
+export function summarizeEventOutcomes(summary: Record<EventReconciliationOutcome, number>): string[] {
+  const lines: string[] = [];
+  if (summary.missing > 0) lines.push(`${summary.missing} fato(s) oficial(is) não persistido(s).`);
+  if (summary.drifted > 0) lines.push(`${summary.drifted} evento(s) com conteúdo divergente da fonte.`);
+  if (summary.stale > 0) lines.push(`${summary.stale} evento(s) obsoleto(s) no banco.`);
+  if (summary.unresolved > 0) {
+    lines.push(`${summary.unresolved} evento(s) com identidade incompleta.`);
+  }
+  if (summary.ambiguous > 0) lines.push(`${summary.ambiguous} evento(s) com identidade ambígua.`);
+  return lines;
 }

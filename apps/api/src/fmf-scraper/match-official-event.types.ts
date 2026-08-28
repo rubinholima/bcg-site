@@ -12,8 +12,33 @@ export const MATCH_OFFICIAL_FACT_TYPES = [
 
 export type MatchOfficialFactType = (typeof MATCH_OFFICIAL_FACT_TYPES)[number];
 
-export const MATCH_RESOLUTION_STATUS = ['resolved', 'unresolved', 'ambiguous'] as const;
+export const MATCH_RESOLUTION_STATUS = ['resolved', 'partial', 'unresolved', 'ambiguous'] as const;
 export type MatchResolutionStatus = (typeof MATCH_RESOLUTION_STATUS)[number];
+
+export const EVENT_RECONCILIATION_OUTCOMES = [
+  'matched',
+  'unresolved',
+  'ambiguous',
+  'missing',
+  'drifted',
+  'stale',
+  'extra',
+] as const;
+export type EventReconciliationOutcome = (typeof EVENT_RECONCILIATION_OUTCOMES)[number];
+
+export const ROSTER_RECONCILIATION_OUTCOMES = [
+  'matched',
+  'missing',
+  'extra',
+  'drifted_side',
+  'drifted_jersey',
+  'drifted_cbf',
+  'drifted_starter',
+  'duplicate',
+  'unresolved',
+  'ambiguous',
+] as const;
+export type RosterReconciliationOutcome = (typeof ROSTER_RECONCILIATION_OUTCOMES)[number];
 
 export const MATCH_RESOLUTION_REASONS = [
   'CBF_EXACT',
@@ -58,6 +83,7 @@ export type MatchOfficialEventDraft = {
   playerId?: string | null;
   technicalStaffId?: string | null;
   resolutionStatus: MatchResolutionStatus;
+  relatedResolutionStatus?: MatchResolutionStatus | null;
   resolutionReason?: MatchResolutionReason | null;
   sourceName?: string | null;
   sourceRegistration?: string | null;
@@ -68,24 +94,91 @@ export type MatchOfficialEventDraft = {
   sourceTeamSide?: 'home' | 'away' | null;
   minute?: number | null;
   period?: string | null;
+  sourceClock?: string | null;
+  sourceSequence?: number | null;
   goalType?: string | null;
   sourceExcerpt?: string | null;
   sourceSections?: string[] | null;
   externalKey: string;
 };
 
+export type EventReconciliationRow = {
+  externalKey: string;
+  factType: MatchOfficialFactType;
+  outcome: EventReconciliationOutcome;
+  sourceSummary: string;
+  persistedSummary?: string | null;
+  explain?: string | null;
+};
+
+export type RosterReconciliationRow = {
+  key: string;
+  side: 'home' | 'away';
+  jerseyNumber?: number | null;
+  cbfRegistration?: string | null;
+  sourceName?: string | null;
+  roleLabel?: string | null;
+  outcome: RosterReconciliationOutcome;
+  explain?: string | null;
+};
+
+export type MatchReconciliationDetail = {
+  roster: {
+    player: {
+      source: number;
+      structured: number;
+      resolved: number;
+      unresolved: number;
+      ambiguous: number;
+      rows: RosterReconciliationRow[];
+    };
+    staff: {
+      source: number;
+      structured: number;
+      rows: RosterReconciliationRow[];
+    };
+  };
+  events: {
+    player: EventReconciliationRow[];
+    staff: EventReconciliationRow[];
+    summary: {
+      matched: number;
+      unresolved: number;
+      ambiguous: number;
+      missing: number;
+      drifted: number;
+      stale: number;
+      extra: number;
+    };
+  };
+  messages: string[];
+  limitations: string[];
+};
+
 export type MatchIntegritySummary = {
   playerRoster: { source: number; structured: number; resolved: number; unresolved: number };
   playerEvents: {
-    goals: { source: number; persisted: number; resolved: number; unresolved: number; ambiguous: number };
-    yellowCards: { source: number; persisted: number; resolved: number; unresolved: number; ambiguous: number };
-    redCards: { source: number; persisted: number; resolved: number; unresolved: number; ambiguous: number };
-    substitutions: { source: number; persisted: number; resolved: number; unresolved: number; ambiguous: number };
+    goals: EventCategoryIntegrity;
+    yellowCards: EventCategoryIntegrity;
+    redCards: EventCategoryIntegrity;
+    substitutions: EventCategoryIntegrity;
   };
   staffRoster: { source: number; structured: number };
   staffEvents: {
-    yellowCards: { source: number; persisted: number; resolved: number; unresolved: number; ambiguous: number };
-    redCards: { source: number; persisted: number; resolved: number; unresolved: number; ambiguous: number };
+    yellowCards: EventCategoryIntegrity;
+    redCards: EventCategoryIntegrity;
   };
   limitations?: string[];
+};
+
+export type EventCategoryIntegrity = {
+  source: number;
+  persisted: number;
+  matched?: number;
+  resolved: number;
+  unresolved: number;
+  ambiguous: number;
+  missing?: number;
+  drifted?: number;
+  stale?: number;
 };

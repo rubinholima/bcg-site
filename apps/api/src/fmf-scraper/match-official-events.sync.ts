@@ -7,7 +7,10 @@ import {
   buildPlayerSubstitutionExternalKey,
   buildStaffCardExternalKey,
 } from './match-official-event.external-key';
-import type { MatchOfficialEventDraft } from './match-official-event.types';
+import {
+  assignSourceSequences,
+  resolveSubstitutionResolution,
+} from './match-official-event.ordering';
 import {
   buildPlayerLinkPool,
   resolvePlayerForJerseyEvent,
@@ -15,6 +18,7 @@ import {
   type PlayerLinkPool,
 } from './match-official-event.identity';
 import type { StaffDisciplineCandidate } from '../futebol-relatorios/fmf-staff-cards.util';
+import type { MatchOfficialEventDraft } from './match-official-event.types';
 
 export type BuildOfficialEventDraftsInput = {
   parsed: ParsedFmfMatchReport;
@@ -57,6 +61,7 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
       sourceTeamSide: goal.teamSide,
       minute: goal.minute,
       period: goal.period,
+      sourceClock: goal.clock,
       goalType: goal.goalType,
       sourceExcerpt: goal.excerpt,
       sourceSections: ['Gols'],
@@ -96,6 +101,7 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
       sourceTeamSide: card.teamSide,
       minute: card.minute,
       period: card.period,
+      sourceClock: card.clock,
       sourceExcerpt: card.excerpt,
       sourceSections: [card.kind === 'yellow' ? 'Cartões Amarelos' : 'Cartões Vermelhos'],
       externalKey: buildPlayerCardExternalKey({
@@ -127,21 +133,20 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
       sub.inSourceName,
       sub.inCbfRegistration,
     );
-    const resolved =
-      outIdentity.resolutionStatus === 'resolved' && inIdentity.resolutionStatus === 'resolved'
-        ? 'resolved'
-        : outIdentity.resolutionStatus === 'ambiguous' || inIdentity.resolutionStatus === 'ambiguous'
-          ? 'ambiguous'
-          : 'unresolved';
+    const subResolution = resolveSubstitutionResolution({
+      out: outIdentity,
+      in: inIdentity,
+    });
     drafts.push({
       factType: 'PLAYER_SUBSTITUTION',
       provenance: 'fmf_official',
       playerId: outIdentity.playerId,
       relatedPlayerId: inIdentity.playerId,
       technicalStaffId: null,
-      resolutionStatus: resolved,
+      resolutionStatus: subResolution.resolutionStatus,
+      relatedResolutionStatus: subResolution.relatedResolutionStatus as MatchOfficialEventDraft['relatedResolutionStatus'],
       resolutionReason:
-        resolved === 'resolved'
+        subResolution.resolutionStatus === 'resolved'
           ? outIdentity.resolutionReason
           : outIdentity.resolutionReason ?? inIdentity.resolutionReason,
       sourceName: sub.outSourceName,
@@ -151,6 +156,7 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
       sourceTeamSide: sub.teamSide,
       minute: sub.absoluteMinute,
       period: sub.period,
+      sourceClock: sub.clock,
       sourceExcerpt: sub.excerpt,
       sourceSections: ['Substituições'],
       externalKey: buildPlayerSubstitutionExternalKey({
@@ -192,6 +198,7 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
       sourceTeamSide: teamSide,
       minute: card.minute,
       period: card.period,
+      sourceClock: card.clock,
       sourceExcerpt: card.excerpt,
       sourceSections: [card.kind === 'yellow' ? 'Cartões Amarelos' : 'Cartões Vermelhos'],
       externalKey: buildStaffCardExternalKey({
@@ -206,18 +213,27 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
     });
   }
 
-  return drafts;
+  return assignSourceSequences(drafts);
 }
 
 function validateEventDraft(draft: MatchOfficialEventDraft): void {
   const playerFacts = draft.factType.startsWith('PLAYER_');
   const staffFacts = draft.factType.startsWith('STAFF_');
   if (draft.resolutionStatus === 'resolved') {
-    if (playerFacts && !draft.playerId && draft.factType !== 'PLAYER_SUBSTITUTION') {
+    if (playerFacts && draft.factType === 'PLAYER_SUBSTITUTION') {
+      if (!draft.playerId || !draft.relatedPlayerId) {
+        throw new Error(`Substituição ${draft.externalKey} marcada resolved sem ambos playerId`);
+      }
+    } else if (playerFacts && !draft.playerId) {
       throw new Error(`Evento ${draft.externalKey} resolvido sem playerId`);
     }
     if (staffFacts && !draft.technicalStaffId) {
       throw new Error(`Evento ${draft.externalKey} resolvido sem technicalStaffId`);
+    }
+  }
+  if (draft.resolutionStatus === 'partial' && draft.factType === 'PLAYER_SUBSTITUTION') {
+    if (!draft.playerId && !draft.relatedPlayerId) {
+      throw new Error(`Substituição partial ${draft.externalKey} sem nenhum playerId`);
     }
   }
   if (staffFacts && draft.playerId) {
@@ -268,6 +284,7 @@ export async function syncMatchOfficialEvents(
       technicalStaffId: draft.technicalStaffId ?? null,
       relatedPlayerId: draft.relatedPlayerId ?? null,
       resolutionStatus: draft.resolutionStatus,
+      relatedResolutionStatus: draft.relatedResolutionStatus ?? null,
       resolutionReason: draft.resolutionReason ?? null,
       sourceName: draft.sourceName ?? null,
       sourceRegistration: draft.sourceRegistration ?? null,
@@ -277,6 +294,8 @@ export async function syncMatchOfficialEvents(
       sourceTeamSide: draft.sourceTeamSide ?? null,
       minute: draft.minute ?? null,
       period: draft.period ?? null,
+      sourceClock: draft.sourceClock ?? null,
+      sourceSequence: draft.sourceSequence ?? null,
       goalType: draft.goalType ?? null,
       sourceExcerpt: draft.sourceExcerpt ?? null,
       sourceSections: (draft.sourceSections ?? null) as Prisma.InputJsonValue,
@@ -319,6 +338,8 @@ export async function syncMatchOfficialEvents(
     });
   }
 
-  const unresolved = drafts.filter((d) => d.resolutionStatus !== 'resolved').length;
+  const unresolved = drafts.filter(
+    (d) => d.resolutionStatus !== 'resolved' && d.resolutionStatus !== 'partial',
+  ).length + drafts.filter((d) => d.resolutionStatus === 'partial').length;
   return { created, updated, removed: stale.length, unresolved };
 }

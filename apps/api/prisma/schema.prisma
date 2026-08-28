@@ -1193,9 +1193,15 @@ model MatchOfficialEvent {
   sourceTeamSide       String?
   minute               Int?
   period               String?
+  /** Relógio oficial HH:MM da súmula (preserva acréscimo, ex.: 47:00). */
+  sourceClock          String?
+  /** Ordem determinística dentro da partida (periodo → relógio → sequência na fonte). */
+  sourceSequence       Int?
   goalType             String?
   sourceExcerpt        String?        @db.Text
   sourceSections       Json?
+  /** Resolução do jogador que entra — relevante em PLAYER_SUBSTITUTION (saída em resolutionStatus). */
+  relatedResolutionStatus String?
   externalKey          String
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt

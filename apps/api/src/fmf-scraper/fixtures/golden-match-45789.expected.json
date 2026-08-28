@@ -1,0 +1,104 @@
+{
+  "meta": {
+    "externalMatchId": "45789",
+    "format": "F10",
+    "layout": "SUB20_DECAGONAL_2026",
+    "sourceUrl": "https://sge.fmf.com.br/sumulas/Sumula_Jogo_45789_F10.pdf",
+    "description": "Súmula real FMF — Nacional Muriaé 1 x 1 Boston City Sub-20 (Boston = visitante/away)"
+  },
+  "match": {
+    "competition": "SUB 20 - 1ª DIVISÃO - 2026",
+    "phase": "DECAGONAL FINAL",
+    "round": 3,
+    "category": "sub20",
+    "season": 2026,
+    "date": "2026-08-01",
+    "kickoff": "15:00:00",
+    "homeTeam": "NACIONAL ATLÉTICO CLUBE - MURIAÉ",
+    "awayTeam": "BOSTON CITY FUTEBOL CLUBE SAF",
+    "score": { "home": 1, "away": 1 },
+    "totalMinutes": 104,
+    "firstHalfMinutes": 52
+  },
+  "playerRoster": {
+    "home": { "count": 20, "starters": 11 },
+    "away": { "count": 23, "starters": 11 },
+    "awayStarters": [
+      { "jersey": 1, "name": "Wallace Luan Furtado Da Silva", "cbf": "753419" },
+      { "jersey": 10, "name": "Gabriel Yuske T. De Almeida", "cbf": "694389" },
+      { "jersey": 11, "name": "Kayo Victor Fonseca Santos", "cbf": "795908" },
+      { "jersey": 4, "name": "Joao Victor Machado De Oliveira", "cbf": "776375" },
+      { "jersey": 6, "name": "Higor Vinicius Pinheiro", "cbf": "793228" }
+    ]
+  },
+  "staffRoster": [
+    { "side": "home", "role": "Técnico", "name": "Adriano Dos Santos Almeida" },
+    { "side": "home", "role": "Preparador Físico", "name": "Yuri Kennedy Oliveira" },
+    { "side": "home", "role": "Fisioterapeuta", "name": "Thiago Igor Albuquerque Oliveira" },
+    { "side": "home", "role": "Prep. de Goleiros", "name": "Jose Bruno Gonçalves Neto" },
+    { "side": "away", "role": "Técnico", "name": "Guilherme José Fontana De Freitas" },
+    { "side": "away", "role": "Auxiliar Técnico", "name": "Roberto Ismael Franco Junior" },
+    { "side": "away", "role": "Preparador Físico", "name": "Juliéderson Vieira Da Silva" },
+    { "side": "away", "role": "Massagista", "name": "Geraldo Cassimiro Alves" },
+    { "side": "away", "role": "Prep. de Goleiros", "name": "Rodrigo Celso Germano" }
+  ],
+  "goals": [
+    {
+      "side": "away",
+      "jersey": 9,
+      "type": "normal",
+      "clock": "03:00",
+      "period": "1T",
+      "name": "William Lopes De Souza"
+    },
+    {
+      "side": "home",
+      "jersey": 3,
+      "type": "normal",
+      "clock": "47:00",
+      "period": "2T",
+      "name": "Wesley Alvim Da Silva",
+      "note": "Relógio 47:00 preserva acréscimo (não colapsar para 45:00)"
+    }
+  ],
+  "playerYellowCards": [
+    { "side": "home", "jersey": 11, "clock": "02:00", "period": "2T", "name": "Andre Felipe Oliveira Das Neves Nobrega" },
+    { "side": "away", "jersey": 6, "clock": "16:00", "period": "2T", "name": "Higor Vinicius Pinheiro" },
+    { "side": "home", "jersey": 3, "clock": "23:00", "period": "2T", "name": "Wesley Alvim Da Silva" },
+    { "side": "away", "jersey": 7, "clock": "24:00", "period": "2T", "name": "Jose Augusto Antonio Valencio" },
+    { "side": "away", "jersey": 11, "clock": "35:00", "period": "2T", "name": "Kayo Victor Fonseca Santos" },
+    { "side": "home", "jersey": 10, "clock": "39:00", "period": "2T", "name": "Luiz Guilherme Ferreira De Oliveira" },
+    { "side": "away", "jersey": 4, "clock": "42:00", "period": "2T", "name": "Joao Victor Machado De Oliveira" },
+    { "side": "home", "jersey": 15, "clock": "45:00", "period": "2T", "name": "Samuel Jose De Paula" }
+  ],
+  "playerRedCards": [],
+  "staffCards": [
+    {
+      "kind": "yellow",
+      "side": "home",
+      "role": "Técnico",
+      "name": "Adriano Dos Santos Almeida",
+      "clock": "20:00",
+      "period": "2T"
+    }
+  ],
+  "substitutions": [
+    { "side": "away", "clock": "11:00", "period": "2T", "out": 5, "in": 14 },
+    { "side": "away", "clock": "22:00", "period": "2T", "out": 2, "in": 13 },
+    { "side": "away", "clock": "22:00", "period": "2T", "out": 9, "in": 22 },
+    { "side": "away", "clock": "35:00", "period": "2T", "out": 6, "in": 16 }
+  ],
+  "bostonAwayExpectations": {
+    "rosterCount": 23,
+    "goals": 1,
+    "yellowCards": 4,
+    "redCards": 0,
+    "timedSubstitutions": 4,
+    "officialEventDrafts": 9,
+    "staffYellow": 0
+  },
+  "limitations": [
+    "Substituições INT (intervalo) existem na fonte mas usam marcador INT, não HH:MM",
+    "Gol mandante usa relógio 47:00 — acréscimo preservado via sourceClock/externalKey"
+  ]
+}

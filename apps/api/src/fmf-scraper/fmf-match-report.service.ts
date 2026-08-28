@@ -26,13 +26,20 @@ import { syncMatchOfficialEvents, buildOfficialEventDrafts } from './match-offic
 import { buildPlayerLinkPool } from './match-official-event.identity';
 import {
   buildIntegritySummary,
+  buildReconciliationDetail,
   countPersistedEvents,
   resolveIntegrityStatus,
+  resolveIntegrityStatusFromReconciliation,
+  summarizeEventOutcomes,
 } from './match-integrity.util';
 import { projectPlayerStatsFromOfficialFacts } from './fmf-player-stat.projection';
 import { buildShadowComparison } from './match-shadow-comparison.util';
 import { normalizeParsedFmfReport } from './fmf-parsed-normalize.util';
 import { parseStaffCardsForMatch } from '../futebol-relatorios/fmf-staff-cards.util';
+import {
+  findDuplicatePlayerCbf,
+  findDuplicateStaffLicenses,
+} from './duplicate-identity-diagnostics.util';
 
 export interface FmfMatchReportCandidate {
   externalMatchId: string;
@@ -1053,12 +1060,56 @@ export class FmfMatchReportService {
 
     const persistedCounts = countPersistedEvents(report.matchOfficialEvents);
 
+    let reconciliation: ReturnType<typeof buildReconciliationDetail> | null = null;
+    if (parsed) {
+      reconciliation = buildReconciliationDetail({
+        parsed,
+        ourTeamSide: ourSide,
+        playerPool,
+        staffPool: staffPool.map((s) => ({
+          id: s.id,
+          name: s.name,
+          role: s.role,
+          licenseNumber: s.licenseNumber,
+        })),
+        persisted: report.matchOfficialEvents.map((e) => ({
+          id: e.id,
+          externalKey: e.externalKey,
+          factType: e.factType,
+          resolutionStatus: e.resolutionStatus,
+          relatedResolutionStatus: e.relatedResolutionStatus,
+          sourceTeamSide: e.sourceTeamSide,
+          sourceJerseyNumber: e.sourceJerseyNumber,
+          relatedJerseyNumber: e.relatedJerseyNumber,
+          sourceName: e.sourceName,
+          sourceRoleLabel: e.sourceRoleLabel,
+          minute: e.minute,
+          period: e.period,
+          sourceClock: e.sourceClock,
+          playerId: e.playerId,
+          technicalStaffId: e.technicalStaffId,
+          relatedPlayerId: e.relatedPlayerId,
+        })),
+        limitations,
+      });
+    }
+
+    const duplicateCbf = await findDuplicatePlayerCbf(this.prisma, tenantId);
+    const duplicateLicenses = await findDuplicateStaffLicenses(this.prisma, tenantId);
+
     return {
       matchId: report.id,
       externalMatchId: report.externalMatchId,
       integrityStatus: report.integrityStatus,
+      computedIntegrityStatus: reconciliation
+        ? resolveIntegrityStatusFromReconciliation(reconciliation)
+        : null,
       integrityCheckedAt: report.integrityCheckedAt?.toISOString() ?? null,
       integritySummary: report.integritySummary,
+      reconciliation,
+      explain: reconciliation
+        ? [...reconciliation.messages, ...summarizeEventOutcomes(reconciliation.events.summary)]
+        : [],
       source: parsed
         ? {
             playerRoster: parsed.roster.filter((r) => r.teamSide === ourSide).length,
@@ -1095,6 +1146,10 @@ export class FmfMatchReportService {
       })),
       shadowComparison: shadow,
       limitations,
+      diagnostics: {
+        duplicatePlayerCbf: duplicateCbf.slice(0, 20),
+        duplicateStaffLicenses: duplicateLicenses.slice(0, 20),
+      },
     };
   }
 
@@ -1105,24 +1160,71 @@ export class FmfMatchReportService {
     linkedCount: number,
     unresolvedRosterCount: number,
   ): Promise<void> {
+    const tenantId = (
+      await this.prisma.fmfMatchReport.findUnique({
+        where: { id: matchId },
+        select: { tenantId: true },
+      })
+    )?.tenantId;
+    if (!tenantId) return;
+
     const events = await this.prisma.matchOfficialEvent.findMany({
       where: { fmfMatchReportId: matchId },
-      select: { factType: true, resolutionStatus: true },
     });
     const persisted = countPersistedEvents(events);
     const limitations: string[] = [];
     if (parsed.staffRoster.length === 0) {
       limitations.push('staffRoster não extraído deste snapshot');
     }
+    if (parsed.substitutionEvents.some((s) => s.clock === 'INT')) {
+      limitations.push('Substituições de intervalo (INT) parseadas mas sem relógio HH:MM');
+    }
+
+    const players = await this.prisma.player.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, cbfRegistration: true, registrationProfile: true },
+    });
+    const staff = await this.prisma.technicalStaff.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, role: true, licenseNumber: true },
+    });
+    const playerPool = buildPlayerLinkPool(players);
+    const reconciliation = buildReconciliationDetail({
+      parsed,
+      ourTeamSide,
+      playerPool,
+      staffPool: staff,
+      persisted: events.map((e) => ({
+        id: e.id,
+        externalKey: e.externalKey,
+        factType: e.factType,
+        resolutionStatus: e.resolutionStatus,
+        relatedResolutionStatus: e.relatedResolutionStatus,
+        sourceTeamSide: e.sourceTeamSide,
+        sourceJerseyNumber: e.sourceJerseyNumber,
+        relatedJerseyNumber: e.relatedJerseyNumber,
+        sourceName: e.sourceName,
+        sourceRoleLabel: e.sourceRoleLabel,
+        minute: e.minute,
+        period: e.period,
+        sourceClock: e.sourceClock,
+        playerId: e.playerId,
+        technicalStaffId: e.technicalStaffId,
+        relatedPlayerId: e.relatedPlayerId,
+      })),
+      limitations: limitations.length ? limitations : undefined,
+    });
+
     const summary = buildIntegritySummary({
       parsed,
       ourTeamSide,
       persisted,
       linkedPlayerCount: linkedCount,
       unresolvedPlayerRosterCount: unresolvedRosterCount,
+      reconciliation,
       limitations: limitations.length ? limitations : undefined,
     });
-    const status = resolveIntegrityStatus(summary);
+    const status = resolveIntegrityStatusFromReconciliation(reconciliation);
     await this.prisma.fmfMatchReport.update({
       where: { id: matchId },
       data: {
