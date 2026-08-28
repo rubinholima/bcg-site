@@ -99,6 +99,8 @@ type MatchInput = {
   occurrencesText: string | null;
   staffCardEvents?: FmfStaffCardEventInput[] | null;
   rawParsed?: unknown;
+  /** Modo events: cartões da comissão já agregados por staffId (sem fallback por nome). */
+  eventStaffCards?: Map<string, StaffMatchCards>;
   playerStats: Array<{
     playerId: string;
     jerseyNumber: number | null;
@@ -807,13 +809,17 @@ function toStaffDisciplineCandidates(
 }
 
 function staffCardsForMatch(
-  match: Pick<MatchInput, 'occurrencesText' | 'staffCardEvents' | 'rawParsed' | 'homeTeam' | 'awayTeam'>,
+  match: Pick<
+    MatchInput,
+    'occurrencesText' | 'staffCardEvents' | 'rawParsed' | 'homeTeam' | 'awayTeam' | 'eventStaffCards'
+  >,
   staff: StaffDisciplineInput[],
   clubName: string,
   aliases: string[],
   staffCandidates?: StaffDisciplineInput[],
   resolveContext?: StaffDisciplineResolveContext,
 ): Map<string, StaffMatchCards> {
+  if (match.eventStaffCards) return match.eventStaffCards;
   const clubFilter: StaffCardClubFilter = {
     homeTeam: match.homeTeam,
     awayTeam: match.awayTeam,

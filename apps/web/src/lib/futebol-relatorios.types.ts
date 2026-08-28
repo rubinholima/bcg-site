@@ -459,6 +459,15 @@ export type DisciplineCompetitionOptionDto = {
   matchCount: number;
 };
 
+export type CartoesSuspensaoSourceInfo = {
+  configured: "legacy" | "events" | "auto";
+  effectiveMode: "legacy" | "events";
+  fallbackReason?: string | null;
+  pendingPlayerCards: number;
+  pendingStaffCards: number;
+  pendingMessages: string[];
+};
+
 export type CartoesSuspensaoReportDto = {
   tenant: {
     id: string;
@@ -498,6 +507,7 @@ export type CartoesSuspensaoReportDto = {
     avgYellowPerMatch: number;
     avgRedPerMatch: number;
   };
+  sourceInfo?: CartoesSuspensaoSourceInfo;
   generatedAt: string;
 };
 

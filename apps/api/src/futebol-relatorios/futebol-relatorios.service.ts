@@ -115,6 +115,14 @@ import {
   reportMatchesCompetitionFilter,
 } from './cartoes-suspensao.util';
 import {
+  buildMatchDisciplineFromOfficialEvents,
+  buildPendingDisciplineMessages,
+} from './cartoes-suspensao-events.util';
+import {
+  getConfiguredCartoesSuspensaoSource,
+  resolveCartoesSuspensaoSource,
+} from './cartoes-suspensao-source.util';
+import {
   buildPlayersByCbf,
   buildPlayersByNormalizedName,
   resolvePlayerForFmfStat,
@@ -2487,6 +2495,7 @@ export class FutebolRelatoriosService {
     staff: CartoesSuspensaoReportDto['staff'];
     totals: CartoesSuspensaoReportDto['totals'];
     staffTotals: CartoesSuspensaoReportDto['staffTotals'];
+    sourceInfo: CartoesSuspensaoReportDto['sourceInfo'];
   }> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: input.tenantId },
@@ -2533,7 +2542,21 @@ export class FutebolRelatoriosService {
         occurrencesText: true,
         rawParsed: true,
         sourceUrl: true,
+        integrityStatus: true,
         unresolvedPlayers: true,
+        matchOfficialEvents: {
+          select: {
+            factType: true,
+            resolutionStatus: true,
+            playerId: true,
+            technicalStaffId: true,
+            sourceName: true,
+            sourceJerseyNumber: true,
+            sourceRoleLabel: true,
+            sourceTeamSide: true,
+            sourceExcerpt: true,
+          },
+        },
         playerStats: {
           select: {
             playerId: true,
@@ -2664,19 +2687,89 @@ export class FutebolRelatoriosService {
       matches.filter((row) => isFriendlyDisciplineMatch(row)).map((row) => row.id),
     );
 
-    const disciplineMatches = matches.map((row) => ({
-      ...row,
-      playerStats: filterDisciplinePlayerStatsForOurClub(
-        enrichDisciplineStatsFromUnresolved(
-          row.playerStats,
-          row.unresolvedPlayers,
-          resolveDisciplinePlayerId,
+    const configuredSource = getConfiguredCartoesSuspensaoSource();
+    const sourceDecision = resolveCartoesSuspensaoSource({
+      configured: configuredSource,
+      matches: matches.map((row) => ({
+        matchId: row.id,
+        rawParsedAvailable: row.rawParsed != null,
+        integrityStatus: row.integrityStatus,
+        eventCount: row.matchOfficialEvents.length,
+        isFriendly: friendlyMatchIds.has(row.id),
+      })),
+    });
+
+    let pendingPlayerCards = 0;
+    let pendingStaffCards = 0;
+
+    type DisciplineMatchRow = Omit<(typeof matches)[number], 'playerStats'> & {
+      playerStats: Array<{
+        playerId: string;
+        jerseyNumber: number | null;
+        playerName: string;
+        cbfRegistration?: string | null;
+        played: boolean;
+        yellowCards: number;
+        redCards: number;
+      }>;
+      eventStaffCards?: Map<
+        string,
+        { yellowCards: number; redCards: number; manual: boolean }
+      >;
+      staffCardEvents?: FmfStaffCardEventInput[] | null;
+    };
+
+    let disciplineMatches: DisciplineMatchRow[];
+
+    if (sourceDecision.effectiveMode === 'events') {
+      disciplineMatches = matches.map((row) => {
+        const fromEvents = buildMatchDisciplineFromOfficialEvents({
+          events: row.matchOfficialEvents,
+          homeTeam: row.homeTeam,
+          awayTeam: row.awayTeam,
+          clubName,
+          aliases,
+        });
+        pendingPlayerCards += fromEvents.pendingPlayerCards;
+        pendingStaffCards += fromEvents.pendingStaffCards;
+        return {
+          ...row,
+          playerStats: fromEvents.playerStats,
+          eventStaffCards: fromEvents.staffCardsByStaffId,
+        };
+      });
+    } else {
+      disciplineMatches = matches.map((row) => ({
+        ...row,
+        playerStats: filterDisciplinePlayerStatsForOurClub(
+          enrichDisciplineStatsFromUnresolved(
+            row.playerStats,
+            row.unresolvedPlayers,
+            resolveDisciplinePlayerId,
+          ),
+          row,
+          clubName,
+          aliases,
         ),
-        row,
-        clubName,
-        aliases,
-      ),
-    }));
+      }));
+      if (sourceDecision.fallbackReason) {
+        this.logger.warn(
+          `[cartoes-suspensao] fallback legacy competition=${input.competition} configured=${sourceDecision.configured} reason=${sourceDecision.fallbackReason}`,
+        );
+      }
+    }
+
+    const sourceInfo: CartoesSuspensaoReportDto['sourceInfo'] = {
+      configured: sourceDecision.configured,
+      effectiveMode: sourceDecision.effectiveMode,
+      fallbackReason: sourceDecision.fallbackReason ?? null,
+      pendingPlayerCards,
+      pendingStaffCards,
+      pendingMessages: buildPendingDisciplineMessages({
+        pendingPlayerCards,
+        pendingStaffCards,
+      }),
+    };
 
     const participantIds = collectDisciplineParticipantIds(disciplineMatches);
     const rosterIds = new Set(players.map((player) => player.id));
@@ -2733,10 +2826,10 @@ export class FutebolRelatoriosService {
       input.tenantId,
       referenceCategory,
     );
-    const disciplineMatchesWithStaffCards = await this.enrichDisciplineMatchesStaffCards(
-      disciplineMatches,
-      staffResolutionPool,
-    );
+    const disciplineMatchesWithStaffCards =
+      sourceDecision.effectiveMode === 'events'
+        ? disciplineMatches
+        : await this.enrichDisciplineMatchesStaffCards(disciplineMatches, staffResolutionPool);
     const resolveContextByMatchId = new Map<string, StaffDisciplineResolveContext>();
     for (const row of disciplineMatchesWithStaffCards) {
       resolveContextByMatchId.set(row.id, {
@@ -2753,8 +2846,10 @@ export class FutebolRelatoriosService {
         homeScore: row.homeScore,
         awayScore: row.awayScore,
         occurrencesText: row.occurrencesText,
-        rawParsed: row.rawParsed,
-        staffCardEvents: row.staffCardEvents,
+        rawParsed: sourceDecision.effectiveMode === 'events' ? undefined : row.rawParsed,
+        staffCardEvents:
+          sourceDecision.effectiveMode === 'events' ? null : row.staffCardEvents,
+        eventStaffCards: row.eventStaffCards,
         playerStats: row.playerStats,
       })),
       staff: staffDisplayRoster.map((member) => this.mapStaffDisciplineInput(member)),
@@ -2791,6 +2886,7 @@ export class FutebolRelatoriosService {
       staff: staffGrid.staff,
       totals: grid.totals,
       staffTotals: staffGrid.staffTotals,
+      sourceInfo,
     };
   }
 
@@ -3167,6 +3263,7 @@ export class FutebolRelatoriosService {
       staff: seasonGrid.staff,
       totals: seasonGrid.totals,
       staffTotals: seasonGrid.staffTotals,
+      sourceInfo: seasonGrid.sourceInfo,
       generatedAt: new Date().toISOString(),
     };
   }

@@ -398,6 +398,10 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
 
           <PageSizeSelect value={pageSize} onChange={setPageSize} />
 
+          {reportData?.sourceInfo?.pendingMessages?.[0] ? (
+            <p className="text-xs text-amber-200/90">{reportData.sourceInfo.pendingMessages[0]}</p>
+          ) : null}
+
           <div className="flex flex-wrap gap-2 pt-1">
             <Button type="button" variant="outline" disabled={busy} onClick={() => void handlePreview()}>
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}

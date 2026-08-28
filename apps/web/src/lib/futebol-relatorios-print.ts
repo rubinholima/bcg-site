@@ -2536,10 +2536,32 @@ export function buildCartoesSuspensaoPrintHtml(
     ? `<div class="meta-item full"><label>Próxima rodada</label><span>${escapeHtml(data.nextRound.label)} · ${escapeHtml(formatBrDate(data.nextRound.matchDate))}</span></div>`
     : "";
 
+  const sourceInfo = data.sourceInfo;
+  const sourceMeta = sourceInfo
+    ? `
+    <section class="section integrity-section">
+      <p class="integrity-label">${sourceInfo.effectiveMode === "events" ? "Disciplina — eventos oficiais" : "Disciplina — fonte legacy"}</p>
+      ${
+        sourceInfo.fallbackReason?.trim()
+          ? `<p class="integrity-source">${escapeHtml(sourceInfo.fallbackReason.trim())}</p>`
+          : sourceInfo.effectiveMode === "events"
+            ? `<p class="integrity-source">Contagem a partir dos eventos oficiais da súmula (FMF)</p>`
+            : ""
+      }
+      ${
+        sourceInfo.pendingMessages.length > 0
+          ? `<ul class="integrity-msgs">${sourceInfo.pendingMessages.map((m) => `<li>${escapeHtml(m)}</li>`).join("")}</ul>`
+          : ""
+      }
+    </section>
+  `
+    : "";
+
   const extraStyles = cartoesSuspensaoDisciplineTableStyles();
 
   const body = `
     <style>${extraStyles}</style>
+    ${sourceMeta}
     <div class="meta-grid">
       ${nextRoundMeta}
       <div class="meta-item"><label>Fase</label><span>${escapeHtml(data.filters.phase ?? "—")}</span></div>
