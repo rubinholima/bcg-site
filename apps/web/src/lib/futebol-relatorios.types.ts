@@ -220,6 +220,80 @@ export type SumulaMatchListItem = {
   sourceUrl: string | null;
 };
 
+export type SumulaCartoesLinkBadge = "pending" | "partial" | "ambiguous";
+
+export type SumulaCartoesOfficialRosterPlayer = {
+  jerseyNumber: number;
+  sourceName: string;
+  cbfRegistration: string | null;
+  starter: boolean;
+  teamSide: "home" | "away";
+  playerId?: string | null;
+  linkBadge?: SumulaCartoesLinkBadge | null;
+};
+
+export type SumulaCartoesOfficialStaffRoster = {
+  sourceName: string;
+  roleLabel: string;
+  teamSide: "home" | "away";
+  technicalStaffId?: string | null;
+  linkBadge?: SumulaCartoesLinkBadge | null;
+};
+
+export type SumulaCartoesOfficialEvent = {
+  id: string;
+  factType: string;
+  sourceName: string | null;
+  sourceJerseyNumber: number | null;
+  relatedJerseyNumber: number | null;
+  relatedSourceName: string | null;
+  sourceRoleLabel: string | null;
+  teamSide: "home" | "away" | null;
+  sourceClock: string | null;
+  period: string | null;
+  timingLabel: string;
+  minute: number | null;
+  goalType: string | null;
+  linkBadge?: SumulaCartoesLinkBadge | null;
+  relatedLinkBadge?: SumulaCartoesLinkBadge | null;
+  playerId?: string | null;
+  relatedPlayerId?: string | null;
+  technicalStaffId?: string | null;
+  sourceSequence: number | null;
+};
+
+export type SumulaCartoesIntegrity = {
+  status: "synced" | "warnings" | "unresolved" | "failed";
+  label: string;
+  messages: string[];
+  pendingPlayerLinks: number;
+  pendingStaffLinks: number;
+};
+
+export type SumulaCartoesOfficialSheet = {
+  roster: {
+    home: SumulaCartoesOfficialRosterPlayer[];
+    away: SumulaCartoesOfficialRosterPlayer[];
+  };
+  staffRoster: {
+    home: SumulaCartoesOfficialStaffRoster[];
+    away: SumulaCartoesOfficialStaffRoster[];
+  };
+  goals: SumulaCartoesOfficialEvent[];
+  playerCards: SumulaCartoesOfficialEvent[];
+  staffCards: SumulaCartoesOfficialEvent[];
+  substitutions: SumulaCartoesOfficialEvent[];
+  timeline: SumulaCartoesOfficialEvent[];
+  integrity: SumulaCartoesIntegrity;
+};
+
+export type SumulaCartoesSourceInfo = {
+  configured: "legacy" | "events" | "auto";
+  effectiveMode: "legacy" | "events";
+  fallbackReason?: string | null;
+  matchId?: string | null;
+};
+
 export type SumulaCartoesMatchPlayer = {
   jerseyNumber: number | null;
   name: string;
@@ -231,6 +305,8 @@ export type SumulaCartoesMatchPlayer = {
   yellowCards: number;
   redCards: number;
   playerId?: string | null;
+  sourceName?: string | null;
+  linkBadge?: SumulaCartoesLinkBadge | null;
 };
 
 export type SumulaCartoesMatchTeam = {
@@ -257,6 +333,8 @@ export type SumulaCartoesMatch = {
   home: SumulaCartoesMatchTeam;
   away: SumulaCartoesMatchTeam;
   staffCards: SumulaCartoesStaffCard[];
+  sourceMode?: "legacy" | "events";
+  officialSheet?: SumulaCartoesOfficialSheet;
 };
 
 export type SumulaCartoesStaffCard = {
@@ -321,6 +399,7 @@ export type SumulaCartoesReportDto = {
     players: CartoesSuspensaoPlayerDto[];
     totals: CartoesSuspensaoReportDto["totals"];
   } | null;
+  sourceInfo?: SumulaCartoesSourceInfo;
   generatedAt: string;
 };
 

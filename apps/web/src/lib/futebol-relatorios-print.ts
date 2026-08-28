@@ -20,6 +20,9 @@ import type {
   RelatorioHospedeRow,
   SumulaCartoesMatchPlayer,
   SumulaCartoesMatchTeam,
+  SumulaCartoesOfficialEvent,
+  SumulaCartoesOfficialRosterPlayer,
+  SumulaCartoesOfficialStaffRoster,
   SumulaCartoesReportDto,
   CartoesSuspensaoReportDto,
 } from "@/lib/futebol-relatorios.types";
@@ -313,6 +316,43 @@ function baseStyles(size: PrintPageSize): string {
       color: #94a3b8;
       font-style: italic;
       padding: 14px;
+    }
+    .link-badge {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 8px;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      color: #92400e;
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      vertical-align: middle;
+    }
+    .integrity-section {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+    }
+    .integrity-label {
+      margin: 0 0 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: ${BCG.blue};
+    }
+    .integrity-source {
+      margin: 0 0 6px;
+      font-size: 10px;
+      color: #475569;
+    }
+    .integrity-msgs {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 10px;
+      color: #64748b;
     }
     .footer {
       margin-top: 24px;
@@ -834,6 +874,206 @@ export function printPassageirosReport(
   printHtmlDocument(buildPassageirosPrintHtml(data, size), "Impressão — Passageiros");
 }
 
+function linkBadgeHtml(badge: SumulaCartoesMatchPlayer["linkBadge"]): string {
+  if (!badge) return "";
+  const label =
+    badge === "partial" ? "Vínculo parcial" : badge === "ambiguous" ? "Vínculo ambíguo" : "Vínculo pendente";
+  return `<span class="link-badge">${escapeHtml(label)}</span>`;
+}
+
+function officialRosterRows(players: SumulaCartoesOfficialRosterPlayer[]): string {
+  if (players.length === 0) {
+    return `<tr><td colspan="5" class="empty">Sem jogadores na relação oficial</td></tr>`;
+  }
+  return players
+    .map(
+      (p) => `<tr>
+        <td class="num">${p.jerseyNumber}</td>
+        <td class="left">${escapeHtml(p.sourceName)}${linkBadgeHtml(p.linkBadge)}</td>
+        <td><span class="doc-id">${escapeHtml(p.cbfRegistration?.trim() || "—")}</span></td>
+        <td>${p.starter ? "Titular" : "Reserva"}</td>
+        <td>${p.teamSide === "home" ? "Mandante" : "Visitante"}</td>
+      </tr>`,
+    )
+    .join("");
+}
+
+function officialStaffRows(staff: SumulaCartoesOfficialStaffRoster[]): string {
+  if (staff.length === 0) {
+    return `<tr><td colspan="3" class="empty">Sem comissão na relação oficial</td></tr>`;
+  }
+  return staff
+    .map(
+      (s) => `<tr>
+        <td class="left">${escapeHtml(s.sourceName)}${linkBadgeHtml(s.linkBadge)}</td>
+        <td class="left">${escapeHtml(s.roleLabel)}</td>
+        <td>${s.teamSide === "home" ? "Mandante" : "Visitante"}</td>
+      </tr>`,
+    )
+    .join("");
+}
+
+function officialEventLabel(event: SumulaCartoesOfficialEvent): string {
+  if (event.factType === "PLAYER_YELLOW_CARD") return "Amarelo";
+  if (event.factType === "PLAYER_RED_CARD") return "Vermelho";
+  if (event.factType === "STAFF_YELLOW_CARD") return "Amarelo (comissão)";
+  if (event.factType === "STAFF_RED_CARD") return "Vermelho (comissão)";
+  if (event.factType === "PLAYER_PENALTY_GOAL") return "Gol (pênalti)";
+  if (event.factType === "PLAYER_OWN_GOAL") return "Gol contra";
+  if (event.factType === "PLAYER_GOAL") return "Gol";
+  if (event.factType === "PLAYER_SUBSTITUTION") return "Substituição";
+  return event.factType;
+}
+
+function officialEventPerson(event: SumulaCartoesOfficialEvent): string {
+  const jersey = event.sourceJerseyNumber != null ? `#${event.sourceJerseyNumber} ` : "";
+  const name = event.sourceName?.trim() || "—";
+  const role = event.sourceRoleLabel?.trim() ? ` (${event.sourceRoleLabel})` : "";
+  return `${jersey}${name}${role}${linkBadgeHtml(event.linkBadge)}`;
+}
+
+function officialSubstitutionRow(event: SumulaCartoesOfficialEvent): string {
+  const outJersey = event.sourceJerseyNumber != null ? `#${event.sourceJerseyNumber} ` : "";
+  const inJersey = event.relatedJerseyNumber != null ? `#${event.relatedJerseyNumber} ` : "";
+  const outName = event.sourceName?.trim() || "—";
+  const inName = event.relatedSourceName?.trim() || "—";
+  return `<tr>
+    <td>${escapeHtml(event.timingLabel)}</td>
+    <td class="left">${escapeHtml(outJersey + outName)}${linkBadgeHtml(event.linkBadge)} → ${escapeHtml(inJersey + inName)}${linkBadgeHtml(event.relatedLinkBadge)}</td>
+    <td>${event.teamSide === "home" ? "Mandante" : event.teamSide === "away" ? "Visitante" : "—"}</td>
+  </tr>`;
+}
+
+function sumulaIntegritySection(match: NonNullable<SumulaCartoesReportDto["match"]>): string {
+  const sheet = match.officialSheet;
+  if (!sheet) return "";
+  const integrity = sheet.integrity;
+  const messages =
+    integrity.messages.length > 0
+      ? `<ul class="integrity-msgs">${integrity.messages.map((m) => `<li>${escapeHtml(m)}</li>`).join("")}</ul>`
+      : "";
+  const sourceNote =
+    match.sourceMode === "events"
+      ? `<p class="integrity-source">Dados oficiais da súmula (FMF)</p>`
+      : "";
+  return `
+    <section class="section integrity-section">
+      <p class="integrity-label">${escapeHtml(integrity.label)}</p>
+      ${sourceNote}
+      ${messages}
+    </section>
+  `;
+}
+
+function sumulaOfficialSheetSections(match: NonNullable<SumulaCartoesReportDto["match"]>): string {
+  const sheet = match.officialSheet;
+  if (!sheet || match.sourceMode !== "events") return "";
+
+  const rosterHome = officialRosterRows(sheet.roster.home);
+  const rosterAway = officialRosterRows(sheet.roster.away);
+  const staffAll = officialStaffRows([...sheet.staffRoster.home, ...sheet.staffRoster.away]);
+
+  const goalRows =
+    sheet.goals.length === 0
+      ? `<tr><td colspan="4" class="empty">Nenhum gol registrado</td></tr>`
+      : sheet.goals
+          .map(
+            (g) => `<tr>
+              <td>${escapeHtml(g.timingLabel)}</td>
+              <td class="left">${escapeHtml(officialEventPerson(g))}</td>
+              <td>${escapeHtml(officialEventLabel(g))}</td>
+              <td>${g.teamSide === "home" ? "Mandante" : g.teamSide === "away" ? "Visitante" : "—"}</td>
+            </tr>`,
+          )
+          .join("");
+
+  const cardRows =
+    sheet.playerCards.length === 0
+      ? `<tr><td colspan="4" class="empty">Nenhum cartão de atleta</td></tr>`
+      : sheet.playerCards
+          .map(
+            (c) => `<tr>
+              <td>${escapeHtml(c.timingLabel)}</td>
+              <td class="left">${escapeHtml(officialEventPerson(c))}</td>
+              <td>${escapeHtml(officialEventLabel(c))}</td>
+              <td>${c.teamSide === "home" ? "Mandante" : c.teamSide === "away" ? "Visitante" : "—"}</td>
+            </tr>`,
+          )
+          .join("");
+
+  const staffCardRows =
+    sheet.staffCards.length === 0
+      ? `<tr><td colspan="4" class="empty">Nenhum cartão da comissão</td></tr>`
+      : sheet.staffCards
+          .map(
+            (c) => `<tr>
+              <td>${escapeHtml(c.timingLabel)}</td>
+              <td class="left">${escapeHtml(officialEventPerson(c))}</td>
+              <td>${escapeHtml(officialEventLabel(c))}</td>
+              <td>${c.teamSide === "home" ? "Mandante" : c.teamSide === "away" ? "Visitante" : "—"}</td>
+            </tr>`,
+          )
+          .join("");
+
+  const subRows =
+    sheet.substitutions.length === 0
+      ? `<tr><td colspan="3" class="empty">Nenhuma substituição registrada</td></tr>`
+      : sheet.substitutions.map(officialSubstitutionRow).join("");
+
+  return `
+    ${sumulaIntegritySection(match)}
+    <section class="section">
+      <h2 class="section-title">Elenco oficial — ${escapeHtml(match.homeTeam)}</h2>
+      <table>
+        <thead><tr><th class="num">#</th><th>Atleta</th><th>CBF</th><th>Status</th><th>Lado</th></tr></thead>
+        <tbody>${rosterHome}</tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2 class="section-title">Elenco oficial — ${escapeHtml(match.awayTeam)}</h2>
+      <table>
+        <thead><tr><th class="num">#</th><th>Atleta</th><th>CBF</th><th>Status</th><th>Lado</th></tr></thead>
+        <tbody>${rosterAway}</tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2 class="section-title">Comissão técnica (relação oficial)</h2>
+      <table>
+        <thead><tr><th>Nome</th><th>Função na partida</th><th>Lado</th></tr></thead>
+        <tbody>${staffAll}</tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2 class="section-title">Gols</h2>
+      <table>
+        <thead><tr><th>Tempo</th><th>Atleta</th><th>Tipo</th><th>Lado</th></tr></thead>
+        <tbody>${goalRows}</tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2 class="section-title">Cartões — atletas</h2>
+      <table>
+        <thead><tr><th>Tempo</th><th>Atleta</th><th>Cartão</th><th>Lado</th></tr></thead>
+        <tbody>${cardRows}</tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2 class="section-title">Cartões — comissão técnica</h2>
+      <table>
+        <thead><tr><th>Tempo</th><th>Membro</th><th>Cartão</th><th>Lado</th></tr></thead>
+        <tbody>${staffCardRows}</tbody>
+      </table>
+    </section>
+    <section class="section">
+      <h2 class="section-title">Substituições</h2>
+      <table>
+        <thead><tr><th>Tempo</th><th>Sai → Entra</th><th>Lado</th></tr></thead>
+        <tbody>${subRows}</tbody>
+      </table>
+    </section>
+  `;
+}
+
 function sumulaPlayerRows(players: SumulaCartoesMatchPlayer[]): string {
   if (players.length === 0) {
     return `<tr><td colspan="8" class="empty">Sem jogadores na súmula</td></tr>`;
@@ -1051,7 +1291,11 @@ export function buildSumulaCartoesPrintHtml(
     : "";
 
   const sumulaBody = data.match
-    ? `${matchMeta}${sumulaTeamTable(data.match.home.teamName, data.match.home)}${sumulaTeamTable(data.match.away.teamName, data.match.away)}${sumulaStaffCardsSection(data.match)}`
+    ? `${matchMeta}${
+        data.match.sourceMode === "events" && data.match.officialSheet
+          ? sumulaOfficialSheetSections(data.match)
+          : `${sumulaTeamTable(data.match.home.teamName, data.match.home)}${sumulaTeamTable(data.match.away.teamName, data.match.away)}${sumulaStaffCardsSection(data.match)}`
+      }`
     : "";
 
   const disciplineBody = `${sumulaSeasonGridSection(data)}${sumulaStaffDisciplineSection(data)}`;

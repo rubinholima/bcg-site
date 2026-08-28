@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -52,6 +53,20 @@ import type {
 } from './futebol-relatorios.types';
 import { assignStartersByCadastroPosition } from '../common/press-kit-lineup.util';
 import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
+import { normalizeParsedFmfReport } from '../fmf-scraper/fmf-parsed-normalize.util';
+import {
+  buildReconciliationDetail,
+  resolveIntegrityStatusFromReconciliation,
+} from '../fmf-scraper/match-integrity.util';
+import { buildPlayerLinkPool } from '../fmf-scraper/match-official-event.identity';
+import {
+  attachEventsModeToMatchDto,
+  buildOfficialSheet,
+} from './sumula-cartoes-events.builder';
+import {
+  getConfiguredSumulaCartoesSource,
+  resolveSumulaCartoesSource,
+} from './sumula-cartoes-source.util';
 
 const PRESS_KIT_STAFF_ROLE_SLUGS = new Set([
   'tecnico',
@@ -189,6 +204,8 @@ const FMF_STORE_KEY = 'fmf_scraper_data';
 
 @Injectable()
 export class FutebolRelatoriosService {
+  private readonly logger = new Logger(FutebolRelatoriosService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly agenda: FutebolAgendaService,
@@ -1677,6 +1694,7 @@ export class FutebolRelatoriosService {
     const staffResolutionPool = await this.loadTechnicalStaffForDisciplineResolution(tenantId);
 
     let match: SumulaCartoesMatchDto | null = null;
+    let sourceInfo: SumulaCartoesReportDto['sourceInfo'] | undefined;
     if (matchId) {
       const row = await this.prisma.fmfMatchReport.findFirst({
         where: { id: matchId, tenantId },
@@ -1684,6 +1702,9 @@ export class FutebolRelatoriosService {
           playerStats: {
             include: { player: { select: { id: true, name: true, jerseyNumber: true } } },
             orderBy: [{ starter: 'desc' }, { jerseyNumber: 'asc' }],
+          },
+          matchOfficialEvents: {
+            orderBy: [{ sourceSequence: 'asc' }, { createdAt: 'asc' }],
           },
         },
       });
@@ -1697,7 +1718,7 @@ export class FutebolRelatoriosService {
         { clubName: tenant.tradeName?.trim() || tenant.name, aliases },
         this.findTravelPressKitForReport(matchRow, travelsForPressKit, tenant.tradeName?.trim() || tenant.name, aliases),
       );
-      match = this.buildSumulaMatchDto(
+      const legacyMatch = this.buildSumulaMatchDto(
         matchRow,
         tenant.name,
         aliases,
@@ -1705,6 +1726,87 @@ export class FutebolRelatoriosService {
         staffResolutionPool,
         staffCardsResolved,
       );
+
+      const configuredSource = getConfiguredSumulaCartoesSource();
+      const parsed = normalizeParsedFmfReport(matchRow.rawParsed);
+      const limitations: string[] = [];
+      if (!parsed) limitations.push('rawParsed indisponível');
+      else if (parsed.staffRoster.length === 0) {
+        limitations.push('staffRoster ausente no snapshot — reimportar PDF para correlacionar comissão');
+      }
+
+      const players = await this.prisma.player.findMany({
+        where: { tenantId },
+        select: { id: true, name: true, cbfRegistration: true, registrationProfile: true },
+      });
+      const playerPool = buildPlayerLinkPool(players);
+
+      const reconciliation =
+        parsed != null
+          ? buildReconciliationDetail({
+              parsed,
+              ourTeamSide: isFmfTeamMatch(matchRow.homeTeam, tenant.name, aliases)
+                ? 'home'
+                : 'away',
+              playerPool,
+              staffPool: staffResolutionPool,
+              persisted: matchRow.matchOfficialEvents.map((e) => ({
+                id: e.id,
+                factType: e.factType,
+                externalKey: e.externalKey,
+                sourceTeamSide: e.sourceTeamSide,
+                sourceJerseyNumber: e.sourceJerseyNumber,
+                sourceClock: e.sourceClock,
+                period: e.period,
+                minute: e.minute,
+                goalType: e.goalType,
+                sourceRoleLabel: e.sourceRoleLabel,
+                sourceName: e.sourceName,
+                resolutionStatus: e.resolutionStatus,
+                relatedResolutionStatus: e.relatedResolutionStatus,
+                playerId: e.playerId,
+                technicalStaffId: e.technicalStaffId,
+              })),
+              limitations,
+            })
+          : null;
+
+      const integrityStatus =
+        reconciliation != null ? resolveIntegrityStatusFromReconciliation(reconciliation) : null;
+
+      const sourceDecision = resolveSumulaCartoesSource({
+        configured: configuredSource,
+        parsed,
+        persistedEventCount: matchRow.matchOfficialEvents.length,
+        reconciliation,
+        integrityStatus,
+        limitations,
+      });
+
+      sourceInfo = {
+        configured: sourceDecision.configured,
+        effectiveMode: sourceDecision.effectiveMode,
+        fallbackReason: sourceDecision.fallbackReason ?? null,
+        matchId,
+      };
+
+      if (sourceDecision.effectiveMode === 'events' && parsed && reconciliation) {
+        const officialSheet = buildOfficialSheet({
+          parsed,
+          events: matchRow.matchOfficialEvents,
+          integrityStatus: integrityStatus ?? 'unresolved',
+          playerPool,
+          staffPool: staffResolutionPool,
+        });
+        match = attachEventsModeToMatchDto(legacyMatch, officialSheet);
+      } else {
+        match = { ...legacyMatch, sourceMode: 'legacy' };
+        if (sourceDecision.fallbackReason) {
+          this.logger.warn(
+            `[sumula-cartoes] fallback legacy matchId=${matchId} configured=${sourceDecision.configured} reason=${sourceDecision.fallbackReason}`,
+          );
+        }
+      }
     }
 
     const discipline = await this.buildSumulaDisciplineRows({
@@ -1745,6 +1847,7 @@ export class FutebolRelatoriosService {
       discipline,
       staffDiscipline,
       seasonGrid,
+      sourceInfo,
       generatedAt: new Date().toISOString(),
     };
   }
