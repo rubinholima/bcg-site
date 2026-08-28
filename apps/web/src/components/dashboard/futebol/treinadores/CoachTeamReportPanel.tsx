@@ -547,6 +547,18 @@ export function CoachTeamReportPanel({
     setDetailPlayerId(playerId);
   };
 
+  const handleOpenPromotionPicker = () => {
+    if (!category) {
+      setFeedback({
+        open: true,
+        title: "Categoria obrigatória",
+        message: "Selecione uma categoria no filtro do topo para indicar subida.",
+      });
+      return;
+    }
+    setPromotionPickerOpen(true);
+  };
+
   if (contextLoading) {
     return (
       <div className="flex justify-center py-16">
@@ -766,6 +778,17 @@ export function CoachTeamReportPanel({
                 Exportar Excel
               </Button>
               {!locked ? (
+                <Button type="button" variant="outline" size="sm" onClick={handleOpenPromotionPicker}>
+                  <Plus className="mr-1 h-4 w-4" />
+                  Indicar subida
+                  {promotionSelections.length > 0 ? (
+                    <span className="ml-1.5 rounded-sm bg-primary/20 px-1.5 py-0.5 text-xs tabular-nums">
+                      {promotionSelections.length}
+                    </span>
+                  ) : null}
+                </Button>
+              ) : null}
+              {!locked ? (
                 <Button type="button" size="sm" disabled={saving} onClick={() => void handleSave(false)}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Salvar relatório
@@ -943,17 +966,7 @@ export function CoachTeamReportPanel({
                 <Button
                   type="button"
                   size="sm"
-                  onClick={() => {
-                    if (!category) {
-                      setFeedback({
-                        open: true,
-                        title: "Categoria obrigatória",
-                        message: "Selecione uma categoria para visualizar atletas elegíveis.",
-                      });
-                      return;
-                    }
-                    setPromotionPickerOpen(true);
-                  }}
+                  onClick={handleOpenPromotionPicker}
                 >
                   <Plus className="mr-1 h-4 w-4" />
                   Indicar
