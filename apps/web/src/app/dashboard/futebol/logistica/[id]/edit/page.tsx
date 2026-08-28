@@ -235,7 +235,11 @@ export default function EditLogisticaPage() {
                       return {
                         personId: oc.personId,
                         personName: oc.personName ?? "",
-                        personType: (oc.personType === "staff" ? "staff" : "player") as "player" | "staff",
+                        personType: (oc.personType === "staff"
+                          ? "staff"
+                          : oc.personType === "guest"
+                            ? "guest"
+                            : "player") as RoomAssignment["occupants"][number]["personType"],
                       };
                     })
                   : [],
@@ -773,6 +777,7 @@ export default function EditLogisticaPage() {
             {item.tenantId && (
               <RoomAssignmentTable
                 tenantId={item.tenantId}
+                travelId={id}
                 value={accommodationRooms}
                 onChange={setAccommodationRooms}
                 disabled={saving}

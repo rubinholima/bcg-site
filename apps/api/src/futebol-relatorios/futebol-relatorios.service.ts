@@ -26,6 +26,7 @@ import {
 } from '../common/brazil-time.util';
 import { isContractExpirationAgendaItem } from '../futebol-agenda/football-agenda-contract-expiration.util';
 import { dedupeTravelLogisticsList } from '../logistica/travel-logistics-dedup.util';
+import { passageirosFromTravelScope } from './passageiros-travel-scope.util';
 import {
   normalizeTeamNameKeyForMerge,
   opponentIdentityKey,
@@ -242,7 +243,15 @@ export class FutebolRelatoriosService {
     let staff: RelatorioPessoaRow[];
     let guests: RelatorioPessoaRow[] = [];
 
-    if (participants.length > 0) {
+    const roomAssignments = this.parseRooms(travel.accommodationRooms);
+    const occupantIds = this.collectOccupantIds(roomAssignments);
+    const scope = passageirosFromTravelScope({
+      participantCount: participants.length,
+      roomPlayerCount: occupantIds.playerIds.size,
+      roomStaffCount: occupantIds.staffIds.size,
+    });
+
+    if (scope === 'convocation') {
       const fromConvocation = await this.enrichFromParticipants(
         travel.tenantId,
         participants,
@@ -250,23 +259,17 @@ export class FutebolRelatoriosService {
       athletes = fromConvocation.athletes;
       staff = fromConvocation.staff;
       guests = fromConvocation.guests;
+    } else if (scope === 'rooms') {
+      const enriched = await this.enrichOccupants(
+        travel.tenantId,
+        occupantIds.playerIds,
+        occupantIds.staffIds,
+      );
+      athletes = enriched.athletes;
+      staff = enriched.staff;
     } else {
-      const roomAssignments = this.parseRooms(travel.accommodationRooms);
-      const occupantIds = this.collectOccupantIds(roomAssignments);
-
-      if (occupantIds.playerIds.size > 0 || occupantIds.staffIds.size > 0) {
-        const enriched = await this.enrichOccupants(
-          travel.tenantId,
-          occupantIds.playerIds,
-          occupantIds.staffIds,
-        );
-        athletes = enriched.athletes;
-        staff = enriched.staff;
-      } else {
-        const squad = await this.loadSquadForCategories(travel.tenantId, categories);
-        athletes = squad.athletes;
-        staff = squad.staff;
-      }
+      athletes = [];
+      staff = [];
     }
 
     return {

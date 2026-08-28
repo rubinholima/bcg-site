@@ -22,11 +22,17 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useLogisticaCadastrosLookups } from "@/hooks/useLogisticaCadastrosLookups";
+import {
+  buildTravelRoomParticipantOptions,
+  mergePreservedRoomOccupantOptions,
+  type TravelParticipantForRoom,
+  type TravelRoomParticipantOption,
+} from "@/lib/travel-room-participant-options.util";
 
 export interface RoomOccupant {
   personId?: string;
   personName: string;
-  personType: "player" | "staff";
+  personType: "player" | "staff" | "guest";
 }
 
 export interface RoomAssignment {
@@ -36,31 +42,12 @@ export interface RoomAssignment {
   occupants: RoomOccupant[];
 }
 
-interface Player {
-  id: string;
-  name: string;
-  category?: string | null;
-}
-
-interface TechnicalStaffMember {
-  id: string;
-  name: string;
-  role?: string | null;
-}
-
 interface RoomAssignmentTableProps {
   tenantId: string;
+  travelId?: string | null;
   value: RoomAssignment[];
   onChange: (rooms: RoomAssignment[]) => void;
   disabled?: boolean;
-}
-
-function buildPersonOption(player: Player) {
-  return { value: `player:${player.id}`, label: player.name, type: "player" as const, id: player.id };
-}
-
-function buildStaffOption(staff: TechnicalStaffMember) {
-  return { value: `staff:${staff.id}`, label: staff.name, type: "staff" as const, id: staff.id };
 }
 
 function slotCountForRoom(room: RoomAssignment, roomTypes: { id: string; capacity?: number }[]): number {
@@ -69,31 +56,64 @@ function slotCountForRoom(room: RoomAssignment, roomTypes: { id: string; capacit
   return Math.min(Math.max(cap, 1), 8);
 }
 
-export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: RoomAssignmentTableProps) {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [staff, setStaff] = useState<TechnicalStaffMember[]>([]);
+function occupantTypeLabel(type: TravelRoomParticipantOption["type"]): string {
+  if (type === "staff") return " (comissão)";
+  if (type === "guest") return " (convidado)";
+  return "";
+}
+
+export function RoomAssignmentTable({
+  tenantId: _tenantId,
+  travelId,
+  value,
+  onChange,
+  disabled,
+}: RoomAssignmentTableProps) {
+  const [tripParticipants, setTripParticipants] = useState<TravelRoomParticipantOption[]>([]);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
   const { roomTypes, loading: loadingLookups } = useLogisticaCadastrosLookups();
 
   useEffect(() => {
-    if (!tenantId) return;
-    Promise.all([
-      api.get<Player[]>(`/players?tenantId=${encodeURIComponent(tenantId)}`),
-      api.get<TechnicalStaffMember[]>(`/technical-staff?tenantId=${encodeURIComponent(tenantId)}`),
-    ])
-      .then(([pRes, sRes]) => {
-        setPlayers(Array.isArray(pRes.data) ? pRes.data : []);
-        setStaff(Array.isArray(sRes.data) ? sRes.data : []);
+    if (!travelId) {
+      setTripParticipants([]);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingParticipants(true);
+    api
+      .get<TravelParticipantForRoom[]>(`/logistica/${encodeURIComponent(travelId)}/participants`)
+      .then((res) => {
+        if (cancelled) return;
+        const participants = Array.isArray(res.data) ? res.data : [];
+        setTripParticipants(buildTravelRoomParticipantOptions(participants));
       })
       .catch(() => {
-        setPlayers([]);
-        setStaff([]);
+        if (!cancelled) setTripParticipants([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingParticipants(false);
       });
-  }, [tenantId]);
 
-  const allOptions = useMemo(
-    () => [...players.map(buildPersonOption), ...staff.map(buildStaffOption)],
-    [players, staff],
-  );
+    return () => {
+      cancelled = true;
+    };
+  }, [travelId]);
+
+  const participantOptions = useMemo(() => {
+    const existingOccupants = value.flatMap((room) => room.occupants ?? []);
+    return mergePreservedRoomOccupantOptions(tripParticipants, existingOccupants);
+  }, [tripParticipants, value]);
+
+  const scopeMessage = useMemo(() => {
+    if (!travelId) {
+      return "Salve a viagem e inclua participantes na convocação para atribuir quartos.";
+    }
+    if (!loadingParticipants && participantOptions.length === 0) {
+      return "Nenhum participante foi incluído nesta viagem.";
+    }
+    return null;
+  }, [travelId, loadingParticipants, participantOptions.length]);
 
   const addRoom = () => {
     onChange([...value, { roomNumber: "", occupants: [] }]);
@@ -133,11 +153,11 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
       occ[slotIndex] = { personName: "", personType: "player" };
     } else {
       const [type, id] = optionValue.split(":");
-      const opt = allOptions.find((o) => o.value === optionValue);
+      const opt = participantOptions.find((o) => o.value === optionValue);
       occ[slotIndex] = {
         personId: id,
         personName: opt?.label ?? "",
-        personType: (type as "player" | "staff") ?? "player",
+        personType: (type as RoomOccupant["personType"]) ?? "player",
       };
     }
     next[roomIndex].occupants = occ.slice(0, maxSlots);
@@ -146,8 +166,9 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
 
   const getOccupantOption = (roomIndex: number, slotIndex: number): string => {
     const occ = value[roomIndex]?.occupants?.[slotIndex];
-    if (!occ?.personId) return "none";
-    return `${occ.personType}:${occ.personId}`;
+    if (!occ?.personId && !occ?.personName?.trim()) return "none";
+    if (occ.personId) return `${occ.personType}:${occ.personId}`;
+    return `${occ.personType}:${occ.personName.trim()}`;
   };
 
   const usedInOtherRooms = (roomIndex: number) => {
@@ -155,7 +176,12 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
     value.forEach((r, ri) => {
       if (ri === roomIndex) return;
       r.occupants.forEach((o) => {
-        if (o.personId) used.add(`${o.personType}:${o.personId}`);
+        const key = o.personId
+          ? `${o.personType}:${o.personId}`
+          : o.personName?.trim()
+            ? `${o.personType}:${o.personName.trim()}`
+            : null;
+        if (key) used.add(key);
       });
     });
     return used;
@@ -164,7 +190,7 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
   const availableOptions = (roomIndex: number, slotIndex: number) => {
     const currentVal = getOccupantOption(roomIndex, slotIndex);
     const used = usedInOtherRooms(roomIndex);
-    return allOptions.filter((o) => {
+    return participantOptions.filter((o) => {
       if (o.value === currentVal) return true;
       return !used.has(`${o.type}:${o.id}`);
     });
@@ -185,6 +211,9 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
           Adicionar quarto
         </Button>
       </div>
+      {scopeMessage ? (
+        <p className="text-sm text-muted-foreground">{scopeMessage}</p>
+      ) : null}
       <div className="overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader>
@@ -244,7 +273,7 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
                           <Select
                             value={getOccupantOption(roomIndex, slotIndex)}
                             onValueChange={(v) => setOccupant(roomIndex, slotIndex, v)}
-                            disabled={disabled}
+                            disabled={disabled || loadingParticipants || !travelId}
                           >
                             <SelectTrigger className="min-w-[140px] min-h-[44px]">
                               <SelectValue placeholder="—" />
@@ -254,7 +283,7 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
                               {availableOptions(roomIndex, slotIndex).map((opt) => (
                                 <SelectItem key={opt.value} value={opt.value}>
                                   {opt.label}
-                                  {opt.type === "staff" ? " (comissão)" : ""}
+                                  {occupantTypeLabel(opt.type)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
