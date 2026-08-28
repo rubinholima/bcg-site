@@ -157,6 +157,7 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
       minute: sub.absoluteMinute,
       period: sub.period,
       sourceClock: sub.clock,
+      sourceTimingMarker: sub.sourceTimingMarker ?? null,
       sourceExcerpt: sub.excerpt,
       sourceSections: ['Substituições'],
       externalKey: buildPlayerSubstitutionExternalKey({

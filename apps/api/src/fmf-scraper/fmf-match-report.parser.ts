@@ -70,6 +70,9 @@ export interface FmfReportPlayerCardEvent {
   excerpt: string;
 }
 
+/** Marcador temporal FMF quando não há relógio HH:MM (legenda oficial da súmula). */
+export type FmfSourceTimingMarker = 'INT' | 'ANT' | 'TER';
+
 /** Substituição oficial — um fato com jogador que sai e entra. */
 export interface FmfReportSubstitutionEvent {
   teamSide: 'home' | 'away';
@@ -79,8 +82,11 @@ export interface FmfReportSubstitutionEvent {
   inCbfRegistration: string | null;
   outSourceName: string | null;
   inSourceName: string | null;
+  /** HH:MM ou marcador INT/ANT/TER. */
   clock: string;
   period: string;
+  /** INT = intervalo; ANT = antes do jogo; TER = após término. */
+  sourceTimingMarker?: FmfSourceTimingMarker | null;
   absoluteMinute: number;
   excerpt: string;
 }
@@ -143,6 +149,82 @@ function section(text: string, start: string, end: string): string {
   const contentStart = from + start.length;
   const to = text.indexOf(end, contentStart);
   return text.slice(contentStart, to >= 0 ? to : undefined);
+}
+
+function splitSubstitutionSectionRows(value: string): string[] {
+  const rows: string[] = [];
+  let current = '';
+  for (const rawLine of value.split(/\r?\n/)) {
+    const line = cleanLine(rawLine);
+    if (!line || /^Tempo\s+/i.test(line)) continue;
+    if (/^(ANT|INT|TER)\s*=|^NR\s*=/i.test(line)) continue;
+    if (/^(INT|ANT|TER)\b/i.test(line) || /^\d{1,2}:\d{2}\s+(?:1T|2T)\b/i.test(line)) {
+      if (current) rows.push(current);
+      current = line;
+    } else if (current) {
+      current += ` ${line}`;
+    }
+  }
+  if (current) rows.push(current);
+  return rows;
+}
+
+/** Minuto derivado para marcadores INT/ANT/TER conforme legenda FMF. */
+export function absoluteMinuteForTimingMarker(
+  marker: FmfSourceTimingMarker,
+  firstHalfMinutes: number,
+  totalMinutes: number,
+): number {
+  switch (marker) {
+    case 'ANT':
+      return 0;
+    case 'INT':
+      return firstHalfMinutes;
+    case 'TER':
+      return totalMinutes;
+    default:
+      return firstHalfMinutes;
+  }
+}
+
+function pushSubstitutionEvent(input: {
+  substitutionEvents: FmfReportSubstitutionEvent[];
+  teamSide: 'home' | 'away';
+  inJersey: number;
+  outJersey: number;
+  entered: FmfReportPlayerStat | undefined;
+  exited: FmfReportPlayerStat | undefined;
+  clock: string;
+  period: string;
+  sourceTimingMarker: FmfSourceTimingMarker | null;
+  absoluteMinute: number;
+  excerpt: string;
+  totalMinutes: number;
+}): void {
+  input.substitutionEvents.push({
+    teamSide: input.teamSide,
+    outJerseyNumber: input.outJersey,
+    inJerseyNumber: input.inJersey,
+    outCbfRegistration: input.exited?.cbfRegistration ?? null,
+    inCbfRegistration: input.entered?.cbfRegistration ?? null,
+    outSourceName: input.exited?.sourceName ?? null,
+    inSourceName: input.entered?.sourceName ?? null,
+    clock: input.clock,
+    period: input.period,
+    sourceTimingMarker: input.sourceTimingMarker,
+    absoluteMinute: input.absoluteMinute,
+    excerpt: input.excerpt,
+  });
+  if (input.entered) {
+    input.entered.played = true;
+    input.entered.enteredMinute = input.absoluteMinute;
+    input.entered.minutesPlayed = Math.max(0, input.totalMinutes - input.absoluteMinute);
+  }
+  if (input.exited) {
+    input.exited.played = true;
+    input.exited.exitedMinute = input.absoluteMinute;
+    input.exited.minutesPlayed = Math.max(0, input.absoluteMinute - (input.exited.enteredMinute ?? 0));
+  }
 }
 
 function splitTimedRows(value: string): string[] {
@@ -652,7 +734,37 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     ...parseStaffCardEventsFromTimedRows(redCardRows, 'red', homeTeam, awayTeam),
   ];
 
-  for (const row of splitTimedRows(section(text, '\nSubstituições\n', '\nANT = Antes do Início'))) {
+  for (const row of splitSubstitutionSectionRows(section(text, '\nSubstituições\n', '\nANT = Antes do Início'))) {
+    const markerMatch = row.match(/^(INT|ANT|TER)\s+(.+)$/i);
+    if (markerMatch) {
+      const marker = markerMatch[1]!.toUpperCase() as FmfSourceTimingMarker;
+      const rest = markerMatch[2]!;
+      const playerMarkers = [...rest.matchAll(/(\d+)\s*-\s*/g)];
+      if (playerMarkers.length < 2) continue;
+      const side = sideFromRow(rest, homeTeam, awayTeam);
+      if (!side) continue;
+      const inJersey = Number(playerMarkers[0]![1]);
+      const outJersey = Number(playerMarkers[1]![1]);
+      const entered = findRoster(side, inJersey);
+      const exited = findRoster(side, outJersey);
+      const absoluteMinute = absoluteMinuteForTimingMarker(marker, effectiveFirst, totalMinutes);
+      pushSubstitutionEvent({
+        substitutionEvents,
+        teamSide: side,
+        inJersey,
+        outJersey,
+        entered,
+        exited,
+        clock: marker,
+        period: marker,
+        sourceTimingMarker: marker,
+        absoluteMinute,
+        excerpt: row.slice(0, 240),
+        totalMinutes,
+      });
+      continue;
+    }
+
     const match = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(.+)$/i);
     if (!match) continue;
     const rest = match[3]!;
@@ -668,29 +780,20 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
       totalMinutes,
       eventAbsoluteMinute(match[2]!, Number(match[1]!.split(':')[0]), effectiveFirst),
     );
-    substitutionEvents.push({
+    pushSubstitutionEvent({
+      substitutionEvents,
       teamSide: side,
-      outJerseyNumber: outJersey,
-      inJerseyNumber: inJersey,
-      outCbfRegistration: exited?.cbfRegistration ?? null,
-      inCbfRegistration: entered?.cbfRegistration ?? null,
-      outSourceName: exited?.sourceName ?? null,
-      inSourceName: entered?.sourceName ?? null,
+      inJersey,
+      outJersey,
+      entered,
+      exited,
       clock: match[1]!,
       period: match[2]!.toUpperCase(),
+      sourceTimingMarker: null,
       absoluteMinute,
       excerpt: row.slice(0, 240),
+      totalMinutes,
     });
-    if (entered) {
-      entered.played = true;
-      entered.enteredMinute = absoluteMinute;
-      entered.minutesPlayed = Math.max(0, totalMinutes - absoluteMinute);
-    }
-    if (exited) {
-      exited.played = true;
-      exited.exitedMinute = absoluteMinute;
-      exited.minutesPlayed = Math.max(0, absoluteMinute - (exited.enteredMinute ?? 0));
-    }
   }
 
   const { occurrencesText, occurrences } = parseOccurrencesSection(text);

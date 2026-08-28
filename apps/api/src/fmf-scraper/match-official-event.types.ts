@@ -95,6 +95,7 @@ export type MatchOfficialEventDraft = {
   minute?: number | null;
   period?: string | null;
   sourceClock?: string | null;
+  sourceTimingMarker?: 'INT' | 'ANT' | 'TER' | null;
   sourceSequence?: number | null;
   goalType?: string | null;
   sourceExcerpt?: string | null;

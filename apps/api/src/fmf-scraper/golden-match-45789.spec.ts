@@ -76,7 +76,7 @@ describe('golden match 45789 (FMF real)', () => {
     expect(awayYellow.length).toBe(expected.bostonAwayExpectations.yellowCards);
   });
 
-  it('drafts oficiais away batem contagem', () => {
+  it('drafts oficiais away incluem substituições INT', () => {
     const drafts = buildOfficialEventDrafts({
       parsed,
       ourTeamSide,
@@ -84,6 +84,9 @@ describe('golden match 45789 (FMF real)', () => {
       staffPool: [],
     });
     expect(drafts.length).toBe(expected.bostonAwayExpectations.officialEventDrafts);
+    expect(drafts.filter((d) => d.sourceClock === 'INT').length).toBe(
+      expected.bostonAwayExpectations.intSubstitutions,
+    );
   });
 
   it('reconciliação event-level matched quando persistido = fonte', () => {

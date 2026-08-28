@@ -1176,9 +1176,6 @@ export class FmfMatchReportService {
     if (parsed.staffRoster.length === 0) {
       limitations.push('staffRoster não extraído deste snapshot');
     }
-    if (parsed.substitutionEvents.some((s) => s.clock === 'INT')) {
-      limitations.push('Substituições de intervalo (INT) parseadas mas sem relógio HH:MM');
-    }
 
     const players = await this.prisma.player.findMany({
       where: { tenantId },

@@ -94,11 +94,11 @@
     "yellowCards": 4,
     "redCards": 0,
     "timedSubstitutions": 4,
-    "officialEventDrafts": 9,
+    "intSubstitutions": 2,
+    "officialEventDrafts": 11,
     "staffYellow": 0
   },
   "limitations": [
-    "Substituições INT (intervalo) existem na fonte mas usam marcador INT, não HH:MM",
-    "Gol mandante usa relógio 47:00 — acréscimo preservado via sourceClock/externalKey"
+    "Substituições INT preservadas com sourceClock=INT e minute=firstHalfMinutes (intervalo oficial FMF)"
   ]
 }

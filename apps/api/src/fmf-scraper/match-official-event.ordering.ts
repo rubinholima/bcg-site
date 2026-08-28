@@ -10,11 +10,20 @@ export function clockToSortSeconds(clock: string | null | undefined): number {
 
 export function periodSortOrder(period: string | null | undefined): number {
   const p = (period ?? '').toUpperCase();
+  if (p === 'ANT') return 0;
   if (p === '1T') return 1;
-  if (p === '2T') return 2;
-  if (p.includes('PROR')) return 3;
-  if (p.includes('PEN')) return 4;
+  if (p === 'INT') return 2;
+  if (p === '2T') return 3;
+  if (p === 'TER') return 4;
+  if (p.includes('PROR')) return 5;
+  if (p.includes('PEN')) return 6;
   return 99;
+}
+
+const TIMING_MARKERS = new Set(['INT', 'ANT', 'TER']);
+
+export function isSourceTimingMarker(clock: string | null | undefined): boolean {
+  return TIMING_MARKERS.has((clock ?? '').toUpperCase());
 }
 
 const FACT_TYPE_ORDER: Record<string, number> = {
@@ -35,8 +44,12 @@ export function compareOfficialEventOrder(
   const periodDiff = periodSortOrder(a.period) - periodSortOrder(b.period);
   if (periodDiff !== 0) return periodDiff;
 
-  const clockA = clockToSortSeconds(a.sourceClock ?? (a.minute != null ? `${a.minute}:00` : null));
-  const clockB = clockToSortSeconds(b.sourceClock ?? (b.minute != null ? `${b.minute}:00` : null));
+  const clockA = isSourceTimingMarker(a.sourceClock)
+    ? (a.minute ?? 0) * 60
+    : clockToSortSeconds(a.sourceClock ?? (a.minute != null ? `${a.minute}:00` : null));
+  const clockB = isSourceTimingMarker(b.sourceClock)
+    ? (b.minute ?? 0) * 60
+    : clockToSortSeconds(b.sourceClock ?? (b.minute != null ? `${b.minute}:00` : null));
   if (clockA !== clockB) return clockA - clockB;
 
   const seqA = a.sourceSequence ?? 0;

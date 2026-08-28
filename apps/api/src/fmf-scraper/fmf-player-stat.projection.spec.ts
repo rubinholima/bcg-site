@@ -97,6 +97,34 @@ describe('fmf-player-stat.projection', () => {
     expect(stats.find((s) => s.jerseyNumber === 10)!.minutesPlayed).toBe(70);
   });
 
+  it('reserva recebe cartão sem entrar — played=false, minutes=0', () => {
+    const events: MatchOfficialEventDraft[] = [
+      {
+        factType: 'PLAYER_YELLOW_CARD',
+        provenance: 'fmf_official',
+        playerId: 'p15',
+        resolutionStatus: 'resolved',
+        sourceJerseyNumber: 15,
+        sourceTeamSide: 'home',
+        minute: 80,
+        period: '2T',
+        sourceClock: '80:00',
+        externalKey: 'bench-yellow',
+      },
+    ];
+    const stats = projectPlayerStatsFromOfficialFacts({
+      roster,
+      ourTeamSide: 'home',
+      totalMinutes: 90,
+      firstHalfMinutes: 45,
+      events,
+    });
+    const bench = stats.find((s) => s.jerseyNumber === 15)!;
+    expect(bench.yellowCards).toBe(1);
+    expect(bench.played).toBe(false);
+    expect(bench.minutesPlayed).toBe(0);
+  });
+
   it('dois amarelos encerram participação no segundo', () => {
     const events: MatchOfficialEventDraft[] = [
       {
