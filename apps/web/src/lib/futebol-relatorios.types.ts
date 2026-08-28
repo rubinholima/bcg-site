@@ -167,6 +167,7 @@ export type PressKitConfigDto = {
   jerseyOverrides: Record<string, number | null>;
   contactLine: string | null;
   showDisclaimer: boolean;
+  persistedAt?: string | null;
 };
 
 export type PressKitReportDto = {

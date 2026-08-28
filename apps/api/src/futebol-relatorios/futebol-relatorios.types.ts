@@ -96,6 +96,8 @@ export type PressKitConfigDto = {
   jerseyOverrides: Record<string, number | null>;
   contactLine: string | null;
   showDisclaimer: boolean;
+  /** ISO — gravação persistida no servidor (proteção contra perda) */
+  persistedAt?: string | null;
 };
 
 export type PressKitReportDto = {

@@ -497,7 +497,10 @@ export class FutebolRelatoriosService {
       !Array.isArray(travel.beatscodeMeta)
         ? { ...(travel.beatscodeMeta as Record<string, unknown>) }
         : {};
-    meta.pressKit = sanitized;
+    meta.pressKit = {
+      ...sanitized,
+      persistedAt: new Date().toISOString(),
+    };
 
     await this.prisma.travelLogistics.update({
       where: { id: travelId },
@@ -1253,28 +1256,48 @@ export class FutebolRelatoriosService {
       );
     }
 
+    const normRoleKey = (value: string) =>
+      value
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
     const mapNamed = (
       list: unknown,
       defaultRoles: readonly string[],
     ): PressKitNamedRole[] => {
       const rows = Array.isArray(list) ? list : [];
+      const byRole = new Map<string, Record<string, unknown>>();
+      for (const item of rows) {
+        if (!item || typeof item !== 'object') continue;
+        const o = item as Record<string, unknown>;
+        const roleKey =
+          typeof o.role === 'string' && o.role.trim()
+            ? normRoleKey(o.role)
+            : '';
+        if (roleKey) byRole.set(roleKey, o);
+      }
       return defaultRoles.map((defaultRole, i) => {
-        const item = rows[i];
-        if (item && typeof item === 'object') {
-          const o = item as Record<string, unknown>;
+        const item =
+          byRole.get(normRoleKey(defaultRole)) ??
+          (rows[i] && typeof rows[i] === 'object'
+            ? (rows[i] as Record<string, unknown>)
+            : null);
+        if (item) {
           return {
             role:
-              typeof o.role === 'string' && o.role.trim()
-                ? o.role.trim()
+              typeof item.role === 'string' && item.role.trim()
+                ? item.role.trim()
                 : defaultRole,
-            name: typeof o.name === 'string' ? o.name.trim() : '',
+            name: typeof item.name === 'string' ? item.name.trim() : '',
             refereeId:
-              typeof o.refereeId === 'string' && o.refereeId.trim()
-                ? o.refereeId.trim()
+              typeof item.refereeId === 'string' && item.refereeId.trim()
+                ? item.refereeId.trim()
                 : null,
             photoUrl:
-              typeof o.photoUrl === 'string' && o.photoUrl.trim()
-                ? o.photoUrl.trim()
+              typeof item.photoUrl === 'string' && item.photoUrl.trim()
+                ? item.photoUrl.trim()
                 : null,
           };
         }
@@ -1396,6 +1419,10 @@ export class FutebolRelatoriosService {
           ? raw.contactLine.trim()
           : null,
       showDisclaimer: raw?.showDisclaimer !== false,
+      persistedAt:
+        typeof raw?.persistedAt === 'string' && raw.persistedAt.trim()
+          ? raw.persistedAt.trim()
+          : null,
     };
   }
 

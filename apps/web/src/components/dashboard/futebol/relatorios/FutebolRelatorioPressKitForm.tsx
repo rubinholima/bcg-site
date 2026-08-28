@@ -74,6 +74,58 @@ function emptyNamed(roles: readonly string[]): PressKitNamedRole[] {
   return roles.map((role) => ({ role, name: "", refereeId: null, photoUrl: null }));
 }
 
+const PRESS_KIT_BACKUP_PREFIX = "bcg-press-kit-backup:";
+
+type PressKitFormSnapshot = {
+  phase: string;
+  matchTime: string;
+  contactLine: string;
+  referees: PressKitNamedRole[];
+  directors: PressKitNamedRole[];
+  starterPlayerIds: string[];
+  formation: string;
+  jerseyOverrides: Record<string, number | null>;
+  captainPlayerId: string;
+  staffRoleOverrides: Record<string, string>;
+};
+
+function pressKitBackupKey(travelId: string) {
+  return `${PRESS_KIT_BACKUP_PREFIX}${travelId}`;
+}
+
+function writePressKitBackup(travelId: string, snapshot: string) {
+  try {
+    sessionStorage.setItem(
+      pressKitBackupKey(travelId),
+      JSON.stringify({ savedAt: new Date().toISOString(), snapshot }),
+    );
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+function readPressKitBackup(travelId: string): { savedAt: string; snapshot: string } | null {
+  try {
+    const raw = sessionStorage.getItem(pressKitBackupKey(travelId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { savedAt?: string; snapshot?: string };
+    if (!parsed?.snapshot) return null;
+    return { savedAt: parsed.savedAt ?? "", snapshot: parsed.snapshot };
+  } catch {
+    return null;
+  }
+}
+
+function parsePressKitSnapshot(snapshot: string): PressKitFormSnapshot | null {
+  try {
+    const parsed = JSON.parse(snapshot) as PressKitFormSnapshot;
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 type StaffDirectoryRow = {
   id: string;
   name: string;
@@ -302,6 +354,8 @@ export function FutebolRelatorioPressKitForm() {
   const [savedSnapshot, setSavedSnapshot] = useState("");
   const [leaveOpen, setLeaveOpen] = useState(false);
   const pendingLeaveRef = useRef<(() => void) | null>(null);
+  const handleSaveRef = useRef<(opts?: { silent?: boolean }) => Promise<boolean>>(async () => false);
+  const [pendingRecoverySave, setPendingRecoverySave] = useState(false);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -378,49 +432,96 @@ export function FutebolRelatorioPressKitForm() {
       )
       .then(({ data }) => {
         if (cancelled) return;
-        setReportData(data);
-        setPhase(data.config.phase ?? "");
-        setMatchTime(data.config.matchTime ?? "");
-        setContactLine(data.config.contactLine ?? "");
-        setReferees(
-          data.config.referees.length
+
+        const backup = readPressKitBackup(travelId);
+        const serverSnapshotForCompare = JSON.stringify({
+          phase: data.config.phase ?? "",
+          matchTime: data.config.matchTime ?? "",
+          contactLine: data.config.contactLine ?? "",
+          referees: data.config.referees.length
             ? data.config.referees
             : emptyNamed(DEFAULT_PRESS_KIT_REFEREE_ROLES),
-        );
-        setDirectors(
-          data.config.directors.length
+          directors: data.config.directors.length
             ? data.config.directors
             : emptyNamed(DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
+          starterPlayerIds: padStarterSlots(data.config.starterPlayerIds),
+          formation: data.config.formation?.trim() || "4-3-3",
+          jerseyOverrides: data.config.jerseyOverrides ?? {},
+          captainPlayerId: data.config.captainPlayerId ?? "",
+          staffRoleOverrides: data.config.staffRoleOverrides ?? {},
+        });
+        const localSnapshot =
+          backup &&
+          !data.config.persistedAt &&
+          backup.snapshot !== serverSnapshotForCompare
+            ? parsePressKitSnapshot(backup.snapshot)
+            : null;
+
+        const phaseValue = localSnapshot?.phase ?? data.config.phase ?? "";
+        const matchTimeValue = localSnapshot?.matchTime ?? data.config.matchTime ?? "";
+        const contactLineValue = localSnapshot?.contactLine ?? data.config.contactLine ?? "";
+        const refereesValue = localSnapshot?.referees?.length
+          ? localSnapshot.referees
+          : data.config.referees.length
+            ? data.config.referees
+            : emptyNamed(DEFAULT_PRESS_KIT_REFEREE_ROLES);
+        const directorsValue = localSnapshot?.directors?.length
+          ? localSnapshot.directors
+          : data.config.directors.length
+            ? data.config.directors
+            : emptyNamed(DEFAULT_PRESS_KIT_DIRECTOR_ROLES);
+        const starters = padStarterSlots(
+          localSnapshot?.starterPlayerIds ?? data.config.starterPlayerIds,
         );
-        const starters = padStarterSlots(data.config.starterPlayerIds);
+        const formationValue =
+          localSnapshot?.formation ??
+          (data.config.formation?.trim() || "4-3-3");
         const seeded = seedProvisionalJerseyOverrides(
           orderedAthleteIdsForJerseySeed(starters, data.athletes),
           data.athletes,
-          data.config.jerseyOverrides ?? {},
+          localSnapshot?.jerseyOverrides ?? data.config.jerseyOverrides ?? {},
         );
+        const captainValue =
+          localSnapshot?.captainPlayerId ?? data.config.captainPlayerId ?? "";
+        const staffOverridesValue =
+          localSnapshot?.staffRoleOverrides ?? data.config.staffRoleOverrides ?? {};
+
+        setReportData(data);
+        setPhase(phaseValue);
+        setMatchTime(matchTimeValue);
+        setContactLine(contactLineValue);
+        setReferees(refereesValue);
+        setDirectors(directorsValue);
         setStarterPlayerIds(starters);
-        setFormation(data.config.formation?.trim() || "4-3-3");
+        setFormation(formationValue);
         setJerseyOverrides(seeded);
-        setCaptainPlayerId(data.config.captainPlayerId ?? "");
-        setStaffRoleOverrides(data.config.staffRoleOverrides ?? {});
-        setSavedSnapshot(
-          JSON.stringify({
-            phase: data.config.phase ?? "",
-            matchTime: data.config.matchTime ?? "",
-            contactLine: data.config.contactLine ?? "",
-            referees: data.config.referees.length
-              ? data.config.referees
-              : emptyNamed(DEFAULT_PRESS_KIT_REFEREE_ROLES),
-            directors: data.config.directors.length
-              ? data.config.directors
-              : emptyNamed(DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
-            starterPlayerIds: starters,
-            formation: data.config.formation?.trim() || "4-3-3",
-            jerseyOverrides: seeded,
-            captainPlayerId: data.config.captainPlayerId ?? "",
-            staffRoleOverrides: data.config.staffRoleOverrides ?? {},
-          }),
-        );
+        setCaptainPlayerId(captainValue);
+        setStaffRoleOverrides(staffOverridesValue);
+
+        const snapshot = JSON.stringify({
+          phase: phaseValue,
+          matchTime: matchTimeValue,
+          contactLine: contactLineValue,
+          referees: refereesValue,
+          directors: directorsValue,
+          starterPlayerIds: starters,
+          formation: formationValue,
+          jerseyOverrides: seeded,
+          captainPlayerId: captainValue,
+          staffRoleOverrides: staffOverridesValue,
+        });
+        setSavedSnapshot(snapshot);
+
+        if (localSnapshot) {
+          setPendingRecoverySave(true);
+          setFeedback({
+            open: true,
+            title: "Press kit recuperado",
+            message:
+              "Os dados deste jogo foram restaurados do backup local e serão gravados no servidor.",
+            variant: "success",
+          });
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -582,6 +683,21 @@ export function FutebolRelatorioPressKitForm() {
           staffRoleOverrides: data.config.staffRoleOverrides ?? {},
         }),
       );
+      writePressKitBackup(
+        travelId,
+        JSON.stringify({
+          phase: data.config.phase ?? "",
+          matchTime: data.config.matchTime ?? "",
+          contactLine: data.config.contactLine ?? "",
+          referees: data.config.referees,
+          directors: data.config.directors,
+          starterPlayerIds: starters,
+          formation: data.config.formation?.trim() || "4-3-3",
+          jerseyOverrides: nextJerseys,
+          captainPlayerId: data.config.captainPlayerId ?? "",
+          staffRoleOverrides: data.config.staffRoleOverrides ?? {},
+        }),
+      );
     };
     try {
       try {
@@ -620,6 +736,23 @@ export function FutebolRelatorioPressKitForm() {
       setSaving(false);
     }
   };
+
+  handleSaveRef.current = handleSave;
+
+  useEffect(() => {
+    if (!pendingRecoverySave || !reportData) return;
+    setPendingRecoverySave(false);
+    void handleSaveRef.current({ silent: true });
+  }, [pendingRecoverySave, reportData]);
+
+  useEffect(() => {
+    if (!isDirty || !travelId || !reportData || saving || loadingReport) return;
+    writePressKitBackup(travelId, currentSnapshot);
+    const timer = window.setTimeout(() => {
+      void handleSaveRef.current({ silent: true });
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, [isDirty, currentSnapshot, travelId, reportData, saving, loadingReport]);
 
   const handlePreview = async () => {
     if (!reportData) {

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { mergeTravelBeatscodeMeta } from '../common/travel-beatscode-meta.util';
 import { isClubKind } from '../public/public.service';
 import {
   buildFmfTravelExternalId,
@@ -129,7 +130,10 @@ export class FmfTravelSyncService {
                 stadiumName,
                 championshipName,
                 country: existing.country?.trim() || 'Brasil',
-                beatscodeMeta: meta as Prisma.InputJsonValue,
+                beatscodeMeta: mergeTravelBeatscodeMeta(
+                  existing.beatscodeMeta,
+                  meta,
+                ) as Prisma.InputJsonValue,
               },
             });
             updated++;
