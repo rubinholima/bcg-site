@@ -108,10 +108,15 @@ import {
   aggregateStaffDisciplineRows,
   extractStaffCardEventsFromRawParsed,
   parseStaffCardsForMatch,
+  resolveDefaultStaffRoleLabel,
+  type StaffDisciplineResolveContext,
 } from './fmf-staff-cards.util';
 import type { FmfStaffCardEventInput } from './fmf-staff-cards.util';
 import { fetchStaffCardEventsFromSumulaUrl } from './fmf-sumula-staff-cards.util';
-import { staffRoleLabel } from '../psychology-sessions/psychology-care-person.util';
+import {
+  matchDatesEquivalent,
+  matchOpponentsEquivalent,
+} from '../common/match-game-opponent.util';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
   DEFAULT_PRESS_KIT_REFEREE_ROLES,
@@ -1669,7 +1674,7 @@ export class FutebolRelatoriosService {
       : 'Todas as categorias';
 
     const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
-    const staffCandidates = await this.loadTechnicalStaffForDiscipline(tenantId, category);
+    const staffResolutionPool = await this.loadTechnicalStaffForDisciplineResolution(tenantId);
 
     let match: SumulaCartoesMatchDto | null = null;
     if (matchId) {
@@ -1683,19 +1688,21 @@ export class FutebolRelatoriosService {
         },
       });
       if (!row) throw new NotFoundException('Súmula não encontrada');
-      const enrichedRow = await this.enrichDisciplineMatchesStaffCards([row], staffCandidates);
+      const enrichedRow = await this.enrichDisciplineMatchesStaffCards([row], staffResolutionPool);
       const matchRow = enrichedRow[0] ?? row;
+      const travelsForPressKit = await this.loadTravelsForDisciplinePressKit(tenantId);
       const staffCardsResolved = await this.resolveStaffCardsForFmfRow(
         matchRow,
-        staffCandidates,
+        staffResolutionPool,
         { clubName: tenant.tradeName?.trim() || tenant.name, aliases },
+        this.findTravelPressKitForReport(matchRow, travelsForPressKit, tenant.tradeName?.trim() || tenant.name, aliases),
       );
       match = this.buildSumulaMatchDto(
         matchRow,
         tenant.name,
         aliases,
         categoryLabels,
-        staffCandidates,
+        staffResolutionPool,
         staffCardsResolved,
       );
     }
@@ -1711,7 +1718,7 @@ export class FutebolRelatoriosService {
       tenantId,
       season,
       category,
-      staffCandidates,
+      staffResolutionPool,
       clubName: tenant.tradeName?.trim() || tenant.name,
       aliases,
     });
@@ -1742,13 +1749,14 @@ export class FutebolRelatoriosService {
     };
   }
 
+  /** Elenco administrativo default por categoria — NÃO usar para resolução disciplinar de identidade. */
   private async loadTechnicalStaffForDiscipline(
     tenantId: string,
     category: string | null,
-  ): Promise<Array<{ id: string; name: string; role: string }>> {
+  ): Promise<Array<{ id: string; name: string; role: string; licenseNumber: string | null }>> {
     const rows = await this.prisma.technicalStaff.findMany({
       where: { tenantId },
-      select: { id: true, name: true, role: true, categories: true },
+      select: { id: true, name: true, role: true, categories: true, licenseNumber: true },
       orderBy: [{ role: 'asc' }, { name: 'asc' }],
     });
     return rows
@@ -1758,27 +1766,54 @@ export class FutebolRelatoriosService {
         if (!cats || !Array.isArray(cats) || cats.length === 0) return true;
         return cats.includes(category);
       })
-      .map(({ id, name, role }) => ({ id, name, role }));
+      .map(({ id, name, role, licenseNumber }) => ({ id, name, role, licenseNumber }));
   }
 
-  private async buildSumulaStaffDisciplineRows(input: {
-    tenantId: string;
-    season: number;
-    category: string | null;
-    staffCandidates: Array<{ id: string; name: string; role: string }>;
-    clubName: string;
-    aliases: string[];
-  }): Promise<SumulaCartoesStaffDisciplineRowDto[]> {
-    if (input.staffCandidates.length === 0) return [];
-
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: input.tenantId },
-      select: { name: true, slug: true, tradeName: true },
+  /** População completa do tenant para resolver PESSOA (sem filtro de categoria default). */
+  private async loadTechnicalStaffForDisciplineResolution(
+    tenantId: string,
+  ): Promise<Array<{ id: string; name: string; role: string; licenseNumber: string | null }>> {
+    const rows = await this.prisma.technicalStaff.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, role: true, licenseNumber: true },
+      orderBy: [{ role: 'asc' }, { name: 'asc' }],
     });
-    if (!tenant) return [];
+    return rows.map(({ id, name, role, licenseNumber }) => ({ id, name, role, licenseNumber }));
+  }
 
+  private mapStaffDisciplineCandidate(
+    member: { id: string; name: string; role: string; licenseNumber?: string | null },
+  ) {
+    return {
+      id: member.id,
+      name: member.name,
+      role: member.role,
+      licenseNumber: member.licenseNumber ?? null,
+    };
+  }
+
+  private mapStaffDisciplineInput(
+    member: { id: string; name: string; role: string; licenseNumber?: string | null },
+  ) {
+    return {
+      id: member.id,
+      name: member.name,
+      roleLabel: resolveDefaultStaffRoleLabel(member.role),
+      licenseNumber: member.licenseNumber ?? null,
+    };
+  }
+
+  private extractPressKitRoleOverrides(beatscodeMeta: unknown): Record<string, string> {
+    if (!beatscodeMeta || typeof beatscodeMeta !== 'object' || Array.isArray(beatscodeMeta)) {
+      return {};
+    }
+    const pressKit = (beatscodeMeta as { pressKit?: PressKitConfigDto }).pressKit;
+    return pressKit?.staffRoleOverrides ?? {};
+  }
+
+  private async loadTravelsForDisciplinePressKit(tenantId: string) {
     const travelsRaw = await this.prisma.travelLogistics.findMany({
-      where: { tenantId: input.tenantId, status: { not: 'cancelado' } },
+      where: { tenantId, status: { not: 'cancelado' } },
       select: {
         id: true,
         tenantId: true,
@@ -1791,9 +1826,50 @@ export class FutebolRelatoriosService {
         stadiumName: true,
         city: true,
         status: true,
+        beatscodeMeta: true,
       },
     });
-    const travels = dedupeTravelLogisticsList(travelsRaw);
+    return dedupeTravelLogisticsList(travelsRaw);
+  }
+
+  private findTravelPressKitForReport(
+    report: { matchDate: Date; homeTeam: string; awayTeam: string },
+    travels: Array<{
+      matchDate: Date;
+      opponentName: string | null;
+      beatscodeMeta?: unknown;
+    }>,
+    clubName: string,
+    aliases: string[],
+  ): Record<string, string> {
+    const isHome = isFmfTeamMatch(report.homeTeam, clubName, aliases);
+    const opponent = isHome ? report.awayTeam : report.homeTeam;
+    const travel = travels.find(
+      (row) =>
+        matchDatesEquivalent(row.matchDate, report.matchDate) &&
+        matchOpponentsEquivalent(row.opponentName, opponent),
+    );
+    if (!travel) return {};
+    return this.extractPressKitRoleOverrides(travel.beatscodeMeta);
+  }
+
+  private async buildSumulaStaffDisciplineRows(input: {
+    tenantId: string;
+    season: number;
+    category: string | null;
+    staffResolutionPool: Array<{ id: string; name: string; role: string; licenseNumber: string | null }>;
+    clubName: string;
+    aliases: string[];
+  }): Promise<SumulaCartoesStaffDisciplineRowDto[]> {
+    if (input.staffResolutionPool.length === 0) return [];
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: input.tenantId },
+      select: { name: true, slug: true, tradeName: true },
+    });
+    if (!tenant) return [];
+
+    const travels = await this.loadTravelsForDisciplinePressKit(input.tenantId);
 
     const reports = await this.prisma.fmfMatchReport.findMany({
       where: {
@@ -1818,6 +1894,7 @@ export class FutebolRelatoriosService {
       ReturnType<typeof parseStaffCardsForMatch>[number] & {
         matchDate: string;
         matchLabel: string;
+        matchCategory: string | null;
       }
     > = [];
 
@@ -1834,12 +1911,25 @@ export class FutebolRelatoriosService {
           ? `${row.homeScore} x ${row.awayScore}`
           : '—';
       const matchLabel = `${formatBrDate(dateKey)} · ${row.homeTeam} ${score} ${row.awayTeam}`;
-      const cards = await this.resolveStaffCardsForFmfRow(row, input.staffCandidates, {
-        clubName: input.clubName,
-        aliases: input.aliases,
-      });
+      const pressKitOverrides = this.findTravelPressKitForReport(
+        row,
+        travels,
+        input.clubName,
+        input.aliases,
+      );
+      const cards = await this.resolveStaffCardsForFmfRow(
+        row,
+        input.staffResolutionPool,
+        { clubName: input.clubName, aliases: input.aliases },
+        pressKitOverrides,
+      );
       for (const card of cards) {
-        parsedRows.push({ ...card, matchDate: dateKey, matchLabel });
+        parsedRows.push({
+          ...card,
+          matchDate: dateKey,
+          matchLabel,
+          matchCategory: row.category ?? null,
+        });
       }
     }
 
@@ -1868,13 +1958,19 @@ export class FutebolRelatoriosService {
       sourceUrl?: string | null;
       staffCardEvents?: FmfStaffCardEventInput[] | null;
     },
-    staffCandidates: Array<{ id: string; name: string; role: string }>,
+    staffResolutionPool: Array<{ id: string; name: string; role: string; licenseNumber: string | null }>,
     clubFilter?: { clubName: string; aliases: string[] } | null,
+    pressKitRoleOverrides?: Record<string, string>,
   ) {
+    const resolveContext: StaffDisciplineResolveContext = {
+      pressKitRoleOverrides: pressKitRoleOverrides ?? {},
+    };
+    const staffCandidates = staffResolutionPool.map((member) => this.mapStaffDisciplineCandidate(member));
     const parseInput = {
       occurrencesText: row.occurrencesText,
       rawParsed: row.rawParsed,
       staffCardEvents: row.staffCardEvents,
+      resolveContext,
       ...(clubFilter
         ? {
             clubFilter: {
@@ -1894,6 +1990,7 @@ export class FutebolRelatoriosService {
           {
             occurrencesText: row.occurrencesText,
             staffCardEvents: fromPdf,
+            resolveContext,
             ...(clubFilter
               ? {
                   clubFilter: {
@@ -1921,7 +2018,7 @@ export class FutebolRelatoriosService {
     },
   >(
     matches: T[],
-    staffCandidates: Array<{ id: string; name: string; role: string }>,
+    staffCandidates: Array<{ id: string; name: string; role: string; licenseNumber?: string | null }>,
   ): Promise<Array<T & { staffCardEvents?: FmfStaffCardEventInput[] | null }>> {
     return Promise.all(
       matches.map(async (match) => {
@@ -1998,7 +2095,7 @@ export class FutebolRelatoriosService {
     tenantName: string,
     aliases: string[],
     categoryLabels: Record<string, string>,
-    staff: Array<{ id: string; name: string; role: string }>,
+    staff: Array<{ id: string; name: string; role: string; licenseNumber?: string | null }>,
     staffCardsResolved?: ReturnType<typeof parseStaffCardsForMatch>,
   ): SumulaCartoesMatchDto {
     const linkedByCbf = new Map(row.playerStats.map((s) => [s.cbfRegistration, s]));
@@ -2311,6 +2408,7 @@ export class FutebolRelatoriosService {
         stadiumName: true,
         city: true,
         status: true,
+        beatscodeMeta: true,
       },
     });
     const travels = dedupeTravelLogisticsList(travelsRaw);
@@ -2527,14 +2625,21 @@ export class FutebolRelatoriosService {
       friendlyMatchIds,
     });
 
-    const staffCandidates = await this.loadTechnicalStaffForDiscipline(
+    const staffResolutionPool = await this.loadTechnicalStaffForDisciplineResolution(input.tenantId);
+    const staffDisplayRoster = await this.loadTechnicalStaffForDiscipline(
       input.tenantId,
       referenceCategory,
     );
     const disciplineMatchesWithStaffCards = await this.enrichDisciplineMatchesStaffCards(
       disciplineMatches,
-      staffCandidates,
+      staffResolutionPool,
     );
+    const resolveContextByMatchId = new Map<string, StaffDisciplineResolveContext>();
+    for (const row of disciplineMatchesWithStaffCards) {
+      resolveContextByMatchId.set(row.id, {
+        pressKitRoleOverrides: this.findTravelPressKitForReport(row, travels, clubName, aliases),
+      });
+    }
     const staffGrid = buildStaffDisciplineGrid({
       matches: disciplineMatchesWithStaffCards.map((row) => ({
         id: row.id,
@@ -2549,15 +2654,13 @@ export class FutebolRelatoriosService {
         staffCardEvents: row.staffCardEvents,
         playerStats: row.playerStats,
       })),
-      staff: staffCandidates.map((member) => ({
-        id: member.id,
-        name: member.name,
-        roleLabel: staffRoleLabel(member.role),
-      })),
+      staff: staffDisplayRoster.map((member) => this.mapStaffDisciplineInput(member)),
+      staffCandidates: staffResolutionPool.map((member) => this.mapStaffDisciplineInput(member)),
       clubName,
       aliases,
       nextMatchDate,
       friendlyMatchIds,
+      resolveContextByMatchId,
     });
 
     let nextRound = grid.nextRound;

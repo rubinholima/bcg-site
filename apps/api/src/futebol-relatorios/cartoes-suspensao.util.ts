@@ -9,6 +9,8 @@ import {
   parseStaffCardsForMatch,
   resolveOurTeamSide,
   type StaffCardClubFilter,
+  type StaffDisciplineCandidate,
+  type StaffDisciplineResolveContext,
 } from './fmf-staff-cards.util';
 import type { FmfStaffCardEventInput } from './fmf-staff-cards.util';
 
@@ -64,6 +66,7 @@ export type StaffDisciplineInput = {
   id: string;
   name: string;
   roleLabel: string;
+  licenseNumber?: string | null;
 };
 
 export type DisciplineGridResult = {
@@ -792,11 +795,24 @@ function staffDisciplineKey(staffId: string | null, name: string): string {
   return staffId?.trim() || `name:${normalizeName(name)}`;
 }
 
+function toStaffDisciplineCandidates(
+  staff: StaffDisciplineInput[],
+): StaffDisciplineCandidate[] {
+  return staff.map((member) => ({
+    id: member.id,
+    name: member.name,
+    role: member.roleLabel,
+    licenseNumber: member.licenseNumber ?? null,
+  }));
+}
+
 function staffCardsForMatch(
   match: Pick<MatchInput, 'occurrencesText' | 'staffCardEvents' | 'rawParsed' | 'homeTeam' | 'awayTeam'>,
   staff: StaffDisciplineInput[],
   clubName: string,
   aliases: string[],
+  staffCandidates?: StaffDisciplineInput[],
+  resolveContext?: StaffDisciplineResolveContext,
 ): Map<string, StaffMatchCards> {
   const clubFilter: StaffCardClubFilter = {
     homeTeam: match.homeTeam,
@@ -804,14 +820,16 @@ function staffCardsForMatch(
     clubName,
     aliases,
   };
+  const resolutionPool = staffCandidates ?? staff;
   const parsed = parseStaffCardsForMatch(
     {
       occurrencesText: match.occurrencesText,
       staffCardEvents: match.staffCardEvents,
       rawParsed: match.rawParsed,
       clubFilter,
+      resolveContext,
     },
-    staff.map((member) => ({ id: member.id, name: member.name, role: member.roleLabel })),
+    toStaffDisciplineCandidates(resolutionPool),
   );
   const map = new Map<string, StaffMatchCards>();
   for (const card of parsed) {
@@ -914,9 +932,34 @@ function disciplineStaffSortRank(row: DisciplineStaffRow): number {
 
 export function mergeDisciplineStaffList(
   roster: StaffDisciplineInput[],
-  _matches: MatchInput[],
+  matches: MatchInput[],
+  clubName: string,
+  aliases: string[],
+  staffCandidates: StaffDisciplineInput[],
+  resolveContextByMatchId?: Map<string, StaffDisciplineResolveContext>,
 ): StaffDisciplineInput[] {
-  return [...roster];
+  const byId = new Map(roster.map((member) => [member.id, member]));
+
+  for (const match of matches) {
+    const resolveContext = resolveContextByMatchId?.get(match.id);
+    const cards = staffCardsForMatch(
+      match,
+      roster,
+      clubName,
+      aliases,
+      staffCandidates,
+      resolveContext,
+    );
+    for (const staffKey of cards.keys()) {
+      if (byId.has(staffKey)) continue;
+      const found = staffCandidates.find(
+        (member) => member.id === staffKey || staffDisciplineKey(null, member.name) === staffKey,
+      );
+      if (found) byId.set(found.id, found);
+    }
+  }
+
+  return [...byId.values()];
 }
 
 export function collectDisciplineStaffParticipantKeys(
@@ -924,10 +967,17 @@ export function collectDisciplineStaffParticipantKeys(
   staff: StaffDisciplineInput[],
   clubName: string,
   aliases: string[],
+  staffCandidates?: StaffDisciplineInput[],
 ): string[] {
   const keys = new Set<string>();
   for (const match of matches) {
-    for (const [key] of staffCardsForMatch(match, staff, clubName, aliases)) {
+    for (const [key] of staffCardsForMatch(
+      match,
+      staff,
+      clubName,
+      aliases,
+      staffCandidates ?? staff,
+    )) {
       keys.add(key);
     }
   }
@@ -938,10 +988,13 @@ export function collectDisciplineStaffParticipantKeys(
 export function buildStaffDisciplineGrid(input: {
   matches: MatchInput[];
   staff: StaffDisciplineInput[];
+  /** População completa do tenant para resolução de identidade (sem filtro de categoria default). */
+  staffCandidates?: StaffDisciplineInput[];
   clubName: string;
   aliases: string[];
   nextMatchDate?: string | null;
   friendlyMatchIds?: ReadonlySet<string>;
+  resolveContextByMatchId?: Map<string, StaffDisciplineResolveContext>;
 }): {
   staff: DisciplineStaffRow[];
   staffTotals: DisciplineGridResult['totals'];
@@ -950,7 +1003,15 @@ export function buildStaffDisciplineGrid(input: {
     (a, b) => a.matchDate.getTime() - b.matchDate.getTime() || (a.round ?? 0) - (b.round ?? 0),
   );
 
-  const disciplineStaff = mergeDisciplineStaffList(input.staff, sortedMatches);
+  const staffCandidates = input.staffCandidates ?? input.staff;
+  const disciplineStaff = mergeDisciplineStaffList(
+    input.staff,
+    sortedMatches,
+    input.clubName,
+    input.aliases,
+    staffCandidates,
+    input.resolveContextByMatchId,
+  );
 
   const states = new Map(
     disciplineStaff.map((member) => [member.id, initPlayerState({
@@ -980,6 +1041,8 @@ export function buildStaffDisciplineGrid(input: {
       disciplineStaff,
       input.clubName,
       input.aliases,
+      staffCandidates,
+      input.resolveContextByMatchId?.get(match.id),
     );
 
     for (const cards of cardsByStaff.values()) {

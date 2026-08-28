@@ -671,4 +671,169 @@ describe('buildStaffDisciplineGrid', () => {
     expect(result.staff[0]?.yellowCardsTotal).toBe(2);
     expect(result.staff[0]?.nextRoundCell).toBe('P');
   });
+
+  it('CASE C: mesmo staff U17 com funções diferentes acumula 3 amarelos juntos', () => {
+    const staffResolution = [
+      { id: 'jose', name: 'José Silva', roleLabel: 'Técnico', licenseNumber: '123456' },
+    ];
+    const baseMatch = {
+      homeTeam: 'Boston City',
+      awayTeam: 'NAC',
+      homeScore: 1,
+      awayScore: 0,
+      playerStats: [],
+      occurrencesText: null as string | null,
+    };
+    const result = buildStaffDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      staff: [],
+      staffCandidates: staffResolution,
+      matches: [
+        {
+          id: 'm1',
+          round: 1,
+          matchDate: new Date('2026-08-10T12:00:00Z'),
+          ...baseMatch,
+          staffCardEvents: [
+            { kind: 'yellow', roleLabel: 'Técnico', name: 'José Silva', excerpt: '10:00 1T Técnico José Silva' },
+          ],
+        },
+        {
+          id: 'm2',
+          round: 2,
+          matchDate: new Date('2026-08-17T12:00:00Z'),
+          ...baseMatch,
+          staffCardEvents: [
+            {
+              kind: 'yellow',
+              roleLabel: 'Auxiliar técnico',
+              name: 'José Silva',
+              excerpt: '20:00 1T Auxiliar técnico José Silva',
+            },
+          ],
+        },
+        {
+          id: 'm3',
+          round: 3,
+          matchDate: new Date('2026-08-24T12:00:00Z'),
+          ...baseMatch,
+          staffCardEvents: [
+            { kind: 'yellow', roleLabel: 'Massagista', name: 'José Silva', excerpt: '30:00 2T Massagista José Silva' },
+          ],
+        },
+      ],
+    });
+    expect(result.staff).toHaveLength(1);
+    expect(result.staff[0]?.yellowCardsTotal).toBe(3);
+    expect(result.staff[0]?.nextRoundCell).toBe('S');
+  });
+
+  it('CASE D: acumulações U17 e U20 permanecem independentes', () => {
+    const staffResolution = [
+      { id: 'jose', name: 'José Silva', roleLabel: 'Técnico', licenseNumber: '123456' },
+    ];
+    const u17Grid = buildStaffDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      staff: [],
+      staffCandidates: staffResolution,
+      matches: Array.from({ length: 3 }, (_, index) => ({
+        id: `u17-${index + 1}`,
+        round: index + 1,
+        matchDate: new Date(`2026-08-${10 + index * 7}T12:00:00Z`),
+        homeTeam: 'Boston City',
+        awayTeam: 'NAC',
+        homeScore: 1,
+        awayScore: 0,
+        occurrencesText: null,
+        playerStats: [],
+        staffCardEvents: [
+          { kind: 'yellow', roleLabel: 'Técnico', name: 'José Silva', excerpt: `10:00 1T Técnico José Silva ${index}` },
+        ],
+      })),
+    });
+
+    const u20Grid = buildStaffDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      staff: staffResolution,
+      staffCandidates: staffResolution,
+      matches: [
+        {
+          id: 'u20-1',
+          round: 1,
+          matchDate: new Date('2026-08-10T12:00:00Z'),
+          homeTeam: 'Boston City',
+          awayTeam: 'CRU',
+          homeScore: 2,
+          awayScore: 1,
+          occurrencesText: null,
+          playerStats: [],
+          staffCardEvents: [
+            { kind: 'yellow', roleLabel: 'Técnico', name: 'José Silva', excerpt: '10:00 1T Técnico José Silva' },
+          ],
+        },
+      ],
+    });
+
+    expect(u17Grid.staff[0]?.yellowCardsTotal).toBe(3);
+    expect(u17Grid.staff[0]?.nextRoundCell).toBe('S');
+    expect(u20Grid.staff[0]?.yellowCardsTotal).toBe(1);
+    expect(u20Grid.staff[0]?.nextRoundCell).toBe('');
+  });
+
+  it('CASE E: vermelho U17 não suspende automaticamente em grid U20', () => {
+    const staffResolution = [
+      { id: 'jose', name: 'José Silva', roleLabel: 'Técnico', licenseNumber: '123456' },
+    ];
+    const u17Grid = buildStaffDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      nextMatchDate: '2026-08-24',
+      staff: [],
+      staffCandidates: staffResolution,
+      matches: [
+        {
+          id: 'u17-red',
+          round: 1,
+          matchDate: new Date('2026-08-10T12:00:00Z'),
+          homeTeam: 'Boston City',
+          awayTeam: 'NAC',
+          homeScore: 1,
+          awayScore: 0,
+          occurrencesText: null,
+          playerStats: [],
+          staffCardEvents: [
+            { kind: 'red', roleLabel: 'Técnico', name: 'José Silva', excerpt: '80:00 2T Técnico José Silva' },
+          ],
+        },
+      ],
+    });
+
+    const u20Grid = buildStaffDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      nextMatchDate: '2026-08-24',
+      staff: staffResolution,
+      staffCandidates: staffResolution,
+      matches: [
+        {
+          id: 'u20-clean',
+          round: 1,
+          matchDate: new Date('2026-08-10T16:00:00Z'),
+          homeTeam: 'Boston City',
+          awayTeam: 'CRU',
+          homeScore: 2,
+          awayScore: 1,
+          occurrencesText: null,
+          playerStats: [],
+          staffCardEvents: [],
+        },
+      ],
+    });
+
+    expect(u17Grid.staff[0]?.nextRoundCell).toBe('S');
+    expect(u20Grid.staff[0]?.nextRoundCell).toBe('');
+  });
 });
