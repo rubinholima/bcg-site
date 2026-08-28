@@ -574,7 +574,7 @@ export function CoachTeamReportPanel({
           {deadline ? (
             <div
               className={cn(
-                "shrink-0 rounded-lg border px-4 py-3 text-sm",
+                "shrink-0 rounded-none border px-4 py-3 text-sm",
                 deadline.tone === "sent" && "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
                 deadline.tone === "overdue" && "border-red-500/40 bg-red-500/10 text-red-300",
                 deadline.tone === "pending" && "border-primary/40 bg-primary/10 text-primary-foreground",
@@ -782,7 +782,7 @@ export function CoachTeamReportPanel({
                           <TableCell>
                             <span
                               className={cn(
-                                "inline-flex min-w-[3rem] justify-center rounded-full border px-2 py-0.5 text-sm font-semibold tabular-nums",
+                                "inline-flex min-w-[3rem] justify-center rounded-none border px-2 py-0.5 text-sm font-semibold tabular-nums",
                                 scoreBadgeTone(row.coachFinalRating),
                               )}
                             >
