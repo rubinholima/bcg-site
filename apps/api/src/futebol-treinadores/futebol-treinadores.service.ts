@@ -51,12 +51,13 @@ import {
   normalizeOpponentBestPlayersInput,
 } from './coach-match-report.util';
 import {
-  buildCategorySortOrderMap,
+  buildCategoryResolutionContext,
   buildMonthlyPeriodStatuses,
   buildPlayerEvaluationStats,
   collectConvokedPlayerIdsInPeriod,
-  isLowerCategory,
+  isLowerCategoryResolved,
   isValidMonthlyPeriodKey,
+  monthlyPeriodKeyLabel,
   resolveMonthlyPeriodRange,
   resolveQuarterlyPeriodRange,
   type CoachTeamReportPeriodKey,
@@ -1075,9 +1076,9 @@ export class FutebolTreinadoresService {
 
     const fixtureCats = await this.prisma.fixtureCategory.findMany({
       where: { active: true },
-      select: { value: true, sortOrder: true, labelPT: true },
+      select: { value: true, sortOrder: true, labelPT: true, labelEN: true },
     });
-    const sortOrderMap = buildCategorySortOrderMap(fixtureCats);
+    const categoryCtx = buildCategoryResolutionContext(fixtureCats);
     const labelByValue = new Map(fixtureCats.map((c) => [c.value, c.labelPT]));
 
     const playersRaw = await this.prisma.player.findMany({
@@ -1100,15 +1101,58 @@ export class FutebolTreinadoresService {
         if (isArchivedSportsSituation(situation) || isLoanedSportsSituation(situation)) {
           return false;
         }
-        return isLowerCategory(p.category, cat, sortOrderMap);
+        return isLowerCategoryResolved(p.category, cat, categoryCtx);
       })
-      .map((p) => ({
-        id: p.id,
-        name: getPlayerListDisplayName(p),
-        photoUrl: p.photoUrl,
-        jerseyNumber: p.jerseyNumber,
-        category: p.category,
-        categoryLabel: p.category ? labelByValue.get(p.category) ?? p.category : null,
+      .map((p) => {
+        const canonical = categoryCtx.resolveCanonical(p.category) ?? p.category;
+        return {
+          id: p.id,
+          name: getPlayerListDisplayName(p),
+          photoUrl: p.photoUrl,
+          jerseyNumber: p.jerseyNumber,
+          category: canonical,
+          categoryLabel: canonical ? labelByValue.get(canonical) ?? canonical : null,
+        };
+      });
+  }
+
+  async getTeamReportPlayerHistory(
+    tenantId: string,
+    playerId: string,
+    category?: string,
+  ) {
+    const rows = await this.prisma.coachTeamReportPlayerEvaluation.findMany({
+      where: {
+        playerId,
+        report: {
+          tenantId,
+          periodType: 'mensal',
+          ...(category?.trim() ? { category: category.trim() } : {}),
+        },
+      },
+      select: {
+        coachFinalRating: true,
+        report: {
+          select: {
+            periodKey: true,
+            status: true,
+            sentAt: true,
+            updatedAt: true,
+            periodEnd: true,
+          },
+        },
+      },
+      orderBy: [{ report: { periodKey: 'desc' } }],
+    });
+
+    return rows
+      .filter((row) => row.report.periodKey)
+      .map((row) => ({
+        periodKey: row.report.periodKey!,
+        periodLabel: monthlyPeriodKeyLabel(row.report.periodKey!),
+        coachFinalRating: row.coachFinalRating,
+        status: row.report.status,
+        date: row.report.sentAt ?? row.report.updatedAt ?? row.report.periodEnd,
       }));
   }
 

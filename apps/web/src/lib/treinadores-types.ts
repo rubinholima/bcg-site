@@ -397,6 +397,14 @@ export type CoachPromotionCandidate = {
   categoryLabel: string | null;
 };
 
+export type CoachTeamReportPlayerHistoryItem = {
+  periodKey: string;
+  periodLabel: string;
+  coachFinalRating: number | null;
+  status: string;
+  date: string | null;
+};
+
 export type CoachTeamMonthlyReportStatus = "pendente" | "rascunho" | "enviado" | "atrasado";
 
 export type CoachTeamReport = {

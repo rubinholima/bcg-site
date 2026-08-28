@@ -213,6 +213,39 @@ export function buildMonthlyPeriodStatuses(input: {
   });
 }
 
+export function normalizeCategoryKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s\-_]/g, '');
+}
+
+export type CategoryResolutionContext = {
+  sortOrderMap: Map<string, number>;
+  resolveCanonical: (raw: string | null | undefined) => string | null;
+};
+
+/** Mapeia value, labelPT e labelEN para o slug canônico de FixtureCategory. */
+export function buildCategoryResolutionContext(
+  categories: Array<{ value: string; sortOrder: number; labelPT: string; labelEN?: string | null }>,
+): CategoryResolutionContext {
+  const sortOrderMap = new Map<string, number>();
+  const aliasMap = new Map<string, string>();
+
+  for (const c of categories) {
+    sortOrderMap.set(c.value, c.sortOrder);
+    for (const alias of [c.value, c.labelPT, c.labelEN ?? '']) {
+      if (!alias.trim()) continue;
+      aliasMap.set(normalizeCategoryKey(alias), c.value);
+    }
+  }
+
+  return {
+    sortOrderMap,
+    resolveCanonical: (raw) => {
+      if (!raw?.trim()) return null;
+      return aliasMap.get(normalizeCategoryKey(raw)) ?? null;
+    },
+  };
+}
+
 export function isLowerCategory(
   playerCategory: string | null | undefined,
   coachCategory: string | null | undefined,
@@ -223,6 +256,21 @@ export function isLowerCategory(
   if (!player || !coach || player === coach) return false;
   const playerOrder = sortOrderMap.get(player);
   const coachOrder = sortOrderMap.get(coach);
+  if (playerOrder == null || coachOrder == null) return false;
+  return playerOrder < coachOrder;
+}
+
+/** Compara categorias após resolver aliases (label/slug) para FixtureCategory. */
+export function isLowerCategoryResolved(
+  playerCategory: string | null | undefined,
+  coachCategory: string | null | undefined,
+  ctx: CategoryResolutionContext,
+): boolean {
+  const player = ctx.resolveCanonical(playerCategory);
+  const coach = ctx.resolveCanonical(coachCategory);
+  if (!player || !coach || player === coach) return false;
+  const playerOrder = ctx.sortOrderMap.get(player);
+  const coachOrder = ctx.sortOrderMap.get(coach);
   if (playerOrder == null || coachOrder == null) return false;
   return playerOrder < coachOrder;
 }

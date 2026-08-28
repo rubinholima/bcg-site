@@ -310,6 +310,22 @@ export class FutebolTreinadoresController {
     );
   }
 
+  @Get('team-reports/player-history/:playerId')
+  @TeamReportReadAccess()
+  getTeamReportPlayerHistory(
+    @Param('playerId') playerId: string,
+    @Query('tenantId') tenantId: string,
+    @Query('category') category?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+    if (!playerId?.trim()) throw new BadRequestException('playerId é obrigatório');
+    return this.service.getTeamReportPlayerHistory(
+      tenantId.trim(),
+      playerId.trim(),
+      category?.trim() || undefined,
+    );
+  }
+
   @Get('team-reports/promotion-candidates')
   @TeamReportReadAccess()
   getPromotionCandidates(

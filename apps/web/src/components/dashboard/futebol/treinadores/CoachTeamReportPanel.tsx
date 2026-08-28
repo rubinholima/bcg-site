@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import { Loader2, Plus, Save, Send, Trash2 } from "lucide-react";
+import { Eye, Loader2, Plus, Save, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { NativeSelect, NativeSelectField } from "@/components/ui/native-select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import {
   AlertDialog,
@@ -30,8 +29,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
-import { getPublicImageUrl } from "@/lib/media-url";
+import { getCategoryLabel } from "@/lib/fixture-categories";
+import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
+import { getPositionLabel } from "@/lib/football-positions";
+import { cn } from "@/lib/utils";
 import type {
   CoachContextPlayer,
   CoachContextResponse,
@@ -39,10 +41,29 @@ import type {
   CoachTeamEvaluationDraft,
   CoachTeamMonthlyReportStatus,
   CoachTeamReport,
-  CoachTeamReportPlayerEvaluation,
   CoachTeamReportSummary,
 } from "@/lib/treinadores-types";
-import { COACH_TEAM_PERIOD_KEYS } from "@/lib/treinadores-types";
+import {
+  CoachTeamReportPlayerDetailDialog,
+  type TeamReportEvaluationRow,
+} from "./CoachTeamReportPlayerDetailDialog";
+import {
+  CoachTeamReportPromotionPicker,
+  type PromotionSelection,
+} from "./CoachTeamReportPromotionPicker";
+import { CoachTeamReportPlayerAvatar } from "./CoachTeamReportPlayerAvatar";
+import {
+  MONTHLY_KEY_RE,
+  computeDeadlineInfo,
+  monthlyPeriodLabel,
+  monthlyStatusLabel,
+  monthlyStatusTone,
+  periodLabel,
+  scoreBadgeTone,
+  suggestMonthlyPeriodKey,
+  truncateText,
+  type TeamReportTab,
+} from "./coach-team-report-utils";
 
 type PlayerActionDraft = {
   playerId: string;
@@ -52,11 +73,6 @@ type PlayerActionDraft = {
   photoUrl: string | null;
   actionType: "dispensa" | "promocao";
   reason: string;
-};
-
-type EvaluationRow = CoachTeamReportPlayerEvaluation & {
-  name: string;
-  jerseyNumber: number | null;
 };
 
 interface Props {
@@ -69,79 +85,14 @@ interface Props {
   showSummary?: boolean;
 }
 
-const MONTHLY_KEY_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+const TABS: Array<{ id: TeamReportTab; label: string }> = [
+  { id: "visao-geral", label: "Visão geral" },
+  { id: "avaliacoes", label: "Avaliações dos atletas" },
+  { id: "acoes", label: "Ações da equipe" },
+  { id: "historico", label: "Histórico" },
+];
 
-function suggestMonthlyPeriodKey(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function monthlyPeriodLabel(periodKey: string): string {
-  if (!MONTHLY_KEY_RE.test(periodKey)) return periodKey;
-  const [year, month] = periodKey.split("-");
-  const names = [
-    "Janeiro",
-    "Fevereiro",
-    "Março",
-    "Abril",
-    "Maio",
-    "Junho",
-    "Julho",
-    "Agosto",
-    "Setembro",
-    "Outubro",
-    "Novembro",
-    "Dezembro",
-  ];
-  return `${names[Number(month) - 1] ?? month} ${year}`;
-}
-
-function periodLabel(report: CoachTeamReport) {
-  if (report.periodKey && MONTHLY_KEY_RE.test(report.periodKey)) {
-    return monthlyPeriodLabel(report.periodKey);
-  }
-  if (report.periodKey) {
-    const keyLabel =
-      COACH_TEAM_PERIOD_KEYS.find((p) => p.value === report.periodKey)?.label ?? report.periodKey;
-    const season = report.season ? ` ${report.season}` : "";
-    if (report.periodStart && report.periodEnd) {
-      return `${keyLabel}${season} · ${formatDateDayMonYear(new Date(report.periodStart))} – ${formatDateDayMonYear(new Date(report.periodEnd))}`;
-    }
-    return `${keyLabel}${season}`;
-  }
-  if (report.periodStart && report.periodEnd) {
-    return `${formatDateDayMonYear(new Date(report.periodStart))} – ${formatDateDayMonYear(new Date(report.periodEnd))}`;
-  }
-  return report.periodType;
-}
-
-function monthlyStatusLabel(status: CoachTeamMonthlyReportStatus) {
-  switch (status) {
-    case "enviado":
-      return "enviado";
-    case "rascunho":
-      return "rascunho";
-    case "atrasado":
-      return "atrasado";
-    default:
-      return "pendente";
-  }
-}
-
-function monthlyStatusTone(status: CoachTeamMonthlyReportStatus) {
-  switch (status) {
-    case "enviado":
-      return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
-    case "rascunho":
-      return "border-amber-500/40 bg-amber-500/10 text-amber-200";
-    case "atrasado":
-      return "border-red-500/40 bg-red-500/10 text-red-300";
-    default:
-      return "border-border/60 bg-muted/30 text-muted-foreground";
-  }
-}
-
-function draftToRows(draft: CoachTeamEvaluationDraft): EvaluationRow[] {
+function draftToRows(draft: CoachTeamEvaluationDraft): TeamReportEvaluationRow[] {
   return draft.players.map((p) => ({
     playerId: p.playerId,
     name: p.name,
@@ -156,7 +107,10 @@ function draftToRows(draft: CoachTeamEvaluationDraft): EvaluationRow[] {
   }));
 }
 
-function evaluationsFromReport(data: CoachTeamReport, players: CoachContextPlayer[]): EvaluationRow[] {
+function evaluationsFromReport(
+  data: CoachTeamReport,
+  players: CoachContextPlayer[],
+): TeamReportEvaluationRow[] {
   const byId = new Map(players.map((p) => [p.id, p]));
   return data.playerEvaluations.map((ev) => {
     const p = ev.player ?? byId.get(ev.playerId);
@@ -182,10 +136,14 @@ export function CoachTeamReportPanel({
   defaultStatusFilter = "all",
   showSummary = false,
 }: Props) {
+  const { categories: fixtureCategories } = useFixtureCategories();
   const currentYear = new Date().getFullYear();
+  const [activeTab, setActiveTab] = useState<TeamReportTab>("avaliacoes");
   const [reports, setReports] = useState<CoachTeamReport[]>([]);
   const [summary, setSummary] = useState<CoachTeamReportSummary | null>(null);
   const [promotionCandidates, setPromotionCandidates] = useState<CoachPromotionCandidate[]>([]);
+  const [promotionLoading, setPromotionLoading] = useState(false);
+  const [promotionLoadError, setPromotionLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -196,9 +154,12 @@ export function CoachTeamReportPanel({
   const [generalDescription, setGeneralDescription] = useState("");
   const [weakPoints, setWeakPoints] = useState("");
   const [status, setStatus] = useState<"rascunho" | "enviado">("rascunho");
-  const [playerEvaluations, setPlayerEvaluations] = useState<EvaluationRow[]>([]);
+  const [playerEvaluations, setPlayerEvaluations] = useState<TeamReportEvaluationRow[]>([]);
   const [playerActions, setPlayerActions] = useState<PlayerActionDraft[]>([]);
   const [statusFilter, setStatusFilter] = useState(defaultStatusFilter);
+  const [detailPlayerId, setDetailPlayerId] = useState<string | null>(null);
+  const [promotionPickerOpen, setPromotionPickerOpen] = useState(false);
+  const [dispensaSearch, setDispensaSearch] = useState("");
   const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
     open: false,
     title: "",
@@ -207,28 +168,43 @@ export function CoachTeamReportPanel({
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const players = useMemo(() => context?.players ?? [], [context?.players]);
+  const playersById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
+
   const season = useMemo(() => {
     if (MONTHLY_KEY_RE.test(periodKey)) return Number(periodKey.split("-")[0]);
     return currentYear;
   }, [periodKey, currentYear]);
 
-  const dispensaOptions = useMemo(
-    () =>
-      players.map((p) => ({
-        value: p.id,
-        label: `${p.jerseyNumber != null ? `#${p.jerseyNumber} ` : ""}${getPlayerListDisplayName(p)}`,
-      })),
-    [players],
+  const categoryLabel = category
+    ? getCategoryLabel(category, "pt", fixtureCategories)
+    : "Todas";
+
+  const currentMonthlyChipStatus = useMemo((): CoachTeamMonthlyReportStatus => {
+    const fromSummary = summary?.monthlyPeriods?.find((m) => m.periodKey === periodKey)?.status;
+    if (fromSummary) return fromSummary;
+    if (status === "enviado") return "enviado";
+    return "rascunho";
+  }, [summary, periodKey, status]);
+
+  const deadline = useMemo(
+    () => computeDeadlineInfo(periodEnd, status),
+    [periodEnd, status],
   );
 
-  const promocaoOptions = useMemo(
-    () =>
-      promotionCandidates.map((p) => ({
-        value: p.id,
-        label: `${p.categoryLabel ?? p.category ?? "?"} · ${p.name}`,
-      })),
-    [promotionCandidates],
-  );
+  const reportSummary = useMemo(() => {
+    const rated = playerEvaluations.filter((e) => e.coachFinalRating != null);
+    const avg =
+      rated.length > 0
+        ? rated.reduce((sum, e) => sum + (e.coachFinalRating ?? 0), 0) / rated.length
+        : null;
+    return {
+      athletes: playerEvaluations.length,
+      matchMinutes: playerEvaluations.reduce((s, e) => s + e.gamesMinutes, 0),
+      trainingMinutes: playerEvaluations.reduce((s, e) => s + e.trainingMinutes, 0),
+      avgScore: avg,
+      promotions: playerActions.filter((a) => a.actionType === "promocao").length,
+    };
+  }, [playerEvaluations, playerActions]);
 
   const loadReports = useCallback(() => {
     if (!tenantId) return;
@@ -256,13 +232,23 @@ export function CoachTeamReportPanel({
   const loadPromotionCandidates = useCallback(() => {
     if (!tenantId || !category) {
       setPromotionCandidates([]);
+      setPromotionLoadError(null);
+      setPromotionLoading(false);
       return;
     }
+    setPromotionLoading(true);
+    setPromotionLoadError(null);
     const params = new URLSearchParams({ tenantId, category });
     api
       .get<CoachPromotionCandidate[]>(`/futebol-treinadores/team-reports/promotion-candidates?${params}`)
       .then(({ data }) => setPromotionCandidates(Array.isArray(data) ? data : []))
-      .catch(() => setPromotionCandidates([]));
+      .catch((e) => {
+        setPromotionCandidates([]);
+        setPromotionLoadError(
+          e instanceof Error ? e.message : "Não foi possível carregar candidatos.",
+        );
+      })
+      .finally(() => setPromotionLoading(false));
   }, [tenantId, category]);
 
   const loadEvaluationDraft = useCallback(
@@ -331,20 +317,24 @@ export function CoachTeamReportPanel({
       setWeakPoints(data.weakPoints ?? "");
       setStatus(data.status);
       setPlayerActions(
-        data.playerActions.map((a) => ({
-          playerId: a.playerId,
-          name: a.player
-            ? getPlayerListDisplayName({
-                name: a.player.name,
-                registrationProfile: a.player.registrationProfile,
-              })
-            : "",
-          jerseyNumber: a.player?.jerseyNumber ?? null,
-          category: a.player?.category ?? null,
-          photoUrl: null,
-          actionType: a.actionType,
-          reason: a.reason ?? "",
-        })),
+        data.playerActions.map((a) => {
+          const ctxPlayer = playersById.get(a.playerId);
+          const promo = promotionCandidates.find((p) => p.id === a.playerId);
+          return {
+            playerId: a.playerId,
+            name: a.player
+              ? getPlayerListDisplayName({
+                  name: a.player.name,
+                  registrationProfile: a.player.registrationProfile,
+                })
+              : ctxPlayer?.name ?? "",
+            jerseyNumber: a.player?.jerseyNumber ?? ctxPlayer?.jerseyNumber ?? null,
+            category: a.player?.category ?? ctxPlayer?.category ?? promo?.category ?? null,
+            photoUrl: ctxPlayer?.photoUrl ?? promo?.photoUrl ?? null,
+            actionType: a.actionType,
+            reason: a.reason ?? "",
+          };
+        }),
       );
       if (data.playerEvaluations.length > 0) {
         setPlayerEvaluations(evaluationsFromReport(data, players));
@@ -353,7 +343,7 @@ export function CoachTeamReportPanel({
         loadEvaluationDraft({ reportId: data.id, nextPeriodKey: data.periodKey });
       }
     });
-  }, [selectedId, players, loadEvaluationDraft]);
+  }, [selectedId, players, playersById, loadEvaluationDraft]);
 
   useEffect(() => {
     if (selectedId || readOnly || !tenantId) return;
@@ -372,40 +362,6 @@ export function CoachTeamReportPanel({
     }
   };
 
-  const addAction = (actionType: "dispensa" | "promocao") => {
-    if (actionType === "dispensa") {
-      const first = players.find((p) => !playerActions.some((a) => a.playerId === p.id));
-      if (!first) return;
-      setPlayerActions((prev) => [
-        ...prev,
-        {
-          playerId: first.id,
-          name: getPlayerListDisplayName(first),
-          jerseyNumber: first.jerseyNumber,
-          category: first.category,
-          photoUrl: null,
-          actionType,
-          reason: "",
-        },
-      ]);
-      return;
-    }
-    const first = promotionCandidates.find((p) => !playerActions.some((a) => a.playerId === p.id));
-    if (!first) return;
-    setPlayerActions((prev) => [
-      ...prev,
-      {
-        playerId: first.id,
-        name: first.name,
-        jerseyNumber: first.jerseyNumber,
-        category: first.category,
-        photoUrl: first.photoUrl,
-        actionType,
-        reason: "",
-      },
-    ]);
-  };
-
   const validateSubmit = () => {
     if (!generalDescription.trim()) {
       return "A descrição do período é obrigatória.";
@@ -413,15 +369,19 @@ export function CoachTeamReportPanel({
     return null;
   };
 
-  const handleSave = async (submit = false) => {
-    if (!tenantId || readOnly) return;
+  const handleSave = async (
+    submit = false,
+    overrides?: { playerEvaluations?: TeamReportEvaluationRow[] },
+  ) => {
+    if (!tenantId || readOnly) return false;
     if (submit) {
       const err = validateSubmit();
       if (err) {
         setFeedback({ open: true, title: "Campos obrigatórios", message: err });
-        return;
+        return false;
       }
     }
+    const evaluationsToSave = overrides?.playerEvaluations ?? playerEvaluations;
     setSaving(true);
     try {
       const payload = {
@@ -443,7 +403,7 @@ export function CoachTeamReportPanel({
             actionType: a.actionType,
             reason: a.reason || null,
           })),
-        playerEvaluations: playerEvaluations.map((e) => ({
+        playerEvaluations: evaluationsToSave.map((e) => ({
           playerId: e.playerId,
           gamesCount: e.gamesCount,
           gamesMinutes: e.gamesMinutes,
@@ -458,22 +418,28 @@ export function CoachTeamReportPanel({
       if (data?.id) setSelectedId(data.id);
       if (submit && data?.id) {
         await api.post(`/futebol-treinadores/team-reports/${data.id}/submit`);
+        setStatus("enviado");
+      }
+      if (overrides?.playerEvaluations) {
+        setPlayerEvaluations(overrides.playerEvaluations);
       }
       loadReports();
       loadSummary();
-      setFeedback({
-        open: true,
-        title: submit ? "Enviado" : "Salvo",
-        message: submit
-          ? "Relatório da equipe enviado ao diretor de futebol."
-          : "Relatório da equipe salvo.",
-      });
+      if (submit) {
+        setFeedback({
+          open: true,
+          title: "Enviado",
+          message: "Relatório da equipe enviado ao diretor de futebol.",
+        });
+      }
+      return true;
     } catch (e) {
       setFeedback({
         open: true,
         title: "Erro",
         message: e instanceof Error ? e.message : "Não foi possível salvar.",
       });
+      return false;
     } finally {
       setSaving(false);
     }
@@ -497,147 +463,66 @@ export function CoachTeamReportPanel({
     }
   };
 
-  const dispensas = playerActions.filter((a) => a.actionType === "dispensa");
-  const promocoes = playerActions.filter((a) => a.actionType === "promocao");
-  const monthlyStatus = summary?.monthlyPeriods ?? [];
-
-  const renderActionTable = (rows: PlayerActionDraft[], actionType: "dispensa" | "promocao") => {
-    const indices = playerActions
-      .map((a, i) => (a.actionType === actionType ? i : -1))
-      .filter((i) => i >= 0);
-    const options = actionType === "dispensa" ? dispensaOptions : promocaoOptions;
-
-    return (
-      <div className="overflow-x-auto rounded-lg border border-border/60">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-14 text-center">#</TableHead>
-              {actionType === "promocao" ? <TableHead className="w-12" /> : null}
-              <TableHead>Atleta</TableHead>
-              {actionType === "promocao" ? <TableHead>Categoria</TableHead> : null}
-              <TableHead>{actionType === "promocao" ? "Motivo / observação" : "Motivo"}</TableHead>
-              {!readOnly ? <TableHead className="w-12" /> : null}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={readOnly ? (actionType === "promocao" ? 4 : 3) : actionType === "promocao" ? 5 : 4}
-                  className="text-muted-foreground text-sm"
-                >
-                  Nenhuma indicação.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((row, rowIdx) => {
-                const idx = indices[rowIdx];
-                const candidate = promotionCandidates.find((p) => p.id === row.playerId);
-                const photoUrl = candidate?.photoUrl ? getPublicImageUrl(candidate.photoUrl) : null;
-                return (
-                  <TableRow key={`${actionType}-${row.playerId}-${idx}`}>
-                    <TableCell className="text-center tabular-nums font-medium">
-                      {row.jerseyNumber ?? "—"}
-                    </TableCell>
-                    {actionType === "promocao" ? (
-                      <TableCell>
-                        {photoUrl ? (
-                          <Image
-                            src={photoUrl}
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="h-8 w-8 rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        )}
-                      </TableCell>
-                    ) : null}
-                    <TableCell>
-                      {readOnly ? (
-                        row.name
-                      ) : (
-                        <NativeSelectField
-                          value={row.playerId}
-                          onChange={(e) => {
-                            if (actionType === "dispensa") {
-                              const player = players.find((p) => p.id === e.target.value);
-                              if (!player) return;
-                              const next = [...playerActions];
-                              next[idx] = {
-                                ...next[idx],
-                                playerId: player.id,
-                                name: getPlayerListDisplayName(player),
-                                jerseyNumber: player.jerseyNumber,
-                                category: player.category,
-                                photoUrl: null,
-                              };
-                              setPlayerActions(next);
-                              return;
-                            }
-                            const promo = promotionCandidates.find((p) => p.id === e.target.value);
-                            if (!promo) return;
-                            const next = [...playerActions];
-                            next[idx] = {
-                              ...next[idx],
-                              playerId: promo.id,
-                              name: promo.name,
-                              jerseyNumber: promo.jerseyNumber,
-                              category: promo.category,
-                              photoUrl: promo.photoUrl,
-                            };
-                            setPlayerActions(next);
-                          }}
-                          options={options}
-                        />
-                      )}
-                    </TableCell>
-                    {actionType === "promocao" ? (
-                      <TableCell className="text-sm text-muted-foreground">
-                        {candidate?.categoryLabel ?? row.category ?? "—"}
-                      </TableCell>
-                    ) : null}
-                    <TableCell>
-                      {readOnly ? (
-                        row.reason || "—"
-                      ) : (
-                        <Input
-                          value={row.reason}
-                          placeholder={actionType === "promocao" ? "Motivo da recomendação" : "Motivo"}
-                          onChange={(e) => {
-                            const next = [...playerActions];
-                            next[idx] = { ...next[idx], reason: e.target.value };
-                            setPlayerActions(next);
-                          }}
-                        />
-                      )}
-                    </TableCell>
-                    {!readOnly ? (
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-destructive"
-                          onClick={() =>
-                            setPlayerActions((prev) => prev.filter((_, i) => i !== idx))
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    ) : null}
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+  const handlePlayerDetailSave = async (patch: {
+    coachFinalRating: number | null;
+    individualObservation: string | null;
+    playerStrengths: string | null;
+  }) => {
+    if (!detailPlayerId) return;
+    const nextEvaluations = playerEvaluations.map((row) =>
+      row.playerId === detailPlayerId
+        ? {
+            ...row,
+            coachFinalRating: patch.coachFinalRating,
+            individualObservation: patch.individualObservation,
+            playerStrengths: patch.playerStrengths,
+          }
+        : row,
     );
+    const ok = await handleSave(false, { playerEvaluations: nextEvaluations });
+    if (ok) {
+      setFeedback({ open: true, title: "Salvo", message: "Avaliação do atleta atualizada." });
+    }
   };
+
+  const promotionSelections: PromotionSelection[] = useMemo(
+    () =>
+      playerActions
+        .filter((a) => a.actionType === "promocao")
+        .map((a) => {
+          const promo = promotionCandidates.find((p) => p.id === a.playerId);
+          return {
+            playerId: a.playerId,
+            name: a.name,
+            jerseyNumber: a.jerseyNumber,
+            category: a.category,
+            categoryLabel: promo?.categoryLabel ?? null,
+            photoUrl: a.photoUrl ?? promo?.photoUrl ?? null,
+            reason: a.reason,
+          };
+        }),
+    [playerActions, promotionCandidates],
+  );
+
+  const dispensas = playerActions.filter((a) => a.actionType === "dispensa");
+  const monthlyStatus = summary?.monthlyPeriods ?? [];
+  const locked = readOnly || status === "enviado";
+
+  const filteredDispensaPlayers = useMemo(() => {
+    const q = dispensaSearch.trim().toLowerCase();
+    const used = new Set(dispensas.map((d) => d.playerId));
+    return players.filter((p) => {
+      if (used.has(p.id)) return false;
+      if (!q) return true;
+      return getPlayerListDisplayName(p).toLowerCase().includes(q);
+    });
+  }, [players, dispensaSearch, dispensas]);
+
+  const detailPlayer = detailPlayerId ? playersById.get(detailPlayerId) ?? null : null;
+  const detailEvaluation =
+    detailPlayerId != null
+      ? playerEvaluations.find((e) => e.playerId === detailPlayerId) ?? null
+      : null;
 
   if (contextLoading) {
     return (
@@ -648,7 +533,7 @@ export function CoachTeamReportPanel({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6">
       {showSummary && summary ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Card>
@@ -678,310 +563,615 @@ export function CoachTeamReportPanel({
         </div>
       ) : null}
 
-      {monthlyStatus.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {monthlyStatus.map((m) => (
-            <button
-              key={m.periodKey}
-              type="button"
-              className={`rounded-full border px-3 py-1 text-xs font-medium ${monthlyStatusTone(m.status)}`}
-              onClick={() => {
-                if (m.reportId) setSelectedId(m.reportId);
-                else {
-                  setSelectedId("");
-                  setPeriodKey(m.periodKey);
-                }
-              }}
+      <div className="rounded-xl border border-border/60 bg-card/40 p-5 sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight">Relatório da Equipe</h2>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Acompanhe o desempenho da equipe e registre avaliações mensais dos atletas.
+            </p>
+          </div>
+          {deadline ? (
+            <div
+              className={cn(
+                "shrink-0 rounded-lg border px-4 py-3 text-sm",
+                deadline.tone === "sent" && "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+                deadline.tone === "overdue" && "border-red-500/40 bg-red-500/10 text-red-300",
+                deadline.tone === "pending" && "border-primary/40 bg-primary/10 text-primary-foreground",
+              )}
             >
-              {monthlyPeriodLabel(m.periodKey)}: {monthlyStatusLabel(m.status)}
-            </button>
-          ))}
+              <p className="font-semibold">{deadline.label}</p>
+              {"sublabel" in deadline && deadline.sublabel ? (
+                <p className="mt-0.5 text-xs opacity-90">{deadline.sublabel}</p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
-      ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-base">Relatórios</CardTitle>
-            {!readOnly ? (
-              <Button type="button" size="sm" variant="outline" onClick={resetForm}>
-                <Plus className="mr-1 h-4 w-4" />
-                Novo
-              </Button>
-            ) : null}
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <NativeSelect
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            >
-              <option value="all">Todos</option>
-              <option value="enviado">Enviados</option>
-              <option value="rascunho">Rascunhos</option>
-            </NativeSelect>
-            {loading ? (
-              <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
-            ) : reports.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum relatório ainda.</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Categoria</Label>
+            <p className="text-sm font-medium">{categoryLabel}</p>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Mês / Período</Label>
+            {locked || !MONTHLY_KEY_RE.test(periodKey) ? (
+              <p className="text-sm font-medium">
+                {MONTHLY_KEY_RE.test(periodKey) ? monthlyPeriodLabel(periodKey) : periodKey}
+              </p>
             ) : (
-              reports.map((r) => (
-                <div
-                  key={r.id}
-                  className={`rounded-lg border p-3 text-sm ${selectedId === r.id ? "border-primary bg-primary/5" : "border-border/60"}`}
-                >
-                  <button type="button" className="w-full text-left" onClick={() => setSelectedId(r.id)}>
-                    <div className="font-medium">{periodLabel(r)}</div>
-                    <div className="text-muted-foreground capitalize">{r.status}</div>
-                  </button>
-                  {!readOnly && r.status === "rascunho" ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="mt-2 h-8 text-destructive"
-                      onClick={() => setDeleteId(r.id)}
-                    >
-                      <Trash2 className="mr-1 h-4 w-4" />
-                      Excluir
-                    </Button>
-                  ) : null}
-                </div>
-              ))
+              <Input
+                type="month"
+                className="h-9 text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                value={periodKey}
+                onChange={(e) => handlePeriodKeyChange(e.target.value)}
+              />
             )}
-          </CardContent>
-        </Card>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Status</Label>
+            <span
+              className={cn(
+                "inline-flex rounded-full border px-3 py-1 text-xs font-medium capitalize",
+                monthlyStatusTone(currentMonthlyChipStatus),
+              )}
+            >
+              {monthlyStatusLabel(currentMonthlyChipStatus)}
+            </span>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Temporada</Label>
+            <p className="text-sm font-medium tabular-nums">{season}</p>
+          </div>
+        </div>
 
+        {monthlyStatus.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {monthlyStatus.map((m) => (
+              <button
+                key={m.periodKey}
+                type="button"
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  monthlyStatusTone(m.status),
+                  periodKey === m.periodKey && "ring-1 ring-primary/50",
+                )}
+                onClick={() => {
+                  if (m.reportId) setSelectedId(m.reportId);
+                  else {
+                    setSelectedId("");
+                    setPeriodKey(m.periodKey);
+                  }
+                }}
+              >
+                {monthlyPeriodLabel(m.periodKey)}: {monthlyStatusLabel(m.status)}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex flex-wrap gap-2 border-b border-border/60 pb-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={cn(
+              "rounded-t-lg px-4 py-2 text-sm font-medium transition-colors",
+              activeTab === tab.id
+                ? "bg-primary/15 text-primary"
+                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+            )}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "visao-geral" ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Relatório da equipe</CardTitle>
+            <CardTitle className="text-base">Visão geral do período</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Mês</Label>
-                {readOnly || status === "enviado" || !MONTHLY_KEY_RE.test(periodKey) ? (
-                  <p className="text-sm">
-                    {MONTHLY_KEY_RE.test(periodKey)
-                      ? monthlyPeriodLabel(periodKey)
-                      : periodLabel({
-                          periodKey,
-                          periodType: "trimestral",
-                          season,
-                          periodStart,
-                          periodEnd,
-                        } as CoachTeamReport)}
-                  </p>
-                ) : (
-                  <Input
-                    type="month"
-                    className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
-                    value={periodKey}
-                    onChange={(e) => handlePeriodKeyChange(e.target.value)}
-                  />
-                )}
+                <Label>Início do período</Label>
+                <Input type="date" value={periodStart} disabled className="text-foreground" />
               </div>
               <div className="space-y-2">
-                <Label>Início</Label>
-                <Input
-                  type="date"
-                  className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
-                  value={periodStart}
-                  disabled
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Fim</Label>
-                <Input
-                  type="date"
-                  className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
-                  value={periodEnd}
-                  disabled
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Temporada</Label>
-                <Input type="number" value={season} disabled />
+                <Label>Fim do período</Label>
+                <Input type="date" value={periodEnd} disabled className="text-foreground" />
               </div>
             </div>
-
             <div className="space-y-2">
-              <Label>Descrição do período *</Label>
+              <Label>Descrição geral do período *</Label>
               <Textarea
-                rows={4}
+                rows={5}
                 value={generalDescription}
-                disabled={readOnly || status === "enviado"}
+                disabled={locked}
                 placeholder="Obrigatória ao enviar"
                 onChange={(e) => setGeneralDescription(e.target.value)}
               />
             </div>
-
             <div className="space-y-2">
-              <Label>Pontos fracos</Label>
+              <Label>Análise / pontos fracos</Label>
               <Textarea
-                rows={3}
+                rows={4}
                 value={weakPoints}
-                disabled={readOnly || status === "enviado"}
+                disabled={locked}
                 onChange={(e) => setWeakPoints(e.target.value)}
               />
             </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <Label>Atletas</Label>
-                {draftLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
-              </div>
-              <div className="overflow-x-auto rounded-lg border border-border/60">
-                <Table>
-                  <TableHeader>
+      {activeTab === "avaliacoes" ? (
+        <Card>
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-base">Avaliações dos atletas</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {MONTHLY_KEY_RE.test(periodKey) ? monthlyPeriodLabel(periodKey) : periodKey}
+              </p>
+            </div>
+            {draftLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto rounded-lg border border-border/60">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10 text-center">#</TableHead>
+                    <TableHead>Atleta</TableHead>
+                    <TableHead className="text-right">Min. jogo</TableHead>
+                    <TableHead className="text-right">Min. treino</TableHead>
+                    <TableHead className="w-28">Nota</TableHead>
+                    <TableHead className="min-w-[140px]">Observação</TableHead>
+                    <TableHead className="w-16 text-center">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {playerEvaluations.length === 0 ? (
                     <TableRow>
-                      <TableHead className="w-12 text-center">#</TableHead>
-                      <TableHead>Atleta</TableHead>
-                      <TableHead className="text-right">Min. jogo</TableHead>
-                      <TableHead className="text-right">Min. treino</TableHead>
-                      <TableHead className="w-24">Nota</TableHead>
-                      <TableHead className="min-w-[180px]">Observação</TableHead>
-                      <TableHead className="min-w-[160px]">Pontos fortes</TableHead>
+                      <TableCell colSpan={7} className="text-muted-foreground text-sm">
+                        {draftLoading
+                          ? "Carregando estatísticas…"
+                          : "Nenhum atleta convocado neste mês."}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {playerEvaluations.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-muted-foreground text-sm">
-                          {draftLoading
-                            ? "Carregando estatísticas…"
-                            : "Nenhum atleta convocado neste mês."}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      playerEvaluations.map((row, idx) => (
+                  ) : (
+                    playerEvaluations.map((row, idx) => {
+                      const ctxPlayer = playersById.get(row.playerId);
+                      const photoUrl = ctxPlayer?.photoUrl ?? null;
+                      const position = ctxPlayer?.position
+                        ? getPositionLabel(ctxPlayer.position)
+                        : null;
+                      return (
                         <TableRow key={row.playerId}>
-                          <TableCell className="text-center tabular-nums">{row.jerseyNumber ?? "—"}</TableCell>
-                          <TableCell className="font-medium">{row.name}</TableCell>
+                          <TableCell className="text-center tabular-nums text-muted-foreground">
+                            {idx + 1}
+                          </TableCell>
+                          <TableCell>
+                            <button
+                              type="button"
+                              className="flex min-w-[180px] items-center gap-3 text-left hover:opacity-90"
+                              onClick={() => setDetailPlayerId(row.playerId)}
+                            >
+                              <CoachTeamReportPlayerAvatar
+                                name={row.name}
+                                photoUrl={photoUrl}
+                                size="sm"
+                              />
+                              <div className="min-w-0">
+                                <p className="truncate font-medium">{row.name}</p>
+                                {position || row.jerseyNumber != null ? (
+                                  <p className="truncate text-xs text-muted-foreground">
+                                    {[position, row.jerseyNumber != null ? `#${row.jerseyNumber}` : null]
+                                      .filter(Boolean)
+                                      .join(" · ")}
+                                  </p>
+                                ) : null}
+                              </div>
+                            </button>
+                          </TableCell>
                           <TableCell className="text-right tabular-nums">{row.gamesMinutes}</TableCell>
                           <TableCell className="text-right tabular-nums">{row.trainingMinutes}</TableCell>
                           <TableCell>
-                            {readOnly || status === "enviado" ? (
-                              row.coachFinalRating ?? "—"
-                            ) : (
-                              <Input
-                                type="number"
-                                min={0}
-                                max={5}
-                                step={0.1}
-                                className="h-9"
-                                value={row.coachFinalRating ?? ""}
-                                onChange={(e) => {
-                                  const val = e.target.value === "" ? null : Number(e.target.value);
-                                  setPlayerEvaluations((prev) => {
-                                    const next = [...prev];
-                                    next[idx] = { ...next[idx], coachFinalRating: val };
-                                    return next;
-                                  });
-                                }}
-                              />
-                            )}
+                            <span
+                              className={cn(
+                                "inline-flex min-w-[3rem] justify-center rounded-full border px-2 py-0.5 text-sm font-semibold tabular-nums",
+                                scoreBadgeTone(row.coachFinalRating),
+                              )}
+                            >
+                              {row.coachFinalRating != null ? row.coachFinalRating.toFixed(1) : "—"}
+                            </span>
                           </TableCell>
-                          <TableCell>
-                            {readOnly || status === "enviado" ? (
-                              row.individualObservation || "—"
-                            ) : (
-                              <Textarea
-                                rows={2}
-                                className="min-h-[60px] text-sm"
-                                value={row.individualObservation ?? ""}
-                                onChange={(e) => {
-                                  setPlayerEvaluations((prev) => {
-                                    const next = [...prev];
-                                    next[idx] = { ...next[idx], individualObservation: e.target.value };
-                                    return next;
-                                  });
-                                }}
-                              />
-                            )}
+                          <TableCell className="max-w-[220px] text-sm text-muted-foreground">
+                            {truncateText(row.individualObservation)}
                           </TableCell>
-                          <TableCell>
-                            {readOnly || status === "enviado" ? (
-                              row.playerStrengths || "—"
-                            ) : (
-                              <Textarea
-                                rows={2}
-                                className="min-h-[60px] text-sm"
-                                value={row.playerStrengths ?? ""}
-                                onChange={(e) => {
-                                  setPlayerEvaluations((prev) => {
-                                    const next = [...prev];
-                                    next[idx] = { ...next[idx], playerStrengths: e.target.value };
-                                    return next;
-                                  });
-                                }}
-                              />
-                            )}
+                          <TableCell className="text-center">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              aria-label="Ver detalhes"
+                              onClick={() => setDetailPlayerId(row.playerId)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
             </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <Label>Dispensas</Label>
-                {!readOnly && status !== "enviado" ? (
-                  <Button type="button" size="sm" variant="outline" onClick={() => addAction("dispensa")}>
-                    <Plus className="mr-1 h-4 w-4" />
-                    Atleta
-                  </Button>
-                ) : null}
-              </div>
-              {renderActionTable(dispensas, "dispensa")}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <Label>Recomendações de subida (treinar com a categoria)</Label>
-                {!readOnly && status !== "enviado" ? (
-                  <Button type="button" size="sm" variant="outline" onClick={() => addAction("promocao")}>
-                    <Plus className="mr-1 h-4 w-4" />
-                    Atleta
-                  </Button>
-                ) : null}
-              </div>
-              {renderActionTable(promocoes, "promocao")}
-            </div>
-
-            {readOnly && status === "enviado" && selectedId ? (
-              <p className="text-sm text-muted-foreground">
-                Relatório enviado
-                {reports.find((r) => r.id === selectedId)?.sentAt
-                  ? ` em ${formatDateDayMonYear(new Date(reports.find((r) => r.id === selectedId)!.sentAt!))}`
-                  : ""}
-                .
-              </p>
-            ) : null}
-
-            {!readOnly && status !== "enviado" ? (
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={() => void handleSave(false)} disabled={saving}>
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  Salvar rascunho
-                </Button>
-                <Button
-                  type="button"
-                  variant="default"
-                  className="bg-[#C8102E] hover:bg-[#C8102E]/90"
-                  onClick={() => void handleSave(true)}
-                  disabled={saving}
-                >
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                  Enviar ao diretor
-                </Button>
-              </div>
-            ) : null}
           </CardContent>
         </Card>
-      </div>
+      ) : null}
+
+      {activeTab === "acoes" ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
+              <CardTitle className="text-base">Indicação de subida</CardTitle>
+              {!locked ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    if (!category) {
+                      setFeedback({
+                        open: true,
+                        title: "Categoria obrigatória",
+                        message: "Selecione uma categoria para visualizar atletas elegíveis.",
+                      });
+                      return;
+                    }
+                    setPromotionPickerOpen(true);
+                  }}
+                >
+                  <Plus className="mr-1 h-4 w-4" />
+                  Indicar
+                </Button>
+              ) : null}
+            </CardHeader>
+            <CardContent>
+              {!category ? (
+                <p className="text-sm text-muted-foreground">
+                  Selecione uma categoria para visualizar atletas elegíveis.
+                </p>
+              ) : promotionSelections.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma indicação registrada.</p>
+              ) : (
+                <div className="space-y-3">
+                  {promotionSelections.map((s) => (
+                    <div
+                      key={s.playerId}
+                      className="flex items-start gap-3 rounded-lg border border-border/60 p-3"
+                    >
+                      <CoachTeamReportPlayerAvatar name={s.name} photoUrl={s.photoUrl} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium">{s.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {s.categoryLabel ??
+                            (s.category ? getCategoryLabel(s.category, "pt", fixtureCategories) : "—")}
+                        </p>
+                        {s.reason ? (
+                          <p className="mt-1 text-sm text-muted-foreground">{s.reason}</p>
+                        ) : null}
+                      </div>
+                      {!locked ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 shrink-0 p-0 text-destructive"
+                          onClick={() =>
+                            setPlayerActions((prev) =>
+                              prev.filter(
+                                (a) => !(a.actionType === "promocao" && a.playerId === s.playerId),
+                              ),
+                            )
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Dispensa</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!locked ? (
+                <>
+                  <div className="space-y-2">
+                    <Label>Buscar atleta da categoria</Label>
+                    <Input
+                      value={dispensaSearch}
+                      placeholder="Nome do atleta…"
+                      onChange={(e) => setDispensaSearch(e.target.value)}
+                    />
+                  </div>
+                  <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-border/60 p-2">
+                    {filteredDispensaPlayers.length === 0 ? (
+                      <p className="py-4 text-center text-sm text-muted-foreground">
+                        Nenhum atleta disponível.
+                      </p>
+                    ) : (
+                      filteredDispensaPlayers.slice(0, 20).map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-muted/30"
+                        >
+                          <CoachTeamReportPlayerAvatar
+                            name={getPlayerListDisplayName(p)}
+                            photoUrl={p.photoUrl}
+                            size="sm"
+                          />
+                          <p className="min-w-0 flex-1 truncate text-sm font-medium">
+                            {getPlayerListDisplayName(p)}
+                          </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              setPlayerActions((prev) => [
+                                ...prev,
+                                {
+                                  playerId: p.id,
+                                  name: getPlayerListDisplayName(p),
+                                  jerseyNumber: p.jerseyNumber,
+                                  category: p.category,
+                                  photoUrl: p.photoUrl ?? null,
+                                  actionType: "dispensa",
+                                  reason: "",
+                                },
+                              ])
+                            }
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              ) : null}
+
+              <div className="space-y-2">
+                <Label>Indicações de dispensa</Label>
+                {dispensas.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhuma dispensa indicada.</p>
+                ) : (
+                  dispensas.map((d) => (
+                    <div
+                      key={d.playerId}
+                      className="flex items-start gap-3 rounded-lg border border-border/60 p-3"
+                    >
+                      <CoachTeamReportPlayerAvatar name={d.name} photoUrl={d.photoUrl} size="sm" />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <p className="font-medium">{d.name}</p>
+                        {!locked ? (
+                          <Input
+                            value={d.reason}
+                            placeholder="Motivo da dispensa"
+                            onChange={(e) =>
+                              setPlayerActions((prev) =>
+                                prev.map((a) =>
+                                  a.playerId === d.playerId && a.actionType === "dispensa"
+                                    ? { ...a, reason: e.target.value }
+                                    : a,
+                                ),
+                              )
+                            }
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground">{d.reason || "—"}</p>
+                        )}
+                      </div>
+                      {!locked ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 shrink-0 p-0 text-destructive"
+                          onClick={() =>
+                            setPlayerActions((prev) =>
+                              prev.filter(
+                                (a) => !(a.actionType === "dispensa" && a.playerId === d.playerId),
+                              ),
+                            )
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      ) : null}
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
+      {activeTab === "historico" ? (
+        <div className="grid gap-6 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
+              <CardTitle className="text-base">Relatórios</CardTitle>
+              {!readOnly ? (
+                <Button type="button" size="sm" variant="outline" onClick={resetForm}>
+                  <Plus className="mr-1 h-4 w-4" />
+                  Novo
+                </Button>
+              ) : null}
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <NativeSelect
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+              >
+                <option value="all">Todos</option>
+                <option value="enviado">Enviados</option>
+                <option value="rascunho">Rascunhos</option>
+              </NativeSelect>
+              {loading ? (
+                <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+              ) : reports.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum relatório ainda.</p>
+              ) : (
+                reports.map((r) => (
+                  <div
+                    key={r.id}
+                    className={cn(
+                      "rounded-lg border p-3 text-sm",
+                      selectedId === r.id ? "border-primary bg-primary/5" : "border-border/60",
+                    )}
+                  >
+                    <button
+                      type="button"
+                      className="w-full text-left"
+                      onClick={() => setSelectedId(r.id)}
+                    >
+                      <div className="font-medium">{periodLabel(r)}</div>
+                      <div className="text-muted-foreground capitalize">{r.status}</div>
+                    </button>
+                    {!readOnly && r.status === "rascunho" ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 h-8 text-destructive"
+                        onClick={() => setDeleteId(r.id)}
+                      >
+                        <Trash2 className="mr-1 h-4 w-4" />
+                        Excluir
+                      </Button>
+                    ) : null}
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              {selectedId ? (
+                <p className="text-sm text-muted-foreground">
+                  Relatório selecionado. Use as abas Visão geral, Avaliações e Ações para editar o
+                  período{" "}
+                  {MONTHLY_KEY_RE.test(periodKey) ? monthlyPeriodLabel(periodKey) : periodKey}.
+                  {status === "enviado" && reports.find((r) => r.id === selectedId)?.sentAt
+                    ? ` Enviado em ${formatDateDayMonYear(new Date(reports.find((r) => r.id === selectedId)!.sentAt!))}.`
+                    : ""}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Selecione um relatório na lista ou use os chips de mês acima para abrir um
+                  período.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
+      <Card className="border-primary/20 bg-muted/10">
+        <CardContent className="grid gap-4 py-5 sm:grid-cols-2 lg:grid-cols-5">
+          <SummaryStat label="Atletas avaliados" value={reportSummary.athletes} />
+          <SummaryStat label="Minutos de jogo" value={reportSummary.matchMinutes} />
+          <SummaryStat label="Minutos de treino" value={reportSummary.trainingMinutes} />
+          <SummaryStat
+            label="Nota média da equipe"
+            value={reportSummary.avgScore != null ? reportSummary.avgScore.toFixed(1) : "—"}
+          />
+          <SummaryStat label="Indicações de subida" value={reportSummary.promotions} />
+        </CardContent>
+      </Card>
+
+      {!locked ? (
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={() => void handleSave(false)} disabled={saving}>
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Salvar rascunho
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            className="bg-[#C8102E] hover:bg-[#C8102E]/90"
+            onClick={() => void handleSave(true)}
+            disabled={saving}
+          >
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+            Enviar ao diretor
+          </Button>
+        </div>
+      ) : null}
+
+      <CoachTeamReportPlayerDetailDialog
+        open={detailPlayerId != null}
+        onOpenChange={(open) => !open && setDetailPlayerId(null)}
+        player={detailPlayer}
+        evaluation={detailEvaluation}
+        tenantId={tenantId}
+        category={category}
+        periodLabel={MONTHLY_KEY_RE.test(periodKey) ? monthlyPeriodLabel(periodKey) : periodKey}
+        readOnly={locked}
+        saving={saving}
+        onSave={handlePlayerDetailSave}
+      />
+
+      <CoachTeamReportPromotionPicker
+        open={promotionPickerOpen}
+        onOpenChange={setPromotionPickerOpen}
+        categorySelected={!!category}
+        candidates={promotionCandidates}
+        loading={promotionLoading}
+        loadError={promotionLoadError}
+        selections={promotionSelections}
+        readOnly={locked}
+        onAdd={(c) => {
+          if (playerActions.some((a) => a.playerId === c.id && a.actionType === "promocao")) return;
+          setPlayerActions((prev) => [
+            ...prev,
+            {
+              playerId: c.id,
+              name: c.name,
+              jerseyNumber: c.jerseyNumber,
+              category: c.category,
+              photoUrl: c.photoUrl,
+              actionType: "promocao",
+              reason: "",
+            },
+          ]);
+        }}
+        onRemove={(playerId) =>
+          setPlayerActions((prev) =>
+            prev.filter((a) => !(a.actionType === "promocao" && a.playerId === playerId)),
+          )
+        }
+        onReasonChange={(playerId, reason) =>
+          setPlayerActions((prev) =>
+            prev.map((a) =>
+              a.playerId === playerId && a.actionType === "promocao" ? { ...a, reason } : a,
+            ),
+          )
+        }
+      />
 
       <FeedbackModal
         open={feedback.open}
@@ -1002,6 +1192,15 @@ export function CoachTeamReportPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function SummaryStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="text-center sm:text-left">
+      <p className="text-2xl font-bold tabular-nums">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
 }

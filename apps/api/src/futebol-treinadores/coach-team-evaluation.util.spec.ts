@@ -1,12 +1,14 @@
 import {
+  buildCategoryResolutionContext,
+  buildCategorySortOrderMap,
   buildMonthlyPeriodStatuses,
   buildPlayerEvaluationStats,
   collectConvokedPlayerIdsInPeriod,
   isLowerCategory,
+  isLowerCategoryResolved,
   isValidMonthlyPeriodKey,
   resolveMonthlyPeriodRange,
   resolveMonthlyReportStatus,
-  buildCategorySortOrderMap,
 } from './coach-team-evaluation.util';
 import { buildSquadPlayerPeriodMinutes } from './player-period-minutes.util';
 
@@ -109,6 +111,17 @@ describe('coach-team-evaluation.util — mensal', () => {
     expect(isLowerCategory('sub14', 'sub17', map)).toBe(true);
     expect(isLowerCategory('sub17', 'sub17', map)).toBe(false);
     expect(isLowerCategory('sub20', 'sub17', map)).toBe(false);
+  });
+
+  it('isLowerCategoryResolved — label e slug', () => {
+    const ctx = buildCategoryResolutionContext([
+      { value: 'sub14', sortOrder: 10, labelPT: 'Sub-14', labelEN: 'U-14' },
+      { value: 'sub17', sortOrder: 20, labelPT: 'Sub-17', labelEN: 'U-17' },
+    ]);
+    expect(isLowerCategoryResolved('Sub-14', 'sub17', ctx)).toBe(true);
+    expect(isLowerCategoryResolved('sub14', 'Sub-17', ctx)).toBe(true);
+    expect(isLowerCategoryResolved('sub17', 'sub17', ctx)).toBe(false);
+    expect(isLowerCategoryResolved('unknown', 'sub17', ctx)).toBe(false);
   });
 
   it('collectConvokedPlayerIdsInPeriod — FMF listed e viagem', () => {
