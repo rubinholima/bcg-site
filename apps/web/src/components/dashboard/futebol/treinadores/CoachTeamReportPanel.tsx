@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, Loader2, Plus, Save, Send, Trash2 } from "lucide-react";
+import { Eye, Loader2, MoreHorizontal, Pencil, Plus, Save, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -44,16 +44,19 @@ import type {
   CoachTeamReportSummary,
 } from "@/lib/treinadores-types";
 import {
-  CoachTeamReportPlayerDetailDialog,
+  CoachTeamReportPlayerDetailSheet,
   type TeamReportEvaluationRow,
-} from "./CoachTeamReportPlayerDetailDialog";
+} from "./CoachTeamReportPlayerDetailSheet";
 import {
   CoachTeamReportPromotionPicker,
   type PromotionSelection,
 } from "./CoachTeamReportPromotionPicker";
 import { CoachTeamReportPlayerAvatar } from "./CoachTeamReportPlayerAvatar";
+import { CoachTeamReportStarRating } from "./CoachTeamReportStarRating";
+import { exportTeamReportEvaluationsExcel } from "./coach-team-report-export";
 import {
   MONTHLY_KEY_RE,
+  TEAM_REPORT_PAGE_SIZE,
   computeDeadlineInfo,
   monthlyPeriodLabel,
   monthlyStatusLabel,
@@ -158,6 +161,8 @@ export function CoachTeamReportPanel({
   const [playerActions, setPlayerActions] = useState<PlayerActionDraft[]>([]);
   const [statusFilter, setStatusFilter] = useState(defaultStatusFilter);
   const [detailPlayerId, setDetailPlayerId] = useState<string | null>(null);
+  const [detailEditMode, setDetailEditMode] = useState(false);
+  const [evaluationsPage, setEvaluationsPage] = useState(1);
   const [promotionPickerOpen, setPromotionPickerOpen] = useState(false);
   const [dispensaSearch, setDispensaSearch] = useState("");
   const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
@@ -505,7 +510,6 @@ export function CoachTeamReportPanel({
   );
 
   const dispensas = playerActions.filter((a) => a.actionType === "dispensa");
-  const monthlyStatus = summary?.monthlyPeriods ?? [];
   const locked = readOnly || status === "enviado";
 
   const filteredDispensaPlayers = useMemo(() => {
@@ -524,6 +528,25 @@ export function CoachTeamReportPanel({
       ? playerEvaluations.find((e) => e.playerId === detailPlayerId) ?? null
       : null;
 
+  const evaluationsPageCount = Math.max(
+    1,
+    Math.ceil(playerEvaluations.length / TEAM_REPORT_PAGE_SIZE),
+  );
+
+  const paginatedEvaluations = useMemo(() => {
+    const start = (evaluationsPage - 1) * TEAM_REPORT_PAGE_SIZE;
+    return playerEvaluations.slice(start, start + TEAM_REPORT_PAGE_SIZE);
+  }, [playerEvaluations, evaluationsPage]);
+
+  useEffect(() => {
+    setEvaluationsPage(1);
+  }, [periodKey, playerEvaluations.length]);
+
+  const openPlayerDetail = (playerId: string, edit = false) => {
+    setDetailEditMode(edit);
+    setDetailPlayerId(playerId);
+  };
+
   if (contextLoading) {
     return (
       <div className="flex justify-center py-16">
@@ -533,7 +556,12 @@ export function CoachTeamReportPanel({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-6">
+    <div
+      className={cn(
+        "mx-auto w-full max-w-[1400px] space-y-6 transition-[padding] duration-200",
+        detailPlayerId != null && "lg:pr-[min(28rem,calc(100vw-2rem))]",
+      )}
+    >
       {showSummary && summary ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Card>
@@ -577,7 +605,7 @@ export function CoachTeamReportPanel({
                 "shrink-0 rounded-none border px-4 py-3 text-sm",
                 deadline.tone === "sent" && "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
                 deadline.tone === "overdue" && "border-red-500/40 bg-red-500/10 text-red-300",
-                deadline.tone === "pending" && "border-primary/40 bg-primary/10 text-primary-foreground",
+                deadline.tone === "pending" && "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
               )}
             >
               <p className="font-semibold">{deadline.label}</p>
@@ -588,7 +616,7 @@ export function CoachTeamReportPanel({
           ) : null}
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-5 grid gap-4 sm:grid-cols-3">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Categoria</Label>
             <p className="text-sm font-medium">{categoryLabel}</p>
@@ -612,55 +640,26 @@ export function CoachTeamReportPanel({
             <Label className="text-xs text-muted-foreground">Status</Label>
             <span
               className={cn(
-                "inline-flex rounded-full border px-3 py-1 text-xs font-medium capitalize",
+                "inline-flex rounded-sm border px-3 py-1 text-xs font-medium capitalize",
                 monthlyStatusTone(currentMonthlyChipStatus),
               )}
             >
               {monthlyStatusLabel(currentMonthlyChipStatus)}
             </span>
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Temporada</Label>
-            <p className="text-sm font-medium tabular-nums">{season}</p>
-          </div>
         </div>
-
-        {monthlyStatus.length > 0 ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {monthlyStatus.map((m) => (
-              <button
-                key={m.periodKey}
-                type="button"
-                className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                  monthlyStatusTone(m.status),
-                  periodKey === m.periodKey && "ring-1 ring-primary/50",
-                )}
-                onClick={() => {
-                  if (m.reportId) setSelectedId(m.reportId);
-                  else {
-                    setSelectedId("");
-                    setPeriodKey(m.periodKey);
-                  }
-                }}
-              >
-                {monthlyPeriodLabel(m.periodKey)}: {monthlyStatusLabel(m.status)}
-              </button>
-            ))}
-          </div>
-        ) : null}
       </div>
 
-      <div className="flex flex-wrap gap-2 border-b border-border/60 pb-1">
+      <div className="flex flex-wrap gap-0 border-b border-border/60">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             type="button"
             className={cn(
-              "rounded-t-lg px-4 py-2 text-sm font-medium transition-colors",
+              "-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
               activeTab === tab.id
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
             onClick={() => setActiveTab(tab.id)}
           >
@@ -670,7 +669,20 @@ export function CoachTeamReportPanel({
       </div>
 
       {activeTab === "visao-geral" ? (
-        <Card>
+        <>
+          <Card className="border-primary/20 bg-muted/10">
+            <CardContent className="grid gap-4 py-5 sm:grid-cols-2 lg:grid-cols-5">
+              <SummaryStat label="Atletas avaliados" value={reportSummary.athletes} />
+              <SummaryStat label="Minutos de jogo" value={reportSummary.matchMinutes} />
+              <SummaryStat label="Minutos de treino" value={reportSummary.trainingMinutes} />
+              <SummaryStat
+                label="Nota média da equipe"
+                value={reportSummary.avgScore != null ? reportSummary.avgScore.toFixed(1) : "—"}
+              />
+              <SummaryStat label="Indicações de subida" value={reportSummary.promotions} />
+            </CardContent>
+          </Card>
+          <Card>
           <CardHeader>
             <CardTitle className="text-base">Visão geral do período</CardTitle>
           </CardHeader>
@@ -704,23 +716,65 @@ export function CoachTeamReportPanel({
                 onChange={(e) => setWeakPoints(e.target.value)}
               />
             </div>
+            {!locked ? (
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button type="button" onClick={() => void handleSave(false)} disabled={saving}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Salvar rascunho
+                </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  className="bg-[#C8102E] hover:bg-[#C8102E]/90"
+                  onClick={() => void handleSave(true)}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                  Enviar ao diretor
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
+        </>
       ) : null}
 
       {activeTab === "avaliacoes" ? (
         <Card>
-          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0 pb-4">
             <div>
               <CardTitle className="text-base">Avaliações dos atletas</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
                 {MONTHLY_KEY_RE.test(periodKey) ? monthlyPeriodLabel(periodKey) : periodKey}
               </p>
             </div>
-            {draftLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
+            <div className="flex flex-wrap items-center gap-2">
+              {draftLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={playerEvaluations.length === 0}
+                onClick={() =>
+                  exportTeamReportEvaluationsExcel(
+                    playerEvaluations,
+                    MONTHLY_KEY_RE.test(periodKey) ? monthlyPeriodLabel(periodKey) : periodKey,
+                    periodKey,
+                  )
+                }
+              >
+                Exportar Excel
+              </Button>
+              {!locked ? (
+                <Button type="button" size="sm" disabled={saving} onClick={() => void handleSave(false)}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Salvar relatório
+                </Button>
+              ) : null}
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto rounded-lg border border-border/60">
+            <div className="overflow-x-auto rounded-md border border-border/60">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -728,9 +782,9 @@ export function CoachTeamReportPanel({
                     <TableHead>Atleta</TableHead>
                     <TableHead className="text-right">Min. jogo</TableHead>
                     <TableHead className="text-right">Min. treino</TableHead>
-                    <TableHead className="w-28">Nota</TableHead>
+                    <TableHead className="w-28 text-center">Nota</TableHead>
                     <TableHead className="min-w-[140px]">Observação</TableHead>
-                    <TableHead className="w-16 text-center">Ações</TableHead>
+                    <TableHead className="w-28 text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -743,7 +797,8 @@ export function CoachTeamReportPanel({
                       </TableCell>
                     </TableRow>
                   ) : (
-                    playerEvaluations.map((row, idx) => {
+                    paginatedEvaluations.map((row, idx) => {
+                      const globalIndex = (evaluationsPage - 1) * TEAM_REPORT_PAGE_SIZE + idx;
                       const ctxPlayer = playersById.get(row.playerId);
                       const photoUrl = ctxPlayer?.photoUrl ?? null;
                       const position = ctxPlayer?.position
@@ -752,13 +807,13 @@ export function CoachTeamReportPanel({
                       return (
                         <TableRow key={row.playerId}>
                           <TableCell className="text-center tabular-nums text-muted-foreground">
-                            {idx + 1}
+                            {globalIndex + 1}
                           </TableCell>
                           <TableCell>
                             <button
                               type="button"
                               className="flex min-w-[180px] items-center gap-3 text-left hover:opacity-90"
-                              onClick={() => setDetailPlayerId(row.playerId)}
+                              onClick={() => openPlayerDetail(row.playerId)}
                             >
                               <CoachTeamReportPlayerAvatar
                                 name={row.name}
@@ -767,12 +822,8 @@ export function CoachTeamReportPanel({
                               />
                               <div className="min-w-0">
                                 <p className="truncate font-medium">{row.name}</p>
-                                {position || row.jerseyNumber != null ? (
-                                  <p className="truncate text-xs text-muted-foreground">
-                                    {[position, row.jerseyNumber != null ? `#${row.jerseyNumber}` : null]
-                                      .filter(Boolean)
-                                      .join(" · ")}
-                                  </p>
+                                {position ? (
+                                  <p className="truncate text-xs text-muted-foreground">{position}</p>
                                 ) : null}
                               </div>
                             </button>
@@ -780,29 +831,56 @@ export function CoachTeamReportPanel({
                           <TableCell className="text-right tabular-nums">{row.gamesMinutes}</TableCell>
                           <TableCell className="text-right tabular-nums">{row.trainingMinutes}</TableCell>
                           <TableCell>
-                            <span
-                              className={cn(
-                                "inline-flex min-w-[3rem] justify-center rounded-none border px-2 py-0.5 text-sm font-semibold tabular-nums",
-                                scoreBadgeTone(row.coachFinalRating),
-                              )}
-                            >
-                              {row.coachFinalRating != null ? row.coachFinalRating.toFixed(1) : "—"}
-                            </span>
+                            <div className="flex flex-col items-center gap-1">
+                              <span
+                                className={cn(
+                                  "inline-flex min-w-[3rem] justify-center rounded-sm border px-2 py-0.5 text-sm font-semibold tabular-nums",
+                                  scoreBadgeTone(row.coachFinalRating),
+                                )}
+                              >
+                                {row.coachFinalRating != null ? row.coachFinalRating.toFixed(1) : "—"}
+                              </span>
+                              <CoachTeamReportStarRating value={row.coachFinalRating} size="sm" />
+                            </div>
                           </TableCell>
                           <TableCell className="max-w-[220px] text-sm text-muted-foreground">
                             {truncateText(row.individualObservation)}
                           </TableCell>
-                          <TableCell className="text-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              aria-label="Ver detalhes"
-                              onClick={() => setDetailPlayerId(row.playerId)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-0.5">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 rounded-full p-0"
+                                aria-label="Ver detalhes"
+                                onClick={() => openPlayerDetail(row.playerId)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              {!locked ? (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 rounded-full p-0"
+                                  aria-label="Editar avaliação"
+                                  onClick={() => openPlayerDetail(row.playerId, true)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              ) : null}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 rounded-full p-0"
+                                aria-label="Mais opções"
+                                onClick={() => openPlayerDetail(row.playerId)}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -811,6 +889,47 @@ export function CoachTeamReportPanel({
                 </TableBody>
               </Table>
             </div>
+            {playerEvaluations.length > TEAM_REPORT_PAGE_SIZE ? (
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Mostrando {(evaluationsPage - 1) * TEAM_REPORT_PAGE_SIZE + 1} a{" "}
+                  {Math.min(evaluationsPage * TEAM_REPORT_PAGE_SIZE, playerEvaluations.length)} de{" "}
+                  {playerEvaluations.length} atletas
+                </p>
+                <div className="flex flex-wrap items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={evaluationsPage <= 1}
+                    onClick={() => setEvaluationsPage((p) => Math.max(1, p - 1))}
+                  >
+                    Anterior
+                  </Button>
+                  {Array.from({ length: evaluationsPageCount }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      type="button"
+                      variant={page === evaluationsPage ? "default" : "outline"}
+                      size="sm"
+                      className="min-w-9"
+                      onClick={() => setEvaluationsPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={evaluationsPage >= evaluationsPageCount}
+                    onClick={() => setEvaluationsPage((p) => Math.min(evaluationsPageCount, p + 1))}
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
@@ -1081,7 +1200,7 @@ export function CoachTeamReportPanel({
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Selecione um relatório na lista ou use os chips de mês acima para abrir um
+                  Selecione um relatório na lista ou altere o mês no cabeçalho para abrir um
                   período.
                 </p>
               )}
@@ -1090,48 +1209,24 @@ export function CoachTeamReportPanel({
         </div>
       ) : null}
 
-      <Card className="border-primary/20 bg-muted/10">
-        <CardContent className="grid gap-4 py-5 sm:grid-cols-2 lg:grid-cols-5">
-          <SummaryStat label="Atletas avaliados" value={reportSummary.athletes} />
-          <SummaryStat label="Minutos de jogo" value={reportSummary.matchMinutes} />
-          <SummaryStat label="Minutos de treino" value={reportSummary.trainingMinutes} />
-          <SummaryStat
-            label="Nota média da equipe"
-            value={reportSummary.avgScore != null ? reportSummary.avgScore.toFixed(1) : "—"}
-          />
-          <SummaryStat label="Indicações de subida" value={reportSummary.promotions} />
-        </CardContent>
-      </Card>
-
-      {!locked ? (
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" onClick={() => void handleSave(false)} disabled={saving}>
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar rascunho
-          </Button>
-          <Button
-            type="button"
-            variant="default"
-            className="bg-[#C8102E] hover:bg-[#C8102E]/90"
-            onClick={() => void handleSave(true)}
-            disabled={saving}
-          >
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-            Enviar ao diretor
-          </Button>
-        </div>
-      ) : null}
-
-      <CoachTeamReportPlayerDetailDialog
+      <CoachTeamReportPlayerDetailSheet
         open={detailPlayerId != null}
-        onOpenChange={(open) => !open && setDetailPlayerId(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDetailPlayerId(null);
+            setDetailEditMode(false);
+          }
+        }}
         player={detailPlayer}
         evaluation={detailEvaluation}
         tenantId={tenantId}
         category={category}
         periodLabel={MONTHLY_KEY_RE.test(periodKey) ? monthlyPeriodLabel(periodKey) : periodKey}
+        season={season}
+        periodEnd={periodEnd}
         readOnly={locked}
         saving={saving}
+        initialEdit={detailEditMode}
         onSave={handlePlayerDetailSave}
       />
 

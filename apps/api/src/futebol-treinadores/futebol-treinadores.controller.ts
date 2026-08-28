@@ -326,6 +326,28 @@ export class FutebolTreinadoresController {
     );
   }
 
+  @Get('team-reports/player-season-stats/:playerId')
+  @TeamReportReadAccess()
+  getTeamReportPlayerSeasonStats(
+    @Param('playerId') playerId: string,
+    @Query('tenantId') tenantId: string,
+    @Query('season') seasonRaw: string,
+    @Query('periodEnd') periodEnd: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+    if (!playerId?.trim()) throw new BadRequestException('playerId é obrigatório');
+    const season = Number(seasonRaw);
+    if (!Number.isFinite(season)) throw new BadRequestException('season inválida');
+    if (!periodEnd?.trim()) throw new BadRequestException('periodEnd é obrigatório');
+    const end = periodEnd.trim().slice(0, 10);
+    return this.playerEvaluationService.getStatsForDateRange(
+      tenantId.trim(),
+      playerId.trim(),
+      `${season}-01-01`,
+      end,
+    );
+  }
+
   @Get('team-reports/promotion-candidates')
   @TeamReportReadAccess()
   getPromotionCandidates(

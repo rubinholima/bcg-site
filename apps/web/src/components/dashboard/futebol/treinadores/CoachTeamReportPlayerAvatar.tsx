@@ -21,9 +21,9 @@ const SIZE_CLASS = {
 export function CoachTeamReportPlayerAvatar({ name, photoUrl, size = "md", className }: Props) {
   const src = photoUrl ? getPublicImageUrl(photoUrl) : null;
   return (
-    <Avatar className={cn(SIZE_CLASS[size], "rounded-none", className)}>
+    <Avatar className={cn(SIZE_CLASS[size], "rounded-md", className)}>
       {src ? <AvatarImage src={src} alt={name} /> : null}
-      <AvatarFallback className="rounded-none bg-muted font-semibold text-muted-foreground">
+      <AvatarFallback className="rounded-md bg-muted font-semibold text-muted-foreground">
         {initialsFromName(name)}
       </AvatarFallback>
     </Avatar>

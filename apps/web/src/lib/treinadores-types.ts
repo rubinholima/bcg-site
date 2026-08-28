@@ -405,6 +405,12 @@ export type CoachTeamReportPlayerHistoryItem = {
   date: string | null;
 };
 
+export type CoachTeamReportPlayerSeasonStats = CoachPlayerEvaluationStats & {
+  yellowCards: number;
+  redCards: number;
+  trainingSessionsCount: number;
+};
+
 export type CoachTeamMonthlyReportStatus = "pendente" | "rascunho" | "enviado" | "atrasado";
 
 export type CoachTeamReport = {

@@ -114,13 +114,32 @@ export class CoachPlayerEvaluationService {
     if (!isValidPlayerEvaluationPeriodKey(periodKey)) {
       throw new BadRequestException('Período de avaliação inválido');
     }
+    const cumulativeRange = resolvePlayerEvaluationCumulativeRange(season, periodKey);
+    const result = await this.getStatsForDateRange(
+      tenantId,
+      playerId,
+      cumulativeRange.start,
+      cumulativeRange.end,
+    );
+    return {
+      ...cumulativeRange,
+      playerCategory: result.playerCategory,
+      stats: result.stats,
+    };
+  }
+
+  async getStatsForDateRange(
+    tenantId: string,
+    playerId: string,
+    from: string,
+    to: string,
+  ) {
     const player = await this.prisma.player.findFirst({
       where: { id: playerId, tenantId },
       select: { id: true, category: true },
     });
     if (!player) throw new NotFoundException('Atleta não encontrado');
 
-    const cumulativeRange = resolvePlayerEvaluationCumulativeRange(season, periodKey);
     const categorySortOrder = await this.loadCategorySortOrder();
 
     const [fmfStats, travelsRaw, coachMatchReports, trainingSessions] = await Promise.all([
@@ -130,8 +149,8 @@ export class CoachPlayerEvaluationService {
           match: {
             tenantId,
             matchDate: {
-              gte: new Date(`${cumulativeRange.start}T00:00:00-03:00`),
-              lte: new Date(`${cumulativeRange.end}T23:59:59-03:00`),
+              gte: new Date(`${from}T00:00:00-03:00`),
+              lte: new Date(`${to}T23:59:59-03:00`),
             },
           },
         },
@@ -141,6 +160,8 @@ export class CoachPlayerEvaluationService {
           starter: true,
           minutesPlayed: true,
           goals: true,
+          yellowCards: true,
+          redCards: true,
           match: { select: { id: true, matchDate: true, category: true } },
         },
       }),
@@ -149,8 +170,8 @@ export class CoachPlayerEvaluationService {
           tenantId,
           status: { notIn: ['rascunho', 'cancelado'] },
           matchDate: {
-            gte: new Date(`${cumulativeRange.start}T00:00:00-03:00`),
-            lte: new Date(`${cumulativeRange.end}T23:59:59-03:00`),
+            gte: new Date(`${from}T00:00:00-03:00`),
+            lte: new Date(`${to}T23:59:59-03:00`),
           },
           participants: { some: { playerId, personType: 'player' } },
         },
@@ -202,7 +223,7 @@ export class CoachPlayerEvaluationService {
         where: {
           tenantId,
           status: 'finalizado',
-          sessionDate: { gte: cumulativeRange.start, lte: cumulativeRange.end },
+          sessionDate: { gte: from, lte: to },
           playerEntries: { some: { playerId } },
         },
         select: {
@@ -219,12 +240,22 @@ export class CoachPlayerEvaluationService {
       }),
     ]);
 
+    const yellowCards = fmfStats.reduce((sum, row) => sum + (row.yellowCards ?? 0), 0);
+    const redCards = fmfStats.reduce((sum, row) => sum + (row.redCards ?? 0), 0);
+    const trainingSessionsCount = trainingSessions.filter(
+      (session) =>
+        session.status === 'finalizado' &&
+        session.sessionDate >= from &&
+        session.sessionDate <= to &&
+        session.playerEntries[0]?.available,
+    ).length;
+
     const stats = buildIndividualPlayerPeriodStats({
       tenantId,
       playerId,
       playerCategory: player.category,
-      from: cumulativeRange.start,
-      to: cumulativeRange.end,
+      from,
+      to,
       categorySortOrder,
       fmfStats: fmfStats.map((row) => ({
         matchId: row.match.id,
@@ -264,9 +295,13 @@ export class CoachPlayerEvaluationService {
     });
 
     return {
-      ...cumulativeRange,
       playerCategory: player.category,
-      stats,
+      stats: {
+        ...stats,
+        yellowCards,
+        redCards,
+        trainingSessionsCount,
+      },
     };
   }
 

@@ -116,6 +116,33 @@ export function computeDeadlineInfo(periodEnd: string, reportStatus: string) {
   };
 }
 
+export const TEAM_REPORT_PAGE_SIZE = 8;
+
+export function historyStatusLabel(status: string): string {
+  if (status === "enviado") return "Concluído";
+  if (status === "rascunho") return "Rascunho";
+  return status;
+}
+
+export function historyStatusTone(status: string): string {
+  if (status === "enviado") return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
+  if (status === "rascunho") return "border-amber-500/40 bg-amber-500/10 text-amber-200";
+  return "border-border/60 bg-muted/30 text-muted-foreground";
+}
+
+export function ratingToFilledStars(value: number | null | undefined): number {
+  if (value == null || !Number.isFinite(value)) return 0;
+  return Math.min(5, Math.max(0, Math.round(value)));
+}
+
+export function parseStrengthBullets(text: string | null | undefined): string[] {
+  if (!text?.trim()) return [];
+  return text
+    .split(/\n+/)
+    .map((line) => line.replace(/^[\s\-•*]+/, "").trim())
+    .filter(Boolean);
+}
+
 export function initialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
