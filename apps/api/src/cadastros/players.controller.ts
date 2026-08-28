@@ -23,6 +23,7 @@ import { PlayersService } from './players.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import { FmfMatchReportService } from '../fmf-scraper/fmf-match-report.service';
+import { PersonalDisciplineHistoryService } from '../futebol-relatorios/personal-discipline-history.service';
 
 @Controller('players')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -31,6 +32,7 @@ export class PlayersController {
     private readonly service: PlayersService,
     private readonly tenantAccess: TenantAccessService,
     private readonly fmfMatchReports: FmfMatchReportService,
+    private readonly disciplineHistory: PersonalDisciplineHistoryService,
   ) {}
 
   private async allowedTenants(req: Request & { user: CognitoJwtPayload }) {
@@ -150,6 +152,24 @@ export class PlayersController {
     const allowed = await this.allowedTenants(req);
     await this.service.findOne(id, allowed);
     return this.fmfMatchReports.getPlayerStats(id);
+  }
+
+  @Get(':id/discipline-history')
+  async findDisciplineHistory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Query('category') category?: string,
+    @Query('season') season?: string,
+    @Query('competition') competition?: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    await this.service.findOne(id, allowed);
+    const seasonNum = season?.trim() ? Number(season.trim()) : undefined;
+    return this.disciplineHistory.getPlayerHistory(id, {
+      category: category?.trim() || null,
+      season: Number.isFinite(seasonNum) ? seasonNum : null,
+      competition: competition?.trim() || null,
+    });
   }
 
   /** PDF de contrato jurídico — autenticado (legal/* não é público no CDN). */

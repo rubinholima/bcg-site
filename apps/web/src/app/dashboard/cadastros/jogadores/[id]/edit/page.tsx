@@ -51,6 +51,7 @@ import { PlayerPhysiologySection } from "@/components/dashboard/fisiologia/Playe
 import { PlayerSocialPedagogySection } from "@/components/dashboard/assistencia-social/PlayerSocialPedagogySection";
 import { PlayerFmfStatsSection } from "@/components/dashboard/players/PlayerFmfStatsSection";
 import { PlayerSubidaHistorySection } from "@/components/dashboard/players/PlayerSubidaHistorySection";
+import { PlayerDisciplineHistorySection } from "@/components/dashboard/discipline/PersonalDisciplineHistorySection";
 import type { PsychologicalAssessmentEntry } from "@/components/dashboard/player-module-types";
 import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
 import {
@@ -960,6 +961,7 @@ export default function EditJogadorPage() {
 
       {activeTab === "estatisticas" && (
         <div className="space-y-6">
+          <PlayerDisciplineHistorySection playerId={player.id} />
           <PlayerSubidaHistorySection playerId={player.id} />
           <PlayerFmfStatsSection playerId={player.id} />
         </div>

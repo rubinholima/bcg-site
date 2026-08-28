@@ -21,6 +21,7 @@ import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName"
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { CONTRACT_TYPES } from "@/lib/staff-roles";
+import { StaffDisciplineHistorySection } from "@/components/dashboard/discipline/PersonalDisciplineHistorySection";
 
 interface Tenant {
   id: string;
@@ -506,6 +507,8 @@ export default function EditComissaoPage() {
             </div>
           </CardContent>
         </Card>
+
+        <StaffDisciplineHistorySection staffId={id} />
 
         <div className="flex gap-4">
           <Button type="submit" disabled={saving}>
