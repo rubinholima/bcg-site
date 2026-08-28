@@ -246,6 +246,10 @@ export function buildCategoryResolutionContext(
   };
 }
 
+/**
+ * Categoria inferior (mais jovem) = sortOrder MAIOR no cadastro FixtureCategory
+ * (principal=0 … sub14=5 … sub9=8).
+ */
 export function isLowerCategory(
   playerCategory: string | null | undefined,
   coachCategory: string | null | undefined,
@@ -257,7 +261,7 @@ export function isLowerCategory(
   const playerOrder = sortOrderMap.get(player);
   const coachOrder = sortOrderMap.get(coach);
   if (playerOrder == null || coachOrder == null) return false;
-  return playerOrder < coachOrder;
+  return playerOrder > coachOrder;
 }
 
 /** Compara categorias após resolver aliases (label/slug) para FixtureCategory. */
@@ -272,7 +276,7 @@ export function isLowerCategoryResolved(
   const playerOrder = ctx.sortOrderMap.get(player);
   const coachOrder = ctx.sortOrderMap.get(coach);
   if (playerOrder == null || coachOrder == null) return false;
-  return playerOrder < coachOrder;
+  return playerOrder > coachOrder;
 }
 
 export function buildCategorySortOrderMap(

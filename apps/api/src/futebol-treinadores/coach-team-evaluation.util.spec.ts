@@ -102,11 +102,11 @@ describe('coach-team-evaluation.util — mensal', () => {
     expect(rows.find((r) => r.periodKey === '2026-10')).toBeUndefined();
   });
 
-  it('isLowerCategory via sortOrder', () => {
+  it('isLowerCategory via sortOrder (cadastro oficial: jovem = sortOrder maior)', () => {
     const map = buildCategorySortOrderMap([
-      { value: 'sub14', sortOrder: 1 },
-      { value: 'sub17', sortOrder: 2 },
-      { value: 'sub20', sortOrder: 3 },
+      { value: 'sub20', sortOrder: 2 },
+      { value: 'sub17', sortOrder: 3 },
+      { value: 'sub14', sortOrder: 5 },
     ]);
     expect(isLowerCategory('sub14', 'sub17', map)).toBe(true);
     expect(isLowerCategory('sub17', 'sub17', map)).toBe(false);
@@ -115,11 +115,13 @@ describe('coach-team-evaluation.util — mensal', () => {
 
   it('isLowerCategoryResolved — label e slug', () => {
     const ctx = buildCategoryResolutionContext([
-      { value: 'sub14', sortOrder: 10, labelPT: 'Sub-14', labelEN: 'U-14' },
-      { value: 'sub17', sortOrder: 20, labelPT: 'Sub-17', labelEN: 'U-17' },
+      { value: 'sub14', sortOrder: 5, labelPT: 'Sub-14', labelEN: 'U-14' },
+      { value: 'sub17', sortOrder: 3, labelPT: 'Sub-17', labelEN: 'U-17' },
+      { value: 'sub20', sortOrder: 2, labelPT: 'Sub-20', labelEN: 'U-20' },
     ]);
     expect(isLowerCategoryResolved('Sub-14', 'sub17', ctx)).toBe(true);
     expect(isLowerCategoryResolved('sub14', 'Sub-17', ctx)).toBe(true);
+    expect(isLowerCategoryResolved('sub20', 'sub17', ctx)).toBe(false);
     expect(isLowerCategoryResolved('sub17', 'sub17', ctx)).toBe(false);
     expect(isLowerCategoryResolved('unknown', 'sub17', ctx)).toBe(false);
   });
