@@ -190,4 +190,12 @@ export class FmfScraperController {
   reconcileMatchReports(@Body() body: { tenantId: string }) {
     return this.matchReports.reconcile(body.tenantId);
   }
+
+  @Get('match-reports/reconciliation')
+  getMatchReconciliation(
+    @Query('tenantId') tenantId: string,
+    @Query('matchId') matchId: string,
+  ) {
+    return this.matchReports.getMatchReconciliation(tenantId, matchId);
+  }
 }

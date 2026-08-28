@@ -22,6 +22,17 @@ import {
 } from './fmf-player-link.util';
 import { syncFmfMatchIncidents } from '../futebol-jogos/football-match-records.sync';
 import { FmfScraperService } from './fmf-scraper.service';
+import { syncMatchOfficialEvents, buildOfficialEventDrafts } from './match-official-events.sync';
+import { buildPlayerLinkPool } from './match-official-event.identity';
+import {
+  buildIntegritySummary,
+  countPersistedEvents,
+  resolveIntegrityStatus,
+} from './match-integrity.util';
+import { projectPlayerStatsFromOfficialFacts } from './fmf-player-stat.projection';
+import { buildShadowComparison } from './match-shadow-comparison.util';
+import { normalizeParsedFmfReport } from './fmf-parsed-normalize.util';
+import { parseStaffCardsForMatch } from '../futebol-relatorios/fmf-staff-cards.util';
 
 export interface FmfMatchReportCandidate {
   externalMatchId: string;
@@ -915,7 +926,211 @@ export class FmfMatchReportService {
       occurrences: parsed.occurrences,
     });
 
+    const staffPool = await this.prisma.technicalStaff.findMany({
+      where: { tenantId: tenant.id },
+      select: { id: true, name: true, role: true, licenseNumber: true },
+    });
+
+    await syncMatchOfficialEvents(this.prisma, {
+      tenantId: tenant.id,
+      matchId: match.id,
+      parsed,
+      ourTeamSide: ourSide,
+      players,
+      staff: staffPool.map((s) => ({
+        id: s.id,
+        name: s.name,
+        role: s.role,
+        licenseNumber: s.licenseNumber,
+      })),
+      parseSucceeded: true,
+    });
+
+    await this.refreshMatchIntegrity(match.id, parsed, ourSide, linked.length, unresolved.length);
+
     return { linked: linked.length, unresolved: unresolved.length };
+  }
+
+  async getMatchReconciliation(tenantId: string, matchId: string) {
+    const report = await this.prisma.fmfMatchReport.findFirst({
+      where: { id: matchId, tenantId },
+      include: {
+        playerStats: true,
+        matchOfficialEvents: true,
+      },
+    });
+    if (!report) throw new NotFoundException('Súmula não encontrada');
+
+    const tenant = await this.getTenant(tenantId);
+    const ourSide: 'home' | 'away' = isFmfTeamMatch(report.homeTeam, tenant.name, tenant.aliases)
+      ? 'home'
+      : 'away';
+
+    const parsed = normalizeParsedFmfReport(report.rawParsed);
+    const limitations: string[] = [];
+    if (!parsed) limitations.push('rawParsed indisponível');
+    else if (parsed.staffRoster.length === 0) {
+      limitations.push('staffRoster ausente no snapshot — reimportar PDF para correlacionar comissão');
+    }
+
+    const staffPool = await this.prisma.technicalStaff.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, role: true, licenseNumber: true },
+    });
+
+    const players = await this.prisma.player.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, cbfRegistration: true, registrationProfile: true },
+    });
+    const playerPool = buildPlayerLinkPool(players);
+
+    let shadow: ReturnType<typeof buildShadowComparison> | null = null;
+    if (parsed) {
+      const drafts = buildOfficialEventDrafts({
+        parsed,
+        ourTeamSide: ourSide,
+        playerPool,
+        staffPool: staffPool.map((s) => ({
+          id: s.id,
+          name: s.name,
+          role: s.role,
+          licenseNumber: s.licenseNumber,
+        })),
+      });
+      const playerIdByJersey = new Map<string, string | null>();
+      for (const d of drafts) {
+        if (d.sourceJerseyNumber != null && d.sourceTeamSide) {
+          playerIdByJersey.set(`${d.sourceTeamSide}:${d.sourceJerseyNumber}`, d.playerId ?? null);
+        }
+      }
+      const projected = projectPlayerStatsFromOfficialFacts({
+        roster: parsed.roster,
+        ourTeamSide: ourSide,
+        totalMinutes: parsed.totalMinutes,
+        firstHalfMinutes: parsed.firstHalfMinutes ?? 45,
+        events: drafts,
+        playerIdByJersey,
+      });
+      const phase1Staff = parseStaffCardsForMatch(
+        {
+          rawParsed: report.rawParsed,
+          occurrencesText: report.occurrencesText,
+          clubFilter: {
+            homeTeam: report.homeTeam,
+            awayTeam: report.awayTeam,
+            clubName: tenant.name,
+            aliases: tenant.aliases,
+          },
+        },
+        staffPool.map((s) => ({
+          id: s.id,
+          name: s.name,
+          role: s.role,
+          licenseNumber: s.licenseNumber,
+        })),
+      );
+      shadow = buildShadowComparison({
+        projectedStats: projected,
+        persistedStats: report.playerStats.map((s) => ({
+          cbfRegistration: s.cbfRegistration,
+          jerseyNumber: s.jerseyNumber,
+          starter: s.starter,
+          played: s.played,
+          minutesPlayed: s.minutesPlayed,
+          goals: s.goals,
+          ownGoals: s.ownGoals,
+          penaltyGoals: s.penaltyGoals,
+          yellowCards: s.yellowCards,
+          redCards: s.redCards,
+        })),
+        eventStaffYellow: report.matchOfficialEvents.filter((e) => e.factType === 'STAFF_YELLOW_CARD')
+          .length,
+        eventStaffRed: report.matchOfficialEvents.filter((e) => e.factType === 'STAFF_RED_CARD').length,
+        phase1StaffYellow: phase1Staff.reduce((sum, row) => sum + row.yellowCards, 0),
+        phase1StaffRed: phase1Staff.reduce((sum, row) => sum + row.redCards, 0),
+      });
+    }
+
+    const persistedCounts = countPersistedEvents(report.matchOfficialEvents);
+
+    return {
+      matchId: report.id,
+      externalMatchId: report.externalMatchId,
+      integrityStatus: report.integrityStatus,
+      integrityCheckedAt: report.integrityCheckedAt?.toISOString() ?? null,
+      integritySummary: report.integritySummary,
+      source: parsed
+        ? {
+            playerRoster: parsed.roster.filter((r) => r.teamSide === ourSide).length,
+            staffRoster: parsed.staffRoster.filter((r) => r.teamSide === ourSide).length,
+            playerGoals: parsed.playerGoalEvents.filter((e) => e.teamSide === ourSide).length,
+            playerYellow: parsed.playerCardEvents.filter(
+              (e) => e.teamSide === ourSide && e.kind === 'yellow',
+            ).length,
+            playerRed: parsed.playerCardEvents.filter(
+              (e) => e.teamSide === ourSide && e.kind === 'red',
+            ).length,
+            substitutions: parsed.substitutionEvents.filter((e) => e.teamSide === ourSide).length,
+          }
+        : null,
+      persisted: {
+        events: report.matchOfficialEvents.length,
+        playerStats: report.playerStats.length,
+        ...persistedCounts,
+      },
+      events: report.matchOfficialEvents.map((e) => ({
+        id: e.id,
+        factType: e.factType,
+        resolutionStatus: e.resolutionStatus,
+        resolutionReason: e.resolutionReason,
+        playerId: e.playerId,
+        technicalStaffId: e.technicalStaffId,
+        minute: e.minute,
+        period: e.period,
+        sourceName: e.sourceName,
+        sourceJerseyNumber: e.sourceJerseyNumber,
+        sourceRoleLabel: e.sourceRoleLabel,
+        externalKey: e.externalKey,
+        sourceExcerpt: e.sourceExcerpt?.slice(0, 160) ?? null,
+      })),
+      shadowComparison: shadow,
+      limitations,
+    };
+  }
+
+  private async refreshMatchIntegrity(
+    matchId: string,
+    parsed: ParsedFmfMatchReport,
+    ourTeamSide: 'home' | 'away',
+    linkedCount: number,
+    unresolvedRosterCount: number,
+  ): Promise<void> {
+    const events = await this.prisma.matchOfficialEvent.findMany({
+      where: { fmfMatchReportId: matchId },
+      select: { factType: true, resolutionStatus: true },
+    });
+    const persisted = countPersistedEvents(events);
+    const limitations: string[] = [];
+    if (parsed.staffRoster.length === 0) {
+      limitations.push('staffRoster não extraído deste snapshot');
+    }
+    const summary = buildIntegritySummary({
+      parsed,
+      ourTeamSide,
+      persisted,
+      linkedPlayerCount: linkedCount,
+      unresolvedPlayerRosterCount: unresolvedRosterCount,
+      limitations: limitations.length ? limitations : undefined,
+    });
+    const status = resolveIntegrityStatus(summary);
+    await this.prisma.fmfMatchReport.update({
+      where: { id: matchId },
+      data: {
+        integrityStatus: status,
+        integrityCheckedAt: new Date(),
+        integritySummary: summary as unknown as Prisma.InputJsonValue,
+      },
+    });
   }
 
   private matchData(
