@@ -7,6 +7,7 @@ import {
   reportKindLabel,
   type FisiologiaReport,
 } from "@/lib/fisiologia-types";
+import { formatDurationMinutes } from "@/lib/physio-transition-labels";
 
 const SKY = {
   primary: "#0284c7",
@@ -29,6 +30,15 @@ function fmtNum(value: number | null | undefined, suffix = ""): string {
 }
 
 function periodText(report: FisiologiaReport): string {
+  if (report.kind === "transicoes" && report.filters.month) {
+    const [y, m] = report.filters.month.split("-");
+    const monthNames = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+    ];
+    const mi = Number(m) - 1;
+    return mi >= 0 && mi < 12 ? `${monthNames[mi]} ${y}` : report.filters.month;
+  }
   const { from, to } = report.filters;
   if (from && to) {
     return `${formatDateDayMonYear(new Date(`${from}T12:00:00`))} a ${formatDateDayMonYear(new Date(`${to}T12:00:00`))}`;
@@ -39,6 +49,17 @@ function periodText(report: FisiologiaReport): string {
 }
 
 function summaryCards(report: FisiologiaReport): string {
+  if (report.kind === "transicoes" && report.transitionReport) {
+    const s = report.summary;
+    return `<div class="summary-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="summary-card"><span class="summary-label">Entraram no mês</span><strong>${s.transitionEnteredInMonth ?? 0}</strong></div>
+      <div class="summary-card"><span class="summary-label">Com atividade</span><strong>${s.transitionActivityInMonth ?? 0}</strong></div>
+      <div class="summary-card"><span class="summary-label">Liberados</span><strong>${s.transitionReleasedInMonth ?? 0}</strong></div>
+      <div class="summary-card"><span class="summary-label">Ativos fim do mês</span><strong>${s.transitionActiveAtMonthEnd ?? 0}</strong></div>
+      <div class="summary-card"><span class="summary-label">Sessões no mês</span><strong>${s.transitionSessionsInMonth ?? 0}</strong></div>
+      <div class="summary-card"><span class="summary-label">Tempo no mês</span><strong>${esc(formatDurationMinutes(s.transitionDurationMinutesInMonth ?? 0))}</strong></div>
+    </div>`;
+  }
   const s = report.summary;
   return `<div class="summary-grid">
     <div class="summary-card"><span class="summary-label">Avaliações</span><strong>${s.assessmentCount}</strong></div>
@@ -46,6 +67,40 @@ function summaryCards(report: FisiologiaReport): string {
     <div class="summary-card"><span class="summary-label">Sessões carga</span><strong>${s.loadSessionCount}</strong></div>
     <div class="summary-card"><span class="summary-label">Registros GPS</span><strong>${s.loadEntryCount}</strong></div>
   </div>`;
+}
+
+function transitionReportTable(report: FisiologiaReport): string {
+  const tr = report.transitionReport;
+  if (!tr || tr.programs.length === 0) return `<p class="muted">Nenhuma transição no mês.</p>`;
+  const body = tr.programs
+    .map(
+      (p) => `<tr>
+        <td>${esc(p.playerName)}</td>
+        <td>${esc(p.originSummary)}</td>
+        <td>${esc(formatDateDayMonYear(new Date(p.startedAt)))}</td>
+        <td>${p.completedAt ? esc(formatDateDayMonYear(new Date(p.completedAt))) : "—"}</td>
+        <td class="num">${p.sessionsInMonth}</td>
+        <td class="num">${esc(formatDurationMinutes(p.durationMinutesInMonth))}</td>
+        <td>${esc(
+          [
+            p.enteredInMonth ? "Entrou" : null,
+            p.releasedInMonth ? "Liberado" : null,
+            p.activeAtMonthEnd ? "Ativo fim mês" : null,
+          ]
+            .filter(Boolean)
+            .join(" · ") || "Atividade",
+        )}</td>
+        <td class="num">${p.totalProgramSessions} total</td>
+      </tr>`,
+    )
+    .join("");
+  return `<table class="data">
+    <thead><tr>
+      <th>Atleta</th><th>Origem</th><th>Início</th><th>Conclusão</th>
+      <th>Sessões (mês)</th><th>Tempo (mês)</th><th>Status no mês</th><th>Programa</th>
+    </tr></thead>
+    <tbody>${body}</tbody>
+  </table>`;
 }
 
 function assessmentsTable(rows: FisiologiaReport["assessments"]): string {
@@ -140,8 +195,14 @@ export function buildFisiologiaPrintHtml(
   const showHydration = report.kind === "geral" || report.kind === "hidratacao";
   const showLoad =
     report.kind === "geral" || report.kind === "carga_treino" || report.kind === "carga_jogo";
+  const showTransitions = report.kind === "transicoes";
 
   const sections: string[] = [];
+  if (showTransitions) {
+    sections.push(
+      `<section class="section"><h2>Transições — atividade mensal</h2>${transitionReportTable(report)}</section>`,
+    );
+  }
   if (showAssessments) {
     sections.push(`<section class="section"><h2>Avaliações físicas</h2>${assessmentsTable(report.assessments)}</section>`);
   }

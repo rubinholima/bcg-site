@@ -13,6 +13,8 @@ import {
   assessmentTypeLabel,
   type PlayerPhysiologyContext,
 } from "@/lib/fisiologia-types";
+import type { PlayerTransitionProgramHistory } from "@/lib/fisiologia-transition-types";
+import { formatDurationMinutes, transitionWorkTypeLabel } from "@/lib/physio-transition-labels";
 
 interface Props {
   playerId: string;
@@ -22,16 +24,22 @@ interface Props {
 
 export function PlayerPhysiologySection({ playerId, playerName, playerCategory }: Props) {
   const [context, setContext] = useState<PlayerPhysiologyContext | null>(null);
+  const [transitions, setTransitions] = useState<PlayerTransitionProgramHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!playerId) return;
     setLoading(true);
     try {
-      const { data } = await api.get<PlayerPhysiologyContext>(`/fisiologia/players/${playerId}/context`);
-      setContext(data);
+      const [ctxRes, trRes] = await Promise.all([
+        api.get<PlayerPhysiologyContext>(`/fisiologia/players/${playerId}/context`),
+        api.get<PlayerTransitionProgramHistory[]>(`/fisiologia/players/${playerId}/transition-programs`),
+      ]);
+      setContext(ctxRes.data);
+      setTransitions(Array.isArray(trRes.data) ? trRes.data : []);
     } catch {
       setContext(null);
+      setTransitions([]);
     } finally {
       setLoading(false);
     }
@@ -72,6 +80,57 @@ export function PlayerPhysiologySection({ playerId, playerName, playerCategory }
           </Link>
         </Button>
       </div>
+
+      {transitions.length > 0 ? (
+        <Card className="rounded-2xl border-border/80">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Transição — retorno ao treino</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            {transitions.map((program) => (
+              <div key={program.id} className="rounded-lg border border-border/60 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-medium">
+                    {program.status === "active"
+                      ? "Em transição"
+                      : program.status === "completed"
+                        ? "Transição concluída"
+                        : "Transição cancelada"}
+                  </p>
+                  <Button asChild variant="outline" size="sm" className="min-h-[44px]">
+                    <Link href={`/dashboard/futebol/fisiologia/transicoes/${program.id}`}>
+                      Abrir programa
+                    </Link>
+                  </Button>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Fisio encerrada {program.originSession.endedAt ? formatDateDayMonYear(program.originSession.endedAt) : "—"}
+                  {" · "}
+                  Início transição {formatDateDayMonYear(program.startedAt)}
+                  {program.completedAt
+                    ? ` · Conclusão ${formatDateDayMonYear(program.completedAt)}`
+                    : ""}
+                </p>
+                <p className="mt-1 text-muted-foreground">Origem: {program.originSummary}</p>
+                {program.entries.length > 0 ? (
+                  <ul className="mt-2 space-y-1 border-t border-border/40 pt-2">
+                    {[...program.entries].reverse().map((e) => (
+                      <li key={e.id} className="text-xs text-muted-foreground">
+                        {formatDateDayMonYear(e.sessionDate)} ·{" "}
+                        {transitionWorkTypeLabel(e.workType, e.workTypeLabel)} ·{" "}
+                        {formatDurationMinutes(e.durationMinutes)}
+                        {e.needsNewSession ? " · continua" : " · alta Performance"}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-xs text-muted-foreground">Aguardando sessões de transição.</p>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="rounded-2xl border-border/80">
         <CardHeader className="pb-2">

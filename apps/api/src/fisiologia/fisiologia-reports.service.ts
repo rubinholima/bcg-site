@@ -6,6 +6,8 @@ import {
   HYDRATION_STATUS_LABELS,
   protocolLabel,
 } from './fisiologia-calculations.util';
+import { FisiologiaTransitionService } from './fisiologia-transition.service';
+import { monthDateRange } from './fisiologia-transition.util';
 
 export const FISIOLOGIA_REPORT_KINDS = [
   'geral',
@@ -13,13 +15,17 @@ export const FISIOLOGIA_REPORT_KINDS = [
   'hidratacao',
   'carga_treino',
   'carga_jogo',
+  'transicoes',
 ] as const;
 
 export type FisiologiaReportKind = (typeof FISIOLOGIA_REPORT_KINDS)[number];
 
 @Injectable()
 export class FisiologiaReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly transitions: FisiologiaTransitionService,
+  ) {}
 
   async buildReport(input: {
     tenantId: string;
@@ -28,7 +34,11 @@ export class FisiologiaReportsService {
     playerId?: string;
     from?: string;
     to?: string;
+    month?: string;
   }) {
+    if (input.kind === 'transicoes') {
+      return this.buildTransitionReport(input);
+    }
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: input.tenantId },
       select: { id: true, name: true, slug: true },
@@ -193,6 +203,65 @@ export class FisiologiaReportsService {
           sprintDistanceM: e.sprintDistanceM,
         })),
       })),
+    };
+  }
+
+  private async buildTransitionReport(input: {
+    tenantId: string;
+    category?: string;
+    playerId?: string;
+    from?: string;
+    to?: string;
+    month?: string;
+  }) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: input.tenantId },
+      select: { id: true, name: true, slug: true },
+    });
+    if (!tenant) return null;
+
+    const monthKey =
+      input.month?.trim() ||
+      (input.from && /^\d{4}-\d{2}-\d{2}$/.test(input.from) ? input.from.slice(0, 7) : null);
+    if (!monthKey) return null;
+
+    const range = monthDateRange(monthKey);
+    if (!range) return null;
+
+    const transitionReport = await this.transitions.buildMonthlyReport({
+      tenantId: input.tenantId,
+      month: monthKey,
+      category: input.category,
+      playerId: input.playerId,
+    });
+    if (!transitionReport) return null;
+
+    return {
+      tenant,
+      kind: 'transicoes' as const,
+      filters: {
+        category: input.category ?? null,
+        playerId: input.playerId ?? null,
+        from: range.from,
+        to: range.to,
+        month: range.monthKey,
+      },
+      summary: {
+        assessmentCount: 0,
+        hydrationCount: 0,
+        loadSessionCount: 0,
+        loadEntryCount: 0,
+        transitionEnteredInMonth: transitionReport.summary.enteredInMonth,
+        transitionActivityInMonth: transitionReport.summary.withActivityInMonth,
+        transitionReleasedInMonth: transitionReport.summary.releasedInMonth,
+        transitionActiveAtMonthEnd: transitionReport.summary.activeAtMonthEnd,
+        transitionSessionsInMonth: transitionReport.summary.sessionsInMonth,
+        transitionDurationMinutesInMonth: transitionReport.summary.durationMinutesInMonth,
+      },
+      assessments: [],
+      hydrations: [],
+      loadSessions: [],
+      transitionReport,
     };
   }
 }

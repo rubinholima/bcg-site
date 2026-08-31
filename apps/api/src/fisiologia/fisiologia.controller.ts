@@ -245,6 +245,30 @@ export class FisiologiaController {
     return this.service.deleteLoadSession(id, await this.allowedTenants(req));
   }
 
+  @Get('players/:playerId/transition-programs')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_fisiologia')
+  async listPlayerTransitionPrograms(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('playerId') playerId: string,
+  ) {
+    return this.transitions.listPlayerPrograms(playerId, await this.allowedTenants(req));
+  }
+
+  @Get('transition-programs/summary')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_fisiologia')
+  async transitionProgramsSummary(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+  ) {
+    return this.transitions.getOperationalSummary(
+      { tenantId, category },
+      await this.allowedTenants(req),
+    );
+  }
+
   @Get('transition-programs')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('futebol_fisiologia')
@@ -296,6 +320,7 @@ export class FisiologiaController {
     @Query('playerId') playerId?: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
+    @Query('month') month?: string,
   ) {
     const reportKind = FISIOLOGIA_REPORT_KINDS.includes(kind as (typeof FISIOLOGIA_REPORT_KINDS)[number])
       ? (kind as (typeof FISIOLOGIA_REPORT_KINDS)[number])
@@ -307,6 +332,7 @@ export class FisiologiaController {
       playerId,
       from,
       to,
+      month,
     });
   }
 }

@@ -36,6 +36,7 @@ export const FISIOLOGIA_REPORT_KINDS = [
   { value: 'hidratacao', label: 'Hidratação' },
   { value: 'carga_treino', label: 'Carga — treinos' },
   { value: 'carga_jogo', label: 'Carga — jogos' },
+  { value: 'transicoes', label: 'Transições mensais' },
 ] as const;
 
 export type SkinfoldSites = {
@@ -190,12 +191,19 @@ export type FisiologiaReport = {
     playerId: string | null;
     from: string | null;
     to: string | null;
+    month?: string | null;
   };
   summary: {
     assessmentCount: number;
     hydrationCount: number;
     loadSessionCount: number;
     loadEntryCount: number;
+    transitionEnteredInMonth?: number;
+    transitionActivityInMonth?: number;
+    transitionReleasedInMonth?: number;
+    transitionActiveAtMonthEnd?: number;
+    transitionSessionsInMonth?: number;
+    transitionDurationMinutesInMonth?: number;
   };
   assessments: Array<{
     id: string;
@@ -250,6 +258,40 @@ export type FisiologiaReport = {
       lowIntensityDistanceM: number | null;
       sprintDistanceM: number | null;
     }>;
+  }>;
+  transitionReport?: TransitionMonthlyReport | null;
+};
+
+export type TransitionMonthlyReport = {
+  month: string;
+  from: string;
+  to: string;
+  summary: {
+    enteredInMonth: number;
+    withActivityInMonth: number;
+    releasedInMonth: number;
+    activeAtMonthEnd: number;
+    sessionsInMonth: number;
+    durationMinutesInMonth: number;
+  };
+  programs: Array<{
+    programId: string;
+    playerId: string;
+    playerName: string;
+    category: string | null;
+    originSummary: string;
+    startedAt: string;
+    completedAt: string | null;
+    programStatus: string;
+    enteredInMonth: boolean;
+    releasedInMonth: boolean;
+    activeAtMonthEnd: boolean;
+    hadActivityInMonth: boolean;
+    sessionsInMonth: number;
+    durationMinutesInMonth: number;
+    totalProgramSessions: number;
+    totalProgramDurationMinutes: number;
+    monthEvolutionNotes: string[];
   }>;
 };
 

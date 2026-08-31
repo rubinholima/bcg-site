@@ -7,6 +7,7 @@ export interface PhysioTransitionProgramListItem {
   status: string;
   startedAt: string;
   completedAt: string | null;
+  isNewReferral?: boolean;
   sessionCount: number;
   player?: {
     id: string;
@@ -71,4 +72,48 @@ export interface CreateTransitionProgramEntryPayload {
   needsNewSession: boolean;
   staffId?: string;
   staffName?: string;
+}
+
+export interface TransitionOperationalSummary {
+  activeCount: number;
+  newCount: number;
+  items: Array<{
+    programId: string;
+    playerId: string;
+    playerName: string;
+    category: string | null;
+    startedAt: string;
+    originSessionId: string | null;
+    originLabel: string | null;
+  }>;
+}
+
+export interface PlayerTransitionProgramHistory {
+  id: string;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  originSessionId: string;
+  originSummary: string;
+  originSession: {
+    id: string;
+    endedAt: string | null;
+    disposition: string | null;
+  };
+  sessionCount: number;
+  entries: Array<{
+    id: string;
+    sessionDate: string;
+    workType: string;
+    workTypeLabel: string | null;
+    startTime: string;
+    endTime: string;
+    durationMinutes: number;
+    objective: string | null;
+    activities: string | null;
+    evolutionNote: string | null;
+    stillFeelsPain: boolean;
+    evolutionScore: number | null;
+    needsNewSession: boolean;
+  }>;
 }

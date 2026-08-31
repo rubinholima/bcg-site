@@ -10,6 +10,12 @@ import {
   computeDurationMinutes,
 } from '../fisioterapia/physio-transition.constants';
 import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
+import {
+  buildTransitionMonthlyReport,
+  isNewTransitionReferral,
+  monthDateRange,
+  type TransitionReportProgramInput,
+} from './fisiologia-transition.util';
 
 @Injectable()
 export class FisiologiaTransitionService {
@@ -17,6 +23,64 @@ export class FisiologiaTransitionService {
     private readonly prisma: PrismaService,
     private readonly availability: PhysioPlayerAvailabilityService,
   ) {}
+
+  private buildOriginSummary(session: {
+    region?: { namePt: string } | null;
+    regionId?: string;
+    diagnosisLabel?: string | null;
+    treatmentLabel?: string | null;
+    sessionDiagnoses?: Array<{ diagnosisLabel: string | null; diagnosis?: { name: string } | null }>;
+    sessionTreatments?: Array<{ treatmentLabel: string | null; treatment?: { name: string } | null }>;
+  } | null): string {
+    if (!session) return '—';
+    const region = session.region?.namePt ?? session.regionId ?? '';
+    const dx =
+      session.sessionDiagnoses && session.sessionDiagnoses.length > 0
+        ? session.sessionDiagnoses
+            .map((d) => d.diagnosisLabel ?? d.diagnosis?.name)
+            .filter(Boolean)
+            .join(' + ')
+        : session.diagnosisLabel ?? '';
+    const tx =
+      session.sessionTreatments && session.sessionTreatments.length > 0
+        ? session.sessionTreatments
+            .map((t) => t.treatmentLabel ?? t.treatment?.name)
+            .filter(Boolean)
+            .join(' + ')
+        : session.treatmentLabel ?? '';
+    return [region, dx ? `Dx: ${dx}` : null, tx ? `Tx: ${tx}` : null].filter(Boolean).join(' · ') || '—';
+  }
+
+  private programListWhere(
+    params: { tenantId?: string; category?: string; status?: string },
+    allowed: string[] | null,
+  ) {
+    const statusParam = params.status?.trim() || 'active';
+    const where: {
+      tenantId?: string | { in: string[] };
+      status?: string | { in: string[] };
+      player?: { category?: string };
+    } = {};
+
+    if (statusParam === 'history') {
+      where.status = { in: ['completed', 'cancelled'] };
+    } else if (statusParam !== 'all') {
+      where.status = statusParam;
+    }
+
+    if (params.tenantId) {
+      this.assertTenant(allowed, params.tenantId);
+      where.tenantId = params.tenantId;
+    } else if (allowed !== null) {
+      where.tenantId = { in: allowed };
+    }
+
+    if (params.category?.trim()) {
+      where.player = { category: params.category.trim() };
+    }
+
+    return where;
+  }
 
   private assertTenant(allowed: string[] | null, tenantId: string) {
     if (allowed === null) return;
@@ -42,6 +106,49 @@ export class FisiologiaTransitionService {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
+  async getOperationalSummary(
+    params: { tenantId?: string; category?: string },
+    allowed: string[] | null,
+  ) {
+    const where = this.programListWhere({ ...params, status: 'active' }, allowed);
+
+    const programs = await this.prisma.physioTransitionProgram.findMany({
+      where,
+      include: {
+        player: { select: { id: true, name: true, category: true } },
+        originSession: {
+          select: {
+            id: true,
+            endedAt: true,
+            region: { select: { namePt: true } },
+            diagnosisLabel: true,
+          },
+        },
+        _count: { select: { entries: true } },
+      },
+      orderBy: [{ startedAt: 'desc' }],
+    });
+
+    const newItems = programs
+      .filter((p) => isNewTransitionReferral(p._count.entries, p.status))
+      .map((p) => ({
+        programId: p.id,
+        playerId: p.playerId,
+        playerName: p.player ? getPlayerListDisplayName(p.player) : '—',
+        category: p.player?.category ?? null,
+        startedAt: p.startedAt,
+        originSessionId: p.originSession?.id ?? null,
+        originLabel:
+          p.originSession?.region?.namePt ?? p.originSession?.diagnosisLabel ?? null,
+      }));
+
+    return {
+      activeCount: programs.length,
+      newCount: newItems.length,
+      items: newItems,
+    };
+  }
+
   async listPrograms(
     params: {
       tenantId?: string;
@@ -50,24 +157,7 @@ export class FisiologiaTransitionService {
     },
     allowed: string[] | null,
   ) {
-    const status = params.status?.trim() || 'active';
-    const where: {
-      tenantId?: string | { in: string[] };
-      status: string;
-      player?: { category?: string };
-    } = { status };
-
-    if (params.tenantId) {
-      this.assertTenant(allowed, params.tenantId);
-      where.tenantId = params.tenantId;
-    } else if (allowed !== null) {
-      where.tenantId = { in: allowed };
-    }
-
-    if (params.category?.trim()) {
-      where.player = { category: params.category.trim() };
-    }
-
+    const where = this.programListWhere(params, allowed);
     const programs = await this.prisma.physioTransitionProgram.findMany({
       where,
       include: {
@@ -100,6 +190,7 @@ export class FisiologiaTransitionService {
       status: p.status,
       startedAt: p.startedAt,
       completedAt: p.completedAt,
+      isNewReferral: isNewTransitionReferral(p._count.entries, p.status),
       player: p.player
         ? { ...p.player, name: getPlayerListDisplayName(p.player) }
         : p.player,
@@ -107,6 +198,110 @@ export class FisiologiaTransitionService {
       sessionCount: p._count.entries,
       latestEntry: p.entries[0] ?? null,
     }));
+  }
+
+  async listPlayerPrograms(playerId: string, allowed: string[] | null) {
+    const player = await this.prisma.player.findUnique({
+      where: { id: playerId },
+      select: { id: true, tenantId: true, name: true, category: true },
+    });
+    if (!player) throw new NotFoundException('Jogador não encontrado.');
+    this.assertTenant(allowed, player.tenantId);
+
+    const programs = await this.prisma.physioTransitionProgram.findMany({
+      where: { playerId },
+      include: {
+        originSession: {
+          include: {
+            region: true,
+            sessionDiagnoses: { include: { diagnosis: true } },
+            sessionTreatments: { include: { treatment: true } },
+          },
+        },
+        entries: { orderBy: [{ sessionDate: 'desc' }, { createdAt: 'desc' }] },
+      },
+      orderBy: [{ startedAt: 'desc' }],
+    });
+
+    return programs.map((p) => ({
+      id: p.id,
+      status: p.status,
+      startedAt: p.startedAt,
+      completedAt: p.completedAt,
+      originSessionId: p.originSessionId,
+      originSummary: this.buildOriginSummary(p.originSession),
+      originSession: {
+        id: p.originSession.id,
+        endedAt: p.originSession.endedAt,
+        disposition: p.originSession.disposition,
+      },
+      sessionCount: p.entries.length,
+      entries: p.entries.map((e) => ({
+        id: e.id,
+        sessionDate: e.sessionDate,
+        workType: e.workType,
+        workTypeLabel: e.workTypeLabel,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        durationMinutes: e.durationMinutes,
+        objective: e.objective,
+        activities: e.activities,
+        evolutionNote: e.evolutionNote,
+        stillFeelsPain: e.stillFeelsPain,
+        evolutionScore: e.evolutionScore,
+        needsNewSession: e.needsNewSession,
+      })),
+    }));
+  }
+
+  async buildMonthlyReport(input: {
+    tenantId: string;
+    month: string;
+    category?: string;
+    playerId?: string;
+  }) {
+    const range = monthDateRange(input.month);
+    if (!range) throw new BadRequestException('Mês inválido. Use AAAA-MM.');
+
+    const programs = await this.prisma.physioTransitionProgram.findMany({
+      where: {
+        tenantId: input.tenantId,
+        ...(input.playerId ? { playerId: input.playerId } : {}),
+        ...(input.category ? { player: { category: input.category } } : {}),
+      },
+      include: {
+        player: { select: { id: true, name: true, category: true } },
+        originSession: {
+          include: {
+            region: true,
+            sessionDiagnoses: { include: { diagnosis: true } },
+            sessionTreatments: { include: { treatment: true } },
+          },
+        },
+        entries: { orderBy: [{ sessionDate: 'asc' }, { createdAt: 'asc' }] },
+      },
+    });
+
+    const reportInput: TransitionReportProgramInput[] = programs.map((p) => ({
+      id: p.id,
+      playerId: p.playerId,
+      playerName: p.player ? getPlayerListDisplayName(p.player) : '—',
+      category: p.player?.category ?? null,
+      status: p.status,
+      startedAt: p.startedAt,
+      completedAt: p.completedAt,
+      originSummary: this.buildOriginSummary(p.originSession),
+      entries: p.entries.map((e) => ({
+        sessionDate: e.sessionDate,
+        durationMinutes: e.durationMinutes,
+        objective: e.objective,
+        activities: e.activities,
+        evolutionNote: e.evolutionNote,
+        needsNewSession: e.needsNewSession,
+      })),
+    }));
+
+    return buildTransitionMonthlyReport(reportInput, input.month);
   }
 
   async findProgram(id: string, allowed: string[] | null) {
@@ -155,7 +350,11 @@ export class FisiologiaTransitionService {
   ) {
     const program = await this.findProgram(programId, allowed);
     if (program.status !== 'active') {
-      throw new BadRequestException('Este programa de transição já foi encerrado.');
+      throw new BadRequestException(
+        program.status === 'completed'
+          ? 'Programa de transição concluído — histórico imutável.'
+          : 'Este programa de transição não aceita novas sessões.',
+      );
     }
 
     const sessionDate = this.normalizePhysioDateKey(dto.sessionDate);
