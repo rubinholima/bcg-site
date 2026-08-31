@@ -1,18 +1,20 @@
 export type PhysioSide = "E" | "D" | "bilateral";
 export type PhysioBodyMapView = "front" | "back";
 export type PhysioSessionStatus = "active" | "completed" | "cancelled";
-export type PhysioDisposition = "alta" | "em_tratamento" | "nao_apto";
+export type PhysioDisposition = "alta" | "em_tratamento" | "nao_apto" | "encaminhado_transicao";
 
 export const PHYSIO_DISPOSITION_LABEL: Record<PhysioDisposition, string> = {
   alta: "Atendido — problema resolvido (Alta)",
   em_tratamento: "Atendido — precisa de novo atendimento, pode treinar (Em tratamento)",
   nao_apto: "Atendido — tratamento intensivo (Não apto)",
+  encaminhado_transicao: "Tratamento encerrado — encaminhado para transição (Performance/Fisiologia)",
 };
 
 export const PHYSIO_DISPOSITION_SHORT: Record<PhysioDisposition, string> = {
   alta: "Alta",
   em_tratamento: "Em tratamento",
   nao_apto: "Não apto",
+  encaminhado_transicao: "Encaminhado p/ transição",
 };
 
 export interface PhysioBodyRegion {
@@ -123,6 +125,7 @@ export interface PhysioSession {
   sessionDiagnoses?: PhysioSessionDiagnosis[];
   sessionTreatments?: PhysioSessionTreatment[];
   transitionEntries?: PhysioTransitionEntry[];
+  transitionProgram?: { id: string; status: string } | null;
   player?: {
     id: string;
     name: string;
@@ -378,6 +381,7 @@ export interface CreatePhysioPlayerEvaluationBatchPayload {
 
 export interface PhysioTransitionEntry {
   id: string;
+  programId?: string;
   sessionId: string;
   sessionDate: string;
   workType: string;
@@ -387,8 +391,10 @@ export interface PhysioTransitionEntry {
   durationMinutes: number;
   objective: string | null;
   activities: string | null;
+  evolutionNote?: string | null;
   stillFeelsPain: boolean;
   evolutionScore: number | null;
+  needsNewSession?: boolean;
   staffId: string | null;
   staffName: string | null;
   createdAt: string;

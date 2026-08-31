@@ -17,7 +17,9 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { FisiologiaService } from './fisiologia.service';
+import { FisiologiaTransitionService } from './fisiologia-transition.service';
 import { FisiologiaReportsService, FISIOLOGIA_REPORT_KINDS } from './fisiologia-reports.service';
+import { CreatePhysioTransitionProgramEntryDto } from './dto/fisiologia-transition.dto';
 import {
   CreatePhysiologyAssessmentDto,
   CreatePhysiologyHydrationDto,
@@ -33,6 +35,7 @@ export class FisiologiaController {
   constructor(
     private readonly service: FisiologiaService,
     private readonly reports: FisiologiaReportsService,
+    private readonly transitions: FisiologiaTransitionService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
@@ -240,6 +243,47 @@ export class FisiologiaController {
   @RequireModule('futebol_fisiologia')
   async deleteLoadSession(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     return this.service.deleteLoadSession(id, await this.allowedTenants(req));
+  }
+
+  @Get('transition-programs')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_fisiologia')
+  async listTransitionPrograms(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.transitions.listPrograms(
+      { tenantId, category, status },
+      await this.allowedTenants(req),
+    );
+  }
+
+  @Get('transition-programs/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_fisiologia')
+  async findTransitionProgram(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    return this.transitions.findProgram(id, await this.allowedTenants(req));
+  }
+
+  @Post('transition-programs/:id/entries')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_fisiologia')
+  async createTransitionProgramEntry(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: CreatePhysioTransitionProgramEntryDto,
+  ) {
+    return this.transitions.createProgramEntry(
+      id,
+      dto,
+      await this.allowedTenants(req),
+      req.user.sub,
+    );
   }
 
   @Get('reports/dashboard')

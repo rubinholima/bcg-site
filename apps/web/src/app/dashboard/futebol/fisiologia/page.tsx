@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Activity, ChevronRight, Droplets, Gauge, Printer } from "lucide-react";
+import { Activity, ChevronRight, Droplets, Gauge, Printer, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FisiologiaShell } from "@/components/dashboard/fisiologia/FisiologiaShell";
 
 const OPTIONS = [
+  { href: "/dashboard/futebol/fisiologia/transicoes", title: "Atletas em Transição", icon: RefreshCw },
   { href: "/dashboard/futebol/fisiologia/avaliacoes", title: "Avaliações físicas", icon: Activity },
   { href: "/dashboard/futebol/fisiologia/hidratacao", title: "Hidratação", icon: Droplets },
   { href: "/dashboard/futebol/fisiologia/carga", title: "Carga e GPS", icon: Gauge },

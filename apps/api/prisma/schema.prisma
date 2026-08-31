@@ -141,6 +141,7 @@ model Tenant {
   matchOfficialEvents   MatchOfficialEvent[]
   psychologySessions  PsychologySession[]
   physioSessions      PhysioSession[]
+  physioTransitionPrograms PhysioTransitionProgram[]
   physioGroupSessions PhysioGroupSession[]
   physioGameAttendances PhysioGameAttendance[]
   physioPlayerEvaluations PhysioPlayerEvaluation[]
@@ -1107,6 +1108,7 @@ model Player {
   travelParticipations TravelParticipant[]
   scoutingProspects    ScoutingProspect[]
   physioSessions       PhysioSession[]
+  physioTransitionPrograms PhysioTransitionProgram[]
   physioGameAttendances PhysioGameAttendance[]
   physioPlayerEvaluations PhysioPlayerEvaluation[]
   fmfMatchStats        FmfPlayerMatchStat[]
@@ -3277,7 +3279,7 @@ model PhysioSession {
   startedAt        DateTime @default(now())
   endedAt          DateTime?
   status           String   @default("active") // active | completed | cancelled
-  /// Desfecho do atendimento: alta | em_tratamento | nao_apto
+  /// Desfecho do atendimento: alta | em_tratamento | nao_apto | encaminhado_transicao
   disposition      String?
   /// Atleta segue programa de transição (fisiologia + preparação + fisio)
   needsTransition    Boolean  @default(false)
@@ -3294,15 +3296,39 @@ model PhysioSession {
   sessionDiagnoses PhysioSessionDiagnosis[]
   sessionTreatments PhysioSessionTreatment[]
   transitionEntries PhysioTransitionEntry[]
+  transitionProgram PhysioTransitionProgram? @relation("PhysioTransitionOrigin")
   @@index([tenantId, status])
   @@index([playerId, status])
   @@index([regionId])
   @@index([startedAt])
 }
 
-/// Sessão de transição do retorno ao jogo (vinculada ao atendimento)
+/// Programa de transição (Performance/Fisiologia) após encerramento do tratamento fisioterápico
+model PhysioTransitionProgram {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId         String
+  player           Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  originSessionId  String   @unique
+  originSession    PhysioSession @relation("PhysioTransitionOrigin", fields: [originSessionId], references: [id], onDelete: Restrict)
+  status           String   @default("active") // active | completed | cancelled
+  startedAt        DateTime @default(now())
+  completedAt      DateTime?
+  createdByUserId  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  entries          PhysioTransitionEntry[]
+  @@index([tenantId, status])
+  @@index([playerId, status])
+}
+
+/// Sessão de transição do retorno ao treino (vinculada ao programa de transição)
 model PhysioTransitionEntry {
   id               String   @id @default(cuid())
+  programId        String
+  program          PhysioTransitionProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  /// Sessão fisioterápica de origem (legado / referência histórica)
   sessionId        String
   session          PhysioSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionDate      String   // YYYY-MM-DD
@@ -3313,13 +3339,16 @@ model PhysioTransitionEntry {
   durationMinutes  Int
   objective        String?  @db.Text
   activities       String?  @db.Text
+  evolutionNote    String?  @db.Text
   stillFeelsPain   Boolean  @default(false)
   evolutionScore   Int?     // 0–10
+  needsNewSession  Boolean  @default(true)
   staffId          String?
   staffName        String?
   createdByUserId  String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  @@index([programId, sessionDate])
   @@index([sessionId, sessionDate])
 }
 

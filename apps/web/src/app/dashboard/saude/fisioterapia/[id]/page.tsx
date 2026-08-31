@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhysioBodyMap } from "@/components/dashboard/fisioterapia/PhysioBodyMap";
-import { PhysioTransitionPanel } from "@/components/dashboard/fisioterapia/PhysioTransitionPanel";
 import type { PhysioDisposition, PhysioEvolutionNote, PhysioSession } from "@/types/fisioterapia";
 import {
   PHYSIO_DISPOSITION_LABEL,
@@ -41,6 +40,7 @@ export default function FisioterapiaSessionDetailPage() {
   const [pain, setPain] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [referOpen, setReferOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
     open: false,
@@ -90,14 +90,6 @@ export default function FisioterapiaSessionDetailPage() {
 
   const setDisposition = async (disposition: PhysioDisposition) => {
     if (!id) return;
-    if (disposition === "alta" && session?.needsTransition && (session.transitionEntries?.length ?? 0) === 0) {
-      setFeedback({
-        open: true,
-        title: "Transição pendente",
-        message: "Registre ao menos uma sessão de transição antes da alta, ou desmarque “Precisa de transição”.",
-      });
-      return;
-    }
     setSaving(true);
     try {
       await api.post(`/fisioterapia/sessions/${id}/disposition`, { disposition });
@@ -114,17 +106,28 @@ export default function FisioterapiaSessionDetailPage() {
     }
   };
 
-  const toggleNeedsTransition = async (checked: boolean) => {
+  const referToTransition = async () => {
     if (!id) return;
     setSaving(true);
     try {
-      await api.patch(`/fisioterapia/sessions/${id}`, { needsTransition: checked });
+      await api.post(`/fisioterapia/sessions/${id}/refer-to-transition`);
+      setReferOpen(false);
       await load();
-    } catch {
+      setFeedback({
+        open: true,
+        title: "Encaminhado para transição",
+        message:
+          "Tratamento fisioterápico encerrado. Atleta encaminhado para transição com Performance/Fisiologia.",
+      });
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : null;
       setFeedback({
         open: true,
         title: "Erro",
-        message: "Não foi possível atualizar a transição.",
+        message: msg ?? "Não foi possível encaminhar para transição.",
       });
     } finally {
       setSaving(false);
@@ -257,6 +260,10 @@ export default function FisioterapiaSessionDetailPage() {
               <span className="inline-flex min-h-[44px] items-center rounded-full bg-zinc-600 px-3 py-1 text-sm font-semibold text-white">
                 Cancelado
               </span>
+            ) : session.disposition === "encaminhado_transicao" || session.transitionProgram?.status === "active" ? (
+              <span className="inline-flex min-h-[44px] items-center rounded-full bg-sky-600 px-3 py-1 text-sm font-semibold text-white">
+                Encaminhado p/ transição
+              </span>
             ) : session.disposition === "alta" || session.status === "completed" ? (
               <span className="inline-flex min-h-[44px] items-center rounded-full bg-emerald-600 px-3 py-1 text-sm font-semibold text-white">
                 Alta
@@ -269,7 +276,15 @@ export default function FisioterapiaSessionDetailPage() {
                   onClick={() => void setDisposition("alta")}
                 >
                   <CheckCircle2 className="mr-2 h-4 w-4" />
-                  {session.needsTransition ? "Alta — tratamento e transição" : "Alta — problema resolvido"}
+                  Alta — pode voltar a treinar
+                </Button>
+                <Button
+                  variant="outline"
+                  className="min-h-[44px] border-sky-500/60 text-sky-200"
+                  disabled={saving}
+                  onClick={() => setReferOpen(true)}
+                >
+                  Encaminhar para transição
                 </Button>
                 <Button
                   variant="outline"
@@ -345,21 +360,25 @@ export default function FisioterapiaSessionDetailPage() {
               <p>
                 <span className="text-muted-foreground">Fisio:</span> {session.staffName ?? "—"}
               </p>
-              {session.status === "active" ? (
-                <label className="flex min-h-[44px] items-center gap-2 pt-1">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-border"
-                    checked={session.needsTransition === true}
-                    disabled={saving}
-                    onChange={(e) => void toggleNeedsTransition(e.target.checked)}
-                  />
-                  <span>Precisa de transição</span>
-                </label>
+              {session.status === "active" ? null : session.disposition === "encaminhado_transicao" ? (
+                <p>
+                  <span className="text-muted-foreground">Transição:</span> encaminhado para Performance/Fisiologia
+                  {session.transitionProgram?.id ? (
+                    <>
+                      {" · "}
+                      <Link
+                        href={`/dashboard/futebol/fisiologia/transicoes/${session.transitionProgram.id}`}
+                        className="text-primary hover:underline"
+                      >
+                        Abrir programa
+                      </Link>
+                    </>
+                  ) : null}
+                </p>
               ) : session.needsTransition ? (
                 <p>
                   <span className="text-muted-foreground">Transição:</span>{" "}
-                  {session.transitionCompletedAt ? "Concluída com alta" : "Sim"}
+                  {session.transitionCompletedAt ? "Concluída" : "Histórico legado"}
                 </p>
               ) : null}
               {session.attachments && session.attachments.length > 0 ? (
@@ -385,10 +404,6 @@ export default function FisioterapiaSessionDetailPage() {
               ) : null}
             </CardContent>
           </Card>
-
-          {session.needsTransition ? (
-            <PhysioTransitionPanel session={session} onUpdated={() => void load()} />
-          ) : null}
 
           <Card>
             <CardHeader className="pb-2">
@@ -446,6 +461,31 @@ export default function FisioterapiaSessionDetailPage() {
         title={feedback.title}
         message={feedback.message}
       />
+
+      <AlertDialog open={referOpen} onOpenChange={setReferOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Encaminhar para transição?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O tratamento fisioterápico será encerrado. O atleta passará para transição com
+              Performance/Fisiologia e não estará apto para treino normal até a conclusão do programa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={saving}
+              onClick={(e) => {
+                e.preventDefault();
+                void referToTransition();
+              }}
+            >
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Encaminhar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>

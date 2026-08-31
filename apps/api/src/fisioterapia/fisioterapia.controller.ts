@@ -176,6 +176,17 @@ export class FisioterapiaController {
     return this.service.setDisposition(id, dto.disposition, allowed);
   }
 
+  @Post('sessions/:id/refer-to-transition')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async referToTransition(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.referToTransition(id, allowed, req.user.sub);
+  }
+
   @Get('sessions/:sessionId/transitions')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('saude')

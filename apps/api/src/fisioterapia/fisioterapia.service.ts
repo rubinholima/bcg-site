@@ -47,6 +47,7 @@ import {
   isLoanedSportsSituation,
 } from '../common/sports-situation.util';
 import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
+import { PhysioPlayerAvailabilityService } from '../common/physio-player-availability.service';
 
 type EvolutionNote = {
   at: string;
@@ -82,6 +83,7 @@ const sessionInclude = {
   transitionEntries: {
     orderBy: [{ sessionDate: 'desc' as const }, { createdAt: 'desc' as const }],
   },
+  transitionProgram: true,
   player: {
     select: {
       id: true,
@@ -98,7 +100,10 @@ const sessionInclude = {
 
 @Injectable()
 export class FisioterapiaService implements OnModuleInit {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly playerAvailability: PhysioPlayerAvailabilityService,
+  ) {}
 
   async onModuleInit() {
     try {
@@ -421,124 +426,70 @@ export class FisioterapiaService implements OnModuleInit {
     sessionDiagnoses?: Array<{ diagnosisLabel?: string | null; diagnosis?: { name: string } | null }>;
     sessionTreatments?: Array<{ treatmentLabel?: string | null; treatment?: { name: string } | null }>;
   }) {
-    const regionParts =
-      session.sessionRegions && session.sessionRegions.length > 0
-        ? session.sessionRegions.map((r) => {
-            const regionName = r.region?.namePt ?? r.regionId;
-            const side =
-              r.side === 'E' ? ' esquerdo' : r.side === 'D' ? ' direito' : '';
-            return `${regionName}${side}`;
-          })
-        : [
-            (() => {
-              const regionName = session.region?.namePt ?? session.regionId;
-              const side =
-                session.side === 'E' ? ' esquerdo' : session.side === 'D' ? ' direito' : '';
-              return `${regionName}${side}`;
-            })(),
-          ];
-
-    const dxParts =
-      session.sessionDiagnoses && session.sessionDiagnoses.length > 0
-        ? session.sessionDiagnoses
-            .map((d) => d.diagnosisLabel ?? d.diagnosis?.name)
-            .filter(Boolean)
-        : session.diagnosisLabel
-          ? [session.diagnosisLabel]
-          : [];
-
-    const txParts =
-      session.sessionTreatments && session.sessionTreatments.length > 0
-        ? session.sessionTreatments
-            .map((t) => t.treatmentLabel ?? t.treatment?.name)
-            .filter(Boolean)
-        : session.treatmentLabel
-          ? [session.treatmentLabel]
-          : [];
-
-    const parts = [
-      `Fisio: ${regionParts.join(' + ')}`,
-      dxParts.length ? `Dx: ${dxParts.join(' + ')}` : null,
-      txParts.length ? `Tx: ${txParts.join(' + ')}` : null,
-      session.estimatedEndDate
-        ? `Previsão: ${session.estimatedEndDate.toISOString().slice(0, 10)}`
-        : null,
-    ].filter(Boolean);
-    return parts.join(' · ');
+    return this.playerAvailability.buildPhysioStatusDetails({
+      region: session.region ?? null,
+      regionId: session.regionId,
+      side: session.side ?? null,
+      diagnosisLabel: session.diagnosisLabel ?? null,
+      treatmentLabel: session.treatmentLabel ?? null,
+      estimatedEndDate: session.estimatedEndDate ?? null,
+      sessionRegions: session.sessionRegions?.map((r) => ({
+        region: r.region ?? null,
+        regionId: r.regionId,
+        side: r.side ?? null,
+      })),
+    });
   }
 
   private async syncPlayerInjuryStatus(playerId: string) {
-    const active = await this.prisma.physioSession.findMany({
-      where: { playerId, status: 'active' },
-      include: {
-        region: true,
-        sessionRegions: { include: { region: true } },
-        sessionDiagnoses: { include: { diagnosis: true } },
-        sessionTreatments: { include: { treatment: true } },
-      },
-      orderBy: { startedAt: 'desc' },
+    await this.playerAvailability.syncPlayerPhysioAndTransitionStatus(playerId);
+  }
+
+  async referToTransition(id: string, allowed: string[] | null, userId?: string) {
+    const current = await this.findSession(id, allowed);
+    if (current.status !== 'active') {
+      throw new BadRequestException('Somente atendimentos ativos podem ser encaminhados para transição.');
+    }
+
+    const existingActive = await this.prisma.physioTransitionProgram.findFirst({
+      where: { playerId: current.playerId, status: 'active' },
+    });
+    if (existingActive) {
+      throw new BadRequestException('Este atleta já possui um programa de transição ativo.');
+    }
+
+    const existingOrigin = await this.prisma.physioTransitionProgram.findUnique({
+      where: { originSessionId: id },
+    });
+    if (existingOrigin) {
+      throw new BadRequestException('Este atendimento já gerou um programa de transição.');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.physioSession.update({
+        where: { id },
+        data: {
+          status: 'completed',
+          disposition: 'encaminhado_transicao',
+          endedAt: current.endedAt ?? new Date(),
+          needsTransition: true,
+          transitionStartedAt: new Date(),
+        },
+      });
+      await tx.physioTransitionProgram.create({
+        data: {
+          tenantId: current.tenantId,
+          playerId: current.playerId,
+          originSessionId: id,
+          status: 'active',
+          startedAt: new Date(),
+          createdByUserId: userId ?? null,
+        },
+      });
     });
 
-    const clearFisioStatus = async () => {
-      const player = await this.prisma.player.findUnique({
-        where: { id: playerId },
-        select: { status: true, statusDetails: true },
-      });
-      if (
-        (player?.status === 'injured' || player?.status === 'available') &&
-        player.statusDetails?.startsWith('Fisio:')
-      ) {
-        await this.prisma.player.update({
-          where: { id: playerId },
-          data: {
-            status: 'available',
-            statusDetails: null,
-            statusUntil: null,
-          },
-        });
-      }
-    };
-
-    if (active.length === 0) {
-      await clearFisioStatus();
-      return;
-    }
-
-    const hasNaoApto = active.some(
-      (s) => s.disposition === 'nao_apto' || !s.disposition,
-    );
-    const hasEmTratamento = active.some((s) => s.disposition === 'em_tratamento');
-    const detailsBase = active.map((s) => this.buildStatusDetails(s)).join(' | ');
-    const latestEnd = active
-      .map((s) => s.estimatedEndDate)
-      .filter((d): d is Date => !!d)
-      .sort((a, b) => b.getTime() - a.getTime())[0];
-
-    if (hasNaoApto) {
-      await this.prisma.player.update({
-        where: { id: playerId },
-        data: {
-          status: 'injured',
-          statusDetails: `Fisio: NÃO APTO · ${detailsBase}`,
-          statusUntil: latestEnd ?? null,
-        },
-      });
-      return;
-    }
-
-    if (hasEmTratamento) {
-      await this.prisma.player.update({
-        where: { id: playerId },
-        data: {
-          status: 'available',
-          statusDetails: `Fisio: EM TRATAMENTO (pode treinar) · ${detailsBase}`,
-          statusUntil: latestEnd ?? null,
-        },
-      });
-      return;
-    }
-
-    await clearFisioStatus();
+    await this.syncPlayerInjuryStatus(current.playerId);
+    return this.findSession(id, allowed);
   }
 
   async setDisposition(
@@ -1558,98 +1509,26 @@ export class FisioterapiaService implements OnModuleInit {
 
   async createTransitionEntry(
     sessionId: string,
-    dto: CreatePhysioTransitionEntryDto,
-    allowed: string[] | null,
-    userId?: string,
+    _dto: CreatePhysioTransitionEntryDto,
+    _allowed: string[] | null,
+    _userId?: string,
   ) {
-    const session = await this.findSession(sessionId, allowed);
-    if (!session.needsTransition) {
-      throw new BadRequestException('Este atendimento não está marcado para transição.');
-    }
-    if (session.status === 'completed' || session.disposition === 'alta') {
-      throw new BadRequestException('Atendimento já encerrado com alta.');
-    }
-    const sessionDate = this.normalizePhysioDateKey(dto.sessionDate);
-    const startTime = this.normalizeTime(dto.startTime, 'Hora de início');
-    const endTime = this.normalizeTime(dto.endTime, 'Hora de fim');
-    const durationMinutes = computeDurationMinutes(startTime, endTime);
-    if (durationMinutes <= 0) {
-      throw new BadRequestException('A hora de fim deve ser posterior à hora de início.');
-    }
-    if (dto.workType === 'outro' && !dto.workTypeLabel?.trim()) {
-      throw new BadRequestException('Descreva o tipo de trabalho.');
-    }
-
-    const entry = await this.prisma.physioTransitionEntry.create({
-      data: {
-        sessionId: session.id,
-        sessionDate,
-        workType: dto.workType.trim(),
-        workTypeLabel: dto.workTypeLabel?.trim() || null,
-        startTime,
-        endTime,
-        durationMinutes,
-        objective: dto.objective?.trim() || null,
-        activities: dto.activities?.trim() || null,
-        stillFeelsPain: dto.stillFeelsPain === true,
-        evolutionScore: dto.evolutionScore ?? null,
-        staffId: dto.staffId?.trim() || null,
-        staffName: dto.staffName?.trim() || null,
-        createdByUserId: userId ?? null,
-      },
-    });
-
-    if (!session.transitionStartedAt) {
-      await this.prisma.physioSession.update({
-        where: { id: session.id },
-        data: { transitionStartedAt: new Date(`${sessionDate}T12:00:00-03:00`) },
-      });
-    }
-
-    return entry;
+    await this.findSession(sessionId, _allowed);
+    throw new BadRequestException(
+      'Sessões de transição são registradas em Performance/Fisiologia (Atletas em Transição).',
+    );
   }
 
   async updateTransitionEntry(
     sessionId: string,
-    entryId: string,
-    dto: UpdatePhysioTransitionEntryDto,
+    _entryId: string,
+    _dto: UpdatePhysioTransitionEntryDto,
     allowed: string[] | null,
   ) {
     await this.findSession(sessionId, allowed);
-    const current = await this.prisma.physioTransitionEntry.findUnique({ where: { id: entryId } });
-    if (!current || current.sessionId !== sessionId) {
-      throw new NotFoundException('Registro de transição não encontrado.');
-    }
-    const startTime = dto.startTime != null ? this.normalizeTime(dto.startTime, 'Hora de início') : current.startTime;
-    const endTime = dto.endTime != null ? this.normalizeTime(dto.endTime, 'Hora de fim') : current.endTime;
-    const durationMinutes = computeDurationMinutes(startTime, endTime);
-    if (durationMinutes <= 0) {
-      throw new BadRequestException('A hora de fim deve ser posterior à hora de início.');
-    }
-    const workType = dto.workType ?? current.workType;
-    const workTypeLabel =
-      dto.workTypeLabel !== undefined ? dto.workTypeLabel?.trim() || null : current.workTypeLabel;
-    if (workType === 'outro' && !workTypeLabel) {
-      throw new BadRequestException('Descreva o tipo de trabalho.');
-    }
-
-    return this.prisma.physioTransitionEntry.update({
-      where: { id: entryId },
-      data: {
-        ...(dto.sessionDate != null && { sessionDate: this.normalizePhysioDateKey(dto.sessionDate) }),
-        ...(dto.workType != null && { workType: dto.workType.trim() }),
-        ...(dto.workTypeLabel !== undefined && { workTypeLabel }),
-        startTime,
-        endTime,
-        durationMinutes,
-        ...(dto.objective !== undefined && { objective: dto.objective?.trim() || null }),
-        ...(dto.activities !== undefined && { activities: dto.activities?.trim() || null }),
-        ...(dto.stillFeelsPain !== undefined && { stillFeelsPain: dto.stillFeelsPain }),
-        ...(dto.evolutionScore !== undefined && { evolutionScore: dto.evolutionScore }),
-        ...(dto.staffId !== undefined && { staffId: dto.staffId?.trim() || null }),
-        ...(dto.staffName !== undefined && { staffName: dto.staffName?.trim() || null }),
-      },
-    });
+    throw new BadRequestException(
+      'Sessões de transição são gerenciadas em Performance/Fisiologia (Atletas em Transição).',
+    );
   }
 
   async deleteTransitionEntry(sessionId: string, entryId: string, allowed: string[] | null) {
@@ -1658,7 +1537,9 @@ export class FisioterapiaService implements OnModuleInit {
     if (!current || current.sessionId !== sessionId) {
       throw new NotFoundException('Registro de transição não encontrado.');
     }
-    await this.prisma.physioTransitionEntry.delete({ where: { id: entryId } });
+    throw new BadRequestException(
+      'Sessões de transição são gerenciadas em Performance/Fisiologia (Atletas em Transição).',
+    );
   }
 
   private mapEvaluationTests(tests: PhysioEvaluationTestDto[]) {
