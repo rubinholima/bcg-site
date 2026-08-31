@@ -126,10 +126,10 @@ export type BankSnapshot = {
 };
 
 /**
- * Precedência documentada (determinística, sem sobrescrever silenciosamente):
- * 1) registrationProfile.extras
- * 2) Employment.bankData do vínculo ativo (via RH)
- * 3) Employee.pixKey para PIX se extras vazio
+ * Precedência documentada (determinística, por campo):
+ * 1) Employment.bankData — fonte canônica RH/administrativa
+ * 2) registrationProfile.extras — fallback de compatibilidade para campos ausentes
+ * 3) Employee.pixKey — fallback final de PIX
  */
 export function resolveBankData(
   profile: ParsedRegistrationProfile,
@@ -154,26 +154,32 @@ export function resolveBankData(
       ? (employmentBankData as Record<string, unknown>)
       : null;
 
+  const strOrNull = (value: unknown): string | null =>
+    typeof value === 'string' ? value.trim() || null : null;
+
   const fromEmployment: BankSnapshot = {
-    bankName: typeof bankJson?.bank === 'string' ? bankJson.bank.trim() : null,
-    bankAgency: typeof bankJson?.agency === 'string' ? bankJson.agency.trim() : null,
-    bankAccount: typeof bankJson?.account === 'string' ? bankJson.account.trim() : null,
-    bankAccountType: typeof bankJson?.accountType === 'string' ? bankJson.accountType.trim() : null,
-    bankOperation: typeof bankJson?.operation === 'string' ? bankJson.operation.trim() : null,
-    pixKey: typeof bankJson?.pix === 'string' ? bankJson.pix.trim() : null,
-    pixKeyType: typeof bankJson?.pixKeyType === 'string' ? bankJson.pixKeyType.trim() : null,
-    bankHolderName: typeof bankJson?.holderName === 'string' ? bankJson.holderName.trim() : null,
-    bankHolderCpf: typeof bankJson?.holderCpf === 'string' ? bankJson.holderCpf.replace(/\D/g, '') || null : null,
+    bankName: strOrNull(bankJson?.bank),
+    bankAgency: strOrNull(bankJson?.agency),
+    bankAccount: strOrNull(bankJson?.account),
+    bankAccountType: strOrNull(bankJson?.accountType),
+    bankOperation: strOrNull(bankJson?.operation),
+    pixKey: strOrNull(bankJson?.pix),
+    pixKeyType: strOrNull(bankJson?.pixKeyType),
+    bankHolderName: strOrNull(bankJson?.holderName),
+    bankHolderCpf:
+      typeof bankJson?.holderCpf === 'string'
+        ? bankJson.holderCpf.replace(/\D/g, '') || null
+        : null,
   };
 
   return {
-    bankName: fromExtras.bankName ?? fromEmployment.bankName,
-    bankAgency: fromExtras.bankAgency ?? fromEmployment.bankAgency,
-    bankAccount: fromExtras.bankAccount ?? fromEmployment.bankAccount,
-    bankAccountType: fromExtras.bankAccountType ?? fromEmployment.bankAccountType,
-    bankOperation: fromEmployment.bankOperation,
-    pixKey: fromExtras.pixKey ?? fromEmployment.pixKey ?? employeePixKey?.trim() ?? null,
-    pixKeyType: fromExtras.pixKeyType ?? fromEmployment.pixKeyType,
+    bankName: fromEmployment.bankName ?? fromExtras.bankName,
+    bankAgency: fromEmployment.bankAgency ?? fromExtras.bankAgency,
+    bankAccount: fromEmployment.bankAccount ?? fromExtras.bankAccount,
+    bankAccountType: fromEmployment.bankAccountType ?? fromExtras.bankAccountType,
+    bankOperation: fromEmployment.bankOperation ?? fromExtras.bankOperation,
+    pixKey: (fromEmployment.pixKey ?? fromExtras.pixKey ?? employeePixKey?.trim()) || null,
+    pixKeyType: fromEmployment.pixKeyType ?? fromExtras.pixKeyType,
     bankHolderName: fromEmployment.bankHolderName,
     bankHolderCpf: fromEmployment.bankHolderCpf,
   };

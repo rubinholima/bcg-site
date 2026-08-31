@@ -55,13 +55,57 @@ describe('Dynamic Reports — population.util', () => {
 });
 
 describe('Dynamic Reports — bank resolver', () => {
-  it('prioriza extras sobre employment bankData', () => {
+  it('prioriza Employment.bankData sobre extras quando ambos têm o mesmo campo', () => {
     const profile = parseRegistrationProfile({
       extras: { bankName: 'Nubank', pixKey: 'pix@extras' },
     });
     const bank = resolveBankData(profile, { bank: 'Outro', pix: 'pix-rh' }, 'pix-employee');
-    expect(bank.bankName).toBe('Nubank');
-    expect(bank.pixKey).toBe('pix@extras');
+    expect(bank.bankName).toBe('Outro');
+    expect(bank.pixKey).toBe('pix-rh');
+  });
+
+  it('Employment prevalece em bankName e account quando ambos existem', () => {
+    const profile = parseRegistrationProfile({
+      extras: { bankName: 'Old Bank', bankAccountNumber: '99999' },
+    });
+    const bank = resolveBankData(profile, { bank: 'New RH Bank', account: '12345' }, null);
+    expect(bank.bankName).toBe('New RH Bank');
+    expect(bank.bankAccount).toBe('12345');
+  });
+
+  it('extras preenche campos ausentes no Employment por campo', () => {
+    const profile = parseRegistrationProfile({
+      extras: {
+        bankName: 'Old Bank',
+        bankAgency: '0001',
+        bankAccountNumber: '99999',
+        pixKey: 'old@example.com',
+      },
+    });
+    const bank = resolveBankData(profile, { bank: 'New RH Bank', account: '12345' }, null);
+    expect(bank.bankName).toBe('New RH Bank');
+    expect(bank.bankAgency).toBe('0001');
+    expect(bank.bankAccount).toBe('12345');
+    expect(bank.pixKey).toBe('old@example.com');
+  });
+
+  it('Employee.pixKey só entra quando Employment e extras não têm PIX', () => {
+    const profile = parseRegistrationProfile({ extras: {} });
+    const bank = resolveBankData(profile, {}, 'pix-employee');
+    expect(bank.pixKey).toBe('pix-employee');
+  });
+
+  it('holderName e holderCpf vêm apenas do Employment', () => {
+    const profile = parseRegistrationProfile({
+      extras: { bankName: 'Extras Bank' },
+    });
+    const bank = resolveBankData(
+      profile,
+      { bank: 'RH Bank', holderName: 'Maria Silva', holderCpf: '123.456.789-00' },
+      null,
+    );
+    expect(bank.bankHolderName).toBe('Maria Silva');
+    expect(bank.bankHolderCpf).toBe('12345678900');
   });
 });
 
