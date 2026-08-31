@@ -8,6 +8,18 @@ import {
 } from './fisiologia-calculations.util';
 import { FisiologiaTransitionService } from './fisiologia-transition.service';
 import { monthDateRange } from './fisiologia-transition.util';
+import {
+  filterLoadSessionsByCurrentSquad,
+  filterReportRowsByCurrentSquad,
+} from './fisiologia-reports.util';
+
+const REPORT_PLAYER_SELECT = {
+  id: true,
+  name: true,
+  jerseyNumber: true,
+  category: true,
+  registrationProfile: true,
+} as const;
 
 export const FISIOLOGIA_REPORT_KINDS = [
   'geral',
@@ -90,41 +102,47 @@ export class FisiologiaReportsService {
       input.kind === 'geral' || input.kind === 'carga_treino' || input.kind === 'carga_jogo';
 
     const assessments = includeAssessments
-      ? await this.prisma.physiologyAssessment.findMany({
-          where: assessmentWhere,
-          orderBy: [{ assessedAt: 'desc' }],
-          take: 500,
-          include: {
-            player: { select: { id: true, name: true, jerseyNumber: true, category: true } },
-          },
-        })
+      ? filterReportRowsByCurrentSquad(
+          await this.prisma.physiologyAssessment.findMany({
+            where: assessmentWhere,
+            orderBy: [{ assessedAt: 'desc' }],
+            take: 500,
+            include: {
+              player: { select: REPORT_PLAYER_SELECT },
+            },
+          }),
+        )
       : [];
 
     const hydrations = includeHydration
-      ? await this.prisma.physiologyHydration.findMany({
-          where: hydrationWhere,
-          orderBy: [{ recordedAt: 'desc' }],
-          take: 500,
-          include: {
-            player: { select: { id: true, name: true, jerseyNumber: true, category: true } },
-          },
-        })
+      ? filterReportRowsByCurrentSquad(
+          await this.prisma.physiologyHydration.findMany({
+            where: hydrationWhere,
+            orderBy: [{ recordedAt: 'desc' }],
+            take: 500,
+            include: {
+              player: { select: REPORT_PLAYER_SELECT },
+            },
+          }),
+        )
       : [];
 
     const loadSessions = includeLoad
-      ? await this.prisma.physiologyLoadSession.findMany({
-          where: loadWhere,
-          orderBy: [{ sessionDate: 'desc' }],
-          take: 200,
-          include: {
-            entries: {
-              where: input.playerId ? { playerId: input.playerId } : undefined,
-              include: {
-                player: { select: { id: true, name: true, jerseyNumber: true, category: true } },
+      ? filterLoadSessionsByCurrentSquad(
+          await this.prisma.physiologyLoadSession.findMany({
+            where: loadWhere,
+            orderBy: [{ sessionDate: 'desc' }],
+            take: 200,
+            include: {
+              entries: {
+                where: input.playerId ? { playerId: input.playerId } : undefined,
+                include: {
+                  player: { select: REPORT_PLAYER_SELECT },
+                },
               },
             },
-          },
-        })
+          }),
+        )
       : [];
 
     return {
