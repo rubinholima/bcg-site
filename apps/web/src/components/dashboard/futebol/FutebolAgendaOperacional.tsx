@@ -299,6 +299,8 @@ export function FutebolAgendaOperacional() {
   const [tenantFilter, setTenantFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [spaceFilter, setSpaceFilter] = useState("all");
+  const [calendarSpaces, setCalendarSpaces] = useState<ActivitySpace[]>([]);
   const [items, setItems] = useState<FootballAgendaCalendarItem[]>([]);
   const [overview, setOverview] = useState<FootballAgendaOverview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -380,6 +382,20 @@ export function FutebolAgendaOperacional() {
       .catch(() => setSpaces([]));
   }, [form.tenantId]);
 
+  useEffect(() => {
+    const url = tenantFilter
+      ? `/football-activity-spaces?tenantId=${encodeURIComponent(tenantFilter)}`
+      : "/football-activity-spaces";
+    api
+      .get<ActivitySpace[]>(url)
+      .then(({ data }) => setCalendarSpaces(Array.isArray(data) ? data : []))
+      .catch(() => setCalendarSpaces([]));
+  }, [tenantFilter]);
+
+  useEffect(() => {
+    setSpaceFilter("all");
+  }, [tenantFilter]);
+
   const load = useCallback(async () => {
     setLoading(true);
     const { from, to } = viewRange(focusDate, viewMode);
@@ -437,16 +453,21 @@ export function FutebolAgendaOperacional() {
       .catch(() => {});
   }, [entryIdFromUrl]);
 
+  const visibleItems = useMemo(() => {
+    if (spaceFilter === "all") return items;
+    return items.filter((item) => item.spaceId === spaceFilter);
+  }, [items, spaceFilter]);
+
   const byDay = useMemo(() => {
     const map = new Map<string, FootballAgendaCalendarItem[]>();
-    for (const item of items) {
+    for (const item of visibleItems) {
       const key = resolveAgendaCalendarDateKey(item);
       const list = map.get(key) ?? [];
       list.push(item);
       map.set(key, list);
     }
     return map;
-  }, [items]);
+  }, [visibleItems]);
 
   const monthLabel = periodLabel(focusDate, viewMode);
   const today = todayKey();
@@ -1090,6 +1111,19 @@ export function FutebolAgendaOperacional() {
                 {FOOTBALL_AGENDA_MANUAL_ENTRY_TYPES.map((t) => (
                   <SelectItem key={t} value={t}>
                     {FOOTBALL_AGENDA_TYPE_LABEL[t]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={spaceFilter} onValueChange={setSpaceFilter}>
+              <SelectTrigger className="min-h-[44px] w-full sm:w-[200px]">
+                <SelectValue placeholder="Espaço" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os espaços</SelectItem>
+                {calendarSpaces.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
                   </SelectItem>
                 ))}
               </SelectContent>
