@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   Globe,
   FileText,
+  FileBarChart,
   Image,
   Settings,
   Newspaper,
@@ -889,6 +890,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: BarChart3,
         moduleSlug: "relatorios_adm",
         children: [
+          {
+            slug: "adm_rel_dinamicos",
+            label: "Relatórios dinâmicos",
+            href: "/dashboard/relatorios/adm/dinamicos",
+            icon: FileBarChart,
+            moduleSlug: "relatorios_adm",
+          },
           {
             slug: "adm_rel_estoque_compras",
             label: "Estoque e Compras",

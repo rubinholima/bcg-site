@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Package } from "lucide-react";
+import { ChevronRight, FileBarChart, Package } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RelatorioAdmDeptShell } from "@/components/dashboard/adm/relatorios/RelatorioAdmDeptShell";
 
 const REPORT_OPTIONS = [
+  {
+    href: "/dashboard/relatorios/adm/dinamicos",
+    title: "Relatórios dinâmicos",
+    icon: FileBarChart,
+  },
   {
     href: "/dashboard/relatorios/adm/estoque-compras",
     title: "Estoque e Compras",

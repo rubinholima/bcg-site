@@ -55,6 +55,7 @@ import { FutebolTreinadoresModule } from './futebol-treinadores/futebol-treinado
 import { AssistenciaSocialModule } from './assistencia-social/assistencia-social.module';
 import { FutebolJogosModule } from './futebol-jogos/futebol-jogos.module';
 import { AgendaConfigModule } from './agenda-config/agenda-config.module';
+import { DynamicReportsModule } from './dynamic-reports/dynamic-reports.module';
 
 @Module({
   imports: [
@@ -112,6 +113,7 @@ import { AgendaConfigModule } from './agenda-config/agenda-config.module';
     AssistenciaSocialModule,
     FutebolJogosModule,
     AgendaConfigModule,
+    DynamicReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
