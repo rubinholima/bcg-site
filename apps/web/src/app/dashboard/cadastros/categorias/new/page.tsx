@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { invalidateFixtureCategoriesCache } from "@/hooks/useFixtureCategories";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 export default function NewCategoriaPage() {
   const router = useRouter();
@@ -33,10 +33,7 @@ export default function NewCategoriaPage() {
         sortOrder: Number.parseInt(sortOrder, 10) || 0,
       });
       invalidateFixtureCategoriesCache();
-      if (data?.id) {
-        markSaveSuccessForNavigation();
-        router.replace(`/dashboard/cadastros/categorias/${data.id}/edit`);
-      }
+      finishCadastroSave(router, CADASTRO_LIST_HREFS.categorias);
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err
@@ -53,7 +50,7 @@ export default function NewCategoriaPage() {
   return (
     <div className="space-y-6">
       <Button variant="ghost" asChild className="min-h-[44px]">
-        <Link href="/dashboard/cadastros/categorias">
+        <Link href={CADASTRO_LIST_HREFS.categorias}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Link>

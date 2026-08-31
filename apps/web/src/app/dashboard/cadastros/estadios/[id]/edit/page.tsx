@@ -1,18 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 export default function EditEstadioPage() {
-  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
+  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -52,7 +51,7 @@ export default function EditEstadioPage() {
         country: country.trim() || undefined,
         address: address.trim() || undefined,
       });
-      notifySaved();
+      finishCadastroSave(router, CADASTRO_LIST_HREFS.estadios);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar estádio");
     } finally {
@@ -140,7 +139,7 @@ export default function EditEstadioPage() {
               <Button type="submit" disabled={loading}>
                 {loading ? "Salvando..." : "Salvar Alterações"}
               </Button>
-              <Link href="/dashboard/cadastros/estadios">
+              <Link href={CADASTRO_LIST_HREFS.estadios}>
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>
@@ -149,7 +148,6 @@ export default function EditEstadioPage() {
           </form>
         </CardContent>
       </Card>
-      <SaveSuccessModal />
     </div>
   );
 }

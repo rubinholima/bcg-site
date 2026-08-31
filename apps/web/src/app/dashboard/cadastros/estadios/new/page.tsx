@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 export default function NewEstadioPage() {
   const router = useRouter();
@@ -33,8 +32,7 @@ export default function NewEstadioPage() {
         address: address.trim() || undefined,
       });
       if (data?.id) {
-        markSaveSuccessForNavigation();
-        router.replace(`/dashboard/cadastros/estadios/${data.id}/edit`);
+        finishCadastroSave(router, CADASTRO_LIST_HREFS.estadios);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar estádio");
@@ -113,7 +111,7 @@ export default function NewEstadioPage() {
               <Button type="submit" disabled={loading}>
                 {loading ? "Criando..." : "Criar Estádio"}
               </Button>
-              <Link href="/dashboard/cadastros/estadios">
+              <Link href={CADASTRO_LIST_HREFS.estadios}>
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>

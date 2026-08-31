@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { filterCurrentSquadPlayers } from '../common/player-roster.util';
 import { PrismaService } from '../prisma/prisma.service';
 
 function startOfDay(d: Date): Date {
@@ -134,11 +135,17 @@ export class NutritionReportsService {
     if (params.categoryId && scope !== 'individual') {
       const cat = await this.prisma.nutritionCategory.findUnique({ where: { id: params.categoryId } });
       if (cat?.code) {
-        players = await this.prisma.player.findMany({
+        const rosterRaw = await this.prisma.player.findMany({
           where: { tenantId: params.tenantId, category: cat.code },
-          select: { id: true, name: true, jerseyNumber: true, category: true },
+          select: { id: true, name: true, jerseyNumber: true, category: true, registrationProfile: true },
           orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
         });
+        players = filterCurrentSquadPlayers(rosterRaw).map(({ id, name, jerseyNumber, category: catCode }) => ({
+          id,
+          name,
+          jerseyNumber,
+          category: catCode,
+        }));
       }
     }
 

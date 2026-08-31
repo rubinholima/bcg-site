@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,9 +11,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { invalidateFixtureCategoriesCache } from "@/hooks/useFixtureCategories";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 export default function EditCategoriaPage() {
-  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
+  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -55,7 +55,7 @@ export default function EditCategoriaPage() {
         active,
       });
       invalidateFixtureCategoriesCache();
-      notifySaved();
+      finishCadastroSave(router, CADASTRO_LIST_HREFS.categorias);
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err
@@ -76,7 +76,7 @@ export default function EditCategoriaPage() {
   return (
     <div className="space-y-6">
       <Button variant="ghost" asChild className="min-h-[44px]">
-        <Link href="/dashboard/cadastros/categorias">
+        <Link href={CADASTRO_LIST_HREFS.categorias}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Link>
@@ -125,13 +125,17 @@ export default function EditCategoriaPage() {
               Categoria ativa (visível no app)
             </label>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <Button type="submit" disabled={loading} className="min-h-[44px] w-full sm:w-auto">
-              {loading ? "Salvando…" : "Salvar alterações"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" disabled={loading} className="min-h-[44px]">
+                {loading ? "Salvando…" : "Salvar alterações"}
+              </Button>
+              <Button type="button" variant="outline" asChild className="min-h-[44px]">
+                <Link href={CADASTRO_LIST_HREFS.categorias}>Cancelar</Link>
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
-      <SaveSuccessModal />
     </div>
   );
 }

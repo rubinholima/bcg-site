@@ -2,9 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { StandingsFormulaEditor } from "@/components/dashboard/StandingsFormulaEditor";
 import { api } from "@/lib/api";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 export default function NewCampeonatoPage() {
   const router = useRouter();
@@ -60,8 +59,7 @@ export default function NewCampeonatoPage() {
         standingsFormulaName: standingsFormulaName.trim() || undefined,
       });
       if (data?.id) {
-        markSaveSuccessForNavigation();
-        router.replace(`/dashboard/cadastros/campeonatos/${data.id}/edit`);
+        finishCadastroSave(router, CADASTRO_LIST_HREFS.campeonatos);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar campeonato");
@@ -151,7 +149,7 @@ export default function NewCampeonatoPage() {
               <Button type="submit" disabled={loading}>
                 {loading ? "Criando..." : "Criar Campeonato"}
               </Button>
-              <Link href="/dashboard/cadastros/campeonatos">
+              <Link href={CADASTRO_LIST_HREFS.campeonatos}>
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>

@@ -2,15 +2,14 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 export default function NewTimePage() {
   const router = useRouter();
@@ -55,8 +54,7 @@ export default function NewTimePage() {
         logoUrl: logoUrl.trim() || undefined,
       });
       if (data?.id) {
-        markSaveSuccessForNavigation();
-        router.replace(`/dashboard/cadastros/times/${data.id}/edit`);
+        finishCadastroSave(router, CADASTRO_LIST_HREFS.times);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar time");
@@ -135,7 +133,7 @@ export default function NewTimePage() {
               <Button type="submit" disabled={loading}>
                 {loading ? "Criando..." : "Criar Time"}
               </Button>
-              <Link href="/dashboard/cadastros/times">
+              <Link href={CADASTRO_LIST_HREFS.times}>
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>

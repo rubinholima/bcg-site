@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { CreateTenantKindDto } from "@/types/tenant-kind";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 export default function NewTipoPage() {
   const router = useRouter();
@@ -28,8 +27,7 @@ export default function NewTipoPage() {
     try {
       const { data } = await api.post<{ id: string }>("/tenant-kinds", formData);
       if (data?.id) {
-        markSaveSuccessForNavigation();
-        router.replace(`/dashboard/cadastros/tipos/${data.id}/edit`);
+        finishCadastroSave(router, CADASTRO_LIST_HREFS.tipos);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar tipo");
@@ -78,7 +76,7 @@ export default function NewTipoPage() {
               <Button type="submit" disabled={loading}>
                 {loading ? "Criando..." : "Criar Tipo"}
               </Button>
-              <Link href="/dashboard/cadastros/tipos">
+              <Link href={CADASTRO_LIST_HREFS.tipos}>
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>

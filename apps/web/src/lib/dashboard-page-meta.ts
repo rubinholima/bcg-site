@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import { Sparkles } from "lucide-react";
 import type { DashboardAccent } from "./dashboard-accent";
 import { resolveDashboardAccent } from "./dashboard-accent";
+import { resolveCadastroListBackHref } from "./cadastros-navigation";
 import { DASHBOARD_MENU, type MenuItemConfig } from "./dashboard-menu.config";
 
 export type DashboardPageMeta = {
@@ -248,8 +249,10 @@ export function resolveDashboardPageMeta(pathname: string): DashboardPageMeta | 
   }
 
   const lastSegment = cleanPath.split("/").pop() ?? "";
+  const cadastroBackHref = resolveCadastroListBackHref(cleanPath);
   const backHref =
     override?.backHref ??
+    cadastroBackHref ??
     (titleForGameDetailPath(cleanPath, lastSegment)
       ? "/dashboard/futebol/jogos"
       : match && isSubpath && match.href !== cleanPath
@@ -313,6 +316,7 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/eventos\/[^/]+\/editar$/,
 
   // Detalhe / formulário com header dedicado
+  /^\/dashboard\/cadastros\/[^/]+\/(new|[^/]+\/(edit|delete))$/,
   /^\/dashboard\/cadastros\/jogadores\/[^/]+\/edit$/,
   /^\/dashboard\/juridico\/[^/]+$/,
   /^\/dashboard\/medico\/(?!equipe(?:\/|$))[^/]+$/,

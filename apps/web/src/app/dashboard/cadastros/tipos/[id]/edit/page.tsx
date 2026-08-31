@@ -1,19 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { UpdateTenantKindDto, TenantKind } from "@/types/tenant-kind";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 export default function EditTipoPage() {
-  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
+  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -44,7 +43,7 @@ export default function EditTipoPage() {
 
     try {
       await api.patch(`/tenant-kinds/${id}`, formData);
-      notifySaved();
+      finishCadastroSave(router, CADASTRO_LIST_HREFS.tipos);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar tipo");
     } finally {
@@ -102,7 +101,7 @@ export default function EditTipoPage() {
               <Button type="submit" disabled={loading}>
                 {loading ? "Salvando..." : "Salvar Alterações"}
               </Button>
-              <Link href="/dashboard/cadastros/tipos">
+              <Link href={CADASTRO_LIST_HREFS.tipos}>
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>
@@ -111,7 +110,6 @@ export default function EditTipoPage() {
           </form>
         </CardContent>
       </Card>
-      <SaveSuccessModal />
     </div>
   );
 }

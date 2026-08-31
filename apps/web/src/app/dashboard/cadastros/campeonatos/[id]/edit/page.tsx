@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "next/navigation";
-import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,9 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { StandingsFormulaEditor } from "@/components/dashboard/StandingsFormulaEditor";
 import { api } from "@/lib/api";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 export default function EditCampeonatoPage() {
-  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
+  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -79,7 +78,7 @@ export default function EditCampeonatoPage() {
         standingsFormula: standingsFormula.trim() || undefined,
         standingsFormulaName: standingsFormulaName.trim() || undefined,
       });
-      notifySaved();
+      finishCadastroSave(router, CADASTRO_LIST_HREFS.campeonatos);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar campeonato");
     } finally {
@@ -178,7 +177,7 @@ export default function EditCampeonatoPage() {
               <Button type="submit" disabled={loading}>
                 {loading ? "Salvando..." : "Salvar Alterações"}
               </Button>
-              <Link href="/dashboard/cadastros/campeonatos">
+              <Link href={CADASTRO_LIST_HREFS.campeonatos}>
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>
@@ -187,7 +186,6 @@ export default function EditCampeonatoPage() {
           </form>
         </CardContent>
       </Card>
-      <SaveSuccessModal />
     </div>
   );
 }

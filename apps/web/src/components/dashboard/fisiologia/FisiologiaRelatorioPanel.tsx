@@ -100,11 +100,13 @@ export function FisiologiaRelatorioPanel() {
       setPlayers([]);
       return;
     }
+    const params = new URLSearchParams({ tenantId: tenantId });
+    if (category) params.set("category", category);
     api
-      .get<PlayerOption[]>(`/players?tenantId=${encodeURIComponent(tenantId)}`)
+      .get<PlayerOption[]>(`/players?${params}`)
       .then(({ data }) => setPlayers(Array.isArray(data) ? data : []))
       .catch(() => setPlayers([]));
-  }, [tenantId]);
+  }, [tenantId, category]);
 
   const fetchReport = async (): Promise<FisiologiaReport | null> => {
     if (!tenantId) {

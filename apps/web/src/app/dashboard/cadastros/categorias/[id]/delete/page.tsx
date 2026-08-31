@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { invalidateFixtureCategoriesCache } from "@/hooks/useFixtureCategories";
+import { CADASTRO_LIST_HREFS } from "@/lib/cadastros-navigation";
 
 export default function DeleteCategoriaPage() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function DeleteCategoriaPage() {
     try {
       await api.delete(`/fixture-categories/${id}`);
       invalidateFixtureCategoriesCache();
-      router.push("/dashboard/cadastros/categorias?success=true");
+      router.push(`${CADASTRO_LIST_HREFS.categorias}?success=true`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao desativar categoria");
       setLoading(false);
@@ -60,7 +61,7 @@ export default function DeleteCategoriaPage() {
             <Button variant="destructive" onClick={handleDelete} disabled={loading} className="min-h-[44px]">
               {loading ? "Desativando…" : "Desativar"}
             </Button>
-            <Link href="/dashboard/cadastros/categorias">
+            <Link href={CADASTRO_LIST_HREFS.categorias}>
               <Button variant="outline" disabled={loading} className="min-h-[44px]">
                 Cancelar
               </Button>

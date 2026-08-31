@@ -24,6 +24,7 @@ import {
   UpdatePhysiologyLoadSessionDto,
 } from './dto/fisiologia.dto';
 import { normalizePhysiology } from '../cadastros/body-metrics.util';
+import { filterCurrentSquadPlayers } from '../common/player-roster.util';
 
 const PLAYER_SELECT = {
   id: true,
@@ -422,11 +423,12 @@ export class FisiologiaService {
 
   async categoryRoster(tenantId: string, category: string, allowedTenants: string[] | null) {
     this.assertTenantAccess(tenantId, allowedTenants);
-    return this.prisma.player.findMany({
+    const players = await this.prisma.player.findMany({
       where: { tenantId, category },
       orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
       select: PLAYER_SELECT,
     });
+    return filterCurrentSquadPlayers(players);
   }
 
   async listLoadSessions(input: {
