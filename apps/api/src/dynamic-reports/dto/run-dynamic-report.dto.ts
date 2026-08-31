@@ -42,6 +42,10 @@ export class DynamicReportFiltersDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsString()
+  referenceDate?: string;
 }
 
 export class RunDynamicReportDto {

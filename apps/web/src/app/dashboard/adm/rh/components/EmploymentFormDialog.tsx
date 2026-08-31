@@ -23,6 +23,10 @@ import { Tenant } from "@/types/tenant";
 import { type DepartmentRow } from "./DepartmentFormDialog";
 import { type JobRoleRow } from "./JobRoleFormDialog";
 import { type EmployeeRow } from "./EmployeeFormDialog";
+import {
+  EmploymentRhFinancialSections,
+  type BankData,
+} from "./EmploymentRhFinancialSections";
 
 export interface EmploymentRow {
   id: string;
@@ -35,6 +39,7 @@ export interface EmploymentRow {
   endDate: string | null;
   salaryBase: number | null;
   status: string;
+  bankData?: Record<string, unknown> | null;
   employee?: { id: string; name: string; type: string; email?: string | null };
   jobRole?: { id: string; name: string; type: string };
   department?: { id: string; name: string } | null;
@@ -99,6 +104,7 @@ export function EmploymentFormDialog({
   const [salaryBase, setSalaryBase] = useState("");
   const [status, setStatus] = useState("ativo");
   const [notes, setNotes] = useState("");
+  const [bankData, setBankData] = useState<BankData>({});
   const [openContractAfterCreate, setOpenContractAfterCreate] = useState(false);
   const [loadingCadastro, setLoadingCadastro] = useState(false);
   const [cadastroMissing, setCadastroMissing] = useState(false);
@@ -152,6 +158,20 @@ export function EmploymentFormDialog({
       setNotes("");
       setSalaryError(null);
       setOpenContractAfterCreate(false);
+      setBankData({});
+      if (edit.id) {
+        void (async () => {
+          try {
+            const { data } = await api.get<EmploymentRow>(`/rh/employments/${edit.id}`);
+            const raw = data.bankData;
+            if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+              setBankData(raw as BankData);
+            }
+          } catch {
+            /* mantém vazio */
+          }
+        })();
+      }
     } else {
       setTenantId(tenants[0]?.id ?? "");
       setEmployeeId("");
@@ -163,6 +183,7 @@ export function EmploymentFormDialog({
       setSalaryBase("");
       setStatus("ativo");
       setNotes("");
+      setBankData({});
       setOpenContractAfterCreate(false);
     }
   }, [open, edit, tenants]);
@@ -207,6 +228,7 @@ export function EmploymentFormDialog({
         salaryBase: salaryParsed,
         status,
         notes: notes.trim() || undefined,
+        bankData,
       };
       if (edit) {
         await api.patch(`/rh/employments/${edit.id}`, payload);
@@ -440,6 +462,12 @@ export function EmploymentFormDialog({
                 ) : null}
               </div>
             </ExpandableSection>
+
+            <EmploymentRhFinancialSections
+              employmentId={edit?.id ?? null}
+              bankData={bankData}
+              onBankDataChange={setBankData}
+            />
 
             <ExpandableSection title="Observações">
               <div className="grid min-w-0 gap-2">

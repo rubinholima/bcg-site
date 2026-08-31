@@ -118,8 +118,11 @@ export type BankSnapshot = {
   bankAgency: string | null;
   bankAccount: string | null;
   bankAccountType: string | null;
+  bankOperation: string | null;
   pixKey: string | null;
   pixKeyType: string | null;
+  bankHolderName: string | null;
+  bankHolderCpf: string | null;
 };
 
 /**
@@ -139,8 +142,11 @@ export function resolveBankData(
     bankAgency: extras.bankAgency?.trim() || null,
     bankAccount: extras.bankAccountNumber?.trim() || null,
     bankAccountType: extras.bankAccountType?.trim() || null,
+    bankOperation: null,
     pixKey: extras.pixKey?.trim() || null,
     pixKeyType: extras.pixKeyType?.trim() || null,
+    bankHolderName: null,
+    bankHolderCpf: null,
   };
 
   const bankJson =
@@ -152,9 +158,12 @@ export function resolveBankData(
     bankName: typeof bankJson?.bank === 'string' ? bankJson.bank.trim() : null,
     bankAgency: typeof bankJson?.agency === 'string' ? bankJson.agency.trim() : null,
     bankAccount: typeof bankJson?.account === 'string' ? bankJson.account.trim() : null,
-    bankAccountType: null,
+    bankAccountType: typeof bankJson?.accountType === 'string' ? bankJson.accountType.trim() : null,
+    bankOperation: typeof bankJson?.operation === 'string' ? bankJson.operation.trim() : null,
     pixKey: typeof bankJson?.pix === 'string' ? bankJson.pix.trim() : null,
-    pixKeyType: null,
+    pixKeyType: typeof bankJson?.pixKeyType === 'string' ? bankJson.pixKeyType.trim() : null,
+    bankHolderName: typeof bankJson?.holderName === 'string' ? bankJson.holderName.trim() : null,
+    bankHolderCpf: typeof bankJson?.holderCpf === 'string' ? bankJson.holderCpf.replace(/\D/g, '') || null : null,
   };
 
   return {
@@ -162,7 +171,10 @@ export function resolveBankData(
     bankAgency: fromExtras.bankAgency ?? fromEmployment.bankAgency,
     bankAccount: fromExtras.bankAccount ?? fromEmployment.bankAccount,
     bankAccountType: fromExtras.bankAccountType ?? fromEmployment.bankAccountType,
+    bankOperation: fromEmployment.bankOperation,
     pixKey: fromExtras.pixKey ?? fromEmployment.pixKey ?? employeePixKey?.trim() ?? null,
     pixKeyType: fromExtras.pixKeyType ?? fromEmployment.pixKeyType,
+    bankHolderName: fromEmployment.bankHolderName,
+    bankHolderCpf: fromEmployment.bankHolderCpf,
   };
 }

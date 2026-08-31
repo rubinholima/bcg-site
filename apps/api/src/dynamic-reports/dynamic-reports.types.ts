@@ -94,6 +94,8 @@ export type DynamicReportRunFilters = {
   season?: number;
   competition?: string;
   search?: string;
+  /** Data de referência para salário/benefícios (YYYY-MM-DD) */
+  referenceDate?: string;
 };
 
 export type DynamicReportRunInput = {

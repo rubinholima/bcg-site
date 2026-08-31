@@ -24,6 +24,10 @@ import { JuridicoEmploymentContractsController } from './juridico-employment-con
 import { JuridicoPersonsController } from './juridico-persons.controller';
 import { JuridicoPersonsService } from './juridico-persons.service';
 import { EmploymentContractsService } from './employment-contracts.service';
+import { EmploymentCompensationController } from './employment-compensation.controller';
+import { EmploymentCompensationService } from './employment-compensation.service';
+import { EmploymentSalaryRevisionsController } from './employment-salary-revisions.controller';
+import { EmploymentSalaryRevisionsService } from './employment-salary-revisions.service';
 
 @Module({
   imports: [AuthModule, ModulesModule, ContractsModule, S3Module, HelloSignModule],
@@ -39,6 +43,8 @@ import { EmploymentContractsService } from './employment-contracts.service';
     EmploymentContractsController,
     JuridicoEmploymentContractsController,
     JuridicoPersonsController,
+    EmploymentCompensationController,
+    EmploymentSalaryRevisionsController,
   ],
   providers: [
     ModuleAccessGuard,
@@ -51,6 +57,8 @@ import { EmploymentContractsService } from './employment-contracts.service';
     LeavePeriodsService,
     EmploymentContractsService,
     JuridicoPersonsService,
+    EmploymentCompensationService,
+    EmploymentSalaryRevisionsService,
   ],
   exports: [
     DepartmentsService,
@@ -60,6 +68,8 @@ import { EmploymentContractsService } from './employment-contracts.service';
     EmployeeDocumentsService,
     EmployeeDependentsService,
     LeavePeriodsService,
+    EmploymentCompensationService,
+    EmploymentSalaryRevisionsService,
   ],
 })
 export class RhModule {}

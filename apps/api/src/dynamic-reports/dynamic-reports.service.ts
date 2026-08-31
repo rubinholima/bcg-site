@@ -25,6 +25,12 @@ import {
   sportsSituationLabel,
 } from './populations/population.util';
 import {
+  compensationAmountAtDate,
+  getSalaryAtDate,
+  receivesCompensationAtDate,
+  startOfDay,
+} from '../rh/employment-compensation.util';
+import {
   DYNAMIC_REPORT_GROUP_OPTIONS,
   DYNAMIC_REPORT_POPULATIONS,
   DYNAMIC_REPORT_PRESETS,
@@ -41,6 +47,27 @@ import type {
   DynamicReportRunFilters,
 } from './dynamic-reports.types';
 
+type EmploymentContext = {
+  id: string;
+  status: string;
+  endDate: Date | null;
+  contractType: string;
+  salaryBase: number | null;
+  bankData: unknown;
+  department: { id: string; name: string } | null;
+  compensationItems: Array<{
+    kind: string;
+    amount: unknown;
+    effectiveFrom: Date;
+    effectiveTo: Date | null;
+  }>;
+  salaryRevisions: Array<{
+    amount: unknown;
+    effectiveFrom: Date;
+    effectiveTo: Date | null;
+  }>;
+};
+
 type PlayerRow = {
   id: string;
   tenantId: string;
@@ -54,13 +81,7 @@ type PlayerRow = {
   rhEmployee?: {
     id: string;
     pixKey: string | null;
-    employments: Array<{
-      status: string;
-      endDate: Date | null;
-      contractType: string;
-      bankData: unknown;
-      department: { id: string; name: string } | null;
-    }>;
+    employments: EmploymentContext[];
   } | null;
 };
 
@@ -71,13 +92,10 @@ type EmployeeRow = {
   type: string;
   playerId: string | null;
   pixKey: string | null;
-  employments: Array<{
-    status: string;
-    endDate: Date | null;
-    contractType: string;
-    bankData: unknown;
-    department: { id: string; name: string } | null;
-  }>;
+  birthDate?: Date | null;
+  cpf?: string | null;
+  rg?: string | null;
+  employments: EmploymentContext[];
 };
 
 @Injectable()
@@ -133,6 +151,7 @@ export class DynamicReportsService {
     }
 
     const filters = input.filters ?? {};
+    const referenceDate = this.resolveReferenceDate(filters);
     const sortBy = input.sortBy ?? preset?.sortBy ?? 'fullName';
     const sortDir = input.sortDir ?? preset?.sortDir ?? 'asc';
     const groupBy = input.groupBy ?? preset?.groupBy ?? 'none';
@@ -152,11 +171,11 @@ export class DynamicReportsService {
           )
         : new Map<string, number>();
       rows = players.map((p) =>
-        this.playerToReportRow(p, population, minutesMap.get(p.id) ?? 0),
+        this.playerToReportRow(p, population, minutesMap.get(p.id) ?? 0, referenceDate),
       );
     } else if (population.startsWith('employee.')) {
       const employees = await this.loadEmployees(input.tenantId, population, filters, allowedTenantIds);
-      rows = employees.map((e) => this.employeeToReportRow(e, population));
+      rows = employees.map((e) => this.employeeToReportRow(e, population, referenceDate));
     }
 
     const resolvedFields = this.resolveFieldKeysForRows(fieldKeys, rows);
@@ -222,7 +241,11 @@ export class DynamicReportsService {
             id: true,
             pixKey: true,
             employments: {
-              include: { department: { select: { id: true, name: true } } },
+              include: {
+                department: { select: { id: true, name: true } },
+                compensationItems: true,
+                salaryRevisions: true,
+              },
               orderBy: { startDate: 'desc' },
             },
           },
@@ -253,6 +276,10 @@ export class DynamicReportsService {
           return normalizeSportsSituation(profile.sports?.situation) === filters.situation.trim();
         }
         return true;
+      }
+      if (population === 'player.payroll') {
+        const active = p.rhEmployee ? pickActiveEmployment(p.rhEmployee.employments) : null;
+        return active != null;
       }
       return true;
     });
@@ -286,8 +313,15 @@ export class DynamicReportsService {
         type: true,
         playerId: true,
         pixKey: true,
+        cpf: true,
+        rg: true,
+        birthDate: true,
         employments: {
-          include: { department: { select: { id: true, name: true } } },
+          include: {
+            department: { select: { id: true, name: true } },
+            compensationItems: true,
+            salaryRevisions: true,
+          },
           orderBy: { startDate: 'desc' },
         },
       },
@@ -322,7 +356,7 @@ export class DynamicReportsService {
     const players = await this.loadPlayers(tenantId, 'player.athletes', filters, allowedTenantIds);
     const playerRows = players
       .filter((p) => !isArchivedPlayer(p.registrationProfile))
-      .map((p) => this.playerToReportRow(p, 'people.cafeteria', 0));
+      .map((p) => this.playerToReportRow(p, 'people.cafeteria', 0, startOfDay(new Date())));
 
     const employees = await this.loadEmployees(
       tenantId,
@@ -332,7 +366,7 @@ export class DynamicReportsService {
     );
     const staffRows = employees
       .filter((e) => !e.playerId)
-      .map((e) => this.employeeToReportRow(e, 'people.cafeteria'));
+      .map((e) => this.employeeToReportRow(e, 'people.cafeteria', startOfDay(new Date())));
 
     return [...playerRows, ...staffRows];
   }
@@ -341,6 +375,7 @@ export class DynamicReportsService {
     player: PlayerRow,
     population: string,
     officialMinutes: number,
+    referenceDate: Date,
   ): DynamicReportRow {
     const profile = parseRegistrationProfile(player.registrationProfile);
     const activeEmp = player.rhEmployee
@@ -351,6 +386,7 @@ export class DynamicReportsService {
       activeEmp?.bankData,
       player.rhEmployee?.pixKey,
     );
+    const financial = this.buildFinancialValues(activeEmp, referenceDate);
     const nickname =
       profile.personal?.nickname?.trim() ||
       profile.sports?.jerseyName?.trim() ||
@@ -384,17 +420,28 @@ export class DynamicReportsService {
         bankAgency: bank.bankAgency,
         bankAccount: bank.bankAccount,
         bankAccountType: bank.bankAccountType,
+        bankOperation: bank.bankOperation,
         pixKey: bank.pixKey,
         pixKeyType: bank.pixKeyType,
+        bankHolderName: bank.bankHolderName,
+        bankHolderCpf: bank.bankHolderCpf,
         officialMatchMinutes: officialMinutes,
+        employmentContractType: activeEmp?.contractType ?? null,
+        ...financial,
         signature: null,
       },
     };
   }
 
-  private employeeToReportRow(employee: EmployeeRow, population: string): DynamicReportRow {
+  private employeeToReportRow(
+    employee: EmployeeRow,
+    population: string,
+    referenceDate: Date,
+  ): DynamicReportRow {
     const active = pickActiveEmployment(employee.employments);
     const department = active?.department?.name?.trim() || 'Sem departamento';
+    const financial = this.buildFinancialValues(active, referenceDate);
+    const bank = resolveBankData({}, active?.bankData, employee.pixKey);
 
     return {
       personType: 'employee',
@@ -407,12 +454,69 @@ export class DynamicReportsService {
       values: {
         fullName: employee.name,
         employeeFullName: employee.name,
+        birthDate: employee.birthDate ? employee.birthDate.toISOString().slice(0, 10) : null,
+        cpf: employee.cpf ?? null,
+        rg: employee.rg ?? null,
         department,
         employeeType: employee.type,
         employmentContractType: active?.contractType ?? null,
+        bankName: bank.bankName,
+        bankAgency: bank.bankAgency,
+        bankAccount: bank.bankAccount,
+        bankAccountType: bank.bankAccountType,
+        bankOperation: bank.bankOperation,
+        pixKey: bank.pixKey,
+        pixKeyType: bank.pixKeyType,
+        bankHolderName: bank.bankHolderName,
+        bankHolderCpf: bank.bankHolderCpf,
+        ...financial,
         signature: null,
       },
     };
+  }
+
+  private buildFinancialValues(
+    activeEmp: EmploymentContext | null,
+    referenceDate: Date,
+  ): Record<string, string | number | null> {
+    if (!activeEmp) {
+      return {
+        salary: null,
+        receivesTransport: 'Não',
+        transportAmount: null,
+        receivesMeal: 'Não',
+        mealAmount: null,
+        receivesCostAllowance: 'Não',
+        costAllowanceAmount: null,
+        receivesImageRights: 'Não',
+        imageRightsAmount: null,
+      };
+    }
+
+    const items = activeEmp.compensationItems ?? [];
+    const salary = getSalaryAtDate(activeEmp.salaryRevisions ?? [], activeEmp.salaryBase, referenceDate);
+
+    const yn = (value: boolean) => (value ? 'Sim' : 'Não');
+
+    return {
+      salary,
+      receivesTransport: yn(receivesCompensationAtDate(items, 'TRANSPORT', referenceDate)),
+      transportAmount: compensationAmountAtDate(items, 'TRANSPORT', referenceDate),
+      receivesMeal: yn(receivesCompensationAtDate(items, 'MEAL', referenceDate)),
+      mealAmount: compensationAmountAtDate(items, 'MEAL', referenceDate),
+      receivesCostAllowance: yn(receivesCompensationAtDate(items, 'COST_ALLOWANCE', referenceDate)),
+      costAllowanceAmount: compensationAmountAtDate(items, 'COST_ALLOWANCE', referenceDate),
+      receivesImageRights: yn(receivesCompensationAtDate(items, 'IMAGE_RIGHTS', referenceDate)),
+      imageRightsAmount: compensationAmountAtDate(items, 'IMAGE_RIGHTS', referenceDate),
+    };
+  }
+
+  private resolveReferenceDate(filters: DynamicReportRunFilters): Date {
+    if (filters.referenceDate?.trim()) {
+      const parsed = startOfDay(new Date(`${filters.referenceDate.trim().slice(0, 10)}T12:00:00`));
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    return startOfDay(new Date());
   }
 
   /** Cafeteria preset pede fullName; funcionários usam employeeFullName internamente */
@@ -549,6 +653,7 @@ export class DynamicReportsService {
     if (filters.season != null) parts.push(`Temporada: ${filters.season}`);
     if (filters.competition) parts.push(`Competição: ${filters.competition}`);
     if (filters.search) parts.push(`Busca: "${filters.search}"`);
+    if (filters.referenceDate) parts.push(`Referência: ${filters.referenceDate}`);
     return parts.join(' · ');
   }
 }

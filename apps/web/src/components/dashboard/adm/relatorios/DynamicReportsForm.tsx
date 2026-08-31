@@ -89,6 +89,7 @@ const GROUP_LABELS: Record<string, string> = {
   bancarios: "Bancários",
   emprestimo: "Empréstimo",
   rh: "RH",
+  financeiro: "Financeiro",
   display: "Exibição",
 };
 
@@ -111,6 +112,7 @@ export function DynamicReportsForm() {
   const [season, setSeason] = useState("");
   const [competition, setCompetition] = useState("");
   const [search, setSearch] = useState("");
+  const [referenceDate, setReferenceDate] = useState("");
   const [pageSize, setPageSize] = useState<PrintPageSize>("A4");
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -222,6 +224,7 @@ export function DynamicReportsForm() {
     if (season.trim()) filters.season = Number(season);
     if (competition.trim()) filters.competition = competition.trim();
     if (search.trim()) filters.search = search.trim();
+    if (referenceDate.trim()) filters.referenceDate = referenceDate.trim();
 
     return {
       tenantId,
@@ -452,6 +455,18 @@ export function DynamicReportsForm() {
               <div className="space-y-2">
                 <Label>Competição (min. de jogo)</Label>
                 <Input value={competition} onChange={(e) => setCompetition(e.target.value)} placeholder="Opcional…" />
+              </div>
+            ) : null}
+
+            {showFilter("referenceDate") ? (
+              <div className="space-y-2">
+                <Label>Data de referência (salário/benefícios)</Label>
+                <Input
+                  type="date"
+                  className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                  value={referenceDate}
+                  onChange={(e) => setReferenceDate(e.target.value)}
+                />
               </div>
             ) : null}
 

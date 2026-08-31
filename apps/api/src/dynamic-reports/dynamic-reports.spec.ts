@@ -2,6 +2,12 @@ import {
   authorizeRequestedFields,
   fieldAllowedForPopulation,
 } from './fields/field.registry';
+import { getPresetDefinition } from './presets/preset.registry';
+import {
+  compensationAmountAtDate,
+  receivesCompensationAtDate,
+  startOfDay,
+} from '../rh/employment-compensation.util';
 import {
   calcAgeFromBirthDate,
   isActiveEmployment,
@@ -130,5 +136,59 @@ describe('Dynamic Reports — selected columns', () => {
     );
     expect(allowed).toEqual(['fullName']);
     expect(stripped).toContain('rg');
+  });
+});
+
+describe('Dynamic Reports — financial ACL', () => {
+  it('remove salary para usuário sem adm_rh/financeiro', () => {
+    const { allowed, stripped } = authorizeRequestedFields(
+      ['fullName', 'salary', 'transportAmount'],
+      'player.payroll',
+      ['relatorios_adm'],
+      false,
+    );
+    expect(allowed).toEqual(['fullName']);
+    expect(stripped).toContain('salary');
+    expect(stripped).toContain('transportAmount');
+  });
+
+  it('permite campos financeiros para adm_financeiro', () => {
+    const { allowed } = authorizeRequestedFields(
+      ['salary', 'costAllowanceAmount', 'bankHolderName'],
+      'player.payroll',
+      ['relatorios_adm', 'adm_financeiro'],
+      false,
+    );
+    expect(allowed).toEqual(['salary', 'costAllowanceAmount', 'bankHolderName']);
+  });
+});
+
+describe('Dynamic Reports — compensation resolution', () => {
+  it('resolve valores na data de referência', () => {
+    const date = startOfDay(new Date('2026-07-15T12:00:00'));
+    const items = [
+      {
+        kind: 'COST_ALLOWANCE',
+        amount: 1200,
+        effectiveFrom: startOfDay(new Date('2026-01-01T12:00:00')),
+        effectiveTo: null,
+      },
+    ];
+    expect(receivesCompensationAtDate(items, 'COST_ALLOWANCE', date)).toBe(true);
+    expect(compensationAmountAtDate(items, 'COST_ALLOWANCE', date)).toBe(1200);
+  });
+});
+
+describe('Dynamic Reports — presets Phase 2', () => {
+  it('lista refeitório preset intacto', () => {
+    const preset = getPresetDefinition('lista_refeitorio');
+    expect(preset?.population).toBe('people.cafeteria');
+    expect(preset?.defaultFields).toEqual(['fullName', 'signature']);
+  });
+
+  it('folha preset usa engine player.payroll', () => {
+    const preset = getPresetDefinition('folha_pagamento');
+    expect(preset?.population).toBe('player.payroll');
+    expect(preset?.defaultFields).toContain('salary');
   });
 });
