@@ -627,6 +627,9 @@ export class FutebolAgendaService {
     allDay?: boolean;
     excludeEntryId?: string;
   }): Promise<FootballAgendaConflictDto[]> {
+    const spaceId = input.spaceId?.trim();
+    if (!spaceId) return [];
+
     const startAt = new Date(input.startAt);
     const endAt = input.endAt ? new Date(input.endAt) : null;
     if (Number.isNaN(startAt.getTime())) {
@@ -636,7 +639,7 @@ export class FutebolAgendaService {
     const rows = await this.prisma.footballAgendaEntry.findMany({
       where: {
         tenantId: input.tenantId,
-        spaceId: input.spaceId,
+        spaceId,
         status: { not: 'cancelado' },
       },
       select: {
@@ -647,14 +650,15 @@ export class FutebolAgendaService {
         startAt: true,
         endAt: true,
         allDay: true,
+        spaceId: true,
       },
     });
 
     const conflicts = findSpaceConflicts(rows, {
+      spaceId,
       startAt,
       endAt,
       allDay: input.allDay ?? false,
-      category: input.category?.trim() || null,
       excludeEntryId: input.excludeEntryId,
     });
 

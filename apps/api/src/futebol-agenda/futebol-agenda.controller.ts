@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -107,6 +108,9 @@ export class FutebolAgendaController {
     @Query('allDay') allDay?: string,
     @Query('excludeEntryId') excludeEntryId?: string,
   ) {
+    if (!spaceId?.trim()) {
+      throw new BadRequestException('Informe o espaço (spaceId) para verificar conflitos.');
+    }
     return this.service.checkSpaceConflicts({
       tenantId,
       spaceId,

@@ -1618,7 +1618,15 @@ export function FutebolAgendaOperacional() {
                 id="agenda-space"
                 className={modalSelectClassName}
                 value={form.spaceId}
-                onChange={(e) => setForm((f) => ({ ...f, spaceId: e.target.value }))}
+                onChange={(e) => {
+                  const nextSpaceId = e.target.value;
+                  const selected = spaces.find((s) => s.id === nextSpaceId);
+                  setForm((f) => ({
+                    ...f,
+                    spaceId: nextSpaceId,
+                    location: selected ? selected.name : f.location,
+                  }));
+                }}
               >
                 <option value="">— Texto livre abaixo —</option>
                 {spaces.map((s) => (
