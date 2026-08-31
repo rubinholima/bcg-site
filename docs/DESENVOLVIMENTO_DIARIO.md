@@ -33,6 +33,65 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 31 DE AGOSTO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO (sessão completa)**
+
+### 1. CUP360 Dynamic Reports — Phase 2 (RH / financeiro estruturado)
+
+- **Schema + migration** `20260831140000_employment_compensation_phase2`: `EmploymentCompensationItem` (TRANSPORT, MEAL, COST_ALLOWANCE, IMAGE_RIGHTS) e `EmploymentSalaryRevision`; `Employment.salaryBase` mantido; sem backfill.
+- **API RH:** compensação efetiva, histórico salarial, merge de `Employment.bankData` (titular/CPF).
+- **UI RH:** seções financeiras no vínculo (`EmploymentRhFinancialSections`).
+- **Dynamic Reports:** campos salário/benefícios/banco, população `player.payroll`, presets Folha de Pagamento, Seguro de Vida, Ajuda de Custo, filtro `referenceDate`.
+- **Commit:** `27023eb` · testes + builds OK · **sem push** na hora.
+
+### 2. Pre-push review Phase 2 — correção de precedência bancária
+
+- Review identificou: `resolveBankData` priorizava `registrationProfile.extras` sobre `Employment.bankData` (invertido vs regra aprovada).
+- **Correção:** RH canônico por campo; extras só preenche lacunas; testes atualizados.
+- **Commit:** `865f9a3`.
+
+### 3. Deploy produção — Phase 2 completa
+
+- **Push:** `origin` + `production` (`865f9a3`).
+- **Migration aplicada:** 165 migrations, 0 pendentes; tabelas novas vazias (esperado).
+- Health OK; rotas Phase 2 protegidas (401 sem auth).
+
+### 4. Performance / Fisiologia — filtro do relatório atual
+
+- **Problema:** lançar carga já usava elenco operacional (`filterCurrentSquadPlayers`); relatório listava atletas desligados/emprestados por registros históricos.
+- **Correção:** `fisiologia-reports.util` — mesmo critério no relatório (ativo/teste sim; desligado/emprestado não); histórico preservado no banco.
+- **Commit:** `dc6984d` · **Deploy:** origin + production.
+
+## **ONDE ESTAMOS**
+
+| Item | Estado |
+|------|--------|
+| **Branch** | `develop` |
+| **HEAD / produção** | `dc6984d` |
+| **GitHub + Lightsail** | alinhados |
+| **Migrations produção** | 165 aplicadas |
+| **Working tree** | limpa (scripts debug / ops untracked — não commitar) |
+| **Validação operacional pendente** | Phase 2 RH/relatórios (Paulinho/time); relatório Performance na área Fisiologia |
+
+## **COMMITS DO DIA (ordem)**
+
+| Commit | Descrição |
+|--------|-----------|
+| `27023eb` | feat(rh): structured compensation + Dynamic Reports Phase 2 |
+| `865f9a3` | fix(reports): RH bank data prevalece no relatório dinâmico |
+| `dc6984d` | fix(performance): relatório Fisiologia só elenco operacional atual |
+
+## **ARQUIVOS PRINCIPAIS**
+
+- Phase 2: `schema.prisma`, migration Phase 2, `employment-compensation*`, `employment-salary-revisions*`, `dynamic-reports/*`, `EmploymentRhFinancialSections.tsx`, `EmploymentFormDialog.tsx`
+- Banco relatório: `population.util.ts`, `dynamic-reports.spec.ts`
+- Performance: `fisiologia-reports.service.ts`, `fisiologia-reports.util.ts`
+
+**Branch:** `develop` · **HEAD:** `dc6984d` · **Push encerramento:** `origin develop` · **Sync Beatscode:** não rodado
+
+---
+
 # 📅 20 DE AGOSTO DE 2026 — ENCERRAMENTO
 
 ## **O QUE FOI FEITO (sessão completa)**
