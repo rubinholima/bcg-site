@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -29,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 import { useAuth } from "@/context/AuthContext";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -226,7 +226,7 @@ function PlaylistImporter({ onImport }: { onImport: (urls: string[]) => void }) 
 }
 
 export default function EditJogadorPage() {
-  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
+  const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const { canAccessModule, user } = useAuth();
@@ -386,7 +386,11 @@ export default function EditJogadorPage() {
         publicFields: player.publicFields ?? undefined,
         registrationProfile: profile,
       });
-      notifySaved();
+      if (fromConsultas) {
+        router.push("/dashboard/consultas");
+      } else {
+        finishCadastroSave(router, CADASTRO_LIST_HREFS.jogadores);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {
@@ -436,7 +440,7 @@ export default function EditJogadorPage() {
         sectionIcon={Shirt}
         title={`${player.jerseyNumber ? `${player.jerseyNumber} - ` : ""}${player.name}`}
         description={[player.tenant?.name, player.category].filter(Boolean).join(" • ")}
-        backHref={fromConsultas ? "/dashboard/consultas" : "/dashboard/cadastros/jogadores"}
+        backHref={fromConsultas ? "/dashboard/consultas" : CADASTRO_LIST_HREFS.jogadores}
         backLabel={fromConsultas ? "Voltar para Consultas" : "Voltar"}
         leading={playerPhotoLeading}
         titleClassName="uppercase"
@@ -1110,7 +1114,6 @@ export default function EditJogadorPage() {
         </div>
       )}
 
-      <SaveSuccessModal />
     </div>
   );
 }

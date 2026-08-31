@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
+import { CADASTRO_LIST_HREFS, finishCadastroSave } from "@/lib/cadastros-navigation";
 
 interface Tenant {
   id: string;
@@ -84,8 +84,7 @@ export default function NewJogadorPage() {
         photoUrl: finalPhotoUrl,
       });
       if (data?.id) {
-        markSaveSuccessForNavigation();
-        router.replace(`/dashboard/cadastros/jogadores/${data.id}/edit`);
+        finishCadastroSave(router, CADASTRO_LIST_HREFS.jogadores);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar atleta");
@@ -97,7 +96,7 @@ export default function NewJogadorPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/cadastros/jogadores">
+        <Link href={CADASTRO_LIST_HREFS.jogadores}>
           <Button type="button" variant="ghost" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Voltar
@@ -213,9 +212,9 @@ export default function NewJogadorPage() {
 
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={loading}>
-                {loading ? "Criando..." : "Criar e editar"}
+                {loading ? "Criando..." : "Criar atleta"}
               </Button>
-              <Link href="/dashboard/cadastros/jogadores">
+              <Link href={CADASTRO_LIST_HREFS.jogadores}>
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>
