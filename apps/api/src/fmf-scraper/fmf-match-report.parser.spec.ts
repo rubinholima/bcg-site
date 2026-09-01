@@ -3,6 +3,7 @@ import {
   joinWrappedFmfRosterLines,
   parseFmfMatchReportText,
   parseStaffCardEventsFromTimedRows,
+  parseStaffFunctionTableCardEvents,
   parseStaffRoster,
 } from './fmf-match-report.parser';
 
@@ -157,6 +158,32 @@ ANT = Antes do Início
     expect(events[0]?.name).toBe('Tarley Dos Santos Sobrinho');
     expect(events[0]?.kind).toBe('red');
     expect(events[0]?.teamSide).toBe('away');
+  });
+
+  it('extrai cartões da comissão na tabela Função Nome Equipe (página 2, bloco multilinha)', () => {
+    const events = parseStaffFunctionTableCardEvents(
+      `
+Substituições
+ANT = Antes do Início do Jogo | INT = Intervalo | TER = Após o Término do Jogo
+Tempo 1T/2T Função Nome Equipe
+20:00 2T Preparador
+De Goleiros
+Fulano De Tal Silva
+Vermelho em decorrência de 2º cartão amarelo.
+Após discordar das marcações da arbitragem, foi advertido com cartão amarelo e em seguida o vermelho.
+BOSTON CITY FUTEBOL CLUBE SAF
+-- 2 of 2 --
+`,
+      'COIMBRA ESPORTE CLUBE SAF',
+      'BOSTON CITY FUTEBOL CLUBE SAF',
+    );
+    expect(events).toHaveLength(2);
+    expect(events.map((e) => e.kind).sort()).toEqual(['red', 'yellow']);
+    expect(events[0]?.roleLabel).toBe('Treinador de goleiros');
+    expect(events[0]?.name).toBe('Fulano De Tal Silva');
+    expect(events[0]?.sourceSection).toBe('Função Nome Equipe');
+    expect(events.every((e) => e.teamSide === 'away')).toBe(true);
+    expect(events.every((e) => e.clock === '20:00' && e.period === '2T')).toBe(true);
   });
 
   it('extrai staffRoster e eventos individuais', () => {

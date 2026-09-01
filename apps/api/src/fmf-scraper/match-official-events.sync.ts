@@ -201,7 +201,9 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
       period: card.period,
       sourceClock: card.clock,
       sourceExcerpt: card.excerpt,
-      sourceSections: [card.kind === 'yellow' ? 'Cartões Amarelos' : 'Cartões Vermelhos'],
+      sourceSections: [
+        card.sourceSection ?? (card.kind === 'yellow' ? 'Cartões Amarelos' : 'Cartões Vermelhos'),
+      ],
       externalKey: buildStaffCardExternalKey({
         kind: card.kind,
         teamSide,

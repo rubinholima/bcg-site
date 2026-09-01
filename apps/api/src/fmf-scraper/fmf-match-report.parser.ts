@@ -36,6 +36,8 @@ export interface FmfStaffCardEvent {
   period: string;
   minute: number;
   teamSide?: 'home' | 'away';
+  /** Seção de origem no PDF quando diferente de Cartões Amarelos/Vermelhos. */
+  sourceSection?: string;
 }
 
 /** Entrada oficial da comissão técnica (seção Comissão Técnica do PDF). */
@@ -466,6 +468,138 @@ export function parseStaffCardEventsFromTimedRows(
   return out;
 }
 
+const STAFF_FUNCTION_ROLE_LABEL: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /prep\.?\s*de\s+goleiros?|preparador\s+de\s+goleiros?|treinador\s+de\s+goleiros?/i, label: 'Treinador de goleiros' },
+  { pattern: /auxiliar\s+t[eé]cnico/i, label: 'Auxiliar técnico' },
+  { pattern: /preparador\s+f[ií]sico/i, label: 'Preparador físico' },
+  { pattern: /massagista/i, label: 'Massagista' },
+  { pattern: /fisioterapeuta/i, label: 'Fisioterapeuta' },
+  { pattern: /fisiologista/i, label: 'Fisiologista' },
+  { pattern: /m[eé]dico/i, label: 'Médico' },
+  { pattern: /t[eé]cnico/i, label: 'Técnico' },
+];
+
+function normalizeStaffFunctionRoleLabel(raw: string): string {
+  const compact = cleanLine(raw);
+  for (const { pattern, label } of STAFF_FUNCTION_ROLE_LABEL) {
+    if (pattern.test(compact)) return label;
+  }
+  return compact || 'Comissão técnica';
+}
+
+function looksLikeStaffPersonNameLine(line: string): boolean {
+  const value = cleanLine(line);
+  if (!value) return false;
+  if (
+    /vermelho|amarelo|discord|decorrencia|decorência|ap[oó]s|mesmo que|ladr[aã]o|advertid|relatar/i.test(
+      value,
+    )
+  ) {
+    return false;
+  }
+  if (
+    /^(preparador|de goleiros|t[eé]cnico|auxiliar|massagista|m[eé]dico|fisioterapeuta|fisiologista)\b/i.test(
+      value,
+    )
+  ) {
+    return false;
+  }
+  const words = value.split(/\s+/).filter(Boolean);
+  return words.length >= 2 && words.length <= 10;
+}
+
+function staffFunctionCardKindsFromNarrative(narrative: string): Array<'yellow' | 'red'> {
+  const text = cleanLine(narrative);
+  if (!text) return [];
+  const secondYellowRed = /2º cart[aã]o amarelo|segundo amarelo|segundo cart[aã]o amarelo/i.test(text);
+  const mentionsYellow = /cart[aã]o amarelo|advertid[oa] com amarelo|apresentei o segundo amarelo/i.test(text);
+  const mentionsRed = /vermelho/i.test(text);
+  if (secondYellowRed || (mentionsYellow && mentionsRed)) return ['yellow', 'red'];
+  if (mentionsRed) return ['red'];
+  if (mentionsYellow) return ['yellow'];
+  return [];
+}
+
+/**
+ * Página 2 da súmula FMF: tabela `Tempo 1T/2T Função Nome Equipe` após substituições.
+ * Cartões da comissão podem aparecer aqui em bloco multilinha (função + nome + narrativa).
+ */
+export function parseStaffFunctionTableCardEvents(
+  text: string,
+  homeTeam = '',
+  awayTeam = '',
+): FmfStaffCardEvent[] {
+  const marker = 'Tempo 1T/2T Função Nome Equipe';
+  const idx = text.lastIndexOf(marker);
+  if (idx < 0) return [];
+
+  let chunk = text.slice(idx + marker.length);
+  const footer = chunk.search(/\n--\s*\d+\s+of\s+\d+\s+--/i);
+  if (footer >= 0) chunk = chunk.slice(0, footer);
+
+  const lines = chunk
+    .split(/\r?\n/)
+    .map(cleanLine)
+    .filter((line) => line && !/^ANT\s*=|^INT\s*=|^TER\s*=|^NR\s*=/i.test(line));
+
+  const out: FmfStaffCardEvent[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const head = lines[i]!.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s*(.*)$/i);
+    if (!head) {
+      i += 1;
+      continue;
+    }
+
+    const clock = head[1]!;
+    const period = head[2]!.toUpperCase();
+    const blockLines: string[] = [];
+    if (head[3]?.trim()) blockLines.push(head[3].trim());
+    i += 1;
+
+    while (i < lines.length && !/^\d{1,2}:\d{2}\s+(1T|2T)\b/i.test(lines[i]!)) {
+      blockLines.push(lines[i]!);
+      i += 1;
+    }
+
+    const blockText = blockLines.join(' ');
+    const teamSide =
+      homeTeam && awayTeam ? inferFmfRowTeamSide(blockText, homeTeam, awayTeam) ?? undefined : undefined;
+    if (!teamSide) continue;
+
+    const nameIdx = blockLines.findIndex((line) => looksLikeStaffPersonNameLine(line));
+    if (nameIdx < 0) continue;
+
+    const name = blockLines[nameIdx]!.trim();
+    const roleRaw = blockLines.slice(0, nameIdx).join(' ');
+    const roleLabel = normalizeStaffFunctionRoleLabel(roleRaw);
+    const narrative = blockLines.slice(nameIdx + 1).join(' ');
+    const kinds = staffFunctionCardKindsFromNarrative(narrative);
+    if (kinds.length === 0) continue;
+
+    const excerpt = [ `${clock} ${period} ${roleRaw} ${name}`.trim(), narrative, blockLines.at(-1) ?? '' ]
+      .filter(Boolean)
+      .join(' ')
+      .slice(0, 240);
+
+    for (const kind of kinds) {
+      out.push({
+        kind,
+        roleLabel,
+        name,
+        excerpt,
+        clock,
+        period,
+        minute: Number(clock.split(':')[0]),
+        teamSide,
+        sourceSection: 'Função Nome Equipe',
+      });
+    }
+  }
+
+  return out;
+}
+
 const STAFF_ROSTER_ROLE_PATTERN =
   /^(T[eé]cnico|Auxiliar T[eé]cnico|M[eé]dico|Preparador F[ií]sico|Fisioterapeuta|Prep\.\s*de\s*Goleiros|Massagista|Fisiologista|Analista(?:\s+de\s+desempenho)?)\s*:\s*(.*)$/i;
 
@@ -733,6 +867,7 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
   const staffCardEvents: FmfStaffCardEvent[] = [
     ...parseStaffCardEventsFromTimedRows(yellowCardRows, 'yellow', homeTeam, awayTeam),
     ...parseStaffCardEventsFromTimedRows(redCardRows, 'red', homeTeam, awayTeam),
+    ...parseStaffFunctionTableCardEvents(text, homeTeam, awayTeam),
   ];
 
   for (const row of splitSubstitutionSectionRows(section(text, '\nSubstituições\n', '\nANT = Antes do Início'))) {
