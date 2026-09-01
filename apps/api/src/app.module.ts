@@ -46,6 +46,7 @@ import { PsychologySessionsModule } from './psychology-sessions/psychology-sessi
 import { FisioterapiaModule } from './fisioterapia/fisioterapia.module';
 import { FisiologiaModule } from './fisiologia/fisiologia.module';
 import { EnfermariaModule } from './enfermaria/enfermaria.module';
+import { MedicalDeparturesModule } from './medical-departures/medical-departures.module';
 import { PsychologySupportMaterialsModule } from './psychology-support-materials/psychology-support-materials.module';
 import { InfrastructureModule } from './infraestrutura/infrastructure.module';
 import { RolesModule } from './roles/roles.module';
@@ -105,6 +106,7 @@ import { DynamicReportsModule } from './dynamic-reports/dynamic-reports.module';
     FisioterapiaModule,
     FisiologiaModule,
     EnfermariaModule,
+    MedicalDeparturesModule,
     PsychologySupportMaterialsModule,
     InfrastructureModule,
     ComunicacaoModule,

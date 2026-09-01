@@ -7,6 +7,7 @@ import {
   ChevronRight,
   ClipboardList,
   HeartPulse,
+  Stethoscope,
   Users,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +38,11 @@ const REPORT_OPTIONS = [
     href: "/dashboard/relatorios/saude/enfermaria",
     title: "Enfermaria — Atendimentos",
     icon: HeartPulse,
+  },
+  {
+    href: "/dashboard/relatorios/saude/saidas-ct",
+    title: "Saídas do CT",
+    icon: Stethoscope,
   },
 ] as const;
 

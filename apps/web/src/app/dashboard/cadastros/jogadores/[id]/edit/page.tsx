@@ -46,6 +46,7 @@ import { RhEmployeeLinkCard } from "@/components/dashboard/rh/RhEmployeeLinkCard
 import { PlayerPsychologyClinicalSection } from "@/components/dashboard/psychology/PlayerPsychologyClinicalSection";
 import { PlayerPhysioSection } from "@/components/dashboard/fisioterapia/PlayerPhysioSection";
 import { PlayerNursingSection } from "@/components/dashboard/enfermaria/PlayerNursingSection";
+import { PlayerMedicalDeparturesSection } from "@/components/dashboard/medico/PlayerMedicalDeparturesSection";
 import { PlayerNutritionSection } from "@/components/dashboard/nutricao/PlayerNutritionSection";
 import { PlayerPhysiologySection } from "@/components/dashboard/fisiologia/PlayerPhysiologySection";
 import { PlayerSocialPedagogySection } from "@/components/dashboard/assistencia-social/PlayerSocialPedagogySection";
@@ -577,6 +578,10 @@ export default function EditJogadorPage() {
 
       {activeTab === "enfermaria" && player && (
         <PlayerNursingSection playerId={player.id} tenantId={player.tenantId} />
+      )}
+
+      {activeTab === "saidas_medicas" && player && (
+        <PlayerMedicalDeparturesSection playerId={player.id} tenantId={player.tenantId} />
       )}
 
       {activeTab === "nutricao" && player && (

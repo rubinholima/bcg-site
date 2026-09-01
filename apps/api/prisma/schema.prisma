@@ -180,6 +180,7 @@ model Tenant {
   physiologyHydrations         PhysiologyHydration[]
   physiologyLoadSessions       PhysiologyLoadSession[]
   nursingSessions              NursingSession[]
+  medicalDepartures            PlayerMedicalDeparture[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -1126,6 +1127,7 @@ model Player {
   physiologyHydrations       PhysiologyHydration[]
   physiologyLoadEntries      PhysiologyLoadEntry[]
   nursingSessions            NursingSession[]
+  medicalDepartures          PlayerMedicalDeparture[]
   @@index([tenantId])
   @@index([tenantId, category])
   @@index([tenantId, cbfRegistration])
@@ -3486,6 +3488,43 @@ model NursingSession {
   @@index([tenantId, status])
   @@index([playerId, status])
   @@index([attendedAt])
+}
+
+/// Saída do CT para atendimento externo de saúde (médico, dentista, exames, etc.)
+model PlayerMedicalDeparture {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId           String
+  player             Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  category           String?
+  departedAt         DateTime
+  returnedAt         DateTime?
+  destination        String   @db.Text
+  /// medico | dentista | exames | pronto_atendimento | emergencia | cirurgia | outro
+  careType           String
+  reason             String   @db.Text
+  careSummary        String?  @db.Text
+  /// proprio | onibus | aplicativo | taxi | ambulancia_clube | carro_clube | outro
+  transportMode      String
+  transportNotes     String?  @db.Text
+  companionStaffId   String?
+  companionName      String?
+  companionPhone     String?
+  /// programada | em_atendimento | retornou | cancelada
+  status             String   @default("programada")
+  notes              String?  @db.Text
+  /// IDs de documentos em registrationProfile.documents do atleta
+  documentIds        Json?
+  createdByUserId    String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@index([tenantId, status])
+  @@index([tenantId, departedAt])
+  @@index([playerId, departedAt])
+  @@index([tenantId, category])
+  @@index([careType])
+  @@index([transportMode])
 }
 
 model NursingSessionDiagnosis {
