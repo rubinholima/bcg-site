@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
@@ -35,8 +35,15 @@ export class DynamicReportsController {
   @Get('meta')
   @UseGuards(ModuleAccessGuard)
   @RequireModule([...DYNAMIC_REPORT_MODULES])
-  getMeta(@Req() req: Request & { user: CognitoJwtPayload }) {
-    return this.service.getMeta(req.user.sub, this.actorRole(req));
+  getMeta(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('population') population?: string,
+  ) {
+    return this.service.getMeta(
+      req.user.sub,
+      this.actorRole(req),
+      population?.trim() || 'player.athletes',
+    );
   }
 
   @Post('run')

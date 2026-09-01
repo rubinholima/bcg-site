@@ -122,17 +122,29 @@ describe('Dynamic Reports — ACL', () => {
     expect(stripped).toContain('bankName');
   });
 
-  it('relatorios_futebol acessa campos operacionais sem RH/Financeiro', () => {
+  it('relatorios_futebol + gestão Futebol libera dados sensíveis de atleta', () => {
     const { allowed, stripped } = authorizeRequestedFields(
       ['fullName', 'athletePhoto', 'category', 'cpf', 'salary', 'bankName'],
       'player.athletes',
       ['relatorios_futebol'],
       false,
+      'supervisor',
     );
-    expect(allowed).toEqual(['fullName', 'athletePhoto', 'category']);
+    expect(allowed).toEqual(['fullName', 'athletePhoto', 'category', 'cpf', 'salary', 'bankName']);
+    expect(stripped).toEqual([]);
+  });
+
+  it('relatorios_futebol sem perfil gestão Futebol nega sensíveis', () => {
+    const { allowed, stripped } = authorizeRequestedFields(
+      ['fullName', 'cpf', 'salary'],
+      'player.athletes',
+      ['relatorios_futebol'],
+      false,
+      'treinador',
+    );
+    expect(allowed).toEqual(['fullName']);
     expect(stripped).toContain('cpf');
     expect(stripped).toContain('salary');
-    expect(stripped).toContain('bankName');
   });
 
   it('permite CPF e banco para adm_rh', () => {

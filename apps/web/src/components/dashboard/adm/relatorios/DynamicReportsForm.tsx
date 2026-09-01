@@ -132,13 +132,16 @@ export function DynamicReportsForm() {
     selectedTenant?.categories,
   );
 
-  const loadMeta = useCallback(async () => {
-    const { data } = await api.get<MetaResponse>("/dynamic-reports/meta");
+  const loadMeta = useCallback(async (pop: string) => {
+    const { data } = await api.get<MetaResponse>(
+      `/dynamic-reports/meta?population=${encodeURIComponent(pop)}`,
+    );
     setMeta(data);
   }, []);
 
   useEffect(() => {
-    loadMeta().catch(() => {
+    if (!effectivePopulation) return;
+    loadMeta(effectivePopulation).catch(() => {
       setFeedback({
         open: true,
         title: "Erro",
@@ -151,7 +154,7 @@ export function DynamicReportsForm() {
       setTenants(list);
       if (list.length === 1) setTenantId(list[0]!.id);
     });
-  }, [loadMeta]);
+  }, [effectivePopulation, loadMeta]);
 
   useEffect(() => {
     if (!tenantId) {

@@ -10,9 +10,9 @@ import {
 import {
   authorizeRequestedFields,
   DYNAMIC_REPORT_FIELDS,
-  filterFieldsForModules,
   getFieldDefinition,
 } from './fields/field.registry';
+import { filterFieldsForAccessContext } from './field-access.util';
 import {
   calcAgeFromBirthDate,
   cbfFromPlayer,
@@ -107,9 +107,18 @@ export class DynamicReportsService {
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
-  async getMeta(userSub: string, role: string): Promise<DynamicReportMetaResult> {
+  async getMeta(
+    userSub: string,
+    role: string,
+    population = 'player.athletes',
+  ): Promise<DynamicReportMetaResult> {
     const { slugs, isSuperAdmin } = await this.resolveModuleAccess(userSub, role);
-    const fields = filterFieldsForModules(DYNAMIC_REPORT_FIELDS, slugs, isSuperAdmin);
+    const fields = filterFieldsForAccessContext(DYNAMIC_REPORT_FIELDS, {
+      moduleSlugs: slugs,
+      population,
+      role,
+      isSuperAdmin,
+    });
     return {
       populations: DYNAMIC_REPORT_POPULATIONS,
       presets: DYNAMIC_REPORT_PRESETS,
@@ -145,6 +154,7 @@ export class DynamicReportsService {
       population,
       slugs,
       isSuperAdmin,
+      role,
     );
 
     if (fieldKeys.length === 0) {

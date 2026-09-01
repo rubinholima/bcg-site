@@ -1,4 +1,7 @@
 import type { DynamicReportFieldDefinition } from '../dynamic-reports.types';
+import {
+  filterFieldsForAccessContext,
+} from '../field-access.util';
 
 const PLAYER_POP = [
   'player.current_bid',
@@ -261,6 +264,20 @@ export const DYNAMIC_REPORT_FIELDS: DynamicReportFieldDefinition[] = [
   {
     key: 'bankAccountType',
     label: 'Tipo de conta',
+    source: 'player',
+    group: 'bancarios',
+    dataType: 'string',
+    sensitivity: 'bank',
+    requiredModules: ['adm_rh', 'adm_financeiro'],
+    sortable: false,
+    filterable: false,
+    exportable: true,
+    fieldType: 'data',
+    populations: [...PLAYER_POP],
+  },
+  {
+    key: 'bankOperation',
+    label: 'Operação bancária',
     source: 'player',
     group: 'bancarios',
     dataType: 'string',
@@ -558,23 +575,21 @@ export function getFieldDefinition(key: string): DynamicReportFieldDefinition | 
   return DYNAMIC_REPORT_FIELDS.find((f) => f.key === key);
 }
 
-export function fieldAllowedForPopulation(
-  field: DynamicReportFieldDefinition,
-  population: string,
-): boolean {
-  if (field.populations.length === 0) return true;
-  return field.populations.includes(population);
-}
+export { fieldAllowedForPopulation } from '../field-access.util';
 
 export function filterFieldsForModules(
   fields: DynamicReportFieldDefinition[],
   moduleSlugs: string[],
   isSuperAdmin: boolean,
+  options?: { population?: string; role?: string },
 ): DynamicReportFieldDefinition[] {
-  if (isSuperAdmin) return fields;
-  return fields.filter((field) => {
-    if (field.requiredModules.length === 0) return true;
-    return field.requiredModules.some((m) => moduleSlugs.includes(m));
+  const population = options?.population ?? 'player.athletes';
+  const role = options?.role ?? 'user';
+  return filterFieldsForAccessContext(fields, {
+    moduleSlugs,
+    population,
+    role,
+    isSuperAdmin,
   });
 }
 
@@ -583,10 +598,11 @@ export function authorizeRequestedFields(
   population: string,
   moduleSlugs: string[],
   isSuperAdmin: boolean,
+  role = 'user',
 ): { allowed: string[]; stripped: string[] } {
+  const ctx = { moduleSlugs, population, role, isSuperAdmin };
   const allowedKeys = new Set(
-    filterFieldsForModules(DYNAMIC_REPORT_FIELDS, moduleSlugs, isSuperAdmin)
-      .filter((f) => fieldAllowedForPopulation(f, population))
+    filterFieldsForAccessContext(DYNAMIC_REPORT_FIELDS, ctx)
       .map((f) => f.key),
   );
   const allowed: string[] = [];
