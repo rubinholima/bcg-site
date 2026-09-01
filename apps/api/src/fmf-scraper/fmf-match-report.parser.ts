@@ -411,6 +411,7 @@ function eventAbsoluteMinute(period: string, minute: number, firstHalfMinutes: n
 
 const STAFF_CARD_ROLE_PREFIXES: Array<{ pattern: RegExp; label: string }> = [
   { pattern: /^auxiliar\s+t[eé]cnico\s+/i, label: 'Auxiliar técnico' },
+  { pattern: /^prep\.\s*de\s+goleiros?\s+/i, label: 'Treinador de goleiros' },
   { pattern: /^treinador\s+de\s+goleiros?\s+/i, label: 'Treinador de goleiros' },
   { pattern: /^preparador\s+f[ií]sico\s+/i, label: 'Preparador físico' },
   { pattern: /^analista(?:\s+de\s+desempenho)?\s+/i, label: 'Analista de desempenho' },

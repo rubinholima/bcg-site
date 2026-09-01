@@ -585,6 +585,13 @@ function resolveFriendlyDisciplineCellCode(
   return code;
 }
 
+/** Saldo de amarelos no cadastro ao chegar ao clube — consumido na simulação cronológica da competição. */
+function openingYellowBalanceFromCadastro(player: PlayerInput): number {
+  const raw = player.yellowCards;
+  if (raw == null || !Number.isFinite(raw)) return 0;
+  return Math.max(0, Math.floor(raw));
+}
+
 function initPlayerState(player: PlayerInput): PlayerRoundState {
   const status = (player.status ?? 'available').toLowerCase();
   const details = player.statusDetails?.trim() || null;
@@ -597,10 +604,11 @@ function initPlayerState(player: PlayerInput): PlayerRoundState {
       stjdReason: details,
     };
   }
+  const openingYellow = openingYellowBalanceFromCadastro(player);
   return {
     suspensionRoundsLeft: 0,
-    yellowAccum: 0,
-    pendurado: false,
+    yellowAccum: openingYellow,
+    pendurado: openingYellow >= 2,
     stjdRoundsLeft: 0,
     stjdReason: null,
   };

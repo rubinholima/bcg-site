@@ -143,6 +143,22 @@ ANT = Antes do Início
     expect(events[0]?.period).toBe('2T');
   });
 
+  it('extrai cartão de prep. de goleiros na seção de cartões', () => {
+    const events = parseStaffCardEventsFromTimedRows(
+      [
+        '35:00 2T Prep. de Goleiros Tarley Dos Santos Sobrinho - conduta violenta; BOSTON CITY FUTEBOL CLUBE SAF',
+      ],
+      'red',
+      'COIMBRA ESPORTE CLUBE SAF',
+      'BOSTON CITY FUTEBOL CLUBE SAF',
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]?.roleLabel).toBe('Treinador de goleiros');
+    expect(events[0]?.name).toBe('Tarley Dos Santos Sobrinho');
+    expect(events[0]?.kind).toBe('red');
+    expect(events[0]?.teamSide).toBe('away');
+  });
+
   it('extrai staffRoster e eventos individuais', () => {
     const text = `
 Competição: SUB 20 - 2026 Fase: FINAL Rodada: 1

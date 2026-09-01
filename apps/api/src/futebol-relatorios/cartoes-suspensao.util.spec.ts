@@ -408,6 +408,101 @@ describe('pendurado por competição', () => {
     expect(row?.nextRoundCell).toBe('S');
   });
 
+  it('saldo importado no cadastro gera suspensão, cumprimento zera ciclo operacional', () => {
+    const d = (iso: string) => new Date(iso);
+    const victor = {
+      id: 'victor-sales',
+      name: 'Victor Hugo Santos Sales',
+      jerseyNumber: 4,
+      position: 'ZAG',
+      category: 'sub13',
+      status: 'available',
+      statusDetails: null,
+      yellowCards: 2,
+      redCards: 0,
+      registrationProfile: {
+        sports: { cbf: '965644', documentationApprovedAt: '2026-01-01T00:00:00.000Z' },
+      },
+    };
+    const grid = buildDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      disciplineCategory: 'sub13',
+      nextMatchDate: '2026-09-01',
+      matches: [
+        {
+          id: 'm8',
+          round: 8,
+          matchDate: d('2026-07-12T12:00:00Z'),
+          homeTeam: 'Boston City',
+          awayTeam: 'NAC',
+          homeScore: 1,
+          awayScore: 0,
+          occurrencesText: null,
+          playerStats: [
+            { playerId: 'victor-sales', jerseyNumber: 4, playerName: 'Victor Hugo Santos Sales', played: true, yellowCards: 0, redCards: 0 },
+          ],
+        },
+        {
+          id: 'm9',
+          round: 9,
+          matchDate: d('2026-08-09T12:00:00Z'),
+          homeTeam: 'Boston City',
+          awayTeam: 'Cruzeiro',
+          homeScore: 0,
+          awayScore: 0,
+          occurrencesText: null,
+          playerStats: [
+            { playerId: 'victor-sales', jerseyNumber: 4, playerName: 'Victor Hugo Santos Sales', played: true, yellowCards: 1, redCards: 0 },
+          ],
+        },
+        {
+          id: 'm10',
+          round: 10,
+          matchDate: d('2026-08-15T12:00:00Z'),
+          homeTeam: 'Boston City',
+          awayTeam: 'Atlético-MG',
+          homeScore: 1,
+          awayScore: 1,
+          occurrencesText: null,
+          playerStats: [],
+        },
+        {
+          id: 'm11',
+          round: 11,
+          matchDate: d('2026-08-22T12:00:00Z'),
+          homeTeam: 'Boston City',
+          awayTeam: 'Villa Nova',
+          homeScore: 2,
+          awayScore: 0,
+          occurrencesText: null,
+          playerStats: [
+            { playerId: 'victor-sales', jerseyNumber: 4, playerName: 'Victor Hugo Santos Sales', played: true, yellowCards: 1, redCards: 0 },
+          ],
+        },
+        {
+          id: 'm12',
+          round: 12,
+          matchDate: d('2026-08-29T12:00:00Z'),
+          homeTeam: 'Coimbra',
+          awayTeam: 'Boston City',
+          homeScore: 1,
+          awayScore: 0,
+          occurrencesText: null,
+          playerStats: [],
+        },
+      ],
+      players: [victor],
+    });
+
+    const row = grid.players.find((p) => p.playerId === 'victor-sales');
+    expect(row?.roundCells).toEqual(['AT', 'AV', 'SA', 'AV', '']);
+    expect(row?.yellowCardsTotal).toBe(2);
+    expect(row?.nextRoundCell).toBe('');
+    expect(row?.aptoForNextRound).toBe(true);
+    expect(row?.unavailable).toBe(false);
+  });
+
   it('não marca pendurado por amarelo sem ter jogado', () => {
     const matchDate = new Date('2026-08-10T12:00:00Z');
     const grid = buildDisciplineGrid({
