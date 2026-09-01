@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RolesService } from '../roles/roles.service';
+import {
+  isFootballManagementRole,
+  isFootballOperationalModuleSlug,
+} from './football-domain-access.util';
 
 export interface ModuleWithPermissions {
   slug: string;
@@ -100,6 +104,23 @@ export class ModulesService {
     return Array.from(out);
   }
 
+  /** Slugs operacionais do domínio Futebol — base da regra Gestor/Gerente/Supervisor. */
+  async getFootballOperationalModuleSlugs(): Promise<string[]> {
+    const modules = await this.prisma.module.findMany({
+      select: { slug: true, functionalArea: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return modules
+      .filter((m) => isFootballOperationalModuleSlug(m.slug, m.functionalArea))
+      .map((m) => m.slug);
+  }
+
+  private async mergeFootballManagementAccess(role: string, slugs: string[]): Promise<string[]> {
+    if (!isFootballManagementRole(role)) return slugs;
+    const footballSlugs = await this.getFootballOperationalModuleSlugs();
+    return this.expandModuleSlugs([...new Set([...slugs, ...footballSlugs])]);
+  }
+
   async getSlugsForRole(role: string): Promise<string[]> {
     const rows = await this.prisma.moduleRole.findMany({
       where: { role, canAccess: true },
@@ -107,7 +128,8 @@ export class ModulesService {
       orderBy: { module: { sortOrder: 'asc' } },
     });
     const raw = rows.map((r) => r.module.slug);
-    return this.expandModuleSlugs(raw);
+    const expanded = await this.expandModuleSlugs(raw);
+    return this.mergeFootballManagementAccess(role, expanded);
   }
 
   async getAllModuleSlugs(): Promise<string[]> {

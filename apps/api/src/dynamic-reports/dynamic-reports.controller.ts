@@ -8,7 +8,12 @@ import { TenantAccessService } from '../auth/tenant-access.service';
 import { DynamicReportsService } from './dynamic-reports.service';
 import { RunDynamicReportDto } from './dto/run-dynamic-report.dto';
 
-const DYNAMIC_REPORT_MODULES = ['relatorios_adm', 'adm_rh', 'adm_financeiro'] as const;
+const DYNAMIC_REPORT_MODULES = [
+  'relatorios_adm',
+  'relatorios_futebol',
+  'adm_rh',
+  'adm_financeiro',
+] as const;
 
 @Controller('dynamic-reports')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)

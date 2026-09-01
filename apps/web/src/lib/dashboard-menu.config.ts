@@ -835,6 +835,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             icon: ClipboardList,
             moduleSlug: "relatorios_futebol",
           },
+          {
+            slug: "futebol_rel_dinamicos",
+            label: "Relatórios dinâmicos",
+            href: "/dashboard/relatorios/futebol/dinamicos",
+            icon: FileBarChart,
+            moduleSlug: "relatorios_futebol",
+          },
         ],
       },
     ],

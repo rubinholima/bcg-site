@@ -122,6 +122,19 @@ describe('Dynamic Reports — ACL', () => {
     expect(stripped).toContain('bankName');
   });
 
+  it('relatorios_futebol acessa campos operacionais sem RH/Financeiro', () => {
+    const { allowed, stripped } = authorizeRequestedFields(
+      ['fullName', 'athletePhoto', 'category', 'cpf', 'salary', 'bankName'],
+      'player.athletes',
+      ['relatorios_futebol'],
+      false,
+    );
+    expect(allowed).toEqual(['fullName', 'athletePhoto', 'category']);
+    expect(stripped).toContain('cpf');
+    expect(stripped).toContain('salary');
+    expect(stripped).toContain('bankName');
+  });
+
   it('permite CPF e banco para adm_rh', () => {
     const { allowed } = authorizeRequestedFields(
       ['fullName', 'cpf', 'bankName'],
@@ -135,6 +148,13 @@ describe('Dynamic Reports — ACL', () => {
   it('signature é display-only e permitida', () => {
     expect(fieldAllowedForPopulation(
       { key: 'signature', populations: ['people.cafeteria'] } as never,
+      'people.cafeteria',
+    )).toBe(true);
+  });
+
+  it('athletePhoto disponível para populações de atletas', () => {
+    expect(fieldAllowedForPopulation(
+      { key: 'athletePhoto', populations: ['player.athletes', 'people.cafeteria'] } as never,
       'people.cafeteria',
     )).toBe(true);
   });
@@ -224,10 +244,10 @@ describe('Dynamic Reports — compensation resolution', () => {
 });
 
 describe('Dynamic Reports — presets Phase 2', () => {
-  it('lista refeitório preset intacto', () => {
+  it('lista refeitório preset com foto, nome, categoria e assinatura', () => {
     const preset = getPresetDefinition('lista_refeitorio');
     expect(preset?.population).toBe('people.cafeteria');
-    expect(preset?.defaultFields).toEqual(['fullName', 'signature']);
+    expect(preset?.defaultFields).toEqual(['athletePhoto', 'fullName', 'category', 'signature']);
   });
 
   it('folha preset usa engine player.payroll', () => {

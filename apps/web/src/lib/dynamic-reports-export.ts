@@ -21,6 +21,8 @@ export function exportDynamicReportExcel(
           const val = row.values[col.key];
           if (col.key === "signature") {
             record[col.label] = "";
+          } else if (col.key === "athletePhoto") {
+            record[col.label] = val == null ? "" : String(val);
           } else if (val == null) {
             record[col.label] = "";
           } else {

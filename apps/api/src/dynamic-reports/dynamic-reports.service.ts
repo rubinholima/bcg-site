@@ -72,6 +72,7 @@ type PlayerRow = {
   id: string;
   tenantId: string;
   name: string;
+  photoUrl: string | null;
   birthDate: string | null;
   category: string | null;
   position: string | null;
@@ -230,6 +231,7 @@ export class DynamicReportsService {
         id: true,
         tenantId: true,
         name: true,
+        photoUrl: true,
         birthDate: true,
         category: true,
         position: true,
@@ -402,6 +404,7 @@ export class DynamicReportsService {
       groupName: category,
       sectionTitle: 'ATLETAS',
       values: {
+        athletePhoto: player.photoUrl,
         fullName: player.name,
         nickname,
         birthDate: player.birthDate,

@@ -64,7 +64,7 @@ export const DYNAMIC_REPORT_PRESETS: DynamicReportPresetDefinition[] = [
     id: 'lista_refeitorio',
     label: 'Lista Refeitório',
     population: 'people.cafeteria',
-    defaultFields: ['fullName', 'signature'],
+    defaultFields: ['athletePhoto', 'fullName', 'category', 'signature'],
     sortBy: 'fullName',
     sortDir: 'asc',
     groupBy: 'cafeteria',

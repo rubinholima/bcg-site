@@ -1,5 +1,6 @@
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { getPublicImageUrl } from "@/lib/media-url";
 import { reportLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
 import { REPORT_PRINT_BREAK_CSS, wrapPrintRootDocument } from "@/lib/report-print-layout";
 
@@ -45,6 +46,13 @@ function formatCellValue(key: string, value: string | number | null | undefined)
   if (key === "signature") {
     return '<span class="sig-line">&nbsp;</span>';
   }
+  if (key === "athletePhoto") {
+    if (value == null || value === "") {
+      return '<span class="photo-placeholder">—</span>';
+    }
+    const url = getPublicImageUrl(String(value)) || String(value);
+    return `<img class="athlete-photo" src="${escapeHtml(url)}" alt="" />`;
+  }
   if (value == null || value === "") return "—";
   if (key === "birthDate" || key === "loanStartDate" || key === "loanEndDate") {
     return escapeHtml(formatDateDayMonYear(String(value)));
@@ -78,6 +86,8 @@ function baseStyles(size: PrintPageSize): string {
     tbody td { padding: 7px 6px; border: 1px solid #e2e8f0; vertical-align: middle; }
     tbody tr:nth-child(even) { background: #f8fafc; }
     .sig-line { display: block; min-width: 140px; border-bottom: 1px solid #64748b; min-height: 18px; }
+    .athlete-photo { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; display: block; }
+    .photo-placeholder { color: #94a3b8; font-size: 10px; }
   `;
 }
 
