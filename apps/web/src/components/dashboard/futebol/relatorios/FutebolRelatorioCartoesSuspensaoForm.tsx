@@ -30,6 +30,7 @@ import {
 } from "@/lib/futebol-relatorios-print";
 import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import { PageSizeSelect, useFutebolRelatorioTenants } from "./futebol-relatorio-shared";
+import { CartoesDisciplineOpeningPanel } from "./CartoesDisciplineOpeningPanel";
 
 const MANUAL_COMPETITION = "__manual__";
 
@@ -397,6 +398,15 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
           </div>
 
           <PageSizeSelect value={pageSize} onChange={setPageSize} />
+
+          {tenantId && resolvedCompetition && Number(season) >= 2000 ? (
+            <CartoesDisciplineOpeningPanel
+              tenantId={tenantId}
+              competition={resolvedCompetition}
+              season={Number(season)}
+              categoryHint={selectedOption?.referenceCategory ?? urlCategoryHint}
+            />
+          ) : null}
 
           {reportData?.sourceInfo?.pendingMessages?.[0] ? (
             <p className="text-xs text-amber-200/90">{reportData.sourceInfo.pendingMessages[0]}</p>

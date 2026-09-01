@@ -51,6 +51,8 @@ import type {
   SumulaCartoesReportDto,
   SumulaMatchListItemDto,
   CartoesSuspensaoReportDto,
+  PlayerDisciplineOpeningDto,
+  UpsertPlayerDisciplineOpeningDto,
 } from './futebol-relatorios.types';
 import { assignStartersByCadastroPosition } from '../common/press-kit-lineup.util';
 import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
@@ -115,6 +117,7 @@ import {
   normalizeCompetitionKey,
   reportMatchesCompetitionFilter,
 } from './cartoes-suspensao.util';
+import { mapDisciplineOpeningRows } from './player-discipline-opening.util';
 import {
   buildMatchDisciplineFromOfficialEvents,
   buildPendingDisciplineMessages,
@@ -2803,6 +2806,22 @@ export class FutebolRelatoriosService {
       upcomingTravel?.matchDate.toISOString().slice(0, 10) ||
       null;
 
+    const competitionKey = normalizeCompetitionKey(input.competition);
+    const openingRows = await this.prisma.playerDisciplineOpening.findMany({
+      where: {
+        tenantId: input.tenantId,
+        competitionKey,
+        season: input.season,
+      },
+      select: {
+        playerId: true,
+        effectiveFrom: true,
+        yellowAccum: true,
+        suspensionRoundsLeft: true,
+      },
+    });
+    const openingByPlayerId = mapDisciplineOpeningRows(openingRows);
+
     const grid = buildDisciplineGrid({
       matches: disciplineMatches.map((row) => ({
         id: row.id,
@@ -2822,6 +2841,7 @@ export class FutebolRelatoriosService {
       disciplineCategory: referenceCategory ?? '',
       nextMatchDate,
       friendlyMatchIds,
+      openingByPlayerId,
     });
 
     const staffResolutionPool = await this.loadTechnicalStaffForDisciplineResolution(input.tenantId);
@@ -3268,6 +3288,140 @@ export class FutebolRelatoriosService {
       staffTotals: seasonGrid.staffTotals,
       sourceInfo: seasonGrid.sourceInfo,
       generatedAt: new Date().toISOString(),
+    };
+  }
+
+  async listDisciplineOpenings(input: {
+    tenantId: string;
+    competition: string;
+    season: number;
+  }): Promise<PlayerDisciplineOpeningDto[]> {
+    const tenantId = input.tenantId?.trim();
+    if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
+    const competition = input.competition?.trim();
+    if (!competition) throw new BadRequestException('competition é obrigatório');
+    const season =
+      typeof input.season === 'number' && input.season >= 2000 ? input.season : null;
+    if (!season) throw new BadRequestException('season inválida');
+
+    const competitionKey = normalizeCompetitionKey(competition);
+    const rows = await this.prisma.playerDisciplineOpening.findMany({
+      where: { tenantId, competitionKey, season },
+      include: { player: { select: { id: true, name: true } } },
+      orderBy: [{ effectiveFrom: 'asc' }, { player: { name: 'asc' } }],
+    });
+    return rows.map((row) => this.mapDisciplineOpeningDto(row));
+  }
+
+  async upsertDisciplineOpening(
+    body: UpsertPlayerDisciplineOpeningDto,
+  ): Promise<PlayerDisciplineOpeningDto> {
+    const tenantId = body.tenantId?.trim();
+    const playerId = body.playerId?.trim();
+    const competition = body.competition?.trim();
+    if (!tenantId || !playerId || !competition) {
+      throw new BadRequestException('tenantId, playerId e competition são obrigatórios');
+    }
+    const season =
+      typeof body.season === 'number' && body.season >= 2000 ? body.season : null;
+    if (!season) throw new BadRequestException('season inválida');
+    if (!body.effectiveFrom?.trim()) {
+      throw new BadRequestException('effectiveFrom é obrigatório');
+    }
+    const effectiveFrom = new Date(`${body.effectiveFrom.trim()}T12:00:00.000Z`);
+    if (Number.isNaN(effectiveFrom.getTime())) {
+      throw new BadRequestException('effectiveFrom inválida');
+    }
+    const yellowAccum = Math.max(0, Math.min(2, Math.trunc(body.yellowAccum ?? 0)));
+    const suspensionRoundsLeft = Math.max(0, Math.trunc(body.suspensionRoundsLeft ?? 0));
+    const source = body.source?.trim() || 'manual';
+    const notes = body.notes?.trim() || null;
+
+    const player = await this.prisma.player.findFirst({
+      where: { id: playerId, tenantId },
+      select: { id: true, name: true },
+    });
+    if (!player) throw new NotFoundException('Atleta não encontrado neste clube');
+
+    const competitionKey = normalizeCompetitionKey(competition);
+    const row = await this.prisma.playerDisciplineOpening.upsert({
+      where: {
+        tenantId_playerId_competitionKey_season: {
+          tenantId,
+          playerId,
+          competitionKey,
+          season,
+        },
+      },
+      create: {
+        tenantId,
+        playerId,
+        competitionKey,
+        competition,
+        season,
+        effectiveFrom,
+        yellowAccum,
+        suspensionRoundsLeft,
+        source,
+        notes,
+      },
+      update: {
+        competition,
+        effectiveFrom,
+        yellowAccum,
+        suspensionRoundsLeft,
+        source,
+        notes,
+      },
+      include: { player: { select: { id: true, name: true } } },
+    });
+    return this.mapDisciplineOpeningDto(row);
+  }
+
+  async deleteDisciplineOpening(tenantId: string, id: string): Promise<{ ok: true }> {
+    const tid = tenantId?.trim();
+    const openingId = id?.trim();
+    if (!tid || !openingId) throw new BadRequestException('tenantId e id são obrigatórios');
+    const existing = await this.prisma.playerDisciplineOpening.findFirst({
+      where: { id: openingId, tenantId: tid },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundException('Saldo de entrada não encontrado');
+    await this.prisma.playerDisciplineOpening.delete({ where: { id: openingId } });
+    return { ok: true };
+  }
+
+  private mapDisciplineOpeningDto(row: {
+    id: string;
+    tenantId: string;
+    playerId: string;
+    competitionKey: string;
+    competition: string;
+    season: number;
+    effectiveFrom: Date;
+    yellowAccum: number;
+    suspensionRoundsLeft: number;
+    source: string;
+    notes: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    player: { name: string };
+  }): PlayerDisciplineOpeningDto {
+    return {
+      id: row.id,
+      tenantId: row.tenantId,
+      playerId: row.playerId,
+      playerName: row.player.name,
+      competitionKey: row.competitionKey,
+      competition: row.competition,
+      season: row.season,
+      effectiveFrom: row.effectiveFrom.toISOString().slice(0, 10),
+      yellowAccum: row.yellowAccum,
+      suspensionRoundsLeft: row.suspensionRoundsLeft,
+      source: row.source,
+      notes: row.notes,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
     };
   }
 }

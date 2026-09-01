@@ -165,6 +165,129 @@ describe('buildDisciplineGrid', () => {
     expect(row?.playedUp).toBe(true);
     expect(row?.squadCategory).toBe('sub17');
   });
+
+  it('saldo de entrada com 2 amarelos deixa atleta pendurado', () => {
+    const player = {
+      id: 'transfer',
+      name: 'Atleta Transferido',
+      jerseyNumber: 9,
+      position: 'ATA',
+      status: 'available',
+      statusDetails: null,
+      yellowCards: null,
+      redCards: null,
+      registrationProfile: null,
+    };
+    const baseMatch = {
+      homeTeam: 'Boston City',
+      awayTeam: 'NAC',
+      homeScore: 1,
+      awayScore: 0,
+      occurrencesText: null,
+    };
+    const grid = buildDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      disciplineCategory: 'sub13',
+      nextMatchDate: '2026-08-17',
+      players: [player],
+      openingByPlayerId: new Map([
+        [
+          'transfer',
+          { effectiveFrom: '2026-08-01', yellowAccum: 2, suspensionRoundsLeft: 0 },
+        ],
+      ]),
+      matches: [
+        {
+          id: 'm1',
+          round: 1,
+          matchDate: new Date('2026-08-10T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [
+            {
+              playerId: 'transfer',
+              jerseyNumber: 9,
+              playerName: 'Atleta Transferido',
+              played: true,
+              yellowCards: 0,
+              redCards: 0,
+            },
+          ],
+        },
+      ],
+    });
+    expect(grid.players[0]?.nextRoundCell).toBe('P');
+  });
+
+  it('saldo de entrada 2 amarelos + novo amarelo gera suspensão e zera acúmulo', () => {
+    const player = {
+      id: 'transfer',
+      name: 'Atleta Transferido',
+      jerseyNumber: 9,
+      position: 'ATA',
+      status: 'available',
+      statusDetails: null,
+      yellowCards: null,
+      redCards: null,
+      registrationProfile: null,
+    };
+    const baseMatch = {
+      homeTeam: 'Boston City',
+      awayTeam: 'NAC',
+      homeScore: 1,
+      awayScore: 0,
+      occurrencesText: null,
+    };
+    const grid = buildDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      disciplineCategory: 'sub13',
+      nextMatchDate: '2026-08-24',
+      players: [player],
+      openingByPlayerId: new Map([
+        [
+          'transfer',
+          { effectiveFrom: '2026-08-01', yellowAccum: 2, suspensionRoundsLeft: 0 },
+        ],
+      ]),
+      matches: [
+        {
+          id: 'm1',
+          round: 1,
+          matchDate: new Date('2026-08-10T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [
+            {
+              playerId: 'transfer',
+              jerseyNumber: 9,
+              playerName: 'Atleta Transferido',
+              played: true,
+              yellowCards: 0,
+              redCards: 0,
+            },
+          ],
+        },
+        {
+          id: 'm2',
+          round: 2,
+          matchDate: new Date('2026-08-17T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [
+            {
+              playerId: 'transfer',
+              jerseyNumber: 9,
+              playerName: 'Atleta Transferido',
+              played: true,
+              yellowCards: 1,
+              redCards: 0,
+            },
+          ],
+        },
+      ],
+    });
+    expect(grid.players[0]?.nextRoundCell).toBe('S');
+    expect(grid.players[0]?.yellowCardsTotal).toBe(1);
+  });
 });
 
 describe('mergeDisciplinePlayerList', () => {

@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
   Query,
@@ -16,6 +18,10 @@ import { FutebolRelatoriosService } from './futebol-relatorios.service';
 import { GuiaPartidaService } from './guia-partida.service';
 import { FmfMatchReportService } from '../fmf-scraper/fmf-match-report.service';
 import type { PressKitConfigDto } from './futebol-relatorios.types';
+import type {
+  PlayerDisciplineOpeningDto,
+  UpsertPlayerDisciplineOpeningDto,
+} from './futebol-relatorios.types';
 
 @Controller('futebol-relatorios')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -218,6 +224,39 @@ export class FutebolRelatoriosController {
       nextMatchDate: nextMatchDate?.trim() || undefined,
       phase: phase?.trim() || undefined,
     });
+  }
+
+  @Get('discipline-openings')
+  listDisciplineOpenings(
+    @Query('tenantId') tenantId?: string,
+    @Query('competition') competition?: string,
+    @Query('season') season?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+    if (!competition?.trim()) throw new BadRequestException('competition é obrigatório');
+    const seasonNum = season?.trim() ? Number(season.trim()) : NaN;
+    if (!Number.isFinite(seasonNum)) throw new BadRequestException('season é obrigatório');
+    return this.service.listDisciplineOpenings({
+      tenantId: tenantId.trim(),
+      competition: competition.trim(),
+      season: seasonNum,
+    });
+  }
+
+  @Put('discipline-openings')
+  upsertDisciplineOpening(@Body() body: UpsertPlayerDisciplineOpeningDto) {
+    return this.service.upsertDisciplineOpening(body);
+  }
+
+  @Delete('discipline-openings/:id')
+  deleteDisciplineOpening(
+    @Param('id') id: string,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    if (!tenantId?.trim() || !id?.trim()) {
+      throw new BadRequestException('tenantId e id são obrigatórios');
+    }
+    return this.service.deleteDisciplineOpening(tenantId.trim(), id.trim());
   }
 
   @Get('programacao-semanal')

@@ -13,6 +13,10 @@ import {
   type StaffDisciplineResolveContext,
 } from './fmf-staff-cards.util';
 import type { FmfStaffCardEventInput } from './fmf-staff-cards.util';
+import {
+  applyDisciplineOpeningIfDue,
+  type DisciplineOpeningBalance,
+} from './player-discipline-opening.util';
 
 /** Códigos por rodada — espelham o relatório operacional do clube (Mineiro). */
 export type DisciplineCellCode = 'AT' | 'AV' | 'AM' | 'V' | 'VM' | 'P' | 'SA' | 'ST' | '';
@@ -615,6 +619,8 @@ export function buildDisciplineGrid(input: {
   nextMatchDate?: string | null;
   /** Jogos amistosos — aparecem na planilha, mas não alteram pendurado/suspensão. */
   friendlyMatchIds?: ReadonlySet<string>;
+  /** Saldo disciplinar de entrada por playerId (competição/temporada). */
+  openingByPlayerId?: Map<string, DisciplineOpeningBalance>;
 }): DisciplineGridResult {
   const sortedMatches = [...input.matches].sort(
     (a, b) => a.matchDate.getTime() - b.matchDate.getTime() || (a.round ?? 0) - (b.round ?? 0),
@@ -646,6 +652,7 @@ export function buildDisciplineGrid(input: {
   );
   const yellowTotals = new Map(input.players.map((p) => [p.id, 0]));
   const redTotals = new Map(input.players.map((p) => [p.id, 0]));
+  const openingAppliedByPlayer = new Map<string, boolean>();
 
   sortedMatches.forEach((match, roundIndex) => {
     const isFriendly = input.friendlyMatchIds?.has(match.id) ?? false;
@@ -653,6 +660,17 @@ export function buildDisciplineGrid(input: {
     for (const player of input.players) {
       const state = states.get(player.id)!;
       const cells = roundCells.get(player.id)!;
+
+      if (!isFriendly) {
+        const applied = openingAppliedByPlayer.get(player.id) ?? false;
+        const nowApplied = applyDisciplineOpeningIfDue(
+          state,
+          match.matchDate,
+          input.openingByPlayerId?.get(player.id),
+          applied,
+        );
+        if (nowApplied) openingAppliedByPlayer.set(player.id, true);
+      }
 
       if (isFriendly) {
         let pending: DisciplineCellCode = '';

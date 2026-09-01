@@ -511,6 +511,23 @@ export type CartoesSuspensaoReportDto = {
   generatedAt: string;
 };
 
+export type PlayerDisciplineOpeningDto = {
+  id: string;
+  tenantId: string;
+  playerId: string;
+  playerName: string;
+  competitionKey: string;
+  competition: string;
+  season: number;
+  effectiveFrom: string;
+  yellowAccum: number;
+  suspensionRoundsLeft: number;
+  source: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type GuiaCampaignLine = {
   label: string;
   matches: number;

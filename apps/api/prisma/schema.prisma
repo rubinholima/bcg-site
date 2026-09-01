@@ -141,6 +141,7 @@ model Tenant {
   footballAgendaEntries FootballAgendaEntry[]
   fmfMatchReports       FmfMatchReport[]
   matchOfficialEvents   MatchOfficialEvent[]
+  playerDisciplineOpenings PlayerDisciplineOpening[]
   psychologySessions  PsychologySession[]
   physioSessions      PhysioSession[]
   physioTransitionPrograms PhysioTransitionProgram[]
@@ -1114,6 +1115,7 @@ model Player {
   physioGameAttendances PhysioGameAttendance[]
   physioPlayerEvaluations PhysioPlayerEvaluation[]
   fmfMatchStats        FmfPlayerMatchStat[]
+  disciplineOpenings   PlayerDisciplineOpening[]
   matchOfficialEvents  MatchOfficialEvent[]
   coachMatchPlayerRatings CoachMatchReportPlayerRating[]
   coachTeamReportPlayerActions CoachTeamReportPlayerAction[]
@@ -1246,6 +1248,31 @@ model FmfPlayerMatchStat {
   @@index([playerId])
   @@index([playerId, matchId])
   @@index([cbfRegistration])
+}
+
+/** Saldo disciplinar de entrada na competição (transferência / clube anterior). */
+model PlayerDisciplineOpening {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId             String
+  player               Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /** Chave canônica (normalizeCompetitionKey). */
+  competitionKey       String
+  /** Rótulo da competição (FMF/planilha). */
+  competition          String
+  season               Int
+  effectiveFrom        DateTime @db.Date
+  yellowAccum          Int      @default(0)
+  suspensionRoundsLeft Int      @default(0)
+  source               String   @default("manual")
+  notes                String?  @db.Text
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([tenantId, playerId, competitionKey, season])
+  @@index([tenantId, competitionKey, season])
+  @@index([playerId])
 }
 
 /** Link público para atleta/colaborador completar cadastro (token único, expiração opcional) */
