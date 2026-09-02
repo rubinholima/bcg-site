@@ -7,6 +7,7 @@ import {
   findPlayerTabGroup,
   type PlayerTabGroupNav,
 } from "@/lib/player-record-nav.config";
+import { PlayerDossierTrigger } from "@/components/dashboard/players/PlayerDossierDialog";
 import { cn } from "@/lib/utils";
 
 type PlayerRecordGroupedNavProps = {
@@ -14,6 +15,9 @@ type PlayerRecordGroupedNavProps = {
   activeTab: string;
   onChange: (tabId: string) => void;
   canAccessTab: (tab: PlayerTabConfig) => boolean;
+  /** Ação fixa após o grupo Histórico — ex.: Dossiê do Atleta */
+  dossierPlayerId?: string;
+  dossierPlayerName?: string;
 };
 
 function GroupButton({
@@ -77,6 +81,8 @@ export function PlayerRecordGroupedNav({
   activeTab,
   onChange,
   canAccessTab,
+  dossierPlayerId,
+  dossierPlayerName,
 }: PlayerRecordGroupedNavProps) {
   const groups = useMemo(
     () => buildPlayerTabGroups(tabs, canAccessTab),
@@ -117,6 +123,13 @@ export function PlayerRecordGroupedNav({
             onClick={() => handleGroupClick(group)}
           />
         ))}
+        {dossierPlayerId && dossierPlayerName ? (
+          <PlayerDossierTrigger
+            playerId={dossierPlayerId}
+            playerName={dossierPlayerName}
+            navStyle
+          />
+        ) : null}
       </div>
 
       {showSubsections && activeGroup ? (

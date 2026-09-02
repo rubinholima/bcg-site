@@ -181,7 +181,7 @@ export class PlayerDossierService {
         playerId: player.id,
         season,
         canChooseOptionalSections: canChooseSensitiveDossierSections(input.role),
-        availableOptionalSections: listAvailableOptionalSections(moduleSlugs).map((id) => ({
+        availableOptionalSections: listAvailableOptionalSections(moduleSlugs, input.role).map((id) => ({
           id,
           label: PLAYER_DOSSIER_OPTIONAL_LABELS[id],
         })),

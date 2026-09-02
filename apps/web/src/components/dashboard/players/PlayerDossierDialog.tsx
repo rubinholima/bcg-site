@@ -2,9 +2,9 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -187,23 +187,44 @@ export function PlayerDossierDialog({
 interface PlayerDossierTriggerProps {
   playerId: string;
   playerName: string;
+  /** Mesmo visual dos botões de grupo (Visão Geral, Histórico, …) */
+  navStyle?: boolean;
 }
 
-/** Botão compacto para o header da ficha — evita button wall. */
-export function PlayerDossierTrigger({ playerId, playerName }: PlayerDossierTriggerProps) {
+/** Botão na navegação da ficha — após Histórico. */
+export function PlayerDossierTrigger({
+  playerId,
+  playerName,
+  navStyle = false,
+}: PlayerDossierTriggerProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        className="min-h-[44px] shrink-0 border-violet-500/40"
-        onClick={() => setOpen(true)}
-      >
-        <FileText className="mr-2 h-4 w-4" />
-        Dossiê do Atleta
-      </Button>
+      {navStyle ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={cn(
+            "inline-flex shrink-0 items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
+            "border-violet-500/35 bg-violet-950/30 text-violet-100",
+            "hover:border-violet-500/50 hover:bg-violet-500/15",
+          )}
+        >
+          <FileText className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
+          Dossiê do Atleta
+        </button>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-[44px] shrink-0 border-violet-500/40"
+          onClick={() => setOpen(true)}
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          Dossiê do Atleta
+        </Button>
+      )}
       <PlayerDossierDialog
         playerId={playerId}
         playerName={playerName}

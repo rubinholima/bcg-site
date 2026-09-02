@@ -57,5 +57,16 @@ describe('player-dossier-access.util', () => {
         'training',
       ]);
     });
+
+    it('super_admin vê todas as seções opcionais', () => {
+      expect(listAvailableOptionalSections([], 'super_admin')).toHaveLength(9);
+      expect(
+        resolveIncludedOptionalSections({
+          role: 'super_admin',
+          moduleSlugs: [],
+          requested: ['psychology', 'scouting', 'training'],
+        }),
+      ).toEqual(['psychology', 'scouting', 'training']);
+    });
   });
 });

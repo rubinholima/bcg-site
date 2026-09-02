@@ -37,7 +37,6 @@ import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
 import { resolvePlayerTabInGroups, buildPlayerTabGroups } from "@/lib/player-record-nav.config";
 import { PlayerRecordGroupedNav } from "@/components/dashboard/players/PlayerRecordGroupedNav";
-import { PlayerDossierTrigger } from "@/components/dashboard/players/PlayerDossierDialog";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
 import { PlayerTrainingHistoryTab } from "@/components/dashboard/players/PlayerTrainingHistoryTab";
 import {
@@ -467,12 +466,9 @@ export default function EditJogadorPage() {
         compact
         className="sticky top-0 z-40 !p-3.5 sm:!p-4 border border-violet-500/25 !bg-background bg-none shadow-[0_12px_32px_-12px_rgba(0,0,0,0.85)]"
         footerAside={
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <PlayerDossierTrigger playerId={player.id} playerName={player.name} />
-            <Button onClick={handleSave} disabled={loading} className="min-h-[44px] min-w-[120px] shrink-0">
-              {loading ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
+          <Button onClick={handleSave} disabled={loading} className="min-h-[44px] min-w-[120px] shrink-0">
+            {loading ? "Salvando..." : "Salvar"}
+          </Button>
         }
       />
 
@@ -486,6 +482,8 @@ export default function EditJogadorPage() {
           activeTab={activeTab}
           onChange={setActiveTab}
           canAccessTab={canAccessPlayerTab}
+          dossierPlayerId={player.id}
+          dossierPlayerName={player.name}
         />
       </div>
 

@@ -64,7 +64,17 @@ export function hasModuleAccess(
   return needed.some((slug) => moduleSlugs.includes(slug));
 }
 
-export function listAvailableOptionalSections(moduleSlugs: readonly string[]): PlayerDossierOptionalSection[] {
+function isDossierBypassRole(role: string | null | undefined): boolean {
+  if (!role) return false;
+  const normalized = role.trim().toLowerCase();
+  return normalized === 'super_admin' || normalized === 'company_admin';
+}
+
+export function listAvailableOptionalSections(
+  moduleSlugs: readonly string[],
+  role?: string | null,
+): PlayerDossierOptionalSection[] {
+  if (isDossierBypassRole(role)) return [...PLAYER_DOSSIER_OPTIONAL_SECTIONS];
   return PLAYER_DOSSIER_OPTIONAL_SECTIONS.filter((section) =>
     hasModuleAccess(moduleSlugs, PLAYER_DOSSIER_OPTIONAL_MODULE[section]),
   );
@@ -86,7 +96,7 @@ export function resolveIncludedOptionalSections(input: {
   requested: readonly string[];
 }): PlayerDossierOptionalSection[] {
   if (!canChooseSensitiveDossierSections(input.role)) return [];
-  const available = new Set(listAvailableOptionalSections(input.moduleSlugs));
+  const available = new Set(listAvailableOptionalSections(input.moduleSlugs, input.role));
   return input.requested.filter(
     (s): s is PlayerDossierOptionalSection =>
       (PLAYER_DOSSIER_OPTIONAL_SECTIONS as readonly string[]).includes(s) && available.has(s as PlayerDossierOptionalSection),

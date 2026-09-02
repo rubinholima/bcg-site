@@ -44,11 +44,20 @@ const OPTIONAL_MODULE: Record<PlayerDossierOptionalSection, string | readonly st
   training: "futebol_treinadores",
 };
 
+function isDossierBypassRole(role: string | null | undefined): boolean {
+  if (!role) return false;
+  const normalized = role.trim().toLowerCase();
+  return normalized === "super_admin" || normalized === "company_admin";
+}
+
 export function listSelectableOptionalSections(
   role: string | null | undefined,
   moduleSlugs: readonly string[],
 ): PlayerDossierOptionalSection[] {
   if (!canChooseSensitiveDossierSections(role)) return [];
+  if (isDossierBypassRole(role)) {
+    return Object.keys(OPTIONAL_MODULE) as PlayerDossierOptionalSection[];
+  }
   return (Object.keys(OPTIONAL_MODULE) as PlayerDossierOptionalSection[]).filter((section) =>
     hasModuleAccess(moduleSlugs, OPTIONAL_MODULE[section]),
   );
