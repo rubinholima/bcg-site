@@ -3,7 +3,11 @@ import { getCategoryLabel } from "@/lib/fixture-categories";
 import { getPositionLabel } from "@/lib/football-positions";
 import { reportLogoUrlForPrint, resolveLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
 import { PLAYER_DOSSIER_OPTIONAL_LABELS } from "@/lib/player-dossier-access";
-import type { PlayerDossierDto, PlayerDossierOptionalSection } from "@/lib/player-dossier.types";
+import type {
+  DossierFmfMatchRow,
+  PlayerDossierDto,
+  PlayerDossierOptionalSection,
+} from "@/lib/player-dossier.types";
 import {
   REPORT_PRINT_BREAK_CSS,
   wrapPrintRootDocument,
@@ -11,11 +15,10 @@ import {
 
 const BCG = {
   red: "#C8102E",
+  redDark: "#9B0C24",
   blue: "#00205B",
+  blueMid: "#003087",
   blueLight: "#E8EEF7",
-  violet: "#6d28d9",
-  violetDark: "#5b21b6",
-  violetLight: "#f3e8ff",
 } as const;
 
 function escapeHtml(text: string): string {
@@ -44,71 +47,18 @@ function asObject(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function optionalBadge(label: string): string {
-  return `<span class="optional-badge">Seção opcional · ${escapeHtml(label)}</span>`;
+function fmtDate(iso?: string | null): string {
+  return formatDateDayMonYear(iso) || "—";
 }
 
-function section(title: string, body: string, optionalLabel?: string): string {
-  if (!body.trim()) return "";
-  const badge = optionalLabel ? `<div class="section-badges">${optionalBadge(optionalLabel)}</div>` : "";
-  return `
-    <section class="section">
-      ${badge}
-      <h3>${escapeHtml(title)}</h3>
-      ${body}
-    </section>
-  `;
+function clubDisplayName(d: PlayerDossierDto): string {
+  return d.club?.name?.trim() || "Boston City FC";
 }
 
-function kvGrid(items: Array<{ label: string; value: string }>): string {
-  const rows = items.filter((i) => i.value && i.value !== "—");
-  if (rows.length === 0) return "";
-  return `
-    <div class="kv-grid">
-      ${rows
-        .map(
-          (item) => `
-        <div class="kv-item">
-          <label>${escapeHtml(item.label)}</label>
-          <span>${escapeHtml(item.value)}</span>
-        </div>`,
-        )
-        .join("")}
-    </div>
-  `;
-}
-
-function barChart(
-  title: string,
-  items: Array<{ label: string; value: number; suffix?: string }>,
-): string {
-  if (items.length === 0) return "";
-  const max = Math.max(...items.map((i) => i.value), 1);
-  return `
-    <div class="chart-block">
-      <h4>${escapeHtml(title)}</h4>
-      <div class="bar-chart">
-        ${items
-          .map(
-            (item) => `
-          <div class="bar-row">
-            <div class="bar-label">${escapeHtml(item.label)}</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:${Math.round((item.value / max) * 100)}%"></div>
-            </div>
-            <div class="bar-value">${item.value}${item.suffix ?? ""}</div>
-          </div>`,
-          )
-          .join("")}
-      </div>
-    </div>
-  `;
-}
-
-function baseStyles(): string {
+function dossierStyles(): string {
   return `
     ${REPORT_PRINT_BREAK_CSS}
-    @page { size: A4; margin: 12mm 11mm; }
+    @page { size: A4; margin: 14mm 12mm 16mm; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -116,666 +66,883 @@ function baseStyles(): string {
       color: #0f172a;
       background: #fff;
       line-height: 1.45;
+      font-size: 11px;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .top-bar {
-      height: 6px;
-      background: linear-gradient(90deg, ${BCG.violet} 0%, ${BCG.blue} 100%);
-      border-radius: 3px;
+    .doc-page {
+      break-after: page;
+      page-break-after: always;
+    }
+    .doc-page:last-child {
+      break-after: auto;
+      page-break-after: auto;
+    }
+    .cover-page {
+      min-height: 250mm;
+      display: flex;
+      flex-direction: column;
+      break-after: page;
+      page-break-after: always;
+    }
+    .cover-top {
+      background: linear-gradient(135deg, ${BCG.blue} 0%, ${BCG.blueMid} 100%);
+      color: #fff;
+      padding: 18px 22px 16px;
+      border-radius: 0 0 12px 12px;
+    }
+    .cover-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
       margin-bottom: 14px;
     }
-    .hero {
+    .cover-logo {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 10px;
+      padding: 6px;
+    }
+    .cover-club-tag {
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+    .cover-club-name {
+      margin: 2px 0 0;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .cover-doc-type {
+      margin: 0;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+    .cover-body {
+      flex: 1;
       display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 18px;
-      padding: 16px 18px;
-      margin-bottom: 14px;
-      border: 1px solid #ddd6fe;
-      border-left: 5px solid ${BCG.violet};
-      border-radius: 12px;
-      background: linear-gradient(135deg, ${BCG.violetLight} 0%, #fff 100%);
-      break-inside: avoid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 22px;
+      padding: 24px 22px 18px;
+      align-items: start;
     }
-    .photo-wrap {
-      width: 120px;
-      height: 150px;
+    .cover-photo {
+      width: 100%;
+      max-width: 280px;
+      aspect-ratio: 4/5;
       border-radius: 12px;
       overflow: hidden;
-      border: 2px solid ${BCG.violetDark};
-      background: #fff;
+      border: 3px solid ${BCG.blue};
+      background: ${BCG.blueLight};
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .photo-wrap img { width: 100%; height: 100%; object-fit: cover; }
-    .photo-fallback {
-      font-size: 11px;
-      font-weight: 700;
-      color: ${BCG.violetDark};
-      text-align: center;
-      padding: 8px;
+    .cover-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 15%;
     }
-    .hero h1 {
-      margin: 0 0 6px;
-      font-size: 26px;
-      font-weight: 800;
+    .cover-photo-fallback {
+      font-size: 12px;
+      font-weight: 700;
+      color: ${BCG.blue};
+      text-align: center;
+      padding: 16px;
+    }
+    .cover-name {
+      margin: 0 0 4px;
+      font-size: 32px;
+      font-weight: 900;
       letter-spacing: -0.02em;
       text-transform: uppercase;
+      color: ${BCG.blue};
+      line-height: 1.05;
     }
-    .hero .club {
-      margin: 0 0 8px;
+    .cover-nickname {
+      margin: 0 0 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #475569;
+    }
+    .cover-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 16px;
+      margin-bottom: 16px;
+    }
+    .cover-meta-item label {
+      display: block;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: ${BCG.red};
+      margin-bottom: 2px;
+    }
+    .cover-meta-item span {
       font-size: 13px;
       font-weight: 700;
-      color: ${BCG.violet};
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      color: #0f172a;
     }
-    .hero .subtitle {
-      margin: 0;
-      font-size: 14px;
+    .cover-bio {
+      margin-top: 8px;
+      padding: 12px 14px;
+      border-left: 4px solid ${BCG.red};
+      background: ${BCG.blueLight};
+      font-size: 11px;
       color: #334155;
+      white-space: pre-wrap;
+      line-height: 1.55;
     }
-    .doc-tag {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 5px 12px;
-      border-radius: 999px;
-      background: ${BCG.violetDark};
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-    .section { margin: 18px 0 0; break-inside: avoid-page; }
-    .section h3 {
+    .section-title {
       margin: 0 0 10px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
-      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: ${BCG.violetDark};
-      border-bottom: 2px solid ${BCG.violetLight};
-      padding-bottom: 6px;
+      letter-spacing: 0.08em;
+      color: ${BCG.blue};
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-left: 10px;
+      border-left: 4px solid ${BCG.red};
+      break-after: avoid;
     }
-    .section h4 { margin: 0 0 8px; font-size: 12px; font-weight: 700; color: #334155; }
-    .section-badges { margin-bottom: 6px; }
-    .optional-badge {
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, ${BCG.blue} 0%, transparent 100%);
+      opacity: 0.3;
+    }
+    .section-block { margin-bottom: 20px; break-inside: avoid-page; }
+    .optional-tag {
       display: inline-block;
+      margin-bottom: 8px;
       padding: 3px 10px;
       border-radius: 999px;
       background: #fef3c7;
       border: 1px solid #fcd34d;
       color: #92400e;
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
     }
     .kv-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px 14px;
+      margin-bottom: 4px;
     }
     .kv-item label {
       display: block;
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 700;
-      letter-spacing: 0.07em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: ${BCG.violetDark};
+      color: ${BCG.blueMid};
       margin-bottom: 2px;
     }
-    .kv-item span { display: block; font-size: 13px; font-weight: 600; color: #0f172a; }
-    .stats-row {
+    .kv-item span { font-size: 12px; font-weight: 600; color: #0f172a; }
+    .stats-band {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 8px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin: 12px 0 16px;
     }
-    .stat-card {
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: ${BCG.blueLight};
-      border: 1px solid #cbd5e1;
+    .stat-box {
       text-align: center;
+      padding: 10px 6px;
+      border: 1px solid #cbd5e1;
+      border-top: 3px solid ${BCG.red};
+      background: ${BCG.blueLight};
+      border-radius: 6px;
     }
-    .stat-card .num { font-size: 22px; font-weight: 800; color: ${BCG.blue}; line-height: 1; }
-    .stat-card .lbl {
+    .stat-box .n { font-size: 20px; font-weight: 800; color: ${BCG.blue}; line-height: 1; }
+    .stat-box .l {
       margin-top: 4px;
-      font-size: 9px;
+      font-size: 7px;
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #475569;
+      color: #64748b;
     }
-    .chart-block { margin-top: 12px; }
-    .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      margin-top: 8px;
+    }
+    table.data-table thead { display: table-header-group; }
+    table.data-table th {
+      background: linear-gradient(180deg, ${BCG.blueMid} 0%, ${BCG.blue} 100%);
+      color: #fff;
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 8px 6px;
+      border: 1px solid ${BCG.blue};
+      text-align: left;
+    }
+    table.data-table td {
+      padding: 6px;
+      border: 1px solid #dbe3f0;
+      vertical-align: top;
+    }
+    table.data-table tbody tr:nth-child(even) td { background: #f8fafc; }
+    .chart-wrap { margin-top: 14px; }
+    .chart-title {
+      margin: 0 0 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
     .bar-row {
       display: grid;
-      grid-template-columns: 140px 1fr 56px;
+      grid-template-columns: 120px 1fr 48px;
       gap: 8px;
       align-items: center;
+      margin-bottom: 6px;
     }
-    .bar-label { font-size: 11px; font-weight: 600; color: #334155; }
+    .bar-label { font-size: 9px; font-weight: 600; color: #475569; }
     .bar-track {
-      height: 10px;
-      border-radius: 999px;
+      height: 8px;
       background: #e2e8f0;
+      border-radius: 999px;
       overflow: hidden;
     }
     .bar-fill {
       height: 100%;
+      background: linear-gradient(90deg, ${BCG.blueMid} 0%, ${BCG.blue} 100%);
       border-radius: 999px;
-      background: linear-gradient(90deg, ${BCG.violet} 0%, ${BCG.blue} 100%);
     }
-    .bar-value { font-size: 11px; font-weight: 700; text-align: right; color: #0f172a; }
-    .timeline { display: flex; flex-direction: column; gap: 8px; }
-    .timeline-item {
+    .bar-val { font-size: 9px; font-weight: 700; text-align: right; }
+    .timeline { display: flex; flex-direction: column; gap: 6px; }
+    .tl-row {
       display: grid;
-      grid-template-columns: 88px 1fr;
-      gap: 10px;
-      padding: 8px 10px;
-      border-radius: 8px;
-      background: #f8fafc;
+      grid-template-columns: 82px 100px 1fr;
+      gap: 8px;
+      padding: 7px 10px;
       border: 1px solid #e2e8f0;
+      border-left: 3px solid ${BCG.red};
+      background: #fafbfc;
     }
-    .timeline-date { font-size: 10px; font-weight: 700; color: ${BCG.violetDark}; }
-    .timeline-label { font-size: 12px; font-weight: 700; color: #0f172a; }
-    .timeline-detail { font-size: 11px; color: #475569; margin-top: 2px; }
-    .simple-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11px;
+    .tl-date { font-size: 9px; font-weight: 700; color: ${BCG.blue}; }
+    .tl-cat { font-size: 8px; font-weight: 700; text-transform: uppercase; color: #64748b; }
+    .tl-title { font-size: 10px; font-weight: 600; color: #0f172a; }
+    .tl-detail { font-size: 9px; color: #64748b; margin-top: 2px; }
+    .prose { font-size: 11px; color: #334155; white-space: pre-wrap; line-height: 1.55; }
+    .report-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid ${BCG.blueLight};
     }
-    .simple-table th, .simple-table td {
-      border: 1px solid #e2e8f0;
-      padding: 6px 8px;
-      text-align: left;
-      vertical-align: top;
-    }
-    .simple-table th {
-      background: ${BCG.violetLight};
-      font-size: 9px;
-      letter-spacing: 0.06em;
+    .report-hdr img { height: 36px; object-fit: contain; }
+    .report-hdr-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: ${BCG.violetDark};
+      color: ${BCG.blue};
+      text-align: right;
     }
-    .bio { font-size: 12px; color: #334155; white-space: pre-wrap; }
-    .report-footer {
+    .report-hdr-sub { font-size: 9px; color: #64748b; text-align: right; }
+    .report-ftr {
       margin-top: 16px;
-      padding-top: 10px;
-      border-top: 1px solid #e2e8f0;
-      font-size: 9px;
+      padding-top: 8px;
+      border-top: 2px solid ${BCG.blueLight};
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
       color: #64748b;
-      text-align: center;
     }
+    .report-ftr strong { color: ${BCG.blue}; }
     @media print {
-      .section { break-inside: avoid-page; }
+      .section-block { break-inside: avoid-page; }
+      thead { display: table-header-group; }
     }
   `;
 }
 
-function renderIdentity(d: PlayerDossierDto): string {
-  const id = d.identity;
-  const photo = id.photoUrl ? resolveLogoUrlForPrint(id.photoUrl) : "";
+function kvGrid(items: Array<{ label: string; value: string }>): string {
+  const rows = items.filter((i) => i.value && i.value !== "—");
+  if (rows.length === 0) return "";
+  return `<div class="kv-grid">${rows
+    .map(
+      (i) =>
+        `<div class="kv-item"><label>${escapeHtml(i.label)}</label><span>${escapeHtml(i.value)}</span></div>`,
+    )
+    .join("")}</div>`;
+}
+
+function dataTable(headers: string[], rows: string[][]): string {
+  if (rows.length === 0) return "";
+  return `<table class="data-table"><thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows
+    .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`)
+    .join("")}</tbody></table>`;
+}
+
+function barChart(title: string, items: Array<{ label: string; value: number; suffix?: string }>): string {
+  if (items.length === 0) return "";
+  const max = Math.max(...items.map((i) => i.value), 1);
+  return `<div class="chart-wrap"><p class="chart-title">${escapeHtml(title)}</p>${items
+    .map(
+      (item) => `<div class="bar-row">
+        <div class="bar-label">${escapeHtml(item.label)}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round((item.value / max) * 100)}%"></div></div>
+        <div class="bar-val">${item.value}${item.suffix ?? ""}</div>
+      </div>`,
+    )
+    .join("")}</div>`;
+}
+
+function sectionBlock(title: string, body: string, optionalLabel?: string): string {
+  if (!body.trim()) return "";
+  const tag = optionalLabel
+    ? `<div class="optional-tag">Seção opcional · ${escapeHtml(optionalLabel)}</div>`
+    : "";
+  return `<div class="section-block">${tag}<h2 class="section-title">${escapeHtml(title)}</h2>${body}</div>`;
+}
+
+function matchRole(row: DossierFmfMatchRow): string {
+  if (!row.listed && !row.played) return "—";
+  if (row.starter) return "Titular";
+  if (row.played && row.enteredMinute != null) return `Reserva (${row.enteredMinute}′)`;
+  if (row.played) return "Reserva";
+  return "Relacionado";
+}
+
+function renderCover(d: PlayerDossierDto): string {
+  const c = d.cover;
   const logo = d.club?.logoUrl
     ? resolveLogoUrlForPrint(reportLogoUrlForPrint(d.club.logoUrl, false))
-    : "";
+    : resolveLogoUrlForPrint("/bcg-logo.png");
+  const photo = c.photoUrl ? resolveLogoUrlForPrint(c.photoUrl) : "";
 
   return `
-    <div class="top-bar"></div>
-    <div class="hero">
-      <div class="photo-wrap">
-        ${
-          photo
-            ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(id.name)}" />`
-            : `<div class="photo-fallback">Sem foto</div>`
-        }
+    <div class="cover-page">
+      <div class="cover-top">
+        <div class="cover-brand">
+          ${logo ? `<img class="cover-logo" src="${escapeHtml(logo)}" alt="" />` : ""}
+          <div>
+            <div class="cover-club-tag">Departamento de Futebol · Apresentação externa</div>
+            <h1 class="cover-club-name">${escapeHtml(clubDisplayName(d))}</h1>
+          </div>
+        </div>
+        <p class="cover-doc-type">Dossiê do Atleta · Documento confidencial</p>
       </div>
-      <div>
-        ${
-          logo
-            ? `<img src="${escapeHtml(logo)}" alt="" style="height:36px;object-fit:contain;margin-bottom:8px;" />`
-            : ""
-        }
-        <p class="club">${escapeHtml(d.club?.name ?? "Clube")}</p>
-        <h1>${escapeHtml(id.name)}</h1>
-        <p class="subtitle">
-          ${[
-            id.jerseyNumber != null ? `#${id.jerseyNumber}` : null,
-            id.category ? getCategoryLabel(id.category, "pt") : null,
-            id.position ? getPositionLabel(id.position) : null,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-        <span class="doc-tag">Dossiê do Atleta · Apresentação externa</span>
+      <div class="cover-body">
+        <div class="cover-photo">
+          ${
+            photo
+              ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(c.name)}" />`
+              : `<div class="cover-photo-fallback">Sem foto cadastrada</div>`
+          }
+        </div>
+        <div>
+          <h2 class="cover-name">${escapeHtml(c.name)}</h2>
+          ${c.nickname?.trim() ? `<p class="cover-nickname">${escapeHtml(c.nickname)}</p>` : ""}
+          <div class="cover-meta-grid">
+            ${[
+              ["Categoria", c.category ? getCategoryLabel(c.category, "pt") : "—"],
+              ["Posição", c.position ? getPositionLabel(c.position) : "—"],
+              ["Camisa", c.jerseyNumber != null ? String(c.jerseyNumber) : "—"],
+              ["Idade", c.age != null ? `${c.age} anos` : fmtDate(d.profile.birthDate)],
+              ["Nacionalidade", c.nationality?.trim() || "—"],
+              ["Pé dominante", footLabel(c.preferredFoot)],
+              ["Altura", c.height ? `${c.height} cm` : "—"],
+              ["Peso", c.weight ? `${c.weight} kg` : "—"],
+              ["Situação esportiva", c.situation?.trim() || "—"],
+            ]
+              .map(
+                ([label, value]) =>
+                  `<div class="cover-meta-item"><label>${escapeHtml(label)}</label><span>${escapeHtml(value)}</span></div>`,
+              )
+              .join("")}
+          </div>
+          ${c.bioPT?.trim() ? `<div class="cover-bio">${escapeHtml(c.bioPT.trim())}</div>` : ""}
+        </div>
       </div>
     </div>
   `;
 }
 
 function renderProfile(d: PlayerDossierDto): string {
-  const id = d.identity;
-  return section(
-    "Perfil esportivo",
+  const p = d.profile;
+  return sectionBlock(
+    "Perfil do atleta",
     kvGrid([
-      { label: "Categoria", value: id.category ? getCategoryLabel(id.category, "pt") : "—" },
-      { label: "Posição", value: id.position ? getPositionLabel(id.position) : "—" },
-      { label: "Pé dominante", value: footLabel(id.preferredFoot) },
-      { label: "Altura", value: id.height ? `${id.height} cm` : "—" },
-      { label: "Peso", value: id.weight ? `${id.weight} kg` : "—" },
-      { label: "Nascimento", value: formatDateDayMonYear(id.birthDate) || "—" },
-      { label: "Nacionalidade", value: id.nationality?.trim() || "—" },
-      { label: "IMC", value: id.bmi != null ? String(id.bmi) : "—" },
-      { label: "% Gordura", value: id.bodyFatPercent != null ? `${id.bodyFatPercent}%` : "—" },
-    ]),
-  );
-}
-
-function renderRegistration(d: PlayerDossierDto): string {
-  const r = d.registration;
-  return section(
-    "Registro e situação esportiva",
-    kvGrid([
-      { label: "Registro CBF", value: r.cbfRegistration?.trim() || "—" },
-      { label: "Federação local", value: r.localFedRegistration?.trim() || "—" },
-      { label: "COMET", value: r.comet?.trim() || "—" },
-      { label: "Situação", value: r.situation?.trim() || "—" },
-      { label: "Nome na camisa", value: r.jerseyName?.trim() || "—" },
-      { label: "Clube atual", value: d.identity.currentTeam?.trim() || d.club?.name || "—" },
+      { label: "Data de nascimento", value: fmtDate(p.birthDate) },
+      { label: "Registro CBF", value: p.cbfRegistration?.trim() || "—" },
+      { label: "Federação local", value: p.localFedRegistration?.trim() || "—" },
+      { label: "COMET", value: p.comet?.trim() || "—" },
+      { label: "Nome na camisa", value: p.jerseyName?.trim() || "—" },
+      { label: "Clube atual", value: p.currentTeam?.trim() || "—" },
+      { label: "IMC", value: p.bmi != null ? String(p.bmi) : "—" },
+      { label: "% Gordura", value: p.bodyFatPercent != null ? `${p.bodyFatPercent}%` : "—" },
+      { label: "Valor de mercado", value: p.marketValue != null ? `€ ${p.marketValue}` : "—" },
     ]),
   );
 }
 
 function renderCareer(d: PlayerDossierDto): string {
-  const teams = d.career.previousTeams;
-  const history = asArray(d.career.seasonHistory);
-  if (teams.length === 0 && history.length === 0) return "";
-
-  const teamsHtml =
-    teams.length > 0
-      ? `<p><strong>Clubes anteriores:</strong> ${escapeHtml(teams.join(" · "))}</p>`
-      : "";
-
-  const historyRows = history
-    .slice(0, 8)
+  const parts: string[] = [];
+  if (d.career.previousTeams.length > 0) {
+    parts.push(
+      `<p><strong>Clubes anteriores:</strong> ${escapeHtml(d.career.previousTeams.join(" · "))}</p>`,
+    );
+  }
+  const histRows = asArray(d.career.seasonHistory)
     .map((row) => {
       const o = asObject(row);
-      const season = typeof o.season === "string" ? o.season : typeof o.year === "string" ? o.year : "—";
-      const club = typeof o.club === "string" ? o.club : typeof o.team === "string" ? o.team : "—";
-      const category =
-        typeof o.category === "string" ? getCategoryLabel(o.category, "pt") : "—";
-      return `<tr><td>${escapeHtml(season)}</td><td>${escapeHtml(club)}</td><td>${escapeHtml(category)}</td></tr>`;
+      return [
+        escapeHtml(typeof o.season === "string" ? o.season : typeof o.year === "string" ? o.year : "—"),
+        escapeHtml(typeof o.club === "string" ? o.club : typeof o.team === "string" ? o.team : "—"),
+        escapeHtml(typeof o.category === "string" ? getCategoryLabel(o.category, "pt") : "—"),
+      ];
     })
-    .join("");
-
-  const historyHtml =
-    historyRows.length > 0
-      ? `
-      <table class="simple-table" style="margin-top:10px;">
-        <thead><tr><th>Temporada</th><th>Clube</th><th>Categoria</th></tr></thead>
-        <tbody>${historyRows}</tbody>
-      </table>`
-      : "";
-
-  return section("Trajetória e histórico", `${teamsHtml}${historyHtml}`);
+    .filter((r) => r.some((c) => c !== "—"));
+  if (histRows.length > 0) {
+    parts.push(dataTable(["Temporada", "Clube", "Categoria"], histRows));
+  }
+  const movRows = d.career.movements.map((m) => [
+    escapeHtml(fmtDate(m.date) !== "—" ? m.date : m.date || "—"),
+    escapeHtml(m.label),
+    escapeHtml(m.detail ?? "—"),
+  ]);
+  if (movRows.length > 0) {
+    parts.push(dataTable(["Data", "Evento", "Detalhe"], movRows));
+  }
+  return sectionBlock("Trajetória e histórico esportivo", parts.join(""));
 }
 
-function renderFmfStats(d: PlayerDossierDto): string {
-  const stats = d.fmfStats;
-  if (!stats?.total) return "";
+function renderMatchHistory(d: PlayerDossierDto): string {
+  const mh = d.matchHistory;
+  if (!mh.totals && mh.matches.length === 0) return "";
 
-  const cards = `
-    <div class="stats-row">
-      <div class="stat-card"><div class="num">${stats.total.matchesPlayed}</div><div class="lbl">Jogos</div></div>
-      <div class="stat-card"><div class="num">${stats.total.minutesPlayed}</div><div class="lbl">Minutos</div></div>
-      <div class="stat-card"><div class="num">${stats.total.goals}</div><div class="lbl">Gols</div></div>
-      <div class="stat-card"><div class="num">${d.meta.season}</div><div class="lbl">Temporada ref.</div></div>
-    </div>
-  `;
+  const totals = mh.totals
+    ? `<div class="stats-band">
+        <div class="stat-box"><div class="n">${mh.totals.matchesPlayed}</div><div class="l">Jogos</div></div>
+        <div class="stat-box"><div class="n">${mh.totals.starts}</div><div class="l">Titularidades</div></div>
+        <div class="stat-box"><div class="n">${mh.totals.minutesPlayed}</div><div class="l">Minutos</div></div>
+        <div class="stat-box"><div class="n">${mh.totals.goals}</div><div class="l">Gols</div></div>
+        <div class="stat-box"><div class="n">${mh.totals.yellowCards}</div><div class="l">Amarelos</div></div>
+        <div class="stat-box"><div class="n">${mh.totals.redCards}</div><div class="l">Vermelhos</div></div>
+      </div>`
+    : "";
+
+  const matchRows = mh.matches
+    .filter((r) => r.played || r.listed)
+    .slice(0, 50)
+    .map((r) => {
+      const m = r.match;
+      const score = `${m.homeScore ?? "–"}×${m.awayScore ?? "–"}`;
+      const cards =
+        [r.yellowCards > 0 ? `${r.yellowCards}A` : "", r.redCards > 0 ? `${r.redCards}V` : ""]
+          .filter(Boolean)
+          .join(" ") || "—";
+      return [
+        escapeHtml(`${m.season}`),
+        escapeHtml(m.competition),
+        escapeHtml(fmtDate(m.matchDate)),
+        escapeHtml(`${m.homeTeam} ${score} ${m.awayTeam}`),
+        escapeHtml(matchRole(r)),
+        escapeHtml(r.played ? String(r.minutesPlayed) : "0"),
+        escapeHtml(r.goals > 0 ? String(r.goals) : "—"),
+        escapeHtml(cards),
+      ];
+    });
 
   const charts = [
     barChart(
-      "Minutos por temporada/competição (FMF)",
-      d.charts.seasonMinutes.map((s) => ({
-        label: s.label,
-        value: s.minutesPlayed,
-        suffix: " min",
-      })),
+      "Minutos por mês (partidas oficiais FMF)",
+      d.charts.monthlyMinutes.map((x) => ({ label: x.label, value: x.minutes, suffix: " min" })),
     ),
     barChart(
-      "Gols por ano (FMF)",
-      d.charts.yearTotals.map((y) => ({
-        label: String(y.year),
-        value: y.goals,
+      "Minutos por temporada/competição",
+      d.charts.seasonMinutes.map((x) => ({
+        label: x.label,
+        value: x.minutesPlayed,
+        suffix: " min",
       })),
     ),
   ].join("");
 
-  return section("Estatísticas oficiais de temporada", `${cards}${charts}`);
+  return sectionBlock(
+    "Histórico oficial de partidas (FMF)",
+    `${totals}${dataTable(["Temp.", "Competição", "Data", "Confronto", "Função", "Min", "Gols", "Cartões"], matchRows)}${charts}`,
+  );
 }
 
 function renderPerformance(d: PlayerDossierDto): string {
   const perf = d.performance;
   const parts: string[] = [];
 
-  if (perf.coachEvaluations.count > 0) {
-    parts.push(`
-      <p><strong>Avaliações técnicas (comissão):</strong> ${perf.coachEvaluations.count} período(s)
-      ${perf.coachEvaluations.averagePercentage != null ? ` · média ${perf.coachEvaluations.averagePercentage}%` : ""}</p>
-    `);
-    const rows = perf.coachEvaluations.periods
-      .map(
-        (p) =>
-          `<tr><td>${escapeHtml(p.periodKey)}</td><td>${p.percentage != null ? `${p.percentage}%` : "—"}</td><td>${escapeHtml(p.classification ?? "—")}</td></tr>`,
-      )
-      .join("");
-    if (rows) {
-      parts.push(`
-        <table class="simple-table">
-          <thead><tr><th>Período</th><th>%</th><th>Classificação</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `);
-    }
-  }
-
-  const metrics = perf.analysisMetrics;
-  const metricKeys = Object.keys(metrics).filter((k) => metrics[k] != null);
-  if (metricKeys.length > 0) {
+  if (perf.coachSummary.count > 0) {
     parts.push(
-      barChart(
-        "Indicadores analíticos",
-        metricKeys.slice(0, 8).map((k) => ({
-          label: k,
-          value: Number(metrics[k]) || 0,
-        })),
+      `<p><strong>Avaliações da comissão técnica:</strong> ${perf.coachSummary.count} período(s) concluído(s)${perf.coachSummary.averagePercentage != null ? ` · média ${perf.coachSummary.averagePercentage}%` : ""}.</p>`,
+    );
+    const coachRows = perf.coachEvaluations.map((r) => [
+      escapeHtml(String(r.season)),
+      escapeHtml(r.periodKey),
+      escapeHtml(r.percentage != null ? `${r.percentage}%` : "—"),
+      escapeHtml(r.classification ?? "—"),
+      escapeHtml(String(r.matchMinutes)),
+      escapeHtml(String(r.goals)),
+      escapeHtml(fmtDate(r.submittedAt)),
+    ]);
+    parts.push(
+      dataTable(
+        ["Temp.", "Período", "%", "Classif.", "Min. jogos", "Gols", "Enviado"],
+        coachRows,
       ),
     );
   }
 
-  const evals = asArray(perf.evaluations);
-  if (evals.length > 0) {
-    const rows = evals
-      .slice(0, 6)
-      .map((ev) => {
-        const o = asObject(ev);
-        return `<tr>
-          <td>${escapeHtml(formatDateDayMonYear(typeof o.date === "string" ? o.date : null) || "—")}</td>
-          <td>${escapeHtml(typeof o.evaluator === "string" ? o.evaluator : "—")}</td>
-          <td>${o.rating != null ? String(o.rating) : "—"}</td>
-          <td>${escapeHtml(typeof o.notes === "string" ? o.notes.slice(0, 120) : "—")}</td>
-        </tr>`;
-      })
-      .join("");
-    parts.push(`
-      <table class="simple-table" style="margin-top:10px;">
-        <thead><tr><th>Data</th><th>Avaliador</th><th>Nota</th><th>Observações</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `);
+  if (perf.performanceAnalysis?.trim()) {
+    parts.push(`<div class="prose">${escapeHtml(perf.performanceAnalysis.trim())}</div>`);
   }
 
-  if (parts.length === 0) return "";
-  return section("Desempenho e evolução", parts.join(""));
+  const evalRows = asArray(perf.diretoriaEvaluations)
+    .slice(0, 10)
+    .map((ev) => {
+      const o = asObject(ev);
+      return [
+        escapeHtml(fmtDate(typeof o.date === "string" ? o.date : null)),
+        escapeHtml(typeof o.evaluator === "string" ? o.evaluator : "—"),
+        escapeHtml(o.rating != null ? String(o.rating) : "—"),
+        escapeHtml(typeof o.notes === "string" ? o.notes.slice(0, 100) : "—"),
+      ];
+    });
+  if (evalRows.length > 0) {
+    parts.push(dataTable(["Data", "Avaliador", "Nota", "Observações"], evalRows));
+  }
+
+  const trend = barChart(
+    "Evolução das avaliações técnicas (%)",
+    d.charts.evaluationTrend.map((x) => ({ label: x.label, value: x.value, suffix: "%" })),
+  );
+  if (trend) parts.push(trend);
+
+  return sectionBlock("Desempenho e avaliações", parts.join(""));
 }
 
 function renderTimeline(d: PlayerDossierDto): string {
   if (d.timeline.length === 0) return "";
-  const items = d.timeline
-    .slice(0, 14)
+  const rows = d.timeline
     .map(
-      (ev) => `
-      <div class="timeline-item">
-        <div class="timeline-date">${escapeHtml(ev.date ? formatDateDayMonYear(ev.date) : "—")}</div>
-        <div>
-          <div class="timeline-label">${escapeHtml(ev.label)}</div>
-          ${ev.detail ? `<div class="timeline-detail">${escapeHtml(ev.detail)}</div>` : ""}
-        </div>
+      (ev) => `<div class="tl-row">
+        <div class="tl-date">${escapeHtml(ev.date ? fmtDate(ev.date) : "—")}</div>
+        <div class="tl-cat">${escapeHtml(ev.category)}</div>
+        <div><div class="tl-title">${escapeHtml(ev.title)}</div>${ev.detail ? `<div class="tl-detail">${escapeHtml(ev.detail)}</div>` : ""}</div>
       </div>`,
     )
     .join("");
-  return section("Linha do tempo esportiva", `<div class="timeline">${items}</div>`);
+  return sectionBlock("Linha do tempo esportiva", `<div class="timeline">${rows}</div>`);
 }
 
-function renderBio(d: PlayerDossierDto): string {
-  const bio = d.identity.bioPT?.trim();
-  if (!bio) return "";
-  return section("Apresentação", `<div class="bio">${escapeHtml(bio)}</div>`);
+function renderOptionalSections(d: PlayerDossierDto): string {
+  return d.meta.includedOptionalSections
+    .map((id) => renderOptionalSection(id, d))
+    .filter(Boolean)
+    .join("");
 }
 
-function renderOptionalSection(
-  sectionId: PlayerDossierOptionalSection,
-  d: PlayerDossierDto,
-): string {
-  const data = d.optional;
+function renderOptionalSection(sectionId: PlayerDossierOptionalSection, d: PlayerDossierDto): string {
   const label = PLAYER_DOSSIER_OPTIONAL_LABELS[sectionId];
+  const data = d.optional;
 
   switch (sectionId) {
+    case "physio": {
+      const block = asObject(data.physio);
+      const sessions = asArray(block.sessions);
+      const evaluations = asArray(block.evaluations);
+      if (sessions.length === 0 && evaluations.length === 0) return "";
+      const sessionRows = sessions.map((s) => {
+        const o = asObject(s);
+        const region = asObject(o.region);
+        return [
+          escapeHtml(fmtDate(isoFromUnknown(o.startedAt))),
+          escapeHtml(typeof region.namePt === "string" ? region.namePt : "—"),
+          escapeHtml(typeof o.diagnosisLabel === "string" ? o.diagnosisLabel : "—"),
+          escapeHtml(typeof o.symptoms === "string" ? o.symptoms.slice(0, 60) : "—"),
+          escapeHtml(typeof o.status === "string" ? o.status : "—"),
+          escapeHtml(typeof o.disposition === "string" ? o.disposition : "—"),
+        ];
+      });
+      const evalRows = evaluations.map((e) => {
+        const o = asObject(e);
+        return [
+          escapeHtml(fmtDate(isoFromUnknown(o.evaluatedAt))),
+          escapeHtml(typeof o.context === "string" ? o.context : "—"),
+          escapeHtml(o.rating != null ? String(o.rating) : "—"),
+          escapeHtml(typeof o.outcome === "string" ? o.outcome : "—"),
+          escapeHtml(typeof o.finalObservations === "string" ? o.finalObservations.slice(0, 80) : "—"),
+        ];
+      });
+      const body = [
+        sessionRows.length
+          ? `<p><strong>Episódios / atendimentos</strong></p>${dataTable(["Início", "Região", "Diagnóstico", "Queixa", "Status", "Desfecho"], sessionRows)}`
+          : "",
+        evalRows.length
+          ? `<p style="margin-top:12px"><strong>Avaliações periódicas</strong></p>${dataTable(["Data", "Contexto", "Nota", "Resultado", "Observações"], evalRows)}`
+          : "",
+      ].join("");
+      return sectionBlock("Histórico — Fisioterapia", body, label);
+    }
     case "psychology": {
       const block = asObject(data.psychology);
       const assessments = asArray(block.assessments);
       const consultations = asArray(block.consultations);
       if (assessments.length === 0 && consultations.length === 0) return "";
-      const rows = assessments
-        .slice(0, 5)
-        .map((a) => {
-          const o = asObject(a);
-          return `<tr><td>${escapeHtml(formatDateDayMonYear(typeof o.date === "string" ? o.date : null) || "—")}</td><td>${escapeHtml(typeof o.evaluator === "string" ? o.evaluator : "Avaliação")}</td></tr>`;
-        })
-        .join("");
-      const consultRows = consultations
-        .slice(0, 5)
-        .map((c) => {
-          const o = asObject(c);
-          return `<tr><td>${escapeHtml(formatDateDayMonYear(typeof o.date === "string" ? o.date : null) || "—")}</td><td>${escapeHtml(typeof o.type === "string" ? o.type : "Consulta")}</td><td>${escapeHtml(typeof o.status === "string" ? o.status : "—")}</td></tr>`;
-        })
-        .join("");
+      const aRows = assessments.map((a) => {
+        const o = asObject(a);
+        return [
+          escapeHtml(fmtDate(typeof o.date === "string" ? o.date : null)),
+          escapeHtml(typeof o.evaluator === "string" ? o.evaluator : "Avaliação"),
+          escapeHtml(typeof o.kind === "string" ? o.kind : "—"),
+        ];
+      });
+      const cRows = consultations.map((c) => {
+        const o = asObject(c);
+        return [
+          escapeHtml(fmtDate(typeof o.date === "string" ? o.date : null)),
+          escapeHtml(typeof o.type === "string" ? o.type : "Consulta"),
+          escapeHtml(typeof o.status === "string" ? o.status : "—"),
+        ];
+      });
       const body = [
-        rows
-          ? `<table class="simple-table"><thead><tr><th>Data</th><th>Avaliação</th></tr></thead><tbody>${rows}</tbody></table>`
-          : "",
-        consultRows
-          ? `<table class="simple-table" style="margin-top:8px;"><thead><tr><th>Data</th><th>Tipo</th><th>Status</th></tr></thead><tbody>${consultRows}</tbody></table>`
-          : "",
+        aRows.length ? dataTable(["Data", "Profissional", "Tipo"], aRows) : "",
+        cRows.length ? dataTable(["Data", "Modalidade", "Status"], cRows) : "",
       ].join("");
-      return section("Psicologia", body, label);
-    }
-    case "physio": {
-      const block = asObject(data.physio);
-      const rows = asArray(block.evaluations);
-      if (rows.length === 0) return "";
-      const table = rows
-        .map((r) => {
-          const o = asObject(r);
-          const date =
-            o.evaluatedAt instanceof Date
-              ? o.evaluatedAt.toISOString()
-              : typeof o.evaluatedAt === "string"
-                ? o.evaluatedAt
-                : null;
-          return `<tr>
-            <td>${escapeHtml(formatDateDayMonYear(date) || "—")}</td>
-            <td>${escapeHtml(typeof o.context === "string" ? o.context : "—")}</td>
-            <td>${o.rating != null ? String(o.rating) : "—"}</td>
-            <td>${escapeHtml(typeof o.outcome === "string" ? o.outcome : "—")}</td>
-          </tr>`;
-        })
-        .join("");
-      return section(
-        "Fisioterapia",
-        `<table class="simple-table"><thead><tr><th>Data</th><th>Contexto</th><th>Nota</th><th>Resultado</th></tr></thead><tbody>${table}</tbody></table>`,
-        label,
-      );
+      return sectionBlock("Histórico — Psicologia", body, label);
     }
     case "nursing": {
-      const block = asObject(data.nursing);
-      const rows = asArray(block.sessions);
-      if (rows.length === 0) return "";
-      const table = rows
-        .map((r) => {
-          const o = asObject(r);
-          const date =
-            typeof o.attendedAt === "string"
-              ? o.attendedAt
-              : o.attendedAt instanceof Date
-                ? o.attendedAt.toISOString()
-                : null;
-          return `<tr>
-            <td>${escapeHtml(formatDateDayMonYear(date) || "—")}</td>
-            <td>${escapeHtml(typeof o.symptoms === "string" ? o.symptoms.slice(0, 80) : "—")}</td>
-            <td>${escapeHtml(typeof o.status === "string" ? o.status : "—")}</td>
-          </tr>`;
-        })
-        .join("");
-      return section(
-        "Enfermaria",
-        `<table class="simple-table"><thead><tr><th>Data</th><th>Queixa</th><th>Status</th></tr></thead><tbody>${table}</tbody></table>`,
+      const sessions = asArray(asObject(data.nursing).sessions);
+      if (sessions.length === 0) return "";
+      const rows = sessions.map((s) => {
+        const o = asObject(s);
+        return [
+          escapeHtml(fmtDate(isoFromUnknown(o.attendedAt))),
+          escapeHtml(typeof o.symptoms === "string" ? o.symptoms.slice(0, 70) : "—"),
+          escapeHtml(typeof o.treatmentNotes === "string" ? o.treatmentNotes.slice(0, 70) : "—"),
+          escapeHtml(typeof o.status === "string" ? o.status : "—"),
+        ];
+      });
+      return sectionBlock(
+        "Histórico — Enfermaria",
+        dataTable(["Data", "Queixa", "Conduta", "Status"], rows),
         label,
       );
     }
     case "medical": {
       const block = asObject(data.medical);
       const departures = asArray(block.departures);
-      const history = asArray(block.history);
+      const history = asArray(block.clinicalHistory);
       if (departures.length === 0 && history.length === 0) return "";
-      const depRows = departures
-        .map((r) => {
-          const o = asObject(r);
-          const date =
-            typeof o.departedAt === "string"
-              ? o.departedAt
-              : o.departedAt instanceof Date
-                ? o.departedAt.toISOString()
-                : null;
-          return `<tr>
-            <td>${escapeHtml(formatDateDayMonYear(date) || "—")}</td>
-            <td>${escapeHtml(typeof o.careType === "string" ? o.careType : "—")}</td>
-            <td>${escapeHtml(typeof o.destination === "string" ? o.destination.slice(0, 60) : "—")}</td>
-          </tr>`;
-        })
-        .join("");
-      const histRows = history
-        .map((r) => {
-          const o = asObject(r);
-          return `<tr>
-            <td>${escapeHtml(formatDateDayMonYear(typeof o.date === "string" ? o.date : null) || "—")}</td>
-            <td>${escapeHtml(typeof o.type === "string" ? o.type : "—")}</td>
-            <td>${escapeHtml(typeof o.description === "string" ? o.description.slice(0, 80) : "—")}</td>
-          </tr>`;
-        })
-        .join("");
+      const depRows = departures.map((d) => {
+        const o = asObject(d);
+        return [
+          escapeHtml(fmtDate(isoFromUnknown(o.departedAt))),
+          escapeHtml(typeof o.careType === "string" ? o.careType : "—"),
+          escapeHtml(typeof o.destination === "string" ? o.destination.slice(0, 50) : "—"),
+          escapeHtml(typeof o.reason === "string" ? o.reason.slice(0, 60) : "—"),
+          escapeHtml(fmtDate(isoFromUnknown(o.returnedAt))),
+          escapeHtml(typeof o.status === "string" ? o.status : "—"),
+        ];
+      });
+      const histRows = history.map((h) => {
+        const o = asObject(h);
+        return [
+          escapeHtml(fmtDate(typeof o.date === "string" ? o.date : null)),
+          escapeHtml(typeof o.type === "string" ? o.type : "—"),
+          escapeHtml(typeof o.description === "string" ? o.description.slice(0, 80) : "—"),
+        ];
+      });
       const body = [
-        depRows
-          ? `<table class="simple-table"><thead><tr><th>Saída</th><th>Tipo</th><th>Destino</th></tr></thead><tbody>${depRows}</tbody></table>`
+        depRows.length
+          ? dataTable(["Saída", "Tipo", "Destino", "Motivo", "Retorno", "Status"], depRows)
           : "",
-        histRows
-          ? `<table class="simple-table" style="margin-top:8px;"><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th></tr></thead><tbody>${histRows}</tbody></table>`
-          : "",
+        histRows.length ? dataTable(["Data", "Tipo", "Registro"], histRows) : "",
       ].join("");
-      return section("Saúde clínica", body, label);
+      return sectionBlock("Histórico — Saúde clínica", body, label);
     }
     case "training": {
-      const block = asObject(data.training);
-      const rows = asArray(block.sessions);
-      if (rows.length === 0) return "";
-      const table = rows
-        .map((r) => {
-          const o = asObject(r);
-          return `<tr>
-            <td>${escapeHtml(formatDateDayMonYear(typeof o.sessionDate === "string" ? o.sessionDate : null) || "—")}</td>
-            <td>${escapeHtml(typeof o.category === "string" ? o.category : "—")}</td>
-            <td>${o.rating != null ? String(o.rating) : "—"}</td>
-            <td>${escapeHtml(typeof o.staffName === "string" ? o.staffName : "—")}</td>
-          </tr>`;
-        })
-        .join("");
-      return section(
-        "Treinos",
-        `<table class="simple-table"><thead><tr><th>Data</th><th>Categoria</th><th>Nota</th><th>Comissão</th></tr></thead><tbody>${table}</tbody></table>`,
+      const sessions = asArray(asObject(data.training).sessions);
+      if (sessions.length === 0) return "";
+      const rows = sessions.map((s) => {
+        const o = asObject(s);
+        return [
+          escapeHtml(fmtDate(typeof o.sessionDate === "string" ? o.sessionDate : null)),
+          escapeHtml(typeof o.category === "string" ? o.category : "—"),
+          escapeHtml(o.rating != null ? String(o.rating) : "—"),
+          escapeHtml(typeof o.staffName === "string" ? o.staffName : "—"),
+          escapeHtml(typeof o.agendaTitle === "string" ? o.agendaTitle.slice(0, 50) : "—"),
+        ];
+      });
+      return sectionBlock(
+        "Histórico — Treinos",
+        dataTable(["Data", "Categoria", "Nota", "Comissão", "Atividade"], rows),
         label,
       );
     }
     case "scouting": {
-      const block = asObject(data.scouting);
-      const prospect = asObject(block.prospect);
-      if (Object.keys(prospect).length === 0) return "";
-      return section(
-        "Captação / Scouting",
-        kvGrid([
-          { label: "Estágio", value: typeof prospect.stage === "string" ? prospect.stage : "—" },
-          { label: "Prioridade", value: typeof prospect.priority === "string" ? prospect.priority : "—" },
-          {
-            label: "Recomendação",
-            value: typeof prospect.recommendation === "string" ? prospect.recommendation : "—",
-          },
-          {
-            label: "Nota geral",
-            value: prospect.overallRating != null ? String(prospect.overallRating) : "—",
-          },
-        ]),
+      const prospects = asArray(asObject(data.scouting).prospects);
+      if (prospects.length === 0) return "";
+      const rows = prospects.map((p) => {
+        const o = asObject(p);
+        return [
+          escapeHtml(typeof o.stage === "string" ? o.stage : "—"),
+          escapeHtml(typeof o.priority === "string" ? o.priority : "—"),
+          escapeHtml(typeof o.recommendation === "string" ? o.recommendation : "—"),
+          escapeHtml(o.overallRating != null ? String(o.overallRating) : "—"),
+        ];
+      });
+      return sectionBlock(
+        "Histórico — Captação",
+        dataTable(["Estágio", "Prioridade", "Recomendação", "Nota"], rows),
         label,
       );
     }
-    case "nutrition":
-    case "physiology":
-    case "performance": {
-      const key =
-        sectionId === "performance"
-          ? "performanceDetail"
-          : sectionId;
-      const block = asObject(data[key]);
-      if (Object.keys(block).length === 0) return "";
-      const summary = JSON.stringify(block, null, 2).slice(0, 1200);
-      return section(
-        PLAYER_DOSSIER_OPTIONAL_LABELS[sectionId],
-        `<pre style="font-size:10px;white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;">${escapeHtml(summary)}</pre>`,
+    case "nutrition": {
+      const block = asObject(data.nutrition);
+      const anamneses = asArray(block.anamneses);
+      const assessments = asArray(block.assessments);
+      if (anamneses.length === 0 && assessments.length === 0) return "";
+      const aRows = anamneses.slice(0, 12).map((a) => {
+        const o = asObject(a);
+        return [
+          escapeHtml(fmtDate(isoFromUnknown(o.assessedAt))),
+          escapeHtml(typeof o.objective === "string" ? o.objective.slice(0, 60) : "—"),
+        ];
+      });
+      const eRows = assessments.slice(0, 12).map((a) => {
+        const o = asObject(a);
+        return [
+          escapeHtml(fmtDate(isoFromUnknown(o.assessedAt))),
+          escapeHtml(o.weight != null ? `${o.weight} kg` : "—"),
+          escapeHtml(o.bodyFatPercent != null ? `${o.bodyFatPercent}%` : "—"),
+        ];
+      });
+      const body = [
+        aRows.length ? dataTable(["Data", "Anamnese"], aRows) : "",
+        eRows.length ? dataTable(["Data", "Peso", "% Gordura"], eRows) : "",
+      ].join("");
+      return sectionBlock("Histórico — Nutrição", body, label);
+    }
+    case "physiology": {
+      const block = asObject(data.physiology);
+      const assessments = asArray(block.assessments);
+      if (assessments.length === 0) return "";
+      const rows = assessments.map((a) => {
+        const o = asObject(a);
+        return [
+          escapeHtml(fmtDate(isoFromUnknown(o.assessedAt))),
+          escapeHtml(o.weight != null ? String(o.weight) : "—"),
+          escapeHtml(o.bodyFatPercent != null ? `${o.bodyFatPercent}%` : "—"),
+          escapeHtml(o.vo2max != null ? String(o.vo2max) : "—"),
+        ];
+      });
+      return sectionBlock(
+        "Histórico — Fisiologia",
+        dataTable(["Data", "Peso", "% Gordura", "VO₂ máx"], rows),
         label,
       );
+    }
+    case "performance": {
+      const block = asObject(data.performanceDetail);
+      if (!block.performanceAnalysis && Object.keys(asObject(block.analysisMetrics)).length === 0) {
+        return "";
+      }
+      const metrics = asObject(block.analysisMetrics);
+      const mRows = Object.entries(metrics)
+        .filter(([, v]) => v != null)
+        .slice(0, 12)
+        .map(([k, v]) => [escapeHtml(k), escapeHtml(String(v))]);
+      const body = [
+        typeof block.performanceAnalysis === "string" && block.performanceAnalysis.trim()
+          ? `<div class="prose">${escapeHtml(block.performanceAnalysis.trim())}</div>`
+          : "",
+        mRows.length ? dataTable(["Indicador", "Valor"], mRows) : "",
+      ].join("");
+      return sectionBlock("Histórico — Desempenho analítico", body, label);
     }
     default:
       return "";
   }
 }
 
-export function buildPlayerDossierPrintHtml(d: PlayerDossierDto): string {
-  const included = d.meta.includedOptionalSections;
-  const optionalHtml = included.map((id) => renderOptionalSection(id, d)).join("");
+function isoFromUnknown(value: unknown): string | null {
+  if (!value) return null;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return value;
+  return null;
+}
 
+function reportHeader(d: PlayerDossierDto): string {
+  const logo = d.club?.logoUrl
+    ? resolveLogoUrlForPrint(reportLogoUrlForPrint(d.club.logoUrl, false))
+    : resolveLogoUrlForPrint("/bcg-logo.png");
+  return `<div class="report-hdr">
+    ${logo ? `<img src="${escapeHtml(logo)}" alt="" />` : ""}
+    <div>
+      <div class="report-hdr-title">Dossiê do Atleta</div>
+      <div class="report-hdr-sub">${escapeHtml(d.cover.name)} · ${escapeHtml(clubDisplayName(d))}</div>
+    </div>
+  </div>`;
+}
+
+function reportFooter(d: PlayerDossierDto): string {
+  const optional =
+    d.meta.includedOptionalSections.length > 0
+      ? ` · Seções internas: ${d.meta.includedOptionalSections.map((id) => PLAYER_DOSSIER_OPTIONAL_LABELS[id]).join(", ")}`
+      : "";
+  return `<div class="report-ftr">
+    <span><strong>${escapeHtml(clubDisplayName(d))}</strong> · CUP360 · ${escapeHtml(fmtDate(d.meta.generatedAt.slice(0, 10)))}</span>
+    <span>Documento para apresentação externa${escapeHtml(optional)}</span>
+  </div>`;
+}
+
+export function buildPlayerDossierPrintHtml(d: PlayerDossierDto): string {
   const bodyHtml = [
-    renderIdentity(d),
+    renderCover(d),
+    `<div class="doc-page">`,
     renderProfile(d),
-    renderRegistration(d),
-    renderBio(d),
     renderCareer(d),
-    renderFmfStats(d),
+    `</div>`,
+    `<div class="doc-page">`,
+    renderMatchHistory(d),
+    `</div>`,
+    `<div class="doc-page">`,
     renderPerformance(d),
     renderTimeline(d),
-    optionalHtml,
+    renderOptionalSections(d),
+    `</div>`,
   ].join("");
 
-  const generated = formatDateDayMonYear(d.meta.generatedAt.slice(0, 10)) || d.meta.generatedAt;
-  const optionalNote =
-    included.length > 0
-      ? `<p><strong>Seções opcionais incluídas:</strong> ${included.map((id) => escapeHtml(PLAYER_DOSSIER_OPTIONAL_LABELS[id])).join(" · ")}</p>`
-      : "";
-
   return wrapPrintRootDocument({
-    title: `Dossiê — ${d.identity.name}`,
-    styles: baseStyles(),
-    headerHtml: "",
-    metaHtml: `
-      <div class="kv-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:12px;">
-        <div class="kv-item"><label>Gerado em</label><span>${escapeHtml(generated)}</span></div>
-        <div class="kv-item"><label>Temporada de referência</label><span>${d.meta.season}</span></div>
-      </div>
-      ${optionalNote}
-    `,
+    title: `Dossiê — ${d.cover.name}`,
+    styles: dossierStyles(),
+    headerHtml: reportHeader(d),
+    metaHtml: "",
     bodyHtml,
-    footerHtml: `<div class="report-footer">Documento gerado pelo CUP360 · Uso externo autorizado pelo clube · Confidencialidade conforme seções incluídas</div>`,
+    footerHtml: reportFooter(d),
   });
 }
 

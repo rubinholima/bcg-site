@@ -14,6 +14,35 @@ export interface PlayerDossierOptionalMeta {
   label: string;
 }
 
+export interface DossierFmfMatchRow {
+  id: string;
+  jerseyNumber?: number | null;
+  starter: boolean;
+  listed: boolean;
+  played: boolean;
+  enteredMinute?: number | null;
+  exitedMinute?: number | null;
+  minutesPlayed: number;
+  goals: number;
+  ownGoals: number;
+  penaltyGoals: number;
+  yellowCards: number;
+  redCards: number;
+  match: {
+    id: string;
+    competition: string;
+    phase?: string | null;
+    round?: string | null;
+    category: string;
+    season: number;
+    matchDate: string;
+    homeTeam: string;
+    awayTeam: string;
+    homeScore?: number | null;
+    awayScore?: number | null;
+  };
+}
+
 export interface PlayerDossierDto {
   meta: {
     generatedAt: string;
@@ -29,89 +58,96 @@ export interface PlayerDossierDto {
     slug?: string;
     logoUrl?: string | null;
   } | null;
-  identity: {
+  cover: {
     name: string;
+    nickname?: string | null;
     photoUrl?: string | null;
     jerseyNumber?: number | null;
-    birthDate?: string | null;
-    nationality?: string | null;
     category?: string | null;
     position?: string | null;
+    age?: number | null;
+    nationality?: string | null;
     preferredFoot?: string | null;
     height?: number | null;
     weight?: number | null;
-    bmi?: number | null;
-    bodyFatPercent?: number | null;
-    currentTeam?: string | null;
+    situation?: string | null;
     bioPT?: string | null;
   };
-  registration: {
+  profile: {
+    birthDate?: string | null;
     cbfRegistration?: string | null;
-    situation?: string | null;
     localFedRegistration?: string | null;
     comet?: string | null;
     jerseyName?: string | null;
+    currentTeam?: string | null;
+    bmi?: number | null;
+    bodyFatPercent?: number | null;
+    matchesPlayed?: number | null;
+    goals?: number | null;
+    assists?: number | null;
+    yellowCards?: number | null;
+    redCards?: number | null;
+    marketValue?: number | null;
   };
   career: {
     previousTeams: string[];
     seasonHistory: unknown[];
-    subidaHighlights: unknown[];
+    subidaEvents: unknown[];
+    movements: Array<{ date: string; label: string; detail?: string | null }>;
   };
-  fmfStats: {
-    total: {
+  matchHistory: {
+    totals: {
+      matchesListed: number;
       matchesPlayed: number;
+      starts: number;
       minutesPlayed: number;
       goals: number;
-    };
-    seasons: Array<{
+      yellowCards: number;
+      redCards: number;
+    } | null;
+    bySeason: Array<{
       year: number;
       competition: string;
       category: string;
       minutesPlayed: number;
       goals: number;
       matchesPlayed: number;
+      starts: number;
     }>;
-    years: Array<{
-      year: number;
-      minutesPlayed: number;
-      goals: number;
-      matchesPlayed: number;
-    }>;
-  } | null;
+    matches: DossierFmfMatchRow[];
+  };
   performance: {
-    evaluations: unknown[];
+    diretoriaEvaluations: unknown[];
     analysisMetrics: Record<string, unknown>;
     performanceAnalysis?: string | null;
-    coachEvaluations: {
+    coachEvaluations: Array<{
+      season: number;
+      periodKey: string;
+      percentage: number | null;
+      classification: string | null;
+      overallAverage: number | null;
+      matchMinutes: number;
+      trainingMinutes: number;
+      goals: number;
+      assists: number;
+      submittedAt: string | null;
+      technicalAssessment?: string | null;
+    }>;
+    coachSummary: {
       count: number;
       averagePercentage: number | null;
-      periods: Array<{
-        periodKey: string;
-        percentage: number | null;
-        classification: string | null;
-        submittedAt: string | null;
-      }>;
     };
   };
   timeline: Array<{
     date: string;
-    type: string;
-    label: string;
+    category: string;
+    title: string;
     detail?: string | null;
   }>;
   charts: {
-    seasonMinutes: Array<{
-      label: string;
-      minutesPlayed: number;
-      goals: number;
-      matchesPlayed: number;
-    }>;
-    yearTotals: Array<{
-      year: number;
-      minutesPlayed: number;
-      goals: number;
-      matchesPlayed: number;
-    }>;
+    monthlyMinutes: Array<{ label: string; minutes: number; games: number }>;
+    seasonMinutes: Array<{ label: string; minutesPlayed: number; goals: number; matchesPlayed: number }>;
+    evaluationTrend: Array<{ label: string; value: number }>;
   };
   optional: Record<string, unknown>;
 }

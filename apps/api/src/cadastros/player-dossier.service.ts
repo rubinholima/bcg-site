@@ -24,9 +24,29 @@ function asObject(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function pickSportsProfile(registrationProfile: unknown) {
-  const sports = asObject(asObject(registrationProfile).sports);
+function isoDate(value: Date | string | null | undefined): string {
+  if (!value) return '';
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return String(value).slice(0, 10);
+}
+
+function calcAge(birthDate?: string | null): number | null {
+  if (!birthDate?.trim()) return null;
+  const d = new Date(`${birthDate.trim()}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  const m = today.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+  return age >= 0 ? age : null;
+}
+
+function pickRegistration(registrationProfile: unknown) {
+  const root = asObject(registrationProfile);
+  const personal = asObject(root.personal);
+  const sports = asObject(root.sports);
   return {
+    nickname: typeof personal.nickname === 'string' ? personal.nickname : null,
     situation: typeof sports.situation === 'string' ? sports.situation : null,
     cbf: typeof sports.cbf === 'string' ? sports.cbf : null,
     localFedRegistration:
@@ -37,34 +57,24 @@ function pickSportsProfile(registrationProfile: unknown) {
   };
 }
 
-function summarizeCoachEvaluations(
-  rows: Array<{
-    periodKey: string;
-    status: string;
-    overallAverage: number | null;
-    percentage: number | null;
-    classification: string | null;
-    submittedAt: Date | null;
-  }>,
+function buildMonthlyMinutesChart(
+  matches: Array<{ played: boolean; minutesPlayed: number; match: { matchDate: Date | string } }>,
 ) {
-  const submitted = rows.filter((r) => r.status === 'concluido' && r.submittedAt);
-  const percentages = submitted
-    .map((r) => r.percentage)
-    .filter((p): p is number => typeof p === 'number' && Number.isFinite(p));
-  const avg =
-    percentages.length > 0
-      ? Math.round((percentages.reduce((a, b) => a + b, 0) / percentages.length) * 10) / 10
-      : null;
-  return {
-    count: submitted.length,
-    averagePercentage: avg,
-    periods: submitted.map((r) => ({
-      periodKey: r.periodKey,
-      percentage: r.percentage,
-      classification: r.classification,
-      submittedAt: r.submittedAt?.toISOString() ?? null,
-    })),
-  };
+  const byMonth = new Map<string, { minutes: number; games: number }>();
+  for (const row of matches) {
+    if (!row.played) continue;
+    const date = row.match.matchDate instanceof Date ? row.match.matchDate : new Date(row.match.matchDate);
+    if (Number.isNaN(date.getTime())) continue;
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const cur = byMonth.get(key) ?? { minutes: 0, games: 0 };
+    cur.minutes += row.minutesPlayed ?? 0;
+    cur.games += 1;
+    byMonth.set(key, cur);
+  }
+  return [...byMonth.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-12)
+    .map(([label, v]) => ({ label, minutes: v.minutes, games: v.games }));
 }
 
 @Injectable()
@@ -98,82 +108,114 @@ export class PlayerDossierService {
         ? input.season
         : new Date().getFullYear();
 
-    const [fmfStats, coachEvaluations, subidaHistory] = await Promise.all([
+    const reg = pickRegistration(player.registrationProfile);
+
+    const [fmfStats, coachEvaluations, subidaHistory, optionalData] = await Promise.all([
       this.fmfMatchReports.getPlayerStats(player.id).catch(() => null),
       this.prisma.coachPlayerEvaluation.findMany({
-        where: { playerId: player.id, season },
-        orderBy: [{ periodKey: 'asc' }],
+        where: { playerId: player.id },
+        orderBy: [{ season: 'desc' }, { periodKey: 'asc' }],
         select: {
+          season: true,
           periodKey: true,
           status: true,
           overallAverage: true,
           percentage: true,
           classification: true,
           submittedAt: true,
+          matchMinutes: true,
+          trainingMinutes: true,
+          goals: true,
+          assists: true,
+          technicalAssessment: true,
         },
       }),
       this.players.findSubidaHistory(player.id, input.allowedTenantIds).catch(() => []),
+      this.loadOptionalSections(player.id, player.tenantId, includedOptional, input.allowedTenantIds),
     ]);
 
-    const sports = pickSportsProfile(player.registrationProfile);
-    const previousTeams = asArray(player.previousTeams).filter(
-      (t): t is string => typeof t === 'string' && t.trim().length > 0,
-    );
-    const seasonHistory = asArray(player.seasonHistory);
-    const highlights = asArray(player.highlights).filter(
-      (h): h is string => typeof h === 'string' && h.trim().length > 0,
-    );
-    const evaluations = asArray(player.evaluations);
-    const analysisMetrics = asObject(player.analysisMetrics);
+    const submittedCoach = coachEvaluations.filter((r) => r.status === 'concluido' && r.submittedAt);
+    const coachPercentages = submittedCoach
+      .map((r) => r.percentage)
+      .filter((p): p is number => typeof p === 'number' && Number.isFinite(p));
+    const coachAvg =
+      coachPercentages.length > 0
+        ? Math.round((coachPercentages.reduce((a, b) => a + b, 0) / coachPercentages.length) * 10) / 10
+        : null;
 
-    const timelineEvents: Array<{
-      date: string;
-      type: string;
-      label: string;
-      detail?: string | null;
-    }> = [];
+    const fmfMatches = (fmfStats?.matches ?? []).map((row) => ({
+      id: row.id,
+      jerseyNumber: row.jerseyNumber,
+      starter: row.starter,
+      listed: row.listed,
+      played: row.played,
+      enteredMinute: row.enteredMinute,
+      exitedMinute: row.exitedMinute,
+      minutesPlayed: row.minutesPlayed,
+      goals: row.goals,
+      ownGoals: row.ownGoals,
+      penaltyGoals: row.penaltyGoals,
+      yellowCards: row.yellowCards,
+      redCards: row.redCards,
+      match: {
+        id: row.match.id,
+        competition: row.match.competition,
+        phase: row.match.phase,
+        round: row.match.round,
+        category: row.match.category,
+        season: row.match.season,
+        matchDate: isoDate(row.match.matchDate),
+        homeTeam: row.match.homeTeam,
+        awayTeam: row.match.awayTeam,
+        homeScore: row.match.homeScore,
+        awayScore: row.match.awayScore,
+      },
+    }));
 
-    for (const ev of evaluations) {
-      const row = asObject(ev);
-      const date = typeof row.date === 'string' ? row.date : null;
-      if (!date) continue;
-      timelineEvents.push({
-        date,
-        type: 'evaluation',
-        label: 'Avaliação técnica',
-        detail: typeof row.notes === 'string' ? row.notes : null,
-      });
-    }
+    const movements: Array<{ date: string; label: string; detail?: string | null }> = [];
 
-    if (fmfStats?.matches?.length) {
-      for (const m of fmfStats.matches.slice(0, 12)) {
-        if (!m.played) continue;
-        timelineEvents.push({
-          date: m.match.matchDate.toISOString().slice(0, 10),
-          type: 'match',
-          label: `${m.match.homeTeam} ${m.match.homeScore ?? '–'}×${m.match.awayScore ?? '–'} ${m.match.awayTeam}`,
-          detail: m.goals > 0 ? `${m.goals} gol(s) · ${m.minutesPlayed} min` : `${m.minutesPlayed} min`,
+    for (const row of asArray(player.seasonHistory)) {
+      const o = asObject(row);
+      const date =
+        typeof o.season === 'string'
+          ? o.season
+          : typeof o.year === 'string'
+            ? o.year
+            : typeof o.year === 'number'
+              ? String(o.year)
+              : '';
+      const club = typeof o.club === 'string' ? o.club : typeof o.team === 'string' ? o.team : '';
+      const cat = typeof o.category === 'string' ? o.category : '';
+      if (club || cat) {
+        movements.push({
+          date,
+          label: club || 'Temporada',
+          detail: cat ? `Categoria ${cat}` : null,
         });
       }
     }
 
-    for (const h of highlights.slice(0, 8)) {
-      timelineEvents.push({
-        date: '',
-        type: 'highlight',
-        label: 'Destaque',
-        detail: h,
+    for (const t of asArray(subidaHistory)) {
+      const o = asObject(t);
+      movements.push({
+        date: isoDate(o.matchDate as Date | string),
+        label: 'Convocação / subida de categoria',
+        detail: Array.isArray(o.eventCategories)
+          ? (o.eventCategories as string[]).join(', ')
+          : null,
       });
     }
 
-    timelineEvents.sort((a, b) => (b.date || '9999').localeCompare(a.date || '9999'));
+    movements.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-    const optionalData = await this.loadOptionalSections(
-      player.id,
-      player.tenantId,
+    const timeline = this.buildTimeline({
+      evaluations: asArray(player.evaluations),
+      fmfMatches,
+      highlights: asArray(player.highlights).filter((h): h is string => typeof h === 'string'),
+      coachEvaluations: submittedCoach,
+      optional: optionalData,
       includedOptional,
-      input.allowedTenantIds,
-    );
+    });
 
     return {
       meta: {
@@ -195,70 +237,195 @@ export class PlayerDossierService {
             logoUrl: player.tenant.logoUrl,
           }
         : null,
-      identity: {
+      cover: {
         name: player.name,
+        nickname: reg.nickname,
         photoUrl: player.photoUrl,
         jerseyNumber: player.jerseyNumber,
-        birthDate: player.birthDate,
-        nationality: player.nationality,
         category: player.category,
         position: player.position,
+        age: calcAge(player.birthDate),
+        nationality: player.nationality,
         preferredFoot: player.preferredFoot,
         height: player.height,
         weight: player.weight,
-        bmi: player.bmi,
-        bodyFatPercent: player.bodyFatPercent,
-        currentTeam: player.currentTeam,
+        situation: reg.situation ?? player.status,
         bioPT: player.bioPT,
       },
-      registration: {
-        cbfRegistration: player.cbfRegistration ?? sports.cbf,
-        situation: sports.situation,
-        localFedRegistration: sports.localFedRegistration,
-        comet: sports.comet,
-        jerseyName: sports.jerseyName,
+      profile: {
+        birthDate: player.birthDate,
+        cbfRegistration: player.cbfRegistration ?? reg.cbf,
+        localFedRegistration: reg.localFedRegistration,
+        comet: reg.comet,
+        jerseyName: reg.jerseyName,
+        currentTeam: player.currentTeam ?? player.tenant?.name ?? null,
+        bmi: player.bmi,
+        bodyFatPercent: player.bodyFatPercent,
+        matchesPlayed: player.matchesPlayed,
+        goals: player.goals,
+        assists: player.assists,
+        yellowCards: player.yellowCards,
+        redCards: player.redCards,
+        marketValue: player.marketValue,
       },
       career: {
-        previousTeams,
-        seasonHistory,
-        subidaHighlights: Array.isArray(subidaHistory)
-          ? subidaHistory.slice(0, 10).map((t: Record<string, unknown>) => ({
-              matchDate:
-                t.matchDate instanceof Date
-                  ? t.matchDate.toISOString()
-                  : typeof t.matchDate === 'string'
-                    ? t.matchDate
-                    : null,
-              destination: typeof t.destination === 'string' ? t.destination : null,
-              eventCategories: t.eventCategories,
-              isSubida: Boolean(t.isSubida),
-            }))
-          : [],
+        previousTeams: asArray(player.previousTeams).filter(
+          (t): t is string => typeof t === 'string' && t.trim().length > 0,
+        ),
+        seasonHistory: asArray(player.seasonHistory),
+        subidaEvents: asArray(subidaHistory),
+        movements,
       },
-      fmfStats,
+      matchHistory: {
+        totals: fmfStats?.total
+          ? {
+              matchesListed: fmfStats.total.matchesListed,
+              matchesPlayed: fmfStats.total.matchesPlayed,
+              starts: fmfStats.total.starts,
+              minutesPlayed: fmfStats.total.minutesPlayed,
+              goals: fmfStats.total.goals,
+              yellowCards: fmfStats.total.yellowCards,
+              redCards: fmfStats.total.redCards,
+            }
+          : null,
+        bySeason: (fmfStats?.seasons ?? []).map((s) => ({
+          year: s.year,
+          competition: s.competition,
+          category: s.category,
+          minutesPlayed: s.minutesPlayed,
+          goals: s.goals,
+          matchesPlayed: s.matchesPlayed,
+          starts: s.starts,
+        })),
+        matches: fmfMatches,
+      },
       performance: {
-        evaluations,
-        analysisMetrics,
+        diretoriaEvaluations: asArray(player.evaluations),
+        analysisMetrics: asObject(player.analysisMetrics),
         performanceAnalysis: player.performanceAnalysis,
-        coachEvaluations: summarizeCoachEvaluations(coachEvaluations),
+        coachEvaluations: submittedCoach.map((r) => ({
+          season: r.season,
+          periodKey: r.periodKey,
+          percentage: r.percentage,
+          classification: r.classification,
+          overallAverage: r.overallAverage,
+          matchMinutes: r.matchMinutes,
+          trainingMinutes: r.trainingMinutes,
+          goals: r.goals,
+          assists: r.assists,
+          submittedAt: r.submittedAt?.toISOString() ?? null,
+          technicalAssessment: r.technicalAssessment,
+        })),
+        coachSummary: {
+          count: submittedCoach.length,
+          averagePercentage: coachAvg,
+        },
       },
-      timeline: timelineEvents,
+      timeline,
       charts: {
-        seasonMinutes: (fmfStats?.seasons ?? []).slice(0, 6).map((s) => ({
+        monthlyMinutes: buildMonthlyMinutesChart(fmfStats?.matches ?? []),
+        seasonMinutes: (fmfStats?.seasons ?? []).slice(0, 8).map((s) => ({
           label: `${s.year} · ${s.competition}`,
           minutesPlayed: s.minutesPlayed,
           goals: s.goals,
           matchesPlayed: s.matchesPlayed,
         })),
-        yearTotals: (fmfStats?.years ?? []).slice(0, 5).map((y) => ({
-          year: y.year,
-          minutesPlayed: y.minutesPlayed,
-          goals: y.goals,
-          matchesPlayed: y.matchesPlayed,
-        })),
+        evaluationTrend: submittedCoach
+          .filter((r) => r.percentage != null)
+          .map((r) => ({
+            label: `${r.season} · ${r.periodKey}`,
+            value: r.percentage as number,
+          })),
       },
       optional: optionalData,
     };
+  }
+
+  private buildTimeline(input: {
+    evaluations: JsonArray;
+    fmfMatches: Array<{ played: boolean; minutesPlayed: number; goals: number; match: { matchDate: string; homeTeam: string; awayTeam: string; homeScore?: number | null; awayScore?: number | null } }>;
+    highlights: string[];
+    coachEvaluations: Array<{ season: number; periodKey: string; submittedAt: Date | null; percentage: number | null }>;
+    optional: Record<string, unknown>;
+    includedOptional: PlayerDossierOptionalSection[];
+  }) {
+    const events: Array<{ date: string; category: string; title: string; detail?: string | null }> = [];
+
+    for (const ev of input.evaluations) {
+      const o = asObject(ev);
+      const date = typeof o.date === 'string' ? o.date : '';
+      if (!date) continue;
+      events.push({
+        date,
+        category: 'Avaliação',
+        title: typeof o.evaluator === 'string' ? `Avaliação — ${o.evaluator}` : 'Avaliação técnica',
+        detail: typeof o.notes === 'string' ? o.notes : null,
+      });
+    }
+
+    for (const m of input.fmfMatches.filter((r) => r.played)) {
+      events.push({
+        date: m.match.matchDate,
+        category: 'Partida oficial',
+        title: `${m.match.homeTeam} ${m.match.homeScore ?? '–'}×${m.match.awayScore ?? '–'} ${m.match.awayTeam}`,
+        detail: `${m.minutesPlayed} min${m.goals > 0 ? ` · ${m.goals} gol(s)` : ''}`,
+      });
+    }
+
+    for (const r of input.coachEvaluations) {
+      events.push({
+        date: isoDate(r.submittedAt),
+        category: 'Comissão técnica',
+        title: `Avaliação ${r.periodKey} (${r.season})`,
+        detail: r.percentage != null ? `${r.percentage}%` : null,
+      });
+    }
+
+    for (const h of input.highlights.slice(0, 10)) {
+      events.push({ date: '', category: 'Destaque', title: h, detail: null });
+    }
+
+    if (input.includedOptional.includes('physio')) {
+      const physio = asObject(input.optional.physio);
+      for (const s of asArray(physio.sessions)) {
+        const o = asObject(s);
+        events.push({
+          date: isoDate(o.startedAt as Date | string),
+          category: 'Fisioterapia',
+          title: typeof o.diagnosisLabel === 'string' ? o.diagnosisLabel : 'Episódio fisioterapêutico',
+          detail: typeof o.symptoms === 'string' ? o.symptoms.slice(0, 120) : null,
+        });
+      }
+    }
+
+    if (input.includedOptional.includes('medical')) {
+      const med = asObject(input.optional.medical);
+      for (const d of asArray(med.departures)) {
+        const o = asObject(d);
+        events.push({
+          date: isoDate(o.departedAt as Date | string),
+          category: 'Saída médica',
+          title: typeof o.destination === 'string' ? o.destination.slice(0, 80) : 'Saída do CT',
+          detail: typeof o.reason === 'string' ? o.reason.slice(0, 120) : null,
+        });
+      }
+    }
+
+    if (input.includedOptional.includes('training')) {
+      const tr = asObject(input.optional.training);
+      for (const s of asArray(tr.sessions)) {
+        const o = asObject(s);
+        events.push({
+          date: isoDate(o.sessionDate as Date | string),
+          category: 'Treino',
+          title: typeof o.agendaTitle === 'string' ? o.agendaTitle : 'Sessão de treino',
+          detail: o.rating != null ? `Nota ${o.rating}` : null,
+        });
+      }
+    }
+
+    events.sort((a, b) => (b.date || '0000').localeCompare(a.date || '0000'));
+    return events.slice(0, 40);
   }
 
   private async loadOptionalSections(
@@ -277,8 +444,8 @@ export class PlayerDossierService {
         (async () => {
           const p = await this.players.findOne(playerId, allowedTenantIds);
           out.psychology = {
-            assessments: asArray(p.psychologicalAssessment).slice(0, 8),
-            consultations: asArray(p.onlineConsultations).slice(0, 8),
+            assessments: asArray(p.psychologicalAssessment),
+            consultations: asArray(p.onlineConsultations),
           };
         })(),
       );
@@ -287,20 +454,30 @@ export class PlayerDossierService {
     if (sections.includes('physio')) {
       tasks.push(
         (async () => {
-          const rows = await this.prisma.physioPlayerEvaluation.findMany({
-            where: { playerId },
-            orderBy: [{ evaluatedAt: 'desc' }],
-            take: 10,
-            select: {
-              id: true,
-              evaluatedAt: true,
-              context: true,
-              rating: true,
-              outcome: true,
-              finalObservations: true,
-            },
-          });
-          out.physio = { evaluations: rows };
+          const [sessions, evaluations, transitions] = await Promise.all([
+            this.prisma.physioSession.findMany({
+              where: { playerId, tenantId },
+              orderBy: [{ startedAt: 'desc' }],
+              take: 25,
+              include: {
+                region: { select: { namePt: true } },
+                transitionProgram: { select: { id: true, status: true, startedAt: true, completedAt: true } },
+              },
+            }),
+            this.prisma.physioPlayerEvaluation.findMany({
+              where: { playerId, tenantId },
+              orderBy: [{ evaluatedAt: 'desc' }],
+              take: 15,
+              include: { tests: true },
+            }),
+            this.prisma.physioTransitionProgram.findMany({
+              where: { playerId, tenantId },
+              orderBy: [{ createdAt: 'desc' }],
+              take: 8,
+              include: { entries: { orderBy: [{ sessionDate: 'desc' }] } },
+            }),
+          ]);
+          out.physio = { sessions, evaluations, transitions };
         })(),
       );
     }
@@ -308,19 +485,17 @@ export class PlayerDossierService {
     if (sections.includes('nursing')) {
       tasks.push(
         (async () => {
-          const rows = await this.prisma.nursingSession.findMany({
-            where: { playerId, tenantId },
-            orderBy: [{ attendedAt: 'desc' }],
-            take: 10,
-            select: {
-              id: true,
-              attendedAt: true,
-              status: true,
-              symptoms: true,
-              treatmentNotes: true,
-            },
-          });
-          out.nursing = { sessions: rows };
+          out.nursing = {
+            sessions: await this.prisma.nursingSession.findMany({
+              where: { playerId, tenantId },
+              orderBy: [{ attendedAt: 'desc' }],
+              take: 25,
+              include: {
+                sessionDiagnoses: { include: { diagnosis: { select: { name: true } } } },
+                sessionTreatments: { include: { treatment: { select: { name: true } } } },
+              },
+            }),
+          };
         })(),
       );
     }
@@ -332,22 +507,13 @@ export class PlayerDossierService {
             this.prisma.playerMedicalDeparture.findMany({
               where: { playerId, tenantId },
               orderBy: [{ departedAt: 'desc' }],
-              take: 10,
-              select: {
-                id: true,
-                departedAt: true,
-                returnedAt: true,
-                destination: true,
-                careType: true,
-                reason: true,
-                status: true,
-              },
+              take: 25,
             }),
             this.players.findOne(playerId, allowedTenantIds),
           ]);
           out.medical = {
             departures,
-            history: asArray(p.medicalHistory).slice(0, 10),
+            clinicalHistory: asArray(p.medicalHistory),
           };
         })(),
       );
@@ -356,8 +522,7 @@ export class PlayerDossierService {
     if (sections.includes('nutrition')) {
       tasks.push(
         (async () => {
-          const history = await this.players.findNutritionHistory(playerId, allowedTenantIds);
-          out.nutrition = history;
+          out.nutrition = await this.players.findNutritionHistory(playerId, allowedTenantIds);
         })(),
       );
     }
@@ -365,8 +530,19 @@ export class PlayerDossierService {
     if (sections.includes('physiology')) {
       tasks.push(
         (async () => {
-          const p = await this.players.findOne(playerId, allowedTenantIds);
-          out.physiology = asObject(p.physiology);
+          const [playerRow, assessments] = await Promise.all([
+            this.players.findOne(playerId, allowedTenantIds),
+            this.prisma.physiologyAssessment.findMany({
+              where: { playerId, tenantId },
+              orderBy: [{ assessedAt: 'desc' }],
+              take: 15,
+            }),
+          ]);
+          out.physiology = {
+            profile: asObject(asObject(playerRow.physiology).profile),
+            records: asArray(asObject(playerRow.physiology).records),
+            assessments,
+          };
         })(),
       );
     }
@@ -387,17 +563,15 @@ export class PlayerDossierService {
     if (sections.includes('scouting')) {
       tasks.push(
         (async () => {
-          const prospect = await this.prisma.scoutingProspect.findFirst({
+          const prospects = await this.prisma.scoutingProspect.findMany({
             where: { playerId, tenantId },
             orderBy: [{ updatedAt: 'desc' }],
+            take: 3,
             include: {
-              reports: {
-                orderBy: [{ reportDate: 'desc' }],
-                take: 5,
-              },
+              reports: { orderBy: [{ reportDate: 'desc' }], take: 10 },
             },
           });
-          out.scouting = { prospect };
+          out.scouting = { prospects };
         })(),
       );
     }
@@ -406,7 +580,7 @@ export class PlayerDossierService {
       tasks.push(
         (async () => {
           const history = await this.players.findTrainingHistory(playerId, allowedTenantIds);
-          out.training = { sessions: history.slice(0, 15) };
+          out.training = { sessions: history };
         })(),
       );
     }

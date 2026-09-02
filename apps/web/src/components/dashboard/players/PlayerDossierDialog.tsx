@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
+import { playerRecordGroupButtonClass } from "@/lib/player-record-nav.styles";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -206,12 +207,11 @@ export function PlayerDossierTrigger({
           type="button"
           onClick={() => setOpen(true)}
           className={cn(
-            "inline-flex shrink-0 items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
-            "border-violet-500/35 bg-violet-950/30 text-violet-100",
-            "hover:border-violet-500/50 hover:bg-violet-500/15",
+            playerRecordGroupButtonClass(open),
+            "inline-flex items-center gap-2",
           )}
         >
-          <FileText className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
+          <FileText className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
           Dossiê do Atleta
         </button>
       ) : (
