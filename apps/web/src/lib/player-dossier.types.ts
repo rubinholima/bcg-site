@@ -43,6 +43,58 @@ export interface DossierFmfMatchRow {
   };
 }
 
+export interface DossierKpiStrip {
+  games: number | null;
+  starts: number | null;
+  minutes: number | null;
+  goals: number | null;
+  assists: number | null;
+  yellowCards: number | null;
+  redCards: number | null;
+  coachAvgPct: number | null;
+}
+
+export interface DossierHighlightItem {
+  kind: "video" | "image" | "link";
+  url: string;
+  label: string;
+}
+
+export interface DossierSportingMilestone {
+  date: string;
+  type: string;
+  title: string;
+  detail?: string | null;
+}
+
+export interface DossierPsychRecord {
+  date: string;
+  kind: string;
+  evaluator?: string | null;
+  present?: boolean | null;
+  summary?: string | null;
+  observations: Array<{ label: string; text: string }>;
+}
+
+export interface DossierCoachEvaluationRow {
+  season: number;
+  periodKey: string;
+  percentage: number | null;
+  classification: string | null;
+  overallAverage: number | null;
+  matchMinutes: number;
+  trainingMinutes: number;
+  goals: number;
+  assists: number;
+  submittedAt: string | null;
+  technicalAssessment?: string | null;
+  techAverage?: number | null;
+  tacAverage?: number | null;
+  physAverage?: number | null;
+  behAverage?: number | null;
+  finalResult?: string | null;
+}
+
 export interface PlayerDossierDto {
   meta: {
     generatedAt: string;
@@ -73,6 +125,9 @@ export interface PlayerDossierDto {
     situation?: string | null;
     bioPT?: string | null;
   };
+  snapshot: DossierKpiStrip;
+  highlights: DossierHighlightItem[];
+  sportingStory: DossierSportingMilestone[];
   profile: {
     birthDate?: string | null;
     cbfRegistration?: string | null;
@@ -120,19 +175,7 @@ export interface PlayerDossierDto {
     diretoriaEvaluations: unknown[];
     analysisMetrics: Record<string, unknown>;
     performanceAnalysis?: string | null;
-    coachEvaluations: Array<{
-      season: number;
-      periodKey: string;
-      percentage: number | null;
-      classification: string | null;
-      overallAverage: number | null;
-      matchMinutes: number;
-      trainingMinutes: number;
-      goals: number;
-      assists: number;
-      submittedAt: string | null;
-      technicalAssessment?: string | null;
-    }>;
+    coachEvaluations: DossierCoachEvaluationRow[];
     coachSummary: {
       count: number;
       averagePercentage: number | null;
@@ -146,8 +189,16 @@ export interface PlayerDossierDto {
   }>;
   charts: {
     monthlyMinutes: Array<{ label: string; minutes: number; games: number }>;
-    seasonMinutes: Array<{ label: string; minutesPlayed: number; goals: number; matchesPlayed: number }>;
+    monthlyGoals: Array<{ label: string; goals: number; games: number }>;
+    monthlyAppearances: Array<{ label: string; appearances: number; starts: number }>;
+    seasonMinutes: Array<{
+      label: string;
+      minutesPlayed: number;
+      goals: number;
+      matchesPlayed: number;
+    }>;
     evaluationTrend: Array<{ label: string; value: number }>;
   };
   optional: Record<string, unknown>;
+  psychologyRecords?: DossierPsychRecord[];
 }

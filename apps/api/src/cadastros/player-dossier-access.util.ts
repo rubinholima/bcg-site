@@ -48,12 +48,7 @@ export const PLAYER_DOSSIER_OPTIONAL_LABELS: Record<PlayerDossierOptionalSection
 export function canChooseSensitiveDossierSections(role: string | null | undefined): boolean {
   if (!role) return false;
   const normalized = role.trim().toLowerCase();
-  return (
-    normalized === 'gerente' ||
-    normalized === 'diretoria' ||
-    normalized === 'super_admin' ||
-    normalized === 'company_admin'
-  );
+  return normalized === 'gerente' || normalized === 'diretoria';
 }
 
 export function hasModuleAccess(
@@ -64,10 +59,8 @@ export function hasModuleAccess(
   return needed.some((slug) => moduleSlugs.includes(slug));
 }
 
-function isDossierBypassRole(role: string | null | undefined): boolean {
-  if (!role) return false;
-  const normalized = role.trim().toLowerCase();
-  return normalized === 'super_admin' || normalized === 'company_admin';
+function isDossierBypassRole(_role: string | null | undefined): boolean {
+  return false;
 }
 
 export function listAvailableOptionalSections(

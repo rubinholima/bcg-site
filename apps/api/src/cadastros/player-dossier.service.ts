@@ -11,6 +11,14 @@ import {
   PlayerDossierOptionalSection,
   resolveIncludedOptionalSections,
 } from './player-dossier-access.util';
+import {
+  buildHighlightItems,
+  buildMonthlyAppearancesChart,
+  buildMonthlyGoalsChart,
+  buildSportingStory,
+  normalizePsychologyRecords,
+  resolveAssists,
+} from './player-dossier-content.util';
 
 type JsonArray = unknown[];
 
@@ -128,6 +136,11 @@ export class PlayerDossierService {
           goals: true,
           assists: true,
           technicalAssessment: true,
+          finalResult: true,
+          techAverage: true,
+          tacAverage: true,
+          physAverage: true,
+          behAverage: true,
         },
       }),
       this.players.findSubidaHistory(player.id, input.allowedTenantIds).catch(() => []),
@@ -208,6 +221,44 @@ export class PlayerDossierService {
 
     movements.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
+    const sportingStory = buildSportingStory({
+      previousTeams: asArray(player.previousTeams).filter(
+        (t): t is string => typeof t === 'string' && t.trim().length > 0,
+      ),
+      seasonHistory: asArray(player.seasonHistory),
+      subidaEvents: asArray(subidaHistory),
+      movements,
+      currentTeam: player.currentTeam ?? player.tenant?.name ?? null,
+      category: player.category,
+    });
+
+    const highlights = buildHighlightItems({
+      highlights: player.highlights,
+      images: player.images,
+    });
+
+    const assists = resolveAssists({
+      profileAssists: player.assists,
+      coachEvaluations: submittedCoach,
+    });
+
+    const fmfTotals = fmfStats?.total ?? null;
+    const snapshot = {
+      games: fmfTotals?.matchesPlayed ?? player.matchesPlayed ?? null,
+      starts: fmfTotals?.starts ?? null,
+      minutes: fmfTotals?.minutesPlayed ?? null,
+      goals: fmfTotals?.goals ?? player.goals ?? null,
+      assists,
+      yellowCards: fmfTotals?.yellowCards ?? player.yellowCards ?? null,
+      redCards: fmfTotals?.redCards ?? player.redCards ?? null,
+      coachAvgPct: coachAvg,
+    };
+
+    const psychologyRecords =
+      includedOptional.includes('psychology') && optionalData.psychology
+        ? normalizePsychologyRecords(asObject(optionalData.psychology).assessments)
+        : undefined;
+
     const timeline = this.buildTimeline({
       evaluations: asArray(player.evaluations),
       fmfMatches,
@@ -252,6 +303,9 @@ export class PlayerDossierService {
         situation: reg.situation ?? player.status,
         bioPT: player.bioPT,
       },
+      snapshot,
+      highlights,
+      sportingStory,
       profile: {
         birthDate: player.birthDate,
         cbfRegistration: player.cbfRegistration ?? reg.cbf,
@@ -315,6 +369,11 @@ export class PlayerDossierService {
           assists: r.assists,
           submittedAt: r.submittedAt?.toISOString() ?? null,
           technicalAssessment: r.technicalAssessment,
+          finalResult: r.finalResult,
+          techAverage: r.techAverage,
+          tacAverage: r.tacAverage,
+          physAverage: r.physAverage,
+          behAverage: r.behAverage,
         })),
         coachSummary: {
           count: submittedCoach.length,
@@ -324,6 +383,8 @@ export class PlayerDossierService {
       timeline,
       charts: {
         monthlyMinutes: buildMonthlyMinutesChart(fmfStats?.matches ?? []),
+        monthlyGoals: buildMonthlyGoalsChart(fmfStats?.matches ?? []),
+        monthlyAppearances: buildMonthlyAppearancesChart(fmfStats?.matches ?? []),
         seasonMinutes: (fmfStats?.seasons ?? []).slice(0, 8).map((s) => ({
           label: `${s.year} · ${s.competition}`,
           minutesPlayed: s.minutesPlayed,
@@ -338,6 +399,7 @@ export class PlayerDossierService {
           })),
       },
       optional: optionalData,
+      ...(psychologyRecords && psychologyRecords.length > 0 ? { psychologyRecords } : {}),
     };
   }
 
@@ -446,6 +508,7 @@ export class PlayerDossierService {
           out.psychology = {
             assessments: asArray(p.psychologicalAssessment),
             consultations: asArray(p.onlineConsultations),
+            records: normalizePsychologyRecords(p.psychologicalAssessment),
           };
         })(),
       );

@@ -9,11 +9,11 @@ describe('player-dossier-access.util', () => {
     it('permite gerente e diretoria', () => {
       expect(canChooseSensitiveDossierSections('gerente')).toBe(true);
       expect(canChooseSensitiveDossierSections('diretoria')).toBe(true);
-      expect(canChooseSensitiveDossierSections('super_admin')).toBe(true);
-      expect(canChooseSensitiveDossierSections('company_admin')).toBe(true);
     });
 
-    it('nega gestor e supervisor', () => {
+    it('nega super_admin, company_admin, gestor e supervisor', () => {
+      expect(canChooseSensitiveDossierSections('super_admin')).toBe(false);
+      expect(canChooseSensitiveDossierSections('company_admin')).toBe(false);
       expect(canChooseSensitiveDossierSections('gestor')).toBe(false);
       expect(canChooseSensitiveDossierSections('supervisor')).toBe(false);
     });
@@ -58,15 +58,15 @@ describe('player-dossier-access.util', () => {
       ]);
     });
 
-    it('super_admin vê todas as seções opcionais', () => {
-      expect(listAvailableOptionalSections([], 'super_admin')).toHaveLength(9);
+    it('super_admin não bypassa seções opcionais', () => {
+      expect(listAvailableOptionalSections([], 'super_admin')).toEqual([]);
       expect(
         resolveIncludedOptionalSections({
           role: 'super_admin',
-          moduleSlugs: [],
+          moduleSlugs: modules,
           requested: ['psychology', 'scouting', 'training'],
         }),
-      ).toEqual(['psychology', 'scouting', 'training']);
+      ).toEqual([]);
     });
   });
 });
