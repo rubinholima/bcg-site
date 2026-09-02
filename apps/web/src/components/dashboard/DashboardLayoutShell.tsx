@@ -8,6 +8,7 @@ import { DashboardShellProvider, useDashboardShell } from "@/context/DashboardSh
 import { DashboardThemeProvider, useDashboardTheme } from "@/context/DashboardThemeContext";
 import { DashboardPageFrame } from "@/components/dashboard/DashboardPageFrame";
 import { TenantWorkspaceRail } from "@/components/dashboard/TenantWorkspaceBackdrop";
+import { cup360 } from "@/lib/cup360-design-tokens";
 
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
@@ -53,11 +54,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 shrink-0 transition-[width,transform] duration-200 ease-out md:static md:z-auto",
-          "w-[min(100vw-2.5rem,20rem)]",
+          "w-[min(100vw-2rem,232px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           desktopHidden && "md:pointer-events-none md:w-0 md:overflow-hidden md:border-0 md:opacity-0",
-          !desktopHidden && desktopIcons && "md:w-[4.5rem]",
-          !desktopHidden && !desktopIcons && "md:w-80",
+          !desktopHidden && desktopIcons && cup360.layout.sidebarCollapsed,
+          !desktopHidden && !desktopIcons && cup360.layout.sidebarOpen,
         )}
       >
         <Sidebar />

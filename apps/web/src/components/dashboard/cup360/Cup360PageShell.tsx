@@ -49,13 +49,19 @@ export function PageSection({
   );
 }
 
-export function SidebarAreaLabel({ label }: { label: string }) {
+export function SidebarAreaLabel({
+  label,
+  className,
+}: {
+  label: string;
+  className?: string;
+}) {
   return (
-    <p
-      className={cn(cup360.sidebar.areaLabel, "px-2.5 pb-1 pt-3 first:pt-1")}
+    <span
+      className={cn(cup360.sidebar.areaLabel, "px-0 pb-0 pt-0", className)}
       role="presentation"
     >
       {label}
-    </p>
+    </span>
   );
 }

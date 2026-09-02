@@ -547,10 +547,14 @@ body.dashboard-active {
     linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.15) 100%);
 }
 .dashboard-link-hover {
-  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.dashboard-link-hover:hover {
-  transform: translateX(2px);
+.cup360-sidebar-hover:hover {
+  background-color: hsl(var(--accent) / 0.45);
+  color: hsl(var(--foreground));
+}
+.dark .cup360-sidebar-hover:hover {
+  background-color: hsl(var(--accent) / 0.35);
 }
 .dashboard-chevron-transition {
   transition: transform 0.2s ease;

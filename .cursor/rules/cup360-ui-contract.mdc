@@ -1,75 +1,128 @@
 ---
-description: Contrato visual CUP360 — baseline protegida, componentes canônicos, título único, relatórios aprovados intactos
+description: Contrato visual CUP360 v1 — baseline protegida, reuso obrigatório, navegação, listas, forms, selectors
 alwaysApply: true
 ---
 
-# CUP360 UI CONTRACT — PROTECTED VISUAL BASELINE
+# CUP360 UI CONTRACT — PROTECTED VISUAL BASELINE v1
 
-## Princípio
+## Princípio (obrigatório)
 
 **Um pedido de feature NÃO autoriza redesenhar o CUP360.**
 
+**Se um componente canônico CUP360 existir, ele DEVE ser reutilizado, salvo exceção explícita autorizada.**
+
 UI aprovada e em produção é baseline protegida. Novos módulos adaptam-se ao CUP360 — não o contrário.
 
-## Estrutura global (obrigatória)
+## Estrutura global (shell)
 
 ```
-GLOBAL HEADER (logo, contexto, top shortcuts, usuário)
-+ SIDEBAR (máx. 3 níveis: Área → Módulo → Tela)
-+ PAGE CONTENT (PageShell / FilterBar / conteúdo)
+GLOBAL HEADER (logo, contexto, top shortcuts, usuário)  ← PROTEGIDO
++ SIDEBAR (Área → Módulo → Tela — máx. 3 níveis visuais)
++ PAGE CONTENT (Cup360PageShell / FilterBar / conteúdo)
 ```
 
-Nenhum módulo recria header, sidebar ou hierarquia de título.
+- **Header + Top Quick Shortcuts:** PROTEGIDOS. TOP = atalhos frequentes; SIDEBAR = navegação completa. Não remover nem duplicar essa responsabilidade.
+- **Título único:** se o shell/header já exibe título/contexto, o conteúdo NÃO repete o mesmo título. Ownership: `header` + `DashboardPageFrame` + `dashboard-page-meta` + `DashboardDeptHeader`.
 
-## Top Quick Shortcuts — protegidos
+## Sidebar — dimensões canônicas v1
 
-- Manter atalhos no header global
-- Usar componente canônico `TopShortcut` (`@/components/dashboard/cup360`)
-- Configuráveis por usuário; respeitar RBAC
+| Token | Valor |
+|-------|-------|
+| OPEN WIDTH | **232px** |
+| COLLAPSED WIDTH | **68px** |
+| L1 row | **38px** |
+| L2 row | **34px** |
+| L3 row | **30–32px** |
+| Ícone L1 | **18px** |
+| Ícone L2/L3 | **16px** |
 
-## Título da página — uma vez só
+- Indentação reduzida; **sem** `translateX` no hover — apenas fundo/texto/borda sutis.
+- Hierarquia visual estrita: **ÁREA → MÓDULO → TELA**. Nunca renderizar nível 4.
+- Accordion: uma área primária aberta; só o módulo relevante expõe telas.
+- Arquitetura de **apresentação** aprovada (URLs/RBAC inalterados):
 
-Se o shell/header já exibe o título ou breadcrumb, **não repetir** no conteúdo da página.
+  - **Dashboard Executivo** — item standalone destacado
+  - **Operação** — Agenda Geral, Requisições
+  - **Futebol** — Visão Geral, Elenco, Competições, Treinos, Captação, Avaliações, Logística, Relatórios
+  - **Saúde** — Visão Geral, Médico, Fisioterapia, Psicologia, Nutrição, Enfermaria, Relatórios
+  - **Administrativo** — Visão Geral, RH, Financeiro, Compras, Patrimônio, Estoque, Contratos, Relatórios
+  - **Outras Áreas** — Assistência Social, Jurídico, Eventos, Marketing, Imprensa, Academias
+  - **Sistema** — Grupo Master, Comunicação, Ferramentas, Configurações
 
-Ownership canônico: `DashboardPageFrame` + `dashboard-page-meta` + `DashboardDeptHeader`.
+## Listas / cadastros
 
-## Antes de criar componente visual novo
+- **TABLE** é o padrão para datasets operacionais estruturados. Sem card walls em listas normais.
+- Densidade: header **40px**, body row **44px**.
+- Composição (sem monolito `CadastroListPage`): `Cup360PageShell` + `DashboardFilterBar` + `Table` + paginação + Empty/Loading/**InlineErrorState**.
+- Erro de carregamento de lista/página: **InlineErrorState com Retry** (não `FeedbackModal` como padrão). `FeedbackModal` para feedback/ações modais.
 
-1. Buscar em `@/components/dashboard/cup360` e componentes UI existentes
-2. Reutilizar se disponível
-3. Estender só se semanticamente necessário
-4. Criar primitivo novo apenas quando não houver solução canônica
+## Formulários
 
-## Componentes canônicos
+- Seções lógicas (`PageSection` / futuro `FormSection`+`FormRow`); grid responsivo; footer de ações previsível.
+- **Unsaved guard:** comportamento canônico desejável; **não obrigatório** na fase de fundação visual atual.
+- Select em modal: `NativeSelect` (regra projeto).
+
+## Detail / profile
+
+- Identity summary + tabs RBAC + seções; referência: ficha do atleta.
+- Futuro: `ProfileSummary` canônico.
+
+## Selectors (regra permanente)
+
+**Conjuntos grandes ou complexos NÃO podem virar parede de checkbox ou parede de cards.**
+
+Usar busca, agrupamento, progressive disclosure e selectors canônicos (`GroupedFieldPicker`, `SearchSelect`, `MultiSelect`, etc.).
+
+| Até ~6 opções visíveis | Checkbox/Radio ok |
+| Médio/grande | SearchSelect / MultiSelect / GroupedFieldPicker |
+| Report builders | Progressive disclosure + GroupedFieldPicker |
+
+## Dashboards
+
+- Dashboard Executivo compõe KPIs/painéis com tokens CUP360; **não** cria segunda linguagem visual.
+- KPI: `KpiCard`.
+
+## Relatórios
+
+- **Builder/configuração:** UI CUP360 (seções, FilterBar, GroupedFieldPicker).
+- **Output aprovado (print/PDF/XLSX):** PROTEGIDO — não redesenhar sem autorização explícita.
+
+## Accent
+
+- **Violeta** = accent primário de interação CUP360 (ativo, seleção, focus) — com moderação.
+- Semânticas: verde sucesso, âmbar aviso, vermelho perigo, azul/sky info. **Não** tornar o app inteiro roxo.
+
+## Componentes canônicos — reuso obrigatório
 
 | Família | Referência |
 |---------|------------|
 | Layout | `Cup360PageShell`, `PageSection` |
-| Navegação | `TopShortcut`, sidebar (`sidebar.tsx`) |
-| Filtros | `DashboardFilterBar` |
-| Seleção de campos | `GroupedFieldPicker` (sem parede de checkboxes) |
+| Atalhos | `TopShortcut*` |
+| Sidebar | `Sidebar` + camada de apresentação |
+| Filtros | `DashboardFilterBar`, `FilterBarField` |
 | KPI | `KpiCard` |
+| Seleção campos | `GroupedFieldPicker` |
 | Tokens | `@/lib/cup360-design-tokens` |
+| Empty/Loading | `DashboardEmptyState`, `DashboardLoadingState` |
+| Tabela | `Table`, `ClickableTableRow` |
+
+**Prioridade de criação (MISSING):** StatusBadge → SearchSelect/MultiSelect → FormSection/FormRow → DataTablePagination → ProfileSummary → Skeleton/InlineErrorState.
+
+Antes de criar componente visual novo:
+1. Buscar em `@/components/dashboard/cup360` e UI existente
+2. **Reutilizar** se disponível
+3. Estender só se semanticamente necessário
+4. Criar primitivo novo apenas sem solução canônica + autorização se tocar baseline protegida
 
 ## Protegido — exige autorização explícita
 
-- Header global (logo, shortcuts, área do usuário)
-- Arquitetura da sidebar e tokens de navegação
-- Sistema tipográfico e design tokens
-- Botões, filtros, selects e hierarquia de título canônicos
+- Global header e top shortcuts
+- Arquitetura/dimensões da sidebar após v1
+- Tokens tipográficos e de cor
+- Hierarquia de título
+- Outputs de relatórios aprovados
+- Workflows de negócio existentes
 
-## Relatórios aprovados — protegidos
+## RBAC
 
-- **Não alterar** saída visual de relatórios já aprovados (print, PDF, XLSX, tabelas geradas)
-- **Pode alterar** apenas builder/configuração (ex.: Dynamic Reports, seleção de colunas psicologia)
-- Preservar API, semântica de dados e lógica de negócio
-
-## RBAC e rotas
-
-- Não alterar rotas, module slugs, `ModuleRole`, `canAccessModule` ou `customModuleAccess` por motivo visual
-- Visibilidade de menu continua baseada em autorização existente
-
-## Referências visuais
-
-- **Imagem A (header atual):** baseline estrutural
-- **Imagem B (dashboard premium):** direção de qualidade — não substitui comportamento aprovado
+Não alterar rotas, slugs, `ModuleRole`, `canAccessModule` ou `customModuleAccess` por motivo visual.
