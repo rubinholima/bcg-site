@@ -24,6 +24,7 @@ import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import { FmfMatchReportService } from '../fmf-scraper/fmf-match-report.service';
 import { PersonalDisciplineHistoryService } from '../futebol-relatorios/personal-discipline-history.service';
+import { PlayerDossierService } from './player-dossier.service';
 
 @Controller('players')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -33,6 +34,7 @@ export class PlayersController {
     private readonly tenantAccess: TenantAccessService,
     private readonly fmfMatchReports: FmfMatchReportService,
     private readonly disciplineHistory: PersonalDisciplineHistoryService,
+    private readonly playerDossier: PlayerDossierService,
   ) {}
 
   private async allowedTenants(req: Request & { user: CognitoJwtPayload }) {
@@ -217,6 +219,26 @@ export class PlayersController {
   ) {
     const allowed = await this.allowedTenants(req);
     return this.service.getDeleteImpact(id, allowed);
+  }
+
+  @Get(':id/dossier')
+  async findDossier(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Query('sections') sections?: string,
+    @Query('season') seasonRaw?: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const season = seasonRaw?.trim() ? Number(seasonRaw.trim()) : undefined;
+    return this.playerDossier.buildDossier({
+      playerId: id,
+      allowedTenantIds: allowed,
+      actorSub: req.user.sub,
+      role,
+      optionalSectionsRaw: sections,
+      season: Number.isFinite(season) ? season : undefined,
+    });
   }
 
   @Get(':id')
