@@ -536,16 +536,16 @@ export class FutebolExecutiveService {
     let suspended = 0;
 
     for (const p of players) {
-      const cat = p.category ?? '—';
-      byCategory[cat] = (byCategory[cat] ?? 0) + 1;
       const profile = p.registrationProfile as Record<string, unknown> | null;
       const sports = profile?.sports as Record<string, unknown> | undefined;
       const sit = normalizeSportsSituation(
         typeof sports?.situation === 'string' ? sports.situation : null,
       );
-      if (!isArchivedSportsSituation(sit)) {
-        bySituation[sit] = (bySituation[sit] ?? 0) + 1;
-      }
+      if (isArchivedSportsSituation(sit)) continue;
+
+      const cat = p.category ?? '—';
+      byCategory[cat] = (byCategory[cat] ?? 0) + 1;
+      bySituation[sit] = (bySituation[sit] ?? 0) + 1;
       const st = p.status ?? 'available';
       byStatus[st] = (byStatus[st] ?? 0) + 1;
       if (st === 'suspended') suspended++;
@@ -781,6 +781,13 @@ export class FutebolExecutiveService {
     let available = 0;
     let unavailable = 0;
     for (const p of players) {
+      const profile = p.registrationProfile as Record<string, unknown> | null;
+      const sports = profile?.sports as Record<string, unknown> | undefined;
+      const sit = normalizeSportsSituation(
+        typeof sports?.situation === 'string' ? sports.situation : null,
+      );
+      if (isArchivedSportsSituation(sit)) continue;
+
       const av = getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(p));
       if (av.apto) available++;
       else unavailable++;
@@ -1053,49 +1060,45 @@ export class FutebolExecutiveService {
     if (data.squad) {
       kpis.push({
         id: 'athletes',
-        label: 'Atletas no clube',
+        label: 'Atletas',
         value: data.squad.total,
         breakdown: data.squad.byCategory,
         href: '/dashboard/cadastros/jogadores',
       });
-      const indisponiveis =
-        (data.squad.byStatus.injured ?? 0) +
-        (data.squad.byStatus.suspended ?? 0) +
-        (data.squad.byStatus.absent ?? 0) +
-        (data.squad.byStatus.not_in_squad ?? 0);
+
+      const disponivel =
+        (data.squad.byStatus.available ?? 0) + (data.squad.byStatus.on_bench ?? 0);
+      const indisponivel = Math.max(0, data.squad.total - disponivel);
       kpis.push({
-        id: 'unavailable',
-        label: 'Indisponíveis',
-        value: indisponiveis,
-        breakdown: {
-          lesionado: data.squad.byStatus.injured ?? 0,
-          suspenso: data.squad.byStatus.suspended ?? 0,
-          ausente: data.squad.byStatus.absent ?? 0,
-        },
+        id: 'availability',
+        label: 'Disponibilidade',
+        value: disponivel,
+        breakdown: { indisponivel, total: data.squad.total },
         href: '/dashboard/cadastros/jogadores',
       });
     }
 
     kpis.push({
       id: 'decisions',
-      label: 'Decisões pendentes',
+      label: 'Decisões',
       value: data.decisions.length,
       href: '#decisoes',
     });
 
     const criticalAlerts = data.alerts.filter((a) => a.severity === 'critical').length;
+    const attentionAlerts = data.alerts.filter((a) => a.severity === 'attention').length;
     kpis.push({
       id: 'alerts',
-      label: 'Alertas críticos',
+      label: 'Alertas',
       value: criticalAlerts,
-      breakdown: { total: data.alerts.length },
+      breakdown: { atencao: attentionAlerts, total: data.alerts.length },
       href: '#alertas',
     });
 
     if (data.captacao) {
       kpis.push({
         id: 'captacao-action',
-        label: 'Prospects aguardando ação',
+        label: 'Captação',
         value: data.captacao.awaitingSchedule + data.captacao.supervisorApprovalPending,
         breakdown: {
           sem_agendamento: data.captacao.awaitingSchedule,
@@ -1107,19 +1110,10 @@ export class FutebolExecutiveService {
 
     kpis.push({
       id: 'agenda',
-      label: 'Próximos compromissos',
+      label: 'Próximos',
       value: data.agenda.length,
       href: '#agenda',
     });
-
-    if (data.health && hasModule(ctx.modules, 'saude')) {
-      kpis.push({
-        id: 'health-active',
-        label: 'Tratamentos fisio ativos',
-        value: data.health.activePhysio,
-        href: '/dashboard/saude/fisioterapia',
-      });
-    }
 
     return kpis;
   }

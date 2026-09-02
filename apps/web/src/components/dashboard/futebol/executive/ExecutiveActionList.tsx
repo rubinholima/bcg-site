@@ -1,14 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Clock } from "lucide-react";
+import { AlertCircle, AlertTriangle, ChevronRight, Circle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  EXECUTIVE_SEVERITY_CLASS,
-  EXECUTIVE_SEVERITY_LABEL,
-} from "@/lib/futebol-executive-access";
-import type { ExecutiveActionItem } from "@/lib/futebol-executive-types";
+import type { ExecutiveActionItem, ExecutiveSeverity } from "@/lib/futebol-executive-types";
 import { formatDateDayMonYear } from "@/lib/format-date";
+
+function SeverityIcon({ severity }: { severity: ExecutiveSeverity }) {
+  if (severity === "critical") {
+    return <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-400" />;
+  }
+  if (severity === "attention") {
+    return <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-400" />;
+  }
+  return <Info className="h-3.5 w-3.5 shrink-0 text-sky-400" />;
+}
 
 function formatWhen(iso?: string): string | null {
   if (!iso) return null;
@@ -22,51 +28,58 @@ function formatWhen(iso?: string): string | null {
 export function ExecutiveActionList({
   items,
   emptyLabel,
-  compact,
+  emptyPositive,
+  maxHeight,
 }: {
   items: ExecutiveActionItem[];
   emptyLabel: string;
-  compact?: boolean;
+  emptyPositive?: boolean;
+  maxHeight?: string;
 }) {
   if (items.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-muted-foreground">{emptyLabel}</p>
+      <p
+        className={cn(
+          "text-center text-xs text-muted-foreground",
+          emptyPositive ? "py-3" : "py-4",
+          emptyPositive && "text-emerald-400/90",
+        )}
+      >
+        {emptyLabel}
+      </p>
     );
   }
 
   return (
-    <ul className={cn("divide-y divide-border/60", compact && "max-h-[420px] overflow-y-auto")}>
+    <ul
+      className={cn("divide-y divide-border/40", maxHeight && "overflow-y-auto")}
+      style={maxHeight ? { maxHeight } : undefined}
+    >
       {items.map((item) => {
         const when = formatWhen(item.dueAt ?? item.createdAt);
         return (
           <li key={item.id}>
             <Link
               href={item.actionUrl}
-              className="group flex items-start gap-3 px-1 py-2.5 transition-colors hover:bg-muted/30"
+              className="group flex items-center gap-2 py-2 pr-1 transition-colors hover:bg-muted/20"
             >
-              <span
-                className={cn(
-                  "mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                  EXECUTIVE_SEVERITY_CLASS[item.severity] ?? EXECUTIVE_SEVERITY_CLASS.info,
-                )}
-              >
-                {EXECUTIVE_SEVERITY_LABEL[item.severity] ?? item.severity}
-              </span>
+              <SeverityIcon severity={item.severity} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground group-hover:text-primary">
+                <p className="truncate text-xs font-medium text-foreground group-hover:text-primary">
                   {item.title}
                 </p>
                 {item.subtitle ? (
-                  <p className="truncate text-xs text-muted-foreground">{item.subtitle}</p>
-                ) : null}
-                {when ? (
-                  <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground/80">
-                    <Clock className="h-3 w-3" />
-                    {when}
-                  </p>
+                  <p className="truncate text-[11px] text-muted-foreground">{item.subtitle}</p>
                 ) : null}
               </div>
-              <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              {when ? (
+                <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/80">
+                  {when}
+                </span>
+              ) : (
+                <Circle className="h-1 w-1 shrink-0 fill-muted-foreground/40 text-transparent" />
+              )}
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 group-hover:opacity-100" />
             </Link>
           </li>
         );

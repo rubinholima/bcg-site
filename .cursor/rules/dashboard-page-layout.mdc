@@ -8,6 +8,13 @@ alwaysApply: false
 
 Todas as páginas do dashboard usam **`DashboardPageFrame`** (via `DashboardLayoutShell`). Não criar `<h1>` manual nem header duplicado.
 
+## Título — sem duplicação (regra permanente)
+
+Se o **shell** (`DashboardDeptHeader` via `DashboardPageFrame`) já renderiza o título da página/módulo, o **conteúdo da página NÃO repete** o mesmo título nem subtítulo idêntico (ex.: evitar segundo "Dashboard Executivo" + "CUP360" dentro do body).
+
+- Subtítulo operacional curto, filtros e metadata ficam **no conteúdo**, abaixo do header automático.
+- Hubs com `variant="hero"` (`HubDashboardPage`) são exceção — já possuem header próprio listados em `DASHBOARD_AUTO_HEADER_EXCLUDE`.
+
 ## Cabeçalho automático
 
 - Metadados em `resolveDashboardPageMeta` (`dashboard-page-meta.ts`)
