@@ -1,3 +1,4 @@
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import {
@@ -66,7 +67,7 @@ export function buildSchoolNotificationPrintHtml(data: NotificationReport): stri
           })
           .join("")}</ul>`;
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
@@ -110,7 +111,7 @@ export function buildSchoolNotificationPrintHtml(data: NotificationReport): stri
       : ""
   }
 </body>
-</html>`;
+</html>`);
 }
 
 export function printSchoolNotification(data: NotificationReport): void {

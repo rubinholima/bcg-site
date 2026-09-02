@@ -1,3 +1,4 @@
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { printHtmlDocument } from "@/lib/futebol-relatorios-print";
 import type { KitchenMenuReport, KitchenPrintPeriod } from "@/lib/nutricao-types";
@@ -92,7 +93,7 @@ export function buildKitchenMenuPrintHtml(
     <p class="meta">Documento para cozinha / refeitório</p>
     ${daysHtml}`;
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
@@ -113,7 +114,7 @@ export function buildKitchenMenuPrintHtml(
 </style>
 </head>
 <body>${body}</body>
-</html>`;
+</html>`);
 }
 
 export function printKitchenMenuReport(report: KitchenMenuReport, period: KitchenPrintPeriod): void {

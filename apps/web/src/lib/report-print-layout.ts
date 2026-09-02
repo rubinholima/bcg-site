@@ -1,3 +1,12 @@
+import {
+  DEFAULT_REPORT_PRINT_CONFIG,
+  ReportCover,
+  ReportDocument,
+  type ReportOrientation,
+  type ReportPaperSize,
+  type ReportPrintConfig,
+} from "@/lib/report-print-engine";
+
 /**
  * Layout de impressão compartilhado — evita página 1 em branco e
  * repete o cabeçalho em cada folha (thead do print-root).
@@ -40,6 +49,45 @@ export const REPORT_PRINT_BREAK_CSS = `
     }
 `;
 
+function legacyConfig(styles: string): { config: ReportPrintConfig; styles: string } {
+  const declaration = styles.match(/@page\s*\{([^}]*)\}/i);
+  if (!declaration) return { config: DEFAULT_REPORT_PRINT_CONFIG, styles };
+  const body = declaration[1];
+  const sizeValue = body.match(/size\s*:\s*([^;]+)/i)?.[1]?.trim().toLowerCase() ?? "a4";
+  const paperSize: ReportPaperSize = sizeValue.includes("letter")
+    ? "Letter"
+    : sizeValue.includes("legal")
+      ? "Legal"
+      : "A4";
+  const orientation: ReportOrientation = sizeValue.includes("landscape")
+    ? "landscape"
+    : "portrait";
+  const marginValues = body
+    .match(/margin\s*:\s*([^;]+)/i)?.[1]
+    ?.trim()
+    .split(/\s+/)
+    .map((value) => {
+      const number = Number.parseFloat(value);
+      return /in$/i.test(value) ? number * 25.4 : /cm$/i.test(value) ? number * 10 : /pt$/i.test(value) ? number * 25.4 / 72 : /px$/i.test(value) ? number * 25.4 / 96 : number;
+    })
+    .filter(Number.isFinite);
+  const values = marginValues?.length ? marginValues : [12, 11, 14, 11];
+  const [top, right = top, bottom = top, left = right] =
+    values.length === 2
+      ? [values[0], values[1], values[0], values[1]]
+      : values.length === 3
+        ? [values[0], values[1], values[2], values[1]]
+        : values;
+  return {
+    config: { paperSize, orientation, margins: { top, right, bottom, left },
+      ...(styles.match(/@page\s*:first\s*\{([^}]*)\}/i) ? {
+        firstPageMargins: legacyConfig(`@page {${styles.match(/@page\s*:first\s*\{([^}]*)\}/i)![1]}}`).config.margins,
+      } : {}),
+    },
+    styles: styles.replace(/@page\s*(?::first\s*)?\{[^}]*\}/gi, ""),
+  };
+}
+
 export function wrapPrintRootDocument(opts: {
   title: string;
   styles: string;
@@ -47,19 +95,18 @@ export function wrapPrintRootDocument(opts: {
   metaHtml?: string;
   bodyHtml: string;
   footerHtml: string;
+  coverHtml?: string;
+  config?: ReportPrintConfig;
 }): string {
+  const legacy = legacyConfig(opts.styles);
   const meta = opts.metaHtml?.trim()
     ? `<div class="report-meta-block">${opts.metaHtml}</div>`
     : "";
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <title>${opts.title}</title>
-  <style>${opts.styles}</style>
-</head>
-<body>
-  <table class="print-root">
+  return ReportDocument({
+    title: opts.title,
+    config: opts.config ?? legacy.config,
+    styles: legacy.styles,
+    content: `${opts.coverHtml?.trim() ? ReportCover(opts.coverHtml) : ""}<table class="print-root">
     <thead>
       <tr>
         <td>
@@ -84,7 +131,16 @@ export function wrapPrintRootDocument(opts: {
         </td>
       </tr>
     </tfoot>
-  </table>
-</body>
-</html>`;
+  </table>`,
+  });
+}
+
+/** Compatibility entry point: legacy generators keep content/design, physical layout belongs to the engine. */
+export function ReportLegacyDocument(html: string): string {
+  const rawTitle = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "Relatório CUP360";
+  const title = rawTitle.replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  const styles = Array.from(html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi), (m) => m[1]).join("\n");
+  const body = html.match(/<body([^>]*)>([\s\S]*?)<\/body>/i);
+  const legacy = legacyConfig(styles);
+  return ReportDocument({ title, styles: legacy.styles, config: legacy.config, content: body?.[2] ?? "", bodyAttributes: body?.[1] });
 }

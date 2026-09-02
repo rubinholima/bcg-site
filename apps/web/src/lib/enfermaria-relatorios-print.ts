@@ -1,3 +1,4 @@
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import {
   monthLabel,
@@ -39,7 +40,7 @@ export function buildEnfermariaPrintHtml(
     )
     .join("");
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -77,7 +78,7 @@ export function buildEnfermariaPrintHtml(
     <tbody>${rows || "<tr><td colspan='8'>Nenhum atendimento no filtro.</td></tr>"}</tbody>
   </table>
 </body>
-</html>`;
+</html>`);
 }
 
 export function printEnfermariaReport(html: string) {

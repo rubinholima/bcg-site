@@ -1,3 +1,4 @@
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import {
   WEEKLY_PSYCH_REPORT_FIELDS,
   type WeeklyPsychReportData,
@@ -31,7 +32,7 @@ function buildPrintHtml(report: WeeklyPsychReportData): string {
     `;
   }).join("");
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -179,7 +180,7 @@ function buildPrintHtml(report: WeeklyPsychReportData): string {
     </footer>
   </div>
 </body>
-</html>`;
+</html>`);
 }
 
 /** Impressão via iframe oculto — não depende de pop-up do navegador. */

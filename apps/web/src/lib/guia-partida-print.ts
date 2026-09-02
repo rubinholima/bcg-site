@@ -1,3 +1,4 @@
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import {
   printHtmlDocument,
   resolveLogoUrlForPrint,
@@ -359,10 +360,10 @@ function styles(size: PrintPageSize): string {
     .sheet.cover-sheet {
       page-break-before: auto;
       break-before: auto;
-      width: 210mm;
-      height: 297mm;
-      max-height: 297mm;
-      min-height: 297mm;
+      width: ${size === "Letter" ? "215.9" : "210"}mm;
+      height: ${size === "Letter" ? "279.4" : "297"}mm;
+      max-height: ${size === "Letter" ? "279.4" : "297"}mm;
+      min-height: ${size === "Letter" ? "279.4" : "297"}mm;
       overflow: hidden;
       padding: 0;
     }
@@ -1493,7 +1494,7 @@ export function buildGuiaPartidaPrintHtml(
     .filter(Boolean)
     .join("\n");
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -1504,7 +1505,7 @@ export function buildGuiaPartidaPrintHtml(
   </style>
 </head>
 <body>${body}</body>
-</html>`;
+</html>`);
 }
 
 export function printGuiaPartidaReport(
@@ -1549,7 +1550,7 @@ export function buildEscalacaoCampoPrintHtml(
     ${esc([matchDateLabel, config.matchTime, travel.categoryLabel].filter(Boolean).join(" · "))}
   </p>`;
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -1559,7 +1560,7 @@ export function buildEscalacaoCampoPrintHtml(
 <body class="escalacao-campo">
   ${sheet(`${header}${inner}${foot("Escalação")}`, "escalacao-sheet")}
 </body>
-</html>`;
+</html>`);
 }
 
 export function printEscalacaoCampoReport(

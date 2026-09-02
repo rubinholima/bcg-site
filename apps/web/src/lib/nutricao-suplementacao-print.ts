@@ -1,3 +1,4 @@
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { printHtmlDocument } from "@/lib/futebol-relatorios-print";
@@ -71,7 +72,7 @@ export function buildSupplementationPrintHtml(
     </table>
     ${rosterBlock}`;
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
@@ -89,7 +90,7 @@ export function buildSupplementationPrintHtml(
 </style>
 </head>
 <body>${body}</body>
-</html>`;
+</html>`);
 }
 
 export function printSupplementationReport(

@@ -1,3 +1,4 @@
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import {
   MEDICAL_DEPARTURE_CARE_TYPE_LABEL,
@@ -51,7 +52,7 @@ export function buildMedicalDeparturePrintHtml(
       .map((i) => `<li>${esc(i.label)}: <strong>${i.count}</strong></li>`)
       .join("") || "<li>—</li>";
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -114,7 +115,7 @@ export function buildMedicalDeparturePrintHtml(
     <tbody>${rows || "<tr><td colspan='8'>Nenhuma saída no filtro.</td></tr>"}</tbody>
   </table>
 </body>
-</html>`;
+</html>`);
 }
 
 export function printMedicalDepartureReport(html: string) {

@@ -1,3 +1,4 @@
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
 import type { CoachTrainingPeriodReport, CoachTrainingSessionReport } from "@/lib/treinadores-types";
@@ -19,7 +20,7 @@ function attachmentKindLabel(kind: string | null): string {
 }
 
 function printShell(title: string, body: string, size: PrintPageSize = "A4"): string {
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
@@ -41,7 +42,7 @@ function printShell(title: string, body: string, size: PrintPageSize = "A4"): st
 <body>
 ${body}
 </body>
-</html>`;
+</html>`);
 }
 
 export function buildTrainingSessionPrintHtml(data: CoachTrainingSessionReport, size: PrintPageSize = "A4"): string {

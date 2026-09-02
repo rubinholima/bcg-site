@@ -1,3 +1,4 @@
+import { reportTrend, reportRadar } from "@/lib/report-charts";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { getPositionLabel } from "@/lib/football-positions";
@@ -16,6 +17,7 @@ import {
   REPORT_PRINT_BREAK_CSS,
   wrapPrintRootDocument,
 } from "@/lib/report-print-layout";
+import { ReportPage, ReportSection, ReportHeader, printReportDocument, type ReportPrintConfig } from "@/lib/report-print-engine";
 
 const BCG = {
   red: "#C8102E",
@@ -82,7 +84,6 @@ function isoFromUnknown(value: unknown): string | null {
 function dossierStyles(): string {
   return `
     ${REPORT_PRINT_BREAK_CSS}
-    @page { size: A4; margin: 12mm 11mm 14mm; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -94,21 +95,15 @@ function dossierStyles(): string {
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .doc-page {
-      break-after: page;
-      page-break-after: always;
-      min-height: 255mm;
-    }
-    .doc-page:last-child { break-after: auto; page-break-after: auto; min-height: auto; }
     .page-inner { padding: 4px 2px 0; }
 
     /* —— CAPA HERO —— */
+    .report-cover > .cover-hero { height: 100%; }
     .cover-hero {
-      min-height: 272mm;
+      min-height: 0;
+      height: 100%;
       display: flex;
       flex-direction: column;
-      break-after: page;
-      page-break-after: always;
       background: linear-gradient(145deg, ${BCG.blueDeep} 0%, ${BCG.blue} 42%, ${BCG.blueMid} 100%);
       color: #fff;
       overflow: hidden;
@@ -188,7 +183,7 @@ function dossierStyles(): string {
     }
     .cover-photo-wrap {
       position: relative;
-      min-height: 320px;
+      min-height: 0;
       display: flex; align-items: flex-end; justify-content: center;
     }
     .cover-photo-wrap::before {
@@ -198,7 +193,7 @@ function dossierStyles(): string {
       z-index: 1;
     }
     .cover-photo-wrap img {
-      width: 100%; height: 100%; min-height: 340px;
+      width: 100%; height: 100%; min-height: 0;
       object-fit: cover; object-position: center 12%;
       display: block;
     }
@@ -241,6 +236,7 @@ function dossierStyles(): string {
       content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, #cbd5e1 0%, transparent 100%);
     }
     .section-block { margin-bottom: 18px; break-inside: avoid-page; }
+    .section-block.section-splittable { break-inside: auto; page-break-inside: auto; }
     .optional-tag {
       display: inline-block; margin-bottom: 8px; padding: 3px 10px; border-radius: 999px;
       background: #fef3c7; border: 1px solid #fcd34d; color: #92400e;
@@ -404,7 +400,7 @@ function dossierStyles(): string {
     }
     .report-ftr strong { color: ${BCG.blue}; }
     @media print {
-      .section-block, .eval-card, .highlight-card, .chart-wrap { break-inside: avoid-page; }
+      .section-block:not(.section-splittable), .eval-card, .highlight-card, .chart-wrap { break-inside: avoid-page; }
       thead { display: table-header-group; }
     }
   `;
@@ -415,7 +411,7 @@ function sectionBlock(title: string, body: string, optionalLabel?: string): stri
   const tag = optionalLabel
     ? `<div class="optional-tag">Seção opcional · ${escapeHtml(optionalLabel)}</div>`
     : "";
-  return `<div class="section-block">${tag}<h2 class="section-title">${escapeHtml(title)}</h2>${body}</div>`;
+  return ReportSection(`${ReportHeader(`${tag}<h2 class="section-title">${escapeHtml(title)}</h2>`)}${body}`, { className: "section-block section-splittable" });
 }
 
 function kvGrid(items: Array<{ label: string; value: string }>): string {
@@ -429,9 +425,9 @@ function kvGrid(items: Array<{ label: string; value: string }>): string {
     .join("")}</div>`;
 }
 
-function dataTable(headers: string[], rows: string[][]): string {
+function dataTable(headers: string[], rows: string[][], widths?: number[]): string {
   if (rows.length === 0) return "";
-  return `<table class="data-table"><thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows
+  return `<table class="data-table">${widths ? `<colgroup>${widths.map(w => `<col style="width:${w}%">`).join("")}</colgroup>` : ""}<thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows
     .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`)
     .join("")}</tbody></table>`;
 }
@@ -535,17 +531,20 @@ function renderExecutiveSnapshot(d: PlayerDossierDto): string {
     { label: "Clube atual", value: p.currentTeam?.trim() || "—" },
   ]);
   const right = kvGrid([
+    { label: "Altura", value: fmtNum(c.height, " cm") },
+    { label: "Peso", value: fmtNum(c.weight, " kg") },
+    { label: "Pé dominante", value: footLabel(c.preferredFoot) },
     { label: "Posição", value: c.position ? getPositionLabel(c.position) : "—" },
     { label: "Categoria", value: c.category ? getCategoryLabel(c.category, "pt") : "—" },
     { label: "Situação", value: c.situation?.trim() || "—" },
-    { label: "IMC", value: p.bmi != null ? String(p.bmi) : "—" },
-    { label: "% Gordura", value: p.bodyFatPercent != null ? `${p.bodyFatPercent}%` : "—" },
+    { label: "IMC", value: d.meta.includedOptionalSections.includes("physiology") && p.bmi != null ? String(p.bmi) : "—" },
+    { label: "% Gordura", value: d.meta.includedOptionalSections.includes("physiology") && p.bodyFatPercent != null ? `${p.bodyFatPercent}%` : "—" },
     { label: "Valor mercado", value: p.marketValue != null ? `€ ${p.marketValue}` : "—" },
   ]);
   const bio = c.bioPT?.trim() ? `<div class="prose" style="margin-top:12px">${escapeHtml(c.bioPT.trim())}</div>` : "";
   return sectionBlock(
     "Perfil executivo",
-    `<p class="lead-text">Resumo cadastral e identificação esportiva do atleta no ${escapeHtml(clubDisplayName(d))}.</p><div class="two-col"><div>${left}</div><div>${right}</div></div>${bio}`,
+    `<p class="lead-text">${escapeHtml(c.name)} · ${escapeHtml(c.position ? getPositionLabel(c.position) : "Atleta")} do ${escapeHtml(clubDisplayName(d))}.${d.matchHistory.totals ? ` ${d.matchHistory.totals.matchesPlayed} jogos, ${d.matchHistory.totals.starts} titularidades e ${d.matchHistory.totals.minutesPlayed} minutos no histórico oficial disponível.` : ""}</p><div class="two-col"><div>${left}</div><div>${right}</div></div>${bio}`,
   );
 }
 
@@ -621,6 +620,10 @@ function renderMatchStatistics(d: PlayerDossierDto): string {
     });
 
   const charts = `<div class="chart-grid">
+    ${mh.totals ? barChart("Participação nas partidas registradas", [
+      {label: "Relacionado", value: mh.totals.matchesListed}, {label: "Entrou em campo", value: mh.totals.matchesPlayed},
+      {label: "Titular", value: mh.totals.starts},
+    ]) : ""}
     ${barChart("Minutos por mês", d.charts.monthlyMinutes.map((x) => ({ label: x.label, value: x.minutes, suffix: "′" })))}
     ${barChart("Gols por mês", d.charts.monthlyGoals.map((x) => ({ label: x.label, value: x.goals })))}
     ${barChart("Jogos por mês", d.charts.monthlyAppearances.map((x) => ({ label: x.label, value: x.appearances })))}
@@ -633,10 +636,10 @@ function renderMatchStatistics(d: PlayerDossierDto): string {
     seasonRows.length
       ? dataTable(["Temp.", "Competição", "Cat.", "Jogos", "Tit.", "Min.", "Gols"], seasonRows)
       : "",
-    matchRows.length
-      ? `<p style="margin-top:14px;font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b">Partidas individuais</p>${dataTable(["Data", "Competição", "Confronto", "Função", "Min", "Gols", "Cartões"], matchRows)}`
-      : "",
     charts,
+    matchRows.length
+      ? `<p style="margin-top:14px;font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b">Partidas individuais</p>${dataTable(["Data", "Competição", "Confronto", "Função", "Min", "Gols", "Cartões"], matchRows, [11, 22, 30, 13, 7, 7, 10])}`
+      : "",
   ].join("");
 
   return sectionBlock("Estatísticas e histórico oficial", parts);
@@ -708,11 +711,11 @@ function renderPerformance(d: PlayerDossierDto): string {
     parts.push(perf.coachEvaluations.map(renderCoachEvalCard).join(""));
   }
 
-  if (perf.performanceAnalysis?.trim()) {
+  if (d.meta.includedOptionalSections.includes("performance") && perf.performanceAnalysis?.trim()) {
     parts.push(`<div class="prose">${escapeHtml(perf.performanceAnalysis.trim())}</div>`);
   }
 
-  const evalRows = asArray(perf.diretoriaEvaluations)
+  const evalRows = asArray(d.meta.includedOptionalSections.includes("performance") ? perf.diretoriaEvaluations : [])
     .slice(0, 12)
     .map((ev) => {
       const o = asObject(ev);
@@ -729,7 +732,7 @@ function renderPerformance(d: PlayerDossierDto): string {
     );
   }
 
-  const metrics = asObject(perf.analysisMetrics);
+  const metrics = asObject(d.meta.includedOptionalSections.includes("performance") ? perf.analysisMetrics : {});
   const mRows = Object.entries(metrics)
     .filter(([, v]) => v != null && v !== "")
     .slice(0, 16)
@@ -738,6 +741,11 @@ function renderPerformance(d: PlayerDossierDto): string {
     parts.push(dataTable(["Indicador analítico", "Valor"], mRows));
   }
 
+  const latest = [...perf.coachEvaluations].filter(r => r.submittedAt).sort((a,b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""))[0];
+  if (latest) parts.push(reportRadar(`Avaliação por dimensão · ${fmtDate(latest.submittedAt)}`, [
+    {label: "Técnica", value: latest.techAverage}, {label: "Tática", value: latest.tacAverage},
+    {label: "Física", value: latest.physAverage}, {label: "Comportamento", value: latest.behAverage},
+  ], 5));
   const trend = barChart(
     "Evolução das avaliações técnicas (%)",
     d.charts.evaluationTrend.map((x) => ({ label: x.label, value: x.value, suffix: "%" })),
@@ -804,6 +812,7 @@ function renderPsychologySection(d: PlayerDossierDto, label: string): string {
   });
 
   const body = [
+    recordCounts("Registros por modalidade", records, "kind"),
     recordHtml,
     cRows.length ? dataTable(["Data", "Modalidade", "Profissional", "Registro / status"], cRows) : "",
   ].join("");
@@ -819,6 +828,48 @@ function flattenEvolutionNotes(raw: unknown): string | null {
     })
     .filter(Boolean) as string[];
   return texts.length > 0 ? texts.join(" · ") : null;
+}
+
+
+const PHYSICAL_METRICS = [
+  ["weight", "Peso", "kg"], ["height", "Altura", "cm"], ["bmi", "IMC", "kg/m²"],
+  ["bodyFatPercent", "Gordura corporal", "%"], ["leanMassKg", "Massa magra", "kg"],
+  ["vo2max", "VO₂ máx", "ml/kg/min"], ["cmjCm", "Salto CMJ", "cm"],
+  ["illinoisSec", "Agilidade Illinois", "s"], ["tTestSec", "Teste T", "s"],
+  ["sprint10m", "Sprint 10 m", "s"], ["sprint20m", "Sprint 20 m", "s"],
+  ["yoyoDistance", "Yo-Yo", "m"], ["rastPower", "Potência RAST", "W"],
+] as const;
+
+function renderPhysicalRecords(block: Record<string, unknown>): string {
+  const records = [...asArray(block.assessments), ...asArray(block.records)].map(asObject);
+  const metricRows: string[][] = [];
+  const charts: string[] = [];
+  for (const [key, label, unit] of PHYSICAL_METRICS) {
+    const observations = records.flatMap(r => {
+      const value = r[key] ?? (key === "weight" ? r.weightKg : key === "height" ? r.heightCm : undefined);
+      const date = isoFromUnknown(r.assessedAt ?? r.date);
+      return typeof value === "number" && Number.isFinite(value) && date
+        ? [{ date, value }] : [];
+    }).sort((a,b) => a.date.localeCompare(b.date));
+    for (const p of observations) metricRows.push([escapeHtml(fmtDate(p.date)), label, `${p.value} ${unit}`]);
+    charts.push(reportTrend(label, unit, observations));
+  }
+  const notes = records.flatMap(r => {
+    const date = isoFromUnknown(r.assessedAt ?? r.date);
+    return [r.notes, r.mobilityNotes].filter((v): v is string => typeof v === "string" && !!v.trim())
+      .map(text => `<p class="prose"><strong>${escapeHtml(fmtDate(date))}:</strong> ${escapeHtml(text)}</p>`);
+  }).join("");
+  const chartHtml = charts.filter(Boolean).join("");
+  return `${chartHtml ? `<div class="chart-grid">${chartHtml}</div>` : ""}${dataTable(["Data", "Avaliação física", "Valor observado"], metricRows)}${notes}`;
+}
+
+function recordCounts(title: string, records: unknown[], field: string): string {
+  const groups = new Map<string, number>();
+  for (const raw of records) {
+    const value = asObject(raw)[field];
+    if (typeof value === "string" && value.trim()) groups.set(value, (groups.get(value) ?? 0) + 1);
+  }
+  return barChart(title, [...groups].map(([label,value]) => ({label,value})));
 }
 
 function renderOptionalSection(sectionId: PlayerDossierOptionalSection, d: PlayerDossierDto): string {
@@ -857,6 +908,7 @@ function renderOptionalSection(sectionId: PlayerDossierOptionalSection, d: Playe
         ];
       });
       const body = [
+        recordCounts("Episódios por status", sessions, "status"),
         sessionRows.length
           ? dataTable(["Início", "Região", "Diagnóstico", "Queixa", "Evolução / conduta", "Desfecho"], sessionRows)
           : "",
@@ -885,7 +937,7 @@ function renderOptionalSection(sectionId: PlayerDossierOptionalSection, d: Playe
       });
       return sectionBlock(
         "Enfermaria — atendimentos",
-        dataTable(["Data", "Queixa", "Diagnósticos", "Conduta", "Status"], rows),
+        recordCounts("Atendimentos por status", sessions, "status") + dataTable(["Data", "Queixa", "Diagnósticos", "Conduta", "Status"], rows),
         label,
       );
     }
@@ -914,6 +966,7 @@ function renderOptionalSection(sectionId: PlayerDossierOptionalSection, d: Playe
         ];
       });
       const body = [
+        recordCounts("Saídas por status", departures, "status"),
         depRows.length ? dataTable(["Saída", "Tipo", "Destino", "Motivo", "Retorno", "Status"], depRows) : "",
         histRows.length ? dataTable(["Data", "Tipo", "Registro clínico"], histRows) : "",
       ].join("");
@@ -935,17 +988,24 @@ function renderOptionalSection(sectionId: PlayerDossierOptionalSection, d: Playe
       });
       return sectionBlock(
         "Treinos — participação e avaliação",
-        dataTable(["Data", "Categoria", "Nota", "Comissão", "Atividade", "Observações"], rows),
+        recordCounts("Participações registradas por categoria", sessions, "category") + dataTable(["Data", "Categoria", "Nota", "Comissão", "Atividade", "Observações"], rows),
         label,
       );
     }
     case "scouting": {
       const prospects = asArray(asObject(data.scouting).prospects);
       if (prospects.length === 0) return "";
-      const parts: string[] = [];
+      const parts: string[] = [recordCounts("Observações por etapa", prospects, "stage")];
       for (const p of prospects) {
         const o = asObject(p);
         const reports = asArray(o.reports);
+        for (const raw of reports) {
+          const report = asObject(raw);
+          parts.push(reportRadar(`Scouting por dimensão · ${fmtDate(isoFromUnknown(report.reportDate))}`, [
+            ["Técnica", report.technicalRating], ["Tática", report.tacticalRating],
+            ["Física", report.physicalRating], ["Cognitiva", report.cognitiveRating],
+          ].map(([label, value]) => ({ label: String(label), value: typeof value === "number" ? value : null })), 10));
+        }
         parts.push(`<div class="eval-card">
           <div class="eval-card-title">${escapeHtml(typeof o.stage === "string" ? o.stage : "Captação")} · ${escapeHtml(typeof o.recommendation === "string" ? o.recommendation : "—")}</div>
           ${typeof o.strengths === "string" && o.strengths.trim() ? `<p><strong>Pontos fortes:</strong> ${escapeHtml(o.strengths.trim())}</p>` : ""}
@@ -985,12 +1045,13 @@ function renderOptionalSection(sectionId: PlayerDossierOptionalSection, d: Playe
         const o = asObject(a);
         return [
           escapeHtml(fmtDate(isoFromUnknown(o.assessedAt))),
-          escapeHtml(o.weight != null ? `${o.weight} kg` : "—"),
+          escapeHtml(o.weightKg != null ? `${o.weightKg} kg` : o.weight != null ? `${o.weight} kg` : "—"),
           escapeHtml(o.bodyFatPercent != null ? `${o.bodyFatPercent}%` : "—"),
           escapeHtml(typeof o.notes === "string" ? o.notes : "—"),
         ];
       });
       const body = [
+        renderPhysicalRecords(block),
         aRows.length ? dataTable(["Data", "Objetivo", "Registro / observações"], aRows) : "",
         eRows.length ? dataTable(["Data", "Peso", "% Gordura", "Observações"], eRows) : "",
       ].join("");
@@ -998,28 +1059,12 @@ function renderOptionalSection(sectionId: PlayerDossierOptionalSection, d: Playe
     }
     case "physiology": {
       const block = asObject(data.physiology);
-      const assessments = asArray(block.assessments);
       const profile = asObject(block.profile);
-      if (assessments.length === 0 && Object.keys(profile).length === 0) return "";
-      const profileRows = Object.entries(profile)
-        .filter(([, v]) => v != null && v !== "")
-        .slice(0, 10)
-        .map(([k, v]) => [escapeHtml(k), escapeHtml(String(v))]);
-      const rows = assessments.map((a) => {
-        const o = asObject(a);
-        return [
-          escapeHtml(fmtDate(isoFromUnknown(o.assessedAt))),
-          escapeHtml(o.weight != null ? String(o.weight) : "—"),
-          escapeHtml(o.bodyFatPercent != null ? `${o.bodyFatPercent}%` : "—"),
-          escapeHtml(o.vo2max != null ? String(o.vo2max) : "—"),
-          escapeHtml(typeof o.notes === "string" ? o.notes : "—"),
-        ];
-      });
-      const body = [
-        profileRows.length ? dataTable(["Indicador de perfil", "Valor"], profileRows) : "",
-        rows.length ? dataTable(["Data", "Peso", "% Gordura", "VO₂ máx", "Observações"], rows) : "",
-      ].join("");
-      return sectionBlock("Fisiologia — perfil e avaliações", body, label);
+      const profileItems = PHYSICAL_METRICS.flatMap(([key,label,unit]) =>
+        typeof profile[key] === "number" ? [{label, value: `${profile[key]} ${unit}`}] : []);
+      const body = kvGrid(profileItems) + renderPhysicalRecords(block);
+      if (!asArray(block.assessments).length && !asArray(block.records).length && !profileItems.length) return "";
+      return sectionBlock("Fisiologia e avaliações físicas", body, label);
     }
     case "performance": {
       const block = asObject(data.performanceDetail);
@@ -1073,12 +1118,14 @@ function reportFooter(d: PlayerDossierDto): string {
   </div>`;
 }
 
-export function buildPlayerDossierPrintHtml(d: PlayerDossierDto): string {
+export function buildPlayerDossierPrintHtml(
+  d: PlayerDossierDto,
+  config?: ReportPrintConfig,
+): string {
   const page = (content: string) =>
-    content.trim() ? `<div class="doc-page"><div class="page-inner">${content}</div></div>` : "";
+    content.trim() ? ReportPage(`<div class="page-inner">${content}</div>`) : "";
 
   const bodyHtml = [
-    renderCover(d),
     page([renderExecutiveSnapshot(d), renderSportingStory(d)].join("")),
     page([renderMatchStatistics(d), renderHighlights(d)].join("")),
     page([renderPerformance(d), renderTimeline(d)].join("")),
@@ -1086,8 +1133,10 @@ export function buildPlayerDossierPrintHtml(d: PlayerDossierDto): string {
   ].join("");
 
   return wrapPrintRootDocument({
-    title: `Dossiê — ${d.cover.name}`,
+    title: `Dossiê - ${d.cover.name}`,
+    config,
     styles: dossierStyles(),
+    coverHtml: renderCover(d),
     headerHtml: reportHeader(d),
     metaHtml: "",
     bodyHtml,
@@ -1096,21 +1145,5 @@ export function buildPlayerDossierPrintHtml(d: PlayerDossierDto): string {
 }
 
 export function printPlayerDossierDocument(html: string): void {
-  const iframe = document.createElement("iframe");
-  iframe.style.position = "fixed";
-  iframe.style.right = "0";
-  iframe.style.bottom = "0";
-  iframe.style.width = "0";
-  iframe.style.height = "0";
-  iframe.style.border = "0";
-  iframe.srcdoc = html;
-  document.body.appendChild(iframe);
-  iframe.onload = () => {
-    try {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-    } finally {
-      window.setTimeout(() => iframe.remove(), 1000);
-    }
-  };
+  printReportDocument(html);
 }

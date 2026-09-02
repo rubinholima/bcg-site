@@ -1,3 +1,5 @@
+import { printReportDocument } from "@/lib/report-print-engine";
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import { formatCpfForDisplay } from "@/lib/format-cpf";
 import {
   formatDateDayMonYear,
@@ -821,7 +823,7 @@ export function buildProgramacaoPrintHtml(
     })
     .join("");
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -831,40 +833,11 @@ export function buildProgramacaoPrintHtml(
 <body>
   ${pages}
 </body>
-</html>`;
+</html>`);
 }
 
-export function printHtmlDocument(html: string, title: string): void {
-  if (typeof document === "undefined") return;
-
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute("title", title);
-  iframe.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
-  document.body.appendChild(iframe);
-
-  const frameWindow = iframe.contentWindow;
-  const frameDoc = frameWindow?.document;
-  if (!frameWindow || !frameDoc) {
-    iframe.remove();
-    return;
-  }
-
-  frameDoc.open();
-  frameDoc.write(html);
-  frameDoc.close();
-
-  const runPrint = () => {
-    try {
-      frameWindow.focus();
-      frameWindow.print();
-    } finally {
-      setTimeout(() => iframe.remove(), 500);
-    }
-  };
-
-  if (frameDoc.readyState === "complete") runPrint();
-  else iframe.onload = runPrint;
+export function printHtmlDocument(html: string, _title: string): void {
+  if (typeof document !== "undefined") printReportDocument(html);
 }
 
 export function printPassageirosReport(

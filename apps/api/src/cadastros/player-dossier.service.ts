@@ -260,7 +260,7 @@ export class PlayerDossierService {
         : undefined;
 
     const timeline = this.buildTimeline({
-      evaluations: asArray(player.evaluations),
+      evaluations: includedOptional.includes('performance') ? asArray(player.evaluations) : [],
       fmfMatches,
       highlights: asArray(player.highlights).filter((h): h is string => typeof h === 'string'),
       coachEvaluations: submittedCoach,
@@ -313,8 +313,8 @@ export class PlayerDossierService {
         comet: reg.comet,
         jerseyName: reg.jerseyName,
         currentTeam: player.currentTeam ?? player.tenant?.name ?? null,
-        bmi: player.bmi,
-        bodyFatPercent: player.bodyFatPercent,
+        bmi: includedOptional.includes('physiology') ? player.bmi : null,
+        bodyFatPercent: includedOptional.includes('physiology') ? player.bodyFatPercent : null,
         matchesPlayed: player.matchesPlayed,
         goals: player.goals,
         assists: player.assists,
@@ -354,9 +354,9 @@ export class PlayerDossierService {
         matches: fmfMatches,
       },
       performance: {
-        diretoriaEvaluations: asArray(player.evaluations),
-        analysisMetrics: asObject(player.analysisMetrics),
-        performanceAnalysis: player.performanceAnalysis,
+        diretoriaEvaluations: includedOptional.includes('performance') ? asArray(player.evaluations) : [],
+        analysisMetrics: includedOptional.includes('performance') ? asObject(player.analysisMetrics) : {},
+        performanceAnalysis: includedOptional.includes('performance') ? player.performanceAnalysis : null,
         coachEvaluations: submittedCoach.map((r) => ({
           season: r.season,
           periodKey: r.periodKey,

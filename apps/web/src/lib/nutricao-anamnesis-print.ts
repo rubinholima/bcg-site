@@ -1,3 +1,4 @@
+import { ReportLegacyDocument } from "@/lib/report-print-layout";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { printHtmlDocument } from "@/lib/futebol-relatorios-print";
@@ -48,7 +49,7 @@ export function buildNutritionAnamnesisPrintHtml(
     ${sections}
     ${notes}`;
 
-  return `<!DOCTYPE html>
+  return ReportLegacyDocument(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
@@ -65,7 +66,7 @@ export function buildNutritionAnamnesisPrintHtml(
 </style>
 </head>
 <body>${body}</body>
-</html>`;
+</html>`);
 }
 
 export function printNutritionAnamnesis(row: NutritionAnamnesisRow, tenantName?: string): void {
