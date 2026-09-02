@@ -44,6 +44,7 @@ import { BeatscodeImportModule } from './beatscode-import/beatscode-import.modul
 import { CaptacaoModule } from './captacao/captacao.module';
 import { PsychologySessionsModule } from './psychology-sessions/psychology-sessions.module';
 import { FisioterapiaModule } from './fisioterapia/fisioterapia.module';
+import { FutebolExecutiveModule } from './futebol-executive/futebol-executive.module';
 import { FisiologiaModule } from './fisiologia/fisiologia.module';
 import { EnfermariaModule } from './enfermaria/enfermaria.module';
 import { MedicalDeparturesModule } from './medical-departures/medical-departures.module';
@@ -104,6 +105,7 @@ import { DynamicReportsModule } from './dynamic-reports/dynamic-reports.module';
     CaptacaoModule,
     PsychologySessionsModule,
     FisioterapiaModule,
+    FutebolExecutiveModule,
     FisiologiaModule,
     EnfermariaModule,
     MedicalDeparturesModule,

@@ -434,6 +434,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     moduleSlug: "futebol_logistica",
     children: [
       {
+        slug: "futebol_executivo",
+        label: "Dashboard Executivo",
+        href: "/dashboard/futebol/executivo",
+        icon: Gauge,
+        moduleSlug: "tipos",
+      },
+      {
         slug: "futebol_visao",
         label: DEPT_HUB_MENU_LABEL,
         href: "/dashboard/futebol",

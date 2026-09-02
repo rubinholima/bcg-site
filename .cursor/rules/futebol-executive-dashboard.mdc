@@ -1,0 +1,39 @@
+---
+description: Dashboard executivo de futebol — camada de agregação obrigatória para features de gestão
+alwaysApply: true
+---
+
+# Dashboard Executivo de Futebol — regra de produto
+
+Rota: `/dashboard/futebol/executivo` · API: `GET /futebol-executive/dashboard`
+
+## Princípio
+
+O **Dashboard Executivo** é camada de **agregação read-only** sobre módulos canônicos.
+Não duplica modelos, aprovações nem regras de negócio.
+
+## Ao criar feature com impacto de gestão
+
+Sempre que uma feature nova introduzir informação relevante para **gerente / gestor / supervisor / diretoria**:
+
+- aprovação ou decisão pendente
+- risco ou alerta operacional
+- KPI executivo
+- prazo ou deadline acionável
+
+→ **considerar** representação no dashboard executivo (bloco, KPI, alerta ou item na Central de Decisões).
+
+Nem todo campo entra na tela — só o que é **acionável ou resumível** para gestão.
+
+## Implementação
+
+1. Fonte canônica permanece no módulo de origem (service/tabela existente).
+2. Dashboard **deriva** dados via `FutebolExecutiveService` ou extensão de bloco existente.
+3. **RBAC no backend** — filtrar dados sensíveis (saúde clínica, salários, etc.) no orchestrator; ocultar no frontend não basta.
+4. Itens acionáveis usam `actionUrl` para telas canônicas — **não** reimplementar fluxo de aprovação na UI do dashboard.
+5. Contrato sugerido: `ExecutiveActionItem` (`id`, `type`, `title`, `severity`, `dueAt`, `actionUrl`, `moduleRequired`).
+
+## Protegido
+
+- Não alterar workflows existentes (captação CT, fisio try-out, transição, disciplina, logística) só para alimentar o dashboard.
+- Baselines de RBAC e `customModuleAccess` permanecem intactos.

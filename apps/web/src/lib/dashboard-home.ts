@@ -21,6 +21,10 @@ interface HubHomeRule {
 /** Prioridade: primeiro match define a home do usuário (exceto super_admin). */
 const HUB_HOME_RULES: HubHomeRule[] = [
   { route: COMPANY_DASHBOARD_ROUTE, roles: ["company_admin"] },
+  {
+    route: "/dashboard/futebol/executivo",
+    roles: ["gerente", "gestor", "supervisor"],
+  },
   { route: "/dashboard/diretoria", roles: ["diretoria"], modules: ["diretoria"] },
   {
     route: "/dashboard/futebol",
