@@ -33,7 +33,28 @@ import {
   labelForPhysioClearanceStatus,
   physioClearanceBadgeClass,
 } from "@/lib/physio-periodic-labels";
+import {
+  formatPeriodicTestClassification,
+  formatPeriodicTestHistory,
+} from "@/lib/physio-periodic-history";
 import { cn } from "@/lib/utils";
+
+function classificationBadgeClass(classification?: string | null): string {
+  switch (classification) {
+    case "aprovado":
+    case "bom":
+      return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
+    case "aceitavel":
+    case "razoavel":
+    case "medio":
+      return "border-amber-500/40 bg-amber-500/10 text-amber-200";
+    case "reprovado":
+    case "ruim":
+      return "border-destructive/40 bg-destructive/10 text-destructive";
+    default:
+      return "border-border/50 bg-muted/20 text-muted-foreground";
+  }
+}
 
 export function PlayerPhysioSection({
   playerId,
@@ -306,33 +327,103 @@ export function PlayerPhysioSection({
             ) : evaluations.length === 0 ? (
               <p className="py-4 text-center text-sm text-muted-foreground">Nenhuma avaliação registrada.</p>
             ) : (
-              evaluations.slice(0, 8).map((ev) => (
-                <div key={ev.id} className="rounded-lg border border-border/60 p-3 text-sm">
-                  <p className="font-medium">
-                    {PHYSIO_EVAL_CONTEXT_LABEL[ev.context] ?? ev.context}
-                    {" · "}
-                    {formatDateDayMonYear(ev.evaluatedAt)}
-                  </p>
-                  {ev.tests.slice(0, 5).map((t, i) => (
-                    <p key={i} className="text-muted-foreground">
-                      {t.protocol
-                        ? PHYSIO_PERIODIC_PROTOCOL_LABEL[t.protocol] ?? t.protocol
-                        : labelFromMap(PHYSIO_EVAL_TEST_TYPE_LABEL, t.testType, t.testTypeLabel)}
-                      {!t.protocol ? (
-                        <>
-                          {" · "}
-                          {labelFromMap(PHYSIO_EVAL_BODY_LOCATION_LABEL, t.bodyLocation, t.bodyLocationLabel)}
-                        </>
-                      ) : null}
-                      {t.classification
-                        ? ` · ${PHYSIO_PROTOCOL_CLASSIFICATION_LABEL[t.classification] ?? t.classification}`
-                        : t.score
-                          ? ` · ${t.score}`
-                          : ""}
+              evaluations.map((ev) => (
+                <div key={ev.id} className="rounded-lg border border-border/60 p-3 text-sm space-y-2">
+                  <div>
+                    <p className="font-medium">
+                      {PHYSIO_EVAL_CONTEXT_LABEL[ev.context] ?? ev.context}
+                      {" · "}
+                      {formatDateDayMonYear(ev.evaluatedAt)}
                     </p>
-                  ))}
+                    {ev.staffName ? (
+                      <p className="text-xs text-muted-foreground">{ev.staffName}</p>
+                    ) : null}
+                  </div>
+                  {ev.tests.map((t, i) => {
+                    const protocol = t.protocol ?? "";
+                    const detailLines = protocol
+                      ? formatPeriodicTestHistory(protocol, t.payload ?? undefined)
+                      : [];
+                    const overallLabel = formatPeriodicTestClassification(t.classification, t.score);
+                    return (
+                      <div key={t.id ?? i} className="rounded border border-border/40 p-2 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium">
+                            {protocol
+                              ? PHYSIO_PERIODIC_PROTOCOL_LABEL[protocol] ?? protocol
+                              : labelFromMap(PHYSIO_EVAL_TEST_TYPE_LABEL, t.testType, t.testTypeLabel)}
+                          </span>
+                          {!protocol ? (
+                            <span className="text-muted-foreground">
+                              ·{" "}
+                              {labelFromMap(
+                                PHYSIO_EVAL_BODY_LOCATION_LABEL,
+                                t.bodyLocation,
+                                t.bodyLocationLabel,
+                              )}
+                            </span>
+                          ) : null}
+                          {overallLabel !== "—" ? (
+                            <span
+                              className={cn(
+                                "rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                                classificationBadgeClass(t.classification),
+                              )}
+                            >
+                              {overallLabel}
+                            </span>
+                          ) : null}
+                        </div>
+                        {detailLines.map((line, lineIdx) => (
+                          <div
+                            key={`${line.label}-${lineIdx}`}
+                            className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                          >
+                            <span>
+                              <span className="text-foreground/80">{line.label}:</span> {line.value}
+                            </span>
+                            {line.classification ? (
+                              <span
+                                className={cn(
+                                  "rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+                                  classificationBadgeClass(line.classification),
+                                )}
+                              >
+                                {PHYSIO_PROTOCOL_CLASSIFICATION_LABEL[line.classification] ??
+                                  line.classification}
+                              </span>
+                            ) : null}
+                          </div>
+                        ))}
+                        {!protocol && t.score ? (
+                          <p className="text-xs text-muted-foreground">Nota: {t.score}</p>
+                        ) : null}
+                        {t.notes ? (
+                          <p className="text-xs text-muted-foreground">Obs.: {t.notes}</p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                   {ev.rating != null ? (
-                    <p className="text-muted-foreground">Nota: {ev.rating}</p>
+                    <p className="text-muted-foreground">Nota geral: {ev.rating}</p>
+                  ) : null}
+                  {ev.finalObservations ? (
+                    <p className="text-muted-foreground">{ev.finalObservations}</p>
+                  ) : null}
+                  {ev.attachments?.length ? (
+                    <div className="space-y-1">
+                      {ev.attachments.map((file, fileIdx) => (
+                        <a
+                          key={`${file.url}-${fileIdx}`}
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-xs text-primary hover:underline"
+                        >
+                          {file.name}
+                        </a>
+                      ))}
+                    </div>
                   ) : null}
                   {ev.outcome ? (
                     <p className={ev.outcome === "reprovado" ? "text-destructive" : "text-emerald-400"}>
