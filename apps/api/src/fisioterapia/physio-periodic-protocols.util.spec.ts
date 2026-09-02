@@ -59,10 +59,38 @@ describe('physio-periodic-protocols.util', () => {
     expect(classifyStopDownProtocol({ frontal: 1, lateral: 3 }).overall).toBe('ruim');
   });
 
-  it('classifyPerimetryPair', () => {
-    expect(classifyPerimetryPair(50, 45)).toBe('aprovado');
-    expect(classifyPerimetryPair(50, 44)).toBe('aceitavel');
-    expect(classifyPerimetryPair(50, 40)).toBe('reprovado');
+  it('classifyPerimetryPair boundaries', () => {
+    expect(classifyPerimetryPair(100, 90)).toBe('aprovado');
+    expect(classifyPerimetryPair(100, 89.9)).toBe('aceitavel');
+    expect(classifyPerimetryPair(100, 85)).toBe('aceitavel');
+    expect(classifyPerimetryPair(100, 84.9)).toBe('reprovado');
+  });
+
+  it('buildProtocolResult y_balance stores bilateral computed', () => {
+    const r = buildProtocolResult('y_balance', {
+      right: { frontal: 90, lateral: 88, cruzado: 85 },
+      left: { frontal: 80, lateral: 88, cruzado: 85 },
+    });
+    const computed = r.payload.computed as {
+      differences: Record<string, number>;
+      differencesAbs: Record<string, number>;
+      classifications: Record<string, string>;
+    };
+    expect(r.classification).toBe('aceitavel');
+    expect(computed.differencesAbs.frontal).toBe(10);
+    expect(computed.classifications.frontal).toBe('aceitavel');
+  });
+
+  it('buildProtocolResult hop_test uses best jumps', () => {
+    const r = buildProtocolResult('hop_test', {
+      rightJumps: [100, 110, 105],
+      leftJumps: [98, 100, 99],
+    });
+    const computed = r.payload.computed as { rightBest: number; leftBest: number; diffPct: number };
+    expect(computed.rightBest).toBe(110);
+    expect(computed.leftBest).toBe(100);
+    expect(computed.diffPct).toBeCloseTo(9.09, 1);
+    expect(r.classification).toBe('aprovado');
   });
 
   it('classifyPerimetria', () => {

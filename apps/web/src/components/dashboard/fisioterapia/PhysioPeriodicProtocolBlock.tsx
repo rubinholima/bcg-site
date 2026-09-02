@@ -54,23 +54,35 @@ function classificationClassName(classification: BilateralClassification): strin
 function BilateralResultRows({
   rows,
 }: {
-  rows: { key: string; label: string; result: { absDiff: number; pctDisplay: string; classification: BilateralClassification } }[];
+  rows: {
+    key: string;
+    label: string;
+    result: {
+      rightValue: number;
+      leftValue: number;
+      absDiff: number;
+      pctDisplay: string;
+      classification: BilateralClassification;
+    };
+  }[];
 }) {
   if (rows.length === 0) return null;
   return (
     <div className="space-y-2 rounded-lg border border-border/50 bg-muted/10 p-3">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Diferença bilateral
+        Comparação bilateral (D vs E)
       </p>
       <div className="space-y-2">
         {rows.map((row) => (
           <div
             key={row.key}
-            className="flex flex-wrap items-center justify-between gap-2 rounded border border-border/40 px-2 py-1.5 text-sm"
+            className="flex flex-col gap-1.5 rounded border border-border/40 px-2 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
           >
             <span className="font-medium">{row.label}</span>
-            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-              <span className="text-muted-foreground">Δ {row.result.absDiff}</span>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm">
+              <span className="text-muted-foreground">D {row.result.rightValue} cm</span>
+              <span className="text-muted-foreground">E {row.result.leftValue} cm</span>
+              <span className="text-muted-foreground">Δ {row.result.absDiff} cm</span>
               <span className="text-muted-foreground">{row.result.pctDisplay}%</span>
               <span
                 className={cn(
@@ -101,7 +113,7 @@ function BilateralSummary({ protocol, payload }: { protocol: PeriodicProtocol; p
         rows={[
           {
             key: "best",
-            label: `Melhor salto (D ${computed.rightBest} · E ${computed.leftBest})`,
+            label: "Melhor salto",
             result: computed.result,
           },
         ]}
@@ -161,11 +173,11 @@ function ProtocolFields({
             {(["right", "left"] as const).map((side) => (
               <div key={side} className="space-y-2 rounded border border-border/50 p-2">
                 <p className="text-xs font-medium uppercase text-muted-foreground">
-                  {side === "right" ? "Direita" : "Esquerda"}
+                  {side === "right" ? "D (direita)" : "E (esquerda)"}
                 </p>
                 {(["frontal", "lateral", "cruzado"] as const).map((dir) => (
                   <div key={dir} className="grid gap-1">
-                    <Label className="text-xs capitalize">{dir}</Label>
+                    <Label className="text-xs capitalize">{dir} (cm)</Label>
                     <Input
                       type="number"
                       step="0.1"
@@ -225,7 +237,7 @@ function ProtocolFields({
             {(["rightJumps", "leftJumps"] as const).map((key) => (
               <div key={key} className="space-y-2 rounded border border-border/50 p-2">
                 <p className="text-xs font-medium uppercase text-muted-foreground">
-                  {key === "rightJumps" ? "Direita (3 saltos cm)" : "Esquerda (3 saltos cm)"}
+                  {key === "rightJumps" ? "D — direita (3 saltos, cm)" : "E — esquerda (3 saltos, cm)"}
                 </p>
                 {[0, 1, 2].map((i) => (
                   <Input
@@ -254,11 +266,11 @@ function ProtocolFields({
             {(["right", "left"] as const).map((side) => (
               <div key={side} className="space-y-2 rounded border border-border/50 p-2">
                 <p className="text-xs font-medium uppercase text-muted-foreground">
-                  {side === "right" ? "Direita" : "Esquerda"}
+                  {side === "right" ? "D (direita)" : "E (esquerda)"}
                 </p>
                 {(["proximal", "medial", "distal"] as const).map((dir) => (
                   <div key={dir} className="grid gap-1">
-                    <Label className="text-xs capitalize">{dir}</Label>
+                    <Label className="text-xs capitalize">{dir} (cm)</Label>
                     <Input
                       type="number"
                       step="0.1"
@@ -278,7 +290,7 @@ function ProtocolFields({
             ))}
             <div className="grid gap-2 sm:col-span-2 sm:grid-cols-2">
               <div className="grid gap-1">
-                <Label>Panturrilha direita</Label>
+                <Label>Panturrilha D (cm)</Label>
                 <Input
                   type="number"
                   step="0.1"
@@ -287,7 +299,7 @@ function ProtocolFields({
                 />
               </div>
               <div className="grid gap-1">
-                <Label>Panturrilha esquerda</Label>
+                <Label>Panturrilha E (cm)</Label>
                 <Input
                   type="number"
                   step="0.1"
@@ -371,8 +383,13 @@ export function PhysioPeriodicProtocolBlock({
   singlePlayerId?: string;
 }) {
   const addProtocol = (protocol: PeriodicProtocol) => {
+    if (entries.some((e) => e.protocol === protocol)) return;
     onChange([...entries, { protocol, payload: {} }]);
   };
+
+  const availableProtocols = PERIODIC_PROTOCOLS.filter(
+    (pr) => !entries.some((e) => e.protocol === pr),
+  );
 
   const updateEntry = (index: number, patch: Partial<PeriodicProtocolEntry>) => {
     onChange(entries.map((e, i) => (i === index ? { ...e, ...patch } : e)));
@@ -398,10 +415,13 @@ export function PhysioPeriodicProtocolBlock({
           className="max-w-xs"
         >
           <option value="">Adicionar protocolo…</option>
-          {PERIODIC_PROTOCOLS.map((pr) => (
+          {availableProtocols.map((pr) => (
             <option key={pr} value={pr}>{PHYSIO_PERIODIC_PROTOCOL_LABEL[pr]}</option>
           ))}
         </NativeSelect>
+        {entries.length > 0 && availableProtocols.length === 0 ? (
+          <span className="text-xs text-muted-foreground">Todos os protocolos foram adicionados.</span>
+        ) : null}
       </div>
       {entries.length === 0 ? (
         <p className="text-sm text-muted-foreground">Adicione ao menos um protocolo.</p>

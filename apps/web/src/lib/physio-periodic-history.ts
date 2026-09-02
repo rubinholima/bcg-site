@@ -29,6 +29,8 @@ function fmtNum(value: unknown): string {
 
 function bilateralLine(
   label: string,
+  rightCm: unknown,
+  leftCm: unknown,
   absDiff: unknown,
   pct: unknown,
   classification?: string | null,
@@ -37,7 +39,7 @@ function bilateralLine(
   const pctText = Number.isFinite(pctNum) ? pctNum.toFixed(1) : fmtNum(pct);
   return {
     label,
-    value: `Δ ${fmtNum(absDiff)} · ${pctText}%`,
+    value: `D ${fmtNum(rightCm)} cm · E ${fmtNum(leftCm)} cm · Δ ${fmtNum(absDiff)} cm · ${pctText}%`,
     classification,
   };
 }
@@ -73,7 +75,16 @@ export function formatPeriodicTestHistory(
       const classes = computed?.classifications as Record<string, string> | undefined;
       if (diffs) {
         for (const [key, pct] of Object.entries(diffs)) {
-          lines.push(bilateralLine(DIR_LABEL[key] ?? key, absDiffs?.[key], pct, classes?.[key]));
+          lines.push(
+            bilateralLine(
+              DIR_LABEL[key] ?? key,
+              right?.[key],
+              left?.[key],
+              absDiffs?.[key],
+              pct,
+              classes?.[key],
+            ),
+          );
         }
       }
       break;
@@ -95,6 +106,8 @@ export function formatPeriodicTestHistory(
         lines.push(
           bilateralLine(
             "Assimetria",
+            computed.rightBest,
+            computed.leftBest,
             computed.absDiff,
             computed.diffPct,
             (computed.overall as string | undefined) ?? null,
@@ -129,9 +142,15 @@ export function formatPeriodicTestHistory(
         | undefined;
       if (pairs?.length) {
         for (const pair of pairs) {
+          const rightVal =
+            pair.key === "panturrilha" ? payload.calfRight : right?.[pair.key as keyof typeof right];
+          const leftVal =
+            pair.key === "panturrilha" ? payload.calfLeft : left?.[pair.key as keyof typeof left];
           lines.push(
             bilateralLine(
               DIR_LABEL[pair.key] ?? pair.key,
+              rightVal,
+              leftVal,
               pair.absDiff,
               pair.diffPct,
               pair.classification,

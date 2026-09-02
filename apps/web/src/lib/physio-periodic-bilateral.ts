@@ -1,6 +1,8 @@
 export type BilateralClassification = "aprovado" | "aceitavel" | "reprovado";
 
 export type BilateralPairResult = {
+  rightValue: number;
+  leftValue: number;
   absDiff: number;
   pctDiff: number;
   pctDisplay: string;
@@ -34,10 +36,16 @@ export function classifyPerimetryDirection(diffPct: number): BilateralClassifica
   return "reprovado";
 }
 
-export function buildBilateralPair(right: number, left: number, classify: (pct: number) => BilateralClassification): BilateralPairResult {
+export function buildBilateralPair(
+  right: number,
+  left: number,
+  classify: (pct: number) => BilateralClassification,
+): BilateralPairResult {
   const absDiff = Math.abs(right - left);
   const pctDiff = pctDifference(right, left);
   return {
+    rightValue: Math.round(right * 10) / 10,
+    leftValue: Math.round(left * 10) / 10,
     absDiff: Math.round(absDiff * 10) / 10,
     pctDiff,
     pctDisplay: formatPctDisplay(pctDiff),
