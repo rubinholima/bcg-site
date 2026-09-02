@@ -27,6 +27,12 @@ import {
   printPlayerDossierDocument,
 } from "@/lib/player-dossier-print";
 import type { PlayerDossierDto, PlayerDossierOptionalSection } from "@/lib/player-dossier.types";
+import {
+  DEFAULT_REPORT_PRINT_CONFIG,
+  type ReportOrientation,
+  type ReportPaperSize,
+  type ReportPrintConfig,
+} from "@/lib/report-print-engine";
 
 interface PlayerDossierDialogProps {
   playerId: string;
@@ -54,6 +60,17 @@ export function PlayerDossierDialog({
   );
 
   const [selectedOptional, setSelectedOptional] = useState<PlayerDossierOptionalSection[]>([]);
+  const [paperSize, setPaperSize] = useState<ReportPaperSize>(
+    DEFAULT_REPORT_PRINT_CONFIG.paperSize,
+  );
+  const [orientation, setOrientation] = useState<ReportOrientation>(
+    DEFAULT_REPORT_PRINT_CONFIG.orientation,
+  );
+
+  const printConfig = useMemo<ReportPrintConfig>(
+    () => ({ ...DEFAULT_REPORT_PRINT_CONFIG, paperSize, orientation }),
+    [orientation, paperSize],
+  );
 
   const toggleOptional = useCallback((section: PlayerDossierOptionalSection) => {
     setSelectedOptional((prev) =>
@@ -85,7 +102,7 @@ export function PlayerDossierDialog({
     try {
       const data = await fetchDossier();
       if (!data) return;
-      const html = buildPlayerDossierPrintHtml(data);
+      const html = buildPlayerDossierPrintHtml(data, printConfig);
       setPrintHtml(html);
       setPreviewOpen(true);
       onOpenChange(false);
@@ -97,7 +114,7 @@ export function PlayerDossierDialog({
     } finally {
       setLoading(false);
     }
-  }, [fetchDossier, onOpenChange]);
+  }, [fetchDossier, onOpenChange, printConfig]);
 
   return (
     <>
@@ -112,6 +129,32 @@ export function PlayerDossierDialog({
               Relatório premium para apresentação externa —{" "}
               <span className="font-medium text-foreground">{playerName}</span>.
             </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="space-y-1 text-xs font-medium">
+                <span>Papel</span>
+                <select
+                  value={paperSize}
+                  onChange={(event) => setPaperSize(event.target.value as ReportPaperSize)}
+                  className="min-h-[44px] w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="A4">A4</option>
+                  <option value="Letter">Letter</option>
+                  <option value="Legal">Legal</option>
+                </select>
+              </label>
+              <label className="space-y-1 text-xs font-medium">
+                <span>Orientação</span>
+                <select
+                  value={orientation}
+                  onChange={(event) => setOrientation(event.target.value as ReportOrientation)}
+                  className="min-h-[44px] w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="portrait">Retrato</option>
+                  <option value="landscape">Paisagem</option>
+                </select>
+              </label>
+            </div>
 
             {canChooseOptional && selectableSections.length > 0 ? (
               <div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
@@ -169,6 +212,7 @@ export function PlayerDossierDialog({
         onOpenChange={setPreviewOpen}
         title={`Dossiê — ${playerName}`}
         html={printHtml}
+        landscape={orientation === "landscape"}
         onPrint={() => {
           if (printHtml) printPlayerDossierDocument(printHtml);
         }}

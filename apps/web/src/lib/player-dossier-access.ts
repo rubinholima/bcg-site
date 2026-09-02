@@ -16,7 +16,12 @@ export const PLAYER_DOSSIER_OPTIONAL_LABELS: Record<PlayerDossierOptionalSection
 export function canChooseSensitiveDossierSections(role: string | null | undefined): boolean {
   if (!role) return false;
   const normalized = role.trim().toLowerCase();
-  return normalized === "gerente" || normalized === "diretoria";
+  return (
+    normalized === "gerente" ||
+    normalized === "diretoria" ||
+    normalized === "super_admin" ||
+    normalized === "company_admin"
+  );
 }
 
 export function hasModuleAccess(
@@ -39,8 +44,10 @@ const OPTIONAL_MODULE: Record<PlayerDossierOptionalSection, string | readonly st
   training: "futebol_treinadores",
 };
 
-function isDossierBypassRole(_role: string | null | undefined): boolean {
-  return false;
+function isDossierBypassRole(role: string | null | undefined): boolean {
+  if (!role) return false;
+  const normalized = role.trim().toLowerCase();
+  return normalized === "super_admin" || normalized === "company_admin";
 }
 
 export function listSelectableOptionalSections(
