@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import {
@@ -21,28 +21,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { dash } from "@/lib/dashboard-theme-classes";
-
-function ShortcutIcon({
-  option,
-  className = "h-4 w-4 shrink-0",
-}: {
-  option: DashboardShortcutOption;
-  className?: string;
-}) {
-  if (option.menuLogoSrc) {
-    return (
-      <img
-        src={option.menuLogoSrc}
-        alt=""
-        className={cn("rounded-full object-contain", className)}
-      />
-    );
-  }
-  const Icon = option.icon;
-  if (!Icon) return null;
-  return <Icon className={cn(dash.shortcutIcon, className)} />;
-}
+import {
+  TopShortcutBar,
+  TopShortcutLink,
+  TopShortcutEmpty,
+  TopShortcutIcon,
+} from "@/components/dashboard/cup360";
 
 /** Nome curto para caber na barra superior. */
 function abbreviateShortcutLabel(label: string, maxLen = 14): string {
@@ -57,8 +41,6 @@ function abbreviateShortcutLabel(label: string, maxLen = 14): string {
   return `${slice}…`;
 }
 
-const shortcutBtnClass =
-  "flex h-9 min-w-[5.5rem] max-w-[8.25rem] shrink-0 items-center gap-1.5 rounded-lg px-2 sm:h-10 sm:min-w-[6.25rem] sm:max-w-[9rem] sm:px-2.5";
 
 /** Atalhos personalizados na barra superior do dashboard. */
 export function DashboardHeaderShortcuts() {
@@ -135,55 +117,40 @@ export function DashboardHeaderShortcuts() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-1 md:justify-center">
+      <TopShortcutBar>
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-      </div>
+      </TopShortcutBar>
     );
   }
 
   return (
     <>
-      <div
-        className="flex min-w-0 flex-1 items-center justify-end gap-1.5 overflow-x-auto overscroll-x-contain md:justify-center md:gap-2"
-        aria-label="Meus atalhos"
-      >
+      <TopShortcutBar>
         {slots.map((href, index) => {
           const option = href ? optionMap.get(href) : null;
 
           if (option) {
             return (
-              <Link
+              <TopShortcutLink
                 key={`shortcut-${index}`}
                 href={option.href}
-                title={option.label}
+                label={option.label}
+                displayLabel={abbreviateShortcutLabel(option.label)}
+                menuLogoSrc={option.menuLogoSrc}
+                icon={option.icon}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   openPicker(index);
                 }}
-                className={cn(shortcutBtnClass, dash.shortcutFilled)}
-              >
-                <ShortcutIcon option={option} className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 truncate text-[11px] font-medium leading-tight sm:text-xs">
-                  {abbreviateShortcutLabel(option.label)}
-                </span>
-              </Link>
+              />
             );
           }
 
           return (
-            <button
-              key={`shortcut-${index}`}
-              type="button"
-              title="Adicionar atalho"
-              onClick={() => openPicker(index)}
-              className={cn(shortcutBtnClass, "justify-center transition-colors", dash.shortcutEmpty)}
-            >
-              <Plus className="h-4 w-4 shrink-0" />
-              <span className="truncate text-[11px] font-medium leading-tight sm:text-xs">Atalho</span>
-            </button>
+            <TopShortcutEmpty key={`shortcut-${index}`} onClick={() => openPicker(index)} />
           );
         })}
-      </div>
+      </TopShortcutBar>
 
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
         <DialogContent className="flex max-h-[85dvh] max-w-lg flex-col gap-0 overflow-hidden p-0">
@@ -242,7 +209,11 @@ export function DashboardHeaderShortcuts() {
                           : "hover:bg-accent hover:text-accent-foreground",
                       )}
                     >
-                      <ShortcutIcon option={option} className="h-5 w-5" />
+                      <TopShortcutIcon
+                        menuLogoSrc={option.menuLogoSrc}
+                        icon={option.icon}
+                        className="h-5 w-5"
+                      />
                       <span className="min-w-0 flex-1 truncate font-medium">{option.label}</span>
                       {alreadyUsed ? (
                         <span className="shrink-0 text-xs text-muted-foreground">Em uso</span>

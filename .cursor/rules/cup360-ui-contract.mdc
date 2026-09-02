@@ -1,0 +1,75 @@
+---
+description: Contrato visual CUP360 — baseline protegida, componentes canônicos, título único, relatórios aprovados intactos
+alwaysApply: true
+---
+
+# CUP360 UI CONTRACT — PROTECTED VISUAL BASELINE
+
+## Princípio
+
+**Um pedido de feature NÃO autoriza redesenhar o CUP360.**
+
+UI aprovada e em produção é baseline protegida. Novos módulos adaptam-se ao CUP360 — não o contrário.
+
+## Estrutura global (obrigatória)
+
+```
+GLOBAL HEADER (logo, contexto, top shortcuts, usuário)
++ SIDEBAR (máx. 3 níveis: Área → Módulo → Tela)
++ PAGE CONTENT (PageShell / FilterBar / conteúdo)
+```
+
+Nenhum módulo recria header, sidebar ou hierarquia de título.
+
+## Top Quick Shortcuts — protegidos
+
+- Manter atalhos no header global
+- Usar componente canônico `TopShortcut` (`@/components/dashboard/cup360`)
+- Configuráveis por usuário; respeitar RBAC
+
+## Título da página — uma vez só
+
+Se o shell/header já exibe o título ou breadcrumb, **não repetir** no conteúdo da página.
+
+Ownership canônico: `DashboardPageFrame` + `dashboard-page-meta` + `DashboardDeptHeader`.
+
+## Antes de criar componente visual novo
+
+1. Buscar em `@/components/dashboard/cup360` e componentes UI existentes
+2. Reutilizar se disponível
+3. Estender só se semanticamente necessário
+4. Criar primitivo novo apenas quando não houver solução canônica
+
+## Componentes canônicos
+
+| Família | Referência |
+|---------|------------|
+| Layout | `Cup360PageShell`, `PageSection` |
+| Navegação | `TopShortcut`, sidebar (`sidebar.tsx`) |
+| Filtros | `DashboardFilterBar` |
+| Seleção de campos | `GroupedFieldPicker` (sem parede de checkboxes) |
+| KPI | `KpiCard` |
+| Tokens | `@/lib/cup360-design-tokens` |
+
+## Protegido — exige autorização explícita
+
+- Header global (logo, shortcuts, área do usuário)
+- Arquitetura da sidebar e tokens de navegação
+- Sistema tipográfico e design tokens
+- Botões, filtros, selects e hierarquia de título canônicos
+
+## Relatórios aprovados — protegidos
+
+- **Não alterar** saída visual de relatórios já aprovados (print, PDF, XLSX, tabelas geradas)
+- **Pode alterar** apenas builder/configuração (ex.: Dynamic Reports, seleção de colunas psicologia)
+- Preservar API, semântica de dados e lógica de negócio
+
+## RBAC e rotas
+
+- Não alterar rotas, module slugs, `ModuleRole`, `canAccessModule` ou `customModuleAccess` por motivo visual
+- Visibilidade de menu continua baseada em autorização existente
+
+## Referências visuais
+
+- **Imagem A (header atual):** baseline estrutural
+- **Imagem B (dashboard premium):** direção de qualidade — não substitui comportamento aprovado

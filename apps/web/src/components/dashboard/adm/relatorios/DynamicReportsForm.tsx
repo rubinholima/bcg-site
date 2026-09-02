@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Eye, FileSpreadsheet, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,6 +28,12 @@ import {
 } from "@/lib/dynamic-reports-print";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
+import {
+  GroupedFieldPicker,
+  PageSection,
+  type GroupedFieldOption,
+} from "@/components/dashboard/cup360";
+import { cup360 } from "@/lib/cup360-design-tokens";
 
 type Tenant = { id: string; name: string; logoUrl?: string | null; categories?: string[] | null };
 
@@ -185,15 +190,6 @@ export function DynamicReportsForm() {
     );
   }, [meta, effectivePopulation]);
 
-  const fieldsByGroup = useMemo(() => {
-    const map = new Map<string, FieldDef[]>();
-    for (const f of availableFields) {
-      const g = f.group || "outros";
-      map.set(g, [...(map.get(g) ?? []), f]);
-    }
-    return map;
-  }, [availableFields]);
-
   const sortOptions = useMemo(() => {
     if (!meta) return [];
     return meta.sortOptions.filter((o) => o.populations.includes(effectivePopulation));
@@ -207,15 +203,6 @@ export function DynamicReportsForm() {
   const populationDef = meta?.populations.find((p) => p.key === effectivePopulation);
   const showFilter = (key: string) => populationDef?.filterKeys.includes(key) ?? false;
   const isLockedPreset = Boolean(selectedPreset?.lockedFields);
-
-  const toggleField = (key: string, checked: boolean) => {
-    if (isLockedPreset) return;
-    setSelectedFields((prev) => {
-      if (checked) return prev.includes(key) ? prev : [...prev, key];
-      const next = prev.filter((k) => k !== key);
-      return next.length > 0 ? next : prev;
-    });
-  };
 
   const buildPayload = () => {
     const filters: Record<string, string | number | undefined> = {};
@@ -326,10 +313,8 @@ export function DynamicReportsForm() {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Relatórios dinâmicos</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
+          <PageSection title="Modelo e população">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label>Modelo</Label>
@@ -377,7 +362,9 @@ export function DynamicReportsForm() {
               </div>
             ) : null}
           </div>
+          </PageSection>
 
+          <PageSection title="Filtros">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {showFilter("category") ? (
               <div className="space-y-2">
@@ -480,43 +467,35 @@ export function DynamicReportsForm() {
               </div>
             ) : null}
           </div>
+          </PageSection>
 
           {!isLockedPreset ? (
-            <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
-              <Label className="text-sm font-semibold">Colunas</Label>
-              {[...fieldsByGroup.entries()].map(([group, fields]) => (
-                <div key={group} className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {GROUP_LABELS[group] ?? group}
-                  </p>
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {fields.map((field) => {
-                      const checked = selectedFields.includes(field.key);
-                      const isLast = checked && selectedFields.length === 1;
-                      return (
-                        <label
-                          key={field.key}
-                          className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                        >
-                          <Checkbox
-                            checked={checked}
-                            disabled={isLast}
-                            onCheckedChange={(v) => toggleField(field.key, v === true)}
-                          />
-                          <span>{field.label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <PageSection title="Colunas">
+              <GroupedFieldPicker
+                options={availableFields.map(
+                  (f): GroupedFieldOption => ({
+                    key: f.key,
+                    label: f.label,
+                    group: f.group || "outros",
+                  }),
+                )}
+                groupLabels={GROUP_LABELS}
+                selected={selectedFields}
+                onChange={setSelectedFields}
+                disabled={isLockedPreset}
+                searchPlaceholder="Buscar coluna…"
+              />
+            </PageSection>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Colunas fixas: {selectedFields.map((k) => availableFields.find((f) => f.key === k)?.label ?? k).join(", ")}
+            <p className={cup360.type.caption}>
+              Colunas fixas:{" "}
+              {selectedFields
+                .map((k) => availableFields.find((f) => f.key === k)?.label ?? k)
+                .join(", ")}
             </p>
           )}
 
+          <PageSection title="Ordenação e saída">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <Label>Ordenar por</Label>
@@ -555,10 +534,11 @@ export function DynamicReportsForm() {
           </div>
 
           {effectivePopulation.startsWith("player") && category ? (
-            <p className="text-xs text-muted-foreground">
+            <p className={cup360.type.caption}>
               Categoria selecionada: {getCategoryLabel(category, "pt", allCategories)}
             </p>
           ) : null}
+          </PageSection>
 
           <div className="flex flex-wrap gap-2">
             <Button

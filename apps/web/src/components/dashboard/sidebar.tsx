@@ -20,6 +20,14 @@ import { useDashboardShell } from "@/context/DashboardShellContext";
 import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
 import { DashboardThemeToggle } from "@/components/dashboard/DashboardThemeToggle";
 import { PLATFORM_APP_NAME } from "@/lib/platform-branding";
+import { SidebarAreaLabel } from "@/components/dashboard/cup360";
+import {
+  getCup360NavAreaForMenuSlug,
+  getCup360NavAreaLabel,
+  type Cup360NavAreaId,
+} from "@/lib/dashboard-nav-areas";
+import { cup360 } from "@/lib/cup360-design-tokens";
+import { Fragment } from "react";
 
 function SidebarMenuIcon({ item, className = "h-4 w-4 shrink-0" }: { item: MenuItemConfig; className?: string }) {
   if (item.menuLogoSrc) {
@@ -621,6 +629,8 @@ function SidebarNav() {
     setFlyoutSlug(null);
   }, [pathname]);
 
+  let lastNavArea: Cup360NavAreaId | null = null;
+
   return (
     <div className="relative flex h-full flex-col border-r border-border bg-card shadow-sm">
       <div
@@ -652,8 +662,24 @@ function SidebarNav() {
         />
       ) : null}
 
-      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-4 uppercase tracking-wide">
+      <nav className={cup360.sidebar.nav}>
         {DASHBOARD_MENU.map((item) => {
+          const navArea = getCup360NavAreaForMenuSlug(item.slug);
+          const areaLabel = !collapsed ? getCup360NavAreaLabel(navArea) : null;
+          const showAreaLabel = Boolean(areaLabel && navArea !== lastNavArea);
+          if (showAreaLabel) lastNavArea = navArea;
+
+          const areaHeader = showAreaLabel && areaLabel ? (
+            <SidebarAreaLabel label={areaLabel} />
+          ) : null;
+
+          const renderWithArea = (key: string, content: React.ReactNode) => (
+            <Fragment key={key}>
+              {areaHeader}
+              {content}
+            </Fragment>
+          );
+
           const Icon = item.icon!;
 
           if (item.slug === "dashboard") {
@@ -669,22 +695,20 @@ function SidebarNav() {
               homeMenu.href === "/dashboard"
                 ? pathname === "/dashboard"
                 : pathname === homeMenu.href || pathname?.startsWith(`${homeMenu.href}/`);
-            return (
+            return renderWithArea(
+              homeMenu.slug,
               <Link
-                key={homeMenu.slug}
                 href={homeMenu.href}
                 onClick={onNavClick}
                 className={cn(
-                  "flex shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium uppercase tracking-wide transition-all duration-200",
+                  cup360.sidebar.linkL1,
                   collapsed && "justify-center px-2",
-                  isActive
-                    ? "dashboard-sidebar-active"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dashboard-link-hover"
+                  isActive ? cup360.sidebar.active : cup360.sidebar.idle,
                 )}
               >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span className="text-left uppercase tracking-wide leading-snug">{homeMenu.label}</span>}
-              </Link>
+                <Icon className={cup360.control.iconMd} />
+                {!collapsed && <span className="min-w-0 truncate leading-snug">{homeMenu.label}</span>}
+              </Link>,
             );
           }
 
@@ -701,24 +725,22 @@ function SidebarNav() {
                 : item.href === "/dashboard/grupo"
                   ? pathname?.startsWith("/dashboard/grupo")
                   : inPath(item.href);
-            return (
+            return renderWithArea(
+              item.slug,
               <SidebarMenuLink
-                key={item.slug}
                 href={item.href!}
                 external={item.external}
                 onNavigate={onNavClick}
                 className={cn(
-                  "flex shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium uppercase tracking-wide transition-all duration-200",
+                  cup360.sidebar.linkL1,
                   collapsed && "justify-center px-2",
-                  isActive
-                    ? "dashboard-sidebar-active"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dashboard-link-hover"
+                  isActive ? cup360.sidebar.active : cup360.sidebar.idle,
                 )}
                 title={collapsed ? item.label : undefined}
               >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span className="text-left uppercase tracking-wide leading-snug">{item.label}</span>}
-              </SidebarMenuLink>
+                <Icon className={cup360.control.iconMd} />
+                {!collapsed && <span className="min-w-0 truncate leading-snug">{item.label}</span>}
+              </SidebarMenuLink>,
             );
           }
 
@@ -778,8 +800,9 @@ function SidebarNav() {
               searchParams,
             );
 
-            return (
-              <div key={item.slug} className="relative shrink-0 space-y-0.5">
+            return renderWithArea(
+              item.slug,
+              <div className="relative shrink-0 space-y-0.5">
                 <button
                   type="button"
                   title={collapsed ? item.label : undefined}
@@ -796,7 +819,7 @@ function SidebarNav() {
                   }}
                   className={cn(
                     "flex w-full shrink-0 items-start gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-200",
-                    "font-bold uppercase tracking-wide leading-snug",
+                    "font-bold leading-snug",
                     collapsed && "justify-center px-2",
                     isOpen || flyoutSlug === item.slug
                       ? "bg-accent/50 text-accent-foreground shadow-sm"
@@ -810,11 +833,11 @@ function SidebarNav() {
                       <ChevronRight className="h-4 w-4 shrink-0 dashboard-chevron-transition" aria-label="Expandir" />
                     ))}
                   <Icon className="h-5 w-5 shrink-0" />
-                  {!collapsed && <span className="min-w-0 text-left uppercase tracking-wide leading-snug">{item.label}</span>}
+                  {!collapsed && <span className="min-w-0 text-left leading-snug">{item.label}</span>}
                 </button>
                 {collapsed && flyoutSlug === item.slug ? (
                   <div className="fixed left-[4.5rem] top-16 z-50 hidden max-h-[calc(100dvh/var(--app-zoom)-4rem)] w-80 overflow-y-auto rounded-r-lg border border-border bg-card p-3 shadow-xl lg:block">
-                    <p className="mb-2 px-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    <p className="mb-2 px-2 text-xs font-bold text-muted-foreground">
                       {item.label}
                     </p>
                     <div className="space-y-0.5 border-l border-border pl-3">
@@ -840,7 +863,7 @@ function SidebarNav() {
                                   onClick={() => toggleNestedChild(child)}
                                   className={cn(
                                     "flex w-full shrink-0 items-start gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all duration-200 dashboard-link-hover",
-                                    "font-semibold uppercase tracking-wide leading-snug",
+                                    "font-semibold leading-snug",
                                     "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                   )}
                                 >
@@ -850,7 +873,7 @@ function SidebarNav() {
                                     <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
                                   )}
                                   <SidebarMenuIcon item={child} />
-                                  <span className="text-left uppercase tracking-wide leading-snug">{child.label}</span>
+                                  <span className="text-left leading-snug">{child.label}</span>
                                 </button>
                                 {isSubOpen && (
                                   <div className="ml-4 space-y-0.5 border-l border-border pl-2">
@@ -904,7 +927,7 @@ function SidebarNav() {
                                                       setFlyoutSlug(null);
                                                     }}
                                                     className={cn(
-                                                      "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                                      "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                                       cc.href === activeBchHref
                                                         ? "dashboard-sidebar-active"
                                                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -919,7 +942,7 @@ function SidebarNav() {
                                                   type="button"
                                                   onClick={() => toggleNested(cc)}
                                                   className={cn(
-                                                    "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                                                    "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                                   )}
                                                 >
                                                   {isCcOpen ? (
@@ -955,7 +978,7 @@ function SidebarNav() {
                                                             setFlyoutSlug(null);
                                                           }}
                                                           className={cn(
-                                                            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                                            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                                             ccc.href === activeBchHref
                                                               ? "dashboard-sidebar-active"
                                                               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -984,14 +1007,14 @@ function SidebarNav() {
                                               setFlyoutSlug(null);
                                             }}
                                             className={cn(
-                                              "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                              "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                               isChildActive
                                                 ? "dashboard-sidebar-active"
                                                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                             )}
                                           >
                                             {cc.icon && <cc.icon className="h-4 w-4 shrink-0" />}
-                                            <span className="text-left uppercase tracking-wide leading-snug">{cc.label}</span>
+                                            <span className="text-left leading-snug">{cc.label}</span>
                                           </SidebarMenuLink>
                                         );
                                       });
@@ -1015,14 +1038,14 @@ function SidebarNav() {
                                 setFlyoutSlug(null);
                               }}
                               className={cn(
-                                "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                 isChildActive
                                   ? "dashboard-sidebar-active"
                                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                               )}
                             >
                               <ChildIcon className="h-4 w-4 shrink-0" />
-                              <span className="text-left uppercase tracking-wide leading-snug">{child.label}</span>
+                              <span className="text-left leading-snug">{child.label}</span>
                             </SidebarMenuLink>
                           );
                         })}
@@ -1053,7 +1076,7 @@ function SidebarNav() {
                                 onClick={() => toggleNestedChild(child)}
                                 className={cn(
                                   "flex w-full shrink-0 items-start gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all duration-200 dashboard-link-hover",
-                                  "font-semibold uppercase tracking-wide leading-snug",
+                                  "font-semibold leading-snug",
                                   "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                 )}
                               >
@@ -1063,7 +1086,7 @@ function SidebarNav() {
                                   <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
                                 )}
                                 <SidebarMenuIcon item={child} />
-                                <span className="text-left uppercase tracking-wide leading-snug">{child.label}</span>
+                                <span className="text-left leading-snug">{child.label}</span>
                               </button>
                               {isSubOpen && (
                                 <div className="ml-4 space-y-0.5 border-l border-border pl-2">
@@ -1114,7 +1137,7 @@ function SidebarNav() {
                                                     external={cc.external}
                                                     onNavigate={onNavClick}
                                                     className={cn(
-                                                      "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                                      "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium transition-all duration-200 dashboard-link-hover",
                                                       cc.href === activeNestedHref
                                                         ? "dashboard-sidebar-active"
                                                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -1129,7 +1152,7 @@ function SidebarNav() {
                                                 type="button"
                                                 onClick={() => toggleNested(cc)}
                                                 className={cn(
-                                                  "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                                  "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium transition-all duration-200 dashboard-link-hover",
                                                   "font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                                 )}
                                               >
@@ -1164,7 +1187,7 @@ function SidebarNav() {
                                                           external={ccc.external}
                                                           onNavigate={onNavClick}
                                                           className={cn(
-                                                            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                                            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                                             isLeafActive
                                                               ? "dashboard-sidebar-active"
                                                               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -1190,7 +1213,7 @@ function SidebarNav() {
                                             external={cc.external}
                                             onNavigate={onNavClick}
                                             className={cn(
-                                              "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                              "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                               isChildActive
                                                 ? "dashboard-sidebar-active"
                                                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -1219,7 +1242,7 @@ function SidebarNav() {
                             external={child.external}
                             onNavigate={onNavClick}
                             className={cn(
-                              "flex items-center gap-2 rounded-lg px-2 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                              "flex items-center gap-2 rounded-lg px-2 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                               compact ? "py-1" : "py-1.5",
                               isChildActive
                                 ? "dashboard-sidebar-active"
@@ -1233,7 +1256,7 @@ function SidebarNav() {
                       })}
                   </div>
                 )}
-              </div>
+              </div>,
             );
           }
 

@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,6 +28,35 @@ import {
   type PsicologiaAtletaReportData,
   type PsicologiaAtletaReportPlayer,
 } from "@/lib/psicologia-atletas-print";
+import {
+  GroupedFieldPicker,
+  PageSection,
+  type GroupedFieldOption,
+} from "@/components/dashboard/cup360";
+import { cup360 } from "@/lib/cup360-design-tokens";
+
+const PSYCH_FIELD_GROUPS: Record<string, string> = {
+  esportivos: "Esportivos",
+  cadastrais: "Cadastrais",
+};
+
+const PSYCH_FIELD_GROUP_MAP: Record<PsicologiaAtletaFieldKey, string> = {
+  num: "esportivos",
+  fullName: "esportivos",
+  nickname: "esportivos",
+  birthDate: "esportivos",
+  position: "esportivos",
+  category: "esportivos",
+  club: "esportivos",
+  jerseyNumber: "esportivos",
+  cpf: "cadastrais",
+  rg: "cadastrais",
+  nationality: "cadastrais",
+  gender: "cadastrais",
+  birthPlace: "cadastrais",
+  contactEmail: "cadastrais",
+  contactPhone: "cadastrais",
+};
 
 interface Tenant {
   id: string;
@@ -82,6 +110,7 @@ export function PsicologiaAtletasReportForm() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [reportData, setReportData] = useState<PsicologiaAtletaReportData | null>(null);
+  const [configStep, setConfigStep] = useState<"population" | "columns">("population");
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -116,13 +145,15 @@ export function PsicologiaAtletasReportForm() {
     return parts.join(" · ");
   }, [selectedTenant, category, search, allCategories]);
 
-  const toggleField = (key: PsicologiaAtletaFieldKey, checked: boolean) => {
-    setSelectedFields((prev) => {
-      if (checked) return prev.includes(key) ? prev : [...prev, key];
-      const next = prev.filter((k) => k !== key);
-      return next.length > 0 ? next : prev;
-    });
-  };
+  const fieldOptions: GroupedFieldOption[] = useMemo(
+    () =>
+      PSICOLOGIA_ATLETA_FIELDS.map((f) => ({
+        key: f.key,
+        label: f.label,
+        group: PSYCH_FIELD_GROUP_MAP[f.key],
+      })),
+    [],
+  );
 
   const selectAllFields = () => {
     setSelectedFields(PSICOLOGIA_ATLETA_FIELDS.map((f) => f.key));
@@ -216,14 +247,9 @@ export function PsicologiaAtletasReportForm() {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de atletas</CardTitle>
-          <CardDescription>
-            Filtre o elenco, escolha as colunas que deseja imprimir e gere o relatório em PDF ou na
-            impressora.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
+          {configStep === "population" ? (
+            <PageSection title="População">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label>Clube</Label>
@@ -275,43 +301,41 @@ export function PsicologiaAtletasReportForm() {
               />
             </div>
           </div>
-
-          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <Label className="text-sm font-semibold">Colunas do relatório</Label>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={selectAllFields}>
-                  Marcar todas
-                </Button>
-                <Button type="button" variant="ghost" size="sm" onClick={resetDefaultFields}>
-                  Padrão psicologia
-                </Button>
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {PSICOLOGIA_ATLETA_FIELDS.map((field) => {
-                const checked = selectedFields.includes(field.key);
-                const isLastSelected = checked && selectedFields.length === 1;
-                return (
-                  <label
-                    key={field.key}
-                    className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  >
-                    <Checkbox
-                      checked={checked}
-                      disabled={isLastSelected}
-                      onCheckedChange={(v) => toggleField(field.key, v === true)}
-                    />
-                    <span>{field.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Padrão sugerido: nome completo, apelido, data de nascimento, posição e categoria.
-            </p>
+          <p className={cup360.type.caption}>{filtersSummary}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={() => setConfigStep("columns")}>
+              Escolher colunas
+            </Button>
           </div>
+            </PageSection>
+          ) : (
+            <>
+              <PageSection
+                title="Colunas"
+                action={
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setConfigStep("population")}>
+                      Voltar aos filtros
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={selectAllFields}>
+                      Marcar todas
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={resetDefaultFields}>
+                      Padrão psicologia
+                    </Button>
+                  </div>
+                }
+              >
+                <GroupedFieldPicker
+                  options={fieldOptions}
+                  groupLabels={PSYCH_FIELD_GROUPS}
+                  selected={selectedFields}
+                  onChange={(keys) => setSelectedFields(keys as PsicologiaAtletaFieldKey[])}
+                  searchPlaceholder="Buscar coluna…"
+                />
+              </PageSection>
 
+              <PageSection title="Saída">
           <div className="grid gap-4 sm:grid-cols-2 lg:max-w-xs">
             <PageSizeSelect value={pageSize} onChange={setPageSize} />
           </div>
@@ -339,6 +363,9 @@ export function PsicologiaAtletasReportForm() {
               Imprimir / PDF
             </Button>
           </div>
+              </PageSection>
+            </>
+          )}
         </CardContent>
       </Card>
 

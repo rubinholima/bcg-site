@@ -559,6 +559,19 @@ body.dashboard-active {
   transform: rotate(90deg);
 }
 
+/* CUP360 sidebar — áreas semânticas e tipografia compacta */
+.cup360-sidebar-nav {
+  scrollbar-gutter: stable;
+}
+.cup360-sidebar-area-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground) / 0.85);
+  user-select: none;
+}
+
 /* Cards em todas as páginas do dashboard (padrão premium) */
 [data-dashboard-content] .rounded-lg.border.bg-card {
   border-radius: 0.75rem;
