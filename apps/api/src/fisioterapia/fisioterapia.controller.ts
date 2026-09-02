@@ -17,6 +17,11 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { FisioterapiaService } from './fisioterapia.service';
+import { PhysioTryoutClearanceService } from './physio-tryout-clearance.service';
+import {
+  CreatePhysioTryoutClearanceDto,
+  UpdatePhysioTryoutClearanceDto,
+} from './dto/physio-tryout-clearance.dto';
 import {
   AddPhysioEvolutionDto,
   CreatePhysioDiagnosisDto,
@@ -40,6 +45,7 @@ import {
 export class FisioterapiaController {
   constructor(
     private readonly service: FisioterapiaService,
+    private readonly tryoutClearance: PhysioTryoutClearanceService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
@@ -454,6 +460,82 @@ export class FisioterapiaController {
   ) {
     const allowed = await this.allowedTenants(req);
     return this.service.deletePlayerEvaluation(id, allowed);
+  }
+
+  @Get('tryout-clearances/tryout-prospects')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async listTryoutProspectsForClearance(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    if (!tenantId?.trim()) return [];
+    return this.tryoutClearance.listTryoutProspects(tenantId.trim(), allowed);
+  }
+
+  @Get('tryout-clearances/operational-status')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule(['saude', 'futebol_captacao', 'futebol_preparacao_fisica'])
+  async getTryoutClearanceOperationalStatus(
+    @Query('prospectId') prospectId: string,
+  ) {
+    if (!prospectId?.trim()) {
+      return { status: 'pendente', canStartFieldEvaluation: false };
+    }
+    return this.tryoutClearance.getOperationalStatusForProspect(prospectId.trim());
+  }
+
+  @Get('tryout-clearances')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async listTryoutClearances(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('prospectId') prospectId?: string,
+    @Query('playerId') playerId?: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    if (prospectId?.trim()) {
+      return this.tryoutClearance.findByProspect(prospectId.trim(), allowed);
+    }
+    if (playerId?.trim()) {
+      return this.tryoutClearance.findByPlayer(playerId.trim(), allowed);
+    }
+    return [];
+  }
+
+  @Get('tryout-clearances/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async getTryoutClearance(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.tryoutClearance.findOne(id, allowed);
+  }
+
+  @Post('tryout-clearances')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async createTryoutClearance(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() dto: CreatePhysioTryoutClearanceDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.tryoutClearance.create(dto, allowed, req.user.sub);
+  }
+
+  @Patch('tryout-clearances/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async updateTryoutClearance(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: UpdatePhysioTryoutClearanceDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.tryoutClearance.update(id, dto, allowed);
   }
 
   @Get('reports/dashboard')

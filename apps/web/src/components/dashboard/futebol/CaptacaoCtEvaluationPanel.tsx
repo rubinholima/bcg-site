@@ -27,6 +27,10 @@ import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPositionLabel } from "@/lib/football-positions";
 import { buildWhatsAppUrl } from "@/lib/whatsapp-url";
 import {
+  labelForPhysioClearanceStatus,
+  physioClearanceBadgeClass,
+} from "@/lib/physio-periodic-labels";
+import {
   type ScoutingProspect,
   labelForPriority,
   labelForCtScheduleStatus,
@@ -176,6 +180,7 @@ export function CaptacaoCtEvaluationPanel({ tenantId }: Props) {
               <TableHead>Prioridade</TableHead>
               <TableHead>Encaminh.</TableHead>
               <TableHead>Status CT</TableHead>
+              <TableHead>Liberação Fisio</TableHead>
               <TableHead>Agendamento</TableHead>
               <TableHead>Contato</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -184,7 +189,7 @@ export function CaptacaoCtEvaluationPanel({ tenantId }: Props) {
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   Nenhum atleta na fila de avaliação CT.
                 </TableCell>
               </TableRow>
@@ -223,6 +228,20 @@ export function CaptacaoCtEvaluationPanel({ tenantId }: Props) {
                         className={`rounded border px-2 py-0.5 text-xs ${ctScheduleBadgeClass(status)}`}
                       >
                         {labelForCtScheduleStatus(status)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`rounded border px-2 py-0.5 text-xs ${physioClearanceBadgeClass(p.physioClearanceStatus)}`}
+                        title={
+                          p.canStartCtFieldEvaluation
+                            ? "Liberado para avaliação em campo"
+                            : p.physioClearanceStatus === "reprovado"
+                              ? "Liberação reprovada — bloqueado para campo"
+                              : "Liberação fisioterapêutica pendente"
+                        }
+                      >
+                        {labelForPhysioClearanceStatus(p.physioClearanceStatus)}
                       </span>
                     </TableCell>
                     <TableCell className="text-xs">
@@ -302,7 +321,14 @@ export function CaptacaoCtEvaluationPanel({ tenantId }: Props) {
                             type="button"
                             size="sm"
                             className="h-8"
-                            disabled={saving}
+                            disabled={saving || !p.canStartCtFieldEvaluation}
+                            title={
+                              p.canStartCtFieldEvaluation
+                                ? undefined
+                                : p.physioClearanceStatus === "reprovado"
+                                  ? "Liberação fisioterapêutica reprovada."
+                                  : "Registre e aprove a liberação da Fisioterapia antes de iniciar em campo."
+                            }
                             onClick={() =>
                               void patchSchedule(p.id, { ctScheduleStatus: "em_avaliacao" })
                             }

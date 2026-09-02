@@ -300,6 +300,10 @@ export interface ScoutingProspect {
   contactLabel?: string | null;
   effectiveCtScheduleStatus?: CtScheduleStatus | null;
   inCtQueue?: boolean;
+  /** Status operacional da liberação fisioterapêutica (sem conteúdo clínico) */
+  physioClearanceStatus?: "pendente" | "aprovado" | "reprovado" | null;
+  canStartCtFieldEvaluation?: boolean;
+  physioClearanceEvaluatedAt?: string | null;
   reports?: ScoutingReportDetail[];
   _count?: { reports: number };
 }

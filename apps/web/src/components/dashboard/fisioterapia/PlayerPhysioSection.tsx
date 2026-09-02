@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, Plus } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import type {
   PhysioGameAttendance,
   PhysioPlayerEvaluation,
   PhysioSession,
+  PhysioTryoutClearance,
 } from "@/types/fisioterapia";
 import {
   formatGameBodyLocationList,
@@ -25,6 +27,12 @@ import {
   PHYSIO_GAME_PHASE_LABEL,
   PHYSIO_GAME_TREATMENT_REASON_LABEL,
 } from "@/lib/physio-game-evaluation-labels";
+import {
+  PHYSIO_PERIODIC_PROTOCOL_LABEL,
+  PHYSIO_PROTOCOL_CLASSIFICATION_LABEL,
+  labelForPhysioClearanceStatus,
+  physioClearanceBadgeClass,
+} from "@/lib/physio-periodic-labels";
 import { cn } from "@/lib/utils";
 
 export function PlayerPhysioSection({
@@ -34,15 +42,18 @@ export function PlayerPhysioSection({
   playerId: string;
   tenantId: string;
 }) {
+  const { canAccessModule } = useAuth();
+  const canViewClinical = canAccessModule("saude");
   const [sessions, setSessions] = useState<PhysioSession[]>([]);
   const [gameAttendances, setGameAttendances] = useState<PhysioGameAttendance[]>([]);
   const [evaluations, setEvaluations] = useState<PhysioPlayerEvaluation[]>([]);
+  const [tryoutClearances, setTryoutClearances] = useState<PhysioTryoutClearance[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [sessionsRes, gameRes, evalRes] = await Promise.all([
+      const [sessionsRes, gameRes, evalRes, clearanceRes] = await Promise.all([
         api.get<PhysioSession[]>(
           `/fisioterapia/sessions?playerId=${encodeURIComponent(playerId)}&status=all`,
         ),
@@ -52,18 +63,25 @@ export function PlayerPhysioSection({
         api.get<PhysioPlayerEvaluation[]>(
           `/fisioterapia/evaluations?playerId=${encodeURIComponent(playerId)}`,
         ),
+        canViewClinical
+          ? api.get<PhysioTryoutClearance[]>(
+              `/fisioterapia/tryout-clearances?playerId=${encodeURIComponent(playerId)}`,
+            )
+          : Promise.resolve({ data: [] as PhysioTryoutClearance[] }),
       ]);
       setSessions(Array.isArray(sessionsRes.data) ? sessionsRes.data : []);
       setGameAttendances(Array.isArray(gameRes.data) ? gameRes.data : []);
       setEvaluations(Array.isArray(evalRes.data) ? evalRes.data : []);
+      setTryoutClearances(Array.isArray(clearanceRes.data) ? clearanceRes.data : []);
     } catch {
       setSessions([]);
       setGameAttendances([]);
       setEvaluations([]);
+      setTryoutClearances([]);
     } finally {
       setLoading(false);
     }
-  }, [playerId]);
+  }, [playerId, canViewClinical]);
 
   useEffect(() => {
     void load();
@@ -187,6 +205,51 @@ export function PlayerPhysioSection({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        {tryoutClearances.length > 0 ? (
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Liberação fisioterapêutica (try-out)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {tryoutClearances.slice(0, 3).map((row) => (
+                <div key={row.id} className="rounded-lg border border-border/60 p-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded border px-2 py-0.5 text-xs ${physioClearanceBadgeClass(
+                        row.outcome === "aprovado"
+                          ? "aprovado"
+                          : row.outcome === "reprovado"
+                            ? "reprovado"
+                            : "pendente",
+                      )}`}
+                    >
+                      {labelForPhysioClearanceStatus(
+                        row.outcome === "aprovado"
+                          ? "aprovado"
+                          : row.outcome === "reprovado"
+                            ? "reprovado"
+                            : "pendente",
+                      )}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {formatDateDayMonYear(row.evaluatedAt)}
+                    </span>
+                    {row.staffName ? (
+                      <span className="text-muted-foreground">· {row.staffName}</span>
+                    ) : null}
+                  </div>
+                  {canViewClinical && row.injuryHistory ? (
+                    <p className="mt-1 text-muted-foreground">{row.injuryHistory}</p>
+                  ) : null}
+                  {canViewClinical && row.observations ? (
+                    <p className="mt-1">{row.observations}</p>
+                  ) : null}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Atendimentos de jogo</CardTitle>
@@ -250,14 +313,27 @@ export function PlayerPhysioSection({
                     {" · "}
                     {formatDateDayMonYear(ev.evaluatedAt)}
                   </p>
-                  {ev.tests.slice(0, 3).map((t, i) => (
+                  {ev.tests.slice(0, 5).map((t, i) => (
                     <p key={i} className="text-muted-foreground">
-                      {labelFromMap(PHYSIO_EVAL_TEST_TYPE_LABEL, t.testType, t.testTypeLabel)}
-                      {" · "}
-                      {labelFromMap(PHYSIO_EVAL_BODY_LOCATION_LABEL, t.bodyLocation, t.bodyLocationLabel)}
-                      {t.score ? ` · ${t.score}` : ""}
+                      {t.protocol
+                        ? PHYSIO_PERIODIC_PROTOCOL_LABEL[t.protocol] ?? t.protocol
+                        : labelFromMap(PHYSIO_EVAL_TEST_TYPE_LABEL, t.testType, t.testTypeLabel)}
+                      {!t.protocol ? (
+                        <>
+                          {" · "}
+                          {labelFromMap(PHYSIO_EVAL_BODY_LOCATION_LABEL, t.bodyLocation, t.bodyLocationLabel)}
+                        </>
+                      ) : null}
+                      {t.classification
+                        ? ` · ${PHYSIO_PROTOCOL_CLASSIFICATION_LABEL[t.classification] ?? t.classification}`
+                        : t.score
+                          ? ` · ${t.score}`
+                          : ""}
                     </p>
                   ))}
+                  {ev.rating != null ? (
+                    <p className="text-muted-foreground">Nota: {ev.rating}</p>
+                  ) : null}
                   {ev.outcome ? (
                     <p className={ev.outcome === "reprovado" ? "text-destructive" : "text-emerald-400"}>
                       {PHYSIO_EVAL_OUTCOME_LABEL[ev.outcome] ?? ev.outcome}

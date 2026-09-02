@@ -32,6 +32,11 @@ import {
   UpdatePhysioTransitionEntryDto,
 } from './dto/fisioterapia.dto';
 import {
+  buildProtocolResult,
+  PHYSIO_PERIODIC_PROTOCOLS,
+  type PhysioPeriodicProtocol,
+} from './physio-periodic-protocols.util';
+import {
   enrichGameAttendanceRow,
   gameAttendanceItemsToJson,
   resolveGameBodyLocationsInput,
@@ -1546,15 +1551,54 @@ export class FisioterapiaService implements OnModuleInit {
     if (!tests?.length) {
       throw new BadRequestException('Informe ao menos um teste na avaliação.');
     }
-    return tests.map((t, index) => ({
-      testType: t.testType.trim(),
-      testTypeLabel: t.testTypeLabel?.trim() || null,
-      bodyLocation: t.bodyLocation.trim(),
-      bodyLocationLabel: t.bodyLocationLabel?.trim() || null,
-      score: t.score?.trim() || null,
-      notes: t.notes?.trim() || null,
-      sortOrder: index,
-    }));
+    return tests.map((t, index) => {
+      const protocol = t.protocol?.trim();
+      if (
+        protocol &&
+        (PHYSIO_PERIODIC_PROTOCOLS as readonly string[]).includes(protocol)
+      ) {
+        const built = buildProtocolResult(
+          protocol as PhysioPeriodicProtocol,
+          (t.payload ?? {}) as Record<string, unknown>,
+        );
+        return {
+          testType: protocol,
+          testTypeLabel: null,
+          bodyLocation: 'geral',
+          bodyLocationLabel: null,
+          protocol,
+          payload: built.payload as Prisma.InputJsonValue,
+          classification: built.classification,
+          score: t.score?.trim() || built.score || null,
+          notes: t.notes?.trim() || null,
+          sortOrder: index,
+        };
+      }
+      return {
+        testType: t.testType.trim(),
+        testTypeLabel: t.testTypeLabel?.trim() || null,
+        bodyLocation: t.bodyLocation.trim(),
+        bodyLocationLabel: t.bodyLocationLabel?.trim() || null,
+        protocol: protocol || null,
+        payload: t.payload ? (t.payload as Prisma.InputJsonValue) : undefined,
+        classification: t.classification?.trim() || null,
+        score: t.score?.trim() || null,
+        notes: t.notes?.trim() || null,
+        sortOrder: index,
+      };
+    });
+  }
+
+  private mapEvaluationAttachments(
+    attachments?: { name: string; url: string; key?: string; mimeType?: string }[],
+  ): Prisma.InputJsonValue | undefined {
+    if (!attachments?.length) return undefined;
+    return attachments.map((a) => ({
+      name: a.name.trim(),
+      url: a.url.trim(),
+      key: a.key?.trim() || undefined,
+      mimeType: a.mimeType?.trim() || undefined,
+    })) as unknown as Prisma.InputJsonValue;
   }
 
   async listPlayerEvaluations(
@@ -1620,6 +1664,8 @@ export class FisioterapiaService implements OnModuleInit {
         context: dto.context,
         finalObservations: dto.finalObservations?.trim() || null,
         outcome: dto.outcome ?? null,
+        rating: dto.rating ?? null,
+        attachments: this.mapEvaluationAttachments(dto.attachments),
         evaluatedAt,
         staffId: dto.staffId?.trim() || null,
         staffName: dto.staffName?.trim() || null,
@@ -1656,6 +1702,8 @@ export class FisioterapiaService implements OnModuleInit {
             context: dto.context,
             finalObservations: dto.finalObservations?.trim() || null,
             outcome: dto.outcome ?? null,
+            rating: dto.rating ?? null,
+            attachments: this.mapEvaluationAttachments(dto.attachments),
             evaluatedAt,
             staffId: dto.staffId?.trim() || null,
             staffName: dto.staffName?.trim() || null,
@@ -1692,6 +1740,13 @@ export class FisioterapiaService implements OnModuleInit {
             finalObservations: dto.finalObservations?.trim() || null,
           }),
           ...(dto.outcome !== undefined && { outcome: dto.outcome ?? null }),
+          ...(dto.rating !== undefined && { rating: dto.rating ?? null }),
+          ...(dto.attachments !== undefined && {
+            attachments:
+              dto.attachments === null
+                ? Prisma.JsonNull
+                : this.mapEvaluationAttachments(dto.attachments ?? undefined),
+          }),
           ...(evaluatedAt != null && { evaluatedAt }),
           ...(dto.staffId !== undefined && { staffId: dto.staffId?.trim() || null }),
           ...(dto.staffName !== undefined && { staffName: dto.staffName?.trim() || null }),

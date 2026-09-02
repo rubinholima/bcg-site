@@ -160,6 +160,12 @@ export default function FisioterapiaPage() {
             </Link>
           </Button>
           <Button asChild variant="outline" className="min-h-[44px]">
+            <Link href="/dashboard/saude/fisioterapia/liberacao-tryout">
+              <ClipboardCheck className="mr-2 h-4 w-4" />
+              Liberação try-out
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="min-h-[44px]">
             <Link href="/dashboard/saude/fisioterapia/avaliacoes">
               <ClipboardCheck className="mr-2 h-4 w-4" />
               Avaliações

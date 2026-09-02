@@ -21,6 +21,10 @@ import {
   labelForCtScheduleStatus,
   ctScheduleBadgeClass,
 } from "@/lib/captacao-types";
+import {
+  labelForPhysioClearanceStatus,
+  physioClearanceBadgeClass,
+} from "@/lib/physio-periodic-labels";
 
 type ScheduleMode = "agendar" | "reagendar" | "faltou" | null;
 
@@ -116,6 +120,11 @@ export function CaptacaoProspectCtSchedule({ prospect, onUpdated }: Props) {
             <span className={`rounded border px-2 py-0.5 text-xs ${ctScheduleBadgeClass(status)}`}>
               {labelForCtScheduleStatus(status)}
             </span>
+            <span
+              className={`rounded border px-2 py-0.5 text-xs ${physioClearanceBadgeClass(prospect.physioClearanceStatus)}`}
+            >
+              Liberação Fisio: {labelForPhysioClearanceStatus(prospect.physioClearanceStatus)}
+            </span>
             {prospect.ctScheduledAt ? (
               <span className="text-sm text-muted-foreground">
                 {new Date(prospect.ctScheduledAt).toLocaleString("pt-BR")}
@@ -163,14 +172,23 @@ export function CaptacaoProspectCtSchedule({ prospect, onUpdated }: Props) {
               </>
             ) : null}
             {status === "compareceu" ? (
-              <Button
-                type="button"
-                size="sm"
-                disabled={saving}
-                onClick={() => void patchSchedule({ ctScheduleStatus: "em_avaliacao" })}
-              >
-                Iniciar avaliação CT
-              </Button>
+              <>
+                {!prospect.canStartCtFieldEvaluation ? (
+                  <p className="w-full text-sm text-amber-400">
+                    {prospect.physioClearanceStatus === "reprovado"
+                      ? "Liberação fisioterapêutica reprovada — o atleta não pode iniciar avaliação em campo."
+                      : "Liberação fisioterapêutica pendente — registre e aprove na Fisioterapia antes de iniciar em campo."}
+                  </p>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={saving || !prospect.canStartCtFieldEvaluation}
+                  onClick={() => void patchSchedule({ ctScheduleStatus: "em_avaliacao" })}
+                >
+                  Iniciar avaliação CT
+                </Button>
+              </>
             ) : null}
             {status === "em_avaliacao" ? (
               <Button

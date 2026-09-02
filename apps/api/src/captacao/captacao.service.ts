@@ -32,6 +32,7 @@ import {
   resolveStageFromOutcome,
 } from './captacao-scouting.util';
 import { MailService } from '../common/mail.service';
+import { PhysioTryoutClearanceService } from '../fisioterapia/physio-tryout-clearance.service';
 
 const ACTIVE_STAGES = [
   'identificado',
@@ -77,6 +78,7 @@ export class CaptacaoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
+    private readonly physioTryoutClearance: PhysioTryoutClearanceService,
   ) {}
 
   private normalizeEvaluationOutcome(value?: string | null): ScoutingEvaluationOutcome {
@@ -563,7 +565,26 @@ export class CaptacaoService {
       },
     });
     if (!prospect) throw new NotFoundException('Prospect não encontrado');
-    return enrichProspectDisplay(prospect);
+    return this.attachPhysioClearanceStatus(enrichProspectDisplay(prospect));
+  }
+
+  private async attachPhysioClearanceStatus<T extends { id: string }>(row: T) {
+    const physio = await this.physioTryoutClearance.getOperationalStatusForProspect(row.id);
+    return {
+      ...row,
+      physioClearanceStatus: physio.status,
+      canStartCtFieldEvaluation: physio.canStartFieldEvaluation,
+      physioClearanceEvaluatedAt: physio.evaluatedAt ?? null,
+    };
+  }
+
+  async getPhysioClearanceOperationalStatus(prospectId: string) {
+    const prospect = await this.prisma.scoutingProspect.findUnique({
+      where: { id: prospectId },
+      select: { id: true },
+    });
+    if (!prospect) throw new NotFoundException('Prospect não encontrado');
+    return this.physioTryoutClearance.getOperationalStatusForProspect(prospectId);
   }
 
   async findCtEvaluationQueue(tenantId?: string) {
@@ -611,9 +632,11 @@ export class CaptacaoService {
       },
     });
 
-    return rows
-      .filter((p) => isProspectInCtQueue(p))
-      .map((p) => enrichProspectDisplay(p));
+    return Promise.all(
+      rows
+        .filter((p) => isProspectInCtQueue(p))
+        .map(async (p) => this.attachPhysioClearanceStatus(enrichProspectDisplay(p))),
+    );
   }
 
   async findPlayerCaptacaoHistory(playerId: string) {
@@ -629,7 +652,7 @@ export class CaptacaoService {
       },
     });
     if (!prospect) return null;
-    return enrichProspectDisplay(prospect);
+    return this.attachPhysioClearanceStatus(enrichProspectDisplay(prospect));
   }
 
   async updateCtSchedule(id: string, dto: UpdateCtScheduleDto) {
@@ -665,6 +688,7 @@ export class CaptacaoService {
           data.presentationDate = today;
         }
       } else if (nextStatus === 'em_avaliacao') {
+        await this.physioTryoutClearance.assertCanStartCtFieldEvaluation(id);
         data.ctEvaluationStartedAt = new Date();
         if (dto.presentationDate?.trim()) {
           data.presentationDate = dto.presentationDate.trim();
@@ -698,7 +722,7 @@ export class CaptacaoService {
       },
     });
 
-    return enrichProspectDisplay(updated);
+    return this.attachPhysioClearanceStatus(enrichProspectDisplay(updated));
   }
 
   async createProspect(dto: CreateProspectDto) {
@@ -1146,6 +1170,8 @@ export class CaptacaoService {
     const player = await this.prisma.player.findUniqueOrThrow({
       where: { id: playerId! },
     });
+
+    await this.physioTryoutClearance.linkPlayerOnPromote(id, playerId!);
 
     return { prospect: updated, player, created: !dto.playerId };
   }

@@ -343,9 +343,19 @@ export interface PhysioEvaluationTest {
   testTypeLabel?: string | null;
   bodyLocation: string;
   bodyLocationLabel?: string | null;
+  protocol?: string | null;
+  payload?: Record<string, unknown> | null;
+  classification?: string | null;
   score?: string | null;
   notes?: string | null;
   sortOrder?: number;
+}
+
+export interface PhysioEvaluationAttachment {
+  name: string;
+  url: string;
+  key?: string;
+  mimeType?: string;
 }
 
 export interface PhysioPlayerEvaluation {
@@ -356,6 +366,8 @@ export interface PhysioPlayerEvaluation {
   context: string;
   finalObservations: string | null;
   outcome: string | null;
+  rating?: number | null;
+  attachments?: PhysioEvaluationAttachment[] | null;
   evaluatedAt: string;
   staffId: string | null;
   staffName: string | null;
@@ -366,6 +378,23 @@ export interface PhysioPlayerEvaluation {
   tenant?: { id: string; name: string; slug: string };
 }
 
+export interface PhysioTryoutClearance {
+  id: string;
+  tenantId: string;
+  prospectId: string;
+  playerId?: string | null;
+  prospectName?: string | null;
+  targetCategory?: string | null;
+  staffName?: string | null;
+  injuryHistory?: string | null;
+  bilateralTests: Record<string, unknown>;
+  manualStrengthTest?: string | null;
+  observations?: string | null;
+  outcome: string;
+  evaluatedAt: string;
+  prospect?: { id: string; name: string; targetCategory?: string | null };
+}
+
 export interface CreatePhysioPlayerEvaluationBatchPayload {
   tenantId: string;
   playerIds: string[];
@@ -373,6 +402,8 @@ export interface CreatePhysioPlayerEvaluationBatchPayload {
   context: string;
   finalObservations?: string;
   outcome?: string;
+  rating?: number;
+  attachments?: PhysioEvaluationAttachment[];
   evaluatedAt?: string;
   staffId?: string;
   staffName?: string;

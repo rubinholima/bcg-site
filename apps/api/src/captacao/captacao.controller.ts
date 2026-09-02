@@ -164,6 +164,13 @@ export class CaptacaoController {
     return this.service.updateCtSchedule(id, dto);
   }
 
+  @Get('prospects/:id/physio-clearance-status')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule(['futebol_captacao', 'futebol_preparacao_fisica', 'saude'])
+  getPhysioClearanceStatus(@Param('id') id: string) {
+    return this.service.getPhysioClearanceOperationalStatus(id);
+  }
+
   @Post('prospects/:id/approve')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('futebol_captacao')

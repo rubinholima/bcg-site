@@ -4,6 +4,7 @@ import {
   IsIn,
   IsInt,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   Max,
@@ -13,6 +14,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PHYSIO_PERIODIC_PROTOCOLS } from '../physio-periodic-protocols.util';
 
 export class PhysioSessionRegionDto {
   @IsString()
@@ -666,13 +668,41 @@ export class PhysioEvaluationTestDto {
   bodyLocationLabel?: string;
 
   @IsOptional()
+  @IsIn([...PHYSIO_PERIODIC_PROTOCOLS])
+  protocol?: string;
+
+  @IsOptional()
+  @IsObject()
+  payload?: Record<string, unknown>;
+
+  @IsOptional()
   @IsString()
-  @MaxLength(32)
+  classification?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
   score?: string;
 
   @IsOptional()
   @IsString()
   notes?: string;
+}
+
+export class PhysioEvaluationAttachmentDto {
+  @IsString()
+  name!: string;
+
+  @IsString()
+  url!: string;
+
+  @IsOptional()
+  @IsString()
+  key?: string;
+
+  @IsOptional()
+  @IsString()
+  mimeType?: string;
 }
 
 export class CreatePhysioPlayerEvaluationDto {
@@ -696,6 +726,18 @@ export class CreatePhysioPlayerEvaluationDto {
   @IsOptional()
   @IsIn(['aprovado', 'reprovado'])
   outcome?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(10)
+  rating?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioEvaluationAttachmentDto)
+  attachments?: PhysioEvaluationAttachmentDto[];
 
   @IsOptional()
   @IsString()
@@ -739,6 +781,18 @@ export class CreatePhysioPlayerEvaluationBatchDto {
   outcome?: string;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(10)
+  rating?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioEvaluationAttachmentDto)
+  attachments?: PhysioEvaluationAttachmentDto[];
+
+  @IsOptional()
   @IsString()
   evaluatedAt?: string;
 
@@ -768,6 +822,18 @@ export class UpdatePhysioPlayerEvaluationDto {
   @IsOptional()
   @IsIn(['aprovado', 'reprovado'])
   outcome?: string | null;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(10)
+  rating?: number | null;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioEvaluationAttachmentDto)
+  attachments?: PhysioEvaluationAttachmentDto[] | null;
 
   @IsOptional()
   @IsString()

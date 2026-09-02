@@ -148,6 +148,7 @@ model Tenant {
   physioGroupSessions PhysioGroupSession[]
   physioGameAttendances PhysioGameAttendance[]
   physioPlayerEvaluations PhysioPlayerEvaluation[]
+  physioTryoutClearances PhysioTryoutClearance[]
   psychologySupportMaterials PsychologySupportMaterial[]
   footballActivitySpaces FootballActivitySpace[]
   events                Event[]
@@ -1115,6 +1116,7 @@ model Player {
   physioTransitionPrograms PhysioTransitionProgram[]
   physioGameAttendances PhysioGameAttendance[]
   physioPlayerEvaluations PhysioPlayerEvaluation[]
+  physioTryoutClearances PhysioTryoutClearance[]
   fmfMatchStats        FmfPlayerMatchStat[]
   disciplineOpenings   PlayerDisciplineOpening[]
   matchOfficialEvents  MatchOfficialEvent[]
@@ -2905,6 +2907,7 @@ model ScoutingProspect {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   reports           ScoutingReport[]
+  physioTryoutClearances PhysioTryoutClearance[]
 
   @@index([tenantId])
   @@index([tenantId, stage])
@@ -3271,9 +3274,13 @@ model PhysioPlayerEvaluation {
   category          String?
   /// pre_temporada | inter_temporada | pos_temporada | desligamento
   context           String
+  /// Nota geral da avaliação (0–10)
+  rating            Float?
   finalObservations String?  @db.Text
   /// aprovado | reprovado
   outcome           String?
+  /// Anexos (ex.: PDF Kinology) [{ name, url, key, mimeType }]
+  attachments       Json?
   evaluatedAt       DateTime @default(now())
   staffId           String?
   staffName         String?
@@ -3293,10 +3300,47 @@ model PhysioPlayerEvaluationTest {
   testTypeLabel     String?
   bodyLocation      String
   bodyLocationLabel String?
+  /// y_balance | t_test | stop_down | hop_test | perimetria | agachamento_bastao | forca_kinology
+  protocol          String?
+  payload           Json?
+  /// aprovado | aceitavel | reprovado | medio | ruim | bom | razoavel
+  classification    String?
   score             String?
   notes             String?  @db.Text
   sortOrder         Int      @default(0)
   @@index([evaluationId])
+}
+
+/// Liberação fisioterapêutica obrigatória antes de avaliação em campo (try-out / CT)
+model PhysioTryoutClearance {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prospectId           String
+  prospect             ScoutingProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  playerId             String?
+  player               Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  prospectName         String?
+  targetCategory       String?
+  staffId              String?
+  staffName            String?
+  injuryHistory        String?  @db.Text
+  /// Testes bilaterais + respostas/outcomes por lado
+  bilateralTests       Json
+  manualStrengthTest   String?  @db.Text
+  observations         String?  @db.Text
+  /// aprovado | reprovado
+  outcome              String
+  evaluatedAt          DateTime @default(now())
+  supervisorNotifiedAt DateTime?
+  managerNotifiedAt    DateTime?
+  emailNotifyError     String?
+  createdByUserId      String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  @@index([tenantId, prospectId])
+  @@index([playerId])
+  @@index([prospectId, evaluatedAt])
 }
 
 /// Diagnóstico clínico categorizado por região (seed + cadastro dinâmico pelo fisio)

@@ -38,6 +38,15 @@ import {
   PHYSIO_EVAL_OUTCOME_LABEL,
   PHYSIO_EVAL_TEST_TYPE_LABEL,
 } from "@/lib/physio-game-evaluation-labels";
+import {
+  PHYSIO_PERIODIC_PROTOCOL_LABEL,
+  PHYSIO_PROTOCOL_CLASSIFICATION_LABEL,
+} from "@/lib/physio-periodic-labels";
+import {
+  PhysioPeriodicProtocolBlock,
+  periodicEntriesToTests,
+  type PeriodicProtocolEntry,
+} from "@/components/dashboard/fisioterapia/PhysioPeriodicProtocolBlock";
 
 type Tenant = { id: string; name: string; categories?: string[] | null; kind?: { name?: string } };
 type StaffOpt = { id: string; name: string };
@@ -66,7 +75,10 @@ export default function PhysioEvaluationsPage() {
   const [staffList, setStaffList] = useState<StaffOpt[]>([]);
   const [roster, setRoster] = useState<PhysioGroupAttendanceRow[]>([]);
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(() => new Set());
+  const [usePeriodicProtocols, setUsePeriodicProtocols] = useState(true);
+  const [protocolEntries, setProtocolEntries] = useState<PeriodicProtocolEntry[]>([]);
   const [tests, setTests] = useState<PhysioEvaluationTest[]>([emptyTest()]);
+  const [rating, setRating] = useState("");
   const [finalObservations, setFinalObservations] = useState("");
   const [outcome, setOutcome] = useState("");
   const [loadingRoster, setLoadingRoster] = useState(false);
@@ -165,8 +177,9 @@ export default function PhysioEvaluationsPage() {
   const addTest = () => setTests((prev) => [...prev, emptyTest()]);
   const removeTest = (index: number) => setTests((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
 
-  const buildTestsPayload = () =>
-    tests.map((t) => {
+  const buildTestsPayload = () => {
+    if (usePeriodicProtocols) return periodicEntriesToTests(protocolEntries);
+    return tests.map((t) => {
       const row: PhysioEvaluationTest = {
         testType: t.testType,
         bodyLocation: t.bodyLocation,
@@ -179,6 +192,10 @@ export default function PhysioEvaluationsPage() {
       }
       return row;
     });
+  };
+
+  const singleSelectedPlayerId =
+    selectedPlayers.size === 1 ? [...selectedPlayers][0] : undefined;
 
   const handleSave = async () => {
     if (!tenantId || !category || selectedPlayers.size === 0) {
@@ -190,7 +207,17 @@ export default function PhysioEvaluationsPage() {
       });
       return;
     }
-    for (const t of tests) {
+    if (usePeriodicProtocols) {
+      if (protocolEntries.length === 0) {
+        setFeedback({
+          open: true,
+          title: "Protocolos",
+          message: "Adicione ao menos um protocolo periódico.",
+          variant: "warning",
+        });
+        return;
+      }
+    } else for (const t of tests) {
       if (t.testType === "outro" && !t.testTypeLabel?.trim()) {
         setFeedback({
           open: true,
@@ -220,6 +247,7 @@ export default function PhysioEvaluationsPage() {
       tests: buildTestsPayload(),
       finalObservations: finalObservations.trim() || undefined,
       outcome: outcome || undefined,
+      rating: rating.trim() ? Number(rating) : undefined,
       staffId: staffId || undefined,
       staffName: selectedStaff?.name,
     };
@@ -229,7 +257,9 @@ export default function PhysioEvaluationsPage() {
       const { data } = await api.post<{ created: number }>("/fisioterapia/evaluations/batch", payload);
       setFinalObservations("");
       setOutcome("");
+      setRating("");
       setSelectedPlayers(new Set());
+      setProtocolEntries([]);
       setTests([emptyTest()]);
       await loadEvaluations();
       setFeedback({
@@ -383,6 +413,24 @@ export default function PhysioEvaluationsPage() {
           </div>
 
           <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Label>Modo de avaliação</Label>
+              <NativeSelect
+                value={usePeriodicProtocols ? "periodic" : "legacy"}
+                onChange={(e) => setUsePeriodicProtocols(e.target.value === "periodic")}
+              >
+                <option value="periodic">Protocolos periódicos</option>
+                <option value="legacy">Testes legados</option>
+              </NativeSelect>
+            </div>
+            {usePeriodicProtocols ? (
+              <PhysioPeriodicProtocolBlock
+                entries={protocolEntries}
+                onChange={setProtocolEntries}
+                singlePlayerId={singleSelectedPlayerId}
+              />
+            ) : (
+              <>
             <div className="flex items-center justify-between gap-2">
               <Label>Testes *</Label>
               <Button type="button" variant="outline" size="sm" onClick={addTest}>
@@ -457,9 +505,22 @@ export default function PhysioEvaluationsPage() {
                 ) : null}
               </div>
             ))}
+              </>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label>Nota geral (0–10)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={10}
+                step="0.1"
+                value={rating}
+                onChange={(e) => setRating(e.target.value)}
+              />
+            </div>
             <div className="grid gap-2 sm:col-span-2">
               <Label>Observações finais</Label>
               <Input value={finalObservations} onChange={(e) => setFinalObservations(e.target.value)} />
@@ -509,12 +570,25 @@ export default function PhysioEvaluationsPage() {
                     </p>
                     {ev.tests.map((t, i) => (
                       <p key={i}>
-                        {labelFromMap(PHYSIO_EVAL_TEST_TYPE_LABEL, t.testType, t.testTypeLabel)}
-                        {" · "}
-                        {labelFromMap(PHYSIO_EVAL_BODY_LOCATION_LABEL, t.bodyLocation, t.bodyLocationLabel)}
-                        {t.score ? ` · Nota ${t.score}` : ""}
+                        {t.protocol
+                          ? PHYSIO_PERIODIC_PROTOCOL_LABEL[t.protocol] ?? t.protocol
+                          : labelFromMap(PHYSIO_EVAL_TEST_TYPE_LABEL, t.testType, t.testTypeLabel)}
+                        {!t.protocol ? (
+                          <>
+                            {" · "}
+                            {labelFromMap(PHYSIO_EVAL_BODY_LOCATION_LABEL, t.bodyLocation, t.bodyLocationLabel)}
+                          </>
+                        ) : null}
+                        {t.classification
+                          ? ` · ${PHYSIO_PROTOCOL_CLASSIFICATION_LABEL[t.classification] ?? t.classification}`
+                          : t.score
+                            ? ` · ${t.score}`
+                            : ""}
                       </p>
                     ))}
+                    {ev.rating != null ? (
+                      <p className="text-muted-foreground">Nota geral: {ev.rating}</p>
+                    ) : null}
                     {ev.finalObservations ? (
                       <p className="text-muted-foreground">{ev.finalObservations}</p>
                     ) : null}
