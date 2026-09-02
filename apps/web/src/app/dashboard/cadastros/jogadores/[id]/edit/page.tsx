@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -35,7 +35,8 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
-import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
+import { resolvePlayerTabInGroups, buildPlayerTabGroups } from "@/lib/player-record-nav.config";
+import { PlayerRecordGroupedNav } from "@/components/dashboard/players/PlayerRecordGroupedNav";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
 import { PlayerTrainingHistoryTab } from "@/components/dashboard/players/PlayerTrainingHistoryTab";
 import {
@@ -240,12 +241,28 @@ export default function EditJogadorPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>(() => searchParams.get("tab") || "dados");
 
+  const canAccessPlayerTab = useCallback(
+    (tab: (typeof PLAYER_TABS)[number]) => !tab.moduleSlug || canAccessModule(tab.moduleSlug),
+    [canAccessModule],
+  );
+
+  const visiblePlayerTabGroups = useMemo(
+    () => buildPlayerTabGroups(PLAYER_TABS, canAccessPlayerTab),
+    [canAccessPlayerTab],
+  );
+
+  useEffect(() => {
+    const resolved = resolvePlayerTabInGroups(visiblePlayerTabGroups, activeTab);
+    if (resolved !== activeTab) setActiveTab(resolved);
+  }, [activeTab, visiblePlayerTabGroups]);
+
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (!tab) return;
     const normalized = tab === "gerencial" ? "psicologica" : tab;
-    if (PLAYER_TABS.some((t) => t.id === normalized)) setActiveTab(normalized);
-  }, [searchParams]);
+    const resolved = resolvePlayerTabInGroups(visiblePlayerTabGroups, normalized);
+    if (PLAYER_TABS.some((t) => t.id === resolved)) setActiveTab(resolved);
+  }, [searchParams, visiblePlayerTabGroups]);
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [tenantCategories, setTenantCategories] = useState<string[]>([]);
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
@@ -459,15 +476,12 @@ export default function EditJogadorPage() {
         <PlayerMatchAvailabilityHeader availability={matchAvailability} />
       </div>
 
-      <div className="relative z-0 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-2 sm:p-3">
-        <BostonTvDashboardTabs
-          tabs={PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug))}
-          active={activeTab}
+      <div className="relative z-0 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:p-4">
+        <PlayerRecordGroupedNav
+          tabs={PLAYER_TABS}
+          activeTab={activeTab}
           onChange={setActiveTab}
-          ariaLabel="Seções do atleta"
-          uppercase
-          dense
-          stretch
+          canAccessTab={canAccessPlayerTab}
         />
       </div>
 
