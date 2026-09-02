@@ -1,14 +1,15 @@
 /**
- * Tokens visuais CUP360 v1 — sidebar 232/68px, densidade compacta.
+ * Tokens visuais CUP360 — sidebar v3 264/68px.
  */
 import { cn } from "@/lib/utils";
 
 export const cup360 = {
   layout: {
-    sidebarOpen: "w-[232px]",
+    sidebarOpen: "w-[264px]",
     sidebarCollapsed: "w-[68px]",
-    sidebarOpenPx: 232,
+    sidebarOpenPx: 264,
     sidebarCollapsedPx: 68,
+    flyoutWidth: "min(720px, calc(100vw - 280px))",
   },
   pageBg: "bg-background dashboard-main-bg",
   surface1: "rounded-xl border border-border/70 bg-card shadow-sm",
@@ -55,33 +56,36 @@ export const cup360 = {
   },
   sidebar: {
     nav: "cup360-sidebar-nav flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2",
-    areaLabel: "cup360-sidebar-area-label",
-    areaToggle:
-      "flex h-[30px] w-full items-center gap-1 px-1.5 text-left transition-colors hover:text-foreground",
-    moduleList: "ml-1 space-y-0.5 border-l border-border/40 pl-1.5",
-    screenList: "ml-1 space-y-0.5 border-l border-border/30 pl-1.5",
-    linkL1:
-      "flex shrink-0 items-center gap-2 rounded-md px-2 text-[13px] font-semibold transition-colors duration-150",
-    linkL2:
-      "flex items-center gap-1.5 rounded-md px-2 text-[13px] font-medium transition-colors duration-150",
-    linkL3:
-      "flex items-center gap-1.5 rounded-md px-2 text-xs font-normal transition-colors duration-150",
-    executiveLink:
-      "mb-1 flex shrink-0 items-center gap-2 rounded-md border border-violet-500/20 bg-violet-500/5 px-2 text-[13px] font-semibold transition-colors duration-150 dark:border-violet-500/25 dark:bg-violet-500/10",
-    iconL1: "h-[18px] w-[18px]",
-    iconL2: "h-4 w-4",
-    active: "dashboard-sidebar-active",
-    activeSoft: "bg-muted/40 text-foreground",
-    idle: "text-muted-foreground hover:bg-accent/60 hover:text-foreground cup360-sidebar-hover",
-    flyout:
-      "cup360-sidebar-flyout absolute left-[calc(100%+4px)] top-0 z-[60] min-w-[196px] max-w-[220px] rounded-lg border border-border/70 bg-popover py-1.5 shadow-lg",
-    flyoutTitle:
-      "px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground",
-    flyoutModule:
-      "px-2.5 pt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/80",
+    rowGrid:
+      "grid h-[42px] w-full grid-cols-[40px_minmax(0,1fr)_20px] items-center rounded-lg px-1 text-left transition-colors duration-150",
+    rowGridCollapsed:
+      "flex h-[42px] w-full items-center justify-center rounded-lg transition-colors duration-150",
+    standaloneTag:
+      "rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400",
+    labelPrimary: "truncate text-[14px] font-medium leading-none",
+    labelSecondary: "truncate text-[12px] text-muted-foreground",
+    sectionDivider: "my-2 border-t border-border/50",
+    areaLabel: "px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70",
+    systemLabel: "px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70",
+    flyoutPanel:
+      "cup360-nav-flyout fixed z-[45] flex flex-col overflow-hidden rounded-xl border border-border/70 bg-zinc-950/95 shadow-2xl backdrop-blur-md",
+    flyoutHeader: "flex items-start justify-between gap-3 border-b border-border/60 px-4 py-3",
+    flyoutTitle: "text-sm font-semibold uppercase tracking-wide text-foreground",
+    flyoutSubtitle: "mt-0.5 text-xs text-muted-foreground",
+    flyoutBack:
+      "mb-1 inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground hover:text-violet-400",
+    flyoutGroupLabel:
+      "px-1 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80",
     flyoutLink:
-      "flex h-[30px] items-center rounded-md px-2.5 text-[13px] transition-colors duration-150",
-    flyoutScroll: "max-h-[min(70vh,420px)] overflow-y-auto",
+      "flex min-h-[34px] items-center rounded-md px-2.5 text-[13px] transition-colors duration-150 hover:bg-violet-500/10",
+    flyoutModuleBtn:
+      "flex min-h-[36px] w-full items-center justify-between gap-2 rounded-md px-2.5 text-left text-[13px] font-medium transition-colors duration-150 hover:bg-violet-500/10",
+    searchTrigger:
+      "hidden h-9 min-w-0 flex-1 max-w-md items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 text-sm text-muted-foreground transition-colors hover:border-violet-500/30 hover:bg-muted/30 md:flex lg:max-w-lg",
+    searchKbd: "ml-auto hidden rounded border border-border/60 bg-background/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline",
+    active: "dashboard-sidebar-active bg-violet-500/10 text-foreground",
+    idle: "text-muted-foreground hover:bg-accent/60 hover:text-foreground cup360-sidebar-hover",
+    iconL1: "h-[18px] w-[18px]",
   },
   shortcut: {
     base:

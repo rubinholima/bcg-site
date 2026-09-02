@@ -40,6 +40,7 @@ export type ResolvedNavStandalone = {
   menuLogoSrc?: string;
   item: MenuItemConfig;
   pathPrefix: string;
+  tag?: string;
 };
 
 /** Localiza item por sequência de slugs a partir do topo ou de um dept. */
