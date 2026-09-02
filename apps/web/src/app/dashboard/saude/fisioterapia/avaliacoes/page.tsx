@@ -158,7 +158,19 @@ export default function PhysioEvaluationsPage() {
     if (category && !categoriesForClub.some((c) => c.value === category)) setCategory("");
   }, [category, categoriesForClub]);
 
+  useEffect(() => {
+    if (!usePeriodicProtocols) return;
+    setSelectedPlayers((prev) => {
+      if (prev.size <= 1) return prev;
+      return new Set([[...prev][0]]);
+    });
+  }, [usePeriodicProtocols]);
+
   const togglePlayer = (id: string) => {
+    if (usePeriodicProtocols) {
+      setSelectedPlayers(new Set([id]));
+      return;
+    }
     setSelectedPlayers((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -202,7 +214,18 @@ export default function PhysioEvaluationsPage() {
       setFeedback({
         open: true,
         title: "Campos obrigatórios",
-        message: "Informe clube, categoria e ao menos um atleta.",
+        message: usePeriodicProtocols
+          ? "Informe clube, categoria e exatamente um atleta."
+          : "Informe clube, categoria e ao menos um atleta.",
+        variant: "warning",
+      });
+      return;
+    }
+    if (usePeriodicProtocols && selectedPlayers.size !== 1) {
+      setFeedback({
+        open: true,
+        title: "Atleta",
+        message: "A avaliação periódica permite apenas um atleta por registro.",
         variant: "warning",
       });
       return;
@@ -372,15 +395,17 @@ export default function PhysioEvaluationsPage() {
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <Label>Atletas em avaliação *</Label>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={selectAllPlayers} disabled={!roster.length}>
-                  Marcar todos
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={clearPlayers} disabled={!selectedPlayers.size}>
-                  Limpar
-                </Button>
-              </div>
+              <Label>{usePeriodicProtocols ? "Atleta *" : "Atletas em avaliação *"}</Label>
+              {!usePeriodicProtocols ? (
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={selectAllPlayers} disabled={!roster.length}>
+                    Marcar todos
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={clearPlayers} disabled={!selectedPlayers.size}>
+                    Limpar
+                  </Button>
+                </div>
+              ) : null}
             </div>
             {loadingRoster ? (
               <div className="flex justify-center py-4">
@@ -538,7 +563,7 @@ export default function PhysioEvaluationsPage() {
 
           <Button onClick={() => void handleSave()} disabled={saving} className="min-h-[44px] w-full sm:w-auto">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Salvar avaliações
+            {usePeriodicProtocols ? "Salvar avaliação" : "Salvar avaliações"}
           </Button>
         </CardContent>
       </Card>

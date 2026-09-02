@@ -27,8 +27,12 @@ export function pctDifference(a: number, b: number): number {
 
 export function classifyYBalanceDirection(diffPct: number): ProtocolClassification {
   if (diffPct <= 10) return 'aprovado';
-  if (diffPct <= 12.5) return 'aceitavel';
+  if (diffPct <= 12) return 'aceitavel';
   return 'reprovado';
+}
+
+export function classifyHopTestDirection(diffPct: number): ProtocolClassification {
+  return classifyYBalanceDirection(diffPct);
 }
 
 export function classifyYBalance(input: {
@@ -37,10 +41,12 @@ export function classifyYBalance(input: {
 }) {
   const directions = ['frontal', 'lateral', 'cruzado'] as const;
   const differences: Record<string, number> = {};
+  const differencesAbs: Record<string, number> = {};
   const classifications: Record<string, ProtocolClassification> = {};
   for (const dir of directions) {
     const diff = pctDifference(input.right[dir], input.left[dir]);
     differences[dir] = Math.round(diff * 10) / 10;
+    differencesAbs[dir] = Math.round(Math.abs(input.right[dir] - input.left[dir]) * 10) / 10;
     classifications[dir] = classifyYBalanceDirection(diff);
   }
   const overall = worstClassification(Object.values(classifications), [
@@ -48,7 +54,7 @@ export function classifyYBalance(input: {
     'aceitavel',
     'reprovado',
   ]);
-  return { differences, classifications, overall };
+  return { differences, differencesAbs, classifications, overall };
 }
 
 export function classifyTTest(seconds: number): ProtocolClassification {
@@ -77,13 +83,12 @@ export function classifyHopTest(input: {
   const rightBest = Math.max(...input.rightJumps);
   const leftBest = Math.max(...input.leftJumps);
   const diffPct = pctDifference(rightBest, leftBest);
-  let overall: ProtocolClassification;
-  if (diffPct <= 10) overall = 'aceitavel';
-  else if (diffPct <= 12) overall = 'ruim';
-  else overall = 'reprovado';
+  const absDiff = Math.abs(rightBest - leftBest);
+  const overall = classifyHopTestDirection(diffPct);
   return {
     rightBest,
     leftBest,
+    absDiff: Math.round(absDiff * 10) / 10,
     diffPct: Math.round(diffPct * 10) / 10,
     overall,
   };
@@ -91,8 +96,8 @@ export function classifyHopTest(input: {
 
 export function classifyPerimetryPair(right: number, left: number): ProtocolClassification {
   const diff = pctDifference(right, left);
-  if (diff <= 10) return 'bom';
-  if (diff <= 15) return 'razoavel';
+  if (diff <= 10) return 'aprovado';
+  if (diff <= 15) return 'aceitavel';
   return 'reprovado';
 }
 
@@ -102,32 +107,45 @@ export function classifyPerimetria(input: {
   calfRight: number;
   calfLeft: number;
 }) {
-  const pairs: { key: string; classification: ProtocolClassification; diffPct: number }[] = [
+  const pairs: {
+    key: string;
+    classification: ProtocolClassification;
+    diffPct: number;
+    absDiff: number;
+  }[] = [
     {
       key: 'proximal',
       diffPct: pctDifference(input.right.proximal, input.left.proximal),
       classification: classifyPerimetryPair(input.right.proximal, input.left.proximal),
+      absDiff: Math.abs(input.right.proximal - input.left.proximal),
     },
     {
       key: 'medial',
       diffPct: pctDifference(input.right.medial, input.left.medial),
       classification: classifyPerimetryPair(input.right.medial, input.left.medial),
+      absDiff: Math.abs(input.right.medial - input.left.medial),
     },
     {
       key: 'distal',
       diffPct: pctDifference(input.right.distal, input.left.distal),
       classification: classifyPerimetryPair(input.right.distal, input.left.distal),
+      absDiff: Math.abs(input.right.distal - input.left.distal),
     },
     {
       key: 'panturrilha',
       diffPct: pctDifference(input.calfRight, input.calfLeft),
       classification: classifyPerimetryPair(input.calfRight, input.calfLeft),
+      absDiff: Math.abs(input.calfRight - input.calfLeft),
     },
-  ].map((p) => ({ ...p, diffPct: Math.round(p.diffPct * 10) / 10 }));
+  ].map((p) => ({
+    ...p,
+    diffPct: Math.round(p.diffPct * 10) / 10,
+    absDiff: Math.round(p.absDiff * 10) / 10,
+  }));
 
   const overall = worstClassification(
     pairs.map((p) => p.classification),
-    ['bom', 'razoavel', 'reprovado'],
+    ['aprovado', 'aceitavel', 'reprovado'],
   );
   return { pairs, overall };
 }

@@ -8,7 +8,14 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { api } from "@/lib/api";
 import type { PhysioEvaluationTest } from "@/types/fisioterapia";
-import { PHYSIO_PERIODIC_PROTOCOL_LABEL } from "@/lib/physio-periodic-labels";
+import { PHYSIO_PERIODIC_PROTOCOL_LABEL, PHYSIO_PROTOCOL_CLASSIFICATION_LABEL } from "@/lib/physio-periodic-labels";
+import {
+  computeHopTestBilateral,
+  computePerimetriaBilateral,
+  computeYBalanceBilateral,
+  type BilateralClassification,
+} from "@/lib/physio-periodic-bilateral";
+import { cn } from "@/lib/utils";
 
 export const PERIODIC_PROTOCOLS = [
   "y_balance",
@@ -31,6 +38,81 @@ export type PeriodicProtocolEntry = {
 function num(v: string): number {
   const n = Number(v.replace(",", "."));
   return Number.isFinite(n) ? n : 0;
+}
+
+function classificationClassName(classification: BilateralClassification): string {
+  switch (classification) {
+    case "aprovado":
+      return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
+    case "aceitavel":
+      return "border-amber-500/40 bg-amber-500/10 text-amber-200";
+    default:
+      return "border-destructive/40 bg-destructive/10 text-destructive";
+  }
+}
+
+function BilateralResultRows({
+  rows,
+}: {
+  rows: { key: string; label: string; result: { absDiff: number; pctDisplay: string; classification: BilateralClassification } }[];
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="space-y-2 rounded-lg border border-border/50 bg-muted/10 p-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Diferença bilateral
+      </p>
+      <div className="space-y-2">
+        {rows.map((row) => (
+          <div
+            key={row.key}
+            className="flex flex-wrap items-center justify-between gap-2 rounded border border-border/40 px-2 py-1.5 text-sm"
+          >
+            <span className="font-medium">{row.label}</span>
+            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+              <span className="text-muted-foreground">Δ {row.result.absDiff}</span>
+              <span className="text-muted-foreground">{row.result.pctDisplay}%</span>
+              <span
+                className={cn(
+                  "rounded-full border px-2 py-0.5 text-xs font-medium",
+                  classificationClassName(row.result.classification),
+                )}
+              >
+                {PHYSIO_PROTOCOL_CLASSIFICATION_LABEL[row.result.classification]}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BilateralSummary({ protocol, payload }: { protocol: PeriodicProtocol; payload: Record<string, unknown> }) {
+  if (protocol === "y_balance") {
+    const rows = computeYBalanceBilateral(payload);
+    return rows ? <BilateralResultRows rows={rows} /> : null;
+  }
+  if (protocol === "hop_test") {
+    const computed = computeHopTestBilateral(payload);
+    if (!computed) return null;
+    return (
+      <BilateralResultRows
+        rows={[
+          {
+            key: "best",
+            label: `Melhor salto (D ${computed.rightBest} · E ${computed.leftBest})`,
+            result: computed.result,
+          },
+        ]}
+      />
+    );
+  }
+  if (protocol === "perimetria") {
+    const rows = computePerimetriaBilateral(payload);
+    return rows ? <BilateralResultRows rows={rows} /> : null;
+  }
+  return null;
 }
 
 function ProtocolFields({
@@ -74,32 +156,35 @@ function ProtocolFields({
   switch (entry.protocol) {
     case "y_balance":
       return (
-        <div className="grid gap-3 sm:grid-cols-3">
-          {(["right", "left"] as const).map((side) => (
-            <div key={side} className="space-y-2 rounded border border-border/50 p-2">
-              <p className="text-xs font-medium uppercase text-muted-foreground">
-                {side === "right" ? "Direita" : "Esquerda"}
-              </p>
-              {(["frontal", "lateral", "cruzado"] as const).map((dir) => (
-                <div key={dir} className="grid gap-1">
-                  <Label className="text-xs capitalize">{dir}</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={String((p[side] as Record<string, number> | undefined)?.[dir] ?? "")}
-                    onChange={(e) =>
-                      setPayload({
-                        [side]: {
-                          ...((p[side] as Record<string, number>) ?? {}),
-                          [dir]: num(e.target.value),
-                        },
-                      })
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          ))}
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {(["right", "left"] as const).map((side) => (
+              <div key={side} className="space-y-2 rounded border border-border/50 p-2">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
+                  {side === "right" ? "Direita" : "Esquerda"}
+                </p>
+                {(["frontal", "lateral", "cruzado"] as const).map((dir) => (
+                  <div key={dir} className="grid gap-1">
+                    <Label className="text-xs capitalize">{dir}</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={String((p[side] as Record<string, number> | undefined)?.[dir] ?? "")}
+                      onChange={(e) =>
+                        setPayload({
+                          [side]: {
+                            ...((p[side] as Record<string, number>) ?? {}),
+                            [dir]: num(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <BilateralSummary protocol="y_balance" payload={p} />
         </div>
       );
     case "t_test":
@@ -135,78 +220,84 @@ function ProtocolFields({
       );
     case "hop_test":
       return (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {(["rightJumps", "leftJumps"] as const).map((key) => (
-            <div key={key} className="space-y-2 rounded border border-border/50 p-2">
-              <p className="text-xs font-medium uppercase text-muted-foreground">
-                {key === "rightJumps" ? "Direita (3 saltos cm)" : "Esquerda (3 saltos cm)"}
-              </p>
-              {[0, 1, 2].map((i) => (
-                <Input
-                  key={i}
-                  type="number"
-                  step="0.1"
-                  placeholder={`Salto ${i + 1}`}
-                  value={String((p[key] as number[] | undefined)?.[i] ?? "")}
-                  onChange={(e) => {
-                    const arr = [...((p[key] as number[]) ?? [0, 0, 0])];
-                    arr[i] = num(e.target.value);
-                    setPayload({ [key]: arr });
-                  }}
-                />
-              ))}
-            </div>
-          ))}
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(["rightJumps", "leftJumps"] as const).map((key) => (
+              <div key={key} className="space-y-2 rounded border border-border/50 p-2">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
+                  {key === "rightJumps" ? "Direita (3 saltos cm)" : "Esquerda (3 saltos cm)"}
+                </p>
+                {[0, 1, 2].map((i) => (
+                  <Input
+                    key={i}
+                    type="number"
+                    step="0.1"
+                    placeholder={`Salto ${i + 1}`}
+                    value={String((p[key] as number[] | undefined)?.[i] ?? "")}
+                    onChange={(e) => {
+                      const arr = [...((p[key] as number[]) ?? [0, 0, 0])];
+                      arr[i] = num(e.target.value);
+                      setPayload({ [key]: arr });
+                    }}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+          <BilateralSummary protocol="hop_test" payload={p} />
         </div>
       );
     case "perimetria":
       return (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {(["right", "left"] as const).map((side) => (
-            <div key={side} className="space-y-2 rounded border border-border/50 p-2">
-              <p className="text-xs font-medium uppercase text-muted-foreground">
-                {side === "right" ? "Direita" : "Esquerda"}
-              </p>
-              {(["proximal", "medial", "distal"] as const).map((dir) => (
-                <div key={dir} className="grid gap-1">
-                  <Label className="text-xs capitalize">{dir}</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={String((p[side] as Record<string, number> | undefined)?.[dir] ?? "")}
-                    onChange={(e) =>
-                      setPayload({
-                        [side]: {
-                          ...((p[side] as Record<string, number>) ?? {}),
-                          [dir]: num(e.target.value),
-                        },
-                      })
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          ))}
-          <div className="grid gap-2 sm:col-span-2 sm:grid-cols-2">
-            <div className="grid gap-1">
-              <Label>Panturrilha direita</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={String(p.calfRight ?? "")}
-                onChange={(e) => setPayload({ calfRight: num(e.target.value) })}
-              />
-            </div>
-            <div className="grid gap-1">
-              <Label>Panturrilha esquerda</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={String(p.calfLeft ?? "")}
-                onChange={(e) => setPayload({ calfLeft: num(e.target.value) })}
-              />
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(["right", "left"] as const).map((side) => (
+              <div key={side} className="space-y-2 rounded border border-border/50 p-2">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
+                  {side === "right" ? "Direita" : "Esquerda"}
+                </p>
+                {(["proximal", "medial", "distal"] as const).map((dir) => (
+                  <div key={dir} className="grid gap-1">
+                    <Label className="text-xs capitalize">{dir}</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={String((p[side] as Record<string, number> | undefined)?.[dir] ?? "")}
+                      onChange={(e) =>
+                        setPayload({
+                          [side]: {
+                            ...((p[side] as Record<string, number>) ?? {}),
+                            [dir]: num(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div className="grid gap-2 sm:col-span-2 sm:grid-cols-2">
+              <div className="grid gap-1">
+                <Label>Panturrilha direita</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={String(p.calfRight ?? "")}
+                  onChange={(e) => setPayload({ calfRight: num(e.target.value) })}
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label>Panturrilha esquerda</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={String(p.calfLeft ?? "")}
+                  onChange={(e) => setPayload({ calfLeft: num(e.target.value) })}
+                />
+              </div>
             </div>
           </div>
+          <BilateralSummary protocol="perimetria" payload={p} />
         </div>
       );
     case "agachamento_bastao":
