@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { ChevronRight, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardShell } from "@/context/DashboardShellContext";
@@ -117,9 +117,7 @@ function DepartmentRow({
     >
       <SidebarRowIcon icon={Icon} />
       <span className={cup360.sidebar.labelPrimary}>{dept.label}</span>
-      <span className="flex justify-end pr-0.5">
-        <ChevronRight className="h-3.5 w-3.5 opacity-40" />
-      </span>
+      <span className="pr-0.5" aria-hidden />
     </button>
   );
 }
