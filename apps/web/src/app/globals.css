@@ -564,39 +564,6 @@ body.dashboard-active {
 }
 
 /* CUP360 sidebar — áreas semânticas e tipografia compacta */
-.cup360-sidebar-nav {
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--border) / 0.55) transparent;
-}
-.cup360-sidebar-nav::-webkit-scrollbar {
-  width: 6px;
-}
-.cup360-sidebar-nav::-webkit-scrollbar-track {
-  background: transparent;
-}
-.cup360-sidebar-nav::-webkit-scrollbar-thumb {
-  background: hsl(var(--border) / 0.55);
-  border-radius: 9999px;
-}
-.cup360-sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.45);
-}
-
-.cup360-flyout-body {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--border) / 0.5) transparent;
-}
-.cup360-flyout-body::-webkit-scrollbar {
-  width: 6px;
-}
-.cup360-flyout-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-.cup360-flyout-body::-webkit-scrollbar-thumb {
-  background: hsl(var(--border) / 0.5);
-  border-radius: 9999px;
-}
 .cup360-sidebar-area-label {
   font-size: 0.6875rem;
   font-weight: 600;

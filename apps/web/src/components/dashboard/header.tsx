@@ -8,10 +8,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
 import { DashboardHeaderShortcuts } from "@/components/dashboard/DashboardUserShortcuts";
-import {
-  Cup360GlobalSearchDialog,
-  Cup360GlobalSearchTrigger,
-} from "@/components/dashboard/cup360/Cup360GlobalSearch";
 import { DashboardThemeToggle } from "@/components/dashboard/DashboardThemeToggle";
 import { resolveDashboardHeaderBreadcrumb } from "@/lib/dashboard-page-meta";
 
@@ -34,7 +30,6 @@ export function Header() {
   const displayUser = user?.name?.trim() || user?.email || "Usuário";
 
   return (
-    <>
     <header className="relative z-30 flex h-14 min-w-0 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 backdrop-blur-sm shadow-sm sm:h-16 sm:gap-3 sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-3">
         <Button
@@ -62,9 +57,7 @@ export function Header() {
             </>
           ) : null}
         </span>
-        <span className="hidden h-5 w-px shrink-0 bg-border lg:block" aria-hidden />
-        <Cup360GlobalSearchTrigger />
-        <span className="hidden h-5 w-px shrink-0 bg-border md:block" aria-hidden />
+        <span className="hidden h-5 w-px shrink-0 bg-border sm:block" aria-hidden />
         <DashboardHeaderShortcuts />
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
@@ -116,7 +109,5 @@ export function Header() {
         </Button>
       </div>
     </header>
-    <Cup360GlobalSearchDialog />
-    </>
   );
 }

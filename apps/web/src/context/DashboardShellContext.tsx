@@ -7,22 +7,15 @@ export type SidebarDesktopMode = "expanded" | "icons" | "hidden";
 const STORAGE_KEY = "bcg-dashboard-sidebar-mode";
 
 interface DashboardShellContextValue {
+  /** Overlay mobile (drawer) */
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   closeSidebar: () => void;
   onNavClick: () => void;
+  /** Desktop: expandido, só ícones ou oculto */
   sidebarDesktopMode: SidebarDesktopMode;
   setSidebarDesktopMode: (mode: SidebarDesktopMode) => void;
   cycleSidebarDesktopMode: () => void;
-  navFlyoutOpen: boolean;
-  navFlyoutDepartmentId: string | null;
-  navFlyoutModuleStack: string[];
-  openNavFlyout: (departmentId: string) => void;
-  pushNavFlyoutModule: (moduleId: string) => void;
-  popNavFlyoutModule: () => void;
-  closeNavFlyout: () => void;
-  globalSearchOpen: boolean;
-  setGlobalSearchOpen: (open: boolean) => void;
 }
 
 const DashboardShellContext = createContext<DashboardShellContextValue | null>(null);
@@ -42,10 +35,6 @@ function readStoredMode(): SidebarDesktopMode {
 export function DashboardShellProvider({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarDesktopMode, setSidebarDesktopModeState] = useState<SidebarDesktopMode>("expanded");
-  const [navFlyoutOpen, setNavFlyoutOpen] = useState(false);
-  const [navFlyoutDepartmentId, setNavFlyoutDepartmentId] = useState<string | null>(null);
-  const [navFlyoutModuleStack, setNavFlyoutModuleStack] = useState<string[]>([]);
-  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
 
   useEffect(() => {
     setSidebarDesktopModeState(readStoredMode());
@@ -84,26 +73,6 @@ export function DashboardShellProvider({ children }: { children: React.ReactNode
     if (isMobileNav()) setSidebarOpen(false);
   }, []);
 
-  const closeNavFlyout = useCallback(() => {
-    setNavFlyoutOpen(false);
-    setNavFlyoutDepartmentId(null);
-    setNavFlyoutModuleStack([]);
-  }, []);
-
-  const openNavFlyout = useCallback((departmentId: string) => {
-    setNavFlyoutDepartmentId(departmentId);
-    setNavFlyoutModuleStack([]);
-    setNavFlyoutOpen(true);
-  }, []);
-
-  const pushNavFlyoutModule = useCallback((moduleId: string) => {
-    setNavFlyoutModuleStack((prev) => [...prev, moduleId]);
-  }, []);
-
-  const popNavFlyoutModule = useCallback(() => {
-    setNavFlyoutModuleStack((prev) => (prev.length > 0 ? prev.slice(0, -1) : prev));
-  }, []);
-
   return (
     <DashboardShellContext.Provider
       value={{
@@ -114,15 +83,6 @@ export function DashboardShellProvider({ children }: { children: React.ReactNode
         sidebarDesktopMode,
         setSidebarDesktopMode,
         cycleSidebarDesktopMode,
-        navFlyoutOpen,
-        navFlyoutDepartmentId,
-        navFlyoutModuleStack,
-        openNavFlyout,
-        pushNavFlyoutModule,
-        popNavFlyoutModule,
-        closeNavFlyout,
-        globalSearchOpen,
-        setGlobalSearchOpen,
       }}
     >
       {children}
