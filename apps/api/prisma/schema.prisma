@@ -2896,6 +2896,12 @@ model ScoutingProspect {
   /** E-mail ao gerente enviado quando encaminhado como aprovado */
   managerNotifiedAt     DateTime?
   schedulerNotifiedAt DateTime?
+  /// nao_agendado | agendado | faltou | compareceu | em_avaliacao | concluido
+  ctScheduleStatus      String?
+  ctScheduledAt         DateTime?
+  ctScheduleNotes       String?  @db.Text
+  ctEvaluationStartedAt DateTime?
+  ctEvaluationCompletedAt DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   reports           ScoutingReport[]

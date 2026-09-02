@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   UserCheck,
   Scale,
+  CalendarClock,
 } from "lucide-react";
 import {
   DashboardDeptHeader,
@@ -88,6 +89,7 @@ import {
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { CaptacaoFieldMode } from "@/components/dashboard/futebol/CaptacaoFieldMode";
 import { CaptacaoReportDetailDialog } from "@/components/dashboard/futebol/CaptacaoReportDetailDialog";
+import { CaptacaoCtEvaluationPanel } from "@/components/dashboard/futebol/CaptacaoCtEvaluationPanel";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/scout-geolocation";
 
 const CaptacaoScoutMap = dynamic(
@@ -132,6 +134,7 @@ const EMPTY_PROSPECT = {
 
 const CAPTACAO_MAIN_TABS = [
   { id: "pipeline", label: "Pipeline", icon: Eye },
+  { id: "avaliacao-ct", label: "Avaliação CT", icon: CalendarClock },
   { id: "mapa", label: "Mapa GPS", icon: Map },
   { id: "captadores", label: "Captadores", icon: Users },
   { id: "relatorios", label: "Relatórios", icon: ClipboardList },
@@ -964,6 +967,12 @@ export function CaptacaoHub() {
                   </Table>
                 </CardContent>
               </Card>
+            </DashboardDeptSection>
+          )}
+
+          {tab === "avaliacao-ct" && (
+            <DashboardDeptSection title="Avaliação CT">
+              <CaptacaoCtEvaluationPanel tenantId={effectiveTenantId} />
             </DashboardDeptSection>
           )}
 

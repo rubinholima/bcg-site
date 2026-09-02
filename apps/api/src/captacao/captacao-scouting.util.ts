@@ -1,5 +1,6 @@
 import {
-  CAPTACAO_SCHEDULER_PHONE,
+  CT_SCHEDULE_STATUSES,
+  type CtScheduleStatus,
   type ScoutingEvaluationOutcome,
 } from './captacao.constants';
 
@@ -74,8 +75,11 @@ export function buildSchedulerNotificationMessage(input: {
   return lines.join('\n');
 }
 
-export function buildWhatsAppNotifyUrl(message: string, phone = CAPTACAO_SCHEDULER_PHONE): string {
-  let normalized = phone.replace(/\D/g, '');
+export function buildWhatsAppNotifyUrl(message: string, phone?: string | null): string | null {
+  const raw = phone?.trim();
+  if (!raw) return null;
+  let normalized = raw.replace(/\D/g, '');
+  if (!normalized) return null;
   if (normalized.length <= 11 && !normalized.startsWith('55')) {
     normalized = `55${normalized}`;
   }
@@ -173,4 +177,155 @@ function publicAppOrigin(): string {
 export function captacaoProspectProfileUrl(prospectId: string, tenantId?: string): string {
   const qs = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : '';
   return `${publicAppOrigin()}/dashboard/futebol/captacao/prospects/${prospectId}${qs}`;
+}
+
+type RatingSlice = {
+  overallRating?: number | null;
+  technicalRating?: number | null;
+  tacticalRating?: number | null;
+  physicalRating?: number | null;
+  cognitiveRating?: number | null;
+};
+
+type ObservationSlice = RatingSlice & {
+  scoutNotes?: string | null;
+  strengths?: string | null;
+  weaknesses?: string | null;
+  risks?: string | null;
+};
+
+export function resolveEffectiveRatings(
+  prospect: RatingSlice,
+  latestReport?: RatingSlice | null,
+): RatingSlice {
+  return {
+    overallRating: prospect.overallRating ?? latestReport?.overallRating ?? null,
+    technicalRating: prospect.technicalRating ?? latestReport?.technicalRating ?? null,
+    tacticalRating: prospect.tacticalRating ?? latestReport?.tacticalRating ?? null,
+    physicalRating: prospect.physicalRating ?? latestReport?.physicalRating ?? null,
+    cognitiveRating: prospect.cognitiveRating ?? latestReport?.cognitiveRating ?? null,
+  };
+}
+
+export function resolveProspectObservation(
+  prospect: {
+    descriptiveObservation?: string | null;
+    notes?: string | null;
+    strengths?: string | null;
+    weaknesses?: string | null;
+    risks?: string | null;
+  },
+  latestReport?: ObservationSlice | null,
+): string | null {
+  if (prospect.descriptiveObservation?.trim()) {
+    return prospect.descriptiveObservation.trim();
+  }
+  const fromProspect = mergeDescriptiveObservation({
+    scoutNotes: prospect.notes,
+    strengths: prospect.strengths,
+    weaknesses: prospect.weaknesses,
+    risks: prospect.risks,
+  });
+  if (fromProspect) return fromProspect;
+  if (!latestReport) return null;
+  return mergeDescriptiveObservation({
+    scoutNotes: latestReport.scoutNotes,
+    strengths: latestReport.strengths,
+    weaknesses: latestReport.weaknesses,
+    risks: latestReport.risks,
+  });
+}
+
+export function resolveProspectContact(prospect: {
+  agentName?: string | null;
+  agentPhone?: string | null;
+  agentEmail?: string | null;
+}) {
+  const contactPhone = prospect.agentPhone?.trim() || null;
+  const contactEmail = prospect.agentEmail?.trim() || null;
+  const contactName = prospect.agentName?.trim() || null;
+  let contactLabel: string | null = null;
+  if (contactName) contactLabel = 'Agente / representante';
+  else if (contactPhone) contactLabel = 'Telefone';
+  else if (contactEmail) contactLabel = 'E-mail';
+  return { contactPhone, contactEmail, contactName, contactLabel };
+}
+
+export function isProspectInCtQueue(prospect: {
+  stage: string;
+  evaluationOutcome?: string | null;
+  ctScheduleStatus?: string | null;
+}): boolean {
+  if (['recusado', 'arquivado'].includes(prospect.stage)) return false;
+  if (prospect.ctScheduleStatus === 'concluido') return false;
+  if (
+    prospect.ctScheduleStatus &&
+    CT_SCHEDULE_STATUSES.includes(prospect.ctScheduleStatus as CtScheduleStatus) &&
+    prospect.ctScheduleStatus !== 'concluido'
+  ) {
+    return true;
+  }
+  if (prospect.stage === 'tryout') return true;
+  if (
+    prospect.evaluationOutcome === 'para_teste' ||
+    prospect.evaluationOutcome === 'aprovado'
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function resolveEffectiveCtScheduleStatus(prospect: {
+  ctScheduleStatus?: string | null;
+  stage: string;
+  evaluationOutcome?: string | null;
+}): CtScheduleStatus | null {
+  if (!isProspectInCtQueue(prospect)) {
+    return (prospect.ctScheduleStatus as CtScheduleStatus | null) ?? null;
+  }
+  if (
+    prospect.ctScheduleStatus &&
+    CT_SCHEDULE_STATUSES.includes(prospect.ctScheduleStatus as CtScheduleStatus)
+  ) {
+    return prospect.ctScheduleStatus as CtScheduleStatus;
+  }
+  return 'nao_agendado';
+}
+
+export function enrichProspectDisplay<
+  T extends {
+    stage: string;
+    evaluationOutcome?: string | null;
+    ctScheduleStatus?: string | null;
+    descriptiveObservation?: string | null;
+    notes?: string | null;
+    strengths?: string | null;
+    weaknesses?: string | null;
+    risks?: string | null;
+    agentName?: string | null;
+    agentPhone?: string | null;
+    agentEmail?: string | null;
+    overallRating?: number | null;
+    technicalRating?: number | null;
+    tacticalRating?: number | null;
+    physicalRating?: number | null;
+    cognitiveRating?: number | null;
+    reports?: ObservationSlice[];
+  },
+>(prospect: T) {
+  const latestReport = prospect.reports?.[0] ?? null;
+  const effectiveRatings = resolveEffectiveRatings(prospect, latestReport);
+  const observationText = resolveProspectObservation(prospect, latestReport);
+  const contact = resolveProspectContact(prospect);
+  const effectiveCtScheduleStatus = resolveEffectiveCtScheduleStatus(prospect);
+  const inCtQueue = isProspectInCtQueue(prospect);
+  return {
+    ...prospect,
+    ...effectiveRatings,
+    observationText,
+    ...contact,
+    effectiveCtScheduleStatus,
+    inCtQueue,
+    latestReportId: latestReport ? (latestReport as { id?: string }).id ?? null : null,
+  };
 }

@@ -22,8 +22,6 @@ import {
 } from "@/lib/captacao-types";
 import { useEffect, useState } from "react";
 
-const SCHEDULER_PHONE = "33984133636";
-
 interface Props {
   reportId: string | null;
   tenantId?: string;
@@ -73,7 +71,7 @@ export function CaptacaoReportDetailDialog({ reportId, tenantId, onClose }: Prop
         .join("\n")
     : "";
 
-  const waUrl = buildWhatsAppUrl(SCHEDULER_PHONE, waMessage);
+  const waUrl = buildWhatsAppUrl(prospect?.agentPhone, waMessage);
 
   return (
     <Dialog open={!!reportId} onOpenChange={(open) => !open && onClose()}>

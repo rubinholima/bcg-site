@@ -85,6 +85,7 @@ import {
   Printer,
   HeartPulse,
   UserPen,
+  ScanSearch,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
@@ -235,6 +236,7 @@ export interface PlayerTabConfig {
 /** Abas do formulário de jogador. Avaliação psicológica e Análise de desempenho exigem módulo. */
 export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "dados", label: "Dados", icon: UserCircle, moduleSlug: null },
+  { id: "captacao", label: "Captação", icon: ScanSearch, moduleSlug: "futebol_captacao" },
   { id: "psicologica", label: "Psicológica", icon: Brain, moduleSlug: "saude" },
   { id: "fisioterapia", label: "Fisioterapia", icon: Activity, moduleSlug: "saude" },
   { id: "enfermaria", label: "Enfermaria", icon: HeartPulse, moduleSlug: "saude" },

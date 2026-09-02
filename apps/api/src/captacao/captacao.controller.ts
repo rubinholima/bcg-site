@@ -25,6 +25,7 @@ import {
   ScoutTrackingDto,
 } from './dto/scout-location.dto';
 import { ApproveProspectDto, PromoteProspectDto } from './dto/approve-prospect.dto';
+import { UpdateCtScheduleDto } from './dto/update-ct-schedule.dto';
 
 @Controller('captacao')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -121,6 +122,20 @@ export class CaptacaoController {
     return this.service.findProspects(tenantId, stage, priority, scoutId, search);
   }
 
+  @Get('ct-evaluation-queue')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  findCtEvaluationQueue(@Query('tenantId') tenantId?: string) {
+    return this.service.findCtEvaluationQueue(tenantId);
+  }
+
+  @Get('players/:playerId/history')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  findPlayerCaptacaoHistory(@Param('playerId') playerId: string) {
+    return this.service.findPlayerCaptacaoHistory(playerId);
+  }
+
   @Get('prospects/:id')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('futebol_captacao')
@@ -140,6 +155,13 @@ export class CaptacaoController {
   @RequireModule('futebol_captacao')
   updateProspect(@Param('id') id: string, @Body() dto: UpdateProspectDto) {
     return this.service.updateProspect(id, dto);
+  }
+
+  @Patch('prospects/:id/ct-schedule')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  updateCtSchedule(@Param('id') id: string, @Body() dto: UpdateCtScheduleDto) {
+    return this.service.updateCtSchedule(id, dto);
   }
 
   @Post('prospects/:id/approve')

@@ -50,6 +50,7 @@ import { PlayerMedicalDeparturesSection } from "@/components/dashboard/medico/Pl
 import { PlayerNutritionSection } from "@/components/dashboard/nutricao/PlayerNutritionSection";
 import { PlayerPhysiologySection } from "@/components/dashboard/fisiologia/PlayerPhysiologySection";
 import { PlayerSocialPedagogySection } from "@/components/dashboard/assistencia-social/PlayerSocialPedagogySection";
+import { PlayerCaptacaoSection } from "@/components/dashboard/futebol/PlayerCaptacaoSection";
 import { PlayerFmfStatsSection } from "@/components/dashboard/players/PlayerFmfStatsSection";
 import { PlayerSubidaHistorySection } from "@/components/dashboard/players/PlayerSubidaHistorySection";
 import { PlayerDisciplineHistorySection } from "@/components/dashboard/discipline/PersonalDisciplineHistorySection";
@@ -551,6 +552,10 @@ export default function EditJogadorPage() {
             />
           </CardContent>
         </Card>
+      )}
+
+      {activeTab === "captacao" && player && (
+        <PlayerCaptacaoSection playerId={player.id} />
       )}
 
       {/* Tab: Avaliação psicológica — anamnese e registros (Depto Saúde) */}

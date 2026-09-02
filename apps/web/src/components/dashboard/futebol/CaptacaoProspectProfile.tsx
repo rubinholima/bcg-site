@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
@@ -21,6 +21,8 @@ import {
   labelForRecommendation,
   labelForEvaluationOutcome,
   formatScoutingRating,
+  labelForCtScheduleStatus,
+  ctScheduleBadgeClass,
   priorityBadgeClass,
   stageBadgeClass,
   emptyDimensionEvals,
@@ -32,8 +34,7 @@ import {
   EMPTY_EVALUATION_FORM,
   type CaptacaoEvaluationFormValues,
 } from "./CaptacaoEvaluationFields";
-
-const SCHEDULER_PHONE = "33984133636";
+import { CaptacaoProspectCtSchedule } from "./CaptacaoProspectCtSchedule";
 
 function InfoBlock({ label, value }: { label: string; value?: string | null }) {
   if (!value?.trim()) return null;
@@ -228,10 +229,8 @@ export function CaptacaoProspectProfile() {
         .join("\n")
     : "";
 
-  const waUrl =
-    prospect?.evaluationOutcome === "para_teste"
-      ? buildWhatsAppUrl(SCHEDULER_PHONE, waMessage)
-      : null;
+  const contactPhone = prospect?.contactPhone ?? prospect?.agentPhone ?? null;
+  const waUrl = contactPhone ? buildWhatsAppUrl(contactPhone, waMessage) : null;
 
   if (loading) {
     return (
@@ -259,7 +258,8 @@ export function CaptacaoProspectProfile() {
         {waUrl ? (
           <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-600/90" asChild>
             <a href={waUrl} target="_blank" rel="noopener noreferrer">
-              WhatsApp — agendar teste
+              <MessageCircle className="mr-2 h-4 w-4" />
+              WhatsApp
             </a>
           </Button>
         ) : null}
@@ -278,6 +278,13 @@ export function CaptacaoProspectProfile() {
             <span className="rounded border border-border/60 px-2 py-0.5 text-xs">
               {labelForEvaluationOutcome(prospect.evaluationOutcome ?? "pendente")}
             </span>
+            {prospect.effectiveCtScheduleStatus ? (
+              <span
+                className={`rounded border px-2 py-0.5 text-xs ${ctScheduleBadgeClass(prospect.effectiveCtScheduleStatus)}`}
+              >
+                {labelForCtScheduleStatus(prospect.effectiveCtScheduleStatus)}
+              </span>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -290,8 +297,24 @@ export function CaptacaoProspectProfile() {
             label="Última observação"
             value={prospect.lastObservedAt ? formatDateDayMonYear(prospect.lastObservedAt) : undefined}
           />
+          {prospect.contactLabel && (prospect.contactName || prospect.contactPhone || prospect.contactEmail) ? (
+            <>
+              <InfoBlock
+                label={prospect.contactLabel}
+                value={prospect.contactName ?? undefined}
+              />
+              <InfoBlock label="Telefone" value={prospect.contactPhone ?? undefined} />
+              <InfoBlock label="E-mail" value={prospect.contactEmail ?? undefined} />
+            </>
+          ) : prospect.contactPhone ? (
+            <InfoBlock label="Telefone" value={prospect.contactPhone} />
+          ) : null}
         </CardContent>
       </Card>
+
+      {prospect.inCtQueue ? (
+        <CaptacaoProspectCtSchedule prospect={prospect} onUpdated={loadProspect} />
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {[
@@ -339,13 +362,15 @@ export function CaptacaoProspectProfile() {
         </CardContent>
       </Card>
 
-      {prospect.descriptiveObservation ? (
+      {(prospect.observationText ?? prospect.descriptiveObservation) ? (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Observação descritiva</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap text-sm">{prospect.descriptiveObservation}</p>
+            <p className="whitespace-pre-wrap text-sm">
+              {prospect.observationText ?? prospect.descriptiveObservation}
+            </p>
           </CardContent>
         </Card>
       ) : null}

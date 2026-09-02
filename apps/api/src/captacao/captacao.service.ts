@@ -12,9 +12,12 @@ import { UpdateProspectDto } from './dto/update-prospect.dto';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ScoutLocationPingDto, ScoutTrackingDto } from './dto/scout-location.dto';
 import { ApproveProspectDto, PromoteProspectDto } from './dto/approve-prospect.dto';
+import { UpdateCtScheduleDto } from './dto/update-ct-schedule.dto';
 import {
   SCOUTING_EVALUATION_OUTCOMES,
   CAPTACAO_MANAGER_EMAIL,
+  CT_SCHEDULE_STATUSES,
+  type CtScheduleStatus,
   type ScoutingEvaluationOutcome,
 } from './captacao.constants';
 import {
@@ -23,6 +26,8 @@ import {
   buildManagerApprovalEmailText,
   captacaoProspectProfileUrl,
   computeReportDimensionRatings,
+  enrichProspectDisplay,
+  isProspectInCtQueue,
   mergeDescriptiveObservation,
   resolveStageFromOutcome,
 } from './captacao-scouting.util';
@@ -92,6 +97,7 @@ export class CaptacaoService {
       targetCategory?: string | null;
       priority?: string | null;
       evaluationOutcome?: string | null;
+      agentPhone?: string | null;
     };
     scoutName?: string | null;
     overallRating?: number | null;
@@ -120,10 +126,11 @@ export class CaptacaoService {
       recommendation: input.recommendation,
       dashboardUrl: `/dashboard/futebol/captacao/prospects/${input.prospectId}`,
     });
+    const contactPhone = input.prospect.agentPhone?.trim() || null;
     return {
-      phone: '33984133636',
+      phone: contactPhone,
       message,
-      whatsappUrl: buildWhatsAppNotifyUrl(message),
+      whatsappUrl: buildWhatsAppNotifyUrl(message, contactPhone),
     };
   }
 
@@ -556,7 +563,142 @@ export class CaptacaoService {
       },
     });
     if (!prospect) throw new NotFoundException('Prospect não encontrado');
-    return prospect;
+    return enrichProspectDisplay(prospect);
+  }
+
+  async findCtEvaluationQueue(tenantId?: string) {
+    const where: Prisma.ScoutingProspectWhereInput = {
+      stage: { notIn: ['recusado', 'arquivado'] },
+      NOT: { ctScheduleStatus: 'concluido' },
+      OR: [
+        {
+          ctScheduleStatus: {
+            in: ['nao_agendado', 'agendado', 'faltou', 'compareceu', 'em_avaliacao'],
+          },
+        },
+        { stage: 'tryout' },
+        { evaluationOutcome: { in: ['para_teste', 'aprovado'] } },
+      ],
+    };
+    if (tenantId) where.tenantId = tenantId;
+
+    const rows = await this.prisma.scoutingProspect.findMany({
+      where,
+      orderBy: [
+        { priority: 'asc' },
+        { ctScheduledAt: 'asc' },
+        { updatedAt: 'desc' },
+      ],
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        scout: { select: { id: true, name: true, phone: true } },
+        reports: {
+          orderBy: { reportDate: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            overallRating: true,
+            technicalRating: true,
+            tacticalRating: true,
+            physicalRating: true,
+            cognitiveRating: true,
+            scoutNotes: true,
+            strengths: true,
+            weaknesses: true,
+            risks: true,
+          },
+        },
+      },
+    });
+
+    return rows
+      .filter((p) => isProspectInCtQueue(p))
+      .map((p) => enrichProspectDisplay(p));
+  }
+
+  async findPlayerCaptacaoHistory(playerId: string) {
+    const prospect = await this.prisma.scoutingProspect.findFirst({
+      where: { playerId },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        scout: { select: { id: true, name: true, phone: true, email: true } },
+        reports: {
+          orderBy: { reportDate: 'desc' },
+          include: { scout: { select: { id: true, name: true } } },
+        },
+      },
+    });
+    if (!prospect) return null;
+    return enrichProspectDisplay(prospect);
+  }
+
+  async updateCtSchedule(id: string, dto: UpdateCtScheduleDto) {
+    const prospect = await this.prisma.scoutingProspect.findUnique({ where: { id } });
+    if (!prospect) throw new NotFoundException('Prospect não encontrado');
+
+    const nextStatus = dto.ctScheduleStatus;
+    if (nextStatus && !CT_SCHEDULE_STATUSES.includes(nextStatus)) {
+      throw new BadRequestException('Status de agendamento inválido.');
+    }
+
+    const data: Prisma.ScoutingProspectUpdateInput = {};
+
+    if (nextStatus) {
+      data.ctScheduleStatus = nextStatus;
+      if (nextStatus === 'agendado') {
+        if (!dto.ctScheduledAt?.trim()) {
+          throw new BadRequestException('Informe data e hora do agendamento.');
+        }
+        data.ctScheduledAt = new Date(dto.ctScheduledAt);
+        if (dto.presentationDate?.trim()) {
+          data.presentationDate = dto.presentationDate.trim();
+        }
+      } else if (nextStatus === 'faltou') {
+        if (dto.ctScheduleNotes !== undefined) {
+          data.ctScheduleNotes = dto.ctScheduleNotes?.trim() || null;
+        }
+      } else if (nextStatus === 'compareceu') {
+        if (dto.presentationDate?.trim()) {
+          data.presentationDate = dto.presentationDate.trim();
+        } else if (!prospect.presentationDate) {
+          const today = new Date().toISOString().slice(0, 10);
+          data.presentationDate = today;
+        }
+      } else if (nextStatus === 'em_avaliacao') {
+        data.ctEvaluationStartedAt = new Date();
+        if (dto.presentationDate?.trim()) {
+          data.presentationDate = dto.presentationDate.trim();
+        }
+      } else if (nextStatus === 'concluido') {
+        data.ctEvaluationCompletedAt = new Date();
+      }
+    }
+
+    if (dto.ctScheduledAt && !nextStatus) {
+      data.ctScheduledAt = new Date(dto.ctScheduledAt);
+    }
+    if (dto.ctScheduleNotes !== undefined && nextStatus !== 'faltou') {
+      data.ctScheduleNotes = dto.ctScheduleNotes?.trim() || null;
+    }
+    if (dto.presentationDate !== undefined && !['agendado', 'compareceu', 'em_avaliacao'].includes(nextStatus ?? '')) {
+      data.presentationDate = dto.presentationDate?.trim() || null;
+    }
+
+    const updated = await this.prisma.scoutingProspect.update({
+      where: { id },
+      data,
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        scout: true,
+        player: true,
+        reports: {
+          orderBy: { reportDate: 'desc' },
+          include: { scout: { select: { id: true, name: true } } },
+        },
+      },
+    });
+
+    return enrichProspectDisplay(updated);
   }
 
   async createProspect(dto: CreateProspectDto) {
@@ -854,6 +996,15 @@ export class CaptacaoService {
         needsLodging: needsLodging ?? null,
         presentationDate: presentationDate ?? null,
         stage: nextStage,
+        ...(evaluationOutcome === 'para_teste' || evaluationOutcome === 'aprovado'
+          ? {
+              ctScheduleStatus:
+                prospect.ctScheduleStatus &&
+                prospect.ctScheduleStatus !== 'nao_agendado'
+                  ? prospect.ctScheduleStatus
+                  : ('nao_agendado' as CtScheduleStatus),
+            }
+          : {}),
         ...(evaluationOutcome === 'para_teste' ? { schedulerNotifiedAt: new Date() } : {}),
         ...(evaluationOutcome === 'aprovado' ? { managerNotifiedAt: new Date() } : {}),
       },
@@ -872,6 +1023,7 @@ export class CaptacaoService {
           targetCategory: prospect.targetCategory,
           priority: prospect.priority,
           evaluationOutcome,
+          agentPhone: prospect.agentPhone,
         },
         scoutName: report.scout?.name,
         overallRating: dto.overallRating ?? null,

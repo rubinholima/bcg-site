@@ -32,6 +32,17 @@ export const SCOUTING_EVALUATION_OUTCOMES = [
   { value: 'para_teste', label: 'Para teste / try-out' },
 ] as const;
 
+export const CT_SCHEDULE_STATUSES = [
+  { value: 'nao_agendado', label: 'Não agendado' },
+  { value: 'agendado', label: 'Agendado' },
+  { value: 'faltou', label: 'Faltou — reagendar' },
+  { value: 'compareceu', label: 'Compareceu' },
+  { value: 'em_avaliacao', label: 'Em avaliação CT' },
+  { value: 'concluido', label: 'Concluído' },
+] as const;
+
+export type CtScheduleStatus = (typeof CT_SCHEDULE_STATUSES)[number]['value'];
+
 export type ScoutingEvaluationOutcome = (typeof SCOUTING_EVALUATION_OUTCOMES)[number]['value'];
 
 export const SCOUTING_RATING_SCALE = { min: 0, max: 10, step: 0.5 } as const;
@@ -276,6 +287,19 @@ export interface ScoutingProspect {
   legalStatus?: string | null;
   needsLodging?: boolean | null;
   presentationDate?: string | null;
+  ctScheduleStatus?: CtScheduleStatus | null;
+  ctScheduledAt?: string | null;
+  ctScheduleNotes?: string | null;
+  ctEvaluationStartedAt?: string | null;
+  ctEvaluationCompletedAt?: string | null;
+  /** Campos enriquecidos pela API (fallback de relatório) */
+  observationText?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  contactName?: string | null;
+  contactLabel?: string | null;
+  effectiveCtScheduleStatus?: CtScheduleStatus | null;
+  inCtQueue?: boolean;
   reports?: ScoutingReportDetail[];
   _count?: { reports: number };
 }
@@ -311,9 +335,9 @@ export interface ScoutingReport {
 export type ScoutingReportDetail = ScoutingReport;
 
 export interface SchedulerNotification {
-  phone: string;
+  phone: string | null;
   message: string;
-  whatsappUrl: string;
+  whatsappUrl: string | null;
 }
 
 export interface ManagerEmailNotification {
@@ -323,6 +347,27 @@ export interface ManagerEmailNotification {
 
 export function labelForEvaluationOutcome(value: string): string {
   return SCOUTING_EVALUATION_OUTCOMES.find((o) => o.value === value)?.label ?? value;
+}
+
+export function labelForCtScheduleStatus(value: string): string {
+  return CT_SCHEDULE_STATUSES.find((s) => s.value === value)?.label ?? value;
+}
+
+export function ctScheduleBadgeClass(status: string): string {
+  switch (status) {
+    case 'agendado':
+      return 'bg-sky-500/20 text-sky-300 border-sky-500/30';
+    case 'faltou':
+      return 'bg-red-500/20 text-red-300 border-red-500/30';
+    case 'compareceu':
+      return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+    case 'em_avaliacao':
+      return 'bg-violet-500/20 text-violet-300 border-violet-500/30';
+    case 'concluido':
+      return 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30';
+    default:
+      return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+  }
 }
 
 export function formatScoutingRating(value: number | null | undefined): string {

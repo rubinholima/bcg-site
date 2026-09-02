@@ -19,5 +19,26 @@ export const SCOUTING_EVALUATION_OUTCOME_LABELS: Record<ScoutingEvaluationOutcom
   para_teste: 'Para teste / try-out',
 };
 
+/** Status operacional do agendamento / avaliação no CT */
+export const CT_SCHEDULE_STATUSES = [
+  'nao_agendado',
+  'agendado',
+  'faltou',
+  'compareceu',
+  'em_avaliacao',
+  'concluido',
+] as const;
+
+export type CtScheduleStatus = (typeof CT_SCHEDULE_STATUSES)[number];
+
+export const CT_SCHEDULE_STATUS_LABELS: Record<CtScheduleStatus, string> = {
+  nao_agendado: 'Não agendado',
+  agendado: 'Agendado',
+  faltou: 'Faltou — reagendar',
+  compareceu: 'Compareceu',
+  em_avaliacao: 'Em avaliação CT',
+  concluido: 'Concluído',
+};
+
 export const SCOUTING_RATING_MIN = 0;
 export const SCOUTING_RATING_MAX = 10;
