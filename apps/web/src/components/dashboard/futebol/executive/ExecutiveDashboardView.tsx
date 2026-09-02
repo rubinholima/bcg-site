@@ -9,11 +9,25 @@ import { ExecutiveHealthPanel } from "./ExecutiveHealthPanel";
 import { ExecutivePerformancePanel } from "./ExecutivePerformancePanel";
 import { ExecutiveCaptacaoPipeline } from "./ExecutiveCaptacaoPipeline";
 import {
-  ExecutiveBottomPanels,
+  ExecutiveAgendaPanel,
+  ExecutiveContractsPanel,
+  ExecutiveFinancePanel,
+  ExecutiveLogisticsPanel,
   ExecutiveQuickActionsGrid,
 } from "./ExecutiveBottomPanels";
 import type { ExecutiveDashboardDto, TenantOption } from "@/lib/futebol-executive-types";
 import type { FixtureCategoryItem } from "@/lib/fixture-categories";
+
+function showFinancePanel(data: ExecutiveDashboardDto): boolean {
+  const finance = data.finance;
+  if (!finance) return false;
+  return (
+    finance.pendingFinanceiroApprovals > 0 ||
+    finance.pendingDiretoriaApprovals > 0 ||
+    (finance.lancamentosPendentes ?? 0) > 0 ||
+    (finance.lancamentosVencidos ?? 0) > 0
+  );
+}
 
 export function ExecutiveDashboardView({
   data,
@@ -56,6 +70,8 @@ export function ExecutiveDashboardView({
     );
   }
 
+  const financeVisible = showFinancePanel(data);
+
   return (
     <div className="mx-auto w-full max-w-[1680px] space-y-3 pb-6">
       <ExecutiveTopBar
@@ -74,7 +90,7 @@ export function ExecutiveDashboardView({
 
       <ExecutiveKpiStrip kpis={data.kpis} />
 
-      <div className="grid grid-cols-12 gap-3">
+      <div className="grid grid-cols-12 items-start gap-3">
         <div className="col-span-12 space-y-3 xl:col-span-8">
           <ExecutiveSportPanel
             squad={data.squad}
@@ -91,20 +107,19 @@ export function ExecutiveDashboardView({
             </div>
           )}
           {data.captacao ? <ExecutiveCaptacaoPipeline captacao={data.captacao} /> : null}
+          {data.logistics ? <ExecutiveLogisticsPanel logistics={data.logistics} /> : null}
+          {financeVisible && data.finance ? (
+            <ExecutiveFinancePanel finance={data.finance} />
+          ) : null}
         </div>
-        <div className="col-span-12 xl:col-span-4">
+
+        <div className="col-span-12 space-y-3 xl:col-span-4">
           <ExecutiveDecisionsAlertsColumn decisions={data.decisions} alerts={data.alerts} />
+          {data.contracts ? <ExecutiveContractsPanel contracts={data.contracts} /> : null}
+          <ExecutiveAgendaPanel agenda={data.agenda} />
+          <ExecutiveQuickActionsGrid actions={data.quickActions} compact />
         </div>
       </div>
-
-      <ExecutiveBottomPanels
-        contracts={data.contracts}
-        logistics={data.logistics}
-        agenda={data.agenda}
-        finance={data.finance}
-      />
-
-      <ExecutiveQuickActionsGrid actions={data.quickActions} />
     </div>
   );
 }
