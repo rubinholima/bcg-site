@@ -190,18 +190,45 @@ export function PlayerPhysiologySection({ playerId, playerName, playerCategory }
           {loadEntries.length === 0 ? (
             <p className="text-muted-foreground">Nenhum registro de carga.</p>
           ) : (
-            loadEntries.slice(0, 8).map((e) => (
-              <p key={e.id ?? `${e.playerId}-${e.session?.sessionDate}`} className="text-muted-foreground">
-                {e.session?.sessionDate
-                  ? formatDateDayMonYear(new Date(`${e.session.sessionDate}T12:00:00`))
-                  : "—"}
-                {" — "}
-                {e.session?.sessionType === "jogo" ? "Jogo" : "Treino"}
-                {e.maxDistanceM != null ? ` · ${e.maxDistanceM} m` : ""}
-                {e.maxSpeedKmh != null ? ` · ${e.maxSpeedKmh} km/h` : ""}
-                {e.rpe != null ? ` · PSE ${e.rpe}` : ""}
-              </p>
-            ))
+            loadEntries.slice(0, 8).map((e) => {
+              const accel = e.gpsData?.accelerations;
+              const decel = e.gpsData?.decelerations;
+              const sessionRef =
+                e.session?.sessionLabel ??
+                e.session?.trainingType ??
+                (e.session?.sessionType === "jogo" ? "Jogo" : "Treino");
+              const minutes = e.session?.sessionType === "jogo" ? e.gameMinutes : e.trainingMinutes;
+              return (
+                <div
+                  key={e.id ?? `${e.playerId}-${e.session?.sessionDate}`}
+                  className="rounded-lg border border-border/60 p-3 text-muted-foreground"
+                >
+                  <p className="font-medium text-foreground">
+                    {e.session?.sessionDate
+                      ? formatDateDayMonYear(new Date(`${e.session.sessionDate}T12:00:00`))
+                      : "—"}
+                    {" — "}
+                    {e.session?.sessionType === "jogo" ? "Jogo" : "Treino"}
+                    {sessionRef ? ` · ${sessionRef}` : ""}
+                  </p>
+                  <p className="mt-1 text-xs">
+                    {minutes != null ? `${minutes} min` : "—"}
+                    {e.maxDistanceM != null ? ` · ${Math.round(e.maxDistanceM)} m total` : ""}
+                    {e.lowIntensityDistanceM != null
+                      ? ` · baixa ${Math.round(e.lowIntensityDistanceM)} m`
+                      : ""}
+                    {e.highIntensityDistanceM != null
+                      ? ` · alta ${Math.round(e.highIntensityDistanceM)} m`
+                      : ""}
+                    {e.sprintCount != null ? ` · ${e.sprintCount} sprints` : ""}
+                    {e.maxSpeedKmh != null ? ` · ${e.maxSpeedKmh} km/h máx` : ""}
+                    {typeof accel === "number" ? ` · ${accel} acel` : ""}
+                    {typeof decel === "number" ? ` · ${decel} desac` : ""}
+                    {e.rpe != null ? ` · PSE ${e.rpe}` : ""}
+                  </p>
+                </div>
+              );
+            })
           )}
         </CardContent>
       </Card>

@@ -114,6 +114,7 @@ export type PhysiologyLoadEntryRow = {
   lowIntensityDistanceM?: number | null;
   sprintDistanceM?: number | null;
   gpsImportLabel?: string | null;
+  gpsData?: Record<string, unknown> | null;
   notes?: string | null;
   player?: { id: string; name: string; jerseyNumber: number | null };
 };
@@ -126,6 +127,9 @@ export type PhysiologyLoadSessionRow = {
   sessionType: string;
   period: string | null;
   trainingType: string | null;
+  sessionLabel: string | null;
+  sourceFileName: string | null;
+  fixtureKey: string | null;
   staffName: string | null;
   notes: string | null;
   entries: PhysiologyLoadEntryRow[];
@@ -298,7 +302,15 @@ export type TransitionMonthlyReport = {
 export type PlayerPhysiologyLoadEntry = PhysiologyLoadEntryRow & {
   session: Pick<
     PhysiologyLoadSessionRow,
-    'id' | 'sessionDate' | 'sessionType' | 'category' | 'period' | 'trainingType'
+    | "id"
+    | "sessionDate"
+    | "sessionType"
+    | "category"
+    | "period"
+    | "trainingType"
+    | "sessionLabel"
+    | "sourceFileName"
+    | "fixtureKey"
   >;
 };
 

@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { NativeSelect, NativeSelectField } from "@/components/ui/native-select";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import {
@@ -18,9 +25,12 @@ import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categ
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { isFootballKind } from "@/lib/home-data";
 import type { PhysiologyLoadEntryRow } from "@/lib/fisiologia-types";
+import type { FutebolGameListItem, FutebolGamesListResponse } from "@/lib/futebol-jogos.types";
 import {
+  applyAmbiguousResolution,
   parseGpsImportText,
   parseGpsXlsxFile,
+  type GpsImportResult,
   type GpsImportRowPatch,
 } from "@/lib/fisiologia-gps-import";
 
@@ -36,6 +46,7 @@ interface RosterPlayer {
   name: string;
   jerseyNumber: number | null;
   category: string | null;
+  registrationProfile?: unknown;
 }
 
 type EntryDraft = PhysiologyLoadEntryRow & { playerName: string };
@@ -54,6 +65,7 @@ function emptyEntry(player: RosterPlayer): EntryDraft {
     highIntensityDistanceM: null,
     lowIntensityDistanceM: null,
     sprintDistanceM: null,
+    gpsData: null,
     player: { id: player.id, name: player.name, jerseyNumber: player.jerseyNumber },
   };
 }
@@ -88,6 +100,10 @@ function applyGpsPatch(entry: EntryDraft, patch: GpsImportRowPatch): EntryDraft 
       patch.sprintDistanceM !== undefined
         ? (patch.sprintDistanceM as number | null)
         : entry.sprintDistanceM,
+    gpsData:
+      patch.gpsData !== undefined
+        ? (patch.gpsData as Record<string, unknown> | null)
+        : entry.gpsData,
   };
 }
 
@@ -111,26 +127,25 @@ function sanitizeEntryForSave(entry: EntryDraft) {
     lowIntensityDistanceM: asNum(entry.lowIntensityDistanceM),
     sprintDistanceM: asNum(entry.sprintDistanceM),
     gpsImportLabel: entry.gpsImportLabel ?? undefined,
+    gpsData: entry.gpsData ?? undefined,
     notes: entry.notes ?? undefined,
   };
 }
 
-function buildImportMessage(result: {
-  matched: number;
-  withGpsData: number;
-  unmatched: string[];
-}): string {
-  if (result.matched === 0) {
+function buildImportMessage(result: GpsImportResult): string {
+  if (result.matched === 0 && result.ambiguous.length === 0) {
     return "Nenhum atleta reconhecido na planilha. Confira categoria e nomes.";
   }
   const parts = [
-    `${result.matched} atleta(s) reconhecido(s)`,
-    `${result.withGpsData} com dados GPS preenchidos`,
+    `${result.workbookAthleteCount} atleta(s) na planilha`,
+    `${result.matched} vinculado(s)`,
+    `${result.withGpsData} com métricas GPS`,
   ];
   if (result.unmatched.length > 0) {
-    const sample = result.unmatched.slice(0, 4).join(", ");
-    const extra = result.unmatched.length > 4 ? ` (+${result.unmatched.length - 4})` : "";
-    parts.push(`Sem vínculo: ${sample}${extra}`);
+    parts.push(`${result.unmatched.length} sem vínculo`);
+  }
+  if (result.ambiguous.length > 0) {
+    parts.push(`${result.ambiguous.length} ambíguo(s) — resolva antes de confirmar`);
   }
   return parts.join(" · ");
 }
@@ -143,6 +158,8 @@ export function FisiologiaCargaPanel() {
   const [category, setCategory] = useState("");
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [sessionType, setSessionType] = useState("treino");
+  const [sessionLabel, setSessionLabel] = useState("");
+  const [fixtureKey, setFixtureKey] = useState("");
   const [period, setPeriod] = useState("");
   const [trainingType, setTrainingType] = useState("");
   const [staffName, setStaffName] = useState("");
@@ -154,6 +171,10 @@ export function FisiologiaCargaPanel() {
   const [saving, setSaving] = useState(false);
   const [csvText, setCsvText] = useState("");
   const [importFileName, setImportFileName] = useState("");
+  const [importPreview, setImportPreview] = useState<GpsImportResult | null>(null);
+  const [importPreviewOpen, setImportPreviewOpen] = useState(false);
+  const [ambiguousResolutions, setAmbiguousResolutions] = useState<Record<string, string>>({});
+  const [fixtureOptions, setFixtureOptions] = useState<FutebolGameListItem[]>([]);
   const [feedback, setFeedback] = useState({ open: false, title: "", message: "" });
 
   useEffect(() => {
@@ -202,12 +223,21 @@ export function FisiologiaCargaPanel() {
     setEntries((prev) => prev.map((e) => (e.playerId === playerId ? { ...e, ...patch } : e)));
   };
 
-  const applyImportResult = (result: Awaited<ReturnType<typeof parseGpsImportText>>) => {
+  const applyImportResult = (result: GpsImportResult) => {
     if (result.sessionHints.sessionDate) {
       setSessionDate(result.sessionHints.sessionDate);
     }
+    if (result.sessionHints.sessionType) {
+      setSessionType(result.sessionHints.sessionType);
+    }
+    if (result.sessionHints.sessionLabel) {
+      setSessionLabel(result.sessionHints.sessionLabel);
+    }
     if (result.sessionHints.trainingType && !trainingType.trim()) {
       setTrainingType(result.sessionHints.trainingType);
+    }
+    if (result.sessionHints.sourceFileName) {
+      setImportFileName(result.sessionHints.sourceFileName);
     }
 
     setEntries((prev) =>
@@ -216,11 +246,56 @@ export function FisiologiaCargaPanel() {
         return patch ? applyGpsPatch(entry, patch) : entry;
       }),
     );
+  };
 
+  const openImportPreview = async (result: GpsImportResult) => {
+    setImportPreview(result);
+    setAmbiguousResolutions({});
+    setImportPreviewOpen(true);
+
+    if (result.sessionHints.sessionType === "jogo" && tenantId && result.sessionHints.sessionDate) {
+      const season = result.sessionHints.sessionDate.slice(0, 4);
+      const params = new URLSearchParams({ tenantId, season, status: "completed" });
+      if (category) params.set("category", category);
+      try {
+        const { data } = await api.get<FutebolGamesListResponse>(`/futebol-jogos?${params}`);
+        const games = Array.isArray(data?.games) ? data.games : [];
+        setFixtureOptions(games);
+        const opponent = result.sessionHints.opponentName?.toLowerCase() ?? "";
+        const auto = games.find(
+          (g) =>
+            g.matchDate?.slice(0, 10) === result.sessionHints.sessionDate &&
+            (g.opponentName?.toLowerCase().includes(opponent) ||
+              opponent.includes(g.opponentName?.toLowerCase() ?? "")),
+        );
+        if (auto) setFixtureKey(auto.gameKey);
+      } catch {
+        setFixtureOptions([]);
+      }
+    } else {
+      setFixtureOptions([]);
+    }
+  };
+
+  const confirmImportPreview = () => {
+    if (!importPreview) return;
+    if (importPreview.ambiguous.some((a) => !ambiguousResolutions[a.label])) {
+      setFeedback({
+        open: true,
+        title: "Ambíguos pendentes",
+        message: "Selecione o atleta correto para cada nome ambíguo antes de confirmar.",
+      });
+      return;
+    }
+
+    const resolved = applyAmbiguousResolution(importPreview, ambiguousResolutions);
+    applyImportResult(resolved);
+    setImportPreviewOpen(false);
+    setImportPreview(null);
     setFeedback({
       open: true,
-      title: "Importação",
-      message: buildImportMessage(result),
+      title: "Importação confirmada",
+      message: buildImportMessage(resolved),
     });
   };
 
@@ -234,7 +309,7 @@ export function FisiologiaCargaPanel() {
       return;
     }
     const result = parseGpsImportText(csvText, roster);
-    applyImportResult(result);
+    void openImportPreview(result);
   };
 
   const handleImportFile = async (file: File | null) => {
@@ -250,14 +325,14 @@ export function FisiologiaCargaPanel() {
       const lower = file.name.toLowerCase();
       if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
         const result = await parseGpsXlsxFile(file, roster);
-        applyImportResult(result);
+        await openImportPreview(result);
         return;
       }
 
       const text = await file.text();
       setCsvText(text);
       const result = parseGpsImportText(text, roster);
-      applyImportResult(result);
+      await openImportPreview(result);
     } catch (err) {
       setFeedback({
         open: true,
@@ -287,6 +362,9 @@ export function FisiologiaCargaPanel() {
         sessionType,
         period: period.trim() || undefined,
         trainingType: trainingType.trim() || undefined,
+        sessionLabel: sessionLabel.trim() || undefined,
+        sourceFileName: importFileName.trim() || undefined,
+        fixtureKey: sessionType === "jogo" && fixtureKey.trim() ? fixtureKey.trim() : undefined,
         staffName: staffName.trim() || undefined,
         notes: notes.trim() || undefined,
         entries: entries.map(sanitizeEntryForSave),
@@ -349,9 +427,26 @@ export function FisiologiaCargaPanel() {
           <Input className="text-foreground" value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="Manhã, tarde…" />
         </div>
         <div className="space-y-2">
-          <DashboardFieldLabel accent="sky">Tipo treino</DashboardFieldLabel>
+          <DashboardFieldLabel accent="sky">Tipo treino / sessão</DashboardFieldLabel>
           <Input className="text-foreground" value={trainingType} onChange={(e) => setTrainingType(e.target.value)} placeholder="Campo, academia…" />
         </div>
+        <div className="space-y-2 sm:col-span-2">
+          <DashboardFieldLabel accent="sky">Referência da sessão</DashboardFieldLabel>
+          <Input className="text-foreground" value={sessionLabel} onChange={(e) => setSessionLabel(e.target.value)} placeholder="Boston x Athletic, Treino MD-3…" />
+        </div>
+        {sessionType === "jogo" ? (
+          <div className="space-y-2 sm:col-span-2">
+            <DashboardFieldLabel accent="sky">Jogo CUP360</DashboardFieldLabel>
+            <NativeSelect value={fixtureKey} onChange={(e) => setFixtureKey(e.target.value)}>
+              <option value="">Selecione o jogo canônico…</option>
+              {fixtureOptions.map((g) => (
+                <option key={g.gameKey} value={g.gameKey}>
+                  {g.matchDate?.slice(0, 10)} — {g.opponentName ?? "Adversário"} ({g.competition ?? "—"})
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
+        ) : null}
         <div className="space-y-2 sm:col-span-2">
           <DashboardFieldLabel accent="sky">Profissional</DashboardFieldLabel>
           <Input className="text-foreground" value={staffName} onChange={(e) => setStaffName(e.target.value)} />
@@ -452,6 +547,7 @@ export function FisiologiaCargaPanel() {
                         ["Vel. máx (km/h)", "maxSpeedKmh", "decimal"],
                         ["Sprints", "sprintCount", "1"],
                         ["Dist. alta (m)", "highIntensityDistanceM", "decimal"],
+                        ["Dist. baixa (m)", "lowIntensityDistanceM", "decimal"],
                         ["Dist. sprint (m)", "sprintDistanceM", "decimal"],
                       ] as const
                     ).map(([label, field, mode]) => (
@@ -486,6 +582,100 @@ export function FisiologiaCargaPanel() {
           </div>
         )}
       </DashboardDeptSection>
+
+      <Dialog open={importPreviewOpen} onOpenChange={setImportPreviewOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Revisar importação HUD</DialogTitle>
+          </DialogHeader>
+          {importPreview ? (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-lg border border-border/60 p-3 space-y-1">
+                <p>
+                  <span className="text-muted-foreground">Abas:</span>{" "}
+                  {importPreview.sessionHints.detectedSheets?.join(", ") ?? "—"}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Sessão:</span>{" "}
+                  {importPreview.sessionHints.sessionLabel ?? importPreview.sessionHints.trainingType ?? "—"}
+                  {importPreview.sessionHints.sessionDate ? ` · ${importPreview.sessionHints.sessionDate}` : ""}
+                  {importPreview.sessionHints.sessionType
+                    ? ` · ${importPreview.sessionHints.sessionType === "jogo" ? "Jogo" : "Treino"}`
+                    : ""}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Atletas na planilha:</span>{" "}
+                  {importPreview.workbookAthleteCount}
+                </p>
+              </div>
+
+              {importPreview.sessionHints.sessionType === "jogo" ? (
+                <div className="space-y-2">
+                  <Label>Jogo canônico CUP360</Label>
+                  <NativeSelect value={fixtureKey} onChange={(e) => setFixtureKey(e.target.value)}>
+                    <option value="">Selecione…</option>
+                    {fixtureOptions.map((g) => (
+                      <option key={g.gameKey} value={g.gameKey}>
+                        {g.matchDate?.slice(0, 10)} — {g.opponentName ?? "Adversário"}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                <p className="font-medium text-emerald-400">Vinculados ({importPreview.matched})</p>
+                <ul className="max-h-32 overflow-y-auto space-y-1 text-muted-foreground">
+                  {importPreview.athleteMatches
+                    .filter((m) => m.status === "matched")
+                    .map((m) => (
+                      <li key={m.workbookLabel}>
+                        {m.workbookLabel} → {m.playerName}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+
+              {importPreview.unmatched.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="font-medium text-amber-400">Sem vínculo ({importPreview.unmatched.length})</p>
+                  <p className="text-xs text-muted-foreground">{importPreview.unmatched.join(", ")}</p>
+                </div>
+              ) : null}
+
+              {importPreview.ambiguous.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="font-medium text-sky-400">Ambíguos ({importPreview.ambiguous.length})</p>
+                  {importPreview.ambiguous.map((item) => (
+                    <div key={item.label} className="grid gap-1">
+                      <Label>{item.label}</Label>
+                      <NativeSelect
+                        value={ambiguousResolutions[item.label] ?? ""}
+                        onChange={(e) =>
+                          setAmbiguousResolutions((prev) => ({ ...prev, [item.label]: e.target.value }))
+                        }
+                      >
+                        <option value="">Selecione o atleta…</option>
+                        {item.candidates.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </NativeSelect>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setImportPreviewOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={confirmImportPreview}>
+              Confirmar importação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <FeedbackModal
         open={feedback.open}

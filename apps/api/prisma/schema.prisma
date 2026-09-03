@@ -3686,6 +3686,12 @@ model PhysiologyLoadSession {
   sessionType  String
   period       String?
   trainingType String?
+  /// Rótulo da sessão HUD (ex.: Boston x Athletic, Treino MD-3)
+  sessionLabel String?
+  /// Nome do arquivo .xlsx importado
+  sourceFileName String?
+  /// Jogo canônico CUP360 (gameKey) quando sessionType = jogo
+  fixtureKey   String?
   staffId      String?
   staffName    String?
   notes        String?  @db.Text

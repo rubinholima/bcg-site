@@ -93,6 +93,9 @@ export class CreatePhysiologyLoadSessionDto {
   @IsIn(['treino', 'jogo']) sessionType!: string;
   @IsOptional() @IsString() period?: string;
   @IsOptional() @IsString() trainingType?: string;
+  @IsOptional() @IsString() sessionLabel?: string;
+  @IsOptional() @IsString() sourceFileName?: string;
+  @IsOptional() @IsString() fixtureKey?: string;
   @IsOptional() @IsString() staffId?: string;
   @IsOptional() @IsString() staffName?: string;
   @IsOptional() @IsString() notes?: string;
@@ -105,6 +108,9 @@ export class UpdatePhysiologyLoadSessionDto {
   @IsOptional() @IsIn(['treino', 'jogo']) sessionType?: string;
   @IsOptional() @IsString() period?: string;
   @IsOptional() @IsString() trainingType?: string;
+  @IsOptional() @IsString() sessionLabel?: string;
+  @IsOptional() @IsString() sourceFileName?: string;
+  @IsOptional() @IsString() fixtureKey?: string;
   @IsOptional() @IsString() staffId?: string;
   @IsOptional() @IsString() staffName?: string;
   @IsOptional() @IsString() notes?: string;
