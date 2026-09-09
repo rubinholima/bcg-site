@@ -11,14 +11,14 @@ export function MasterDashboardHeader({
   stats,
 }: {
   groupName: string;
-  stats: DashboardDeptStat[];
+  stats?: DashboardDeptStat[];
 }) {
   return (
     <DashboardDeptHeader
       section="Grupo Master"
       sectionIcon={Globe}
       title="Dashboard Master"
-      description={groupName}
+      description={`${groupName} · Console operacional da plataforma`}
       stats={stats}
     />
   );

@@ -74,6 +74,79 @@ export class PresenceService {
     return { ok: true };
   }
 
+  /** Agregações read-only para o Dashboard Master — não altera regras de heartbeat. */
+  async getPlatformInsights() {
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const live = await this.listLiveUsers();
+    const [activeTodayGroups, todaySessions, totalUsers] = await Promise.all([
+      this.prisma.userPresenceSession.groupBy({
+        by: ['userId'],
+        where: { lastActivityAt: { gte: startOfDay } },
+      }),
+      this.prisma.userPresenceSession.findMany({
+        where: { lastActivityAt: { gte: startOfDay } },
+        select: { lastActivityAt: true, userId: true },
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    const hourlyUsers = new Map<number, Set<string>>();
+    for (const session of todaySessions) {
+      const hour = session.lastActivityAt.getHours();
+      if (!hourlyUsers.has(hour)) hourlyUsers.set(hour, new Set());
+      hourlyUsers.get(hour)!.add(session.userId);
+    }
+    const currentHour = now.getHours();
+    const hourlyActivity = Array.from({ length: currentHour + 1 }, (_, hour) => ({
+      hour: `${String(hour).padStart(2, '0')}:00`,
+      users: hourlyUsers.get(hour)?.size ?? 0,
+    }));
+
+    const companyCounts = new Map<string, number>();
+    const moduleCounts = new Map<string, number>();
+    const liveRoleCounts = new Map<string, number>();
+
+    for (const item of live.items) {
+      const company = item.tenant?.name?.trim() || 'Grupo Master';
+      companyCounts.set(company, (companyCounts.get(company) ?? 0) + 1);
+
+      const module = item.currentModule?.trim() || item.currentPageTitle?.trim() || 'Dashboard';
+      moduleCounts.set(module, (moduleCounts.get(module) ?? 0) + 1);
+
+      const role = item.user.role?.trim() || 'user';
+      liveRoleCounts.set(role, (liveRoleCounts.get(role) ?? 0) + 1);
+    }
+
+    const toSortedRows = (map: Map<string, number>, limit = 8) =>
+      [...map.entries()]
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, limit);
+
+    const activeTenantKeys = new Set(
+      live.items.map((item) => item.tenant?.id ?? item.tenant?.name ?? 'master'),
+    );
+
+    return {
+      live: {
+        online: live.online,
+        idle: live.idle,
+        total: live.total,
+      },
+      activeTodayUsers: activeTodayGroups.length,
+      totalUsers,
+      activeTenantCount: activeTenantKeys.size,
+      hourlyActivity,
+      byCompany: toSortedRows(companyCounts),
+      byModule: toSortedRows(moduleCounts),
+      byRoleLive: toSortedRows(liveRoleCounts, 10),
+      asOf: now.toISOString(),
+    };
+  }
+
   async listLiveUsers(query?: string) {
     const now = new Date();
     const minSeen = new Date(now.getTime() - PRESENCE_IDLE_MS);

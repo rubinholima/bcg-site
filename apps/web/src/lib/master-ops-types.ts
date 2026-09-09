@@ -32,6 +32,23 @@ export interface LiveUsersResponse {
   asOf: string;
 }
 
+export interface PlatformInsightRow {
+  name: string;
+  count: number;
+}
+
+export interface PlatformInsightsResponse {
+  live: { online: number; idle: number; total: number };
+  activeTodayUsers: number;
+  totalUsers: number;
+  activeTenantCount: number;
+  hourlyActivity: Array<{ hour: string; users: number }>;
+  byCompany: PlatformInsightRow[];
+  byModule: PlatformInsightRow[];
+  byRoleLive: PlatformInsightRow[];
+  asOf: string;
+}
+
 export type AnnouncementType = "info" | "warning" | "success" | "danger";
 
 export interface MasterAnnouncement {

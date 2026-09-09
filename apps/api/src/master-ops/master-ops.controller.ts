@@ -42,6 +42,11 @@ export class MasterOpsController {
     return this.presenceService.listLiveUsers(q);
   }
 
+  @Get('platform-insights')
+  platformInsights() {
+    return this.presenceService.getPlatformInsights();
+  }
+
   @Get('announcements')
   listAnnouncements() {
     return this.announcementsService.listForMaster();
