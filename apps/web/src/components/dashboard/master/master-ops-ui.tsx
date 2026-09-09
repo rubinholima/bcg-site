@@ -91,6 +91,34 @@ export function formatLiveUserRole(role: string | null | undefined) {
   return formatRoleSlug(role ?? "user");
 }
 
+function titleCaseWord(word: string): string {
+  if (!word) return word;
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
+/** Exibição compacta na lista: primeiro + último nome (cadastro completo inalterado). */
+export function formatCompactDisplayName(name: string | null, username: string): string {
+  const raw = (name || username).trim();
+  if (!name?.trim()) return raw;
+  const parts = raw.split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return titleCaseWord(parts[0] ?? username);
+  return `${titleCaseWord(parts[0])} ${titleCaseWord(parts[parts.length - 1])}`;
+}
+
+export function liveUserCompanyKey(item: LiveUserItem): string {
+  return item.tenant?.id ?? item.tenant?.name ?? "__master__";
+}
+
+export function liveUserCompanyLabel(item: LiveUserItem): string {
+  return item.tenant?.name ?? "Grupo Master";
+}
+
+export function formatCompactActivityTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
 /** Paleta neutra para gráficos do Master Dashboard. */
 export const MASTER_CHART_COLORS = [
   "hsl(262 52% 58%)",

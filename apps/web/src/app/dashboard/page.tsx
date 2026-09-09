@@ -127,9 +127,9 @@ export default async function DashboardPage() {
 
         <MasterOperationsConsole />
 
-        <MasterPlatformAnalytics usersByRole={usersByRole} />
-
         <MasterAnnouncementsPanel />
+
+        <MasterPlatformAnalytics usersByRole={usersByRole} />
 
         <MasterSecondarySection stats={stats} tenants={tenants} kindEntries={kindEntries} />
 
