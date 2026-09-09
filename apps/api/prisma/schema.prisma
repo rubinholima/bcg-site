@@ -29,6 +29,10 @@ model User {
   /** Escopo de empresas/clubes: vazio = sem restrição (vê todas, exceto super_admin que ignora tabela). Com linhas = só esses tenants. */
   userTenants  UserTenant[]
   moduleAccess UserModuleAccess[]
+  presenceSessions       UserPresenceSession[]
+  announcementsCreated   PlatformAnnouncement[] @relation("AnnouncementCreatedBy")
+  announcementsTargeted  PlatformAnnouncement[] @relation("AnnouncementTargetUser")
+  announcementReceipts   PlatformAnnouncementReceipt[]
 }
 
 model UserTenant {
@@ -182,6 +186,7 @@ model Tenant {
   physiologyLoadSessions       PhysiologyLoadSession[]
   nursingSessions              NursingSession[]
   medicalDepartures            PlayerMedicalDeparture[]
+  presenceSessions             UserPresenceSession[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -4072,4 +4077,65 @@ model CoachMatchStatOverride {
   updatedAt          DateTime @updatedAt
   @@index([tenantId, category])
   @@index([tenantId, matchDate])
+}
+
+/// Sessão ativa no dashboard CUP360 (heartbeat + atividade real).
+model UserPresenceSession {
+  id               String   @id @default(cuid())
+  sessionKey       String   @unique
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role             String
+  tenantId         String?
+  tenant           Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenantLabel      String?
+  currentPath      String?
+  currentModule    String?
+  currentPageTitle String?
+  userAgent        String?
+  browserLabel     String?
+  deviceLabel      String?
+  startedAt        DateTime @default(now())
+  lastSeenAt       DateTime @default(now())
+  lastActivityAt   DateTime @default(now())
+  @@index([userId])
+  @@index([lastSeenAt])
+  @@index([lastActivityAt])
+}
+
+/// Aviso in-app enviado pela administração Master.
+model PlatformAnnouncement {
+  id              String   @id @default(cuid())
+  title           String
+  message         String   @db.Text
+  /// info | warning | success | danger
+  type            String   @default("info")
+  /// all | user
+  targetMode      String   @default("all")
+  targetUserId    String?
+  targetUser      User?    @relation("AnnouncementTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  dismissible     Boolean  @default(true)
+  startsAt        DateTime?
+  expiresAt       DateTime?
+  createdByUserId String
+  createdBy       User     @relation("AnnouncementCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  receipts        PlatformAnnouncementReceipt[]
+  @@index([targetMode, startsAt, expiresAt])
+  @@index([createdAt])
+}
+
+/// Entrega/leitura/dismiss de aviso por usuário.
+model PlatformAnnouncementReceipt {
+  id             String   @id @default(cuid())
+  announcementId String
+  announcement   PlatformAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveredAt    DateTime @default(now())
+  readAt         DateTime?
+  dismissedAt    DateTime?
+  @@unique([announcementId, userId])
+  @@index([userId])
 }

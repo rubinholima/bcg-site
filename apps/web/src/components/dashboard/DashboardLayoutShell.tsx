@@ -8,6 +8,8 @@ import { DashboardShellProvider, useDashboardShell } from "@/context/DashboardSh
 import { DashboardThemeProvider, useDashboardTheme } from "@/context/DashboardThemeContext";
 import { DashboardPageFrame } from "@/components/dashboard/DashboardPageFrame";
 import { TenantWorkspaceRail } from "@/components/dashboard/TenantWorkspaceBackdrop";
+import { DashboardPresenceTracker } from "@/components/dashboard/master/DashboardPresenceTracker";
+import { PlatformAnnouncementBanner } from "@/components/dashboard/master/PlatformAnnouncementBanner";
 
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
@@ -91,6 +93,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 )}
                 data-dashboard-content
               >
+                <DashboardPresenceTracker />
+                {!isAcademiasEmbed ? <PlatformAnnouncementBanner /> : null}
                 {usePageFrame ? <DashboardPageFrame>{children}</DashboardPageFrame> : children}
               </div>
             </div>

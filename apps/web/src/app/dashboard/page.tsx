@@ -11,7 +11,6 @@ import {
   Image,
   Settings,
   Mail,
-  Bell,
   Clock,
 } from "lucide-react";
 import { Tenant } from "@/types/tenant";
@@ -27,6 +26,8 @@ import { buildBackendUrl, getAppBaseUrl } from "@/lib/apiProxy";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { MasterDashboardGate } from "@/components/dashboard/MasterDashboardGate";
 import { MasterDashboardHeader } from "@/components/dashboard/MasterDashboardHeader";
+import { MasterLiveUsersPanel } from "@/components/dashboard/master/MasterLiveUsersPanel";
+import { MasterAnnouncementsPanel } from "@/components/dashboard/master/MasterAnnouncementsPanel";
 
 interface LastActivity {
   name: string;
@@ -395,18 +396,15 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Avisos / Notificações */}
-      <Card className="min-w-0 border-amber-500/20 bg-amber-500/5 rounded-xl shadow-md dashboard-card-hover overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            Avisos
-          </CardTitle>
-        </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Nenhum aviso no momento.</p>
-          </CardContent>
-      </Card>
+      {/* Operações ao vivo — presença + avisos Master */}
+      <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="min-w-0 xl:col-span-2">
+          <MasterLiveUsersPanel />
+        </div>
+        <div className="min-w-0 xl:col-span-1">
+          <MasterAnnouncementsPanel />
+        </div>
+      </div>
 
       {/* Data da última atualização */}
       <p className="text-xs text-muted-foreground text-right">

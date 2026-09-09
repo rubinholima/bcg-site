@@ -58,6 +58,7 @@ import { AssistenciaSocialModule } from './assistencia-social/assistencia-social
 import { FutebolJogosModule } from './futebol-jogos/futebol-jogos.module';
 import { AgendaConfigModule } from './agenda-config/agenda-config.module';
 import { DynamicReportsModule } from './dynamic-reports/dynamic-reports.module';
+import { MasterOpsModule } from './master-ops/master-ops.module';
 
 @Module({
   imports: [
@@ -118,6 +119,7 @@ import { DynamicReportsModule } from './dynamic-reports/dynamic-reports.module';
     FutebolJogosModule,
     AgendaConfigModule,
     DynamicReportsModule,
+    MasterOpsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
