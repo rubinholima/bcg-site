@@ -7,7 +7,10 @@ export const PHYSIO_GAME_PHASES = [
   'pos_jogo',
 ] as const;
 
-export const PHYSIO_GAME_PHASE_LABEL: Record<(typeof PHYSIO_GAME_PHASES)[number], string> = {
+export const PHYSIO_GAME_PHASE_LABEL: Record<
+  (typeof PHYSIO_GAME_PHASES)[number],
+  string
+> = {
   concentracao: 'Concentração',
   pre_jogo: 'Pré-jogo',
   primeiro_tempo: '1º tempo',
@@ -16,7 +19,10 @@ export const PHYSIO_GAME_PHASE_LABEL: Record<(typeof PHYSIO_GAME_PHASES)[number]
   pos_jogo: 'Pós-jogo',
 };
 
-export const PHYSIO_GAME_CARE_CATEGORIES = ['tratamento', 'preparo_preventivo'] as const;
+export const PHYSIO_GAME_CARE_CATEGORIES = [
+  'tratamento',
+  'preparo_preventivo',
+] as const;
 
 export const PHYSIO_GAME_CARE_CATEGORY_LABEL: Record<
   (typeof PHYSIO_GAME_CARE_CATEGORIES)[number],
@@ -46,7 +52,10 @@ export const PHYSIO_GAME_PROCEDURES = [
   'outro',
 ] as const;
 
-export const PHYSIO_GAME_PROCEDURE_LABEL: Record<(typeof PHYSIO_GAME_PROCEDURES)[number], string> = {
+export const PHYSIO_GAME_PROCEDURE_LABEL: Record<
+  (typeof PHYSIO_GAME_PROCEDURES)[number],
+  string
+> = {
   botinha: 'Botinha',
   bandagem_elastica: 'Bandagem elástica',
   bandagem_estabilizacao: 'Bandagem de estabilização',
@@ -125,7 +134,10 @@ export const PHYSIO_EVAL_CONTEXTS = [
   'desligamento',
 ] as const;
 
-export const PHYSIO_EVAL_CONTEXT_LABEL: Record<(typeof PHYSIO_EVAL_CONTEXTS)[number], string> = {
+export const PHYSIO_EVAL_CONTEXT_LABEL: Record<
+  (typeof PHYSIO_EVAL_CONTEXTS)[number],
+  string
+> = {
   pre_temporada: 'Pré-temporada',
   inter_temporada: 'Inter-temporada',
   pos_temporada: 'Pós-temporada',
@@ -142,7 +154,10 @@ export const PHYSIO_EVAL_TEST_TYPES = [
   'outro',
 ] as const;
 
-export const PHYSIO_EVAL_TEST_TYPE_LABEL: Record<(typeof PHYSIO_EVAL_TEST_TYPES)[number], string> = {
+export const PHYSIO_EVAL_TEST_TYPE_LABEL: Record<
+  (typeof PHYSIO_EVAL_TEST_TYPES)[number],
+  string
+> = {
   forca: 'Força',
   mobilidade: 'Mobilidade',
   flexibilidade: 'Flexibilidade',
@@ -179,7 +194,10 @@ export const PHYSIO_EVAL_BODY_LOCATION_LABEL: Record<
 
 export const PHYSIO_EVAL_OUTCOMES = ['aprovado', 'reprovado'] as const;
 
-export const PHYSIO_EVAL_OUTCOME_LABEL: Record<(typeof PHYSIO_EVAL_OUTCOMES)[number], string> = {
+export const PHYSIO_EVAL_OUTCOME_LABEL: Record<
+  (typeof PHYSIO_EVAL_OUTCOMES)[number],
+  string
+> = {
   aprovado: 'Aprovado',
   reprovado: 'Reprovado',
 };
