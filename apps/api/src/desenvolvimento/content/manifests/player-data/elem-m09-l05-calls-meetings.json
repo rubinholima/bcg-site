@@ -1,0 +1,724 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 9,
+  "goalPt": "Calls e reuniões simples — entrar na call, agenda, Any questions?, clube (briefing) e escritório (Zoom).",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Reunião por video — você entra, confirma áudio e participa da agenda com pergunta ou confirmação.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Participate in a simple meeting.",
+    "headlinePt": "Participe de uma reunião simples.",
+    "bodyPt": "",
+    "canDo": [
+      "Can you hear me?",
+      "Here's the agenda",
+      "I can share an update",
+      "Any questions?"
+    ],
+    "production": {
+      "introPt": "Simule entrada na call, contribuição na agenda e encerramento.",
+      "prompts": [
+        {
+          "speaker": "Host",
+          "questionEn": "Walk us through your part of the meeting."
+        }
+      ],
+      "fields": [
+        {
+          "id": "join",
+          "labelPt": "Entrar / áudio",
+          "prefixEn": "",
+          "placeholderEn": "Sorry I'm a minute late — yes, I can hear you fine."
+        },
+        {
+          "id": "update",
+          "labelPt": "Sua contribuição",
+          "prefixEn": "",
+          "placeholderEn": "I can share an update — travel is confirmed for Saturday."
+        },
+        {
+          "id": "close",
+          "labelPt": "Encerramento",
+          "prefixEn": "",
+          "placeholderEn": "No questions from me — thanks, everyone."
+        }
+      ],
+      "exampleEn": "Sorry I'm late — I can hear you fine. I can share an update on travel. No questions — thanks!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em09l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Calls & simple meetings",
+        "titlePt": "Ligações e reuniões simples",
+        "bodyPt": "Video calls fazem parte do dia — entrar, testar áudio, seguir agenda e encerrar com Any questions? Funciona no briefing do clube e na stand-up da empresa."
+      },
+      {
+        "id": "em09l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Video call · Match prep OR weekly team sync",
+        "scenarioPt": "Reunião por video — você entra, confirma áudio e participa da agenda com pergunta ou confirmação."
+      },
+      {
+        "id": "em09l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Host",
+        "promptEn": "Hi everyone — can you hear me OK?",
+        "promptPt": "Host testa áudio. Você responde:",
+        "options": [
+          {
+            "labelEn": "Yes, I can hear you fine.",
+            "correct": true,
+            "feedbackPt": "Confirma áudio claramente."
+          },
+          {
+            "labelEn": "Hear me yes fine.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "Audio is elevator.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      },
+      {
+        "id": "em09l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Joining late.)",
+        "promptPt": "Entrar atrasado na call:",
+        "options": [
+          {
+            "labelEn": "Sorry I'm late — had another call. I'm here now.",
+            "correct": true,
+            "feedbackPt": "Desculpa + presente."
+          },
+          {
+            "labelEn": "Late me sorry call.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I am late yesterday.",
+            "correct": false,
+            "feedbackPt": "Tempo errado."
+          }
+        ]
+      },
+      {
+        "id": "em09l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Host",
+        "promptEn": "Let's start. Here's the agenda for today.",
+        "promptPt": "Host abre reunião:",
+        "options": [
+          {
+            "labelEn": "Sounds good — go ahead.",
+            "correct": true,
+            "feedbackPt": "Encoraja início."
+          },
+          {
+            "labelEn": "Agenda is bad.",
+            "correct": false,
+            "feedbackPt": "Negativo sem motivo."
+          },
+          {
+            "labelEn": "I start now host.",
+            "correct": false,
+            "feedbackPt": "Papel invertido."
+          }
+        ]
+      },
+      {
+        "id": "em09l05-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Host",
+        "promptEn": "First item — travel logistics for Saturday.",
+        "promptPt": "Item da agenda — você contribui:",
+        "options": [
+          {
+            "labelEn": "I can share an update — flights are confirmed for the squad.",
+            "correct": true,
+            "feedbackPt": "Contribuição concreta — clube."
+          },
+          {
+            "labelEn": "Flights confirm squad I.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "Travel is my hotel.",
+            "correct": false,
+            "feedbackPt": "Confunde contextos."
+          }
+        ]
+      },
+      {
+        "id": "em09l05-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Host",
+        "promptEn": "Any questions before we wrap up?",
+        "promptPt": "Encerramento — Any questions?:",
+        "options": [
+          {
+            "labelEn": "No questions from me — thanks, everyone.",
+            "correct": true,
+            "feedbackPt": "Encerramento natural."
+          },
+          {
+            "labelEn": "Questions any wrap.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I question start agenda.",
+            "correct": false,
+            "feedbackPt": "Reunião já encerra."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em09l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Joining a call",
+        "titlePt": "Entrar na call",
+        "introPt": "Entrar, testar áudio, pedir repetição.",
+        "examples": [
+          {
+            "en": "Can you hear me OK?",
+            "pt": "teste de áudio"
+          },
+          {
+            "en": "Sorry I'm late — I'm here now.",
+            "pt": "atraso"
+          },
+          {
+            "en": "You're on mute.",
+            "pt": "está mutado"
+          },
+          {
+            "en": "Could you repeat that?",
+            "pt": "repetir"
+          }
+        ]
+      },
+      {
+        "id": "em09l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Meeting flow",
+        "titlePt": "Fluxo da reunião",
+        "introPt": "Let's start / Here's the agenda / Next item.",
+        "examples": [
+          {
+            "en": "Let's start.",
+            "pt": "iniciar"
+          },
+          {
+            "en": "Here's the agenda for today.",
+            "pt": "pauta"
+          },
+          {
+            "en": "First item — budget review.",
+            "pt": "primeiro item"
+          },
+          {
+            "en": "Can we move on to the next point?",
+            "pt": "avançar"
+          }
+        ]
+      },
+      {
+        "id": "em09l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Participating",
+        "titlePt": "Participar",
+        "introPt": "Contribuir, concordar, fazer pergunta.",
+        "examples": [
+          {
+            "en": "I can share a quick update.",
+            "pt": "dar update"
+          },
+          {
+            "en": "Sounds good to me.",
+            "pt": "concordo"
+          },
+          {
+            "en": "I have a question about the timeline.",
+            "pt": "pergunta"
+          },
+          {
+            "en": "Any questions?",
+            "pt": "host pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em09l05-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Closing",
+        "titlePt": "Encerrar",
+        "introPt": "Wrap up, thanks, next steps.",
+        "examples": [
+          {
+            "en": "Any questions before we wrap up?",
+            "pt": "pergunta final"
+          },
+          {
+            "en": "No questions from me.",
+            "pt": "sem dúvidas"
+          },
+          {
+            "en": "Thanks, everyone.",
+            "pt": "agradecer"
+          },
+          {
+            "en": "I'll send the notes after the call.",
+            "pt": "próximos passos"
+          }
+        ]
+      },
+      {
+        "id": "em09l05-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Club vs office calls",
+        "titlePt": "Calls no clube vs escritório",
+        "items": [
+          {
+            "formalEn": "match prep / squad travel / medical update",
+            "naturalEn": "quarterly review / client sync / sprint planning",
+            "notePt": "Mesma estrutura de reunião — vocabulário muda."
+          },
+          {
+            "formalEn": "You're on mute",
+            "naturalEn": "Same on every Zoom/Teams call",
+            "notePt": "Frase universal em video calls."
+          }
+        ],
+        "tipPt": "Agenda + Any questions? funcionam em qualquer reunião profissional."
+      },
+      {
+        "id": "em09l05-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "Sorry I late. / Any question before wrap?",
+        "rightEn": "Sorry I'm late. / Any questions before we wrap up?",
+        "explanationPt": "I'm late (não I late). Any questions — plural."
+      },
+      {
+        "id": "em09l05-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "Can you hear me OK?",
+            "pt": "áudio"
+          },
+          {
+            "en": "Sorry I'm late.",
+            "pt": "atraso"
+          },
+          {
+            "en": "Here's the agenda.",
+            "pt": "pauta"
+          },
+          {
+            "en": "Any questions?",
+            "pt": "encerrar"
+          },
+          {
+            "en": "Thanks, everyone.",
+            "pt": "agradecer"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em09l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Can you hear me OK?"
+          },
+          {
+            "en": "Yes, I can hear you fine."
+          },
+          {
+            "en": "Sorry I'm late — I'm here now."
+          },
+          {
+            "en": "Let's start. Here's the agenda."
+          },
+          {
+            "en": "I can share a quick update."
+          },
+          {
+            "en": "Any questions before we wrap up?"
+          },
+          {
+            "en": "No questions from me — thanks."
+          },
+          {
+            "en": "I'll send the notes after the call."
+          },
+          {
+            "en": "You're on mute."
+          },
+          {
+            "en": "Could you repeat that?"
+          }
+        ],
+        "dialogueEn": "Can you hear me? — Yes, fine. — Sorry I'm late. — Let's start. Here's the agenda. — I can share an update. — Any questions? — No questions from me. Thanks!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em09l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Participate in a simple meeting.",
+        "headlinePt": "Participe de uma reunião simples.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Host",
+            "questionEn": "Walk us through your part of the meeting."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em09l05-prac-01",
+      "type": "choice",
+      "promptPt": "Teste de áudio — resposta:",
+      "options": [
+        {
+          "labelEn": "Yes, I can hear you fine.",
+          "correct": true,
+          "feedbackPt": "Confirmação clara."
+        },
+        {
+          "labelEn": "Yes hear fine you.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        },
+        {
+          "labelEn": "I am hear good.",
+          "correct": false,
+          "feedbackPt": "I can hear."
+        }
+      ]
+    },
+    {
+      "id": "em09l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — atraso:",
+      "templateEn": "Sorry I'm ___ — I'm here now.",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "late",
+          "correct": true,
+          "feedbackPt": "I'm late."
+        },
+        {
+          "labelEn": "later",
+          "correct": false,
+          "feedbackPt": "Late, não later."
+        },
+        {
+          "labelEn": "lateness",
+          "correct": false,
+          "feedbackPt": "Substantivo errado."
+        }
+      ]
+    },
+    {
+      "id": "em09l05-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte — aqui está a pauta:",
+      "tokens": [
+        "today.",
+        "agenda",
+        "the",
+        "Here's",
+        "for"
+      ],
+      "correctOrder": [
+        "Here's",
+        "the",
+        "agenda",
+        "for",
+        "today."
+      ],
+      "feedbackCorrectPt": "Here's the agenda for today.",
+      "feedbackWrongPt": "Here's the agenda for..."
+    },
+    {
+      "id": "em09l05-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Host: Any questions?",
+      "speaker": "You",
+      "contextEn": "Host: Any questions before we wrap up?",
+      "options": [
+        {
+          "labelEn": "No questions from me — thanks, everyone.",
+          "correct": true,
+          "feedbackPt": "Encerramento natural."
+        },
+        {
+          "labelEn": "Yes start agenda.",
+          "correct": false,
+          "feedbackPt": "Confuso."
+        },
+        {
+          "labelEn": "Questions wrap any.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l05-prac-05",
+      "type": "choice",
+      "promptPt": "Contribuição na reunião:",
+      "options": [
+        {
+          "labelEn": "I can share a quick update on travel.",
+          "correct": true,
+          "feedbackPt": "Update concreto."
+        },
+        {
+          "labelEn": "Update share I quick.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        },
+        {
+          "labelEn": "I sharing update.",
+          "correct": false,
+          "feedbackPt": "I can share."
+        }
+      ]
+    },
+    {
+      "id": "em09l05-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Colega mutado:",
+      "speaker": "You",
+      "contextEn": "You can't hear your colleague.",
+      "options": [
+        {
+          "labelEn": "I think you're on mute.",
+          "correct": true,
+          "feedbackPt": "On mute — padrão."
+        },
+        {
+          "labelEn": "You mute on are.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        },
+        {
+          "labelEn": "Mute elevator.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em09l05-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Complete — avançar:",
+      "templateEn": "Can we move on to the ___ point?",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "next",
+          "correct": true,
+          "feedbackPt": "Next point."
+        },
+        {
+          "labelEn": "before",
+          "correct": false,
+          "feedbackPt": "Next, não before."
+        },
+        {
+          "labelEn": "last",
+          "correct": false,
+          "feedbackPt": "Next point."
+        }
+      ]
+    },
+    {
+      "id": "em09l05-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte pergunta final:",
+      "tokens": [
+        "up?",
+        "wrap",
+        "we",
+        "before",
+        "questions",
+        "Any"
+      ],
+      "correctOrder": [
+        "Any",
+        "questions",
+        "before",
+        "we",
+        "wrap",
+        "up?"
+      ],
+      "feedbackCorrectPt": "Any questions before we wrap up?",
+      "feedbackWrongPt": "Any questions before we wrap up?"
+    },
+    {
+      "id": "em09l05-prac-09",
+      "type": "choice",
+      "promptPt": "Abrir reunião:",
+      "options": [
+        {
+          "labelEn": "Let's start. Here's the agenda.",
+          "correct": true,
+          "feedbackPt": "Padrão host."
+        },
+        {
+          "labelEn": "Agenda start let.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        },
+        {
+          "labelEn": "I finish meeting.",
+          "correct": false,
+          "feedbackPt": "Início, não fim."
+        }
+      ]
+    },
+    {
+      "id": "em09l05-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Precisa repetir:",
+      "speaker": "You",
+      "contextEn": "Audio broke up — you didn't catch it.",
+      "options": [
+        {
+          "labelEn": "Could you repeat that, please?",
+          "correct": true,
+          "feedbackPt": "Repeat — call padrão."
+        },
+        {
+          "labelEn": "Repeat you could that?",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        },
+        {
+          "labelEn": "I repeat you.",
+          "correct": false,
+          "feedbackPt": "Incorreto."
+        }
+      ]
+    },
+    {
+      "id": "em09l05-prac-11",
+      "type": "fill_blank",
+      "promptPt": "Complete — notas pós-call:",
+      "templateEn": "I'll send the ___ after the call.",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "notes",
+          "correct": true,
+          "feedbackPt": "Meeting notes."
+        },
+        {
+          "labelEn": "note",
+          "correct": false,
+          "feedbackPt": "Notes plural comum."
+        },
+        {
+          "labelEn": "noting",
+          "correct": false,
+          "feedbackPt": "Substantivo notes."
+        }
+      ]
+    },
+    {
+      "id": "em09l05-prac-12",
+      "type": "choice",
+      "promptPt": "Clube — update natural:",
+      "options": [
+        {
+          "labelEn": "Flights are confirmed for the squad.",
+          "correct": true,
+          "feedbackPt": "Travel clube."
+        },
+        {
+          "labelEn": "Flights are confirmed for the salad.",
+          "correct": false,
+          "feedbackPt": "Contexto errado."
+        },
+        {
+          "labelEn": "Elevator is confirmed.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    }
+  ]
+}

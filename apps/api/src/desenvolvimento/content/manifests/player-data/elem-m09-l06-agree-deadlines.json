@@ -1,0 +1,727 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 9,
+  "goalPt": "Concordar, discordar educadamente e falar de prazos — I agree, I see your point, I don't think so, by Friday, EOD.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Equipe discute prazo de entrega. Você concorda, discorda educadamente ou propõe alternativa com deadline claro.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Agree, disagree and set deadlines.",
+    "headlinePt": "Concorde, discorde e defina prazos.",
+    "bodyPt": "",
+    "canDo": [
+      "I agree",
+      "I see your point, but...",
+      "by Friday EOD",
+      "That works for me"
+    ],
+    "production": {
+      "introPt": "Concordar com uma proposta, discordar educadamente de outra e confirmar um prazo.",
+      "prompts": [
+        {
+          "speaker": "Manager",
+          "questionEn": "What do you think about the timeline?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "agree",
+          "labelPt": "Concordar",
+          "prefixEn": "",
+          "placeholderEn": "I agree — that gives us enough time."
+        },
+        {
+          "id": "disagree",
+          "labelPt": "Discordar educado",
+          "prefixEn": "",
+          "placeholderEn": "I see your point, but I don't think we should skip the review."
+        },
+        {
+          "id": "deadline",
+          "labelPt": "Confirmar prazo",
+          "prefixEn": "",
+          "placeholderEn": "Yes — I can have it done by Friday EOD."
+        }
+      ],
+      "exampleEn": "I agree on the launch date. I see your point on skipping review, but I don't think we should. I can deliver by Friday EOD."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em09l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Agree, disagree & deadlines",
+        "titlePt": "Concordar, discordar e prazos",
+        "bodyPt": "Reuniões exigem opinião — concordar, discordar com respeito e confirmar prazos (by Friday, EOD). Clube ou escritório, o tom profissional é o mesmo."
+      },
+      {
+        "id": "em09l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Planning meeting · Club schedule OR project timeline",
+        "scenarioPt": "Equipe discute prazo de entrega. Você concorda, discorda educadamente ou propõe alternativa com deadline claro."
+      },
+      {
+        "id": "em09l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "I think we should launch the app before the season starts.",
+        "promptPt": "Colega propõe prazo. Você concorda:",
+        "options": [
+          {
+            "labelEn": "I agree — that gives us enough time to test.",
+            "correct": true,
+            "feedbackPt": "I agree + razão."
+          },
+          {
+            "labelEn": "Agree I time test.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I agree before season yesterday.",
+            "correct": false,
+            "feedbackPt": "Tempo confuso."
+          }
+        ]
+      },
+      {
+        "id": "em09l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "We can skip the review and ship on Monday.",
+        "promptPt": "Discordar educadamente:",
+        "options": [
+          {
+            "labelEn": "I see your point, but I don't think we should skip the review.",
+            "correct": true,
+            "feedbackPt": "I see your point + disagree educado."
+          },
+          {
+            "labelEn": "I don't think so you point.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "Skip review good no.",
+            "correct": false,
+            "feedbackPt": "Incompleto."
+          }
+        ]
+      },
+      {
+        "id": "em09l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "Can you finish the report by Friday?",
+        "promptPt": "Confirmar prazo:",
+        "options": [
+          {
+            "labelEn": "Yes — I can have it done by Friday EOD.",
+            "correct": true,
+            "feedbackPt": "By Friday EOD — claro."
+          },
+          {
+            "labelEn": "Friday I done maybe.",
+            "correct": false,
+            "feedbackPt": "Vago."
+          },
+          {
+            "labelEn": "I finish Friday yesterday.",
+            "correct": false,
+            "feedbackPt": "Tempo errado."
+          }
+        ]
+      },
+      {
+        "id": "em09l06-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "What about the presentation — is Thursday realistic?",
+        "promptPt": "Avaliar prazo realisticamente:",
+        "options": [
+          {
+            "labelEn": "I think Thursday is tight, but I can deliver a draft by EOD Wednesday.",
+            "correct": true,
+            "feedbackPt": "Honesto + alternativa."
+          },
+          {
+            "labelEn": "Thursday realistic always yes.",
+            "correct": false,
+            "feedbackPt": "Sem nuance."
+          },
+          {
+            "labelEn": "Presentation is Thursday food.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      },
+      {
+        "id": "em09l06-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "So we're aligned — report by Friday, draft by Wednesday?",
+        "promptPt": "Confirmar alinhamento:",
+        "options": [
+          {
+            "labelEn": "Yes, that works for me.",
+            "correct": true,
+            "feedbackPt": "Confirma alinhamento."
+          },
+          {
+            "labelEn": "Aligned we maybe not.",
+            "correct": false,
+            "feedbackPt": "Confuso."
+          },
+          {
+            "labelEn": "Wednesday is Friday.",
+            "correct": false,
+            "feedbackPt": "Contraditório."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em09l06-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Agreeing",
+        "titlePt": "Concordar",
+        "introPt": "I agree / That works / Sounds good to me.",
+        "examples": [
+          {
+            "en": "I agree.",
+            "pt": "concordo"
+          },
+          {
+            "en": "I agree — that makes sense.",
+            "pt": "concordo + razão"
+          },
+          {
+            "en": "That works for me.",
+            "pt": "funciona pra mim"
+          },
+          {
+            "en": "Sounds good to me.",
+            "pt": "parece bom"
+          }
+        ]
+      },
+      {
+        "id": "em09l06-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Disagreeing politely",
+        "titlePt": "Discordar com educação",
+        "introPt": "I see your point, but... / I don't think so / I'm not sure about that.",
+        "examples": [
+          {
+            "en": "I see your point, but I don't think we should rush.",
+            "pt": "reconhece + discorda"
+          },
+          {
+            "en": "I don't think that's realistic.",
+            "pt": "não acho realista"
+          },
+          {
+            "en": "I'm not sure about skipping the review.",
+            "pt": "dúvida educada"
+          },
+          {
+            "en": "Could we consider an alternative?",
+            "pt": "propor alternativa"
+          }
+        ]
+      },
+      {
+        "id": "em09l06-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Deadlines",
+        "titlePt": "Prazos",
+        "introPt": "By Friday / by EOD / by end of day / realistic.",
+        "examples": [
+          {
+            "en": "Can you finish by Friday?",
+            "pt": "até sexta"
+          },
+          {
+            "en": "I need it by EOD Thursday.",
+            "pt": "fim do dia quinta"
+          },
+          {
+            "en": "Is Thursday realistic?",
+            "pt": "é realista?"
+          },
+          {
+            "en": "I'll have it done by 5 PM.",
+            "pt": "até 17h"
+          }
+        ]
+      },
+      {
+        "id": "em09l06-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Confirming alignment",
+        "titlePt": "Confirmar alinhamento",
+        "introPt": "So we're aligned / Yes, that works / Let me confirm.",
+        "examples": [
+          {
+            "en": "So we're aligned on the timeline?",
+            "pt": "confirmar"
+          },
+          {
+            "en": "Yes, that works for me.",
+            "pt": "aceita"
+          },
+          {
+            "en": "Let me confirm — report by Friday?",
+            "pt": "repetir prazo"
+          },
+          {
+            "en": "I'll update the team.",
+            "pt": "próximo passo"
+          }
+        ]
+      },
+      {
+        "id": "em09l06-learn-cmp",
+        "type": "comparison",
+        "titleEn": "By Friday vs EOD Friday",
+        "titlePt": "By Friday vs EOD Friday",
+        "left": {
+          "labelEn": "BY FRIDAY · anytime Friday",
+          "exampleEn": "Please send it by Friday.",
+          "notePt": "Durante sexta ou antes."
+        },
+        "right": {
+          "labelEn": "BY EOD FRIDAY · end of business Friday",
+          "exampleEn": "I need it by EOD Friday.",
+          "notePt": "Fim do expediente — mais preciso."
+        },
+        "modelEn": "By Friday (flex) · By EOD Friday (specific cutoff)",
+        "modelPt": "EOD = deadline no fim do dia."
+      },
+      {
+        "id": "em09l06-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "I don't think so we should skip. / By EOD of Friday day.",
+        "rightEn": "I don't think we should skip. / By EOD Friday.",
+        "explanationPt": "Don't think + clause. EOD Friday — sem of day redundante."
+      },
+      {
+        "id": "em09l06-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I agree.",
+            "pt": "concordar"
+          },
+          {
+            "en": "I see your point, but...",
+            "pt": "discordar educado"
+          },
+          {
+            "en": "by Friday / by EOD",
+            "pt": "prazo"
+          },
+          {
+            "en": "That works for me.",
+            "pt": "confirmar"
+          },
+          {
+            "en": "So we're aligned?",
+            "pt": "alinhamento"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em09l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I agree — that makes sense."
+          },
+          {
+            "en": "I see your point, but I don't think we should skip the review."
+          },
+          {
+            "en": "Can you finish by Friday EOD?"
+          },
+          {
+            "en": "Is Thursday realistic?"
+          },
+          {
+            "en": "I think Thursday is tight, but I can deliver a draft by Wednesday EOD."
+          },
+          {
+            "en": "Yes, that works for me."
+          },
+          {
+            "en": "So we're aligned on the timeline?"
+          },
+          {
+            "en": "I'll update the team."
+          },
+          {
+            "en": "I don't think that's realistic."
+          },
+          {
+            "en": "Could we consider an alternative?"
+          }
+        ],
+        "dialogueEn": "I think we should launch before season. — I agree. — Can we skip review? — I see your point, but I don't think so. — Report by Friday? — Yes, by EOD Friday. — We're aligned? — Yes, that works."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em09l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Agree, disagree and set deadlines.",
+        "headlinePt": "Concorde, discorde e defina prazos.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Manager",
+            "questionEn": "What do you think about the timeline?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em09l06-prac-01",
+      "type": "choice",
+      "promptPt": "Concordar naturalmente:",
+      "options": [
+        {
+          "labelEn": "I agree — that makes sense.",
+          "correct": true,
+          "feedbackPt": "I agree + razão."
+        },
+        {
+          "labelEn": "I agree sense that no.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        },
+        {
+          "labelEn": "Agree I makes.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l06-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — discordar educado:",
+      "templateEn": "I see your point, but I ___ think we should rush.",
+      "blankLabel": "don't/do",
+      "options": [
+        {
+          "labelEn": "don't",
+          "correct": true,
+          "feedbackPt": "I don't think."
+        },
+        {
+          "labelEn": "am not",
+          "correct": false,
+          "feedbackPt": "Don't think, não am not think."
+        },
+        {
+          "labelEn": "no",
+          "correct": false,
+          "feedbackPt": "Incorreto."
+        }
+      ]
+    },
+    {
+      "id": "em09l06-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte — prazo sexta EOD:",
+      "tokens": [
+        "EOD.",
+        "Friday",
+        "by",
+        "it",
+        "have",
+        "can",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "can",
+        "have",
+        "it",
+        "by",
+        "Friday",
+        "EOD."
+      ],
+      "feedbackCorrectPt": "I can have it by Friday EOD.",
+      "feedbackWrongPt": "I can have it by + deadline."
+    },
+    {
+      "id": "em09l06-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Manager: Can you finish by Friday?",
+      "speaker": "You",
+      "contextEn": "Manager: Can you finish the report by Friday?",
+      "options": [
+        {
+          "labelEn": "Yes — I can have it done by Friday EOD.",
+          "correct": true,
+          "feedbackPt": "Prazo claro."
+        },
+        {
+          "labelEn": "Friday maybe done.",
+          "correct": false,
+          "feedbackPt": "Vago."
+        },
+        {
+          "labelEn": "I finished Friday.",
+          "correct": false,
+          "feedbackPt": "Passado."
+        }
+      ]
+    },
+    {
+      "id": "em09l06-prac-05",
+      "type": "choice",
+      "promptPt": "Confirmar alinhamento:",
+      "options": [
+        {
+          "labelEn": "Yes, that works for me.",
+          "correct": true,
+          "feedbackPt": "That works for me."
+        },
+        {
+          "labelEn": "Works me that no.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        },
+        {
+          "labelEn": "I work for that yes.",
+          "correct": false,
+          "feedbackPt": "Confunde work/work works."
+        }
+      ]
+    },
+    {
+      "id": "em09l06-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Proposta irrealista:",
+      "speaker": "You",
+      "contextEn": "Colleague: We can finish everything by tomorrow.",
+      "options": [
+        {
+          "labelEn": "I don't think that's realistic — could we target Friday instead?",
+          "correct": true,
+          "feedbackPt": "Disagree + alternativa."
+        },
+        {
+          "labelEn": "I agree tomorrow everything.",
+          "correct": false,
+          "feedbackPt": "Concorda com irreal."
+        },
+        {
+          "labelEn": "Realistic not tomorrow agree.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l06-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Complete — Sounds good:",
+      "templateEn": "Sounds good ___ me.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "to",
+          "correct": true,
+          "feedbackPt": "Sounds good to me."
+        },
+        {
+          "labelEn": "for",
+          "correct": false,
+          "feedbackPt": "To me, não for me aqui."
+        },
+        {
+          "labelEn": "with",
+          "correct": false,
+          "feedbackPt": "To me."
+        }
+      ]
+    },
+    {
+      "id": "em09l06-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte — estamos alinhados?",
+      "tokens": [
+        "timeline?",
+        "the",
+        "on",
+        "aligned",
+        "we're",
+        "So"
+      ],
+      "correctOrder": [
+        "So",
+        "we're",
+        "aligned",
+        "on",
+        "the",
+        "timeline?"
+      ],
+      "feedbackCorrectPt": "So we're aligned on the timeline?",
+      "feedbackWrongPt": "So we're aligned on..."
+    },
+    {
+      "id": "em09l06-prac-09",
+      "type": "choice",
+      "promptPt": "EOD significa:",
+      "options": [
+        {
+          "labelEn": "End of day — fim do expediente.",
+          "correct": true,
+          "feedbackPt": "EOD."
+        },
+        {
+          "labelEn": "End of December.",
+          "correct": false,
+          "feedbackPt": "End of day."
+        },
+        {
+          "labelEn": "Every other day.",
+          "correct": false,
+          "feedbackPt": "Incorrect."
+        }
+      ]
+    },
+    {
+      "id": "em09l06-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Concordar com lançamento:",
+      "speaker": "You",
+      "contextEn": "Colleague: Launch before season starts?",
+      "options": [
+        {
+          "labelEn": "I agree — that gives us time to test.",
+          "correct": true,
+          "feedbackPt": "Agree + benefit."
+        },
+        {
+          "labelEn": "I disagree agree season.",
+          "correct": false,
+          "feedbackPt": "Confuso."
+        },
+        {
+          "labelEn": "Season launch no.",
+          "correct": false,
+          "feedbackPt": "Incompleto."
+        }
+      ]
+    },
+    {
+      "id": "em09l06-prac-11",
+      "type": "fill_blank",
+      "promptPt": "Complete — alternativa:",
+      "templateEn": "Could we ___ an alternative?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "consider",
+          "correct": true,
+          "feedbackPt": "Consider an alternative."
+        },
+        {
+          "labelEn": "considering",
+          "correct": false,
+          "feedbackPt": "Base verb after could."
+        },
+        {
+          "labelEn": "considered",
+          "correct": false,
+          "feedbackPt": "Base form."
+        }
+      ]
+    },
+    {
+      "id": "em09l06-prac-12",
+      "type": "choice",
+      "promptPt": "Prazo preciso:",
+      "options": [
+        {
+          "labelEn": "I need it by EOD Thursday.",
+          "correct": true,
+          "feedbackPt": "EOD + dia."
+        },
+        {
+          "labelEn": "I need it EOD by Thursday day of.",
+          "correct": false,
+          "feedbackPt": "Redundante/confuso."
+        },
+        {
+          "labelEn": "I need Thursday EOD it.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    }
+  ]
+}

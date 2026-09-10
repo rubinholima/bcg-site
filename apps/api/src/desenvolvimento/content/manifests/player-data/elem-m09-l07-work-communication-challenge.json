@@ -1,0 +1,704 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 9,
+  "goalPt": "Desafio M9 — integrar responsabilidades, permissão, Can/Could, mensagens, calls e prazos. Sem gramática nova.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Terça completa — stand-up, pedidos, email com anexo, video call e confirmação de deadline.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Complete your work communication day.",
+    "headlinePt": "Complete seu dia de comunicação.",
+    "bodyPt": "Seis momentos — responsabilidade, permissão, pedido, email, call e prazo.",
+    "canDo": [
+      "responsibilities",
+      "Could I",
+      "Could you",
+      "Hi team / Please find attached",
+      "Any questions?",
+      "by Friday EOD"
+    ],
+    "production": {
+      "introPt": "Produza seis momentos do dia profissional — um campo por passo.",
+      "prompts": [
+        {
+          "speaker": "Jamie",
+          "questionEn": "Walk through your work communication day."
+        }
+      ],
+      "fields": [
+        {
+          "id": "resp",
+          "labelPt": "Responsabilidade + prioridade",
+          "prefixEn": "My main responsibility is",
+          "placeholderEn": "coordinating travel. The rollout is our top priority."
+        },
+        {
+          "id": "perm",
+          "labelPt": "Pedir permissão",
+          "prefixEn": "Could I",
+          "placeholderEn": "leave at 3 PM? I have an appointment."
+        },
+        {
+          "id": "req",
+          "labelPt": "Pedido Could you",
+          "prefixEn": "Could you",
+          "placeholderEn": "send me the updated roster, please?"
+        },
+        {
+          "id": "email",
+          "labelPt": "Email — anexo + ação",
+          "prefixEn": "",
+          "placeholderEn": "Hi team, Please find attached the itinerary. Could you confirm by EOD?"
+        },
+        {
+          "id": "call",
+          "labelPt": "Encerrar call",
+          "prefixEn": "",
+          "placeholderEn": "No questions from me — thanks, everyone."
+        },
+        {
+          "id": "deadline",
+          "labelPt": "Confirmar prazo",
+          "prefixEn": "",
+          "placeholderEn": "Yes — I can have it done by Friday EOD. That works for me."
+        }
+      ],
+      "exampleEn": "My main responsibility is travel. Could I leave at 3? Could you send the roster? Hi team, attached itinerary. No questions — thanks. By Friday EOD — that works."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em09l07-ctx-01",
+        "type": "intro",
+        "titleEn": "Work Communication Challenge",
+        "titlePt": "Desafio — Comunicação no trabalho",
+        "bodyPt": "Um dia de comunicação profissional — stand-up, Slack, email, call e alinhamento de prazo. Tudo do Módulo 9, zero gramática nova."
+      },
+      {
+        "id": "em09l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Full workday · Club front office OR corporate ops",
+        "scenarioPt": "Terça completa — stand-up, pedidos, email com anexo, video call e confirmação de deadline."
+      },
+      {
+        "id": "em09l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "What are your main responsibilities this week?",
+        "promptPt": "Passo 1 — Responsabilidades:",
+        "options": [
+          {
+            "labelEn": "My main responsibility is coordinating travel — the equipment rollout is our top priority.",
+            "correct": true,
+            "feedbackPt": "M9L1 — responsibility + priority."
+          },
+          {
+            "labelEn": "I responsibility travel priority.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          },
+          {
+            "labelEn": "Travel is my hotel reservation.",
+            "correct": false,
+            "feedbackPt": "Contexto errado."
+          }
+        ]
+      },
+      {
+        "id": "em09l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Need to leave early.)",
+        "promptPt": "Passo 2 — Pedir permissão:",
+        "options": [
+          {
+            "labelEn": "Could I leave at 3 PM? I have an appointment.",
+            "correct": true,
+            "feedbackPt": "M9L2 — Could I."
+          },
+          {
+            "labelEn": "I leave 3 PM now.",
+            "correct": false,
+            "feedbackPt": "Sem pedido."
+          },
+          {
+            "labelEn": "Leave permission 3.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Slack message to colleague.)",
+        "promptPt": "Passo 3 — Can/Could request:",
+        "options": [
+          {
+            "labelEn": "Could you send me the updated roster, please?",
+            "correct": true,
+            "feedbackPt": "M9L3 — Could you."
+          },
+          {
+            "labelEn": "Send roster me now!",
+            "correct": false,
+            "feedbackPt": "Abrupto."
+          },
+          {
+            "labelEn": "Roster send you could.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Writing email to team.)",
+        "promptPt": "Passo 4 — Email:",
+        "options": [
+          {
+            "labelEn": "Hi team, Please find attached the travel itinerary. Could you confirm by EOD?",
+            "correct": true,
+            "feedbackPt": "M9L4 — email pattern."
+          },
+          {
+            "labelEn": "Hey attach file team hi.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "Best regards attach please.",
+            "correct": false,
+            "feedbackPt": "Confuso."
+          }
+        ]
+      },
+      {
+        "id": "em09l07-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Host",
+        "promptEn": "Any questions before we wrap up?",
+        "promptPt": "Passo 5 — Call:",
+        "options": [
+          {
+            "labelEn": "No questions from me — thanks, everyone.",
+            "correct": true,
+            "feedbackPt": "M9L5 — meeting close."
+          },
+          {
+            "labelEn": "Questions any me no wrap.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I start the agenda now.",
+            "correct": false,
+            "feedbackPt": "Papel errado."
+          }
+        ]
+      },
+      {
+        "id": "em09l07-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "Can you deliver the final version by Friday EOD?",
+        "promptPt": "Passo 6 — Deadline:",
+        "options": [
+          {
+            "labelEn": "Yes — that works for me. I can have it done by Friday EOD.",
+            "correct": true,
+            "feedbackPt": "M9L6 — deadline + alignment."
+          },
+          {
+            "labelEn": "Friday EOD maybe not yes.",
+            "correct": false,
+            "feedbackPt": "Vago."
+          },
+          {
+            "labelEn": "I agree Friday hotel.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em09l07-learn-01",
+        "type": "review",
+        "titleEn": "L1 — Responsibilities",
+        "titlePt": "L1 — Responsabilidades",
+        "items": [
+          {
+            "en": "My main responsibility is...",
+            "pt": "papel"
+          },
+          {
+            "en": "I'm leading... / top priority",
+            "pt": "projeto"
+          },
+          {
+            "en": "I'm in charge of...",
+            "pt": "liderança"
+          }
+        ]
+      },
+      {
+        "id": "em09l07-learn-02",
+        "type": "review",
+        "titleEn": "L2 — Permission",
+        "titlePt": "L2 — Permissão",
+        "items": [
+          {
+            "en": "Could I leave at 3 PM?",
+            "pt": "Could I"
+          },
+          {
+            "en": "Would it be OK if I left early?",
+            "pt": "Would it be OK if"
+          },
+          {
+            "en": "May I access this file?",
+            "pt": "May I"
+          }
+        ]
+      },
+      {
+        "id": "em09l07-learn-03",
+        "type": "review",
+        "titleEn": "L3 — Can/Could requests",
+        "titlePt": "L3 — Pedidos",
+        "items": [
+          {
+            "en": "Can you check this?",
+            "pt": "Can"
+          },
+          {
+            "en": "Could you send me...?",
+            "pt": "Could"
+          },
+          {
+            "en": "When you get a chance",
+            "pt": "suavizar"
+          }
+        ]
+      },
+      {
+        "id": "em09l07-learn-04",
+        "type": "review",
+        "titleEn": "L4 — Messages",
+        "titlePt": "L4 — Mensagens",
+        "items": [
+          {
+            "en": "Hi team,",
+            "pt": "abertura"
+          },
+          {
+            "en": "Please find attached...",
+            "pt": "anexo"
+          },
+          {
+            "en": "Best regards,",
+            "pt": "fechamento"
+          }
+        ]
+      },
+      {
+        "id": "em09l07-learn-05",
+        "type": "review",
+        "titleEn": "L5 — Calls & meetings",
+        "titlePt": "L5 — Calls",
+        "items": [
+          {
+            "en": "Sorry I'm late.",
+            "pt": "atraso"
+          },
+          {
+            "en": "Here's the agenda.",
+            "pt": "pauta"
+          },
+          {
+            "en": "Any questions?",
+            "pt": "encerrar"
+          }
+        ]
+      },
+      {
+        "id": "em09l07-learn-06",
+        "type": "review",
+        "titleEn": "L6 — Agree & deadlines",
+        "titlePt": "L6 — Prazos",
+        "items": [
+          {
+            "en": "I agree. / I see your point, but...",
+            "pt": "opinião"
+          },
+          {
+            "en": "by Friday EOD",
+            "pt": "prazo"
+          },
+          {
+            "en": "That works for me.",
+            "pt": "alinhamento"
+          }
+        ]
+      },
+      {
+        "id": "em09l07-learn-07",
+        "type": "language_focus",
+        "titleEn": "Challenge flow",
+        "titlePt": "Fluxo do desafio",
+        "items": [
+          {
+            "formalEn": "Responsibilities → Permission → Request → Email → Call → Deadline",
+            "naturalEn": "One professional day in English",
+            "notePt": "Siga a ordem na missão ou adapte à sua rotina."
+          }
+        ],
+        "tipPt": "Sem gramática nova — só integração do Módulo 9."
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em09l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "My main responsibility is coordinating travel."
+          },
+          {
+            "en": "Could I leave at 3 PM?"
+          },
+          {
+            "en": "Could you send me the roster, please?"
+          },
+          {
+            "en": "Hi team, Please find attached the itinerary."
+          },
+          {
+            "en": "Any questions before we wrap up?"
+          },
+          {
+            "en": "Yes — by Friday EOD. That works for me."
+          }
+        ],
+        "dialogueEn": "Responsibilities → Permission → Request → Email → Call → Deadline — full M9 workday."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em09l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Complete your work communication day.",
+        "headlinePt": "Complete seu dia de comunicação.",
+        "bodyPt": "Seis momentos — responsabilidade, permissão, pedido, email, call e prazo.",
+        "prompts": [
+          {
+            "speaker": "Jamie",
+            "questionEn": "Walk through your work communication day."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em09l07-prac-01",
+      "type": "choice",
+      "promptPt": "Passo 1 — responsabilidade:",
+      "options": [
+        {
+          "labelEn": "My main responsibility is coordinating travel logistics.",
+          "correct": true,
+          "feedbackPt": "M9L1."
+        },
+        {
+          "labelEn": "I hotel travel reservation.",
+          "correct": false,
+          "feedbackPt": "Contexto errado."
+        },
+        {
+          "labelEn": "Responsibility travel me.",
+          "correct": false,
+          "feedbackPt": "Gramática."
+        }
+      ]
+    },
+    {
+      "id": "em09l07-prac-02",
+      "type": "choice",
+      "promptPt": "Passo 2 — permissão:",
+      "options": [
+        {
+          "labelEn": "Could I leave at 3 PM?",
+          "correct": true,
+          "feedbackPt": "M9L2."
+        },
+        {
+          "labelEn": "I leave now 3.",
+          "correct": false,
+          "feedbackPt": "Sem pedido."
+        },
+        {
+          "labelEn": "May attach file.",
+          "correct": false,
+          "feedbackPt": "Contexto errado."
+        }
+      ]
+    },
+    {
+      "id": "em09l07-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Passo 3 — pedido arquivo:",
+      "speaker": "You",
+      "contextEn": "You need the roster.",
+      "options": [
+        {
+          "labelEn": "Could you send me the updated roster, please?",
+          "correct": true,
+          "feedbackPt": "M9L3."
+        },
+        {
+          "labelEn": "Send me now roster!",
+          "correct": false,
+          "feedbackPt": "Abrupto."
+        },
+        {
+          "labelEn": "Roster you send.",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        }
+      ]
+    },
+    {
+      "id": "em09l07-prac-04",
+      "type": "choice",
+      "promptPt": "Passo 4 — email:",
+      "options": [
+        {
+          "labelEn": "Please find attached the travel itinerary.",
+          "correct": true,
+          "feedbackPt": "M9L4."
+        },
+        {
+          "labelEn": "Attach find please itinerary the.",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        },
+        {
+          "labelEn": "Best regards Hi team.",
+          "correct": false,
+          "feedbackPt": "Confuso."
+        }
+      ]
+    },
+    {
+      "id": "em09l07-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Passo 5 — call:",
+      "speaker": "You",
+      "contextEn": "Host: Any questions before we wrap up?",
+      "options": [
+        {
+          "labelEn": "No questions from me — thanks, everyone.",
+          "correct": true,
+          "feedbackPt": "M9L5."
+        },
+        {
+          "labelEn": "I start agenda.",
+          "correct": false,
+          "feedbackPt": "Papel errado."
+        },
+        {
+          "labelEn": "Questions elevator.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em09l07-prac-06",
+      "type": "choice",
+      "promptPt": "Passo 6 — prazo:",
+      "options": [
+        {
+          "labelEn": "Yes — I can have it done by Friday EOD.",
+          "correct": true,
+          "feedbackPt": "M9L6."
+        },
+        {
+          "labelEn": "Friday maybe.",
+          "correct": false,
+          "feedbackPt": "Vago."
+        },
+        {
+          "labelEn": "EOD is hotel.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em09l07-prac-07",
+      "type": "classify",
+      "promptPt": "Qual lição? — Could I leave at 3 PM?",
+      "sentenceEn": "Could I leave at 3 PM?",
+      "category": "L2",
+      "feedbackCorrectPt": "L2 — permission.",
+      "feedbackWrongPt": "Could I = permission."
+    },
+    {
+      "id": "em09l07-prac-08",
+      "type": "classify",
+      "promptPt": "Qual lição? — Please find attached",
+      "sentenceEn": "Please find attached the file.",
+      "category": "L4",
+      "feedbackCorrectPt": "L4 — messages.",
+      "feedbackWrongPt": "Email pattern."
+    },
+    {
+      "id": "em09l07-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte email abertura + anexo:",
+      "tokens": [
+        "itinerary.",
+        "attached",
+        "the",
+        "find",
+        "Please"
+      ],
+      "correctOrder": [
+        "Please",
+        "find",
+        "attached",
+        "the",
+        "itinerary."
+      ],
+      "feedbackCorrectPt": "Please find attached the itinerary.",
+      "feedbackWrongPt": "Please find attached + object."
+    },
+    {
+      "id": "em09l07-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Complete — alinhamento:",
+      "templateEn": "Yes, that ___ for me.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "works",
+          "correct": true,
+          "feedbackPt": "That works for me."
+        },
+        {
+          "labelEn": "work",
+          "correct": false,
+          "feedbackPt": "Works — terceira pessoa."
+        },
+        {
+          "labelEn": "working",
+          "correct": false,
+          "feedbackPt": "Works."
+        }
+      ]
+    },
+    {
+      "id": "em09l07-prac-11",
+      "type": "dialogue_complete",
+      "promptPt": "Integração — discordar de skip review:",
+      "speaker": "You",
+      "contextEn": "Colleague: Can we skip the review?",
+      "options": [
+        {
+          "labelEn": "I see your point, but I don't think we should skip it.",
+          "correct": true,
+          "feedbackPt": "M9L6 disagree."
+        },
+        {
+          "labelEn": "Skip review I agree.",
+          "correct": false,
+          "feedbackPt": "Contraditório."
+        },
+        {
+          "labelEn": "Review skip hotel.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em09l07-prac-12",
+      "type": "choice",
+      "promptPt": "Ordem do desafio:",
+      "options": [
+        {
+          "labelEn": "Responsibilities → Permission → Request → Email → Call → Deadline",
+          "correct": true,
+          "feedbackPt": "Fluxo M9 challenge."
+        },
+        {
+          "labelEn": "Email → Hotel → Food → Travel",
+          "correct": false,
+          "feedbackPt": "M7-8."
+        },
+        {
+          "labelEn": "Past → Future → Present",
+          "correct": false,
+          "feedbackPt": "Tempos — não M9 flow."
+        }
+      ]
+    }
+  ]
+}

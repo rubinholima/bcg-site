@@ -1,0 +1,700 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 9,
+  "goalPt": "Can e Could em pedidos profissionais — Can you send..., Could you review..., diferença de formalidade no clube e no escritório.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Thread de trabalho. Você pede revisão de documento, envio de arquivo e confirmação de prazo — Can/Could com please.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Make professional requests.",
+    "headlinePt": "Faça pedidos profissionais.",
+    "bodyPt": "",
+    "canDo": [
+      "Can you...?",
+      "Could you...?",
+      "please",
+      "Sure, I'll..."
+    ],
+    "production": {
+      "introPt": "Dois pedidos — um com Can, um com Could — e agradecimento.",
+      "prompts": [
+        {
+          "speaker": "Colleague",
+          "questionEn": "What do you need?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "can",
+          "labelPt": "Pedido com Can",
+          "prefixEn": "Can you",
+          "placeholderEn": "check this travel budget for me?"
+        },
+        {
+          "id": "could",
+          "labelPt": "Pedido com Could",
+          "prefixEn": "Could you",
+          "placeholderEn": "send me the updated roster, please?"
+        },
+        {
+          "id": "thanks",
+          "labelPt": "Agradecer",
+          "prefixEn": "",
+          "placeholderEn": "Thanks — I really appreciate it."
+        }
+      ],
+      "exampleEn": "Can you check this budget? Could you send me the roster, please? Thanks — I appreciate it."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em09l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Can / Could — professional requests",
+        "titlePt": "Can / Could — pedidos profissionais",
+        "bodyPt": "Pedidos rápidos no Slack ou email — Can you...? para colegas próximos, Could you...? para tom mais educado ou hierarquia."
+      },
+      {
+        "id": "em09l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Slack thread · Club ops OR marketing team",
+        "scenarioPt": "Thread de trabalho. Você pede revisão de documento, envio de arquivo e confirmação de prazo — Can/Could com please."
+      },
+      {
+        "id": "em09l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(You need the travel spreadsheet.)",
+        "promptPt": "Pedir arquivo — Could (educado):",
+        "options": [
+          {
+            "labelEn": "Could you send me the updated travel spreadsheet, please?",
+            "correct": true,
+            "feedbackPt": "Could + send me + please."
+          },
+          {
+            "labelEn": "Send spreadsheet me now!",
+            "correct": false,
+            "feedbackPt": "Muito abrupto."
+          },
+          {
+            "labelEn": "Me send you spreadsheet.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "Sure — I'll send it in a few minutes.",
+        "promptPt": "Colega aceita. Como agradecer?",
+        "options": [
+          {
+            "labelEn": "Perfect, thanks! I really appreciate it.",
+            "correct": true,
+            "feedbackPt": "Agradece com naturalidade."
+          },
+          {
+            "labelEn": "Send now hurry.",
+            "correct": false,
+            "feedbackPt": "Rude."
+          },
+          {
+            "labelEn": "You send good.",
+            "correct": false,
+            "feedbackPt": "Incompleto."
+          }
+        ]
+      },
+      {
+        "id": "em09l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Quick ask to teammate nearby.)",
+        "promptPt": "Pedido informal — Can:",
+        "options": [
+          {
+            "labelEn": "Can you check this number for me?",
+            "correct": true,
+            "feedbackPt": "Can you — colega próximo."
+          },
+          {
+            "labelEn": "Could checking this number?",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          },
+          {
+            "labelEn": "Check me number you.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l03-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "Can you join the call at 4?",
+        "promptPt": "Manager pede — você confirma:",
+        "options": [
+          {
+            "labelEn": "Sure, I'll be there at 4.",
+            "correct": true,
+            "feedbackPt": "Confirmação clara."
+          },
+          {
+            "labelEn": "I join call maybe.",
+            "correct": false,
+            "feedbackPt": "Vago."
+          },
+          {
+            "labelEn": "Call 4 I can.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l03-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(You need a favor from director.)",
+        "promptPt": "Pedido formal — Could:",
+        "options": [
+          {
+            "labelEn": "Could you review the contract draft when you have a moment?",
+            "correct": true,
+            "feedbackPt": "Could + when you have a moment — respeitoso."
+          },
+          {
+            "labelEn": "Review contract now director.",
+            "correct": false,
+            "feedbackPt": "Muito direto."
+          },
+          {
+            "labelEn": "You review me contract.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em09l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Can you...?",
+        "titlePt": "Can you...?",
+        "introPt": "Pedidos diretos a colegas — informal mas profissional.",
+        "examples": [
+          {
+            "en": "Can you send me the file?",
+            "pt": "enviar arquivo"
+          },
+          {
+            "en": "Can you check this for me?",
+            "pt": "verificar"
+          },
+          {
+            "en": "Can you join the call at 4?",
+            "pt": "entrar na call"
+          },
+          {
+            "en": "Can you help me with this?",
+            "pt": "ajuda"
+          }
+        ]
+      },
+      {
+        "id": "em09l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Could you...?",
+        "titlePt": "Could you...?",
+        "introPt": "Mais educado — supervisor, outro departamento, email formal.",
+        "examples": [
+          {
+            "en": "Could you send me the report, please?",
+            "pt": "relatório"
+          },
+          {
+            "en": "Could you review this draft?",
+            "pt": "revisar rascunho"
+          },
+          {
+            "en": "Could you cc me on that email?",
+            "pt": "copiar no email"
+          },
+          {
+            "en": "Could you let me know by EOD?",
+            "pt": "responder até fim do dia"
+          }
+        ]
+      },
+      {
+        "id": "em09l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Responses & follow-up",
+        "titlePt": "Respostas e follow-up",
+        "introPt": "Sure / No problem / I'll send it / When you get a chance.",
+        "examples": [
+          {
+            "en": "Sure, I'll send it shortly.",
+            "pt": "enviarei em breve"
+          },
+          {
+            "en": "No problem — give me ten minutes.",
+            "pt": "dez minutos"
+          },
+          {
+            "en": "When you get a chance, no rush.",
+            "pt": "sem pressa"
+          },
+          {
+            "en": "I'll get back to you by 5.",
+            "pt": "retorno até 5"
+          }
+        ]
+      },
+      {
+        "id": "em09l03-learn-cmp",
+        "type": "comparison",
+        "titleEn": "Can vs Could",
+        "titlePt": "Can vs Could",
+        "left": {
+          "labelEn": "CAN · teammates, quick asks",
+          "exampleEn": "Can you check this for me?",
+          "notePt": "Colega próximo, chat rápido."
+        },
+        "right": {
+          "labelEn": "COULD · polite / hierarchy",
+          "exampleEn": "Could you review this when you have a moment?",
+          "notePt": "Mais educado — supervisor ou email."
+        },
+        "modelEn": "Can you send the file? · Could you review the contract draft?",
+        "modelPt": "Can = direto; Could = mais formal."
+      },
+      {
+        "id": "em09l03-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "Could you to send me the file? / Can you sending the report?",
+        "rightEn": "Could you send me the file? / Can you send the report?",
+        "explanationPt": "Após Can/Could you, verbo base — send, check, review. Nunca to send ou sending."
+      },
+      {
+        "id": "em09l03-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "Can you send me...?",
+            "pt": "pedido direto"
+          },
+          {
+            "en": "Could you review...?",
+            "pt": "pedido educado"
+          },
+          {
+            "en": "please / when you get a chance",
+            "pt": "suavizar"
+          },
+          {
+            "en": "Sure, I'll send it.",
+            "pt": "resposta"
+          },
+          {
+            "en": "Thanks — I appreciate it.",
+            "pt": "agradecer"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em09l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Could you send me the updated spreadsheet, please?"
+          },
+          {
+            "en": "Sure — I'll send it in a few minutes."
+          },
+          {
+            "en": "Can you check this number for me?"
+          },
+          {
+            "en": "Can you join the call at 4?"
+          },
+          {
+            "en": "Sure, I'll be there."
+          },
+          {
+            "en": "Could you review the draft when you have a moment?"
+          },
+          {
+            "en": "When you get a chance, no rush."
+          },
+          {
+            "en": "Thanks — I really appreciate it."
+          },
+          {
+            "en": "Could you cc me on that email?"
+          },
+          {
+            "en": "I'll get back to you by EOD."
+          }
+        ],
+        "dialogueEn": "Could you send me the spreadsheet? — Sure, I'll send it shortly. — Can you check this number? — No problem. — Could you review the draft? — When I get a moment. — Thanks!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em09l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Make professional requests.",
+        "headlinePt": "Faça pedidos profissionais.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Colleague",
+            "questionEn": "What do you need?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em09l03-prac-01",
+      "type": "choice",
+      "promptPt": "Pedido educado com arquivo:",
+      "options": [
+        {
+          "labelEn": "Could you send me the report, please?",
+          "correct": true,
+          "feedbackPt": "Could you + base verb."
+        },
+        {
+          "labelEn": "Could you to send me the report?",
+          "correct": false,
+          "feedbackPt": "Sem to."
+        },
+        {
+          "labelEn": "Could you sending the report?",
+          "correct": false,
+          "feedbackPt": "Base verb após Could you."
+        }
+      ]
+    },
+    {
+      "id": "em09l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — Can you:",
+      "templateEn": "Can you ___ this for me?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "check",
+          "correct": true,
+          "feedbackPt": "Can you check."
+        },
+        {
+          "labelEn": "checking",
+          "correct": false,
+          "feedbackPt": "Base verb."
+        },
+        {
+          "labelEn": "to check",
+          "correct": false,
+          "feedbackPt": "Sem to."
+        }
+      ]
+    },
+    {
+      "id": "em09l03-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte pedido:",
+      "tokens": [
+        "please?",
+        "file",
+        "the",
+        "send",
+        "me",
+        "you",
+        "Could"
+      ],
+      "correctOrder": [
+        "Could",
+        "you",
+        "send",
+        "me",
+        "the",
+        "file",
+        "please?"
+      ],
+      "feedbackCorrectPt": "Could you send me the file, please?",
+      "feedbackWrongPt": "Could you + verb + me + object."
+    },
+    {
+      "id": "em09l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Colleague confirma envio",
+      "speaker": "You",
+      "contextEn": "Colleague: Sure — I'll send it in a few minutes.",
+      "options": [
+        {
+          "labelEn": "Perfect, thanks! I really appreciate it.",
+          "correct": true,
+          "feedbackPt": "Agradecimento natural."
+        },
+        {
+          "labelEn": "Send faster.",
+          "correct": false,
+          "feedbackPt": "Rude."
+        },
+        {
+          "labelEn": "Good send.",
+          "correct": false,
+          "feedbackPt": "Incompleto."
+        }
+      ]
+    },
+    {
+      "id": "em09l03-prac-05",
+      "type": "choice",
+      "promptPt": "Can vs Could — colega próximo:",
+      "options": [
+        {
+          "labelEn": "Can you join the call at 4?",
+          "correct": true,
+          "feedbackPt": "Can — informal profissional."
+        },
+        {
+          "labelEn": "Could you joining the call?",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        },
+        {
+          "labelEn": "Join call you 4.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l03-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Pedido formal ao diretor:",
+      "speaker": "You",
+      "contextEn": "You need director to review contract.",
+      "options": [
+        {
+          "labelEn": "Could you review the contract draft when you have a moment?",
+          "correct": true,
+          "feedbackPt": "Could + when you have a moment."
+        },
+        {
+          "labelEn": "Review contract now.",
+          "correct": false,
+          "feedbackPt": "Muito direto."
+        },
+        {
+          "labelEn": "Director review me.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l03-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Complete resposta:",
+      "templateEn": "Sure, I'll ___ it shortly.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "send",
+          "correct": true,
+          "feedbackPt": "I'll send it."
+        },
+        {
+          "labelEn": "sending",
+          "correct": false,
+          "feedbackPt": "Will + base."
+        },
+        {
+          "labelEn": "sent",
+          "correct": false,
+          "feedbackPt": "Futuro, não passado."
+        }
+      ]
+    },
+    {
+      "id": "em09l03-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte — sem pressa:",
+      "tokens": [
+        "chance,",
+        "a",
+        "get",
+        "you",
+        "When"
+      ],
+      "correctOrder": [
+        "When",
+        "you",
+        "get",
+        "a",
+        "chance,"
+      ],
+      "feedbackCorrectPt": "When you get a chance,",
+      "feedbackWrongPt": "When you get a chance = sem pressa."
+    },
+    {
+      "id": "em09l03-prac-09",
+      "type": "choice",
+      "promptPt": "Erro a evitar:",
+      "options": [
+        {
+          "labelEn": "Can you help me with this?",
+          "correct": true,
+          "feedbackPt": "Can you + base verb."
+        },
+        {
+          "labelEn": "Can you helping me?",
+          "correct": false,
+          "feedbackPt": "Help, não helping."
+        },
+        {
+          "labelEn": "Can you to help me?",
+          "correct": false,
+          "feedbackPt": "Sem to."
+        }
+      ]
+    },
+    {
+      "id": "em09l03-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Manager: Can you join at 4?",
+      "speaker": "You",
+      "contextEn": "Manager: Can you join the call at 4?",
+      "options": [
+        {
+          "labelEn": "Sure, I'll be there at 4.",
+          "correct": true,
+          "feedbackPt": "Confirma horário."
+        },
+        {
+          "labelEn": "Maybe call.",
+          "correct": false,
+          "feedbackPt": "Vago."
+        },
+        {
+          "labelEn": "I join 4 call.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l03-prac-11",
+      "type": "fill_blank",
+      "promptPt": "Complete — cc no email:",
+      "templateEn": "Could you ___ me on that email?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "cc",
+          "correct": true,
+          "feedbackPt": "Cc = copiar."
+        },
+        {
+          "labelEn": "copy",
+          "correct": false,
+          "feedbackPt": "Copy funciona informalmente, cc é padrão profissional."
+        },
+        {
+          "labelEn": "send",
+          "correct": false,
+          "feedbackPt": "Cc é o termo correto aqui."
+        }
+      ]
+    },
+    {
+      "id": "em09l03-prac-12",
+      "type": "choice",
+      "promptPt": "Clube — pedido natural:",
+      "options": [
+        {
+          "labelEn": "Could you send me the updated travel itinerary?",
+          "correct": true,
+          "feedbackPt": "Travel — contexto clube."
+        },
+        {
+          "labelEn": "Could you send me the hotel elevator?",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        },
+        {
+          "labelEn": "Could you send me my allergies?",
+          "correct": false,
+          "feedbackPt": "Contexto errado."
+        }
+      ]
+    }
+  ]
+}

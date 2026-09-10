@@ -1,0 +1,660 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 10,
+  "goalPt": "Revisão M3-5 — present continuous, past simple e future (going to/will). Sem gramática nova.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Sexta-feira — Jamie pergunta o que você está fazendo agora, o que fez ontem e planos do fim de semana.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Mix now, past and future.",
+    "headlinePt": "Misture agora, passado e futuro.",
+    "bodyPt": "",
+    "canDo": [
+      "I'm ...ing now",
+      "Yesterday I...",
+      "I'm going to...",
+      "I'll..."
+    ],
+    "production": {
+      "introPt": "Responda sobre agora, ontem e fim de semana — três tempos.",
+      "prompts": [
+        {
+          "speaker": "Jamie",
+          "questionEn": "Quick time mix — now, yesterday, weekend?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "now",
+          "labelPt": "Agora (continuous)",
+          "prefixEn": "Right now I'm",
+          "placeholderEn": "finishing the travel report."
+        },
+        {
+          "id": "past",
+          "labelPt": "Ontem (past)",
+          "prefixEn": "Yesterday I",
+          "placeholderEn": "met with the medical team."
+        },
+        {
+          "id": "future",
+          "labelPt": "Fim de semana (going to)",
+          "prefixEn": "This weekend I'm going to",
+          "placeholderEn": "visit my family."
+        },
+        {
+          "id": "will",
+          "labelPt": "Decisão espontânea (will)",
+          "prefixEn": "",
+          "placeholderEn": "Actually, I'll join the team dinner tonight."
+        }
+      ],
+      "exampleEn": "Right now I'm finishing the report. Yesterday I met the team. This weekend I'm going to visit family. I'll join dinner tonight."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em10l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Now, past & future — review",
+        "titlePt": "Agora, passado e futuro — revisão",
+        "bodyPt": "Mistura controlada de tempos — o que está acontecendo agora, o que aconteceu ontem e planos para amanhã. Clube ou escritório."
+      },
+      {
+        "id": "em10l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Friday check-in · Match week OR project wrap-up",
+        "scenarioPt": "Sexta-feira — Jamie pergunta o que você está fazendo agora, o que fez ontem e planos do fim de semana."
+      },
+      {
+        "id": "em10l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are you doing right now?",
+        "promptPt": "Present continuous — agora:",
+        "options": [
+          {
+            "labelEn": "I'm finishing the travel report — we're leaving for the match tomorrow.",
+            "correct": true,
+            "feedbackPt": "M3 now + M5 future context."
+          },
+          {
+            "labelEn": "I finish report now right.",
+            "correct": false,
+            "feedbackPt": "Continuous for now."
+          },
+          {
+            "labelEn": "I finished report now doing.",
+            "correct": false,
+            "feedbackPt": "Tempos misturados errado."
+          }
+        ]
+      },
+      {
+        "id": "em10l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What did you do yesterday?",
+        "promptPt": "Past simple — ontem:",
+        "options": [
+          {
+            "labelEn": "Yesterday I met with the medical team and reviewed the injury list.",
+            "correct": true,
+            "feedbackPt": "M4 — past actions."
+          },
+          {
+            "labelEn": "Yesterday I meet medical team.",
+            "correct": false,
+            "feedbackPt": "Past = met."
+          },
+          {
+            "labelEn": "I am meeting yesterday medical.",
+            "correct": false,
+            "feedbackPt": "Tempo errado."
+          }
+        ]
+      },
+      {
+        "id": "em10l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are you going to do this weekend?",
+        "promptPt": "Going to — planos:",
+        "options": [
+          {
+            "labelEn": "This weekend I'm going to visit my family — I'm not going to work.",
+            "correct": true,
+            "feedbackPt": "M5 — going to + negative."
+          },
+          {
+            "labelEn": "This weekend I visit family going.",
+            "correct": false,
+            "feedbackPt": "Ordem."
+          },
+          {
+            "labelEn": "I will visited family weekend.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em10l03-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Is the team practicing right now?",
+        "promptPt": "Present continuous — terceira pessoa:",
+        "options": [
+          {
+            "labelEn": "Yes — they're practicing on the field. The coaches are watching.",
+            "correct": true,
+            "feedbackPt": "They are + activity now."
+          },
+          {
+            "labelEn": "Yes they practice field now always.",
+            "correct": false,
+            "feedbackPt": "Now = continuous."
+          },
+          {
+            "labelEn": "They practiced right now.",
+            "correct": false,
+            "feedbackPt": "Past vs now."
+          }
+        ]
+      },
+      {
+        "id": "em10l03-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Any spontaneous plans for tonight?",
+        "promptPt": "Will — decisão espontânea:",
+        "options": [
+          {
+            "labelEn": "Actually, I'll join the team dinner — someone just invited me.",
+            "correct": true,
+            "feedbackPt": "M5 will — spontaneous."
+          },
+          {
+            "labelEn": "I going to joined dinner tonight will.",
+            "correct": false,
+            "feedbackPt": "Confuso."
+          },
+          {
+            "labelEn": "I joined dinner tonight.",
+            "correct": false,
+            "feedbackPt": "Past."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em10l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Now — Present Continuous (M3)",
+        "titlePt": "Agora — Present Continuous (M3)",
+        "introPt": "Am/is/are + -ing for actions happening now.",
+        "examples": [
+          {
+            "en": "I'm finishing the report.",
+            "pt": "agora"
+          },
+          {
+            "en": "They're practicing on the field.",
+            "pt": "clube"
+          },
+          {
+            "en": "She is on a call right now.",
+            "pt": "escritório"
+          },
+          {
+            "en": "What are you doing?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em10l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Past — Simple Past (M4)",
+        "titlePt": "Passado — Simple Past (M4)",
+        "introPt": "Yesterday / last week / did + base verb.",
+        "examples": [
+          {
+            "en": "Yesterday I met with the medical team.",
+            "pt": "ontem"
+          },
+          {
+            "en": "We reviewed the injury list.",
+            "pt": "regular -ed"
+          },
+          {
+            "en": "Did you finish the report?",
+            "pt": "pergunta did"
+          },
+          {
+            "en": "The flight was delayed.",
+            "pt": "was/were"
+          }
+        ]
+      },
+      {
+        "id": "em10l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Future — Going to & Will (M5)",
+        "titlePt": "Futuro — Going to & Will (M5)",
+        "introPt": "Plans vs spontaneous decisions.",
+        "examples": [
+          {
+            "en": "I'm going to visit my family.",
+            "pt": "plano"
+          },
+          {
+            "en": "I'm not going to work this weekend.",
+            "pt": "negativa"
+          },
+          {
+            "en": "I'll join the team dinner.",
+            "pt": "will espontâneo"
+          },
+          {
+            "en": "Are you going to travel next week?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em10l03-learn-cmp",
+        "type": "comparison",
+        "titleEn": "Three time frames",
+        "titlePt": "Três tempos",
+        "left": {
+          "labelEn": "NOW · am/is/are + -ing",
+          "exampleEn": "I'm finishing the report.",
+          "notePt": "M3 — happening now."
+        },
+        "right": {
+          "labelEn": "PAST · did / -ed / was",
+          "exampleEn": "Yesterday I met the team.",
+          "notePt": "M4 — finished actions."
+        },
+        "modelEn": "Now: I'm working. Past: I worked yesterday. Future: I'm going to rest.",
+        "modelPt": "M3 + M4 + M5 na mesma conversa — Friday check-in clássico."
+      },
+      {
+        "id": "em10l03-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "What are you doing right now?",
+            "pt": "M3"
+          },
+          {
+            "en": "What did you do yesterday?",
+            "pt": "M4"
+          },
+          {
+            "en": "What are you going to do this weekend?",
+            "pt": "M5 going to"
+          },
+          {
+            "en": "I'll join the dinner.",
+            "pt": "M5 will"
+          },
+          {
+            "en": "They're practicing now.",
+            "pt": "M3 plural"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em10l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What are you doing right now?"
+          },
+          {
+            "en": "I'm finishing the travel report."
+          },
+          {
+            "en": "What did you do yesterday?"
+          },
+          {
+            "en": "I met with the medical team."
+          },
+          {
+            "en": "What are you going to do this weekend?"
+          },
+          {
+            "en": "I'm going to visit my family."
+          },
+          {
+            "en": "I'll join the team dinner."
+          },
+          {
+            "en": "They're practicing on the field."
+          }
+        ],
+        "dialogueEn": "What are you doing? — Finishing the report. — Yesterday? — Met the medical team. — Weekend plans? — Going to visit family. — Tonight? — I'll join the dinner."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em10l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Mix now, past and future.",
+        "headlinePt": "Misture agora, passado e futuro.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Jamie",
+            "questionEn": "Quick time mix — now, yesterday, weekend?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em10l03-prac-01",
+      "type": "choice",
+      "promptPt": "Agora — continuous:",
+      "options": [
+        {
+          "labelEn": "I'm finishing the report.",
+          "correct": true,
+          "feedbackPt": "M3."
+        },
+        {
+          "labelEn": "I finish the report now.",
+          "correct": false,
+          "feedbackPt": "Now = -ing."
+        },
+        {
+          "labelEn": "I finished the report now.",
+          "correct": false,
+          "feedbackPt": "Past."
+        }
+      ]
+    },
+    {
+      "id": "em10l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — ontem:",
+      "templateEn": "Yesterday I ___ with the medical team.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "met",
+          "correct": true,
+          "feedbackPt": "Met — irregular past."
+        },
+        {
+          "labelEn": "meet",
+          "correct": false,
+          "feedbackPt": "Past needed."
+        },
+        {
+          "labelEn": "meeting",
+          "correct": false,
+          "feedbackPt": "Simple past."
+        }
+      ]
+    },
+    {
+      "id": "em10l03-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte — going to:",
+      "tokens": [
+        "family.",
+        "visit",
+        "to",
+        "going",
+        "I'm",
+        "my"
+      ],
+      "correctOrder": [
+        "I'm",
+        "going",
+        "to",
+        "visit",
+        "my",
+        "family."
+      ],
+      "feedbackCorrectPt": "I'm going to visit my family.",
+      "feedbackWrongPt": "Going to + base verb."
+    },
+    {
+      "id": "em10l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What did you do yesterday?",
+      "speaker": "You",
+      "contextEn": "Jamie: What did you do yesterday?",
+      "options": [
+        {
+          "labelEn": "I reviewed the injury list and sent the update.",
+          "correct": true,
+          "feedbackPt": "M4 past."
+        },
+        {
+          "labelEn": "I review injury list yesterday.",
+          "correct": false,
+          "feedbackPt": "Reviewed."
+        },
+        {
+          "labelEn": "I am reviewing yesterday.",
+          "correct": false,
+          "feedbackPt": "Tempo errado."
+        }
+      ]
+    },
+    {
+      "id": "em10l03-prac-05",
+      "type": "choice",
+      "promptPt": "Will espontâneo:",
+      "options": [
+        {
+          "labelEn": "I'll join the team dinner.",
+          "correct": true,
+          "feedbackPt": "M5 will."
+        },
+        {
+          "labelEn": "I going to join dinner.",
+          "correct": false,
+          "feedbackPt": "Plan vs spontaneous — will ok."
+        },
+        {
+          "labelEn": "I joined dinner tonight.",
+          "correct": false,
+          "feedbackPt": "Past."
+        }
+      ]
+    },
+    {
+      "id": "em10l03-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete — they practicing now:",
+      "templateEn": "They're ___ on the field.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "practicing",
+          "correct": true,
+          "feedbackPt": "Are + -ing."
+        },
+        {
+          "labelEn": "practice",
+          "correct": false,
+          "feedbackPt": "-ing needed."
+        },
+        {
+          "labelEn": "practiced",
+          "correct": false,
+          "feedbackPt": "Now = continuous."
+        }
+      ]
+    },
+    {
+      "id": "em10l03-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte pergunta passado:",
+      "tokens": [
+        "yesterday?",
+        "do",
+        "you",
+        "did",
+        "What"
+      ],
+      "correctOrder": [
+        "What",
+        "did",
+        "you",
+        "do",
+        "yesterday?"
+      ],
+      "feedbackCorrectPt": "What did you do yesterday?",
+      "feedbackWrongPt": "What did you + base verb?"
+    },
+    {
+      "id": "em10l03-prac-08",
+      "type": "choice",
+      "promptPt": "Going to negativo:",
+      "options": [
+        {
+          "labelEn": "I'm not going to work this weekend.",
+          "correct": true,
+          "feedbackPt": "M5 negative."
+        },
+        {
+          "labelEn": "I'm not going to working.",
+          "correct": false,
+          "feedbackPt": "Base verb."
+        },
+        {
+          "labelEn": "I don't going to work.",
+          "correct": false,
+          "feedbackPt": "Am not going to."
+        }
+      ]
+    },
+    {
+      "id": "em10l03-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What are you doing right now?",
+      "speaker": "You",
+      "contextEn": "Jamie: What are you doing right now?",
+      "options": [
+        {
+          "labelEn": "I'm wrapping up the travel report.",
+          "correct": true,
+          "feedbackPt": "M3 now."
+        },
+        {
+          "labelEn": "I wrap up travel report usually.",
+          "correct": false,
+          "feedbackPt": "Now = continuous."
+        },
+        {
+          "labelEn": "I wrapped up the report.",
+          "correct": false,
+          "feedbackPt": "Past."
+        }
+      ]
+    },
+    {
+      "id": "em10l03-prac-10",
+      "type": "classify",
+      "promptPt": "Qual tempo? — Yesterday I met the team",
+      "sentenceEn": "Yesterday I met the team.",
+      "category": "past",
+      "feedbackCorrectPt": "M4 past.",
+      "feedbackWrongPt": "Yesterday = past."
+    },
+    {
+      "id": "em10l03-prac-11",
+      "type": "classify",
+      "promptPt": "Qual tempo? — I am going to visit family",
+      "sentenceEn": "I'm going to visit my family.",
+      "category": "future",
+      "feedbackCorrectPt": "M5 going to.",
+      "feedbackWrongPt": "Going to = plan."
+    },
+    {
+      "id": "em10l03-prac-12",
+      "type": "choice",
+      "promptPt": "Revisão tempos — qual par correto?",
+      "options": [
+        {
+          "labelEn": "Now: I'm working. / Past: I worked yesterday.",
+          "correct": true,
+          "feedbackPt": "M3 + M4."
+        },
+        {
+          "labelEn": "Now: I work. / Past: I am working yesterday.",
+          "correct": false,
+          "feedbackPt": "Tempos trocados."
+        },
+        {
+          "labelEn": "Future: I went tomorrow.",
+          "correct": false,
+          "feedbackPt": "Impossível."
+        }
+      ]
+    }
+  ]
+}

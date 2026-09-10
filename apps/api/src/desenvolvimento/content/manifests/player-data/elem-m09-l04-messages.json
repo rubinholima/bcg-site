@@ -1,0 +1,733 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 9,
+  "goalPt": "Padrões de email e mensagem — subject lines, Hi team, Please find attached, Best regards — clube e corporativo.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Você envia email para a equipe com anexo — itinerário de viagem (clube) ou relatório trimestral (escritório).",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Write a professional email.",
+    "headlinePt": "Escreva um email profissional.",
+    "bodyPt": "",
+    "canDo": [
+      "Hi team,",
+      "Please find attached",
+      "Could you review by EOD?",
+      "Best regards,"
+    ],
+    "production": {
+      "introPt": "Monte email curto — abertura, anexo, pedido de ação, fechamento.",
+      "prompts": [
+        {
+          "speaker": "Task",
+          "questionEn": "Write your team email."
+        }
+      ],
+      "fields": [
+        {
+          "id": "open",
+          "labelPt": "Abertura",
+          "prefixEn": "",
+          "placeholderEn": "Hi team,"
+        },
+        {
+          "id": "attach",
+          "labelPt": "Anexo",
+          "prefixEn": "",
+          "placeholderEn": "Please find attached the updated travel itinerary."
+        },
+        {
+          "id": "action",
+          "labelPt": "Pedido de ação",
+          "prefixEn": "",
+          "placeholderEn": "Could you review it and confirm by EOD Thursday?"
+        },
+        {
+          "id": "close",
+          "labelPt": "Fechamento",
+          "prefixEn": "",
+          "placeholderEn": "Best regards,"
+        }
+      ],
+      "exampleEn": "Hi team, Please find attached the updated itinerary. Could you review by EOD Thursday? Best regards,"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em09l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Professional messages",
+        "titlePt": "Mensagens profissionais",
+        "bodyPt": "Emails e Slack seguem padrões — assunto claro, saudação, corpo objetivo, anexo, fechamento. Mesmo no clube, comunicação escrita profissional importa."
+      },
+      {
+        "id": "em09l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Email · Match day logistics OR quarterly report",
+        "scenarioPt": "Você envia email para a equipe com anexo — itinerário de viagem (clube) ou relatório trimestral (escritório)."
+      },
+      {
+        "id": "em09l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Writing subject line.)",
+        "promptPt": "Assunto do email — claro e específico:",
+        "options": [
+          {
+            "labelEn": "Subject: Updated travel itinerary — March 15 match",
+            "correct": true,
+            "feedbackPt": "Assunto específico com data/evento."
+          },
+          {
+            "labelEn": "Subject: Email",
+            "correct": false,
+            "feedbackPt": "Vago demais."
+          },
+          {
+            "labelEn": "Subject: Hi team please read",
+            "correct": false,
+            "feedbackPt": "Saudação não vai no subject."
+          }
+        ]
+      },
+      {
+        "id": "em09l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Opening the email.)",
+        "promptPt": "Abertura do email:",
+        "options": [
+          {
+            "labelEn": "Hi team,",
+            "correct": true,
+            "feedbackPt": "Hi team — padrão interno comum."
+          },
+          {
+            "labelEn": "Hey team guys whats up",
+            "correct": false,
+            "feedbackPt": "Informal demais para email profissional."
+          },
+          {
+            "labelEn": "Dear team respectfully hello",
+            "correct": false,
+            "feedbackPt": "Artificial."
+          }
+        ]
+      },
+      {
+        "id": "em09l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Referring to attachment.)",
+        "promptPt": "Referência ao anexo:",
+        "options": [
+          {
+            "labelEn": "Please find attached the updated travel itinerary.",
+            "correct": true,
+            "feedbackPt": "Please find attached — padrão fixo."
+          },
+          {
+            "labelEn": "Attached please find is itinerary.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I attach you find please.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l04-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Asking for action.)",
+        "promptPt": "Pedido de ação:",
+        "options": [
+          {
+            "labelEn": "Could you review it and confirm by EOD Thursday?",
+            "correct": true,
+            "feedbackPt": "Ação + prazo EOD."
+          },
+          {
+            "labelEn": "Review maybe sometime.",
+            "correct": false,
+            "feedbackPt": "Vago."
+          },
+          {
+            "labelEn": "You review confirm EOD.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l04-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Closing the email.)",
+        "promptPt": "Fechamento:",
+        "options": [
+          {
+            "labelEn": "Best regards,",
+            "correct": true,
+            "feedbackPt": "Best regards — fechamento profissional padrão."
+          },
+          {
+            "labelEn": "Bye bye see ya",
+            "correct": false,
+            "feedbackPt": "Informal demais."
+          },
+          {
+            "labelEn": "Your friend always",
+            "correct": false,
+            "feedbackPt": "Contexto errado."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em09l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Subject lines",
+        "titlePt": "Linhas de assunto",
+        "introPt": "Claro, específico, com data ou projeto quando relevante.",
+        "examples": [
+          {
+            "en": "Updated travel itinerary — March 15",
+            "pt": "viagem clube"
+          },
+          {
+            "en": "Q1 report — please review",
+            "pt": "relatório trimestral"
+          },
+          {
+            "en": "Meeting notes from today",
+            "pt": "ata de reunião"
+          },
+          {
+            "en": "Action required: budget approval",
+            "pt": "ação necessária"
+          }
+        ]
+      },
+      {
+        "id": "em09l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Openings",
+        "titlePt": "Aberturas",
+        "introPt": "Hi team / Hi everyone / Hello all — interno. Dear Mr. Smith — externo formal.",
+        "examples": [
+          {
+            "en": "Hi team,",
+            "pt": "equipe interna"
+          },
+          {
+            "en": "Hi everyone,",
+            "pt": "todos"
+          },
+          {
+            "en": "Hello all,",
+            "pt": "alternativa"
+          },
+          {
+            "en": "Dear Mr. Johnson,",
+            "pt": "externo formal"
+          }
+        ]
+      },
+      {
+        "id": "em09l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Attachments & action",
+        "titlePt": "Anexos e ação",
+        "introPt": "Please find attached / Please review / confirm by EOD.",
+        "examples": [
+          {
+            "en": "Please find attached the updated file.",
+            "pt": "anexo"
+          },
+          {
+            "en": "Please find the document attached.",
+            "pt": "variação"
+          },
+          {
+            "en": "Could you review and confirm by EOD?",
+            "pt": "prazo fim do dia"
+          },
+          {
+            "en": "Let me know if you have any questions.",
+            "pt": "disponibilidade"
+          }
+        ]
+      },
+      {
+        "id": "em09l04-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Closings",
+        "titlePt": "Fechamentos",
+        "introPt": "Best regards / Thanks / Kind regards + nome.",
+        "examples": [
+          {
+            "en": "Best regards,",
+            "pt": "padrão US"
+          },
+          {
+            "en": "Thanks,",
+            "pt": "informal interno"
+          },
+          {
+            "en": "Kind regards,",
+            "pt": "alternativa"
+          },
+          {
+            "en": "Best,\nCarlos",
+            "pt": "curto + nome"
+          }
+        ]
+      },
+      {
+        "id": "em09l04-learn-voc",
+        "type": "vocabulary",
+        "titleEn": "Email shorthand",
+        "titlePt": "Abreviações de email",
+        "words": [
+          {
+            "en": "EOD",
+            "pt": "end of day — fim do expediente",
+            "exampleEn": "Please confirm by EOD Thursday."
+          },
+          {
+            "en": "FYI",
+            "pt": "for your information",
+            "exampleEn": "FYI — the meeting moved to 3 PM."
+          },
+          {
+            "en": "ASAP",
+            "pt": "as soon as possible",
+            "exampleEn": "Need this ASAP, please."
+          },
+          {
+            "en": "cc",
+            "pt": "cópia no email",
+            "exampleEn": "Could you cc me on that?"
+          }
+        ]
+      },
+      {
+        "id": "em09l04-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "Please find attach the file. / Best regards Carlos no comma",
+        "rightEn": "Please find attached the file. / Best regards,\nCarlos",
+        "explanationPt": "Attached (particípio), não attach. Vírgula após Best regards antes do nome."
+      },
+      {
+        "id": "em09l04-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "Hi team,",
+            "pt": "abertura"
+          },
+          {
+            "en": "Please find attached...",
+            "pt": "anexo"
+          },
+          {
+            "en": "Could you review by EOD?",
+            "pt": "prazo"
+          },
+          {
+            "en": "Best regards,",
+            "pt": "fechamento"
+          },
+          {
+            "en": "Let me know if you have questions.",
+            "pt": "disponível"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em09l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Subject: Updated travel itinerary — March 15"
+          },
+          {
+            "en": "Hi team,"
+          },
+          {
+            "en": "Please find attached the updated travel itinerary."
+          },
+          {
+            "en": "Could you review it and confirm by EOD Thursday?"
+          },
+          {
+            "en": "Let me know if you have any questions."
+          },
+          {
+            "en": "Best regards,"
+          },
+          {
+            "en": "Please find the Q1 report attached."
+          },
+          {
+            "en": "Action required: budget approval"
+          },
+          {
+            "en": "FYI — the meeting moved to 3 PM."
+          },
+          {
+            "en": "Thanks,"
+          }
+        ],
+        "dialogueEn": "Hi team, Please find attached the updated itinerary. Could you review and confirm by EOD Thursday? Let me know if you have questions. Best regards,"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em09l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Write a professional email.",
+        "headlinePt": "Escreva um email profissional.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Task",
+            "questionEn": "Write your team email."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em09l04-prac-01",
+      "type": "choice",
+      "promptPt": "Assunto eficaz:",
+      "options": [
+        {
+          "labelEn": "Updated travel itinerary — March 15 match",
+          "correct": true,
+          "feedbackPt": "Específico + data."
+        },
+        {
+          "labelEn": "Email for you",
+          "correct": false,
+          "feedbackPt": "Vago."
+        },
+        {
+          "labelEn": "Hi team",
+          "correct": false,
+          "feedbackPt": "Saudação, não assunto."
+        }
+      ]
+    },
+    {
+      "id": "em09l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete anexo:",
+      "templateEn": "Please find ___ the updated file.",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "attached",
+          "correct": true,
+          "feedbackPt": "Please find attached."
+        },
+        {
+          "labelEn": "attach",
+          "correct": false,
+          "feedbackPt": "Attached, não attach."
+        },
+        {
+          "labelEn": "attaching",
+          "correct": false,
+          "feedbackPt": "Attached fixo."
+        }
+      ]
+    },
+    {
+      "id": "em09l04-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte abertura + anexo:",
+      "tokens": [
+        "itinerary.",
+        "attached",
+        "the",
+        "find",
+        "Please",
+        "travel",
+        "updated"
+      ],
+      "correctOrder": [
+        "Please",
+        "find",
+        "attached",
+        "the",
+        "updated",
+        "travel",
+        "itinerary."
+      ],
+      "feedbackCorrectPt": "Please find attached the updated travel itinerary.",
+      "feedbackWrongPt": "Please find attached + object."
+    },
+    {
+      "id": "em09l04-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Pedir confirmação com prazo:",
+      "speaker": "You",
+      "contextEn": "You need team to confirm by end of day.",
+      "options": [
+        {
+          "labelEn": "Could you review it and confirm by EOD Thursday?",
+          "correct": true,
+          "feedbackPt": "EOD + dia."
+        },
+        {
+          "labelEn": "Confirm maybe.",
+          "correct": false,
+          "feedbackPt": "Sem prazo."
+        },
+        {
+          "labelEn": "EOD confirm you.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l04-prac-05",
+      "type": "choice",
+      "promptPt": "Fechamento profissional:",
+      "options": [
+        {
+          "labelEn": "Best regards,",
+          "correct": true,
+          "feedbackPt": "Padrão US."
+        },
+        {
+          "labelEn": "See ya later,",
+          "correct": false,
+          "feedbackPt": "Informal demais."
+        },
+        {
+          "labelEn": "Your humble servant,",
+          "correct": false,
+          "feedbackPt": "Archaic/wrong tone."
+        }
+      ]
+    },
+    {
+      "id": "em09l04-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete — disponível para dúvidas:",
+      "templateEn": "Let me know if you have any ___.",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "questions",
+          "correct": true,
+          "feedbackPt": "Any questions."
+        },
+        {
+          "labelEn": "questioning",
+          "correct": false,
+          "feedbackPt": "Questions plural."
+        },
+        {
+          "labelEn": "ask",
+          "correct": false,
+          "feedbackPt": "Have questions, não have ask."
+        }
+      ]
+    },
+    {
+      "id": "em09l04-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte fechamento curto:",
+      "tokens": [
+        "Thanks,"
+      ],
+      "correctOrder": [
+        "Thanks,"
+      ],
+      "feedbackCorrectPt": "Thanks,",
+      "feedbackWrongPt": "Thanks, — informal interno ok."
+    },
+    {
+      "id": "em09l04-prac-08",
+      "type": "choice",
+      "promptPt": "EOD significa:",
+      "options": [
+        {
+          "labelEn": "End of day — fim do expediente.",
+          "correct": true,
+          "feedbackPt": "EOD = prazo no mesmo dia."
+        },
+        {
+          "labelEn": "End of December.",
+          "correct": false,
+          "feedbackPt": "End of day."
+        },
+        {
+          "labelEn": "Email of document.",
+          "correct": false,
+          "feedbackPt": "Incorrect."
+        }
+      ]
+    },
+    {
+      "id": "em09l04-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Email formal externo:",
+      "speaker": "You",
+      "contextEn": "Email to external partner.",
+      "options": [
+        {
+          "labelEn": "Dear Mr. Johnson,",
+          "correct": true,
+          "feedbackPt": "Dear + title — externo."
+        },
+        {
+          "labelEn": "Hey bro,",
+          "correct": false,
+          "feedbackPt": "Informal demais."
+        },
+        {
+          "labelEn": "Hi team,",
+          "correct": false,
+          "feedbackPt": "Interno, não externo formal."
+        }
+      ]
+    },
+    {
+      "id": "em09l04-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Complete — FYI:",
+      "templateEn": "___, the meeting moved to 3 PM.",
+      "blankLabel": "sigla",
+      "options": [
+        {
+          "labelEn": "FYI",
+          "correct": true,
+          "feedbackPt": "For your information."
+        },
+        {
+          "labelEn": "ASAP",
+          "correct": false,
+          "feedbackPt": "Urgência, não informativo."
+        },
+        {
+          "labelEn": "EOD",
+          "correct": false,
+          "feedbackPt": "Prazo, não FYI."
+        }
+      ]
+    },
+    {
+      "id": "em09l04-prac-11",
+      "type": "choice",
+      "promptPt": "Erro no anexo:",
+      "options": [
+        {
+          "labelEn": "Please find attached the report.",
+          "correct": true,
+          "feedbackPt": "Correto."
+        },
+        {
+          "labelEn": "Please find attach the report.",
+          "correct": false,
+          "feedbackPt": "Attached."
+        },
+        {
+          "labelEn": "Please attached find the report.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l04-prac-12",
+      "type": "dialogue_complete",
+      "promptPt": "Encerrar com disponibilidade:",
+      "speaker": "You",
+      "contextEn": "Before closing email.",
+      "options": [
+        {
+          "labelEn": "Let me know if you have any questions.",
+          "correct": true,
+          "feedbackPt": "Disponibilidade padrão."
+        },
+        {
+          "labelEn": "No questions allowed.",
+          "correct": false,
+          "feedbackPt": "Hostil."
+        },
+        {
+          "labelEn": "Questions me let.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    }
+  ]
+}

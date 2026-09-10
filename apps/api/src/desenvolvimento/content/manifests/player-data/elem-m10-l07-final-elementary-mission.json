@@ -1,0 +1,1022 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 10,
+  "goalPt": "Missão final Elementary — produção multi-cenário integrando M1-M9. Sem gramática nova; ~22 min, 7 cenas, 18+ campos de produção.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Dia completo — evento, rotina, agora/passado/futuro, problema na cidade, jantar, hotel e comunicação no trabalho.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Complete your Elementary Mission.",
+    "headlinePt": "Complete sua missão Elementary.",
+    "bodyPt": "Sete cenas reais num único dia — use apenas inglês Elementary dos Módulos 1–9.",
+    "canDo": [
+      "Meet people",
+      "Describe routine",
+      "Mix time frames",
+      "Describe city & problems",
+      "Order food & travel",
+      "Professional communication"
+    ],
+    "production": {
+      "introPt": "Viva um dia completo em inglês Elementary. Preencha cada cena — encontro, rotina, tempos, cidade, comida/viagem e trabalho. Só material Elementary M1-M9.",
+      "prompts": [
+        {
+          "speaker": "Jamie",
+          "questionEn": "Ready for your Elementary Final Mission? Seven scenes — let us go."
+        },
+        {
+          "speaker": "Jamie",
+          "questionEn": "Scene 1 — You meet someone new at an event."
+        },
+        {
+          "speaker": "Jamie",
+          "questionEn": "Scene 2 — Talk about your routine."
+        },
+        {
+          "speaker": "Jamie",
+          "questionEn": "Scene 3 — Now and yesterday."
+        },
+        {
+          "speaker": "Jamie",
+          "questionEn": "Scene 4 — Weekend plans."
+        },
+        {
+          "speaker": "Jamie",
+          "questionEn": "Scene 5 — City and a problem."
+        },
+        {
+          "speaker": "Jamie",
+          "questionEn": "Scene 6 — Dinner and hotel."
+        },
+        {
+          "speaker": "Jamie",
+          "questionEn": "Scene 7 — Work message and deadline."
+        }
+      ],
+      "fields": [
+        {
+          "id": "s1-greet",
+          "labelPt": "Cena 1 — Cumprimento",
+          "prefixEn": "",
+          "placeholderEn": "Hi! Good afternoon! How are you?"
+        },
+        {
+          "id": "s1-name",
+          "labelPt": "Cena 1 — Nome",
+          "prefixEn": "My name is",
+          "placeholderEn": "Carlos. Nice to meet you!"
+        },
+        {
+          "id": "s1-ask",
+          "labelPt": "Cena 1 — Follow-up",
+          "prefixEn": "",
+          "placeholderEn": "What do you do? What are you into?"
+        },
+        {
+          "id": "s2-routine",
+          "labelPt": "Cena 2 — Rotina manhã",
+          "prefixEn": "I usually",
+          "placeholderEn": "wake up at 6 and go to the training center by 7."
+        },
+        {
+          "id": "s2-freq",
+          "labelPt": "Cena 2 — Frequência",
+          "prefixEn": "",
+          "placeholderEn": "I travel with the team about twice a month."
+        },
+        {
+          "id": "s3-now",
+          "labelPt": "Cena 3 — Agora",
+          "prefixEn": "Right now I'm",
+          "placeholderEn": "finishing the travel report."
+        },
+        {
+          "id": "s3-past",
+          "labelPt": "Cena 3 — Ontem",
+          "prefixEn": "Yesterday I",
+          "placeholderEn": "met with the medical team."
+        },
+        {
+          "id": "s4-going",
+          "labelPt": "Cena 4 — Plano",
+          "prefixEn": "This weekend I'm going to",
+          "placeholderEn": "visit my family."
+        },
+        {
+          "id": "s4-will",
+          "labelPt": "Cena 4 — Will",
+          "prefixEn": "",
+          "placeholderEn": "I'll keep my phone on for urgent messages."
+        },
+        {
+          "id": "s5-place",
+          "labelPt": "Cena 5 — Bairro",
+          "prefixEn": "",
+          "placeholderEn": "It's pretty quiet — smaller than Boston, but nice."
+        },
+        {
+          "id": "s5-problem",
+          "labelPt": "Cena 5 — Problema",
+          "prefixEn": "",
+          "placeholderEn": "I'm having a problem — my charger stopped working."
+        },
+        {
+          "id": "s5-help",
+          "labelPt": "Cena 5 — Pedir ajuda",
+          "prefixEn": "",
+          "placeholderEn": "Could you recommend a store nearby?"
+        },
+        {
+          "id": "s6-food",
+          "labelPt": "Cena 6 — Restrição/pedido",
+          "prefixEn": "",
+          "placeholderEn": "I'm allergic to shellfish. Medium, please — sauce on the side."
+        },
+        {
+          "id": "s6-hotel",
+          "labelPt": "Cena 6 — Hotel",
+          "prefixEn": "",
+          "placeholderEn": "I have a reservation under Santos for two nights."
+        },
+        {
+          "id": "s6-health",
+          "labelPt": "Cena 6 — Como se sente",
+          "prefixEn": "",
+          "placeholderEn": "I have a slight headache — I should rest."
+        },
+        {
+          "id": "s7-email",
+          "labelPt": "Cena 7 — Email",
+          "prefixEn": "",
+          "placeholderEn": "Hi team, Please find attached the updated itinerary."
+        },
+        {
+          "id": "s7-request",
+          "labelPt": "Cena 7 — Pedido",
+          "prefixEn": "Could you",
+          "placeholderEn": "review it and confirm by EOD Thursday?"
+        },
+        {
+          "id": "s7-deadline",
+          "labelPt": "Cena 7 — Prazo",
+          "prefixEn": "",
+          "placeholderEn": "Yes — I can have the final version done by Friday EOD."
+        },
+        {
+          "id": "closing",
+          "labelPt": "Despedida final",
+          "prefixEn": "",
+          "placeholderEn": "Thank you! Great practice — see you at the next level!"
+        }
+      ],
+      "exampleEn": "Hi! I'm Carlos. Nice to meet you! I usually wake up at 6. Right now I'm finishing the report. Yesterday I met the team. Going to visit family. Quiet neighborhood — charger problem. Allergic to shellfish, reservation under Santos. Hi team, attached itinerary — by EOD Friday. Thank you!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em10l07-ctx-01",
+        "type": "intro",
+        "titleEn": "Final Elementary Mission",
+        "titlePt": "Missão final Elementary",
+        "bodyPt": "Seu dia completo em inglês Elementary — sete cenas, zero gramática nova. Tudo dos Módulos 1–9: pessoas, rotina, tempos, cidade, comida, viagem e trabalho."
+      },
+      {
+        "id": "em10l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Full day · Club trip + office + travel",
+        "scenarioPt": "Dia completo — evento, rotina, agora/passado/futuro, problema na cidade, jantar, hotel e comunicação no trabalho."
+      },
+      {
+        "id": "em10l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Hi! I do not think we have met.",
+        "promptPt": "Cena 1 — Conhecer pessoas (M1):",
+        "options": [
+          {
+            "labelEn": "Hi Alex! I am Carlos — nice to meet you! What do you do?",
+            "correct": true,
+            "feedbackPt": "M1 meeting."
+          },
+          {
+            "labelEn": "Please find attached itinerary.",
+            "correct": false,
+            "feedbackPt": "M9 email."
+          },
+          {
+            "labelEn": "I have a headache.",
+            "correct": false,
+            "feedbackPt": "M7 health."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Walk me through your typical morning.",
+        "promptPt": "Cena 2 — Rotina (M2):",
+        "options": [
+          {
+            "labelEn": "I usually wake up at 6 and go to the training center by 7.",
+            "correct": true,
+            "feedbackPt": "M2 routine."
+          },
+          {
+            "labelEn": "I'm going to wake up yesterday.",
+            "correct": false,
+            "feedbackPt": "Tempo errado."
+          },
+          {
+            "labelEn": "My neighborhood is quiet.",
+            "correct": false,
+            "feedbackPt": "M6."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are you doing now? And what did you do yesterday?",
+        "promptPt": "Cena 3 — Now & past (M3-4):",
+        "options": [
+          {
+            "labelEn": "I'm finishing the report. Yesterday I met with the medical team.",
+            "correct": true,
+            "feedbackPt": "M3 + M4."
+          },
+          {
+            "labelEn": "I usually finish reports.",
+            "correct": false,
+            "feedbackPt": "M2 habit."
+          },
+          {
+            "labelEn": "I will met the team.",
+            "correct": false,
+            "feedbackPt": "Grammar."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Plans for the weekend?",
+        "promptPt": "Cena 4 — Future (M5):",
+        "options": [
+          {
+            "labelEn": "I'm going to visit my family. I'll keep my phone on for work.",
+            "correct": true,
+            "feedbackPt": "M5 going to + will."
+          },
+          {
+            "labelEn": "I visited my family tomorrow.",
+            "correct": false,
+            "feedbackPt": "Tempo."
+          },
+          {
+            "labelEn": "I am allergic to family.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Local",
+        "promptEn": "Is this neighborhood safe?",
+        "promptPt": "Cena 5 — City & problem (M6):",
+        "options": [
+          {
+            "labelEn": "It's pretty quiet, but I'm having a problem — my phone charger stopped working.",
+            "correct": true,
+            "feedbackPt": "M6 place + problem."
+          },
+          {
+            "labelEn": "Medium steak, please.",
+            "correct": false,
+            "feedbackPt": "M7."
+          },
+          {
+            "labelEn": "Boarding pass here.",
+            "correct": false,
+            "feedbackPt": "M8."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "Any dietary restrictions?",
+        "promptPt": "Cena 6 — Food & travel (M7-8):",
+        "options": [
+          {
+            "labelEn": "I'm allergic to shellfish. Also — I have a hotel reservation under Santos.",
+            "correct": true,
+            "feedbackPt": "M7 + M8."
+          },
+          {
+            "labelEn": "Could I leave at 3 PM?",
+            "correct": false,
+            "feedbackPt": "M9 permission."
+          },
+          {
+            "labelEn": "She runs the Monday meeting.",
+            "correct": false,
+            "feedbackPt": "M2 third person."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-ctx-09",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "Can you send the itinerary update by EOD?",
+        "promptPt": "Cena 7 — Work communication (M9):",
+        "options": [
+          {
+            "labelEn": "Hi team, Please find attached the update. I can have it done by Friday EOD.",
+            "correct": true,
+            "feedbackPt": "M9 email + deadline."
+          },
+          {
+            "labelEn": "Nice to meet you!",
+            "correct": false,
+            "feedbackPt": "M1."
+          },
+          {
+            "labelEn": "I rarely watch TV.",
+            "correct": false,
+            "feedbackPt": "M2."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-ctx-10",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Outstanding — you completed Elementary!",
+        "promptPt": "Encerramento:",
+        "options": [
+          {
+            "labelEn": "Thank you! It was great practice — see you at the next level!",
+            "correct": true,
+            "feedbackPt": "Closing natural."
+          },
+          {
+            "labelEn": "Where is gate B12?",
+            "correct": false,
+            "feedbackPt": "Fora de contexto."
+          },
+          {
+            "labelEn": "I disagree agree deadline.",
+            "correct": false,
+            "feedbackPt": "Confuso."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em10l07-learn-01",
+        "type": "review",
+        "titleEn": "Scene 1 — Meeting (M1)",
+        "titlePt": "Cena 1 — Encontro (M1)",
+        "items": [
+          {
+            "en": "Nice to meet you!",
+            "pt": "intro"
+          },
+          {
+            "en": "What do you do?",
+            "pt": "follow-up"
+          },
+          {
+            "en": "I'm into...",
+            "pt": "interests"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-learn-02",
+        "type": "review",
+        "titleEn": "Scene 2 — Routine (M2)",
+        "titlePt": "Cena 2 — Rotina (M2)",
+        "items": [
+          {
+            "en": "I usually...",
+            "pt": "habit"
+          },
+          {
+            "en": "How often...?",
+            "pt": "frequency"
+          },
+          {
+            "en": "She/He works...",
+            "pt": "3rd person"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-learn-03",
+        "type": "review",
+        "titleEn": "Scene 3 — Now & Past (M3-4)",
+        "titlePt": "Cena 3 — Agora e passado (M3-4)",
+        "items": [
+          {
+            "en": "What are you doing?",
+            "pt": "M3"
+          },
+          {
+            "en": "I'm ...ing",
+            "pt": "now"
+          },
+          {
+            "en": "What did you do yesterday?",
+            "pt": "M4"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-learn-04",
+        "type": "review",
+        "titleEn": "Scene 4 — Future (M5)",
+        "titlePt": "Cena 4 — Futuro (M5)",
+        "items": [
+          {
+            "en": "I'm going to...",
+            "pt": "plan"
+          },
+          {
+            "en": "I'll...",
+            "pt": "will"
+          },
+          {
+            "en": "I'm not going to...",
+            "pt": "negative"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-learn-05",
+        "type": "review",
+        "titleEn": "Scene 5 — City (M6)",
+        "titlePt": "Cena 5 — Cidade (M6)",
+        "items": [
+          {
+            "en": "neighborhood / comparatives",
+            "pt": "place"
+          },
+          {
+            "en": "I'm having a problem",
+            "pt": "problem"
+          },
+          {
+            "en": "nearby / Could you recommend?",
+            "pt": "help"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-learn-06",
+        "type": "review",
+        "titleEn": "Scene 6 — Food & Travel (M7-8)",
+        "titlePt": "Cena 6 — Comida e viagem (M7-8)",
+        "items": [
+          {
+            "en": "I'm allergic to...",
+            "pt": "food"
+          },
+          {
+            "en": "Medium, please / on the side",
+            "pt": "order"
+          },
+          {
+            "en": "I have a reservation under...",
+            "pt": "hotel"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-learn-07",
+        "type": "review",
+        "titleEn": "Scene 7 — Work (M9)",
+        "titlePt": "Cena 7 — Trabalho (M9)",
+        "items": [
+          {
+            "en": "Hi team, / Please find attached",
+            "pt": "email"
+          },
+          {
+            "en": "Could you...?",
+            "pt": "request"
+          },
+          {
+            "en": "by EOD / That works for me",
+            "pt": "deadline"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-learn-08",
+        "type": "language_focus",
+        "titleEn": "Mission rules",
+        "titlePt": "Regras da missão",
+        "items": [
+          {
+            "formalEn": "Only Elementary M1-M9",
+            "naturalEn": "No new grammar — phrases you already know.",
+            "notePt": "Se não aprendeu no curso, não use."
+          },
+          {
+            "formalEn": "Seven scenes, one day",
+            "naturalEn": "Meet → Routine → Time → Future → City → Food/Travel → Work → Goodbye",
+            "notePt": "Siga a ordem na produção."
+          }
+        ],
+        "tipPt": "Adapte nomes, cidades e horários à sua realidade. Produza em inglês — clube ou escritório."
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em10l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "SCENE 1 — MEETING"
+          },
+          {
+            "en": "Hi! I'm Carlos — nice to meet you!"
+          },
+          {
+            "en": "SCENE 2 — ROUTINE"
+          },
+          {
+            "en": "I usually wake up at 6."
+          },
+          {
+            "en": "SCENE 3 — NOW & PAST"
+          },
+          {
+            "en": "I'm finishing the report. Yesterday I met the team."
+          },
+          {
+            "en": "SCENE 4 — FUTURE"
+          },
+          {
+            "en": "I'm going to visit my family."
+          },
+          {
+            "en": "SCENE 5 — CITY"
+          },
+          {
+            "en": "Quiet neighborhood — I'm having a problem with my charger."
+          },
+          {
+            "en": "SCENE 6 — FOOD & TRAVEL"
+          },
+          {
+            "en": "Allergic to shellfish. Reservation under Santos."
+          },
+          {
+            "en": "SCENE 7 — WORK"
+          },
+          {
+            "en": "Please find attached. By EOD Friday."
+          },
+          {
+            "en": "Thank you — see you at the next level!"
+          }
+        ],
+        "dialogueEn": "Seven scenes — M1 through M9 — one full Elementary day in English."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em10l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your Elementary Final Mission.",
+        "headlinePt": "Sua missão final Elementary.",
+        "bodyPt": "Sete cenas, um dia inteiro. Preencha cada cena — só inglês Elementary M1-M9.",
+        "prompts": [
+          {
+            "speaker": "Jamie",
+            "questionEn": "Ready? Scene by scene — let us go."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-miss-02",
+        "type": "mission_intro",
+        "headlineEn": "Scene 1 — Meeting someone",
+        "headlinePt": "Cena 1 — Conhecendo alguém",
+        "bodyPt": "Evento. Cumprimente, diga seu nome, follow-up.",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Hi! I do not think we have met."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-miss-03",
+        "type": "mission_intro",
+        "headlineEn": "Scene 2 — Routine",
+        "headlinePt": "Cena 2 — Rotina",
+        "bodyPt": "Rotina matinal e frequência de uma atividade.",
+        "prompts": [
+          {
+            "speaker": "Jamie",
+            "questionEn": "Walk me through your typical morning."
+          }
+        ]
+      },
+      {
+        "id": "em10l07-miss-04",
+        "type": "mission_intro",
+        "headlineEn": "Scene 3 — Now & past",
+        "headlinePt": "Cena 3 — Agora e passado",
+        "bodyPt": "O que faz agora e o que fez ontem.",
+        "prompts": [
+          {
+            "speaker": "Jamie",
+            "questionEn": "What are you doing now? What did you do yesterday?"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-miss-05",
+        "type": "mission_intro",
+        "headlineEn": "Scene 4 — Future",
+        "headlinePt": "Cena 4 — Futuro",
+        "bodyPt": "Planos do fim de semana + decisão com will.",
+        "prompts": [
+          {
+            "speaker": "Jamie",
+            "questionEn": "Plans for the weekend?"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-miss-06",
+        "type": "mission_intro",
+        "headlineEn": "Scene 5 — City & problem",
+        "headlinePt": "Cena 5 — Cidade e problema",
+        "bodyPt": "Descreva o bairro, explique um problema, peça ajuda.",
+        "prompts": [
+          {
+            "speaker": "Local",
+            "questionEn": "How is the neighborhood?"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-miss-07",
+        "type": "mission_intro",
+        "headlineEn": "Scene 6 — Food & travel",
+        "headlinePt": "Cena 6 — Comida e viagem",
+        "bodyPt": "Jantar com restrição, hotel e como se sente.",
+        "prompts": [
+          {
+            "speaker": "Waiter",
+            "questionEn": "Any dietary restrictions?"
+          }
+        ]
+      },
+      {
+        "id": "em10l07-miss-08",
+        "type": "mission_intro",
+        "headlineEn": "Scene 7 — Work communication",
+        "headlinePt": "Cena 7 — Comunicação no trabalho",
+        "bodyPt": "Email com anexo, pedido e confirmação de prazo.",
+        "prompts": [
+          {
+            "speaker": "Manager",
+            "questionEn": "Can you send the update by EOD?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em10l07-prac-01",
+      "type": "choice",
+      "promptPt": "Cena 1 — meeting:",
+      "options": [
+        {
+          "labelEn": "Hi! I'm Carlos — nice to meet you!",
+          "correct": true,
+          "feedbackPt": "M1."
+        },
+        {
+          "labelEn": "Please find attached.",
+          "correct": false,
+          "feedbackPt": "M9."
+        },
+        {
+          "labelEn": "I have a reservation.",
+          "correct": false,
+          "feedbackPt": "M8."
+        }
+      ]
+    },
+    {
+      "id": "em10l07-prac-02",
+      "type": "choice",
+      "promptPt": "Cena 2 — routine:",
+      "options": [
+        {
+          "labelEn": "I usually wake up at 6.",
+          "correct": true,
+          "feedbackPt": "M2."
+        },
+        {
+          "labelEn": "I'm finishing the report.",
+          "correct": false,
+          "feedbackPt": "M3."
+        },
+        {
+          "labelEn": "Yesterday I met the team.",
+          "correct": false,
+          "feedbackPt": "M4."
+        }
+      ]
+    },
+    {
+      "id": "em10l07-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Cena 3 — now & past:",
+      "speaker": "You",
+      "contextEn": "Jamie: What now? What yesterday?",
+      "options": [
+        {
+          "labelEn": "I'm wrapping up the report. Yesterday I met the medical team.",
+          "correct": true,
+          "feedbackPt": "M3+M4."
+        },
+        {
+          "labelEn": "I wrap up usually yesterday.",
+          "correct": false,
+          "feedbackPt": "Tempos."
+        },
+        {
+          "labelEn": "Going to met team.",
+          "correct": false,
+          "feedbackPt": "Grammar."
+        }
+      ]
+    },
+    {
+      "id": "em10l07-prac-04",
+      "type": "choice",
+      "promptPt": "Cena 4 — future:",
+      "options": [
+        {
+          "labelEn": "I'm going to visit my family.",
+          "correct": true,
+          "feedbackPt": "M5."
+        },
+        {
+          "labelEn": "I visited family tomorrow.",
+          "correct": false,
+          "feedbackPt": "Tempo."
+        },
+        {
+          "labelEn": "I am visit family.",
+          "correct": false,
+          "feedbackPt": "Grammar."
+        }
+      ]
+    },
+    {
+      "id": "em10l07-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Cena 5 — problem:",
+      "speaker": "You",
+      "contextEn": "Local: Everything OK?",
+      "options": [
+        {
+          "labelEn": "I'm having a problem — my charger stopped working.",
+          "correct": true,
+          "feedbackPt": "M6."
+        },
+        {
+          "labelEn": "Medium steak please.",
+          "correct": false,
+          "feedbackPt": "M7."
+        },
+        {
+          "labelEn": "Could you cc me?",
+          "correct": false,
+          "feedbackPt": "M9."
+        }
+      ]
+    },
+    {
+      "id": "em10l07-prac-06",
+      "type": "choice",
+      "promptPt": "Cena 6 — food & hotel:",
+      "options": [
+        {
+          "labelEn": "I'm allergic to shellfish. Reservation under Santos.",
+          "correct": true,
+          "feedbackPt": "M7+M8."
+        },
+        {
+          "labelEn": "I agree deadline Friday.",
+          "correct": false,
+          "feedbackPt": "M9."
+        },
+        {
+          "labelEn": "She runs Monday meeting.",
+          "correct": false,
+          "feedbackPt": "M2."
+        }
+      ]
+    },
+    {
+      "id": "em10l07-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Cena 7 — work:",
+      "speaker": "You",
+      "contextEn": "Manager: Send update by EOD?",
+      "options": [
+        {
+          "labelEn": "Hi team, Please find attached the update. By EOD Friday.",
+          "correct": true,
+          "feedbackPt": "M9."
+        },
+        {
+          "labelEn": "Nice to meet you team.",
+          "correct": false,
+          "feedbackPt": "M1."
+        },
+        {
+          "labelEn": "I rarely work weekends.",
+          "correct": false,
+          "feedbackPt": "M2."
+        }
+      ]
+    },
+    {
+      "id": "em10l07-prac-08",
+      "type": "classify",
+      "promptPt": "Cena? — Please find attached",
+      "sentenceEn": "Please find attached the file.",
+      "category": "Scene7",
+      "feedbackCorrectPt": "M9 work.",
+      "feedbackWrongPt": "Work email = scene 7."
+    },
+    {
+      "id": "em10l07-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte cena 1:",
+      "tokens": [
+        "you!",
+        "meet",
+        "to",
+        "Nice",
+        "Carlos.",
+        "is",
+        "name",
+        "My"
+      ],
+      "correctOrder": [
+        "My",
+        "name",
+        "is",
+        "Carlos.",
+        "Nice",
+        "to",
+        "meet",
+        "you!"
+      ],
+      "feedbackCorrectPt": "My name is Carlos. Nice to meet you!",
+      "feedbackWrongPt": "Name + nice to meet you."
+    },
+    {
+      "id": "em10l07-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Cena 4 — going to:",
+      "templateEn": "This weekend I'm ___ to visit my family.",
+      "blankLabel": "word",
+      "options": [
+        {
+          "labelEn": "going",
+          "correct": true,
+          "feedbackPt": "Going to."
+        },
+        {
+          "labelEn": "go",
+          "correct": false,
+          "feedbackPt": "Going to."
+        },
+        {
+          "labelEn": "went",
+          "correct": false,
+          "feedbackPt": "Future."
+        }
+      ]
+    },
+    {
+      "id": "em10l07-prac-11",
+      "type": "choice",
+      "promptPt": "Ordem das 7 cenas:",
+      "options": [
+        {
+          "labelEn": "Meet → Routine → Now/Past → Future → City → Food/Travel → Work",
+          "correct": true,
+          "feedbackPt": "Mission flow."
+        },
+        {
+          "labelEn": "Work → Food → Meet → Routine",
+          "correct": false,
+          "feedbackPt": "Wrong."
+        },
+        {
+          "labelEn": "Travel → Past → Future → City",
+          "correct": false,
+          "feedbackPt": "Wrong."
+        }
+      ]
+    },
+    {
+      "id": "em10l07-prac-12",
+      "type": "dialogue_complete",
+      "promptPt": "Encerramento missão:",
+      "speaker": "You",
+      "contextEn": "Jamie: You completed Elementary!",
+      "options": [
+        {
+          "labelEn": "Thank you! See you at the next level!",
+          "correct": true,
+          "feedbackPt": "Closing."
+        },
+        {
+          "labelEn": "Any questions before we wrap up?",
+          "correct": false,
+          "feedbackPt": "Meeting close."
+        },
+        {
+          "labelEn": "Where is the elevator?",
+          "correct": false,
+          "feedbackPt": "M8."
+        }
+      ]
+    }
+  ]
+}

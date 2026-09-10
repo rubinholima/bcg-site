@@ -1,0 +1,651 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 10,
+  "goalPt": "Revisão ampla M1-M9 — blocos por módulo, produção multi-tópico. Sem gramática nova.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Sessão de revisão com Jamie — blocos rápidos de cada módulo antes da missão final.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Broad Elementary review production.",
+    "headlinePt": "Produção revisão Elementary.",
+    "bodyPt": "",
+    "canDo": [
+      "M1-M9 phrases",
+      "multi-topic",
+      "no new grammar"
+    ],
+    "production": {
+      "introPt": "Uma frase por área — people, routine, now, past, future, city, food/travel, work.",
+      "prompts": [
+        {
+          "speaker": "Jamie",
+          "questionEn": "Give me one sentence from each module — M1 through M9."
+        }
+      ],
+      "fields": [
+        {
+          "id": "m1",
+          "labelPt": "M1 — People",
+          "prefixEn": "Hi! I'm",
+          "placeholderEn": "Carlos — nice to meet you!"
+        },
+        {
+          "id": "m2",
+          "labelPt": "M2 — Routine",
+          "prefixEn": "I usually",
+          "placeholderEn": "wake up at 6."
+        },
+        {
+          "id": "m3",
+          "labelPt": "M3 — Now",
+          "prefixEn": "Right now I'm",
+          "placeholderEn": "preparing for the meeting."
+        },
+        {
+          "id": "m4",
+          "labelPt": "M4 — Past",
+          "prefixEn": "Yesterday I",
+          "placeholderEn": "met with the team."
+        },
+        {
+          "id": "m5",
+          "labelPt": "M5 — Future",
+          "prefixEn": "This weekend I'm going to",
+          "placeholderEn": "rest."
+        },
+        {
+          "id": "m6",
+          "labelPt": "M6 — City",
+          "prefixEn": "",
+          "placeholderEn": "My neighborhood is quiet — smaller than Boston."
+        },
+        {
+          "id": "m78",
+          "labelPt": "M7-8 — Food/Travel",
+          "prefixEn": "",
+          "placeholderEn": "I'm allergic to shellfish. I have a reservation under Santos."
+        },
+        {
+          "id": "m9",
+          "labelPt": "M9 — Work",
+          "prefixEn": "",
+          "placeholderEn": "Could you send me the file by EOD? Best regards,"
+        }
+      ],
+      "exampleEn": "Hi! I'm Carlos. I usually wake up at 6. Right now I'm preparing. Yesterday I met the team. Going to rest this weekend. Quiet neighborhood. Allergic to shellfish. Could you send the file by EOD?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em10l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Elementary Review",
+        "titlePt": "Revisão Elementary",
+        "bodyPt": "Panorama dos 9 módulos — people, routine, now, past, future, city, food, travel, work communication. Preparação para a missão final."
+      },
+      {
+        "id": "em10l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Review session · Jamie guides recap",
+        "scenarioPt": "Sessão de revisão com Jamie — blocos rápidos de cada módulo antes da missão final."
+      },
+      {
+        "id": "em10l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Quick fire — introduce yourself!",
+        "promptPt": "M1 — people:",
+        "options": [
+          {
+            "labelEn": "Hi! I'm Carlos — nice to meet you!",
+            "correct": true,
+            "feedbackPt": "M1."
+          },
+          {
+            "labelEn": "Please find attached.",
+            "correct": false,
+            "feedbackPt": "M9."
+          },
+          {
+            "labelEn": "I was delayed.",
+            "correct": false,
+            "feedbackPt": "M8."
+          }
+        ]
+      },
+      {
+        "id": "em10l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Your typical Monday?",
+        "promptPt": "M2 — routine:",
+        "options": [
+          {
+            "labelEn": "I usually wake up at 6 and go to the training center.",
+            "correct": true,
+            "feedbackPt": "M2."
+          },
+          {
+            "labelEn": "I'm finishing the report.",
+            "correct": false,
+            "feedbackPt": "M3 now."
+          },
+          {
+            "labelEn": "I agree Monday.",
+            "correct": false,
+            "feedbackPt": "M9."
+          }
+        ]
+      },
+      {
+        "id": "em10l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What's happening right now?",
+        "promptPt": "M3 — now:",
+        "options": [
+          {
+            "labelEn": "I'm preparing for the team meeting.",
+            "correct": true,
+            "feedbackPt": "M3."
+          },
+          {
+            "labelEn": "I prepared yesterday.",
+            "correct": false,
+            "feedbackPt": "M4."
+          },
+          {
+            "labelEn": "I prepare usually.",
+            "correct": false,
+            "feedbackPt": "M2."
+          }
+        ]
+      },
+      {
+        "id": "em10l06-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What did you do last week?",
+        "promptPt": "M4 — past:",
+        "options": [
+          {
+            "labelEn": "Last week I traveled with the squad and met the new coach.",
+            "correct": true,
+            "feedbackPt": "M4."
+          },
+          {
+            "labelEn": "Last week I am traveling.",
+            "correct": false,
+            "feedbackPt": "Tempo."
+          },
+          {
+            "labelEn": "I going to travel last week.",
+            "correct": false,
+            "feedbackPt": "Future."
+          }
+        ]
+      },
+      {
+        "id": "em10l06-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Plans for next month?",
+        "promptPt": "M5 — future:",
+        "options": [
+          {
+            "labelEn": "Next month I'm going to take a short vacation.",
+            "correct": true,
+            "feedbackPt": "M5."
+          },
+          {
+            "labelEn": "Next month I took vacation.",
+            "correct": false,
+            "feedbackPt": "Past."
+          },
+          {
+            "labelEn": "Next month I taking vacation.",
+            "correct": false,
+            "feedbackPt": "Grammar."
+          }
+        ]
+      },
+      {
+        "id": "em10l06-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Work email — how do you attach a file?",
+        "promptPt": "M9 — messages:",
+        "options": [
+          {
+            "labelEn": "Please find attached the updated file.",
+            "correct": true,
+            "feedbackPt": "M9."
+          },
+          {
+            "labelEn": "I have a headache attached.",
+            "correct": false,
+            "feedbackPt": "M7."
+          },
+          {
+            "labelEn": "Attached I agree file.",
+            "correct": false,
+            "feedbackPt": "M9 grammar wrong."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em10l06-learn-01",
+        "type": "review",
+        "titleEn": "M1 — People",
+        "titlePt": "M1 — Pessoas",
+        "items": [
+          {
+            "en": "Nice to meet you!",
+            "pt": "intro"
+          },
+          {
+            "en": "I'm into...",
+            "pt": "interests"
+          },
+          {
+            "en": "What do you do?",
+            "pt": "follow-up"
+          }
+        ]
+      },
+      {
+        "id": "em10l06-learn-02",
+        "type": "review",
+        "titleEn": "M2 — Routine",
+        "titlePt": "M2 — Rotina",
+        "items": [
+          {
+            "en": "I usually...",
+            "pt": "habit"
+          },
+          {
+            "en": "How often...?",
+            "pt": "frequency"
+          },
+          {
+            "en": "She works...",
+            "pt": "3rd person"
+          }
+        ]
+      },
+      {
+        "id": "em10l06-learn-03",
+        "type": "review",
+        "titleEn": "M3 — Now",
+        "titlePt": "M3 — Agora",
+        "items": [
+          {
+            "en": "What are you doing?",
+            "pt": "question"
+          },
+          {
+            "en": "I'm ...ing",
+            "pt": "continuous"
+          },
+          {
+            "en": "They're practicing.",
+            "pt": "plural"
+          }
+        ]
+      },
+      {
+        "id": "em10l06-learn-04",
+        "type": "review",
+        "titleEn": "M4 — Past",
+        "titlePt": "M4 — Passado",
+        "items": [
+          {
+            "en": "What did you do?",
+            "pt": "question"
+          },
+          {
+            "en": "Yesterday I met...",
+            "pt": "past"
+          },
+          {
+            "en": "Was/Were",
+            "pt": "be past"
+          }
+        ]
+      },
+      {
+        "id": "em10l06-learn-05",
+        "type": "review",
+        "titleEn": "M5 — Future",
+        "titlePt": "M5 — Futuro",
+        "items": [
+          {
+            "en": "I'm going to...",
+            "pt": "plan"
+          },
+          {
+            "en": "I'll...",
+            "pt": "will"
+          },
+          {
+            "en": "I'm not going to...",
+            "pt": "negative"
+          }
+        ]
+      },
+      {
+        "id": "em10l06-learn-06",
+        "type": "review",
+        "titleEn": "M6 — City & problems",
+        "titlePt": "M6 — Cidade",
+        "items": [
+          {
+            "en": "neighborhood / comparatives",
+            "pt": "place"
+          },
+          {
+            "en": "I'm having a problem",
+            "pt": "problem"
+          },
+          {
+            "en": "Could you help...?",
+            "pt": "help"
+          }
+        ]
+      },
+      {
+        "id": "em10l06-learn-07",
+        "type": "review",
+        "titleEn": "M7-8 — Food & travel",
+        "titlePt": "M7-8 — Comida e viagem",
+        "items": [
+          {
+            "en": "I'm allergic to...",
+            "pt": "food"
+          },
+          {
+            "en": "I have a reservation",
+            "pt": "hotel"
+          },
+          {
+            "en": "Flight was delayed",
+            "pt": "travel problem"
+          }
+        ]
+      },
+      {
+        "id": "em10l06-learn-08",
+        "type": "review",
+        "titleEn": "M9 — Work communication",
+        "titlePt": "M9 — Trabalho",
+        "items": [
+          {
+            "en": "My main responsibility is...",
+            "pt": "role"
+          },
+          {
+            "en": "Could I / Could you",
+            "pt": "requests"
+          },
+          {
+            "en": "Please find attached / by EOD",
+            "pt": "email"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em10l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "M1: Nice to meet you!"
+          },
+          {
+            "en": "M2: I usually wake up at 6."
+          },
+          {
+            "en": "M3: I am preparing now."
+          },
+          {
+            "en": "M4: Yesterday I traveled."
+          },
+          {
+            "en": "M5: I am going to rest."
+          },
+          {
+            "en": "M6: It is smaller than Boston."
+          },
+          {
+            "en": "M7: I am allergic to nuts."
+          },
+          {
+            "en": "M8: I have a reservation."
+          },
+          {
+            "en": "M9: Please find attached."
+          }
+        ],
+        "dialogueEn": "M1 people → M2 routine → M3 now → M4 past → M5 future → M6 city → M7-8 travel → M9 work."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em10l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Broad Elementary review production.",
+        "headlinePt": "Produção revisão Elementary.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Jamie",
+            "questionEn": "Give me one sentence from each module — M1 through M9."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em10l06-prac-01",
+      "type": "classify",
+      "promptPt": "Qual módulo? — Nice to meet you",
+      "sentenceEn": "Nice to meet you!",
+      "category": "M1",
+      "feedbackCorrectPt": "M1.",
+      "feedbackWrongPt": "M1 people."
+    },
+    {
+      "id": "em10l06-prac-02",
+      "type": "classify",
+      "promptPt": "Qual módulo? — I usually wake up at 6",
+      "sentenceEn": "I usually wake up at 6.",
+      "category": "M2",
+      "feedbackCorrectPt": "M2.",
+      "feedbackWrongPt": "M2 routine."
+    },
+    {
+      "id": "em10l06-prac-03",
+      "type": "classify",
+      "promptPt": "Qual módulo? — I am finishing the report",
+      "sentenceEn": "I'm finishing the report.",
+      "category": "M3",
+      "feedbackCorrectPt": "M3.",
+      "feedbackWrongPt": "M3 continuous."
+    },
+    {
+      "id": "em10l06-prac-04",
+      "type": "classify",
+      "promptPt": "Qual módulo? — Yesterday I met the team",
+      "sentenceEn": "Yesterday I met the team.",
+      "category": "M4",
+      "feedbackCorrectPt": "M4.",
+      "feedbackWrongPt": "M4 past."
+    },
+    {
+      "id": "em10l06-prac-05",
+      "type": "classify",
+      "promptPt": "Qual módulo? — I am going to visit family",
+      "sentenceEn": "I'm going to visit my family.",
+      "category": "M5",
+      "feedbackCorrectPt": "M5.",
+      "feedbackWrongPt": "M5 future."
+    },
+    {
+      "id": "em10l06-prac-06",
+      "type": "classify",
+      "promptPt": "Qual módulo? — smaller than Boston",
+      "sentenceEn": "It's smaller than Boston.",
+      "category": "M6",
+      "feedbackCorrectPt": "M6.",
+      "feedbackWrongPt": "M6 comparatives."
+    },
+    {
+      "id": "em10l06-prac-07",
+      "type": "classify",
+      "promptPt": "Qual módulo? — allergic to shellfish",
+      "sentenceEn": "I'm allergic to shellfish.",
+      "category": "M7",
+      "feedbackCorrectPt": "M7.",
+      "feedbackWrongPt": "M7 food."
+    },
+    {
+      "id": "em10l06-prac-08",
+      "type": "classify",
+      "promptPt": "Qual módulo? — reservation under Santos",
+      "sentenceEn": "I have a reservation under Santos.",
+      "category": "M8",
+      "feedbackCorrectPt": "M8.",
+      "feedbackWrongPt": "M8 travel."
+    },
+    {
+      "id": "em10l06-prac-09",
+      "type": "classify",
+      "promptPt": "Qual módulo? — Please find attached",
+      "sentenceEn": "Please find attached the file.",
+      "category": "M9",
+      "feedbackCorrectPt": "M9.",
+      "feedbackWrongPt": "M9 email."
+    },
+    {
+      "id": "em10l06-prac-10",
+      "type": "choice",
+      "promptPt": "Ordem dos módulos Elementary:",
+      "options": [
+        {
+          "labelEn": "People → Routine → Now → Past → Future → City → Food → Travel → Work",
+          "correct": true,
+          "feedbackPt": "M1-M9 order."
+        },
+        {
+          "labelEn": "Travel → Food → Work → People",
+          "correct": false,
+          "feedbackPt": "Wrong order."
+        },
+        {
+          "labelEn": "Past → Future → Now → Routine",
+          "correct": false,
+          "feedbackPt": "Wrong order."
+        }
+      ]
+    },
+    {
+      "id": "em10l06-prac-11",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Quick — work request?",
+      "speaker": "You",
+      "contextEn": "Jamie: One M9 phrase?",
+      "options": [
+        {
+          "labelEn": "Could you send me the file by EOD?",
+          "correct": true,
+          "feedbackPt": "M9."
+        },
+        {
+          "labelEn": "Nice to meet you!",
+          "correct": false,
+          "feedbackPt": "M1."
+        },
+        {
+          "labelEn": "I usually wake up at 6.",
+          "correct": false,
+          "feedbackPt": "M2."
+        }
+      ]
+    },
+    {
+      "id": "em10l06-prac-12",
+      "type": "reorder",
+      "promptPt": "Monte M5 plano:",
+      "tokens": [
+        "family.",
+        "visit",
+        "to",
+        "going",
+        "I'm"
+      ],
+      "correctOrder": [
+        "I'm",
+        "going",
+        "to",
+        "visit",
+        "family."
+      ],
+      "feedbackCorrectPt": "I'm going to visit family.",
+      "feedbackWrongPt": "Going to + verb."
+    }
+  ]
+}

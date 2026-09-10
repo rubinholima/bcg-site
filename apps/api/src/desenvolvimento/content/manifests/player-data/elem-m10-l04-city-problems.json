@@ -1,0 +1,665 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 10,
+  "goalPt": "Revisão M6 — city, comparatives, everyday problems, asking for help. Sem gramática nova.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Você chegou a uma cidade nova — descreve o bairro, compara com Boston e pede ajuda com um problema.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Describe place and solve a problem.",
+    "headlinePt": "Descreva lugar e resolva um problema.",
+    "bodyPt": "",
+    "canDo": [
+      "neighborhood description",
+      "comparatives",
+      "having a problem",
+      "ask for help"
+    ],
+    "production": {
+      "introPt": "Descreva bairro com comparativo, explique um problema e peça ajuda.",
+      "prompts": [
+        {
+          "speaker": "Colleague",
+          "questionEn": "Tell me about your area — any problems?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "place",
+          "labelPt": "Bairro + comparativo",
+          "prefixEn": "",
+          "placeholderEn": "It's pretty quiet — smaller than Boston, but the downtown is more modern."
+        },
+        {
+          "id": "problem",
+          "labelPt": "Problema",
+          "prefixEn": "",
+          "placeholderEn": "I'm having a problem — the Wi-Fi keeps disconnecting."
+        },
+        {
+          "id": "help",
+          "labelPt": "Pedir ajuda",
+          "prefixEn": "",
+          "placeholderEn": "Could you recommend a good pharmacy nearby?"
+        }
+      ],
+      "exampleEn": "Quiet neighborhood, smaller than Boston. Wi-Fi keeps disconnecting. Could you recommend a pharmacy nearby?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em10l04-ctx-01",
+        "type": "intro",
+        "titleEn": "City & problems — review",
+        "titlePt": "Cidade e problemas — revisão",
+        "bodyPt": "Revisão do Módulo 6 — descrever bairro, comparar lugares, explicar problemas do dia a dia e pedir ajuda. Clube (cidade sede) ou vida urbana."
+      },
+      {
+        "id": "em10l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "New city · Relocation OR away match trip",
+        "scenarioPt": "Você chegou a uma cidade nova — descreve o bairro, compara com Boston e pede ajuda com um problema."
+      },
+      {
+        "id": "em10l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "How is your neighborhood?",
+        "promptPt": "Descrever bairro — M6L1:",
+        "options": [
+          {
+            "labelEn": "It's pretty quiet — there's a park nearby and good public transport.",
+            "correct": true,
+            "feedbackPt": "M6 — neighborhood description."
+          },
+          {
+            "labelEn": "Neighborhood quiet is pretty transport.",
+            "correct": false,
+            "feedbackPt": "Ordem."
+          },
+          {
+            "labelEn": "My neighborhood better Boston always.",
+            "correct": false,
+            "feedbackPt": "Incompleto."
+          }
+        ]
+      },
+      {
+        "id": "em10l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "Is it bigger than Boston?",
+        "promptPt": "Comparative — M6L3:",
+        "options": [
+          {
+            "labelEn": "No — it's smaller, but the downtown area is more modern.",
+            "correct": true,
+            "feedbackPt": "Comparatives smaller/more modern."
+          },
+          {
+            "labelEn": "No big smaller modern downtown.",
+            "correct": false,
+            "feedbackPt": "Ordem."
+          },
+          {
+            "labelEn": "Boston is smaller than it bigger.",
+            "correct": false,
+            "feedbackPt": "Confuso."
+          }
+        ]
+      },
+      {
+        "id": "em10l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(Your internet stopped working at the hotel.)",
+        "promptPt": "Everyday problem — M6L5:",
+        "options": [
+          {
+            "labelEn": "I'm having a problem — the Wi-Fi isn't working in my room.",
+            "correct": true,
+            "feedbackPt": "Problem + específico."
+          },
+          {
+            "labelEn": "Problem internet me hotel room.",
+            "correct": false,
+            "feedbackPt": "Ordem."
+          },
+          {
+            "labelEn": "Wi-Fi working is good no problem.",
+            "correct": false,
+            "feedbackPt": "Contraditório."
+          }
+        ]
+      },
+      {
+        "id": "em10l04-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Receptionist",
+        "promptEn": "I see. Can you describe the issue?",
+        "promptPt": "Explicar problema — M6L6:",
+        "options": [
+          {
+            "labelEn": "It keeps disconnecting every few minutes — I can't join my video calls.",
+            "correct": true,
+            "feedbackPt": "Explain + impact."
+          },
+          {
+            "labelEn": "Issue describe disconnecting I.",
+            "correct": false,
+            "feedbackPt": "Ordem."
+          },
+          {
+            "labelEn": "Problem is elevator gate B12.",
+            "correct": false,
+            "feedbackPt": "Contextos misturados."
+          }
+        ]
+      },
+      {
+        "id": "em10l04-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Receptionist",
+        "promptEn": "Let me send maintenance. Anything else?",
+        "promptPt": "Pedir ajuda adicional:",
+        "options": [
+          {
+            "labelEn": "Could you also recommend a good pharmacy nearby?",
+            "correct": true,
+            "feedbackPt": "Ask for help + nearby."
+          },
+          {
+            "labelEn": "Maintenance send me pharmacy.",
+            "correct": false,
+            "feedbackPt": "Confuso."
+          },
+          {
+            "labelEn": "Anything else no help.",
+            "correct": false,
+            "feedbackPt": "Incompleto."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em10l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Home & neighborhood (M6L1)",
+        "titlePt": "Casa e bairro (M6L1)",
+        "introPt": "Describing where you live.",
+        "examples": [
+          {
+            "en": "It's pretty quiet.",
+            "pt": "tranquilo"
+          },
+          {
+            "en": "There's a park nearby.",
+            "pt": "perto"
+          },
+          {
+            "en": "Good public transport",
+            "pt": "transporte"
+          },
+          {
+            "en": "I live near downtown.",
+            "pt": "localização"
+          }
+        ]
+      },
+      {
+        "id": "em10l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Comparatives (M6L3)",
+        "titlePt": "Comparativos (M6L3)",
+        "introPt": "Bigger/smaller, more modern, better than.",
+        "examples": [
+          {
+            "en": "It's smaller than Boston.",
+            "pt": "menor"
+          },
+          {
+            "en": "The downtown area is more modern.",
+            "pt": "mais moderno"
+          },
+          {
+            "en": "Public transport is better here.",
+            "pt": "melhor"
+          },
+          {
+            "en": "Is it bigger than...?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em10l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Problems & help (M6L5-6)",
+        "titlePt": "Problemas e ajuda (M6L5-6)",
+        "introPt": "Having a problem, explain, ask for help.",
+        "examples": [
+          {
+            "en": "I'm having a problem with the Wi-Fi.",
+            "pt": "problema"
+          },
+          {
+            "en": "It isn't working.",
+            "pt": "não funciona"
+          },
+          {
+            "en": "Could you help me with this?",
+            "pt": "pedir ajuda"
+          },
+          {
+            "en": "Is there a pharmacy nearby?",
+            "pt": "pergunta local"
+          }
+        ]
+      },
+      {
+        "id": "em10l04-learn-voc",
+        "type": "vocabulary",
+        "titleEn": "City & services (M6L2)",
+        "titlePt": "Cidade e serviços (M6L2)",
+        "words": [
+          {
+            "en": "public transport",
+            "pt": "transporte público",
+            "exampleEn": "Good public transport nearby."
+          },
+          {
+            "en": "pharmacy",
+            "pt": "farmácia",
+            "exampleEn": "Is there a pharmacy nearby?"
+          },
+          {
+            "en": "maintenance",
+            "pt": "manutenção",
+            "exampleEn": "Let me send maintenance."
+          },
+          {
+            "en": "nearby",
+            "pt": "perto",
+            "exampleEn": "A park nearby."
+          }
+        ]
+      },
+      {
+        "id": "em10l04-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "It's pretty quiet — there's a park nearby.",
+            "pt": "M6 neighborhood"
+          },
+          {
+            "en": "It's smaller, but more modern.",
+            "pt": "comparatives"
+          },
+          {
+            "en": "I'm having a problem — the Wi-Fi isn't working.",
+            "pt": "problem"
+          },
+          {
+            "en": "Could you recommend... nearby?",
+            "pt": "ask help"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em10l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "How is your neighborhood?"
+          },
+          {
+            "en": "It's pretty quiet — good public transport."
+          },
+          {
+            "en": "It's smaller than Boston, but more modern."
+          },
+          {
+            "en": "I'm having a problem — the Wi-Fi isn't working."
+          },
+          {
+            "en": "It keeps disconnecting."
+          },
+          {
+            "en": "Could you recommend a pharmacy nearby?"
+          }
+        ],
+        "dialogueEn": "How's the neighborhood? — Quiet, good transport. — Bigger than Boston? — Smaller, but more modern. — Wi-Fi problem? — It keeps disconnecting. — Pharmacy nearby? — Could you recommend one?"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em10l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Describe place and solve a problem.",
+        "headlinePt": "Descreva lugar e resolva um problema.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Colleague",
+            "questionEn": "Tell me about your area — any problems?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em10l04-prac-01",
+      "type": "choice",
+      "promptPt": "Comparative — correto:",
+      "options": [
+        {
+          "labelEn": "It's smaller than Boston.",
+          "correct": true,
+          "feedbackPt": "M6 comparative."
+        },
+        {
+          "labelEn": "It's more small than Boston.",
+          "correct": false,
+          "feedbackPt": "Smaller, not more small."
+        },
+        {
+          "labelEn": "It smaller Boston is.",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        }
+      ]
+    },
+    {
+      "id": "em10l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — problema:",
+      "templateEn": "I'm having a ___ with the Wi-Fi.",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "problem",
+          "correct": true,
+          "feedbackPt": "Having a problem."
+        },
+        {
+          "labelEn": "probleming",
+          "correct": false,
+          "feedbackPt": "Problem noun."
+        },
+        {
+          "labelEn": "problematic",
+          "correct": false,
+          "feedbackPt": "Adjective."
+        }
+      ]
+    },
+    {
+      "id": "em10l04-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte — park nearby:",
+      "tokens": [
+        "nearby.",
+        "park",
+        "a",
+        "There's"
+      ],
+      "correctOrder": [
+        "There's",
+        "a",
+        "park",
+        "nearby."
+      ],
+      "feedbackCorrectPt": "There's a park nearby.",
+      "feedbackWrongPt": "There's a + noun + nearby."
+    },
+    {
+      "id": "em10l04-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Wi-Fi problem:",
+      "speaker": "You",
+      "contextEn": "Receptionist: What seems to be the problem?",
+      "options": [
+        {
+          "labelEn": "The Wi-Fi keeps disconnecting — I can't join my calls.",
+          "correct": true,
+          "feedbackPt": "Explain problem."
+        },
+        {
+          "labelEn": "Wi-Fi good no problem disconnect.",
+          "correct": false,
+          "feedbackPt": "Contraditório."
+        },
+        {
+          "labelEn": "Problem hotel me internet.",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        }
+      ]
+    },
+    {
+      "id": "em10l04-prac-05",
+      "type": "choice",
+      "promptPt": "More modern — correto:",
+      "options": [
+        {
+          "labelEn": "The downtown area is more modern.",
+          "correct": true,
+          "feedbackPt": "More + adjective."
+        },
+        {
+          "labelEn": "The downtown is moderner.",
+          "correct": false,
+          "feedbackPt": "More modern."
+        },
+        {
+          "labelEn": "The downtown is more modernly.",
+          "correct": false,
+          "feedbackPt": "Adjective, not adverb."
+        }
+      ]
+    },
+    {
+      "id": "em10l04-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete — pedir ajuda:",
+      "templateEn": "Could you recommend a good pharmacy ___?",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "nearby",
+          "correct": true,
+          "feedbackPt": "Nearby."
+        },
+        {
+          "labelEn": "near",
+          "correct": false,
+          "feedbackPt": "Nearby more natural here."
+        },
+        {
+          "labelEn": "next",
+          "correct": false,
+          "feedbackPt": "Nearby or near here."
+        }
+      ]
+    },
+    {
+      "id": "em10l04-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte comparative question:",
+      "tokens": [
+        "Boston?",
+        "than",
+        "bigger",
+        "it",
+        "Is"
+      ],
+      "correctOrder": [
+        "Is",
+        "it",
+        "bigger",
+        "than",
+        "Boston?"
+      ],
+      "feedbackCorrectPt": "Is it bigger than Boston?",
+      "feedbackWrongPt": "Is it + comparative + than?"
+    },
+    {
+      "id": "em10l04-prac-08",
+      "type": "choice",
+      "promptPt": "Neighborhood description:",
+      "options": [
+        {
+          "labelEn": "It's pretty quiet — good public transport.",
+          "correct": true,
+          "feedbackPt": "M6L1."
+        },
+        {
+          "labelEn": "Neighborhood transport quiet pretty.",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        },
+        {
+          "labelEn": "I'm going to the neighborhood.",
+          "correct": false,
+          "feedbackPt": "Future — description."
+        }
+      ]
+    },
+    {
+      "id": "em10l04-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Explain impact:",
+      "speaker": "You",
+      "contextEn": "Colleague: What is wrong with the Wi-Fi?",
+      "options": [
+        {
+          "labelEn": "It isn't working — I can't join my video calls.",
+          "correct": true,
+          "feedbackPt": "Problem + impact."
+        },
+        {
+          "labelEn": "Working is good Wi-Fi.",
+          "correct": false,
+          "feedbackPt": "Contraditório."
+        },
+        {
+          "labelEn": "Video calls I join always.",
+          "correct": false,
+          "feedbackPt": "Oposto."
+        }
+      ]
+    },
+    {
+      "id": "em10l04-prac-10",
+      "type": "classify",
+      "promptPt": "Qual módulo? — smaller than Boston",
+      "sentenceEn": "It's smaller than Boston.",
+      "category": "M6",
+      "feedbackCorrectPt": "M6 comparatives.",
+      "feedbackWrongPt": "Comparative = M6."
+    },
+    {
+      "id": "em10l04-prac-11",
+      "type": "choice",
+      "promptPt": "Revisão M6 — qual frase?",
+      "options": [
+        {
+          "labelEn": "I'm having a problem with the Wi-Fi.",
+          "correct": true,
+          "feedbackPt": "M6 problems."
+        },
+        {
+          "labelEn": "I'd like a salad, please.",
+          "correct": false,
+          "feedbackPt": "M7 food."
+        },
+        {
+          "labelEn": "I have a reservation under Carlos.",
+          "correct": false,
+          "feedbackPt": "M8 hotel."
+        }
+      ]
+    },
+    {
+      "id": "em10l04-prac-12",
+      "type": "fill_blank",
+      "promptPt": "Complete — Wi-Fi parou",
+      "templateEn": "The Wi-Fi ___ working.",
+      "blankLabel": "isn't/aren't",
+      "options": [
+        {
+          "labelEn": "isn't",
+          "correct": true,
+          "feedbackPt": "Wi-Fi = it."
+        },
+        {
+          "labelEn": "aren't",
+          "correct": false,
+          "feedbackPt": "Singular."
+        },
+        {
+          "labelEn": "don't",
+          "correct": false,
+          "feedbackPt": "Is not working."
+        }
+      ]
+    }
+  ]
+}

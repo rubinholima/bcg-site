@@ -1,0 +1,666 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 10,
+  "goalPt": "Revisão M2 — present simple expandido, rotinas, frequency. Sem gramática nova.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Conversa informal — Jamie pergunta sobre sua rotina semanal e hábitos.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Describe your routine — M2 review.",
+    "headlinePt": "Descreva sua rotina — revisão M2.",
+    "bodyPt": "",
+    "canDo": [
+      "I usually...",
+      "How often...?",
+      "She/He works...",
+      "I rarely..."
+    ],
+    "production": {
+      "introPt": "Descreva rotina diária, frequência de uma atividade e free time.",
+      "prompts": [
+        {
+          "speaker": "Jamie",
+          "questionEn": "Tell me about your routine."
+        }
+      ],
+      "fields": [
+        {
+          "id": "daily",
+          "labelPt": "Rotina diária",
+          "prefixEn": "I usually",
+          "placeholderEn": "wake up at 6 and go to the training center by 7."
+        },
+        {
+          "id": "freq",
+          "labelPt": "Frequência",
+          "prefixEn": "",
+          "placeholderEn": "I travel with the team about twice a month."
+        },
+        {
+          "id": "free",
+          "labelPt": "Free time",
+          "prefixEn": "",
+          "placeholderEn": "In my free time, I usually read or go to the gym."
+        }
+      ],
+      "exampleEn": "I usually wake up at 6. I travel twice a month. In my free time, I read or go to the gym."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em10l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Routine & life — review",
+        "titlePt": "Rotina e vida — revisão",
+        "bodyPt": "Revisão do Módulo 2 — rotina semanal, hábitos, terceira pessoa e frequency adverbs. Clube (treino) ou escritório (expediente)."
+      },
+      {
+        "id": "em10l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Coffee chat · Training schedule OR office routine",
+        "scenarioPt": "Conversa informal — Jamie pergunta sobre sua rotina semanal e hábitos."
+      },
+      {
+        "id": "em10l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What does a typical week look like for you?",
+        "promptPt": "Rotina semanal:",
+        "options": [
+          {
+            "labelEn": "I usually wake up at 6, go to the training center by 7, and finish around 5.",
+            "correct": true,
+            "feedbackPt": "M2 — rotina + horários."
+          },
+          {
+            "labelEn": "Week typical I look.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I am waking up every week typical.",
+            "correct": false,
+            "feedbackPt": "Present continuous — rotina usa simple."
+          }
+        ]
+      },
+      {
+        "id": "em10l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "How often do you travel with the squad?",
+        "promptPt": "Frequency — clube:",
+        "options": [
+          {
+            "labelEn": "I travel with the team about twice a month during the season.",
+            "correct": true,
+            "feedbackPt": "Frequency adverb + detalhe."
+          },
+          {
+            "labelEn": "Travel I often squad month.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I am traveling twice month always.",
+            "correct": false,
+            "feedbackPt": "Gramática confusa."
+          }
+        ]
+      },
+      {
+        "id": "em10l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What does your manager do on Mondays?",
+        "promptPt": "Terceira pessoa — he/she:",
+        "options": [
+          {
+            "labelEn": "She usually runs the weekly planning meeting on Monday mornings.",
+            "correct": true,
+            "feedbackPt": "Third person + routine."
+          },
+          {
+            "labelEn": "Manager she run Monday meeting.",
+            "correct": false,
+            "feedbackPt": "She runs, não run."
+          },
+          {
+            "labelEn": "On Monday manager is travel.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em10l02-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What do you do in your free time?",
+        "promptPt": "Free time — M2L5:",
+        "options": [
+          {
+            "labelEn": "I rarely watch TV — I usually read or go to the gym.",
+            "correct": true,
+            "feedbackPt": "Rarely/usually + atividades."
+          },
+          {
+            "labelEn": "Free time TV I watch always gym.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I am free time reading usually.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em10l02-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Does your schedule change much in the off-season?",
+        "promptPt": "Contraste de rotina:",
+        "options": [
+          {
+            "labelEn": "Yes — in the off-season I usually work from the office more often.",
+            "correct": true,
+            "feedbackPt": "Contraste sazonal natural."
+          },
+          {
+            "labelEn": "Off-season schedule change no never.",
+            "correct": false,
+            "feedbackPt": "Incompleto."
+          },
+          {
+            "labelEn": "Season off I am changing always.",
+            "correct": false,
+            "feedbackPt": "Overuse continuous."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em10l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Weekly routine (M2)",
+        "titlePt": "Rotina semanal (M2)",
+        "introPt": "Present simple — I wake up, I go, I finish.",
+        "examples": [
+          {
+            "en": "I usually wake up at 6.",
+            "pt": "acordar"
+          },
+          {
+            "en": "I go to the training center by 7.",
+            "pt": "clube"
+          },
+          {
+            "en": "I work from the office on Wednesdays.",
+            "pt": "escritório"
+          },
+          {
+            "en": "I finish around 5 PM.",
+            "pt": "horário"
+          }
+        ]
+      },
+      {
+        "id": "em10l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Frequency (M2L4)",
+        "titlePt": "Frequência (M2L4)",
+        "introPt": "Always, usually, sometimes, rarely, never.",
+        "examples": [
+          {
+            "en": "I usually have lunch at 12.",
+            "pt": "usually"
+          },
+          {
+            "en": "I rarely work on weekends.",
+            "pt": "rarely"
+          },
+          {
+            "en": "Twice a month / once a week",
+            "pt": "frequência numérica"
+          },
+          {
+            "en": "How often do you travel?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em10l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Third person (M2L2)",
+        "titlePt": "Terceira pessoa (M2L2)",
+        "introPt": "He/she works, does, has — -s na afirmativa.",
+        "examples": [
+          {
+            "en": "She runs the Monday meeting.",
+            "pt": "ela conduz"
+          },
+          {
+            "en": "He works in the medical department.",
+            "pt": "ele trabalha"
+          },
+          {
+            "en": "The coach usually arrives early.",
+            "pt": "treinador"
+          },
+          {
+            "en": "Does she travel often?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em10l02-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Routine vs now — M2 vs M3",
+        "titlePt": "Rotina vs agora — M2 vs M3",
+        "items": [
+          {
+            "formalEn": "I usually wake up at 6.",
+            "naturalEn": "Right now I'm in a meeting.",
+            "notePt": "Usually = hábito (M2). Right now = agora (M3)."
+          }
+        ],
+        "tipPt": "Na revisão, não misture usually com ação happening now."
+      },
+      {
+        "id": "em10l02-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I usually wake up at...",
+            "pt": "rotina"
+          },
+          {
+            "en": "How often do you...?",
+            "pt": "frequency"
+          },
+          {
+            "en": "She works / He runs...",
+            "pt": "3rd person"
+          },
+          {
+            "en": "I rarely / sometimes...",
+            "pt": "adverbs"
+          },
+          {
+            "en": "What do you do in your free time?",
+            "pt": "free time"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em10l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What does a typical week look like?"
+          },
+          {
+            "en": "I usually wake up at 6."
+          },
+          {
+            "en": "I travel twice a month."
+          },
+          {
+            "en": "She runs the Monday meeting."
+          },
+          {
+            "en": "I rarely work on weekends."
+          },
+          {
+            "en": "What do you do in your free time?"
+          },
+          {
+            "en": "I usually read or go to the gym."
+          }
+        ],
+        "dialogueEn": "Typical week? — I wake up at 6, go to training by 7. — How often travel? — Twice a month. — Free time? — I rarely watch TV."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em10l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Describe your routine — M2 review.",
+        "headlinePt": "Descreva sua rotina — revisão M2.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Jamie",
+            "questionEn": "Tell me about your routine."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em10l02-prac-01",
+      "type": "choice",
+      "promptPt": "Rotina — present simple:",
+      "options": [
+        {
+          "labelEn": "I usually wake up at 6.",
+          "correct": true,
+          "feedbackPt": "M2 routine."
+        },
+        {
+          "labelEn": "I am usually waking up at 6.",
+          "correct": false,
+          "feedbackPt": "Routine = simple present."
+        },
+        {
+          "labelEn": "I wake up usually at 6 am every.",
+          "correct": false,
+          "feedbackPt": "Ordem estranha."
+        }
+      ]
+    },
+    {
+      "id": "em10l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — frequency:",
+      "templateEn": "I ___ work on weekends.",
+      "blankLabel": "adverb",
+      "options": [
+        {
+          "labelEn": "rarely",
+          "correct": true,
+          "feedbackPt": "Rarely = raramente."
+        },
+        {
+          "labelEn": "rare",
+          "correct": false,
+          "feedbackPt": "Rarely adverb."
+        },
+        {
+          "labelEn": "rareness",
+          "correct": false,
+          "feedbackPt": "Substantivo."
+        }
+      ]
+    },
+    {
+      "id": "em10l02-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte — terceira pessoa:",
+      "tokens": [
+        "meeting.",
+        "Monday",
+        "the",
+        "runs",
+        "She"
+      ],
+      "correctOrder": [
+        "She",
+        "runs",
+        "the",
+        "Monday",
+        "meeting."
+      ],
+      "feedbackCorrectPt": "She runs the Monday meeting.",
+      "feedbackWrongPt": "She + verb-s + object."
+    },
+    {
+      "id": "em10l02-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: How often do you travel?",
+      "speaker": "You",
+      "contextEn": "Jamie: How often do you travel with the team?",
+      "options": [
+        {
+          "labelEn": "About twice a month during the season.",
+          "correct": true,
+          "feedbackPt": "Frequency answer."
+        },
+        {
+          "labelEn": "Travel often I am.",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        },
+        {
+          "labelEn": "I traveled twice.",
+          "correct": false,
+          "feedbackPt": "Past — habit question."
+        }
+      ]
+    },
+    {
+      "id": "em10l02-prac-05",
+      "type": "choice",
+      "promptPt": "Third person — correto:",
+      "options": [
+        {
+          "labelEn": "She works in the medical department.",
+          "correct": true,
+          "feedbackPt": "She works."
+        },
+        {
+          "labelEn": "She work in medical.",
+          "correct": false,
+          "feedbackPt": "Works + -s."
+        },
+        {
+          "labelEn": "She working medical department.",
+          "correct": false,
+          "feedbackPt": "Simple present."
+        }
+      ]
+    },
+    {
+      "id": "em10l02-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete pergunta:",
+      "templateEn": "What ___ you do in your free time?",
+      "blankLabel": "aux",
+      "options": [
+        {
+          "labelEn": "do",
+          "correct": true,
+          "feedbackPt": "What do you do?"
+        },
+        {
+          "labelEn": "does",
+          "correct": false,
+          "feedbackPt": "You = do."
+        },
+        {
+          "labelEn": "are",
+          "correct": false,
+          "feedbackPt": "Do for actions."
+        }
+      ]
+    },
+    {
+      "id": "em10l02-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte rotina:",
+      "tokens": [
+        "center.",
+        "training",
+        "the",
+        "to",
+        "go",
+        "I",
+        "7.",
+        "by"
+      ],
+      "correctOrder": [
+        "I",
+        "go",
+        "to",
+        "the",
+        "training",
+        "center",
+        "by",
+        "7."
+      ],
+      "feedbackCorrectPt": "I go to the training center by 7.",
+      "feedbackWrongPt": "I go to + place + by + time."
+    },
+    {
+      "id": "em10l02-prac-08",
+      "type": "choice",
+      "promptPt": "Usually vs now:",
+      "options": [
+        {
+          "labelEn": "I usually have lunch at 12.",
+          "correct": true,
+          "feedbackPt": "Habit = usually + simple."
+        },
+        {
+          "labelEn": "I am usually having lunch at 12 now.",
+          "correct": false,
+          "feedbackPt": "Habit, not now."
+        },
+        {
+          "labelEn": "I usually am having lunch.",
+          "correct": false,
+          "feedbackPt": "Simple for habit."
+        }
+      ]
+    },
+    {
+      "id": "em10l02-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Terceira pessoa — coach:",
+      "speaker": "You",
+      "contextEn": "Jamie: What does the coach do on match days?",
+      "options": [
+        {
+          "labelEn": "He usually arrives two hours before kickoff.",
+          "correct": true,
+          "feedbackPt": "He + routine."
+        },
+        {
+          "labelEn": "Coach arrive he two hours.",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        },
+        {
+          "labelEn": "He is arriving usually every match day always.",
+          "correct": false,
+          "feedbackPt": "Overuse continuous."
+        }
+      ]
+    },
+    {
+      "id": "em10l02-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Complete — once a week:",
+      "templateEn": "I go to the gym ___ a week.",
+      "blankLabel": "frequency",
+      "options": [
+        {
+          "labelEn": "once",
+          "correct": true,
+          "feedbackPt": "Once a week."
+        },
+        {
+          "labelEn": "one",
+          "correct": false,
+          "feedbackPt": "Once."
+        },
+        {
+          "labelEn": "first",
+          "correct": false,
+          "feedbackPt": "Once."
+        }
+      ]
+    },
+    {
+      "id": "em10l02-prac-11",
+      "type": "classify",
+      "promptPt": "Qual módulo? — I rarely watch TV",
+      "sentenceEn": "I rarely watch TV.",
+      "category": "M2",
+      "feedbackCorrectPt": "M2 — frequency.",
+      "feedbackWrongPt": "M2 routine/frequency."
+    },
+    {
+      "id": "em10l02-prac-12",
+      "type": "choice",
+      "promptPt": "Revisão M2 — qual frase?",
+      "options": [
+        {
+          "labelEn": "How often do you travel?",
+          "correct": true,
+          "feedbackPt": "M2 frequency."
+        },
+        {
+          "labelEn": "What are you doing right now?",
+          "correct": false,
+          "feedbackPt": "M3 continuous."
+        },
+        {
+          "labelEn": "I went to the gym yesterday.",
+          "correct": false,
+          "feedbackPt": "M4 past."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,670 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 10,
+  "goalPt": "Revisão M7-8 — food, health, travel, hotel, airport. Sem gramática nova.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Viagem com a equipe — aeroporto, check-in no hotel, jantar e pequeno problema de saúde.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Handle food and travel — M7-8 review.",
+    "headlinePt": "Comida e viagem — revisão M7-8.",
+    "bodyPt": "",
+    "canDo": [
+      "airport check",
+      "hotel reservation",
+      "food order/allergy",
+      "symptoms"
+    ],
+    "production": {
+      "introPt": "Simule aeroporto, hotel, pedido no jantar e como se sente.",
+      "prompts": [
+        {
+          "speaker": "Jamie",
+          "questionEn": "Walk through your trip — airport, hotel, dinner, health."
+        }
+      ],
+      "fields": [
+        {
+          "id": "airport",
+          "labelPt": "Aeroporto",
+          "prefixEn": "",
+          "placeholderEn": "Here's my passport — I'm on the 3 PM flight."
+        },
+        {
+          "id": "hotel",
+          "labelPt": "Hotel",
+          "prefixEn": "",
+          "placeholderEn": "I have a reservation under Santos for two nights."
+        },
+        {
+          "id": "food",
+          "labelPt": "Jantar",
+          "prefixEn": "",
+          "placeholderEn": "I'm allergic to shellfish. Medium, please — sauce on the side."
+        },
+        {
+          "id": "health",
+          "labelPt": "Como se sente",
+          "prefixEn": "",
+          "placeholderEn": "I have a headache — I think I need rest."
+        }
+      ],
+      "exampleEn": "Passport here, flight 3 PM. Reservation under Santos. Allergic to shellfish, medium steak. Headache — need rest."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em10l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Food, well-being & travel — review",
+        "titlePt": "Comida, bem-estar e viagem — revisão",
+        "bodyPt": "Revisão dos Módulos 7 e 8 — preferências alimentares, pedidos, sintomas, aeroporto, hotel e problemas de viagem."
+      },
+      {
+        "id": "em10l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Away trip · Airport, hotel & team dinner",
+        "scenarioPt": "Viagem com a equipe — aeroporto, check-in no hotel, jantar e pequeno problema de saúde."
+      },
+      {
+        "id": "em10l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Agent",
+        "promptEn": "May I see your passport and boarding pass?",
+        "promptPt": "Aeroporto — M8L1:",
+        "options": [
+          {
+            "labelEn": "Here you go — I'm on the 3 PM flight to Miami.",
+            "correct": true,
+            "feedbackPt": "M8 airport."
+          },
+          {
+            "labelEn": "Nice to meet you passport.",
+            "correct": false,
+            "feedbackPt": "M1."
+          },
+          {
+            "labelEn": "I agree passport flight.",
+            "correct": false,
+            "feedbackPt": "M9."
+          }
+        ]
+      },
+      {
+        "id": "em10l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Receptionist",
+        "promptEn": "Good evening! Do you have a reservation?",
+        "promptPt": "Hotel — M8L2:",
+        "options": [
+          {
+            "labelEn": "Yes — I have a reservation under Santos. Two nights.",
+            "correct": true,
+            "feedbackPt": "M8 hotel check-in."
+          },
+          {
+            "labelEn": "I would like a salad.",
+            "correct": false,
+            "feedbackPt": "M7 restaurant."
+          },
+          {
+            "labelEn": "My main responsibility is hotel.",
+            "correct": false,
+            "feedbackPt": "M9."
+          }
+        ]
+      },
+      {
+        "id": "em10l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "Any dietary restrictions?",
+        "promptPt": "Food preferences — M7L1:",
+        "options": [
+          {
+            "labelEn": "I'm allergic to shellfish — otherwise no restrictions.",
+            "correct": true,
+            "feedbackPt": "M7 allergy."
+          },
+          {
+            "labelEn": "I prefer gate B12.",
+            "correct": false,
+            "feedbackPt": "Airport."
+          },
+          {
+            "labelEn": "I rarely watch TV.",
+            "correct": false,
+            "feedbackPt": "M2."
+          }
+        ]
+      },
+      {
+        "id": "em10l05-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "How would you like your steak?",
+        "promptPt": "Ordering detail — M7L2:",
+        "options": [
+          {
+            "labelEn": "Medium, please — and could I have the sauce on the side?",
+            "correct": true,
+            "feedbackPt": "M7 order detail."
+          },
+          {
+            "labelEn": "Steak medium flight delayed.",
+            "correct": false,
+            "feedbackPt": "Mixed context."
+          },
+          {
+            "labelEn": "I am medium steak.",
+            "correct": false,
+            "feedbackPt": "Wrong."
+          }
+        ]
+      },
+      {
+        "id": "em10l05-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "You don't look well — are you OK?",
+        "promptPt": "Health — M7L4:",
+        "options": [
+          {
+            "labelEn": "I have a headache and a sore throat — I think I need rest.",
+            "correct": true,
+            "feedbackPt": "M7 symptoms."
+          },
+          {
+            "labelEn": "I have reservation headache hotel.",
+            "correct": false,
+            "feedbackPt": "Mixed."
+          },
+          {
+            "labelEn": "Headache is smaller than Boston.",
+            "correct": false,
+            "feedbackPt": "M6."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em10l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Food (M7)",
+        "titlePt": "Comida (M7)",
+        "introPt": "Preferences, ordering, restrictions.",
+        "examples": [
+          {
+            "en": "I'm allergic to shellfish.",
+            "pt": "alergia"
+          },
+          {
+            "en": "Medium, please — sauce on the side.",
+            "pt": "pedido detalhe"
+          },
+          {
+            "en": "I'd like the grilled salmon.",
+            "pt": "pedido"
+          },
+          {
+            "en": "No restrictions, thanks.",
+            "pt": "sem restrição"
+          }
+        ]
+      },
+      {
+        "id": "em10l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Health (M7L4-5)",
+        "titlePt": "Saúde (M7L4-5)",
+        "introPt": "Symptoms and advice.",
+        "examples": [
+          {
+            "en": "I have a headache and a sore throat.",
+            "pt": "sintomas"
+          },
+          {
+            "en": "You should rest and drink water.",
+            "pt": "should advice"
+          },
+          {
+            "en": "I don't feel well.",
+            "pt": "mal-estar"
+          },
+          {
+            "en": "Do you have anything for a headache?",
+            "pt": "farmácia"
+          }
+        ]
+      },
+      {
+        "id": "em10l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Travel (M8)",
+        "titlePt": "Viagem (M8)",
+        "introPt": "Airport, hotel, problems.",
+        "examples": [
+          {
+            "en": "Here's my passport and boarding pass.",
+            "pt": "aeroporto"
+          },
+          {
+            "en": "I have a reservation under Santos.",
+            "pt": "hotel"
+          },
+          {
+            "en": "My flight was delayed.",
+            "pt": "problema"
+          },
+          {
+            "en": "Could I get a late checkout?",
+            "pt": "serviço hotel"
+          }
+        ]
+      },
+      {
+        "id": "em10l05-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum — M7 vs M8",
+        "wrongEn": "I have allergy to shellfish at gate B12.",
+        "rightEn": "I'm allergic to shellfish. / My flight is at gate B12.",
+        "explanationPt": "Allergic to (M7 comida). Gate B12 = aeroporto (M8) — não misture na mesma frase confusa."
+      },
+      {
+        "id": "em10l05-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I'm allergic to...",
+            "pt": "M7 food"
+          },
+          {
+            "en": "Medium, please — on the side.",
+            "pt": "M7 order"
+          },
+          {
+            "en": "I have a headache.",
+            "pt": "M7 health"
+          },
+          {
+            "en": "I have a reservation under...",
+            "pt": "M8 hotel"
+          },
+          {
+            "en": "My flight was delayed.",
+            "pt": "M8 problem"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em10l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Here's my passport."
+          },
+          {
+            "en": "I have a reservation under Santos."
+          },
+          {
+            "en": "I'm allergic to shellfish."
+          },
+          {
+            "en": "Medium, please — sauce on the side."
+          },
+          {
+            "en": "I have a headache and a sore throat."
+          },
+          {
+            "en": "My flight was delayed."
+          },
+          {
+            "en": "Could I get a late checkout?"
+          }
+        ],
+        "dialogueEn": "Passport here. — Reservation under Santos. — Allergic to shellfish. — Medium, sauce on side. — Headache and sore throat. — Flight delayed. — Late checkout?"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em10l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Handle food and travel — M7-8 review.",
+        "headlinePt": "Comida e viagem — revisão M7-8.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Jamie",
+            "questionEn": "Walk through your trip — airport, hotel, dinner, health."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em10l05-prac-01",
+      "type": "choice",
+      "promptPt": "Airport — correto:",
+      "options": [
+        {
+          "labelEn": "Here's my passport and boarding pass.",
+          "correct": true,
+          "feedbackPt": "M8."
+        },
+        {
+          "labelEn": "Please find attached passport.",
+          "correct": false,
+          "feedbackPt": "M9 email."
+        },
+        {
+          "labelEn": "I usually wake up at 6.",
+          "correct": false,
+          "feedbackPt": "M2."
+        }
+      ]
+    },
+    {
+      "id": "em10l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — hotel:",
+      "templateEn": "I have a reservation ___ Santos.",
+      "blankLabel": "prep",
+      "options": [
+        {
+          "labelEn": "under",
+          "correct": true,
+          "feedbackPt": "Under + name."
+        },
+        {
+          "labelEn": "in",
+          "correct": false,
+          "feedbackPt": "Under for reservations."
+        },
+        {
+          "labelEn": "at",
+          "correct": false,
+          "feedbackPt": "Under."
+        }
+      ]
+    },
+    {
+      "id": "em10l05-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Dietary restrictions:",
+      "speaker": "You",
+      "contextEn": "Waiter: Any dietary restrictions?",
+      "options": [
+        {
+          "labelEn": "I'm allergic to shellfish.",
+          "correct": true,
+          "feedbackPt": "M7."
+        },
+        {
+          "labelEn": "I have a reservation.",
+          "correct": false,
+          "feedbackPt": "M8."
+        },
+        {
+          "labelEn": "I agree with shellfish.",
+          "correct": false,
+          "feedbackPt": "Wrong."
+        }
+      ]
+    },
+    {
+      "id": "em10l05-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte pedido:",
+      "tokens": [
+        "please.",
+        "side.",
+        "the",
+        "on",
+        "sauce",
+        "the",
+        "have",
+        "I",
+        "could"
+      ],
+      "correctOrder": [
+        "could",
+        "I",
+        "have",
+        "the",
+        "sauce",
+        "on",
+        "the",
+        "side,",
+        "please."
+      ],
+      "feedbackCorrectPt": "Could I have the sauce on the side, please?",
+      "feedbackWrongPt": "Could I have + detail."
+    },
+    {
+      "id": "em10l05-prac-05",
+      "type": "choice",
+      "promptPt": "Symptoms — correto:",
+      "options": [
+        {
+          "labelEn": "I have a headache and a sore throat.",
+          "correct": true,
+          "feedbackPt": "M7 health."
+        },
+        {
+          "labelEn": "I have headache the sore.",
+          "correct": false,
+          "feedbackPt": "Articles."
+        },
+        {
+          "labelEn": "Headache I am having usually.",
+          "correct": false,
+          "feedbackPt": "Symptoms now."
+        }
+      ]
+    },
+    {
+      "id": "em10l05-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Flight delayed:",
+      "speaker": "You",
+      "contextEn": "Agent: How can I help?",
+      "options": [
+        {
+          "labelEn": "My flight was delayed — what are my options?",
+          "correct": true,
+          "feedbackPt": "M8 problem."
+        },
+        {
+          "labelEn": "My flight is delicious.",
+          "correct": false,
+          "feedbackPt": "Food."
+        },
+        {
+          "labelEn": "Delayed I agree flight.",
+          "correct": false,
+          "feedbackPt": "M9."
+        }
+      ]
+    },
+    {
+      "id": "em10l05-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Complete — advice:",
+      "templateEn": "You ___ rest and drink water.",
+      "blankLabel": "modal",
+      "options": [
+        {
+          "labelEn": "should",
+          "correct": true,
+          "feedbackPt": "Should advice."
+        },
+        {
+          "labelEn": "should to",
+          "correct": false,
+          "feedbackPt": "Should + base."
+        },
+        {
+          "labelEn": "shoulding",
+          "correct": false,
+          "feedbackPt": "Should modal."
+        }
+      ]
+    },
+    {
+      "id": "em10l05-prac-08",
+      "type": "choice",
+      "promptPt": "Hotel service:",
+      "options": [
+        {
+          "labelEn": "Could I get a late checkout?",
+          "correct": true,
+          "feedbackPt": "M8 services."
+        },
+        {
+          "labelEn": "Could I leave at 3 PM appointment?",
+          "correct": false,
+          "feedbackPt": "M9 permission."
+        },
+        {
+          "labelEn": "Late checkout is smaller than Boston.",
+          "correct": false,
+          "feedbackPt": "M6."
+        }
+      ]
+    },
+    {
+      "id": "em10l05-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte — boarding pass:",
+      "tokens": [
+        "pass.",
+        "boarding",
+        "and",
+        "passport",
+        "my",
+        "Here's"
+      ],
+      "correctOrder": [
+        "Here's",
+        "my",
+        "passport",
+        "and",
+        "boarding",
+        "pass."
+      ],
+      "feedbackCorrectPt": "Here's my passport and boarding pass.",
+      "feedbackWrongPt": "Here's my + documents."
+    },
+    {
+      "id": "em10l05-prac-10",
+      "type": "classify",
+      "promptPt": "M7 ou M8? — I have a reservation",
+      "sentenceEn": "I have a reservation under Santos.",
+      "category": "M8",
+      "feedbackCorrectPt": "M8 travel.",
+      "feedbackWrongPt": "Hotel = M8."
+    },
+    {
+      "id": "em10l05-prac-11",
+      "type": "dialogue_complete",
+      "promptPt": "Order steak:",
+      "speaker": "You",
+      "contextEn": "Waiter: How would you like your steak?",
+      "options": [
+        {
+          "labelEn": "Medium, please.",
+          "correct": true,
+          "feedbackPt": "M7 order."
+        },
+        {
+          "labelEn": "Steak reservation medium.",
+          "correct": false,
+          "feedbackPt": "Mixed."
+        },
+        {
+          "labelEn": "I am medium.",
+          "correct": false,
+          "feedbackPt": "Wrong."
+        }
+      ]
+    },
+    {
+      "id": "em10l05-prac-12",
+      "type": "choice",
+      "promptPt": "Revisão M7-8 — qual frase?",
+      "options": [
+        {
+          "labelEn": "My flight was delayed.",
+          "correct": true,
+          "feedbackPt": "M8."
+        },
+        {
+          "labelEn": "I'm leading the project.",
+          "correct": false,
+          "feedbackPt": "M9."
+        },
+        {
+          "labelEn": "They're practicing now.",
+          "correct": false,
+          "feedbackPt": "M3."
+        }
+      ]
+    }
+  ]
+}

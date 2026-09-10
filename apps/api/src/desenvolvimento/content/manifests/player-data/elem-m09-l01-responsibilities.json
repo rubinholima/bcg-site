@@ -1,0 +1,720 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 9,
+  "goalPt": "Falar de responsabilidades, projetos e prioridades no clube e no escritório — main responsibility, in charge of, top priority.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Stand-up semanal. O gestor pergunta sobre suas responsabilidades, projetos ativos e o que é prioridade esta semana.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Describe your role and priorities.",
+    "headlinePt": "Descreva seu papel e prioridades.",
+    "bodyPt": "",
+    "canDo": [
+      "My main responsibility is...",
+      "I'm leading...",
+      "It's our top priority.",
+      "I'm in charge of..."
+    ],
+    "production": {
+      "introPt": "Descreva sua responsabilidade principal, um projeto que lidera e a prioridade da semana.",
+      "prompts": [
+        {
+          "speaker": "Manager",
+          "questionEn": "Tell us about your responsibilities and priorities this week."
+        }
+      ],
+      "fields": [
+        {
+          "id": "resp",
+          "labelPt": "Responsabilidade principal",
+          "prefixEn": "My main responsibility is",
+          "placeholderEn": "coordinating travel logistics for the squad."
+        },
+        {
+          "id": "project",
+          "labelPt": "Projeto atual",
+          "prefixEn": "I'm leading",
+          "placeholderEn": "the preseason equipment rollout."
+        },
+        {
+          "id": "priority",
+          "labelPt": "Prioridade da semana",
+          "prefixEn": "",
+          "placeholderEn": "It's our top priority — the deadline is Friday."
+        }
+      ],
+      "exampleEn": "My main responsibility is coordinating travel logistics. I'm leading the equipment rollout. It's our top priority — deadline Friday."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em09l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Responsibilities & projects",
+        "titlePt": "Responsabilidades e projetos",
+        "bodyPt": "No trabalho profissional você descreve o que faz, o que lidera e o que é prioridade — no front office do clube ou na sala de operações da empresa."
+      },
+      {
+        "id": "em09l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Monday stand-up · Club front office OR corporate HQ",
+        "scenarioPt": "Stand-up semanal. O gestor pergunta sobre suas responsabilidades, projetos ativos e o que é prioridade esta semana."
+      },
+      {
+        "id": "em09l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "What are your main responsibilities here?",
+        "promptPt": "Gestor pergunta responsabilidades principais:",
+        "options": [
+          {
+            "labelEn": "My main responsibility is coordinating travel logistics for the squad.",
+            "correct": true,
+            "feedbackPt": "Main responsibility + área concreta."
+          },
+          {
+            "labelEn": "I am responsibility travel.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta — use My main responsibility is..."
+          },
+          {
+            "labelEn": "Responsibility is me travel.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "Which project are you working on right now?",
+        "promptPt": "Follow-up sobre projeto atual:",
+        "options": [
+          {
+            "labelEn": "I'm leading the preseason equipment rollout — it's our top priority.",
+            "correct": true,
+            "feedbackPt": "Leading + top priority — natural."
+          },
+          {
+            "labelEn": "I work project equipment.",
+            "correct": false,
+            "feedbackPt": "Falta estrutura completa."
+          },
+          {
+            "labelEn": "Project is priority me.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "Are you in charge of the media team this season?",
+        "promptPt": "Colega pergunta se você lidera a equipe (clube):",
+        "options": [
+          {
+            "labelEn": "Yes, I'm in charge of media coordination until December.",
+            "correct": true,
+            "feedbackPt": "In charge of + prazo."
+          },
+          {
+            "labelEn": "I charge media team.",
+            "correct": false,
+            "feedbackPt": "Falta in charge of."
+          },
+          {
+            "labelEn": "Media is my charge responsible.",
+            "correct": false,
+            "feedbackPt": "Forma incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l01-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "What should we prioritize this week?",
+        "promptPt": "Gestor pede prioridades (escritório):",
+        "options": [
+          {
+            "labelEn": "We should prioritize the client presentation — the deadline is Friday.",
+            "correct": true,
+            "feedbackPt": "Prioritize + deadline."
+          },
+          {
+            "labelEn": "Priority is we Friday.",
+            "correct": false,
+            "feedbackPt": "Frase incompleta."
+          },
+          {
+            "labelEn": "We prioritize must Friday deadline.",
+            "correct": false,
+            "feedbackPt": "Ordem confusa."
+          }
+        ]
+      },
+      {
+        "id": "em09l01-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "Anything blocking your projects?",
+        "promptPt": "Encerramento — bloqueios:",
+        "options": [
+          {
+            "labelEn": "Not really — I'm waiting on approval for the budget, but everything else is on track.",
+            "correct": true,
+            "feedbackPt": "On track + bloqueio específico."
+          },
+          {
+            "labelEn": "Block project no.",
+            "correct": false,
+            "feedbackPt": "Muito curto."
+          },
+          {
+            "labelEn": "I blocked everything track.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em09l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Main responsibilities",
+        "titlePt": "Responsabilidades principais",
+        "introPt": "Descreva o que você faz no dia a dia — clube ou empresa.",
+        "examples": [
+          {
+            "en": "My main responsibility is managing travel logistics.",
+            "pt": "logística de viagens"
+          },
+          {
+            "en": "I'm responsible for player welfare programs.",
+            "pt": "bem-estar dos atletas"
+          },
+          {
+            "en": "I handle vendor contracts and renewals.",
+            "pt": "contratos com fornecedores"
+          },
+          {
+            "en": "I oversee the operations department.",
+            "pt": "supervisiono operações"
+          }
+        ]
+      },
+      {
+        "id": "em09l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Projects & leading",
+        "titlePt": "Projetos e liderança",
+        "introPt": "Projetos ativos — lead, work on, rollout.",
+        "examples": [
+          {
+            "en": "I'm leading the preseason equipment rollout.",
+            "pt": "lidero implantação de equipamentos"
+          },
+          {
+            "en": "We're working on a new fan engagement app.",
+            "pt": "app para torcedores"
+          },
+          {
+            "en": "The project is in the final phase.",
+            "pt": "fase final"
+          },
+          {
+            "en": "I'm collaborating with the medical team on this.",
+            "pt": "colaboração entre áreas"
+          }
+        ]
+      },
+      {
+        "id": "em09l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Priorities",
+        "titlePt": "Prioridades",
+        "introPt": "Top priority, prioritize, on track, deadline.",
+        "examples": [
+          {
+            "en": "It's our top priority this week.",
+            "pt": "prioridade máxima"
+          },
+          {
+            "en": "We need to prioritize the client presentation.",
+            "pt": "priorizar apresentação"
+          },
+          {
+            "en": "Everything is on track for Friday.",
+            "pt": "no prazo"
+          },
+          {
+            "en": "The deadline is end of day Friday.",
+            "pt": "prazo EOD sexta"
+          }
+        ]
+      },
+      {
+        "id": "em09l01-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "In charge of",
+        "titlePt": "Responsável por / à frente de",
+        "introPt": "In charge of = lidera ou responde por uma área.",
+        "examples": [
+          {
+            "en": "I'm in charge of media coordination.",
+            "pt": "coordenação de mídia"
+          },
+          {
+            "en": "She's in charge of the finance team.",
+            "pt": "equipe financeira"
+          },
+          {
+            "en": "Who is in charge of travel this season?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "I'm in charge until December.",
+            "pt": "temporário"
+          }
+        ]
+      },
+      {
+        "id": "em09l01-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Club vs office vocabulary",
+        "titlePt": "Clube vs escritório",
+        "items": [
+          {
+            "formalEn": "squad / roster / front office",
+            "naturalEn": "team / staff / headquarters",
+            "notePt": "Clube usa squad e front office; empresa usa team e HQ."
+          },
+          {
+            "formalEn": "preseason rollout / match day ops",
+            "naturalEn": "product launch / quarterly review",
+            "notePt": "Mesma estrutura — troque o vocabulário do setor."
+          }
+        ],
+        "tipPt": "Responsibility, project e priority funcionam igual nos dois contextos — adapte só o vocabulário do setor."
+      },
+      {
+        "id": "em09l01-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "My responsible is travel. / I am in charge the media.",
+        "rightEn": "My main responsibility is travel. / I am in charge of the media.",
+        "explanationPt": "Responsibility é substantivo (My responsibility is...). In charge of exige of antes do objeto."
+      },
+      {
+        "id": "em09l01-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "My main responsibility is...",
+            "pt": "responsabilidade principal"
+          },
+          {
+            "en": "I'm leading the... project.",
+            "pt": "liderar projeto"
+          },
+          {
+            "en": "It's our top priority.",
+            "pt": "prioridade"
+          },
+          {
+            "en": "I'm in charge of...",
+            "pt": "responsável por"
+          },
+          {
+            "en": "Everything is on track.",
+            "pt": "no prazo"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em09l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What are your main responsibilities?"
+          },
+          {
+            "en": "My main responsibility is coordinating travel logistics."
+          },
+          {
+            "en": "I'm leading the preseason equipment rollout."
+          },
+          {
+            "en": "It's our top priority this week."
+          },
+          {
+            "en": "I'm in charge of media coordination until December."
+          },
+          {
+            "en": "We should prioritize the client presentation."
+          },
+          {
+            "en": "The deadline is Friday."
+          },
+          {
+            "en": "Everything is on track."
+          },
+          {
+            "en": "Anything blocking your projects?"
+          },
+          {
+            "en": "I'm waiting on budget approval, but everything else is fine."
+          }
+        ],
+        "dialogueEn": "What are your main responsibilities? — My main responsibility is coordinating travel logistics. — Which project? — I'm leading the equipment rollout — it's our top priority. — Anything blocking you? — Just waiting on budget approval. Everything else is on track."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em09l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Describe your role and priorities.",
+        "headlinePt": "Descreva seu papel e prioridades.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Manager",
+            "questionEn": "Tell us about your responsibilities and priorities this week."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em09l01-prac-01",
+      "type": "choice",
+      "promptPt": "Responsabilidade principal — forma correta:",
+      "options": [
+        {
+          "labelEn": "My main responsibility is managing vendor contracts.",
+          "correct": true,
+          "feedbackPt": "My main responsibility is + gerúndio/substantivo."
+        },
+        {
+          "labelEn": "My responsible is vendor.",
+          "correct": false,
+          "feedbackPt": "Use responsibility (substantivo)."
+        },
+        {
+          "labelEn": "I responsibility manage vendors.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — lidero o projeto:",
+      "templateEn": "I'm ___ the new fan engagement app.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "leading",
+          "correct": true,
+          "feedbackPt": "I'm leading = lidero."
+        },
+        {
+          "labelEn": "lead",
+          "correct": false,
+          "feedbackPt": "Precisa de -ing ou in charge of."
+        },
+        {
+          "labelEn": "leader",
+          "correct": false,
+          "feedbackPt": "Leader é substantivo."
+        }
+      ]
+    },
+    {
+      "id": "em09l01-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte — é nossa prioridade máxima:",
+      "tokens": [
+        "priority.",
+        "top",
+        "our",
+        "It's"
+      ],
+      "correctOrder": [
+        "It's",
+        "our",
+        "top",
+        "priority."
+      ],
+      "feedbackCorrectPt": "It's our top priority.",
+      "feedbackWrongPt": "It's + our + top priority."
+    },
+    {
+      "id": "em09l01-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Manager: Which project are you on?",
+      "speaker": "You",
+      "contextEn": "Manager: Which project are you working on?",
+      "options": [
+        {
+          "labelEn": "I'm leading the equipment rollout — it's our top priority.",
+          "correct": true,
+          "feedbackPt": "Projeto + prioridade."
+        },
+        {
+          "labelEn": "Project equipment I.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        },
+        {
+          "labelEn": "I worked equipment rollout.",
+          "correct": false,
+          "feedbackPt": "Passado — projeto atual."
+        }
+      ]
+    },
+    {
+      "id": "em09l01-prac-05",
+      "type": "choice",
+      "promptPt": "In charge of — correto:",
+      "options": [
+        {
+          "labelEn": "I'm in charge of media coordination.",
+          "correct": true,
+          "feedbackPt": "In charge of + área."
+        },
+        {
+          "labelEn": "I'm in charge media.",
+          "correct": false,
+          "feedbackPt": "Falta of."
+        },
+        {
+          "labelEn": "I charge of media.",
+          "correct": false,
+          "feedbackPt": "Falta in charge."
+        }
+      ]
+    },
+    {
+      "id": "em09l01-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete — tudo no prazo:",
+      "templateEn": "Everything is ___ track for Friday.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "on",
+          "correct": true,
+          "feedbackPt": "On track = no prazo."
+        },
+        {
+          "labelEn": "in",
+          "correct": false,
+          "feedbackPt": "In track não existe."
+        },
+        {
+          "labelEn": "at",
+          "correct": false,
+          "feedbackPt": "At track incorreto."
+        }
+      ]
+    },
+    {
+      "id": "em09l01-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Colleague: Are you in charge of travel?",
+      "speaker": "You",
+      "contextEn": "Colleague: Are you in charge of travel this season?",
+      "options": [
+        {
+          "labelEn": "Yes, I'm in charge of travel logistics until December.",
+          "correct": true,
+          "feedbackPt": "Confirmação + prazo."
+        },
+        {
+          "labelEn": "Yes, I charge travel.",
+          "correct": false,
+          "feedbackPt": "In charge of."
+        },
+        {
+          "labelEn": "Travel is my.",
+          "correct": false,
+          "feedbackPt": "Incompleto."
+        }
+      ]
+    },
+    {
+      "id": "em09l01-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte pergunta — responsabilidades:",
+      "tokens": [
+        "responsibilities?",
+        "main",
+        "your",
+        "are",
+        "What"
+      ],
+      "correctOrder": [
+        "What",
+        "are",
+        "your",
+        "main",
+        "responsibilities?"
+      ],
+      "feedbackCorrectPt": "What are your main responsibilities?",
+      "feedbackWrongPt": "What + are + your + main + responsibilities?"
+    },
+    {
+      "id": "em09l01-prac-09",
+      "type": "choice",
+      "promptPt": "Priorizar apresentação:",
+      "options": [
+        {
+          "labelEn": "We should prioritize the client presentation.",
+          "correct": true,
+          "feedbackPt": "Prioritize + objeto."
+        },
+        {
+          "labelEn": "We priority client presentation.",
+          "correct": false,
+          "feedbackPt": "Falta verbo prioritize."
+        },
+        {
+          "labelEn": "Priority we should client.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l01-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Manager: Anything blocking you?",
+      "speaker": "You",
+      "contextEn": "Manager: Anything blocking your projects?",
+      "options": [
+        {
+          "labelEn": "I'm waiting on budget approval, but everything else is on track.",
+          "correct": true,
+          "feedbackPt": "Bloqueio + status."
+        },
+        {
+          "labelEn": "Block no project.",
+          "correct": false,
+          "feedbackPt": "Incompleto."
+        },
+        {
+          "labelEn": "Everything blocked track.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l01-prac-11",
+      "type": "fill_blank",
+      "promptPt": "Complete — responsável por:",
+      "templateEn": "I'm in charge ___ the finance team.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "of",
+          "correct": true,
+          "feedbackPt": "In charge of."
+        },
+        {
+          "labelEn": "for",
+          "correct": false,
+          "feedbackPt": "In charge of, não for."
+        },
+        {
+          "labelEn": "to",
+          "correct": false,
+          "feedbackPt": "In charge to incorreto."
+        }
+      ]
+    },
+    {
+      "id": "em09l01-prac-12",
+      "type": "choice",
+      "promptPt": "Clube — vocabulário natural:",
+      "options": [
+        {
+          "labelEn": "I'm in charge of match day operations.",
+          "correct": true,
+          "feedbackPt": "Match day ops — clube."
+        },
+        {
+          "labelEn": "I'm in charge of the elevator.",
+          "correct": false,
+          "feedbackPt": "Hotel/viagem."
+        },
+        {
+          "labelEn": "I'm in charge of my allergies.",
+          "correct": false,
+          "feedbackPt": "Saúde — contexto errado."
+        }
+      ]
+    }
+  ]
+}

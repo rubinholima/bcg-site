@@ -1,0 +1,660 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 10,
+  "goalPt": "Revisão M1 — conhecer pessoas, follow-up questions, likes/dislikes. Sem gramática nova.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Evento social — você conhece alguém novo, faz follow-up e fala de interesses.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Meet someone new — M1 review.",
+    "headlinePt": "Conheça alguém — revisão M1.",
+    "bodyPt": "",
+    "canDo": [
+      "Nice to meet you",
+      "What do you do?",
+      "I'm into...",
+      "Do you like...?"
+    ],
+    "production": {
+      "introPt": "Apresente-se, fale do trabalho, interesses e faça uma pergunta de follow-up.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "Tell me about yourself!"
+        }
+      ],
+      "fields": [
+        {
+          "id": "intro",
+          "labelPt": "Apresentação",
+          "prefixEn": "Hi! I'm",
+          "placeholderEn": "Carlos — nice to meet you!"
+        },
+        {
+          "id": "work",
+          "labelPt": "Trabalho",
+          "prefixEn": "I work in",
+          "placeholderEn": "operations — travel logistics."
+        },
+        {
+          "id": "interests",
+          "labelPt": "Interesses",
+          "prefixEn": "I'm into",
+          "placeholderEn": "soccer and cooking."
+        },
+        {
+          "id": "ask",
+          "labelPt": "Pergunta follow-up",
+          "prefixEn": "",
+          "placeholderEn": "What about you — what are you into?"
+        }
+      ],
+      "exampleEn": "Hi! I'm Carlos — nice to meet you! I work in operations. I'm into soccer. What about you?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em10l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Meeting people — review",
+        "titlePt": "Conhecendo pessoas — revisão",
+        "bodyPt": "Revisão do Módulo 1 — apresentações, perguntas de follow-up e falar do que gosta. Evento do clube ou happy hour corporativo."
+      },
+      {
+        "id": "em10l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Networking event · Club gala OR company mixer",
+        "scenarioPt": "Evento social — você conhece alguém novo, faz follow-up e fala de interesses."
+      },
+      {
+        "id": "em10l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Hi! I don't think we've met — I'm Alex.",
+        "promptPt": "Primeiro contato:",
+        "options": [
+          {
+            "labelEn": "Hi Alex! I'm Carlos — nice to meet you!",
+            "correct": true,
+            "feedbackPt": "M1 — nome + nice to meet you."
+          },
+          {
+            "labelEn": "I'd like a hotel room.",
+            "correct": false,
+            "feedbackPt": "M8 — contexto errado."
+          },
+          {
+            "labelEn": "Yesterday I went home.",
+            "correct": false,
+            "feedbackPt": "M4 — contexto errado."
+          }
+        ]
+      },
+      {
+        "id": "em10l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What do you do?",
+        "promptPt": "Follow-up — trabalho:",
+        "options": [
+          {
+            "labelEn": "I work in operations — mostly travel logistics for the squad.",
+            "correct": true,
+            "feedbackPt": "M1 — profissão + detalhe."
+          },
+          {
+            "labelEn": "I do operations work me.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I am doing operations now right.",
+            "correct": false,
+            "feedbackPt": "Present continuous desnecessário."
+          }
+        ]
+      },
+      {
+        "id": "em10l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What are you into outside of work?",
+        "promptPt": "Interesses — M1L3-4:",
+        "options": [
+          {
+            "labelEn": "I'm into soccer and cooking — I really enjoy hiking on weekends.",
+            "correct": true,
+            "feedbackPt": "Into + enjoy."
+          },
+          {
+            "labelEn": "Into I soccer cooking enjoy.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I into the soccering.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em10l01-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you like living in Boston?",
+        "promptPt": "Likes — follow-up:",
+        "options": [
+          {
+            "labelEn": "Yes, I love it — especially the food scene.",
+            "correct": true,
+            "feedbackPt": "Like/love + detalhe."
+          },
+          {
+            "labelEn": "Boston living I like yes.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          },
+          {
+            "labelEn": "I dislike love Boston.",
+            "correct": false,
+            "feedbackPt": "Contraditório."
+          }
+        ]
+      },
+      {
+        "id": "em10l01-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Great chatting! See you around.",
+        "promptPt": "Encerrar conversa social:",
+        "options": [
+          {
+            "labelEn": "Likewise! It was nice meeting you.",
+            "correct": true,
+            "feedbackPt": "Despedida natural."
+          },
+          {
+            "labelEn": "Where is gate B12?",
+            "correct": false,
+            "feedbackPt": "Aeroporto."
+          },
+          {
+            "labelEn": "The meeting is at 3 PM.",
+            "correct": false,
+            "feedbackPt": "Trabalho formal."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em10l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Introductions (M1)",
+        "titlePt": "Apresentações (M1)",
+        "introPt": "Revisão — nome, prazer, follow-up.",
+        "examples": [
+          {
+            "en": "Hi! I'm Carlos — nice to meet you!",
+            "pt": "apresentação"
+          },
+          {
+            "en": "I don't think we've met.",
+            "pt": "primeiro contato"
+          },
+          {
+            "en": "What do you do?",
+            "pt": "follow-up"
+          },
+          {
+            "en": "Where do you work?",
+            "pt": "trabalho"
+          }
+        ]
+      },
+      {
+        "id": "em10l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Interests (M1L3-4)",
+        "titlePt": "Interesses (M1L3-4)",
+        "introPt": "Into, enjoy, like/dislike.",
+        "examples": [
+          {
+            "en": "I'm into soccer and cooking.",
+            "pt": "interesses"
+          },
+          {
+            "en": "I enjoy hiking on weekends.",
+            "pt": "enjoy + -ing"
+          },
+          {
+            "en": "Do you like sports?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "I don't really like cold weather.",
+            "pt": "dislike"
+          }
+        ]
+      },
+      {
+        "id": "em10l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Follow-up questions (M1L2)",
+        "titlePt": "Follow-up (M1L2)",
+        "introPt": "Oh really? / What about you? / Tell me more.",
+        "examples": [
+          {
+            "en": "Oh, really? Tell me more.",
+            "pt": "interesse"
+          },
+          {
+            "en": "What about you?",
+            "pt": "devolver pergunta"
+          },
+          {
+            "en": "That sounds interesting!",
+            "pt": "reação"
+          },
+          {
+            "en": "How long have you been here?",
+            "pt": "follow-up"
+          }
+        ]
+      },
+      {
+        "id": "em10l01-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum — revisão M1",
+        "wrongEn": "I am like soccer. / Nice to meet you I am Carlos.",
+        "rightEn": "I like soccer. / I'm Carlos — nice to meet you!",
+        "explanationPt": "Like + substantivo (sem am). Apresentação: I'm + nome + nice to meet you."
+      },
+      {
+        "id": "em10l01-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "Nice to meet you!",
+            "pt": "M1"
+          },
+          {
+            "en": "What do you do?",
+            "pt": "follow-up"
+          },
+          {
+            "en": "I'm into...",
+            "pt": "interesses"
+          },
+          {
+            "en": "Do you like...?",
+            "pt": "likes"
+          },
+          {
+            "en": "It was nice meeting you.",
+            "pt": "despedida"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em10l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Hi! I'm Carlos — nice to meet you!"
+          },
+          {
+            "en": "What do you do?"
+          },
+          {
+            "en": "I work in operations."
+          },
+          {
+            "en": "I'm into soccer and cooking."
+          },
+          {
+            "en": "Do you like living here?"
+          },
+          {
+            "en": "Yes, I love it!"
+          },
+          {
+            "en": "It was nice meeting you!"
+          }
+        ],
+        "dialogueEn": "Hi! Nice to meet you! — What do you do? — I work in operations. — What are you into? — Soccer and cooking. — Nice meeting you!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em10l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Meet someone new — M1 review.",
+        "headlinePt": "Conheça alguém — revisão M1.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Tell me about yourself!"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em10l01-prac-01",
+      "type": "choice",
+      "promptPt": "Apresentação M1:",
+      "options": [
+        {
+          "labelEn": "Nice to meet you!",
+          "correct": true,
+          "feedbackPt": "M1."
+        },
+        {
+          "labelEn": "I have a reservation.",
+          "correct": false,
+          "feedbackPt": "M8."
+        },
+        {
+          "labelEn": "Please find attached.",
+          "correct": false,
+          "feedbackPt": "M9."
+        }
+      ]
+    },
+    {
+      "id": "em10l01-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: What do you do?",
+      "speaker": "You",
+      "contextEn": "Alex: What do you do?",
+      "options": [
+        {
+          "labelEn": "I work in operations at the club.",
+          "correct": true,
+          "feedbackPt": "M1 work."
+        },
+        {
+          "labelEn": "I working operations.",
+          "correct": false,
+          "feedbackPt": "I work."
+        },
+        {
+          "labelEn": "Operations do I.",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        }
+      ]
+    },
+    {
+      "id": "em10l01-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete — interesses:",
+      "templateEn": "I'm ___ soccer and cooking.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "into",
+          "correct": true,
+          "feedbackPt": "I'm into."
+        },
+        {
+          "labelEn": "in",
+          "correct": false,
+          "feedbackPt": "Into."
+        },
+        {
+          "labelEn": "to",
+          "correct": false,
+          "feedbackPt": "Into."
+        }
+      ]
+    },
+    {
+      "id": "em10l01-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte pergunta follow-up:",
+      "tokens": [
+        "you?",
+        "about",
+        "What",
+        "do"
+      ],
+      "correctOrder": [
+        "What",
+        "do",
+        "you",
+        "do?"
+      ],
+      "feedbackCorrectPt": "What do you do?",
+      "feedbackWrongPt": "What do you do?"
+    },
+    {
+      "id": "em10l01-prac-05",
+      "type": "choice",
+      "promptPt": "Likes/dislikes:",
+      "options": [
+        {
+          "labelEn": "I really enjoy hiking on weekends.",
+          "correct": true,
+          "feedbackPt": "Enjoy + -ing."
+        },
+        {
+          "labelEn": "I enjoy to hike weekends.",
+          "correct": false,
+          "feedbackPt": "Enjoy hiking."
+        },
+        {
+          "labelEn": "Enjoy I hiking.",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        }
+      ]
+    },
+    {
+      "id": "em10l01-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Encerrar conversa:",
+      "speaker": "You",
+      "contextEn": "Alex: See you around!",
+      "options": [
+        {
+          "labelEn": "Likewise! Nice meeting you.",
+          "correct": true,
+          "feedbackPt": "Despedida."
+        },
+        {
+          "labelEn": "Gate B12 where?",
+          "correct": false,
+          "feedbackPt": "Aeroporto."
+        },
+        {
+          "labelEn": "By Friday EOD.",
+          "correct": false,
+          "feedbackPt": "M9 deadline."
+        }
+      ]
+    },
+    {
+      "id": "em10l01-prac-07",
+      "type": "choice",
+      "promptPt": "Do you like...?",
+      "options": [
+        {
+          "labelEn": "Do you like living in Boston?",
+          "correct": true,
+          "feedbackPt": "Like + gerund/noun."
+        },
+        {
+          "labelEn": "Do you liking Boston?",
+          "correct": false,
+          "feedbackPt": "Like + base."
+        },
+        {
+          "labelEn": "Like you do Boston?",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        }
+      ]
+    },
+    {
+      "id": "em10l01-prac-08",
+      "type": "fill_blank",
+      "promptPt": "Complete — dislike:",
+      "templateEn": "I don't really ___ cold weather.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "like",
+          "correct": true,
+          "feedbackPt": "Don't like."
+        },
+        {
+          "labelEn": "liking",
+          "correct": false,
+          "feedbackPt": "Like."
+        },
+        {
+          "labelEn": "liked",
+          "correct": false,
+          "feedbackPt": "Present."
+        }
+      ]
+    },
+    {
+      "id": "em10l01-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte apresentação:",
+      "tokens": [
+        "you!",
+        "meet",
+        "to",
+        "Nice",
+        "Carlos.",
+        "I'm"
+      ],
+      "correctOrder": [
+        "I'm",
+        "Carlos.",
+        "Nice",
+        "to",
+        "meet",
+        "you!"
+      ],
+      "feedbackCorrectPt": "I'm Carlos. Nice to meet you!",
+      "feedbackWrongPt": "Nome + Nice to meet you."
+    },
+    {
+      "id": "em10l01-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Follow-up interesses:",
+      "speaker": "You",
+      "contextEn": "Alex told you about photography.",
+      "options": [
+        {
+          "labelEn": "Oh, really? What kind of photos do you take?",
+          "correct": true,
+          "feedbackPt": "M1 follow-up."
+        },
+        {
+          "labelEn": "Please find attached photos.",
+          "correct": false,
+          "feedbackPt": "Email."
+        },
+        {
+          "labelEn": "Photos airport gate.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em10l01-prac-11",
+      "type": "choice",
+      "promptPt": "Revisão M1 — qual frase?",
+      "options": [
+        {
+          "labelEn": "I'm into podcasts lately.",
+          "correct": true,
+          "feedbackPt": "M1 interests."
+        },
+        {
+          "labelEn": "I'm going to the airport.",
+          "correct": false,
+          "feedbackPt": "M5/M8."
+        },
+        {
+          "labelEn": "I was at the meeting.",
+          "correct": false,
+          "feedbackPt": "M4 past."
+        }
+      ]
+    },
+    {
+      "id": "em10l01-prac-12",
+      "type": "classify",
+      "promptPt": "Qual módulo? — Nice to meet you",
+      "sentenceEn": "Nice to meet you!",
+      "category": "M1",
+      "feedbackCorrectPt": "M1 — meeting people.",
+      "feedbackWrongPt": "M1 introduction."
+    }
+  ]
+}

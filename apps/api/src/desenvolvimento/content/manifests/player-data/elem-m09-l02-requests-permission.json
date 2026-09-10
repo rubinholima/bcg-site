@@ -1,0 +1,715 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 9,
+  "goalPt": "Pedir permissão com educação — Could I, Would it be OK if, May I — no clube e no escritório.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Você precisa sair mais cedo para consulta médica (clube) ou reservar a sala de reunião (escritório). Pedidos educados de permissão.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Ask for permission politely.",
+    "headlinePt": "Peça permissão com educação.",
+    "bodyPt": "",
+    "canDo": [
+      "Could I...?",
+      "Would it be OK if...?",
+      "May I...?",
+      "Sure, no problem."
+    ],
+    "production": {
+      "introPt": "Faça dois pedidos de permissão (Could I / Would it be OK if) e uma confirmação quando aceitarem.",
+      "prompts": [
+        {
+          "speaker": "Supervisor",
+          "questionEn": "What do you need?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "req1",
+          "labelPt": "Pedido 1 — Could I",
+          "prefixEn": "Could I",
+          "placeholderEn": "leave at 3 PM today? I have an appointment."
+        },
+        {
+          "id": "req2",
+          "labelPt": "Pedido 2 — Would it be OK if",
+          "prefixEn": "Would it be OK if",
+          "placeholderEn": "I worked from home on Friday?"
+        },
+        {
+          "id": "thanks",
+          "labelPt": "Agradecer e confirmar",
+          "prefixEn": "",
+          "placeholderEn": "Thanks! I'll update the team."
+        }
+      ],
+      "exampleEn": "Could I leave at 3 PM? I have an appointment. Would it be OK if I worked from home Friday? Thanks — I'll update the team."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em09l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Requests & permission",
+        "titlePt": "Pedidos e permissão",
+        "bodyPt": "Antes de sair mais cedo, usar sala de reunião ou acessar dados sensíveis, você pede permissão de forma educada — Could I e May I são essenciais."
+      },
+      {
+        "id": "em09l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Training facility · OR open-plan office",
+        "scenarioPt": "Você precisa sair mais cedo para consulta médica (clube) ou reservar a sala de reunião (escritório). Pedidos educados de permissão."
+      },
+      {
+        "id": "em09l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(You need to leave early for a doctor appointment.)",
+        "promptPt": "Precisa sair mais cedo — clube:",
+        "options": [
+          {
+            "labelEn": "Could I leave at 3 PM today? I have a doctor appointment.",
+            "correct": true,
+            "feedbackPt": "Could I + motivo — educado."
+          },
+          {
+            "labelEn": "I leave 3 PM now.",
+            "correct": false,
+            "feedbackPt": "Muito direto — falta pedido."
+          },
+          {
+            "labelEn": "Leave me 3 PM please go.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Supervisor",
+        "promptEn": "Sure, no problem. Just update the team.",
+        "promptPt": "Supervisor aceita. Como confirmar?",
+        "options": [
+          {
+            "labelEn": "Thanks! I'll send a quick message to the group.",
+            "correct": true,
+            "feedbackPt": "Agradece + ação concreta."
+          },
+          {
+            "labelEn": "No problem me leave.",
+            "correct": false,
+            "feedbackPt": "Confunde quem disse no problem."
+          },
+          {
+            "labelEn": "I permission thanks.",
+            "correct": false,
+            "feedbackPt": "Incompleto."
+          }
+        ]
+      },
+      {
+        "id": "em09l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(You want to use the conference room at 2 PM.)",
+        "promptPt": "Reservar sala — escritório:",
+        "options": [
+          {
+            "labelEn": "Would it be OK if I used the conference room at 2 PM?",
+            "correct": true,
+            "feedbackPt": "Would it be OK if + past — pedido educado."
+          },
+          {
+            "labelEn": "I use conference room 2 PM.",
+            "correct": false,
+            "feedbackPt": "Afirmativa — não pede permissão."
+          },
+          {
+            "labelEn": "OK if conference I use?",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l02-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Admin",
+        "promptEn": "Actually, it's booked until 3. Can you do 3:30?",
+        "promptPt": "Admin propõe horário alternativo:",
+        "options": [
+          {
+            "labelEn": "3:30 works for me — thank you!",
+            "correct": true,
+            "feedbackPt": "Aceita alternativa naturalmente."
+          },
+          {
+            "labelEn": "No I need 2 PM only.",
+            "correct": false,
+            "feedbackPt": "Pode negociar, mas seja educado."
+          },
+          {
+            "labelEn": "Booked is problem your.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em09l02-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "(You need to access a restricted file.)",
+        "promptPt": "Acesso a arquivo restrito:",
+        "options": [
+          {
+            "labelEn": "May I access the player contract folder for this review?",
+            "correct": true,
+            "feedbackPt": "May I — formal e apropriado para acesso."
+          },
+          {
+            "labelEn": "I access contract folder now.",
+            "correct": false,
+            "feedbackPt": "Não pede permissão."
+          },
+          {
+            "labelEn": "Access me folder may?",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em09l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Could I...?",
+        "titlePt": "Could I...?",
+        "introPt": "Pedido educado comum — sair mais cedo, usar recurso, fazer pausa.",
+        "examples": [
+          {
+            "en": "Could I leave at 3 PM today?",
+            "pt": "sair mais cedo"
+          },
+          {
+            "en": "Could I work from home on Friday?",
+            "pt": "home office"
+          },
+          {
+            "en": "Could I take a quick break?",
+            "pt": "pausa rápida"
+          },
+          {
+            "en": "Could I ask you a question?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em09l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Would it be OK if...?",
+        "titlePt": "Would it be OK if...?",
+        "introPt": "Mais suave — propõe algo e pede aprovação.",
+        "examples": [
+          {
+            "en": "Would it be OK if I left early today?",
+            "pt": "sair cedo"
+          },
+          {
+            "en": "Would it be OK if we moved the meeting to Thursday?",
+            "pt": "remarcar reunião"
+          },
+          {
+            "en": "Would it be OK if I used your laptop?",
+            "pt": "usar equipamento"
+          },
+          {
+            "en": "Would it be OK if I brought a guest?",
+            "pt": "convidado"
+          }
+        ]
+      },
+      {
+        "id": "em09l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "May I...?",
+        "titlePt": "May I...?",
+        "introPt": "Mais formal — permissão, acesso, entrada.",
+        "examples": [
+          {
+            "en": "May I access this file?",
+            "pt": "acessar arquivo"
+          },
+          {
+            "en": "May I enter the training room?",
+            "pt": "entrar na sala"
+          },
+          {
+            "en": "May I speak with the director?",
+            "pt": "falar com diretor"
+          },
+          {
+            "en": "May I suggest an alternative?",
+            "pt": "sugerir alternativa"
+          }
+        ]
+      },
+      {
+        "id": "em09l02-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Responses",
+        "titlePt": "Respostas",
+        "introPt": "Sure, no problem / Go ahead / Actually...",
+        "examples": [
+          {
+            "en": "Sure, no problem.",
+            "pt": "aceita informal"
+          },
+          {
+            "en": "Go ahead.",
+            "pt": "pode ir"
+          },
+          {
+            "en": "Actually, it's booked until 3.",
+            "pt": "recusa com alternativa"
+          },
+          {
+            "en": "Let me check and get back to you.",
+            "pt": "precisa verificar"
+          }
+        ]
+      },
+      {
+        "id": "em09l02-learn-cmp",
+        "type": "comparison",
+        "titleEn": "Could I vs May I",
+        "titlePt": "Could I vs May I",
+        "left": {
+          "labelEn": "COULD I · everyday polite",
+          "exampleEn": "Could I leave at 3 PM?",
+          "notePt": "Comum no dia a dia — clube e escritório."
+        },
+        "right": {
+          "labelEn": "MAY I · formal permission",
+          "exampleEn": "May I access the contract folder?",
+          "notePt": "Mais formal — acesso, dados sensíveis."
+        },
+        "modelEn": "Could I take a break? · May I review the confidential report?",
+        "modelPt": "Could I = cotidiano; May I = formal/acesso."
+      },
+      {
+        "id": "em09l02-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "Would it be OK if I leave early? / May I to access the file?",
+        "rightEn": "Would it be OK if I left early? / May I access the file?",
+        "explanationPt": "After if, use past form (left) for present/future request. May I + base verb — no to."
+      },
+      {
+        "id": "em09l02-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "Could I leave at 3 PM?",
+            "pt": "pedido cotidiano"
+          },
+          {
+            "en": "Would it be OK if I left early?",
+            "pt": "pedido suave"
+          },
+          {
+            "en": "May I access this file?",
+            "pt": "formal"
+          },
+          {
+            "en": "Sure, no problem.",
+            "pt": "aceita"
+          },
+          {
+            "en": "Go ahead.",
+            "pt": "pode ir"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em09l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Could I leave at 3 PM today?"
+          },
+          {
+            "en": "I have a doctor appointment."
+          },
+          {
+            "en": "Sure, no problem."
+          },
+          {
+            "en": "Would it be OK if I used the conference room at 2 PM?"
+          },
+          {
+            "en": "Actually, it's booked until 3."
+          },
+          {
+            "en": "3:30 works for me — thank you!"
+          },
+          {
+            "en": "May I access the contract folder?"
+          },
+          {
+            "en": "Go ahead — just log your access."
+          },
+          {
+            "en": "Could I work from home on Friday?"
+          },
+          {
+            "en": "Let me check and get back to you."
+          }
+        ],
+        "dialogueEn": "Could I leave at 3 PM? I have an appointment. — Sure, no problem. — Would it be OK if I used the conference room at 2? — Actually, it's booked until 3. Can you do 3:30? — 3:30 works. — May I access the contract folder? — Go ahead."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em09l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Ask for permission politely.",
+        "headlinePt": "Peça permissão com educação.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Supervisor",
+            "questionEn": "What do you need?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em09l02-prac-01",
+      "type": "choice",
+      "promptPt": "Pedido educado — sair cedo:",
+      "options": [
+        {
+          "labelEn": "Could I leave at 3 PM today?",
+          "correct": true,
+          "feedbackPt": "Could I + verbo base."
+        },
+        {
+          "labelEn": "I leave 3 PM.",
+          "correct": false,
+          "feedbackPt": "Afirmativa — não pede."
+        },
+        {
+          "labelEn": "Could I leaving at 3 PM?",
+          "correct": false,
+          "feedbackPt": "Verbo base após Could I."
+        }
+      ]
+    },
+    {
+      "id": "em09l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — Would it be OK if:",
+      "templateEn": "Would it be OK if I ___ early today?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "left",
+          "correct": true,
+          "feedbackPt": "Past after if = pedido educado."
+        },
+        {
+          "labelEn": "leave",
+          "correct": false,
+          "feedbackPt": "Use left após if."
+        },
+        {
+          "labelEn": "leaving",
+          "correct": false,
+          "feedbackPt": "Past simple após if."
+        }
+      ]
+    },
+    {
+      "id": "em09l02-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte — May I acessar:",
+      "tokens": [
+        "file?",
+        "this",
+        "access",
+        "I",
+        "May"
+      ],
+      "correctOrder": [
+        "May",
+        "I",
+        "access",
+        "this",
+        "file?"
+      ],
+      "feedbackCorrectPt": "May I access this file?",
+      "feedbackWrongPt": "May I + base verb + object."
+    },
+    {
+      "id": "em09l02-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Supervisor: Sure, no problem.",
+      "speaker": "You",
+      "contextEn": "Supervisor: Sure, no problem.",
+      "options": [
+        {
+          "labelEn": "Thanks! I'll send a message to the team.",
+          "correct": true,
+          "feedbackPt": "Agradece + ação."
+        },
+        {
+          "labelEn": "No problem you.",
+          "correct": false,
+          "feedbackPt": "Confunde papéis."
+        },
+        {
+          "labelEn": "Permission OK.",
+          "correct": false,
+          "feedbackPt": "Incompleto."
+        }
+      ]
+    },
+    {
+      "id": "em09l02-prac-05",
+      "type": "choice",
+      "promptPt": "Reserva de sala — correto:",
+      "options": [
+        {
+          "labelEn": "Would it be OK if I used the conference room at 2 PM?",
+          "correct": true,
+          "feedbackPt": "Would it be OK if + past."
+        },
+        {
+          "labelEn": "I used conference room OK?",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        },
+        {
+          "labelEn": "Use conference me 2 PM.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l02-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Admin: sala ocupada até 3h",
+      "speaker": "You",
+      "contextEn": "Admin: Actually, it's booked until 3. Can you do 3:30?",
+      "options": [
+        {
+          "labelEn": "3:30 works for me — thank you!",
+          "correct": true,
+          "feedbackPt": "Aceita alternativa."
+        },
+        {
+          "labelEn": "No 2 PM only.",
+          "correct": false,
+          "feedbackPt": "Pouco flexível — ok em contexto, mas menos natural."
+        },
+        {
+          "labelEn": "Booked problem.",
+          "correct": false,
+          "feedbackPt": "Incompleto."
+        }
+      ]
+    },
+    {
+      "id": "em09l02-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Complete — May I:",
+      "templateEn": "___ I access the contract folder?",
+      "blankLabel": "modal",
+      "options": [
+        {
+          "labelEn": "May",
+          "correct": true,
+          "feedbackPt": "May I = formal permission."
+        },
+        {
+          "labelEn": "Can",
+          "correct": false,
+          "feedbackPt": "Can funciona, mas May é mais formal para acesso."
+        },
+        {
+          "labelEn": "Could",
+          "correct": false,
+          "feedbackPt": "Could I também ok — aqui May é a resposta pedida."
+        }
+      ]
+    },
+    {
+      "id": "em09l02-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte resposta — pode ir:",
+      "tokens": [
+        "ahead.",
+        "Go"
+      ],
+      "correctOrder": [
+        "Go",
+        "ahead."
+      ],
+      "feedbackCorrectPt": "Go ahead.",
+      "feedbackWrongPt": "Go ahead = pode prosseguir."
+    },
+    {
+      "id": "em09l02-prac-09",
+      "type": "choice",
+      "promptPt": "Formal vs informal:",
+      "options": [
+        {
+          "labelEn": "May I speak with the director?",
+          "correct": true,
+          "feedbackPt": "May I — formal."
+        },
+        {
+          "labelEn": "I speak director now.",
+          "correct": false,
+          "feedbackPt": "Sem pedido."
+        },
+        {
+          "labelEn": "Speak me director?",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l02-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "You need WFH Friday:",
+      "speaker": "You",
+      "contextEn": "You want to work from home Friday.",
+      "options": [
+        {
+          "labelEn": "Could I work from home on Friday?",
+          "correct": true,
+          "feedbackPt": "Could I — pedido comum."
+        },
+        {
+          "labelEn": "I work home Friday.",
+          "correct": false,
+          "feedbackPt": "Afirmativa."
+        },
+        {
+          "labelEn": "Friday home work I.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em09l02-prac-11",
+      "type": "fill_blank",
+      "promptPt": "Complete — aceita informal:",
+      "templateEn": "Sure, ___ problem.",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "no",
+          "correct": true,
+          "feedbackPt": "Sure, no problem."
+        },
+        {
+          "labelEn": "not",
+          "correct": false,
+          "feedbackPt": "No problem, não not problem."
+        },
+        {
+          "labelEn": "any",
+          "correct": false,
+          "feedbackPt": "Any problem = pergunta diferente."
+        }
+      ]
+    },
+    {
+      "id": "em09l02-prac-12",
+      "type": "choice",
+      "promptPt": "Erro a evitar:",
+      "options": [
+        {
+          "labelEn": "Would it be OK if I left early?",
+          "correct": true,
+          "feedbackPt": "Past after if."
+        },
+        {
+          "labelEn": "Would it be OK if I leave early?",
+          "correct": false,
+          "feedbackPt": "Leave → left após if."
+        },
+        {
+          "labelEn": "Would it be OK if I to leave early?",
+          "correct": false,
+          "feedbackPt": "Sem to após if I."
+        }
+      ]
+    }
+  ]
+}
