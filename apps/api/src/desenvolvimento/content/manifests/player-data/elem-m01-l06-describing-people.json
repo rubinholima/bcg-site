@@ -1,0 +1,683 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 1,
+  "goalPt": "Descrever aparência e personalidade juntas — conectores and / but para frases mais completas.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex precisa que você descreva um colega para alguém que ainda não o conhece — aparência + personalidade.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can describe people — looks and personality.",
+    "headlinePt": "Você consegue descrever pessoas — aparência e personalidade.",
+    "bodyPt": "",
+    "canDo": [
+      "What does he look like?",
+      "What's she like?",
+      "and / but"
+    ],
+    "production": {
+      "introPt": "Descreva três colegas — aparência, personalidade e um contraste com but.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "Can you describe Marco for the new hire?"
+        },
+        {
+          "speaker": "Alex",
+          "questionEn": "What about Sarah?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "marco",
+          "labelPt": "Marco (aparência + personalidade)",
+          "prefixEn": "He's",
+          "placeholderEn": "tall with dark hair, and really friendly."
+        },
+        {
+          "id": "sarah",
+          "labelPt": "Sarah",
+          "prefixEn": "She has",
+          "placeholderEn": "long blonde hair and seems organized."
+        },
+        {
+          "id": "tom",
+          "labelPt": "Tom (contraste)",
+          "prefixEn": "He's",
+          "placeholderEn": "quiet but really smart."
+        },
+        {
+          "id": "coach",
+          "labelPt": "Treinador",
+          "prefixEn": "He's",
+          "placeholderEn": "strict but fair."
+        }
+      ],
+      "exampleEn": "He's tall and friendly. She has long hair and seems organized. He's quiet but smart. Strict but fair."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em01-l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Describing people",
+        "titlePt": "Descrevendo pessoas",
+        "bodyPt": "Junte aparência (tall, dark hair) com personalidade (friendly, funny) usando and e but — descrições naturais de colegas e amigos."
+      },
+      {
+        "id": "em01-l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Video call · Introducing a teammate",
+        "scenarioPt": "Alex precisa que você descreva um colega para alguém que ainda não o conhece — aparência + personalidade."
+      },
+      {
+        "id": "em01-l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Can you describe Marco for the new hire?",
+        "promptPt": "Alex pede descrição completa.",
+        "options": [
+          {
+            "labelEn": "He's tall with dark hair, and he's really friendly.",
+            "correct": true,
+            "feedbackPt": "Aparência + and + personalidade."
+          },
+          {
+            "labelEn": "He tall and friendly.",
+            "correct": false,
+            "feedbackPt": "Falta verbo (is/has)."
+          },
+          {
+            "labelEn": "He's tall but dark hair.",
+            "correct": false,
+            "feedbackPt": "But conecta contrastes — dark hair precisa de with/has."
+          }
+        ]
+      },
+      {
+        "id": "em01-l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What about Sarah?",
+        "promptPt": "Alex pede descrição de Sarah.",
+        "options": [
+          {
+            "labelEn": "She has long blonde hair and she seems very organized.",
+            "correct": true,
+            "feedbackPt": "Has + aparência + seem + personalidade."
+          },
+          {
+            "labelEn": "She have long hair.",
+            "correct": false,
+            "feedbackPt": "She has."
+          },
+          {
+            "labelEn": "She is have blonde hair.",
+            "correct": false,
+            "feedbackPt": "Is have incorreto."
+          }
+        ]
+      },
+      {
+        "id": "em01-l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Is Tom the quiet one?",
+        "promptPt": "Alex confirma impressão sobre Tom.",
+        "options": [
+          {
+            "labelEn": "Yeah, he's quiet but really smart.",
+            "correct": true,
+            "feedbackPt": "But = contraste — quiet but smart."
+          },
+          {
+            "labelEn": "Yeah, he quiet but smart.",
+            "correct": false,
+            "feedbackPt": "Falta is."
+          },
+          {
+            "labelEn": "Yeah, he is quiet and but smart.",
+            "correct": false,
+            "feedbackPt": "And but redundante."
+          }
+        ]
+      },
+      {
+        "id": "em01-l06-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "How would you describe our coach?",
+        "promptPt": "Sua pergunta sobre o treinador.",
+        "options": [
+          {
+            "labelEn": "What's he like?",
+            "correct": true,
+            "feedbackPt": "Pergunta padrão personalidade."
+          },
+          {
+            "labelEn": "What does he look?",
+            "correct": false,
+            "feedbackPt": "What does he look like? — falta like."
+          },
+          {
+            "labelEn": "How he is?",
+            "correct": false,
+            "feedbackPt": "Falta auxiliar."
+          }
+        ]
+      },
+      {
+        "id": "em01-l06-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "He's strict in training but fair off the field.",
+        "promptPt": "Alex descreve treinador com contraste.",
+        "options": [
+          {
+            "labelEn": "That makes sense — strict but fair.",
+            "correct": true,
+            "feedbackPt": "Repete estrutura but com concordância."
+          },
+          {
+            "labelEn": "That makes sense — strict and but fair.",
+            "correct": false,
+            "feedbackPt": "And but incorreto."
+          },
+          {
+            "labelEn": "He is strict but is fair off.",
+            "correct": false,
+            "feedbackPt": "Redundante e incompleto."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em01-l06-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Appearance basics",
+        "titlePt": "Aparência básica",
+        "introPt": "Adjetivos + with/has para detalhes físicos.",
+        "examples": [
+          {
+            "en": "He's tall.",
+            "pt": "alto"
+          },
+          {
+            "en": "She has long dark hair.",
+            "pt": "cabelo escuro longo"
+          },
+          {
+            "en": "He's in his thirties.",
+            "pt": "idade aproximada"
+          },
+          {
+            "en": "What does he look like?",
+            "pt": "pergunta aparência"
+          }
+        ]
+      },
+      {
+        "id": "em01-l06-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "and — adding information",
+        "titlePt": "and — somar informação",
+        "introPt": "And conecta ideias similares — aparência + aparência ou personalidade + personalidade.",
+        "examples": [
+          {
+            "en": "He's tall and athletic.",
+            "pt": "dois adjetivos"
+          },
+          {
+            "en": "She's friendly and funny.",
+            "pt": "personalidade"
+          },
+          {
+            "en": "He has dark hair and brown eyes.",
+            "pt": "dois traços"
+          },
+          {
+            "en": "She's smart and organized.",
+            "pt": "trabalho"
+          }
+        ]
+      },
+      {
+        "id": "em01-l06-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "but — contrast",
+        "titlePt": "but — contraste",
+        "introPt": "But mostra contraste — quiet but smart, strict but fair.",
+        "examples": [
+          {
+            "en": "He's quiet but friendly.",
+            "pt": "tímido mas simpático"
+          },
+          {
+            "en": "She's strict but fair.",
+            "pt": "rigorosa mas justa"
+          },
+          {
+            "en": "He's young but experienced.",
+            "pt": "jovem mas experiente"
+          },
+          {
+            "en": "Small but powerful.",
+            "pt": "estrutura comum"
+          }
+        ]
+      },
+      {
+        "id": "em01-l06-learn-cmp",
+        "type": "comparison",
+        "titleEn": "and vs but",
+        "titlePt": "and vs but",
+        "left": {
+          "labelEn": "AND · similar / add",
+          "exampleEn": "tall and friendly · smart and organized",
+          "notePt": "Soma informações que combinam."
+        },
+        "right": {
+          "labelEn": "BUT · contrast",
+          "exampleEn": "quiet but smart · strict but fair",
+          "notePt": "Mostra contraste ou surpresa."
+        },
+        "modelEn": "He's tall and friendly. / He's quiet but really smart.",
+        "modelPt": "And = e (adição). But = mas (contraste)."
+      },
+      {
+        "id": "em01-l06-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Look like vs Be like",
+        "titlePt": "Look like vs Be like",
+        "items": [
+          {
+            "formalEn": "What is his appearance?",
+            "naturalEn": "What does he look like?",
+            "notePt": "Look like = aparência física."
+          },
+          {
+            "formalEn": "What is his personality?",
+            "naturalEn": "What's he like?",
+            "notePt": "Be like = personalidade/comportamento."
+          }
+        ],
+        "tipPt": "Look like = ver; Be like = personalidade."
+      },
+      {
+        "id": "em01-l06-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "What does he look? / She have long hair.",
+        "rightEn": "What does he look like? / She has long hair.",
+        "explanationPt": "Look like é fixo para aparência. Terceira pessoa: she has, he has."
+      },
+      {
+        "id": "em01-l06-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "He's tall with dark hair.",
+            "pt": "aparência"
+          },
+          {
+            "en": "She's friendly and funny.",
+            "pt": "and"
+          },
+          {
+            "en": "He's quiet but smart.",
+            "pt": "but"
+          },
+          {
+            "en": "What does he look like?",
+            "pt": "pergunta aparência"
+          },
+          {
+            "en": "What's she like?",
+            "pt": "pergunta personalidade"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em01-l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Can you describe Marco?"
+          },
+          {
+            "en": "He's tall with dark hair."
+          },
+          {
+            "en": "And he's really friendly."
+          },
+          {
+            "en": "What about Sarah?"
+          },
+          {
+            "en": "She has long blonde hair."
+          },
+          {
+            "en": "She seems very organized."
+          },
+          {
+            "en": "Is Tom the quiet one?"
+          },
+          {
+            "en": "He's quiet but really smart."
+          },
+          {
+            "en": "What does he look like?"
+          },
+          {
+            "en": "What's she like?"
+          },
+          {
+            "en": "Strict but fair."
+          }
+        ],
+        "dialogueEn": "Can you describe Marco? — He's tall with dark hair, and he's really friendly. — What about Sarah? — She has long blonde hair and she seems very organized. — Is Tom quiet? — He's quiet but really smart."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em01-l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can describe people — looks and personality.",
+        "headlinePt": "Você consegue descrever pessoas — aparência e personalidade.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Can you describe Marco for the new hire?"
+          },
+          {
+            "speaker": "Alex",
+            "questionEn": "What about Sarah?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em01-l06-prac-01",
+      "type": "choice",
+      "promptPt": "Pergunta sobre aparência:",
+      "options": [
+        {
+          "labelEn": "What does he look like?",
+          "correct": true,
+          "feedbackPt": "Look like = aparência."
+        },
+        {
+          "labelEn": "What does he look?",
+          "correct": false,
+          "feedbackPt": "Falta like."
+        },
+        {
+          "labelEn": "What's he look like?",
+          "correct": false,
+          "feedbackPt": "Does, não is."
+        }
+      ]
+    },
+    {
+      "id": "em01-l06-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Conector contraste:",
+      "templateEn": "He's quiet ___ really smart.",
+      "blankLabel": "conector",
+      "options": [
+        {
+          "labelEn": "but",
+          "correct": true,
+          "feedbackPt": "But = mas."
+        },
+        {
+          "labelEn": "and",
+          "correct": false,
+          "feedbackPt": "And não mostra contraste aqui."
+        },
+        {
+          "labelEn": "because",
+          "correct": false,
+          "feedbackPt": "Because = causa."
+        }
+      ]
+    },
+    {
+      "id": "em01-l06-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte descrição:",
+      "tokens": [
+        "friendly.",
+        "and",
+        "he's",
+        "tall,",
+        "He's"
+      ],
+      "correctOrder": [
+        "He's",
+        "tall,",
+        "and",
+        "he's",
+        "friendly."
+      ],
+      "feedbackCorrectPt": "He's tall, and he's friendly.",
+      "feedbackWrongPt": "Aparência + and + personalidade."
+    },
+    {
+      "id": "em01-l06-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: Describe Sarah.",
+      "speaker": "You",
+      "contextEn": "Alex: Can you describe Sarah?",
+      "options": [
+        {
+          "labelEn": "She has long blonde hair and seems organized.",
+          "correct": true,
+          "feedbackPt": "Completa."
+        },
+        {
+          "labelEn": "She have long hair.",
+          "correct": false,
+          "feedbackPt": "She has."
+        },
+        {
+          "labelEn": "She is have blonde.",
+          "correct": false,
+          "feedbackPt": "Incorreto."
+        }
+      ]
+    },
+    {
+      "id": "em01-l06-prac-05",
+      "type": "choice",
+      "promptPt": "Conector para somar:",
+      "options": [
+        {
+          "labelEn": "and",
+          "correct": true,
+          "feedbackPt": "And soma."
+        },
+        {
+          "labelEn": "but",
+          "correct": false,
+          "feedbackPt": "But contrasta."
+        },
+        {
+          "labelEn": "because",
+          "correct": false,
+          "feedbackPt": "Because explica causa."
+        }
+      ]
+    },
+    {
+      "id": "em01-l06-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Terceira pessoa has:",
+      "templateEn": "She ___ dark hair.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "has",
+          "correct": true,
+          "feedbackPt": "She has."
+        },
+        {
+          "labelEn": "have",
+          "correct": false,
+          "feedbackPt": "She have errado."
+        },
+        {
+          "labelEn": "is",
+          "correct": false,
+          "feedbackPt": "Is não combina com hair sozinho."
+        }
+      ]
+    },
+    {
+      "id": "em01-l06-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Contraste:",
+      "speaker": "You",
+      "contextEn": "Describe Tom — quiet but...",
+      "options": [
+        {
+          "labelEn": "He's quiet but really smart.",
+          "correct": true,
+          "feedbackPt": "But + contraste."
+        },
+        {
+          "labelEn": "He quiet but smart.",
+          "correct": false,
+          "feedbackPt": "Falta is."
+        },
+        {
+          "labelEn": "He's quiet and but smart.",
+          "correct": false,
+          "feedbackPt": "And but errado."
+        }
+      ]
+    },
+    {
+      "id": "em01-l06-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte pergunta personalidade:",
+      "tokens": [
+        "like?",
+        "she",
+        "is",
+        "What"
+      ],
+      "correctOrder": [
+        "What",
+        "is",
+        "she",
+        "like?"
+      ],
+      "feedbackCorrectPt": "What's she like?",
+      "feedbackWrongPt": "What is she like?"
+    },
+    {
+      "id": "em01-l06-prac-09",
+      "type": "choice",
+      "promptPt": "Descrição completa:",
+      "options": [
+        {
+          "labelEn": "He's tall and athletic.",
+          "correct": true,
+          "feedbackPt": "Dois adjetivos com and."
+        },
+        {
+          "labelEn": "He tall and athletic.",
+          "correct": false,
+          "feedbackPt": "Falta is."
+        },
+        {
+          "labelEn": "He's tall but athletic.",
+          "correct": false,
+          "feedbackPt": "But implica contraste — tall e athletic não contrastam."
+        }
+      ]
+    },
+    {
+      "id": "em01-l06-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Aparência com with:",
+      "templateEn": "He's tall ___ dark hair.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "with",
+          "correct": true,
+          "feedbackPt": "With dark hair."
+        },
+        {
+          "labelEn": "and",
+          "correct": false,
+          "feedbackPt": "And dark hair incompleto."
+        },
+        {
+          "labelEn": "has",
+          "correct": false,
+          "feedbackPt": "He has dark hair — estrutura diferente."
+        }
+      ]
+    }
+  ]
+}

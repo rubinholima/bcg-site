@@ -1,0 +1,669 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 1,
+  "goalPt": "Ir além do START — falar de estado civil, moradia atual e trabalho com frases mais completas e naturais.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex encontra você num happy hour da empresa. A conversa sai do básico e entra em detalhes pessoais — estado civil, moradia e trabalho atual.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can share personal details beyond START.",
+    "headlinePt": "Você consegue compartilhar detalhes pessoais além do START.",
+    "bodyPt": "",
+    "canDo": [
+      "I'm single.",
+      "Where do you live now?",
+      "I work at...",
+      "Tell me more."
+    ],
+    "production": {
+      "introPt": "Alex quer te conhecer melhor. Responda sobre estado civil, moradia e trabalho — frases completas em inglês.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "Are you married or single?"
+        },
+        {
+          "speaker": "Alex",
+          "questionEn": "Where do you live now?"
+        },
+        {
+          "speaker": "Alex",
+          "questionEn": "Where do you work now?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "status",
+          "labelPt": "Estado civil",
+          "prefixEn": "I'm",
+          "placeholderEn": "single."
+        },
+        {
+          "id": "live",
+          "labelPt": "Onde mora",
+          "prefixEn": "I live in",
+          "placeholderEn": "Boston now."
+        },
+        {
+          "id": "work",
+          "labelPt": "Onde trabalha",
+          "prefixEn": "I work at",
+          "placeholderEn": "the club's office downtown."
+        },
+        {
+          "id": "followUp",
+          "labelPt": "Reagir ao que Alex disse",
+          "prefixEn": "",
+          "placeholderEn": "Oh, really? Tell me more."
+        }
+      ],
+      "exampleEn": "I'm single. I live in Boston now. I work at the club's office downtown. Oh, really? Tell me more."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em01-l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Beyond START — personal details",
+        "titlePt": "Além do START — detalhes pessoais",
+        "bodyPt": "Você já sabe nome, origem e profissão básica. Agora a conversa aprofunda: casado ou solteiro? Onde mora hoje? Onde trabalha agora? Frases mais longas, mais inglês, menos tradução do português."
+      },
+      {
+        "id": "em01-l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office lounge · After-work mixer",
+        "scenarioPt": "Alex encontra você num happy hour da empresa. A conversa sai do básico e entra em detalhes pessoais — estado civil, moradia e trabalho atual."
+      },
+      {
+        "id": "em01-l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "So, are you married or single?",
+        "promptPt": "Alex pergunta estado civil — comum em conversa informal nos EUA.",
+        "options": [
+          {
+            "labelEn": "I'm single.",
+            "correct": true,
+            "feedbackPt": "Resposta direta e natural."
+          },
+          {
+            "labelEn": "I am single person.",
+            "correct": false,
+            "feedbackPt": "Redundante — single já basta."
+          },
+          {
+            "labelEn": "I have single.",
+            "correct": false,
+            "feedbackPt": "Tradução literal — use BE (I'm single)."
+          }
+        ]
+      },
+      {
+        "id": "em01-l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Where do you live now?",
+        "promptPt": "Alex quer saber onde você mora atualmente — now enfatiza o presente.",
+        "options": [
+          {
+            "labelEn": "I live in Boston now.",
+            "correct": true,
+            "feedbackPt": "Now = situação atual — natural."
+          },
+          {
+            "labelEn": "I live in Boston yesterday.",
+            "correct": false,
+            "feedbackPt": "Yesterday é passado — moradia é presente."
+          },
+          {
+            "labelEn": "I am live in Boston.",
+            "correct": false,
+            "feedbackPt": "Live é verbo — não use am antes de live."
+          }
+        ]
+      },
+      {
+        "id": "em01-l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "And where do you work now?",
+        "promptPt": "Alex conecta moradia e trabalho — pergunta sobre emprego atual.",
+        "options": [
+          {
+            "labelEn": "I work at the club's office downtown.",
+            "correct": true,
+            "feedbackPt": "At + local — resposta completa."
+          },
+          {
+            "labelEn": "I work in the club office downtown.",
+            "correct": false,
+            "feedbackPt": "In funciona para departamento; aqui at + local físico é mais natural."
+          },
+          {
+            "labelEn": "I am work at downtown.",
+            "correct": false,
+            "feedbackPt": "Gramaticalmente incorreto — I work, não I am work."
+          }
+        ]
+      },
+      {
+        "id": "em01-l01-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Nice! I'm married, actually. Two kids.",
+        "promptPt": "Alex compartilha sobre si. Como devolver interesse?",
+        "options": [
+          {
+            "labelEn": "Oh, really? Tell me more.",
+            "correct": true,
+            "feedbackPt": "Follow-up natural — mostra interesse."
+          },
+          {
+            "labelEn": "Where do you live now?",
+            "correct": false,
+            "feedbackPt": "Muda de assunto abruptamente."
+          },
+          {
+            "labelEn": "I am single.",
+            "correct": false,
+            "feedbackPt": "Só repete sobre você — não reage ao que Alex disse."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em01-l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Marital status",
+        "titlePt": "Estado civil",
+        "introPt": "Perguntas e respostas comuns — married, single, divorced. Use BE (I'm), não have.",
+        "examples": [
+          {
+            "en": "Are you married or single?",
+            "pt": "pergunta direta"
+          },
+          {
+            "en": "I'm single.",
+            "pt": "solteiro(a)"
+          },
+          {
+            "en": "I'm married.",
+            "pt": "casado(a)"
+          },
+          {
+            "en": "I'm divorced.",
+            "pt": "divorciado(a)"
+          }
+        ]
+      },
+      {
+        "id": "em01-l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Where do you live / work now?",
+        "titlePt": "Onde mora / trabalha agora?",
+        "introPt": "Now marca a situação atual — diferente de where are you from (origem).",
+        "examples": [
+          {
+            "en": "Where do you live now?",
+            "pt": "moradia atual"
+          },
+          {
+            "en": "I live in Miami now.",
+            "pt": "moro em Miami"
+          },
+          {
+            "en": "Where do you work now?",
+            "pt": "emprego atual"
+          },
+          {
+            "en": "I work at the training center.",
+            "pt": "trabalho no centro"
+          }
+        ]
+      },
+      {
+        "id": "em01-l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "at vs in (work)",
+        "titlePt": "at vs in (trabalho)",
+        "introPt": "At = empresa/local específico. In = departamento ou área dentro de organização.",
+        "examples": [
+          {
+            "en": "I work at Google.",
+            "pt": "empresa"
+          },
+          {
+            "en": "I work in marketing.",
+            "pt": "departamento"
+          },
+          {
+            "en": "I work at the club's office.",
+            "pt": "local físico"
+          },
+          {
+            "en": "I work in operations.",
+            "pt": "área"
+          }
+        ]
+      },
+      {
+        "id": "em01-l01-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Now vs from",
+        "titlePt": "Now vs from — presente vs origem",
+        "items": [
+          {
+            "formalEn": "Where are you from? → Brazil.",
+            "naturalEn": "Where do you live now? → I live in Boston now.",
+            "notePt": "From = origem. Live now = moradia atual."
+          },
+          {
+            "formalEn": "What do you do? → I am engineer.",
+            "naturalEn": "Where do you work now? → I work at the club office.",
+            "notePt": "Profissão vs local de trabalho — perguntas diferentes."
+          }
+        ],
+        "tipPt": "Em conversas mais longas, alterne origem (from) com situação atual (now)."
+      },
+      {
+        "id": "em01-l01-learn-voc",
+        "type": "vocabulary",
+        "titleEn": "Personal detail words",
+        "titlePt": "Vocabulário — detalhes pessoais",
+        "words": [
+          {
+            "en": "single",
+            "pt": "solteiro(a)",
+            "exampleEn": "I'm single."
+          },
+          {
+            "en": "married",
+            "pt": "casado(a)",
+            "exampleEn": "I'm married with two kids."
+          },
+          {
+            "en": "downtown",
+            "pt": "centro da cidade",
+            "exampleEn": "I work downtown."
+          },
+          {
+            "en": "actually",
+            "pt": "na verdade",
+            "exampleEn": "I'm married, actually."
+          }
+        ]
+      },
+      {
+        "id": "em01-l01-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I have single. / I am work at the office.",
+        "rightEn": "I'm single. / I work at the office.",
+        "explanationPt": "Estado civil usa BE: I'm single, I'm married — não I have single. Trabalho usa verbo simples: I work — não I am work."
+      },
+      {
+        "id": "em01-l01-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I'm single.",
+            "pt": "estado civil"
+          },
+          {
+            "en": "Where do you live now?",
+            "pt": "moradia atual"
+          },
+          {
+            "en": "I live in Boston now.",
+            "pt": "resposta moradia"
+          },
+          {
+            "en": "Where do you work now?",
+            "pt": "trabalho atual"
+          },
+          {
+            "en": "I work at the club's office.",
+            "pt": "resposta trabalho"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em01-l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Are you married or single?"
+          },
+          {
+            "en": "I'm single."
+          },
+          {
+            "en": "Where do you live now?"
+          },
+          {
+            "en": "I live in Boston now."
+          },
+          {
+            "en": "Where do you work now?"
+          },
+          {
+            "en": "I work at the club's office downtown."
+          },
+          {
+            "en": "Oh, really? Tell me more."
+          },
+          {
+            "en": "I'm married, actually. Two kids."
+          }
+        ],
+        "dialogueEn": "Are you married or single? — I'm single. — Where do you live now? — I live in Boston now. — Where do you work now? — I work at the club's office downtown. — Nice! I'm married, actually. Two kids. — Oh, really? Tell me more."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em01-l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can share personal details beyond START.",
+        "headlinePt": "Você consegue compartilhar detalhes pessoais além do START.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Are you married or single?"
+          },
+          {
+            "speaker": "Alex",
+            "questionEn": "Where do you live now?"
+          },
+          {
+            "speaker": "Alex",
+            "questionEn": "Where do you work now?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em01-l01-prac-01",
+      "type": "choice",
+      "promptPt": "Alex: Are you married or single?",
+      "options": [
+        {
+          "labelEn": "I'm single.",
+          "correct": true,
+          "feedbackPt": "BE + adjetivo."
+        },
+        {
+          "labelEn": "I have single.",
+          "correct": false,
+          "feedbackPt": "Use I'm, não have."
+        },
+        {
+          "labelEn": "I am single person.",
+          "correct": false,
+          "feedbackPt": "Redundante."
+        }
+      ]
+    },
+    {
+      "id": "em01-l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: moradia atual",
+      "templateEn": "I live ___ Boston now.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "in",
+          "correct": true,
+          "feedbackPt": "Live in + cidade."
+        },
+        {
+          "labelEn": "at",
+          "correct": false,
+          "feedbackPt": "At é para lugares específicos, não cidade inteira."
+        },
+        {
+          "labelEn": "on",
+          "correct": false,
+          "feedbackPt": "On não combina com cidade."
+        }
+      ]
+    },
+    {
+      "id": "em01-l01-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: onde trabalha",
+      "tokens": [
+        "downtown.",
+        "work",
+        "I",
+        "at the club's office"
+      ],
+      "correctOrder": [
+        "I",
+        "work",
+        "at the club's office",
+        "downtown."
+      ],
+      "feedbackCorrectPt": "I work at the club's office downtown.",
+      "feedbackWrongPt": "I + work + at + local."
+    },
+    {
+      "id": "em01-l01-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: Where do you live now?",
+      "speaker": "You",
+      "contextEn": "Alex: Where do you live now?",
+      "options": [
+        {
+          "labelEn": "I live in Miami now.",
+          "correct": true,
+          "feedbackPt": "Now = situação atual."
+        },
+        {
+          "labelEn": "I am from Miami.",
+          "correct": false,
+          "feedbackPt": "From = origem, não moradia atual."
+        },
+        {
+          "labelEn": "I live in Miami yesterday.",
+          "correct": false,
+          "feedbackPt": "Yesterday é passado."
+        }
+      ]
+    },
+    {
+      "id": "em01-l01-prac-05",
+      "type": "choice",
+      "promptPt": "Qual pergunta é sobre trabalho ATUAL?",
+      "options": [
+        {
+          "labelEn": "Where do you work now?",
+          "correct": true,
+          "feedbackPt": "Work now = emprego atual."
+        },
+        {
+          "labelEn": "Where are you from?",
+          "correct": false,
+          "feedbackPt": "Origem/nacionalidade."
+        },
+        {
+          "labelEn": "What is your name?",
+          "correct": false,
+          "feedbackPt": "Nome."
+        }
+      ]
+    },
+    {
+      "id": "em01-l01-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Estado civil — use BE:",
+      "templateEn": "I ___ married.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "'m",
+          "correct": true,
+          "feedbackPt": "I'm married."
+        },
+        {
+          "labelEn": "have",
+          "correct": false,
+          "feedbackPt": "I have married está errado."
+        },
+        {
+          "labelEn": "do",
+          "correct": false,
+          "feedbackPt": "Do não combina."
+        }
+      ]
+    },
+    {
+      "id": "em01-l01-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Alex compartilha: I'm married. Two kids.",
+      "speaker": "You",
+      "contextEn": "Alex: I'm married, actually. Two kids.",
+      "options": [
+        {
+          "labelEn": "Oh, really? Tell me more.",
+          "correct": true,
+          "feedbackPt": "Follow-up natural."
+        },
+        {
+          "labelEn": "I'm single.",
+          "correct": false,
+          "feedbackPt": "Ignora o que Alex disse."
+        },
+        {
+          "labelEn": "Where do you work now?",
+          "correct": false,
+          "feedbackPt": "Muda de assunto."
+        }
+      ]
+    },
+    {
+      "id": "em01-l01-prac-08",
+      "type": "choice",
+      "promptPt": "Melhor resposta sobre trabalho:",
+      "options": [
+        {
+          "labelEn": "I work in marketing.",
+          "correct": true,
+          "feedbackPt": "In + departamento."
+        },
+        {
+          "labelEn": "I am work in marketing.",
+          "correct": false,
+          "feedbackPt": "I work, não I am work."
+        },
+        {
+          "labelEn": "I work at marketing.",
+          "correct": false,
+          "feedbackPt": "At marketing soa estranho — use in marketing."
+        }
+      ]
+    },
+    {
+      "id": "em01-l01-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte pergunta moradia:",
+      "tokens": [
+        "now?",
+        "live",
+        "you",
+        "do",
+        "Where"
+      ],
+      "correctOrder": [
+        "Where",
+        "do",
+        "you",
+        "live",
+        "now?"
+      ],
+      "feedbackCorrectPt": "Where do you live now?",
+      "feedbackWrongPt": "Where + do + you + live + now?"
+    },
+    {
+      "id": "em01-l01-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Trabalho — preposição departamento:",
+      "templateEn": "She works ___ HR.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "in",
+          "correct": true,
+          "feedbackPt": "In + departamento."
+        },
+        {
+          "labelEn": "at",
+          "correct": false,
+          "feedbackPt": "At HR é menos natural que in HR."
+        },
+        {
+          "labelEn": "on",
+          "correct": false,
+          "feedbackPt": "On não combina."
+        }
+      ]
+    }
+  ]
+}

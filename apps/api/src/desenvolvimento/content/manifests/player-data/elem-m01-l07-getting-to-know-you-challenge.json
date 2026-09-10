@@ -1,0 +1,728 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 1,
+  "goalPt": "Desafio Módulo 1 — integrar detalhes pessoais, follow-ups, hobbies, gostos, personalidade e descrições numa conversa completa.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Jantar de boas-vindas — Alex conduz conversa completa para te conhecer de verdade.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Full Module 1 conversation — getting to know you.",
+    "headlinePt": "Conversa completa Módulo 1 — conhecendo você.",
+    "bodyPt": "",
+    "canDo": [
+      "Personal details",
+      "Follow-ups",
+      "Hobbies",
+      "Likes",
+      "Personality",
+      "Descriptions"
+    ],
+    "production": {
+      "introPt": "Monte a conversa completa do Módulo 1 — use apenas o que aprendeu nas lições 1 a 6.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "Let's really get to know each other — ready?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "status",
+          "labelPt": "Estado civil + moradia",
+          "prefixEn": "I'm",
+          "placeholderEn": "single. I live in Boston now."
+        },
+        {
+          "id": "followUp",
+          "labelPt": "Follow-up",
+          "prefixEn": "",
+          "placeholderEn": "Really? Tell me more."
+        },
+        {
+          "id": "hobbies",
+          "labelPt": "Hobbies",
+          "prefixEn": "I'm into",
+          "placeholderEn": "soccer. I enjoy cooking."
+        },
+        {
+          "id": "likes",
+          "labelPt": "Likes + concordância",
+          "prefixEn": "",
+          "placeholderEn": "I love the food here. Me too!"
+        },
+        {
+          "id": "people",
+          "labelPt": "Personalidade + descrição",
+          "prefixEn": "",
+          "placeholderEn": "Maria seems friendly. Marco is tall and outgoing."
+        }
+      ],
+      "exampleEn": "I'm single. I live in Boston. Really? Tell me more. I'm into soccer. Me too! Maria seems friendly. Marco is tall and outgoing."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em01-l07-ctx-01",
+        "type": "intro",
+        "titleEn": "Getting to Know You Challenge",
+        "titlePt": "Desafio — Conhecendo você",
+        "bodyPt": "Hora de juntar tudo do Módulo 1 numa conversa real com Alex — sem vocabulário novo. Detalhes pessoais, follow-ups, hobbies, likes, personalidade e descrições."
+      },
+      {
+        "id": "em01-l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team welcome dinner · Full conversation",
+        "scenarioPt": "Jantar de boas-vindas — Alex conduz conversa completa para te conhecer de verdade."
+      },
+      {
+        "id": "em01-l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "So — married or single?",
+        "promptPt": "Passo 1 — estado civil.",
+        "options": [
+          {
+            "labelEn": "I'm single.",
+            "correct": true,
+            "feedbackPt": "BE + adjetivo."
+          },
+          {
+            "labelEn": "I have single.",
+            "correct": false,
+            "feedbackPt": "Have errado."
+          },
+          {
+            "labelEn": "I am single person.",
+            "correct": false,
+            "feedbackPt": "Redundante."
+          }
+        ]
+      },
+      {
+        "id": "em01-l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I've lived here for five years.",
+        "promptPt": "Passo 2 — Alex compartilha. Reação?",
+        "options": [
+          {
+            "labelEn": "Really? How long have you been in Boston?",
+            "correct": true,
+            "feedbackPt": "Follow-up natural."
+          },
+          {
+            "labelEn": "What is your name?",
+            "correct": false,
+            "feedbackPt": "Fora de contexto."
+          },
+          {
+            "labelEn": "I hate Boston.",
+            "correct": false,
+            "feedbackPt": "Rude sem motivo."
+          }
+        ]
+      },
+      {
+        "id": "em01-l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What are you into these days?",
+        "promptPt": "Passo 3 — hobbies.",
+        "options": [
+          {
+            "labelEn": "I'm into soccer and I enjoy cooking.",
+            "correct": true,
+            "feedbackPt": "Into + enjoy."
+          },
+          {
+            "labelEn": "I like play soccer.",
+            "correct": false,
+            "feedbackPt": "Like playing."
+          },
+          {
+            "labelEn": "I am into the cooking.",
+            "correct": false,
+            "feedbackPt": "Sem the."
+          }
+        ]
+      },
+      {
+        "id": "em01-l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I love the food here. The steak is amazing.",
+        "promptPt": "Passo 4 — likes.",
+        "options": [
+          {
+            "labelEn": "Me too! I love it.",
+            "correct": true,
+            "feedbackPt": "Me too + love."
+          },
+          {
+            "labelEn": "Neither do I.",
+            "correct": false,
+            "feedbackPt": "Para negativo."
+          },
+          {
+            "labelEn": "I am love steak.",
+            "correct": false,
+            "feedbackPt": "I love."
+          }
+        ]
+      },
+      {
+        "id": "em01-l07-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What's Maria like? You work with her, right?",
+        "promptPt": "Passo 5 — personalidade.",
+        "options": [
+          {
+            "labelEn": "She seems really friendly and organized.",
+            "correct": true,
+            "feedbackPt": "Seem + adjetivos."
+          },
+          {
+            "labelEn": "She is seem friendly.",
+            "correct": false,
+            "feedbackPt": "Is seem errado."
+          },
+          {
+            "labelEn": "She friendly.",
+            "correct": false,
+            "feedbackPt": "Falta verbo."
+          }
+        ]
+      },
+      {
+        "id": "em01-l07-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Can you describe Marco for me? I haven't met him yet.",
+        "promptPt": "Passo 6 — descrição completa.",
+        "options": [
+          {
+            "labelEn": "He's tall with dark hair, and he's outgoing but really professional.",
+            "correct": true,
+            "feedbackPt": "Aparência + and + but."
+          },
+          {
+            "labelEn": "He tall and outgoing.",
+            "correct": false,
+            "feedbackPt": "Falta verbo."
+          },
+          {
+            "labelEn": "He has tall.",
+            "correct": false,
+            "feedbackPt": "Incorreto."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em01-l07-learn-cmp",
+        "type": "comparison",
+        "titleEn": "Full flow — Getting to know someone",
+        "titlePt": "Fluxo completo",
+        "left": {
+          "labelEn": "OPEN · personal",
+          "exampleEn": "Married? · Where live? · Where work?",
+          "notePt": "Detalhes básicos além do START."
+        },
+        "right": {
+          "labelEn": "DEEPEN · connect",
+          "exampleEn": "Really? · Hobbies · Likes · People · Descriptions",
+          "notePt": "Follow-ups e tópicos sociais."
+        },
+        "modelEn": "Status → Follow-up → Hobbies → Likes → Personality → Describe someone",
+        "modelPt": "Ordem típica num jantar ou happy hour."
+      },
+      {
+        "id": "em01-l07-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Challenge reminders",
+        "titlePt": "Lembretes do desafio",
+        "items": [
+          {
+            "formalEn": "I have single. / I like play soccer.",
+            "naturalEn": "I'm single. / I like playing soccer.",
+            "notePt": "BE para estado civil; like/enjoy + -ing."
+          },
+          {
+            "formalEn": "Answer only, no reaction.",
+            "naturalEn": "React → Follow-up → Share → Return",
+            "notePt": "Mantenha a conversa viva."
+          }
+        ],
+        "tipPt": "Cada pergunta de Alex cobre um tópico do módulo — responda só aquilo, depois avance."
+      },
+      {
+        "id": "em01-l07-learn-rev-01",
+        "type": "review",
+        "titleEn": "Step 1 — Personal details",
+        "titlePt": "Passo 1 — Detalhes pessoais",
+        "items": [
+          {
+            "en": "I'm single.",
+            "pt": "estado civil"
+          },
+          {
+            "en": "Where do you live now?",
+            "pt": "moradia"
+          },
+          {
+            "en": "Where do you work now?",
+            "pt": "trabalho"
+          }
+        ]
+      },
+      {
+        "id": "em01-l07-learn-rev-02",
+        "type": "review",
+        "titleEn": "Step 2 — Follow-ups",
+        "titlePt": "Passo 2 — Follow-ups",
+        "items": [
+          {
+            "en": "Really?",
+            "pt": "reação"
+          },
+          {
+            "en": "How long have you been here?",
+            "pt": "duração"
+          },
+          {
+            "en": "Tell me more.",
+            "pt": "aprofundar"
+          },
+          {
+            "en": "What about you?",
+            "pt": "devolver"
+          }
+        ]
+      },
+      {
+        "id": "em01-l07-learn-rev-03",
+        "type": "review",
+        "titleEn": "Step 3 — Hobbies & likes",
+        "titlePt": "Passo 3 — Hobbies e gostos",
+        "items": [
+          {
+            "en": "I'm into soccer.",
+            "pt": "interesses"
+          },
+          {
+            "en": "I enjoy cooking.",
+            "pt": "enjoy + -ing"
+          },
+          {
+            "en": "I love it. / Me too!",
+            "pt": "likes + concordância"
+          }
+        ]
+      },
+      {
+        "id": "em01-l07-learn-rev-04",
+        "type": "review",
+        "titleEn": "Step 4 — People",
+        "titlePt": "Passo 4 — Pessoas",
+        "items": [
+          {
+            "en": "She seems friendly.",
+            "pt": "personalidade"
+          },
+          {
+            "en": "He's tall with dark hair.",
+            "pt": "aparência"
+          },
+          {
+            "en": "He's quiet but smart.",
+            "pt": "and / but"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em01-l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Are you married or single?"
+          },
+          {
+            "en": "I'm single."
+          },
+          {
+            "en": "Really? Tell me more."
+          },
+          {
+            "en": "What are you into?"
+          },
+          {
+            "en": "I'm into soccer."
+          },
+          {
+            "en": "I love the food here."
+          },
+          {
+            "en": "Me too!"
+          },
+          {
+            "en": "What's Maria like?"
+          },
+          {
+            "en": "She seems friendly."
+          },
+          {
+            "en": "Can you describe Marco?"
+          },
+          {
+            "en": "He's tall and outgoing."
+          },
+          {
+            "en": "Nice getting to know you!"
+          }
+        ],
+        "dialogueEn": "Are you married or single? — I'm single. — Really? Tell me more. — What are you into? — I'm into soccer. — I love the food here. — Me too! — What's Maria like? — She seems friendly. — Can you describe Marco? — He's tall and outgoing. — Nice getting to know you!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em01-l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Full Module 1 conversation — getting to know you.",
+        "headlinePt": "Conversa completa Módulo 1 — conhecendo você.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Let's really get to know each other — ready?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em01-l07-prac-01",
+      "type": "choice",
+      "promptPt": "Passo 1 — estado civil:",
+      "options": [
+        {
+          "labelEn": "I'm single.",
+          "correct": true,
+          "feedbackPt": "Correto."
+        },
+        {
+          "labelEn": "I have single.",
+          "correct": false,
+          "feedbackPt": "Have errado."
+        },
+        {
+          "labelEn": "Where do you work?",
+          "correct": false,
+          "feedbackPt": "Não responde."
+        }
+      ]
+    },
+    {
+      "id": "em01-l07-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Passo 2 — Alex: I've lived here five years.",
+      "speaker": "You",
+      "contextEn": "Alex: I've lived here for five years.",
+      "options": [
+        {
+          "labelEn": "Really? How long have you been here?",
+          "correct": true,
+          "feedbackPt": "Follow-up."
+        },
+        {
+          "labelEn": "I am single.",
+          "correct": false,
+          "feedbackPt": "Outro tópico."
+        },
+        {
+          "labelEn": "Goodbye.",
+          "correct": false,
+          "feedbackPt": "Encerra."
+        }
+      ]
+    },
+    {
+      "id": "em01-l07-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Passo 3 — hobby:",
+      "templateEn": "I'm ___ soccer.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "into",
+          "correct": true,
+          "feedbackPt": "I'm into."
+        },
+        {
+          "labelEn": "enjoy",
+          "correct": false,
+          "feedbackPt": "I enjoy playing — estrutura diferente."
+        },
+        {
+          "labelEn": "like to",
+          "correct": false,
+          "feedbackPt": "I like playing soccer."
+        }
+      ]
+    },
+    {
+      "id": "em01-l07-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Passo 4 — Alex: I love the food.",
+      "speaker": "You",
+      "contextEn": "Alex: I love the food here.",
+      "options": [
+        {
+          "labelEn": "Me too!",
+          "correct": true,
+          "feedbackPt": "Concordância."
+        },
+        {
+          "labelEn": "Neither do I.",
+          "correct": false,
+          "feedbackPt": "Negativo."
+        },
+        {
+          "labelEn": "Tell me more.",
+          "correct": false,
+          "feedbackPt": "Não concorda."
+        }
+      ]
+    },
+    {
+      "id": "em01-l07-prac-05",
+      "type": "reorder",
+      "promptPt": "Passo 5 — personalidade:",
+      "tokens": [
+        "friendly.",
+        "seems",
+        "She",
+        "really"
+      ],
+      "correctOrder": [
+        "She",
+        "seems",
+        "really",
+        "friendly."
+      ],
+      "feedbackCorrectPt": "She seems really friendly.",
+      "feedbackWrongPt": "She seems + adv + adj."
+    },
+    {
+      "id": "em01-l07-prac-06",
+      "type": "choice",
+      "promptPt": "Passo 6 — descrição:",
+      "options": [
+        {
+          "labelEn": "He's tall and outgoing.",
+          "correct": true,
+          "feedbackPt": "Aparência + personalidade."
+        },
+        {
+          "labelEn": "He tall outgoing.",
+          "correct": false,
+          "feedbackPt": "Falta verbo."
+        },
+        {
+          "labelEn": "He is seem tall.",
+          "correct": false,
+          "feedbackPt": "Is seem errado."
+        }
+      ]
+    },
+    {
+      "id": "em01-l07-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Integração — concordância negativa:",
+      "templateEn": "I don't like cold weather. — ___ do I.",
+      "blankLabel": "Neither",
+      "options": [
+        {
+          "labelEn": "Neither",
+          "correct": true,
+          "feedbackPt": "Neither do I."
+        },
+        {
+          "labelEn": "Me",
+          "correct": false,
+          "feedbackPt": "Me too é positivo."
+        },
+        {
+          "labelEn": "Nor",
+          "correct": false,
+          "feedbackPt": "Nor alone incompleto."
+        }
+      ]
+    },
+    {
+      "id": "em01-l07-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Follow-up devolver:",
+      "speaker": "You",
+      "contextEn": "Alex shared about his move.",
+      "options": [
+        {
+          "labelEn": "What about you?",
+          "correct": true,
+          "feedbackPt": "Devolve."
+        },
+        {
+          "labelEn": "Really?",
+          "correct": false,
+          "feedbackPt": "Só reação."
+        },
+        {
+          "labelEn": "I hate moving.",
+          "correct": false,
+          "feedbackPt": "Sem devolver."
+        }
+      ]
+    },
+    {
+      "id": "em01-l07-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte: enjoy + atividade",
+      "tokens": [
+        "cooking.",
+        "enjoy",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "enjoy",
+        "cooking."
+      ],
+      "feedbackCorrectPt": "I enjoy cooking.",
+      "feedbackWrongPt": "I enjoy + -ing/substantivo."
+    },
+    {
+      "id": "em01-l07-prac-10",
+      "type": "choice",
+      "promptPt": "Contraste na descrição:",
+      "options": [
+        {
+          "labelEn": "quiet but smart",
+          "correct": true,
+          "feedbackPt": "But = contraste."
+        },
+        {
+          "labelEn": "quiet and but smart",
+          "correct": false,
+          "feedbackPt": "And but errado."
+        },
+        {
+          "labelEn": "quiet because smart",
+          "correct": false,
+          "feedbackPt": "Because = causa."
+        }
+      ]
+    },
+    {
+      "id": "em01-l07-prac-11",
+      "type": "fill_blank",
+      "promptPt": "Moradia atual:",
+      "templateEn": "I live ___ Miami now.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "in",
+          "correct": true,
+          "feedbackPt": "Live in + cidade."
+        },
+        {
+          "labelEn": "at",
+          "correct": false,
+          "feedbackPt": "At cidade errado."
+        },
+        {
+          "labelEn": "on",
+          "correct": false,
+          "feedbackPt": "On não combina."
+        }
+      ]
+    },
+    {
+      "id": "em01-l07-prac-12",
+      "type": "dialogue_complete",
+      "promptPt": "Encerramento:",
+      "speaker": "You",
+      "contextEn": "Alex: Great getting to know you!",
+      "options": [
+        {
+          "labelEn": "Nice talking to you!",
+          "correct": true,
+          "feedbackPt": "Encerramento."
+        },
+        {
+          "labelEn": "How old are you?",
+          "correct": false,
+          "feedbackPt": "Reabre."
+        },
+        {
+          "labelEn": "Tell me more.",
+          "correct": false,
+          "feedbackPt": "Fora de contexto."
+        }
+      ]
+    }
+  ]
+}

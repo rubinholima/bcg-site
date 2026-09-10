@@ -1,0 +1,662 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 1,
+  "goalPt": "Expressar intensidade de gosto — love, hate, don't mind — e concordar com Me too / Neither do I.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Você e Alex comentam comida, clima e rotina do escritório — com opiniões fortes e concordâncias.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can express likes, dislikes, and agree naturally.",
+    "headlinePt": "Você consegue expressar gostos, aversões e concordar naturalmente.",
+    "bodyPt": "",
+    "canDo": [
+      "I love...",
+      "I don't mind...",
+      "Me too.",
+      "Neither do I."
+    ],
+    "production": {
+      "introPt": "Dê opiniões sobre comida e rotina do escritório; concorde com Alex quando fizer sentido.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "Do you like the cafeteria food?"
+        },
+        {
+          "speaker": "Alex",
+          "questionEn": "I love the coffee here."
+        }
+      ],
+      "fields": [
+        {
+          "id": "neutral",
+          "labelPt": "Opinião neutra",
+          "prefixEn": "I don't mind",
+          "placeholderEn": "the cafeteria food."
+        },
+        {
+          "id": "love",
+          "labelPt": "Algo que adora",
+          "prefixEn": "I love",
+          "placeholderEn": "the espresso here."
+        },
+        {
+          "id": "agree",
+          "labelPt": "Concordar",
+          "prefixEn": "",
+          "placeholderEn": "Me too!"
+        },
+        {
+          "id": "hate",
+          "labelPt": "Algo que odeia",
+          "prefixEn": "I hate",
+          "placeholderEn": "long meetings."
+        },
+        {
+          "id": "neither",
+          "labelPt": "Concordar (negativo)",
+          "prefixEn": "",
+          "placeholderEn": "Neither can I."
+        }
+      ],
+      "exampleEn": "I don't mind the food. I love the espresso. Me too! I hate long meetings. Neither can I."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em01-l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Likes & dislikes",
+        "titlePt": "Gostos e aversões",
+        "bodyPt": "Nem todo gosto é igual — love, hate e don't mind mostram intensidade. Aprenda também a concordar naturalmente: Me too e Neither do I."
+      },
+      {
+        "id": "em01-l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office kitchen · Lunch break",
+        "scenarioPt": "Você e Alex comentam comida, clima e rotina do escritório — com opiniões fortes e concordâncias."
+      },
+      {
+        "id": "em01-l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you like the cafeteria food here?",
+        "promptPt": "Alex pergunta opinião sobre comida.",
+        "options": [
+          {
+            "labelEn": "Honestly, I don't mind it.",
+            "correct": true,
+            "feedbackPt": "Don't mind = tolerável, neutro."
+          },
+          {
+            "labelEn": "I don't minding it.",
+            "correct": false,
+            "feedbackPt": "Don't mind + base, não -ing."
+          },
+          {
+            "labelEn": "I am not mind it.",
+            "correct": false,
+            "feedbackPt": "Forma incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em01-l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I love the coffee here.",
+        "promptPt": "Alex expressa gosto forte.",
+        "options": [
+          {
+            "labelEn": "Me too! The espresso is great.",
+            "correct": true,
+            "feedbackPt": "Me too = concordo (afirmativo)."
+          },
+          {
+            "labelEn": "Neither do I.",
+            "correct": false,
+            "feedbackPt": "Neither do I é para negativo — Alex disse love (positivo)."
+          },
+          {
+            "labelEn": "I hate coffee.",
+            "correct": false,
+            "feedbackPt": "Contradiz sem transição — possível, mas não concorda."
+          }
+        ]
+      },
+      {
+        "id": "em01-l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I can't stand long meetings.",
+        "promptPt": "Alex expressa aversão forte.",
+        "options": [
+          {
+            "labelEn": "Neither can I.",
+            "correct": true,
+            "feedbackPt": "Neither + auxiliar — concordância negativa."
+          },
+          {
+            "labelEn": "Me too.",
+            "correct": false,
+            "feedbackPt": "Me too é para positivo."
+          },
+          {
+            "labelEn": "I can stand too.",
+            "correct": false,
+            "feedbackPt": "Forma incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em01-l04-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "I hate cold mornings.",
+        "promptPt": "Você compartilha aversão. Alex concorda — qual resposta dele?",
+        "options": [
+          {
+            "labelEn": "Me too. I need coffee first.",
+            "correct": true,
+            "feedbackPt": "Me too após hate (afirmativa de aversão compartilhada)."
+          },
+          {
+            "labelEn": "Neither do I.",
+            "correct": false,
+            "feedbackPt": "Hate é afirmativo — use Me too, não Neither."
+          },
+          {
+            "labelEn": "I love cold mornings.",
+            "correct": false,
+            "feedbackPt": "Discorda."
+          }
+        ]
+      },
+      {
+        "id": "em01-l04-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What about spicy food?",
+        "promptPt": "Alex muda de assunto — comida apimentada.",
+        "options": [
+          {
+            "labelEn": "I love it!",
+            "correct": true,
+            "feedbackPt": "Love = adoro."
+          },
+          {
+            "labelEn": "I am love it.",
+            "correct": false,
+            "feedbackPt": "I love, não I am love."
+          },
+          {
+            "labelEn": "I love spicy.",
+            "correct": false,
+            "feedbackPt": "Love it ou I love spicy food — spicy sozinho incompleto."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em01-l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "love / hate / like",
+        "titlePt": "love / hate / like",
+        "introPt": "Intensidade crescente ou decrescente — love > like > don't mind > dislike > hate.",
+        "examples": [
+          {
+            "en": "I love pizza.",
+            "pt": "adoro"
+          },
+          {
+            "en": "I like pizza.",
+            "pt": "gosto"
+          },
+          {
+            "en": "I hate cold coffee.",
+            "pt": "odeio"
+          },
+          {
+            "en": "I don't like spicy food.",
+            "pt": "não gosto"
+          }
+        ]
+      },
+      {
+        "id": "em01-l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "don't mind",
+        "titlePt": "não me importo / tolero",
+        "introPt": "Don't mind = neutro, aceitável — nem ama nem odeia.",
+        "examples": [
+          {
+            "en": "I don't mind the commute.",
+            "pt": "tolerável"
+          },
+          {
+            "en": "I don't mind working late sometimes.",
+            "pt": "aceito"
+          },
+          {
+            "en": "Do you mind if I sit here?",
+            "pt": "pergunta educada"
+          },
+          {
+            "en": "Not at all.",
+            "pt": "resposta"
+          }
+        ]
+      },
+      {
+        "id": "em01-l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Me too / Neither do I",
+        "titlePt": "Eu também / Nem eu",
+        "introPt": "Me too = concordância com frase positiva. Neither do I = concordância com negativa.",
+        "examples": [
+          {
+            "en": "I love it. — Me too!",
+            "pt": "positivo"
+          },
+          {
+            "en": "I don't like that. — Neither do I.",
+            "pt": "negativo"
+          },
+          {
+            "en": "I can't swim. — Neither can I.",
+            "pt": "outro auxiliar"
+          },
+          {
+            "en": "I'm not a morning person. — Me neither.",
+            "pt": "variante informal"
+          }
+        ]
+      },
+      {
+        "id": "em01-l04-learn-cmp",
+        "type": "comparison",
+        "titleEn": "Me too vs Neither do I",
+        "titlePt": "Me too vs Neither do I",
+        "left": {
+          "labelEn": "POSITIVE · Me too",
+          "exampleEn": "I love coffee. — Me too!",
+          "notePt": "Concorda com afirmativa positiva."
+        },
+        "right": {
+          "labelEn": "NEGATIVE · Neither do I",
+          "exampleEn": "I don't like that. — Neither do I.",
+          "notePt": "Concorda com negativa."
+        },
+        "modelEn": "I love it. — Me too. / I hate it. — Me too. (shared feeling) / I don't mind. — Neither do I.",
+        "modelPt": "Com hate/love afirmativo, Me too funciona para compartilhar o sentimento."
+      },
+      {
+        "id": "em01-l04-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "Me neither do I. / I am not mind it.",
+        "rightEn": "Neither do I. / I don't mind it.",
+        "explanationPt": "Não misture Me neither com Neither do I na mesma frase. Don't mind + verbo base ou substantivo."
+      },
+      {
+        "id": "em01-l04-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I love it.",
+            "pt": "intensidade alta"
+          },
+          {
+            "en": "I don't mind.",
+            "pt": "neutro"
+          },
+          {
+            "en": "Me too!",
+            "pt": "concordância positiva"
+          },
+          {
+            "en": "Neither do I.",
+            "pt": "concordância negativa"
+          },
+          {
+            "en": "I can't stand long meetings.",
+            "pt": "aversão forte"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em01-l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Do you like the cafeteria food?"
+          },
+          {
+            "en": "Honestly, I don't mind it."
+          },
+          {
+            "en": "I love the coffee here."
+          },
+          {
+            "en": "Me too! The espresso is great."
+          },
+          {
+            "en": "I can't stand long meetings."
+          },
+          {
+            "en": "Neither can I."
+          },
+          {
+            "en": "I hate cold mornings."
+          },
+          {
+            "en": "Me too. I need coffee first."
+          },
+          {
+            "en": "What about spicy food?"
+          },
+          {
+            "en": "I love it!"
+          }
+        ],
+        "dialogueEn": "Do you like the cafeteria food? — Honestly, I don't mind it. — I love the coffee here. — Me too! — I can't stand long meetings. — Neither can I. — I hate cold mornings. — Me too!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em01-l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can express likes, dislikes, and agree naturally.",
+        "headlinePt": "Você consegue expressar gostos, aversões e concordar naturalmente.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Do you like the cafeteria food?"
+          },
+          {
+            "speaker": "Alex",
+            "questionEn": "I love the coffee here."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em01-l04-prac-01",
+      "type": "choice",
+      "promptPt": "Alex: I love the coffee. Você também:",
+      "options": [
+        {
+          "labelEn": "Me too!",
+          "correct": true,
+          "feedbackPt": "Concordância positiva."
+        },
+        {
+          "labelEn": "Neither do I.",
+          "correct": false,
+          "feedbackPt": "Para negativo."
+        },
+        {
+          "labelEn": "Me neither do I.",
+          "correct": false,
+          "feedbackPt": "Mistura incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em01-l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Opinião neutra:",
+      "templateEn": "I ___ mind the commute.",
+      "blankLabel": "auxiliar",
+      "options": [
+        {
+          "labelEn": "don't",
+          "correct": true,
+          "feedbackPt": "Don't mind."
+        },
+        {
+          "labelEn": "doesn't",
+          "correct": false,
+          "feedbackPt": "I = don't."
+        },
+        {
+          "labelEn": "am not",
+          "correct": false,
+          "feedbackPt": "Don't mind, não am not mind."
+        }
+      ]
+    },
+    {
+      "id": "em01-l04-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: I don't like spicy food.",
+      "speaker": "You",
+      "contextEn": "Alex: I don't like spicy food.",
+      "options": [
+        {
+          "labelEn": "Neither do I.",
+          "correct": true,
+          "feedbackPt": "Concordância negativa."
+        },
+        {
+          "labelEn": "Me too.",
+          "correct": false,
+          "feedbackPt": "Me too com negativo de Alex — ambíguo; Neither é mais claro."
+        },
+        {
+          "labelEn": "I am neither.",
+          "correct": false,
+          "feedbackPt": "Forma incompleta."
+        }
+      ]
+    },
+    {
+      "id": "em01-l04-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: adoro",
+      "tokens": [
+        "it!",
+        "love",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "love",
+        "it!"
+      ],
+      "feedbackCorrectPt": "I love it!",
+      "feedbackWrongPt": "I + love + it."
+    },
+    {
+      "id": "em01-l04-prac-05",
+      "type": "choice",
+      "promptPt": "Intensidade — mais forte que like:",
+      "options": [
+        {
+          "labelEn": "love",
+          "correct": true,
+          "feedbackPt": "Love > like."
+        },
+        {
+          "labelEn": "mind",
+          "correct": false,
+          "feedbackPt": "Don't mind é neutro."
+        },
+        {
+          "labelEn": "kind of",
+          "correct": false,
+          "feedbackPt": "Kind of é fraco."
+        }
+      ]
+    },
+    {
+      "id": "em01-l04-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Aversão forte:",
+      "templateEn": "I can't ___ long meetings.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "stand",
+          "correct": true,
+          "feedbackPt": "Can't stand = não suporto."
+        },
+        {
+          "labelEn": "standing",
+          "correct": false,
+          "feedbackPt": "Stand, não standing."
+        },
+        {
+          "labelEn": "to stand",
+          "correct": false,
+          "feedbackPt": "Can't stand, não can't to stand."
+        }
+      ]
+    },
+    {
+      "id": "em01-l04-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Concordar com hate:",
+      "speaker": "You",
+      "contextEn": "Friend: I hate traffic.",
+      "options": [
+        {
+          "labelEn": "Me too.",
+          "correct": true,
+          "feedbackPt": "Compartilha aversão."
+        },
+        {
+          "labelEn": "Neither do I hate.",
+          "correct": false,
+          "feedbackPt": "Forma incorreta."
+        },
+        {
+          "labelEn": "I am too.",
+          "correct": false,
+          "feedbackPt": "Me too, não I am too."
+        }
+      ]
+    },
+    {
+      "id": "em01-l04-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte concordância negativa:",
+      "tokens": [
+        "I.",
+        "do",
+        "Neither"
+      ],
+      "correctOrder": [
+        "Neither",
+        "do",
+        "I."
+      ],
+      "feedbackCorrectPt": "Neither do I.",
+      "feedbackWrongPt": "Neither + do + I."
+    },
+    {
+      "id": "em01-l04-prac-09",
+      "type": "choice",
+      "promptPt": "Qual está ERRADA?",
+      "options": [
+        {
+          "labelEn": "I am not mind it.",
+          "correct": true,
+          "feedbackPt": "Errada — use don't mind."
+        },
+        {
+          "labelEn": "I don't mind it.",
+          "correct": false,
+          "feedbackPt": "Correta."
+        },
+        {
+          "labelEn": "I love it.",
+          "correct": false,
+          "feedbackPt": "Correta."
+        }
+      ]
+    },
+    {
+      "id": "em01-l04-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Variante informal:",
+      "templateEn": "I'm not a morning person. — ___ neither.",
+      "blankLabel": "Me",
+      "options": [
+        {
+          "labelEn": "Me",
+          "correct": true,
+          "feedbackPt": "Me neither — informal."
+        },
+        {
+          "labelEn": "Neither",
+          "correct": false,
+          "feedbackPt": "Falta Me."
+        },
+        {
+          "labelEn": "Too",
+          "correct": false,
+          "feedbackPt": "Me too seria concordância positiva estranha aqui."
+        }
+      ]
+    }
+  ]
+}

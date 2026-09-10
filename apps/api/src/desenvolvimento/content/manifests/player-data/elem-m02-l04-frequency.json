@@ -1,0 +1,676 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 2,
+  "goalPt": "Adverbios de frequência — always, usually, sometimes, never e posição correta na frase.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex e você comparam frequência de treino, estudo e hábitos saudáveis.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can talk about frequency naturally.",
+    "headlinePt": "Você consegue falar de frequência naturalmente.",
+    "bodyPt": "",
+    "canDo": [
+      "always / usually / sometimes / never",
+      "How often...?",
+      "adverb position"
+    ],
+    "production": {
+      "introPt": "Descreva frequência de treino, estudo e um hábito com to be.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "How often do you train?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "train",
+          "labelPt": "Treino (usually)",
+          "prefixEn": "I usually",
+          "placeholderEn": "train three times a week."
+        },
+        {
+          "id": "sometimes",
+          "labelPt": "Algo ocasional",
+          "prefixEn": "I sometimes",
+          "placeholderEn": "work from home."
+        },
+        {
+          "id": "never",
+          "labelPt": "Algo que nunca faz",
+          "prefixEn": "I never",
+          "placeholderEn": "skip breakfast."
+        },
+        {
+          "id": "tobe",
+          "labelPt": "Com to be",
+          "prefixEn": "I am always",
+          "placeholderEn": "tired on Mondays."
+        }
+      ],
+      "exampleEn": "I usually train three times a week. I sometimes work from home. I never skip breakfast. I am always tired on Mondays."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em02-l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Frequency & habits",
+        "titlePt": "Frequência e hábitos",
+        "bodyPt": "Always, usually, sometimes, never — onde colocar na frase? Posição correta é essencial para soar natural."
+      },
+      {
+        "id": "em02-l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Gym · Habit conversation",
+        "scenarioPt": "Alex e você comparam frequência de treino, estudo e hábitos saudáveis."
+      },
+      {
+        "id": "em02-l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "How often do you train?",
+        "promptPt": "Alex pergunta frequência de treino.",
+        "options": [
+          {
+            "labelEn": "I usually train three times a week.",
+            "correct": true,
+            "feedbackPt": "Usually antes do verbo."
+          },
+          {
+            "labelEn": "I train usually three times.",
+            "correct": false,
+            "feedbackPt": "Posição errada."
+          },
+          {
+            "labelEn": "I am usually train three times.",
+            "correct": false,
+            "feedbackPt": "Am train errado."
+          }
+        ]
+      },
+      {
+        "id": "em02-l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you ever skip breakfast?",
+        "promptPt": "Alex pergunta sobre café da manhã.",
+        "options": [
+          {
+            "labelEn": "Sometimes I skip it, but I usually eat something.",
+            "correct": true,
+            "feedbackPt": "Sometimes + usually."
+          },
+          {
+            "labelEn": "I sometimes am skip it.",
+            "correct": false,
+            "feedbackPt": "Sometimes + base verb."
+          },
+          {
+            "labelEn": "Sometimes I skipping it.",
+            "correct": false,
+            "feedbackPt": "Skip, não skipping."
+          }
+        ]
+      },
+      {
+        "id": "em02-l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I never eat fast food.",
+        "promptPt": "Alex compartilha hábito.",
+        "options": [
+          {
+            "labelEn": "Really? I sometimes eat fast food.",
+            "correct": true,
+            "feedbackPt": "Sometimes = ocasionalmente."
+          },
+          {
+            "labelEn": "Really? I eat sometimes fast food.",
+            "correct": false,
+            "feedbackPt": "Posição errada."
+          },
+          {
+            "labelEn": "Really? I never sometimes eat.",
+            "correct": false,
+            "feedbackPt": "Confuso."
+          }
+        ]
+      },
+      {
+        "id": "em02-l04-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "How often do you study English?",
+        "promptPt": "Sua pergunta sobre estudo.",
+        "options": [
+          {
+            "labelEn": "How often do you study English?",
+            "correct": true,
+            "feedbackPt": "How often = pergunta frequência."
+          },
+          {
+            "labelEn": "How many you study English?",
+            "correct": false,
+            "feedbackPt": "How often."
+          },
+          {
+            "labelEn": "How often you study English?",
+            "correct": false,
+            "feedbackPt": "Falta do."
+          }
+        ]
+      },
+      {
+        "id": "em02-l04-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I always review vocabulary before bed.",
+        "promptPt": "Alex descreve hábito fixo.",
+        "options": [
+          {
+            "labelEn": "That's a good habit. I sometimes do that.",
+            "correct": true,
+            "feedbackPt": "Resposta natural."
+          },
+          {
+            "labelEn": "I always am review vocabulary.",
+            "correct": false,
+            "feedbackPt": "I always review."
+          },
+          {
+            "labelEn": "That good. I review always vocabulary before.",
+            "correct": false,
+            "feedbackPt": "Posição errada."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em02-l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "always · usually · sometimes · never",
+        "titlePt": "always · usually · sometimes · never",
+        "introPt": "Escala de frequência — do 100% ao 0%.",
+        "examples": [
+          {
+            "en": "I always check my calendar.",
+            "pt": "100%"
+          },
+          {
+            "en": "I usually train in the morning.",
+            "pt": "~80%"
+          },
+          {
+            "en": "I sometimes work from home.",
+            "pt": "~40%"
+          },
+          {
+            "en": "I never skip breakfast.",
+            "pt": "0%"
+          }
+        ]
+      },
+      {
+        "id": "em02-l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Position — before main verb",
+        "titlePt": "Posição — antes do verbo principal",
+        "introPt": "Always/usually/sometimes/never ANTES do verbo principal.",
+        "examples": [
+          {
+            "en": "I always eat breakfast.",
+            "pt": "correto"
+          },
+          {
+            "en": "She usually works late.",
+            "pt": "3ª pessoa"
+          },
+          {
+            "en": "We sometimes travel for work.",
+            "pt": "plural"
+          },
+          {
+            "en": "He never complains.",
+            "pt": "never"
+          }
+        ]
+      },
+      {
+        "id": "em02-l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Position — with to be",
+        "titlePt": "Posição — com to be",
+        "introPt": "Com am/is/are: advérbio DEPOIS do to be.",
+        "examples": [
+          {
+            "en": "I am always tired on Mondays.",
+            "pt": "am + always"
+          },
+          {
+            "en": "She is usually on time.",
+            "pt": "is + usually"
+          },
+          {
+            "en": "They are sometimes late.",
+            "pt": "are + sometimes"
+          },
+          {
+            "en": "He is never angry.",
+            "pt": "is + never"
+          }
+        ]
+      },
+      {
+        "id": "em02-l04-learn-cmp",
+        "type": "comparison",
+        "titleEn": "Verb vs to be position",
+        "titlePt": "Posição com verbo vs to be",
+        "left": {
+          "labelEn": "MAIN VERB · before",
+          "exampleEn": "I always eat. / She usually works.",
+          "notePt": "Advérbio ANTES do verbo principal."
+        },
+        "right": {
+          "labelEn": "TO BE · after",
+          "exampleEn": "I am always tired. / She is usually late.",
+          "notePt": "Advérbio DEPOIS de am/is/are."
+        },
+        "modelEn": "I always eat breakfast. / I am always hungry in the morning.",
+        "modelPt": "Duas posições — memorize os dois padrões."
+      },
+      {
+        "id": "em02-l04-learn-lf",
+        "type": "language_focus",
+        "titleEn": "How often...?",
+        "titlePt": "How often...?",
+        "items": [
+          {
+            "formalEn": "How many times you train?",
+            "naturalEn": "How often do you train?",
+            "notePt": "How often = com que frequência."
+          },
+          {
+            "formalEn": "I train always in morning.",
+            "naturalEn": "I always train in the morning.",
+            "notePt": "Posição do advérbio."
+          }
+        ],
+        "tipPt": "How often + do/does + you/he + verbo base."
+      },
+      {
+        "id": "em02-l04-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I eat always breakfast. / I always am tired.",
+        "rightEn": "I always eat breakfast. / I am always tired.",
+        "explanationPt": "Com verbo normal: always ANTES. Com to be: always DEPOIS de am/is/are."
+      },
+      {
+        "id": "em02-l04-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I always eat breakfast.",
+            "pt": "before verb"
+          },
+          {
+            "en": "I am always tired.",
+            "pt": "after to be"
+          },
+          {
+            "en": "I sometimes work from home.",
+            "pt": "sometimes"
+          },
+          {
+            "en": "I never skip training.",
+            "pt": "never"
+          },
+          {
+            "en": "How often do you train?",
+            "pt": "pergunta"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em02-l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "How often do you train?"
+          },
+          {
+            "en": "I usually train three times a week."
+          },
+          {
+            "en": "Do you ever skip breakfast?"
+          },
+          {
+            "en": "Sometimes I skip it."
+          },
+          {
+            "en": "I never eat fast food."
+          },
+          {
+            "en": "I sometimes eat fast food."
+          },
+          {
+            "en": "How often do you study English?"
+          },
+          {
+            "en": "I always review vocabulary before bed."
+          },
+          {
+            "en": "I am always tired on Mondays."
+          },
+          {
+            "en": "She is usually on time."
+          }
+        ],
+        "dialogueEn": "How often do you train? — I usually train three times a week. — Do you ever skip breakfast? — Sometimes I skip it. — I never eat fast food. — I sometimes eat fast food."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em02-l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can talk about frequency naturally.",
+        "headlinePt": "Você consegue falar de frequência naturalmente.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "How often do you train?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em02-l04-prac-01",
+      "type": "choice",
+      "promptPt": "Posição correta:",
+      "options": [
+        {
+          "labelEn": "I always eat breakfast.",
+          "correct": true,
+          "feedbackPt": "Always antes do verbo."
+        },
+        {
+          "labelEn": "I eat always breakfast.",
+          "correct": false,
+          "feedbackPt": "Posição errada."
+        },
+        {
+          "labelEn": "I always am eat breakfast.",
+          "correct": false,
+          "feedbackPt": "Am eat errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "To be + advérbio:",
+      "templateEn": "I am ___ tired on Mondays.",
+      "blankLabel": "advérbio",
+      "options": [
+        {
+          "labelEn": "always",
+          "correct": true,
+          "feedbackPt": "Am always tired."
+        },
+        {
+          "labelEn": "always am",
+          "correct": false,
+          "feedbackPt": "I am always."
+        },
+        {
+          "labelEn": "always tired am",
+          "correct": false,
+          "feedbackPt": "Ordem errada."
+        }
+      ]
+    },
+    {
+      "id": "em02-l04-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte frequência:",
+      "tokens": [
+        "a week.",
+        "three times",
+        "train",
+        "usually",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "usually",
+        "train",
+        "three times",
+        "a week."
+      ],
+      "feedbackCorrectPt": "I usually train three times a week.",
+      "feedbackWrongPt": "I + usually + verbo + frequência."
+    },
+    {
+      "id": "em02-l04-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: I never eat fast food.",
+      "speaker": "You",
+      "contextEn": "Alex: I never eat fast food.",
+      "options": [
+        {
+          "labelEn": "Really? I sometimes eat fast food.",
+          "correct": true,
+          "feedbackPt": "Sometimes ocasional."
+        },
+        {
+          "labelEn": "Really? I eat sometimes fast food.",
+          "correct": false,
+          "feedbackPt": "Posição errada."
+        },
+        {
+          "labelEn": "Really? I never sometimes eat.",
+          "correct": false,
+          "feedbackPt": "Confuso."
+        }
+      ]
+    },
+    {
+      "id": "em02-l04-prac-05",
+      "type": "choice",
+      "promptPt": "Pergunta frequência:",
+      "options": [
+        {
+          "labelEn": "How often do you train?",
+          "correct": true,
+          "feedbackPt": "How often."
+        },
+        {
+          "labelEn": "How many do you train?",
+          "correct": false,
+          "feedbackPt": "How often/many times."
+        },
+        {
+          "labelEn": "How often you train?",
+          "correct": false,
+          "feedbackPt": "Falta do."
+        }
+      ]
+    },
+    {
+      "id": "em02-l04-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Never posição:",
+      "templateEn": "She ___ complains.",
+      "blankLabel": "advérbio",
+      "options": [
+        {
+          "labelEn": "never",
+          "correct": true,
+          "feedbackPt": "She never complains."
+        },
+        {
+          "labelEn": "complains never",
+          "correct": false,
+          "feedbackPt": "Never antes do verbo."
+        },
+        {
+          "labelEn": "is never",
+          "correct": false,
+          "feedbackPt": "Never complains — verbo principal."
+        }
+      ]
+    },
+    {
+      "id": "em02-l04-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Sometimes:",
+      "speaker": "You",
+      "contextEn": "Alex: Do you ever skip breakfast?",
+      "options": [
+        {
+          "labelEn": "Sometimes I skip it, but I usually eat something.",
+          "correct": true,
+          "feedbackPt": "Sometimes + usually."
+        },
+        {
+          "labelEn": "I sometimes am skip.",
+          "correct": false,
+          "feedbackPt": "Sometimes skip."
+        },
+        {
+          "labelEn": "Sometimes I skipping.",
+          "correct": false,
+          "feedbackPt": "Skip."
+        }
+      ]
+    },
+    {
+      "id": "em02-l04-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte pergunta:",
+      "tokens": [
+        "English?",
+        "study",
+        "you",
+        "often",
+        "do",
+        "How"
+      ],
+      "correctOrder": [
+        "How",
+        "often",
+        "do",
+        "you",
+        "study",
+        "English?"
+      ],
+      "feedbackCorrectPt": "How often do you study English?",
+      "feedbackWrongPt": "How often + do + you + verbo."
+    },
+    {
+      "id": "em02-l04-prac-09",
+      "type": "choice",
+      "promptPt": "3ª pessoa usually:",
+      "options": [
+        {
+          "labelEn": "She usually works late.",
+          "correct": true,
+          "feedbackPt": "She usually works."
+        },
+        {
+          "labelEn": "She usually work late.",
+          "correct": false,
+          "feedbackPt": "Works."
+        },
+        {
+          "labelEn": "She works usually late.",
+          "correct": false,
+          "feedbackPt": "Posição errada."
+        }
+      ]
+    },
+    {
+      "id": "em02-l04-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Escala — 0%:",
+      "templateEn": "I ___ skip training.",
+      "blankLabel": "advérbio",
+      "options": [
+        {
+          "labelEn": "never",
+          "correct": true,
+          "feedbackPt": "Never = 0%."
+        },
+        {
+          "labelEn": "always",
+          "correct": false,
+          "feedbackPt": "Always = 100%."
+        },
+        {
+          "labelEn": "usually",
+          "correct": false,
+          "feedbackPt": "Usually = ~80%."
+        }
+      ]
+    }
+  ]
+}

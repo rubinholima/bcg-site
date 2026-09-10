@@ -1,0 +1,697 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 2,
+  "goalPt": "Falar de tempo livre — In my free time..., hobbies combinados com rotina semanal.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex encontra você depois do expediente e pergunta o que faz no tempo livre.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can talk about free time and hobbies.",
+    "headlinePt": "Você consegue falar de tempo livre e hobbies.",
+    "bodyPt": "",
+    "canDo": [
+      "In my free time...",
+      "after work",
+      "on weekends"
+    ],
+    "production": {
+      "introPt": "Descreva tempo livre, pós-trabalho e fim de semana — hobbies incluídos.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "What do you do in your free time?"
+        },
+        {
+          "speaker": "Alex",
+          "questionEn": "What do you do after work?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "freeTime",
+          "labelPt": "Tempo livre",
+          "prefixEn": "In my free time, I",
+          "placeholderEn": "usually play soccer and read."
+        },
+        {
+          "id": "afterWork",
+          "labelPt": "Depois do trabalho",
+          "prefixEn": "After work, I",
+          "placeholderEn": "usually go to the gym."
+        },
+        {
+          "id": "weekend",
+          "labelPt": "Fim de semana",
+          "prefixEn": "On weekends, I",
+          "placeholderEn": "relax and see friends."
+        },
+        {
+          "id": "ask",
+          "labelPt": "Perguntar a Alex",
+          "prefixEn": "",
+          "placeholderEn": "What do you do after work?"
+        }
+      ],
+      "exampleEn": "In my free time, I play soccer. After work, I go to the gym. On weekends, I see friends."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em02-l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Free time",
+        "titlePt": "Tempo livre",
+        "bodyPt": "Conecte rotina e lazer — In my free time I..., after work, on weekends. Hobbies dentro do contexto de vida real."
+      },
+      {
+        "id": "em02-l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Park bench · After work",
+        "scenarioPt": "Alex encontra você depois do expediente e pergunta o que faz no tempo livre."
+      },
+      {
+        "id": "em02-l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What do you do in your free time?",
+        "promptPt": "Alex pergunta tempo livre — pergunta clássica.",
+        "options": [
+          {
+            "labelEn": "In my free time, I usually play soccer and read.",
+            "correct": true,
+            "feedbackPt": "In my free time + rotina lazer."
+          },
+          {
+            "labelEn": "In my free time I am play soccer.",
+            "correct": false,
+            "feedbackPt": "I play, não am play."
+          },
+          {
+            "labelEn": "In the free time I playing soccer.",
+            "correct": false,
+            "feedbackPt": "I play soccer."
+          }
+        ]
+      },
+      {
+        "id": "em02-l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you have much free time during the week?",
+        "promptPt": "Alex pergunta disponibilidade.",
+        "options": [
+          {
+            "labelEn": "Not really. I usually relax after work.",
+            "correct": true,
+            "feedbackPt": "Honesto e natural."
+          },
+          {
+            "labelEn": "Not really. I am relax after work.",
+            "correct": false,
+            "feedbackPt": "I relax."
+          },
+          {
+            "labelEn": "Not really. I relax always after the work.",
+            "correct": false,
+            "feedbackPt": "Posição always errada."
+          }
+        ]
+      },
+      {
+        "id": "em02-l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I usually go hiking on weekends.",
+        "promptPt": "Alex compartilha hobby.",
+        "options": [
+          {
+            "labelEn": "That sounds great. I sometimes go to the gym.",
+            "correct": true,
+            "feedbackPt": "Resposta + sometimes."
+          },
+          {
+            "labelEn": "That sounds great. I go sometimes gym.",
+            "correct": false,
+            "feedbackPt": "I sometimes go to the gym."
+          },
+          {
+            "labelEn": "That sounds great. I am hiking usually.",
+            "correct": false,
+            "feedbackPt": "Ordem errada."
+          }
+        ]
+      },
+      {
+        "id": "em02-l05-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "What do you do after work?",
+        "promptPt": "Sua pergunta sobre rotina pós-trabalho.",
+        "options": [
+          {
+            "labelEn": "What do you do after work?",
+            "correct": true,
+            "feedbackPt": "Pergunta natural."
+          },
+          {
+            "labelEn": "What you do after work?",
+            "correct": false,
+            "feedbackPt": "Falta do."
+          },
+          {
+            "labelEn": "What do you after work do?",
+            "correct": false,
+            "feedbackPt": "Ordem errada."
+          }
+        ]
+      },
+      {
+        "id": "em02-l05-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I never watch TV — I prefer podcasts.",
+        "promptPt": "Alex contrasta hábitos de mídia.",
+        "options": [
+          {
+            "labelEn": "Interesting. I sometimes watch TV, but I usually listen to music.",
+            "correct": true,
+            "feedbackPt": "Contraste com sometimes/usually."
+          },
+          {
+            "labelEn": "Interesting. I watch never TV.",
+            "correct": false,
+            "feedbackPt": "I never watch TV."
+          },
+          {
+            "labelEn": "Interesting. I am usually listen music.",
+            "correct": false,
+            "feedbackPt": "I usually listen."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em02-l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "In my free time...",
+        "titlePt": "No meu tempo livre...",
+        "introPt": "Frase abertura clássica para hobbies e lazer.",
+        "examples": [
+          {
+            "en": "In my free time, I play guitar.",
+            "pt": "abertura"
+          },
+          {
+            "en": "In my free time, I usually read and cook.",
+            "pt": "duas atividades"
+          },
+          {
+            "en": "What do you do in your free time?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "Not much free time during the week.",
+            "pt": "pouco tempo"
+          }
+        ]
+      },
+      {
+        "id": "em02-l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "after work / on weekends",
+        "titlePt": "depois do trabalho / nos fins de semana",
+        "introPt": "Marcadores de tempo para lazer.",
+        "examples": [
+          {
+            "en": "After work, I usually go to the gym.",
+            "pt": "pós-expediente"
+          },
+          {
+            "en": "On weekends, I relax and see friends.",
+            "pt": "fim de semana"
+          },
+          {
+            "en": "What do you do after work?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "I sometimes cook dinner with friends.",
+            "pt": "social"
+          }
+        ]
+      },
+      {
+        "id": "em02-l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Hobbies + routine together",
+        "titlePt": "Hobbies + rotina juntos",
+        "introPt": "Combine Presente Simples de rotina com hobbies do Módulo 1.",
+        "examples": [
+          {
+            "en": "I work on weekdays. On weekends, I hike.",
+            "pt": "contraste"
+          },
+          {
+            "en": "I'm into photography. In my free time, I take photos.",
+            "pt": "into + free time"
+          },
+          {
+            "en": "I usually train in the morning. Evenings are for family.",
+            "pt": "divisão do dia"
+          },
+          {
+            "en": "I never work on Sundays. I always relax.",
+            "pt": "never + always"
+          }
+        ]
+      },
+      {
+        "id": "em02-l05-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Free time expressions",
+        "titlePt": "Expressões de tempo livre",
+        "items": [
+          {
+            "formalEn": "In the free times I play.",
+            "naturalEn": "In my free time, I play soccer.",
+            "notePt": "Free time singular + my."
+          },
+          {
+            "formalEn": "After the work I relax.",
+            "naturalEn": "After work, I relax.",
+            "notePt": "After work — sem the."
+          }
+        ],
+        "tipPt": "In my free time + vírgula + frase completa soa educado e claro."
+      },
+      {
+        "id": "em02-l05-learn-voc",
+        "type": "vocabulary",
+        "titleEn": "Leisure words",
+        "titlePt": "Vocabulário lazer",
+        "words": [
+          {
+            "en": "free time",
+            "pt": "tempo livre",
+            "exampleEn": "In my free time, I read."
+          },
+          {
+            "en": "after work",
+            "pt": "depois do trabalho",
+            "exampleEn": "After work, I go to the gym."
+          },
+          {
+            "en": "relax",
+            "pt": "relaxar",
+            "exampleEn": "I relax on weekends."
+          },
+          {
+            "en": "hang out",
+            "pt": "sair/encontrar amigos",
+            "exampleEn": "I hang out with friends."
+          }
+        ]
+      },
+      {
+        "id": "em02-l05-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "In the free time I am play soccer. / After the work I relaxing.",
+        "rightEn": "In my free time, I play soccer. / After work, I relax.",
+        "explanationPt": "My free time (possessivo). Verbo simples: I play, I relax — não am play nem relaxing sozinho."
+      },
+      {
+        "id": "em02-l05-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "In my free time, I play soccer.",
+            "pt": "free time"
+          },
+          {
+            "en": "After work, I relax.",
+            "pt": "after work"
+          },
+          {
+            "en": "I usually go to the gym.",
+            "pt": "usually"
+          },
+          {
+            "en": "On weekends, I see friends.",
+            "pt": "weekends"
+          },
+          {
+            "en": "What do you do in your free time?",
+            "pt": "pergunta"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em02-l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What do you do in your free time?"
+          },
+          {
+            "en": "In my free time, I usually play soccer and read."
+          },
+          {
+            "en": "Do you have much free time during the week?"
+          },
+          {
+            "en": "Not really. I usually relax after work."
+          },
+          {
+            "en": "I usually go hiking on weekends."
+          },
+          {
+            "en": "I sometimes go to the gym."
+          },
+          {
+            "en": "What do you do after work?"
+          },
+          {
+            "en": "I never watch TV. I prefer podcasts."
+          },
+          {
+            "en": "After work, I listen to music."
+          },
+          {
+            "en": "On weekends, I see friends and relax."
+          }
+        ],
+        "dialogueEn": "What do you do in your free time? — In my free time, I play soccer and read. — Do you have much free time? — Not really. I relax after work. — I usually go hiking on weekends. — That sounds great!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em02-l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can talk about free time and hobbies.",
+        "headlinePt": "Você consegue falar de tempo livre e hobbies.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "What do you do in your free time?"
+          },
+          {
+            "speaker": "Alex",
+            "questionEn": "What do you do after work?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em02-l05-prac-01",
+      "type": "choice",
+      "promptPt": "Tempo livre — abertura:",
+      "options": [
+        {
+          "labelEn": "In my free time, I play guitar.",
+          "correct": true,
+          "feedbackPt": "In my free time."
+        },
+        {
+          "labelEn": "In the free time I am play guitar.",
+          "correct": false,
+          "feedbackPt": "My free time + I play."
+        },
+        {
+          "labelEn": "In free times I playing guitar.",
+          "correct": false,
+          "feedbackPt": "Incorreto."
+        }
+      ]
+    },
+    {
+      "id": "em02-l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "After work:",
+      "templateEn": "After work, I usually ___ to the gym.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "go",
+          "correct": true,
+          "feedbackPt": "I go to the gym."
+        },
+        {
+          "labelEn": "going",
+          "correct": false,
+          "feedbackPt": "Go base form."
+        },
+        {
+          "labelEn": "am go",
+          "correct": false,
+          "feedbackPt": "I go."
+        }
+      ]
+    },
+    {
+      "id": "em02-l05-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte frase lazer:",
+      "tokens": [
+        "soccer.",
+        "play",
+        "I",
+        "time,",
+        "free",
+        "my",
+        "In"
+      ],
+      "correctOrder": [
+        "In",
+        "my",
+        "free",
+        "time,",
+        "I",
+        "play",
+        "soccer."
+      ],
+      "feedbackCorrectPt": "In my free time, I play soccer.",
+      "feedbackWrongPt": "In my free time + I + verbo."
+    },
+    {
+      "id": "em02-l05-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: What do you do in your free time?",
+      "speaker": "You",
+      "contextEn": "Alex: What do you do in your free time?",
+      "options": [
+        {
+          "labelEn": "In my free time, I usually read and cook.",
+          "correct": true,
+          "feedbackPt": "Resposta completa."
+        },
+        {
+          "labelEn": "In my free time I am read.",
+          "correct": false,
+          "feedbackPt": "I read."
+        },
+        {
+          "labelEn": "I free time read books.",
+          "correct": false,
+          "feedbackPt": "Incorreto."
+        }
+      ]
+    },
+    {
+      "id": "em02-l05-prac-05",
+      "type": "choice",
+      "promptPt": "After work — correto:",
+      "options": [
+        {
+          "labelEn": "After work, I relax.",
+          "correct": true,
+          "feedbackPt": "After work sem the."
+        },
+        {
+          "labelEn": "After the work, I relax.",
+          "correct": false,
+          "feedbackPt": "After work (US)."
+        },
+        {
+          "labelEn": "After work, I am relax.",
+          "correct": false,
+          "feedbackPt": "I relax."
+        }
+      ]
+    },
+    {
+      "id": "em02-l05-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Sometimes + gym:",
+      "templateEn": "I ___ go to the gym on weekdays.",
+      "blankLabel": "advérbio",
+      "options": [
+        {
+          "labelEn": "sometimes",
+          "correct": true,
+          "feedbackPt": "I sometimes go."
+        },
+        {
+          "labelEn": "go sometimes",
+          "correct": false,
+          "feedbackPt": "Posição errada."
+        },
+        {
+          "labelEn": "am sometimes",
+          "correct": false,
+          "feedbackPt": "I sometimes go."
+        }
+      ]
+    },
+    {
+      "id": "em02-l05-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: I usually go hiking on weekends.",
+      "speaker": "You",
+      "contextEn": "Alex: I usually go hiking on weekends.",
+      "options": [
+        {
+          "labelEn": "That sounds great. I sometimes go to the gym.",
+          "correct": true,
+          "feedbackPt": "Resposta natural."
+        },
+        {
+          "labelEn": "That sounds great. I go gym sometimes.",
+          "correct": false,
+          "feedbackPt": "Go to the gym."
+        },
+        {
+          "labelEn": "That sounds great. I am hiking.",
+          "correct": false,
+          "feedbackPt": "Resposta diferente ok mas less complete."
+        }
+      ]
+    },
+    {
+      "id": "em02-l05-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte pergunta:",
+      "tokens": [
+        "work?",
+        "after",
+        "you",
+        "do",
+        "What"
+      ],
+      "correctOrder": [
+        "What",
+        "do",
+        "you",
+        "do",
+        "after",
+        "work?"
+      ],
+      "feedbackCorrectPt": "What do you do after work?",
+      "feedbackWrongPt": "What do you do after work?"
+    },
+    {
+      "id": "em02-l05-prac-09",
+      "type": "choice",
+      "promptPt": "Integração hobby + rotina:",
+      "options": [
+        {
+          "labelEn": "I work on weekdays. On weekends, I hike.",
+          "correct": true,
+          "feedbackPt": "Rotina + lazer."
+        },
+        {
+          "labelEn": "I am work weekdays. Weekends hiking.",
+          "correct": false,
+          "feedbackPt": "Incompleto."
+        },
+        {
+          "labelEn": "I work and in free time always hiking I.",
+          "correct": false,
+          "feedbackPt": "Ordem errada."
+        }
+      ]
+    },
+    {
+      "id": "em02-l05-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Never + TV:",
+      "templateEn": "I never ___ TV. I prefer podcasts.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "watch",
+          "correct": true,
+          "feedbackPt": "I never watch TV."
+        },
+        {
+          "labelEn": "watches",
+          "correct": false,
+          "feedbackPt": "I watch."
+        },
+        {
+          "labelEn": "watching",
+          "correct": false,
+          "feedbackPt": "Watch base."
+        }
+      ]
+    }
+  ]
+}

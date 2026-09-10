@@ -1,0 +1,688 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 1,
+  "goalPt": "Descrever personalidade com friendly, outgoing, shy e He seems... — impressões naturais sobre pessoas.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex apresenta colegas novos. Vocês comentam personalidade de forma educada e natural.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can describe personality naturally.",
+    "headlinePt": "Você consegue descrever personalidade naturalmente.",
+    "bodyPt": "",
+    "canDo": [
+      "friendly / outgoing / shy",
+      "He seems...",
+      "What's she like?"
+    ],
+    "production": {
+      "introPt": "Descreva colegas e a si mesmo — impressões educadas com seem e adjetivos.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "What's Maria like?"
+        },
+        {
+          "speaker": "Alex",
+          "questionEn": "How would you describe yourself?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "maria",
+          "labelPt": "Sobre Maria",
+          "prefixEn": "She seems",
+          "placeholderEn": "really friendly."
+        },
+        {
+          "id": "tom",
+          "labelPt": "Sobre Tom",
+          "prefixEn": "He's",
+          "placeholderEn": "very outgoing."
+        },
+        {
+          "id": "self",
+          "labelPt": "Sobre você",
+          "prefixEn": "I'm",
+          "placeholderEn": "friendly, but shy at first."
+        },
+        {
+          "id": "manager",
+          "labelPt": "Sobre o gerente",
+          "prefixEn": "He seems",
+          "placeholderEn": "strict but fair."
+        }
+      ],
+      "exampleEn": "She seems friendly. He's outgoing. I'm friendly but shy at first. He seems professional."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em01-l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Personality",
+        "titlePt": "Personalidade",
+        "bodyPt": "Além de hobbies, você descreve como as pessoas são — friendly, outgoing, shy. He seems... permite dar impressões sem ser rude."
+      },
+      {
+        "id": "em01-l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team event · New colleagues",
+        "scenarioPt": "Alex apresenta colegas novos. Vocês comentam personalidade de forma educada e natural."
+      },
+      {
+        "id": "em01-l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What do you think of Maria?",
+        "promptPt": "Alex pede impressão sobre colega.",
+        "options": [
+          {
+            "labelEn": "She seems really friendly.",
+            "correct": true,
+            "feedbackPt": "Seems + adjetivo — impressão educada."
+          },
+          {
+            "labelEn": "She is seem friendly.",
+            "correct": false,
+            "feedbackPt": "She seems, não is seem."
+          },
+          {
+            "labelEn": "She friendly seems.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em01-l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "And Tom? He talks to everyone at parties.",
+        "promptPt": "Alex descreve comportamento de Tom.",
+        "options": [
+          {
+            "labelEn": "He's very outgoing.",
+            "correct": true,
+            "feedbackPt": "Outgoing = extrovertido, sociável."
+          },
+          {
+            "labelEn": "He's very outgoingly.",
+            "correct": false,
+            "feedbackPt": "Outgoing é adjetivo, não -ly."
+          },
+          {
+            "labelEn": "He outgoing is.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em01-l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I heard Lisa is pretty quiet in meetings.",
+        "promptPt": "Alex fala de Lisa.",
+        "options": [
+          {
+            "labelEn": "Yeah, she seems a bit shy.",
+            "correct": true,
+            "feedbackPt": "Shy = tímida; seems suaviza."
+          },
+          {
+            "labelEn": "Yeah, she seems shyly.",
+            "correct": false,
+            "feedbackPt": "Shy, não shyly (adjetivo)."
+          },
+          {
+            "labelEn": "Yeah, she is shyness.",
+            "correct": false,
+            "feedbackPt": "Shyness é substantivo."
+          }
+        ]
+      },
+      {
+        "id": "em01-l05-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "How would you describe yourself?",
+        "promptPt": "Alex pergunta sobre sua personalidade.",
+        "options": [
+          {
+            "labelEn": "I'm friendly, but sometimes I'm shy at first.",
+            "correct": true,
+            "feedbackPt": "Resposta honesta com conectores."
+          },
+          {
+            "labelEn": "I am personality friendly.",
+            "correct": false,
+            "feedbackPt": "Forma incorreta."
+          },
+          {
+            "labelEn": "I seem I am friendly.",
+            "correct": false,
+            "feedbackPt": "Redundante e errado."
+          }
+        ]
+      },
+      {
+        "id": "em01-l05-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Our manager seems strict but fair.",
+        "promptPt": "Alex descreve o gerente.",
+        "options": [
+          {
+            "labelEn": "Yeah, he seems professional.",
+            "correct": true,
+            "feedbackPt": "Seems + adjetivo profissional."
+          },
+          {
+            "labelEn": "Yeah, he seem professional.",
+            "correct": false,
+            "feedbackPt": "He seems — terceira pessoa."
+          },
+          {
+            "labelEn": "Yeah, he is seem strict.",
+            "correct": false,
+            "feedbackPt": "Is seem incorreto."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em01-l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "friendly / outgoing / shy",
+        "titlePt": "friendly / outgoing / shy",
+        "introPt": "Adjetivos comuns para personalidade — use BE (is/are) ou seem.",
+        "examples": [
+          {
+            "en": "She's very friendly.",
+            "pt": "simpática"
+          },
+          {
+            "en": "He's outgoing and fun.",
+            "pt": "extrovertido"
+          },
+          {
+            "en": "I'm a bit shy at first.",
+            "pt": "tímido no início"
+          },
+          {
+            "en": "Are you outgoing?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em01-l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "He seems...",
+        "titlePt": "Ele parece...",
+        "introPt": "Seem = impressão, não fato absoluto — mais educado que He is... quando você acabou de conhecer.",
+        "examples": [
+          {
+            "en": "He seems nice.",
+            "pt": "parece legal"
+          },
+          {
+            "en": "She seems really smart.",
+            "pt": "parece inteligente"
+          },
+          {
+            "en": "They seem friendly.",
+            "pt": "parecem simpáticos"
+          },
+          {
+            "en": "Does he seem shy?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em01-l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Personality questions",
+        "titlePt": "Perguntas sobre personalidade",
+        "introPt": "What is he/she like? = como é a pessoa (personalidade).",
+        "examples": [
+          {
+            "en": "What's Maria like?",
+            "pt": "como é a Maria?"
+          },
+          {
+            "en": "What's he like at work?",
+            "pt": "no trabalho"
+          },
+          {
+            "en": "She's calm and organized.",
+            "pt": "resposta"
+          },
+          {
+            "en": "How would you describe yourself?",
+            "pt": "autodescrição"
+          }
+        ]
+      },
+      {
+        "id": "em01-l05-learn-lf",
+        "type": "language_focus",
+        "titleEn": "seem vs be",
+        "titlePt": "seem vs be",
+        "items": [
+          {
+            "formalEn": "He is shy. (first meeting)",
+            "naturalEn": "He seems shy.",
+            "notePt": "Seem suaviza — você não conhece bem a pessoa."
+          },
+          {
+            "formalEn": "She is outgoing person.",
+            "naturalEn": "She's outgoing.",
+            "notePt": "Adjetivo direto — sem person redundante."
+          }
+        ],
+        "tipPt": "Em impressões iniciais, seems soa mais natural e menos definitivo."
+      },
+      {
+        "id": "em01-l05-learn-voc",
+        "type": "vocabulary",
+        "titleEn": "More personality words",
+        "titlePt": "Mais adjetivos",
+        "words": [
+          {
+            "en": "calm",
+            "pt": "calmo(a)",
+            "exampleEn": "She's calm under pressure."
+          },
+          {
+            "en": "organized",
+            "pt": "organizado(a)",
+            "exampleEn": "He's very organized."
+          },
+          {
+            "en": "fun",
+            "pt": "divertido(a)",
+            "exampleEn": "They're a lot of fun."
+          },
+          {
+            "en": "strict",
+            "pt": "rigoroso(a)",
+            "exampleEn": "He seems strict but fair."
+          }
+        ]
+      },
+      {
+        "id": "em01-l05-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "He is very friend. / She seems shyly.",
+        "rightEn": "He is very friendly. / She seems shy.",
+        "explanationPt": "Friendly é adjetivo (não friend = amigo). Shy é adjetivo — não shyly após seem."
+      },
+      {
+        "id": "em01-l05-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "She seems friendly.",
+            "pt": "impressão"
+          },
+          {
+            "en": "He's outgoing.",
+            "pt": "extrovertido"
+          },
+          {
+            "en": "I'm shy at first.",
+            "pt": "tímido"
+          },
+          {
+            "en": "What's she like?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "He seems professional.",
+            "pt": "seem + adjetivo"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em01-l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What's Maria like?"
+          },
+          {
+            "en": "She seems really friendly."
+          },
+          {
+            "en": "What about Tom?"
+          },
+          {
+            "en": "He's very outgoing."
+          },
+          {
+            "en": "Lisa seems a bit shy."
+          },
+          {
+            "en": "How would you describe yourself?"
+          },
+          {
+            "en": "I'm friendly, but shy at first."
+          },
+          {
+            "en": "Our manager seems strict but fair."
+          },
+          {
+            "en": "Yeah, he seems professional."
+          },
+          {
+            "en": "They seem like a great team."
+          }
+        ],
+        "dialogueEn": "What's Maria like? — She seems really friendly. — What about Tom? — He's very outgoing. — Lisa seems a bit shy. — How would you describe yourself? — I'm friendly, but shy at first."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em01-l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can describe personality naturally.",
+        "headlinePt": "Você consegue descrever personalidade naturalmente.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "What's Maria like?"
+          },
+          {
+            "speaker": "Alex",
+            "questionEn": "How would you describe yourself?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em01-l05-prac-01",
+      "type": "choice",
+      "promptPt": "Impressão educada:",
+      "options": [
+        {
+          "labelEn": "She seems friendly.",
+          "correct": true,
+          "feedbackPt": "Seem + adjetivo."
+        },
+        {
+          "labelEn": "She is seem friendly.",
+          "correct": false,
+          "feedbackPt": "Is seem errado."
+        },
+        {
+          "labelEn": "She friendly.",
+          "correct": false,
+          "feedbackPt": "Falta verbo."
+        }
+      ]
+    },
+    {
+      "id": "em01-l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Extrovertido:",
+      "templateEn": "He's very ___.",
+      "blankLabel": "adjetivo",
+      "options": [
+        {
+          "labelEn": "outgoing",
+          "correct": true,
+          "feedbackPt": "Outgoing."
+        },
+        {
+          "labelEn": "outgoingly",
+          "correct": false,
+          "feedbackPt": "Adjetivo, não advérbio."
+        },
+        {
+          "labelEn": "outgo",
+          "correct": false,
+          "feedbackPt": "Não existe."
+        }
+      ]
+    },
+    {
+      "id": "em01-l05-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: What's Tom like?",
+      "speaker": "You",
+      "contextEn": "Alex: What's Tom like?",
+      "options": [
+        {
+          "labelEn": "He's very outgoing.",
+          "correct": true,
+          "feedbackPt": "Resposta direta."
+        },
+        {
+          "labelEn": "He is very friend.",
+          "correct": false,
+          "feedbackPt": "Friendly, não friend."
+        },
+        {
+          "labelEn": "He outgoing is.",
+          "correct": false,
+          "feedbackPt": "Ordem errada."
+        }
+      ]
+    },
+    {
+      "id": "em01-l05-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte impressão:",
+      "tokens": [
+        "shy.",
+        "seems",
+        "She",
+        "a bit"
+      ],
+      "correctOrder": [
+        "She",
+        "seems",
+        "a bit",
+        "shy."
+      ],
+      "feedbackCorrectPt": "She seems a bit shy.",
+      "feedbackWrongPt": "She + seems + a bit + shy."
+    },
+    {
+      "id": "em01-l05-prac-05",
+      "type": "choice",
+      "promptPt": "Pergunta sobre personalidade:",
+      "options": [
+        {
+          "labelEn": "What's she like?",
+          "correct": true,
+          "feedbackPt": "Like = personalidade/comportamento."
+        },
+        {
+          "labelEn": "What does she like?",
+          "correct": false,
+          "feedbackPt": "Like = gostos/hobbies."
+        },
+        {
+          "labelEn": "How she is?",
+          "correct": false,
+          "feedbackPt": "Falta auxiliar."
+        }
+      ]
+    },
+    {
+      "id": "em01-l05-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Terceira pessoa seem:",
+      "templateEn": "He ___ professional.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "seems",
+          "correct": true,
+          "feedbackPt": "He seems."
+        },
+        {
+          "labelEn": "seem",
+          "correct": false,
+          "feedbackPt": "He + seems."
+        },
+        {
+          "labelEn": "is seem",
+          "correct": false,
+          "feedbackPt": "Is seem errado."
+        }
+      ]
+    },
+    {
+      "id": "em01-l05-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Autodescrição:",
+      "speaker": "You",
+      "contextEn": "Alex: How would you describe yourself?",
+      "options": [
+        {
+          "labelEn": "I'm friendly, but shy at first.",
+          "correct": true,
+          "feedbackPt": "Honesto e natural."
+        },
+        {
+          "labelEn": "I am personality outgoing.",
+          "correct": false,
+          "feedbackPt": "Incorreto."
+        },
+        {
+          "labelEn": "I seem I friendly.",
+          "correct": false,
+          "feedbackPt": "Redundante."
+        }
+      ]
+    },
+    {
+      "id": "em01-l05-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte pergunta:",
+      "tokens": [
+        "like?",
+        "she",
+        "is",
+        "What"
+      ],
+      "correctOrder": [
+        "What",
+        "is",
+        "she",
+        "like?"
+      ],
+      "feedbackCorrectPt": "What's she like?",
+      "feedbackWrongPt": "What + is + she + like?"
+    },
+    {
+      "id": "em01-l05-prac-09",
+      "type": "choice",
+      "promptPt": "Qual adjetivo descreve quem fala com todos?",
+      "options": [
+        {
+          "labelEn": "outgoing",
+          "correct": true,
+          "feedbackPt": "Sociável, extrovertido."
+        },
+        {
+          "labelEn": "shy",
+          "correct": false,
+          "feedbackPt": "Tímido — oposto."
+        },
+        {
+          "labelEn": "strict",
+          "correct": false,
+          "feedbackPt": "Rigoroso — outro sentido."
+        }
+      ]
+    },
+    {
+      "id": "em01-l05-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Corrija:",
+      "templateEn": "He is very ___. (simpático — adjetivo)",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "friendly",
+          "correct": true,
+          "feedbackPt": "Friendly = simpático."
+        },
+        {
+          "labelEn": "friend",
+          "correct": false,
+          "feedbackPt": "Friend = substantivo amigo."
+        },
+        {
+          "labelEn": "friendship",
+          "correct": false,
+          "feedbackPt": "Friendship = amizade."
+        }
+      ]
+    }
+  ]
+}

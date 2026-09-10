@@ -1,0 +1,740 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 2,
+  "goalPt": "Desafio Módulo 2 — integrar Presente Simples expandido, terceira pessoa, rotina semanal, frequência, tempo livre e rotinas de outros.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex quer entender sua vida completa — rotina diária, semana, lazer e como funciona o time.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Full Module 2 — your life and routines.",
+    "headlinePt": "Módulo 2 completo — sua vida e rotinas.",
+    "bodyPt": "",
+    "canDo": [
+      "I usually...",
+      "He/she works",
+      "On Mondays...",
+      "How often...",
+      "In my free time...",
+      "Does she...?"
+    ],
+    "production": {
+      "introPt": "Monte visão completa da sua vida e rotinas do time — use apenas Módulo 2.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "Walk me through your life — routine, week, free time, and the team."
+        }
+      ],
+      "fields": [
+        {
+          "id": "morning",
+          "labelPt": "Rotina matinal",
+          "prefixEn": "I usually",
+          "placeholderEn": "wake up at 6:30 and always have coffee."
+        },
+        {
+          "id": "week",
+          "labelPt": "Semana",
+          "prefixEn": "On Mondays I",
+          "placeholderEn": "have meetings. On weekends I relax."
+        },
+        {
+          "id": "frequency",
+          "labelPt": "Frequência",
+          "prefixEn": "I usually",
+          "placeholderEn": "train three times a week."
+        },
+        {
+          "id": "freeTime",
+          "labelPt": "Tempo livre",
+          "prefixEn": "In my free time, I",
+          "placeholderEn": "play soccer and read."
+        },
+        {
+          "id": "team",
+          "labelPt": "Colega (he/she) + pergunta",
+          "prefixEn": "",
+          "placeholderEn": "Marco works in marketing. Does Sarah work from home on Fridays?"
+        }
+      ],
+      "exampleEn": "I usually wake up at 6:30. On Mondays I have meetings. I train three times a week. In my free time, I play soccer. Marco works in marketing. Does Sarah work from home?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em02-l07-ctx-01",
+        "type": "intro",
+        "titleEn": "My Life Challenge",
+        "titlePt": "Desafio — Minha vida",
+        "bodyPt": "Junte tudo do Módulo 2 — sua rotina, hábitos, semana, tempo livre e rotinas de colegas — numa conversa completa com Alex."
+      },
+      {
+        "id": "em02-l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team coffee chat · Full life overview",
+        "scenarioPt": "Alex quer entender sua vida completa — rotina diária, semana, lazer e como funciona o time."
+      },
+      {
+        "id": "em02-l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What time do you usually wake up?",
+        "promptPt": "Passo 1 — rotina matinal.",
+        "options": [
+          {
+            "labelEn": "I usually wake up at 6:30.",
+            "correct": true,
+            "feedbackPt": "Usually + rotina."
+          },
+          {
+            "labelEn": "I wake up usually at 6:30.",
+            "correct": false,
+            "feedbackPt": "Posição usually."
+          },
+          {
+            "labelEn": "I am usually wake up.",
+            "correct": false,
+            "feedbackPt": "I usually wake up."
+          }
+        ]
+      },
+      {
+        "id": "em02-l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Where does Marco work?",
+        "promptPt": "Passo 2 — terceira pessoa.",
+        "options": [
+          {
+            "labelEn": "He works in marketing.",
+            "correct": true,
+            "feedbackPt": "He works."
+          },
+          {
+            "labelEn": "He work in marketing.",
+            "correct": false,
+            "feedbackPt": "He works."
+          },
+          {
+            "labelEn": "He is work in marketing.",
+            "correct": false,
+            "feedbackPt": "I work."
+          }
+        ]
+      },
+      {
+        "id": "em02-l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What do you do on Mondays?",
+        "promptPt": "Passo 3 — rotina semanal.",
+        "options": [
+          {
+            "labelEn": "On Mondays I usually have team meetings.",
+            "correct": true,
+            "feedbackPt": "On Mondays."
+          },
+          {
+            "labelEn": "In Mondays I have meetings.",
+            "correct": false,
+            "feedbackPt": "On Mondays."
+          },
+          {
+            "labelEn": "On Monday I am have meetings.",
+            "correct": false,
+            "feedbackPt": "I have."
+          }
+        ]
+      },
+      {
+        "id": "em02-l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "How often do you train?",
+        "promptPt": "Passo 4 — frequência.",
+        "options": [
+          {
+            "labelEn": "I usually train three times a week.",
+            "correct": true,
+            "feedbackPt": "Usually + frequência."
+          },
+          {
+            "labelEn": "I train usually three times.",
+            "correct": false,
+            "feedbackPt": "Posição."
+          },
+          {
+            "labelEn": "I am usually train.",
+            "correct": false,
+            "feedbackPt": "I usually train."
+          }
+        ]
+      },
+      {
+        "id": "em02-l07-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What do you do in your free time?",
+        "promptPt": "Passo 5 — tempo livre.",
+        "options": [
+          {
+            "labelEn": "In my free time, I play soccer and read.",
+            "correct": true,
+            "feedbackPt": "In my free time."
+          },
+          {
+            "labelEn": "In the free time I am play.",
+            "correct": false,
+            "feedbackPt": "I play."
+          },
+          {
+            "labelEn": "Free time I playing soccer.",
+            "correct": false,
+            "feedbackPt": "Incorreto."
+          }
+        ]
+      },
+      {
+        "id": "em02-l07-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Does Sarah work from home on Fridays?",
+        "promptPt": "Passo 6 — rotina de outros.",
+        "options": [
+          {
+            "labelEn": "Yes, she sometimes works from home on Fridays.",
+            "correct": true,
+            "feedbackPt": "She works + sometimes."
+          },
+          {
+            "labelEn": "Yes, she sometimes work from home.",
+            "correct": false,
+            "feedbackPt": "She works."
+          },
+          {
+            "labelEn": "Yes, she does works from home.",
+            "correct": false,
+            "feedbackPt": "Does works errado."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em02-l07-learn-cmp",
+        "type": "comparison",
+        "titleEn": "My life — full picture",
+        "titlePt": "Minha vida — visão completa",
+        "left": {
+          "labelEn": "MY ROUTINE · I",
+          "exampleEn": "I usually... / On Mondays... / In my free time...",
+          "notePt": "Sua vida — primeira pessoa."
+        },
+        "right": {
+          "labelEn": "THE TEAM · he/she",
+          "exampleEn": "He works... / Does she...? / She usually...",
+          "notePt": "Colegas — terceira pessoa + does."
+        },
+        "modelEn": "My morning → My week → My free time → Team schedules",
+        "modelPt": "Conversa natural cobre você e o time."
+      },
+      {
+        "id": "em02-l07-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Challenge reminders",
+        "titlePt": "Lembretes do desafio",
+        "items": [
+          {
+            "formalEn": "He work. / I eat always breakfast.",
+            "naturalEn": "He works. / I always eat breakfast.",
+            "notePt": "3ª pessoa -s + posição advérbio."
+          },
+          {
+            "formalEn": "In Mondays / Does he works?",
+            "naturalEn": "On Mondays / Does he work?",
+            "notePt": "On + dia. Does + base."
+          }
+        ],
+        "tipPt": "Alterne I (sua vida) com he/she (colegas) — conversa real sobre rotina de time."
+      },
+      {
+        "id": "em02-l07-learn-rev-01",
+        "type": "review",
+        "titleEn": "Step 1 — Daily habits",
+        "titlePt": "Passo 1 — Hábitos diários",
+        "items": [
+          {
+            "en": "I usually wake up at 6.",
+            "pt": "usually"
+          },
+          {
+            "en": "I always have coffee first.",
+            "pt": "always"
+          },
+          {
+            "en": "I am always tired on Mondays.",
+            "pt": "to be + always"
+          }
+        ]
+      },
+      {
+        "id": "em02-l07-learn-rev-02",
+        "type": "review",
+        "titleEn": "Step 2 — Third person",
+        "titlePt": "Passo 2 — Terceira pessoa",
+        "items": [
+          {
+            "en": "He works in marketing.",
+            "pt": "he + -s"
+          },
+          {
+            "en": "She trains every morning.",
+            "pt": "she + -s"
+          },
+          {
+            "en": "Does he work here?",
+            "pt": "does + base"
+          }
+        ]
+      },
+      {
+        "id": "em02-l07-learn-rev-03",
+        "type": "review",
+        "titleEn": "Step 3 — Weekly & frequency",
+        "titlePt": "Passo 3 — Semana e frequência",
+        "items": [
+          {
+            "en": "On Mondays I have meetings.",
+            "pt": "on + dia"
+          },
+          {
+            "en": "I relax on weekends.",
+            "pt": "weekend"
+          },
+          {
+            "en": "I sometimes work from home.",
+            "pt": "sometimes"
+          },
+          {
+            "en": "I never skip breakfast.",
+            "pt": "never"
+          }
+        ]
+      },
+      {
+        "id": "em02-l07-learn-rev-04",
+        "type": "review",
+        "titleEn": "Step 4 — Free time & others",
+        "titlePt": "Passo 4 — Tempo livre e outros",
+        "items": [
+          {
+            "en": "In my free time, I play soccer.",
+            "pt": "free time"
+          },
+          {
+            "en": "After work, I relax.",
+            "pt": "after work"
+          },
+          {
+            "en": "What time does she start?",
+            "pt": "pergunta horário"
+          },
+          {
+            "en": "Does he train on weekends?",
+            "pt": "pergunta yes/no"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em02-l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What time do you usually wake up?"
+          },
+          {
+            "en": "I usually wake up at 6:30."
+          },
+          {
+            "en": "Where does Marco work?"
+          },
+          {
+            "en": "He works in marketing."
+          },
+          {
+            "en": "What do you do on Mondays?"
+          },
+          {
+            "en": "On Mondays I have team meetings."
+          },
+          {
+            "en": "How often do you train?"
+          },
+          {
+            "en": "I usually train three times a week."
+          },
+          {
+            "en": "What do you do in your free time?"
+          },
+          {
+            "en": "In my free time, I play soccer."
+          },
+          {
+            "en": "Does Sarah work from home on Fridays?"
+          },
+          {
+            "en": "Yes, she sometimes works from home."
+          }
+        ],
+        "dialogueEn": "What time do you usually wake up? — At 6:30. — Where does Marco work? — He works in marketing. — What do you do on Mondays? — Team meetings. — How often do you train? — Three times a week. — Free time? — I play soccer. — Does Sarah work from home? — Yes, sometimes on Fridays."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em02-l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Full Module 2 — your life and routines.",
+        "headlinePt": "Módulo 2 completo — sua vida e rotinas.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Walk me through your life — routine, week, free time, and the team."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em02-l07-prac-01",
+      "type": "choice",
+      "promptPt": "Passo 1 — usually wake up:",
+      "options": [
+        {
+          "labelEn": "I usually wake up at 6:30.",
+          "correct": true,
+          "feedbackPt": "Correto."
+        },
+        {
+          "labelEn": "I wake up usually at 6:30.",
+          "correct": false,
+          "feedbackPt": "Posição."
+        },
+        {
+          "labelEn": "I am usually wake up.",
+          "correct": false,
+          "feedbackPt": "Errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l07-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Passo 2 — Marco:",
+      "speaker": "You",
+      "contextEn": "Alex: Where does Marco work?",
+      "options": [
+        {
+          "labelEn": "He works in marketing.",
+          "correct": true,
+          "feedbackPt": "He works."
+        },
+        {
+          "labelEn": "He work in marketing.",
+          "correct": false,
+          "feedbackPt": "He works."
+        },
+        {
+          "labelEn": "He is work in marketing.",
+          "correct": false,
+          "feedbackPt": "Errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l07-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Passo 3 — segunda:",
+      "templateEn": "___ Mondays I have team meetings.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "On",
+          "correct": true,
+          "feedbackPt": "On Mondays."
+        },
+        {
+          "labelEn": "In",
+          "correct": false,
+          "feedbackPt": "On."
+        },
+        {
+          "labelEn": "At",
+          "correct": false,
+          "feedbackPt": "On."
+        }
+      ]
+    },
+    {
+      "id": "em02-l07-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Passo 4 — frequência:",
+      "speaker": "You",
+      "contextEn": "Alex: How often do you train?",
+      "options": [
+        {
+          "labelEn": "I usually train three times a week.",
+          "correct": true,
+          "feedbackPt": "Usually + frequência."
+        },
+        {
+          "labelEn": "I train usually three times.",
+          "correct": false,
+          "feedbackPt": "Posição."
+        },
+        {
+          "labelEn": "I am usually train.",
+          "correct": false,
+          "feedbackPt": "Errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l07-prac-05",
+      "type": "reorder",
+      "promptPt": "Passo 5 — free time:",
+      "tokens": [
+        "soccer.",
+        "play",
+        "I",
+        "time,",
+        "free",
+        "my",
+        "In"
+      ],
+      "correctOrder": [
+        "In",
+        "my",
+        "free",
+        "time,",
+        "I",
+        "play",
+        "soccer."
+      ],
+      "feedbackCorrectPt": "In my free time, I play soccer.",
+      "feedbackWrongPt": "In my free time + I + verbo."
+    },
+    {
+      "id": "em02-l07-prac-06",
+      "type": "choice",
+      "promptPt": "Passo 6 — Sarah:",
+      "options": [
+        {
+          "labelEn": "Yes, she sometimes works from home.",
+          "correct": true,
+          "feedbackPt": "She works."
+        },
+        {
+          "labelEn": "Yes, she sometimes work from home.",
+          "correct": false,
+          "feedbackPt": "She works."
+        },
+        {
+          "labelEn": "Yes, she does works from home.",
+          "correct": false,
+          "feedbackPt": "Does works errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l07-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Always posição:",
+      "templateEn": "I ___ have coffee first.",
+      "blankLabel": "advérbio",
+      "options": [
+        {
+          "labelEn": "always",
+          "correct": true,
+          "feedbackPt": "I always have."
+        },
+        {
+          "labelEn": "have always",
+          "correct": false,
+          "feedbackPt": "Posição."
+        },
+        {
+          "labelEn": "am always",
+          "correct": false,
+          "feedbackPt": "I always have."
+        }
+      ]
+    },
+    {
+      "id": "em02-l07-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Pergunta does:",
+      "speaker": "You",
+      "contextEn": "Ask about Tom training.",
+      "options": [
+        {
+          "labelEn": "Does Tom train on weekends?",
+          "correct": true,
+          "feedbackPt": "Does he train."
+        },
+        {
+          "labelEn": "Do Tom train on weekends?",
+          "correct": false,
+          "feedbackPt": "Does Tom."
+        },
+        {
+          "labelEn": "Does Tom trains on weekends?",
+          "correct": false,
+          "feedbackPt": "Does + train."
+        }
+      ]
+    },
+    {
+      "id": "em02-l07-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte: she starts",
+      "tokens": [
+        "9 a.m.",
+        "at",
+        "starts",
+        "She"
+      ],
+      "correctOrder": [
+        "She",
+        "starts",
+        "at",
+        "9 a.m."
+      ],
+      "feedbackCorrectPt": "She starts at 9 a.m.",
+      "feedbackWrongPt": "She + starts + at + time."
+    },
+    {
+      "id": "em02-l07-prac-10",
+      "type": "choice",
+      "promptPt": "Integração I vs He:",
+      "options": [
+        {
+          "labelEn": "I work every day. He works in marketing.",
+          "correct": true,
+          "feedbackPt": "I base, he -s."
+        },
+        {
+          "labelEn": "I works every day. He work in marketing.",
+          "correct": false,
+          "feedbackPt": "Ambos errados."
+        },
+        {
+          "labelEn": "I work. He work.",
+          "correct": false,
+          "feedbackPt": "He works."
+        }
+      ]
+    },
+    {
+      "id": "em02-l07-prac-11",
+      "type": "fill_blank",
+      "promptPt": "To be + always:",
+      "templateEn": "I am ___ tired on Mondays.",
+      "blankLabel": "advérbio",
+      "options": [
+        {
+          "labelEn": "always",
+          "correct": true,
+          "feedbackPt": "Am always tired."
+        },
+        {
+          "labelEn": "always am",
+          "correct": false,
+          "feedbackPt": "Ordem."
+        },
+        {
+          "labelEn": "never am",
+          "correct": false,
+          "feedbackPt": "Am never tired — possível mas less common here."
+        }
+      ]
+    },
+    {
+      "id": "em02-l07-prac-12",
+      "type": "dialogue_complete",
+      "promptPt": "Encerramento:",
+      "speaker": "You",
+      "contextEn": "Alex: Great talking about your routine!",
+      "options": [
+        {
+          "labelEn": "You too! Have a good week.",
+          "correct": true,
+          "feedbackPt": "Encerramento."
+        },
+        {
+          "labelEn": "What time does she start?",
+          "correct": false,
+          "feedbackPt": "Reabre."
+        },
+        {
+          "labelEn": "I am usually wake up.",
+          "correct": false,
+          "feedbackPt": "Errado."
+        }
+      ]
+    }
+  ]
+}

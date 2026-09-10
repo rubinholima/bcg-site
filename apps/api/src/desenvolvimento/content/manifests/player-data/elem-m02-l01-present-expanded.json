@@ -1,0 +1,690 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 2,
+  "goalPt": "Expandir o Presente Simples — I usually..., always e rotinas com mais naturalidade.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex pergunta sobre sua rotina matinal e hábitos diários com usually e always.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can talk about daily routines with usually and always.",
+    "headlinePt": "Você consegue falar de rotina com usually e always.",
+    "bodyPt": "",
+    "canDo": [
+      "I usually...",
+      "I always...",
+      "What do you usually...?"
+    ],
+    "production": {
+      "introPt": "Descreva sua rotina matinal e hábitos fixos com usually e always.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "What time do you usually wake up?"
+        },
+        {
+          "speaker": "Alex",
+          "questionEn": "Do you always have coffee first?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "wake",
+          "labelPt": "Acordar (usually)",
+          "prefixEn": "I usually wake up at",
+          "placeholderEn": "6:30."
+        },
+        {
+          "id": "coffee",
+          "labelPt": "Café (always)",
+          "prefixEn": "I always",
+          "placeholderEn": "have coffee first."
+        },
+        {
+          "id": "commute",
+          "labelPt": "Deslocamento (usually)",
+          "prefixEn": "I usually",
+          "placeholderEn": "take the train to work."
+        },
+        {
+          "id": "ask",
+          "labelPt": "Perguntar a Alex",
+          "prefixEn": "",
+          "placeholderEn": "Do you always eat breakfast?"
+        }
+      ],
+      "exampleEn": "I usually wake up at 6:30. I always have coffee first. I usually take the train. Do you always eat breakfast?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em02-l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Simple Present — expanded",
+        "titlePt": "Presente Simples — expandido",
+        "bodyPt": "Você já usa I work every day. Agora expande com usually, always e frases mais completas sobre rotina diária."
+      },
+      {
+        "id": "em02-l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Morning coffee · Routine chat",
+        "scenarioPt": "Alex pergunta sobre sua rotina matinal e hábitos diários com usually e always."
+      },
+      {
+        "id": "em02-l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What time do you usually wake up?",
+        "promptPt": "Alex pergunta horário habitual com usually.",
+        "options": [
+          {
+            "labelEn": "I usually wake up at 6:30.",
+            "correct": true,
+            "feedbackPt": "Usually antes do verbo principal."
+          },
+          {
+            "labelEn": "I wake up usually at 6:30.",
+            "correct": false,
+            "feedbackPt": "Usually antes do verbo (exceto verbo to be)."
+          },
+          {
+            "labelEn": "I am usually wake up at 6:30.",
+            "correct": false,
+            "feedbackPt": "Am wake incorreto."
+          }
+        ]
+      },
+      {
+        "id": "em02-l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you always have coffee first?",
+        "promptPt": "Alex pergunta hábito com always.",
+        "options": [
+          {
+            "labelEn": "Yes, I always have coffee first.",
+            "correct": true,
+            "feedbackPt": "Always antes do verbo principal."
+          },
+          {
+            "labelEn": "Yes, I have always coffee first.",
+            "correct": false,
+            "feedbackPt": "Always antes do have."
+          },
+          {
+            "labelEn": "Yes, I always having coffee.",
+            "correct": false,
+            "feedbackPt": "Always + base, não -ing."
+          }
+        ]
+      },
+      {
+        "id": "em02-l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I usually take the train to work.",
+        "promptPt": "Alex compartilha rotina.",
+        "options": [
+          {
+            "labelEn": "Me too. I usually drive.",
+            "correct": true,
+            "feedbackPt": "Resposta paralela com usually."
+          },
+          {
+            "labelEn": "I am usually drive.",
+            "correct": false,
+            "feedbackPt": "I usually drive."
+          },
+          {
+            "labelEn": "I drive usually always.",
+            "correct": false,
+            "feedbackPt": "Ordem confusa."
+          }
+        ]
+      },
+      {
+        "id": "em02-l01-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Do you always eat breakfast?",
+        "promptPt": "Sua pergunta sobre hábito.",
+        "options": [
+          {
+            "labelEn": "Do you always eat breakfast?",
+            "correct": true,
+            "feedbackPt": "Do you + always + verbo base."
+          },
+          {
+            "labelEn": "Are you always eat breakfast?",
+            "correct": false,
+            "feedbackPt": "Are eat incorreto."
+          },
+          {
+            "labelEn": "Do you eat always breakfast?",
+            "correct": false,
+            "feedbackPt": "Always antes do verbo."
+          }
+        ]
+      },
+      {
+        "id": "em02-l01-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I always check email before meetings.",
+        "promptPt": "Alex descreve hábito de trabalho.",
+        "options": [
+          {
+            "labelEn": "That makes sense. I usually do the same.",
+            "correct": true,
+            "feedbackPt": "Resposta natural."
+          },
+          {
+            "labelEn": "I always am check email.",
+            "correct": false,
+            "feedbackPt": "Am check errado."
+          },
+          {
+            "labelEn": "I usually same do.",
+            "correct": false,
+            "feedbackPt": "Ordem incorreta."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em02-l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "I usually...",
+        "titlePt": "Eu geralmente...",
+        "introPt": "Usually = na maioria das vezes — hábito com variação.",
+        "examples": [
+          {
+            "en": "I usually wake up at 6.",
+            "pt": "acordar"
+          },
+          {
+            "en": "I usually take the train.",
+            "pt": "transporte"
+          },
+          {
+            "en": "What do you usually do on Sundays?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "She usually works from home.",
+            "pt": "terceira pessoa"
+          }
+        ]
+      },
+      {
+        "id": "em02-l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "I always...",
+        "titlePt": "Eu sempre...",
+        "introPt": "Always = 100% do tempo — hábito fixo.",
+        "examples": [
+          {
+            "en": "I always have coffee first.",
+            "pt": "café"
+          },
+          {
+            "en": "I always check my email.",
+            "pt": "trabalho"
+          },
+          {
+            "en": "Do you always eat breakfast?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "He always arrives early.",
+            "pt": "terceira pessoa"
+          }
+        ]
+      },
+      {
+        "id": "em02-l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Daily routine verbs",
+        "titlePt": "Verbos de rotina",
+        "introPt": "Verbos comuns no Presente Simples — forma base com I/you/we/they.",
+        "examples": [
+          {
+            "en": "I wake up · I get dressed · I leave home",
+            "pt": "manhã"
+          },
+          {
+            "en": "I work · I train · I study English",
+            "pt": "dia"
+          },
+          {
+            "en": "I cook dinner · I relax · I go to bed",
+            "pt": "noite"
+          },
+          {
+            "en": "What time do you start work?",
+            "pt": "pergunta horário"
+          }
+        ]
+      },
+      {
+        "id": "em02-l01-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Adverb position — usually / always",
+        "titlePt": "Posição de usually / always",
+        "items": [
+          {
+            "formalEn": "I go always to the gym.",
+            "naturalEn": "I always go to the gym.",
+            "notePt": "Always/usually ANTES do verbo principal (exceto to be)."
+          },
+          {
+            "formalEn": "She works usually at home.",
+            "naturalEn": "She usually works at home.",
+            "notePt": "Mesma regra na terceira pessoa."
+          }
+        ],
+        "tipPt": "Exceção: I am always tired. (to be + always + adjetivo)"
+      },
+      {
+        "id": "em02-l01-learn-voc",
+        "type": "vocabulary",
+        "titleEn": "Routine words",
+        "titlePt": "Vocabulário rotina",
+        "words": [
+          {
+            "en": "usually",
+            "pt": "geralmente",
+            "exampleEn": "I usually wake up at 6."
+          },
+          {
+            "en": "always",
+            "pt": "sempre",
+            "exampleEn": "I always have coffee."
+          },
+          {
+            "en": "wake up",
+            "pt": "acordar",
+            "exampleEn": "I wake up early."
+          },
+          {
+            "en": "commute",
+            "pt": "deslocamento",
+            "exampleEn": "I commute by train."
+          }
+        ]
+      },
+      {
+        "id": "em02-l01-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I always am tired. / I go always to work.",
+        "rightEn": "I am always tired. / I always go to work.",
+        "explanationPt": "Com to be: am/is/are + always. Com outros verbos: always + verbo base."
+      },
+      {
+        "id": "em02-l01-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I usually wake up at 6.",
+            "pt": "usually"
+          },
+          {
+            "en": "I always have coffee first.",
+            "pt": "always"
+          },
+          {
+            "en": "What do you usually do?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "She usually works from home.",
+            "pt": "3ª pessoa"
+          },
+          {
+            "en": "I am always tired on Mondays.",
+            "pt": "to be + always"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em02-l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What time do you usually wake up?"
+          },
+          {
+            "en": "I usually wake up at 6:30."
+          },
+          {
+            "en": "Do you always have coffee first?"
+          },
+          {
+            "en": "Yes, I always have coffee first."
+          },
+          {
+            "en": "I usually take the train to work."
+          },
+          {
+            "en": "Me too. I usually drive."
+          },
+          {
+            "en": "Do you always eat breakfast?"
+          },
+          {
+            "en": "I always check email before meetings."
+          },
+          {
+            "en": "I usually do the same."
+          },
+          {
+            "en": "What do you usually do on Sundays?"
+          }
+        ],
+        "dialogueEn": "What time do you usually wake up? — I usually wake up at 6:30. — Do you always have coffee first? — Yes, I always have coffee first. — I usually take the train. — Me too. I usually drive."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em02-l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can talk about daily routines with usually and always.",
+        "headlinePt": "Você consegue falar de rotina com usually e always.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "What time do you usually wake up?"
+          },
+          {
+            "speaker": "Alex",
+            "questionEn": "Do you always have coffee first?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em02-l01-prac-01",
+      "type": "choice",
+      "promptPt": "Posição de always:",
+      "options": [
+        {
+          "labelEn": "I always have coffee.",
+          "correct": true,
+          "feedbackPt": "Always antes do verbo."
+        },
+        {
+          "labelEn": "I have always coffee.",
+          "correct": false,
+          "feedbackPt": "Posição errada."
+        },
+        {
+          "labelEn": "I always having coffee.",
+          "correct": false,
+          "feedbackPt": "Having errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Usually + verbo:",
+      "templateEn": "I ___ wake up at 6.",
+      "blankLabel": "advérbio",
+      "options": [
+        {
+          "labelEn": "usually",
+          "correct": true,
+          "feedbackPt": "I usually wake up."
+        },
+        {
+          "labelEn": "usual",
+          "correct": false,
+          "feedbackPt": "Usually, não usual."
+        },
+        {
+          "labelEn": "am usually",
+          "correct": false,
+          "feedbackPt": "I usually, não I am usually wake."
+        }
+      ]
+    },
+    {
+      "id": "em02-l01-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte rotina:",
+      "tokens": [
+        "at 6:30.",
+        "wake up",
+        "usually",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "usually",
+        "wake up",
+        "at 6:30."
+      ],
+      "feedbackCorrectPt": "I usually wake up at 6:30.",
+      "feedbackWrongPt": "I + usually + verbo + horário."
+    },
+    {
+      "id": "em02-l01-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: Do you always eat breakfast?",
+      "speaker": "You",
+      "contextEn": "Alex: Do you always eat breakfast?",
+      "options": [
+        {
+          "labelEn": "Yes, I always eat breakfast.",
+          "correct": true,
+          "feedbackPt": "Always antes de eat."
+        },
+        {
+          "labelEn": "Yes, I eat always breakfast.",
+          "correct": false,
+          "feedbackPt": "Posição errada."
+        },
+        {
+          "labelEn": "Yes, I am always eat.",
+          "correct": false,
+          "feedbackPt": "Am eat errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l01-prac-05",
+      "type": "choice",
+      "promptPt": "To be + always:",
+      "options": [
+        {
+          "labelEn": "I am always tired on Mondays.",
+          "correct": true,
+          "feedbackPt": "Am + always + adjetivo."
+        },
+        {
+          "labelEn": "I always am tired on Mondays.",
+          "correct": false,
+          "feedbackPt": "Am always tired."
+        },
+        {
+          "labelEn": "I always tired am.",
+          "correct": false,
+          "feedbackPt": "Ordem errada."
+        }
+      ]
+    },
+    {
+      "id": "em02-l01-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Pergunta rotina:",
+      "templateEn": "What do you ___ do on Sundays?",
+      "blankLabel": "advérbio",
+      "options": [
+        {
+          "labelEn": "usually",
+          "correct": true,
+          "feedbackPt": "Do you usually."
+        },
+        {
+          "labelEn": "always",
+          "correct": false,
+          "feedbackPt": "Usually encaixa melhor para variação."
+        },
+        {
+          "labelEn": "usual",
+          "correct": false,
+          "feedbackPt": "Usually."
+        }
+      ]
+    },
+    {
+      "id": "em02-l01-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: I usually take the train.",
+      "speaker": "You",
+      "contextEn": "Alex: I usually take the train to work.",
+      "options": [
+        {
+          "labelEn": "Me too. I usually drive.",
+          "correct": true,
+          "feedbackPt": "Resposta paralela."
+        },
+        {
+          "labelEn": "I am usually drive.",
+          "correct": false,
+          "feedbackPt": "I usually drive."
+        },
+        {
+          "labelEn": "I drive usually the.",
+          "correct": false,
+          "feedbackPt": "Incorreto."
+        }
+      ]
+    },
+    {
+      "id": "em02-l01-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte pergunta:",
+      "tokens": [
+        "coffee first?",
+        "always",
+        "have",
+        "you",
+        "Do"
+      ],
+      "correctOrder": [
+        "Do",
+        "you",
+        "always",
+        "have",
+        "coffee first?"
+      ],
+      "feedbackCorrectPt": "Do you always have coffee first?",
+      "feedbackWrongPt": "Do + you + always + verbo."
+    },
+    {
+      "id": "em02-l01-prac-09",
+      "type": "choice",
+      "promptPt": "Terceira pessoa usually:",
+      "options": [
+        {
+          "labelEn": "She usually works from home.",
+          "correct": true,
+          "feedbackPt": "She + usually + works."
+        },
+        {
+          "labelEn": "She usually work from home.",
+          "correct": false,
+          "feedbackPt": "Works com -s."
+        },
+        {
+          "labelEn": "She works usually from home.",
+          "correct": false,
+          "feedbackPt": "Posição errada."
+        }
+      ]
+    },
+    {
+      "id": "em02-l01-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Verbo rotina:",
+      "templateEn": "I always ___ my email before meetings.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "check",
+          "correct": true,
+          "feedbackPt": "Check — base form."
+        },
+        {
+          "labelEn": "checks",
+          "correct": false,
+          "feedbackPt": "I check, não checks."
+        },
+        {
+          "labelEn": "checking",
+          "correct": false,
+          "feedbackPt": "Always + base."
+        }
+      ]
+    }
+  ]
+}

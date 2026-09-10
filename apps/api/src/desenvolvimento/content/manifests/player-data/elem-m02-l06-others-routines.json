@@ -1,0 +1,660 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 2,
+  "goalPt": "Perguntar sobre rotina de outros — What time does she...? Does he...? — terceira pessoa em perguntas.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex precisa coordenar horários com colegas — você pergunta e responde sobre rotinas de he/she.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can ask about other people's routines.",
+    "headlinePt": "Você consegue perguntar sobre rotinas de outras pessoas.",
+    "bodyPt": "",
+    "canDo": [
+      "What time does she...?",
+      "Does he...?",
+      "What does she do...?"
+    ],
+    "production": {
+      "introPt": "Descreva rotina de dois colegas (he/she) e faça duas perguntas com does.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "Help me understand the team schedule."
+        }
+      ],
+      "fields": [
+        {
+          "id": "maria",
+          "labelPt": "Maria (she) — horário",
+          "prefixEn": "She starts at",
+          "placeholderEn": "9 a.m."
+        },
+        {
+          "id": "tom",
+          "labelPt": "Tom (he) — fim de semana",
+          "prefixEn": "He usually trains on",
+          "placeholderEn": "Saturdays."
+        },
+        {
+          "id": "q1",
+          "labelPt": "Pergunta 1",
+          "prefixEn": "",
+          "placeholderEn": "Does Marco work from home on Fridays?"
+        },
+        {
+          "id": "q2",
+          "labelPt": "Pergunta 2",
+          "prefixEn": "",
+          "placeholderEn": "What does Sarah do after work?"
+        },
+        {
+          "id": "answer",
+          "labelPt": "Resposta sobre Sarah",
+          "prefixEn": "She usually",
+          "placeholderEn": "goes to the gym."
+        }
+      ],
+      "exampleEn": "She starts at 9. He trains on Saturdays. Does Marco work from home? What does Sarah do after work? She goes to the gym."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em02-l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Other people's routines",
+        "titlePt": "Rotinas de outras pessoas",
+        "bodyPt": "Pergunte sobre colegas e família — What time does she start? Does he train on weekends? Rotina de terceiros com does."
+      },
+      {
+        "id": "em02-l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Scheduling chat",
+        "scenarioPt": "Alex precisa coordenar horários com colegas — você pergunta e responde sobre rotinas de he/she."
+      },
+      {
+        "id": "em02-l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What time does Maria start work?",
+        "promptPt": "Alex pergunta horário de Maria (she).",
+        "options": [
+          {
+            "labelEn": "She starts at 9 a.m.",
+            "correct": true,
+            "feedbackPt": "She starts — afirmativa -s."
+          },
+          {
+            "labelEn": "She start at 9 a.m.",
+            "correct": false,
+            "feedbackPt": "She start errado."
+          },
+          {
+            "labelEn": "She does starts at 9.",
+            "correct": false,
+            "feedbackPt": "Does starts redundante."
+          }
+        ]
+      },
+      {
+        "id": "em02-l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Does Tom train on weekends?",
+        "promptPt": "Alex pergunta sobre Tom (he).",
+        "options": [
+          {
+            "labelEn": "Yes, he usually trains on Saturdays.",
+            "correct": true,
+            "feedbackPt": "He trains + usually."
+          },
+          {
+            "labelEn": "Yes, he usually train on Saturdays.",
+            "correct": false,
+            "feedbackPt": "He train errado."
+          },
+          {
+            "labelEn": "Yes, he does trains on Saturdays.",
+            "correct": false,
+            "feedbackPt": "Does trains errado."
+          }
+        ]
+      },
+      {
+        "id": "em02-l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What does Sarah do after work?",
+        "promptPt": "What does + she + verbo base na pergunta.",
+        "options": [
+          {
+            "labelEn": "She usually goes to the gym.",
+            "correct": true,
+            "feedbackPt": "She goes — 3ª pessoa."
+          },
+          {
+            "labelEn": "She usually go to the gym.",
+            "correct": false,
+            "feedbackPt": "She goes."
+          },
+          {
+            "labelEn": "She is usually go to the gym.",
+            "correct": false,
+            "feedbackPt": "She goes."
+          }
+        ]
+      },
+      {
+        "id": "em02-l06-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Does Marco work from home on Fridays?",
+        "promptPt": "Sua pergunta sobre colega.",
+        "options": [
+          {
+            "labelEn": "Does Marco work from home on Fridays?",
+            "correct": true,
+            "feedbackPt": "Does + base verb."
+          },
+          {
+            "labelEn": "Do Marco work from home on Fridays?",
+            "correct": false,
+            "feedbackPt": "Marco = he = does."
+          },
+          {
+            "labelEn": "Does Marco works from home on Fridays?",
+            "correct": false,
+            "feedbackPt": "Does + work base."
+          }
+        ]
+      },
+      {
+        "id": "em02-l06-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "She never eats lunch at the office.",
+        "promptPt": "Alex descreve hábito de colega.",
+        "options": [
+          {
+            "labelEn": "Really? Where does she usually eat?",
+            "correct": true,
+            "feedbackPt": "Follow-up com does."
+          },
+          {
+            "labelEn": "Really? Where she usually eats?",
+            "correct": false,
+            "feedbackPt": "Where does she eat."
+          },
+          {
+            "labelEn": "Really? Where does she usually eats?",
+            "correct": false,
+            "feedbackPt": "Does + eat base."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em02-l06-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "What time does she...?",
+        "titlePt": "What time does she...?",
+        "introPt": "Perguntar horário de terceiros — does + he/she + base verb.",
+        "examples": [
+          {
+            "en": "What time does she start work?",
+            "pt": "horário início"
+          },
+          {
+            "en": "What time does he finish?",
+            "pt": "horário fim"
+          },
+          {
+            "en": "She starts at 9. / He finishes at 6.",
+            "pt": "respostas"
+          },
+          {
+            "en": "What time do you start?",
+            "pt": "contraste you = do"
+          }
+        ]
+      },
+      {
+        "id": "em02-l06-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Does he/she...?",
+        "titlePt": "Does he/she...?",
+        "introPt": "Sim/não sobre rotina de terceiros.",
+        "examples": [
+          {
+            "en": "Does he train on weekends?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "Does she work from home?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "Yes, he does. / No, she doesn't.",
+            "pt": "respostas curtas"
+          },
+          {
+            "en": "Does he always eat breakfast?",
+            "pt": "com always"
+          }
+        ]
+      },
+      {
+        "id": "em02-l06-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "What does he/she do...?",
+        "titlePt": "What does he/she do...?",
+        "introPt": "Pergunta aberta sobre atividade.",
+        "examples": [
+          {
+            "en": "What does she do after work?",
+            "pt": "pós-trabalho"
+          },
+          {
+            "en": "What does he do on Sundays?",
+            "pt": "domingo"
+          },
+          {
+            "en": "She usually relaxes. / He plays soccer.",
+            "pt": "respostas"
+          },
+          {
+            "en": "What do they do on weekends?",
+            "pt": "plural = do"
+          }
+        ]
+      },
+      {
+        "id": "em02-l06-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Do vs Does questions",
+        "titlePt": "Do vs Does em perguntas",
+        "items": [
+          {
+            "formalEn": "What time she starts?",
+            "naturalEn": "What time does she start?",
+            "notePt": "She = does."
+          },
+          {
+            "formalEn": "Does he works on Monday?",
+            "naturalEn": "Does he work on Monday?",
+            "notePt": "Does + verbo base."
+          }
+        ],
+        "tipPt": "I/you/we/they → Do. He/she/it/Marco/Sarah → Does."
+      },
+      {
+        "id": "em02-l06-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "What time she starts? / Does he works on weekends?",
+        "rightEn": "What time does she start? / Does he work on weekends?",
+        "explanationPt": "Perguntas precisam de does com he/she. Does + verbo BASE (sem -s)."
+      },
+      {
+        "id": "em02-l06-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "What time does she start work?",
+            "pt": "horário"
+          },
+          {
+            "en": "Does he train on weekends?",
+            "pt": "yes/no"
+          },
+          {
+            "en": "What does she do after work?",
+            "pt": "aberta"
+          },
+          {
+            "en": "She usually goes to the gym.",
+            "pt": "resposta -s"
+          },
+          {
+            "en": "Yes, he does.",
+            "pt": "resposta curta"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em02-l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What time does Maria start work?"
+          },
+          {
+            "en": "She starts at 9 a.m."
+          },
+          {
+            "en": "Does Tom train on weekends?"
+          },
+          {
+            "en": "Yes, he usually trains on Saturdays."
+          },
+          {
+            "en": "What does Sarah do after work?"
+          },
+          {
+            "en": "She usually goes to the gym."
+          },
+          {
+            "en": "Does Marco work from home on Fridays?"
+          },
+          {
+            "en": "Yes, he sometimes works from home."
+          },
+          {
+            "en": "Where does she usually eat lunch?"
+          },
+          {
+            "en": "She never eats at the office."
+          }
+        ],
+        "dialogueEn": "What time does Maria start? — She starts at 9. — Does Tom train on weekends? — Yes, he usually trains on Saturdays. — What does Sarah do after work? — She usually goes to the gym."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em02-l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can ask about other people's routines.",
+        "headlinePt": "Você consegue perguntar sobre rotinas de outras pessoas.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Help me understand the team schedule."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em02-l06-prac-01",
+      "type": "choice",
+      "promptPt": "Horário Maria (she):",
+      "options": [
+        {
+          "labelEn": "What time does she start work?",
+          "correct": true,
+          "feedbackPt": "Does she start."
+        },
+        {
+          "labelEn": "What time she starts work?",
+          "correct": false,
+          "feedbackPt": "Falta does."
+        },
+        {
+          "labelEn": "What time does she starts work?",
+          "correct": false,
+          "feedbackPt": "Does + start base."
+        }
+      ]
+    },
+    {
+      "id": "em02-l06-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Does + base:",
+      "templateEn": "Does he ___ on weekends?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "train",
+          "correct": true,
+          "feedbackPt": "Does he train."
+        },
+        {
+          "labelEn": "trains",
+          "correct": false,
+          "feedbackPt": "Does + base."
+        },
+        {
+          "labelEn": "training",
+          "correct": false,
+          "feedbackPt": "Train base."
+        }
+      ]
+    },
+    {
+      "id": "em02-l06-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: Does Tom train on weekends?",
+      "speaker": "You",
+      "contextEn": "Alex: Does Tom train on weekends?",
+      "options": [
+        {
+          "labelEn": "Yes, he usually trains on Saturdays.",
+          "correct": true,
+          "feedbackPt": "He trains."
+        },
+        {
+          "labelEn": "Yes, he usually train on Saturdays.",
+          "correct": false,
+          "feedbackPt": "He train errado."
+        },
+        {
+          "labelEn": "Yes, he does trains.",
+          "correct": false,
+          "feedbackPt": "Does trains errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l06-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte pergunta:",
+      "tokens": [
+        "after work?",
+        "do",
+        "she",
+        "does",
+        "What"
+      ],
+      "correctOrder": [
+        "What",
+        "does",
+        "she",
+        "do",
+        "after work?"
+      ],
+      "feedbackCorrectPt": "What does she do after work?",
+      "feedbackWrongPt": "What + does + she + do."
+    },
+    {
+      "id": "em02-l06-prac-05",
+      "type": "choice",
+      "promptPt": "Resposta she goes:",
+      "options": [
+        {
+          "labelEn": "She usually goes to the gym.",
+          "correct": true,
+          "feedbackPt": "She goes."
+        },
+        {
+          "labelEn": "She usually go to the gym.",
+          "correct": false,
+          "feedbackPt": "She goes."
+        },
+        {
+          "labelEn": "She usually going to gym.",
+          "correct": false,
+          "feedbackPt": "She goes."
+        }
+      ]
+    },
+    {
+      "id": "em02-l06-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Resposta curta:",
+      "templateEn": "Does he work from home? — Yes, he ___.",
+      "blankLabel": "resposta",
+      "options": [
+        {
+          "labelEn": "does",
+          "correct": true,
+          "feedbackPt": "Yes, he does."
+        },
+        {
+          "labelEn": "works",
+          "correct": false,
+          "feedbackPt": "Short answer: does."
+        },
+        {
+          "labelEn": "do",
+          "correct": false,
+          "feedbackPt": "He does."
+        }
+      ]
+    },
+    {
+      "id": "em02-l06-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Follow-up:",
+      "speaker": "You",
+      "contextEn": "Alex: She never eats lunch at the office.",
+      "options": [
+        {
+          "labelEn": "Really? Where does she usually eat?",
+          "correct": true,
+          "feedbackPt": "Where does she eat."
+        },
+        {
+          "labelEn": "Really? Where she eats usually?",
+          "correct": false,
+          "feedbackPt": "Where does she eat."
+        },
+        {
+          "labelEn": "Really? Where does she eats?",
+          "correct": false,
+          "feedbackPt": "Does + eat base."
+        }
+      ]
+    },
+    {
+      "id": "em02-l06-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte afirmativa:",
+      "tokens": [
+        "9 a.m.",
+        "at",
+        "starts",
+        "She"
+      ],
+      "correctOrder": [
+        "She",
+        "starts",
+        "at",
+        "9 a.m."
+      ],
+      "feedbackCorrectPt": "She starts at 9 a.m.",
+      "feedbackWrongPt": "She + starts + at + time."
+    },
+    {
+      "id": "em02-l06-prac-09",
+      "type": "choice",
+      "promptPt": "Do vs Does:",
+      "options": [
+        {
+          "labelEn": "Does Marco work from home?",
+          "correct": true,
+          "feedbackPt": "Marco = he = does."
+        },
+        {
+          "labelEn": "Do Marco work from home?",
+          "correct": false,
+          "feedbackPt": "Does Marco."
+        },
+        {
+          "labelEn": "Does Marco works from home?",
+          "correct": false,
+          "feedbackPt": "Does + work."
+        }
+      ]
+    },
+    {
+      "id": "em02-l06-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Plural they:",
+      "templateEn": "What do they ___ on weekends?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "do",
+          "correct": true,
+          "feedbackPt": "What do they do."
+        },
+        {
+          "labelEn": "does",
+          "correct": false,
+          "feedbackPt": "They = do."
+        },
+        {
+          "labelEn": "doing",
+          "correct": false,
+          "feedbackPt": "Do base."
+        }
+      ]
+    }
+  ]
+}

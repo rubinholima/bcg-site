@@ -1,0 +1,625 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 1,
+  "goalPt": "Manter a conversa viva com follow-ups: Really? How long? Tell me more. What about you?",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex conta que mora em Boston há três anos. Você aprende a reagir, aprofundar e devolver a pergunta.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can keep a conversation going with follow-ups.",
+    "headlinePt": "Você consegue manter a conversa com follow-ups.",
+    "bodyPt": "",
+    "canDo": [
+      "Really?",
+      "How long?",
+      "Tell me more.",
+      "What about you?"
+    ],
+    "production": {
+      "introPt": "Alex contou sobre a mudança para Boston. Reaja, aprofunde, peça mais detalhes e devolva a pergunta.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "I've lived in Boston for three years."
+        }
+      ],
+      "fields": [
+        {
+          "id": "react",
+          "labelPt": "Reação",
+          "prefixEn": "",
+          "placeholderEn": "Really? How long have you been here?"
+        },
+        {
+          "id": "more",
+          "labelPt": "Pedir detalhes",
+          "prefixEn": "",
+          "placeholderEn": "Tell me more."
+        },
+        {
+          "id": "return",
+          "labelPt": "Devolver",
+          "prefixEn": "",
+          "placeholderEn": "What about you?"
+        },
+        {
+          "id": "answer",
+          "labelPt": "Sua resposta",
+          "prefixEn": "",
+          "placeholderEn": "I've been here for about a year."
+        }
+      ],
+      "exampleEn": "Really? How long have you been here? — Tell me more. — What about you? — I've been here for about a year."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em01-l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Follow-up questions",
+        "titlePt": "Perguntas de follow-up",
+        "bodyPt": "Conversas reais não são só pergunta-resposta — você reage, aprofunda e devolve. Aprenda frases curtas que mantêm o diálogo fluindo naturalmente."
+      },
+      {
+        "id": "em01-l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Coffee shop · Weekend chat",
+        "scenarioPt": "Alex conta que mora em Boston há três anos. Você aprende a reagir, aprofundar e devolver a pergunta."
+      },
+      {
+        "id": "em01-l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I've lived in Boston for three years.",
+        "promptPt": "Alex compartilha algo. Como reagir antes de fazer outra pergunta?",
+        "options": [
+          {
+            "labelEn": "Really? How long have you been here?",
+            "correct": true,
+            "feedbackPt": "Really? mostra interesse + How long aprofunda."
+          },
+          {
+            "labelEn": "What is your name?",
+            "correct": false,
+            "feedbackPt": "Vocês já se conhecem — fora de contexto."
+          },
+          {
+            "labelEn": "I live in Boston.",
+            "correct": false,
+            "feedbackPt": "Não reage ao que Alex disse."
+          }
+        ]
+      },
+      {
+        "id": "em01-l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "About three years. I moved from Chicago.",
+        "promptPt": "Alex responde. Como pedir mais detalhes?",
+        "options": [
+          {
+            "labelEn": "Tell me more.",
+            "correct": true,
+            "feedbackPt": "Convite aberto — Alex pode elaborar."
+          },
+          {
+            "labelEn": "Goodbye.",
+            "correct": false,
+            "feedbackPt": "Encerra a conversa."
+          },
+          {
+            "labelEn": "How old are you?",
+            "correct": false,
+            "feedbackPt": "Muda de assunto sem transição."
+          }
+        ]
+      },
+      {
+        "id": "em01-l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Well, I got a job offer and my wife wanted a change.",
+        "promptPt": "Alex elaborou. Como devolver a conversa para você?",
+        "options": [
+          {
+            "labelEn": "What about you? Where do you live?",
+            "correct": true,
+            "feedbackPt": "What about you? devolve naturalmente."
+          },
+          {
+            "labelEn": "Tell me more.",
+            "correct": false,
+            "feedbackPt": "Repetir Tell me more após resposta longa soa estranho."
+          },
+          {
+            "labelEn": "I am fine.",
+            "correct": false,
+            "feedbackPt": "Não devolve a pergunta."
+          }
+        ]
+      },
+      {
+        "id": "em01-l02-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "That's interesting! And you?",
+        "promptPt": "Alex devolve. Como responder sobre sua situação?",
+        "options": [
+          {
+            "labelEn": "I've been here for about a year.",
+            "correct": true,
+            "feedbackPt": "Resposta natural com tempo."
+          },
+          {
+            "labelEn": "Really? How long?",
+            "correct": false,
+            "feedbackPt": "Isso seria pergunta, não resposta."
+          },
+          {
+            "labelEn": "Tell me more.",
+            "correct": false,
+            "feedbackPt": "Alex acabou de perguntar sobre você."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em01-l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Really?",
+        "titlePt": "Really?",
+        "introPt": "Reação curta de interesse ou surpresa — abre espaço para mais informação.",
+        "examples": [
+          {
+            "en": "Really?",
+            "pt": "Sério? / É mesmo?"
+          },
+          {
+            "en": "Oh, really? That's cool.",
+            "pt": "com entusiasmo"
+          },
+          {
+            "en": "Really? I didn't know that.",
+            "pt": "surpresa"
+          },
+          {
+            "en": "Really? How come?",
+            "pt": "aprofundar motivo"
+          }
+        ]
+      },
+      {
+        "id": "em01-l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "How long?",
+        "titlePt": "Há quanto tempo?",
+        "introPt": "Pergunta duração — How long + present perfect ou simple present.",
+        "examples": [
+          {
+            "en": "How long have you been here?",
+            "pt": "há quanto tempo está aqui"
+          },
+          {
+            "en": "How long have you worked here?",
+            "pt": "há quanto trabalha aqui"
+          },
+          {
+            "en": "I've been here for two years.",
+            "pt": "resposta com for"
+          },
+          {
+            "en": "About three years.",
+            "pt": "resposta curta"
+          }
+        ]
+      },
+      {
+        "id": "em01-l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Tell me more / What about you?",
+        "titlePt": "Conte mais / E você?",
+        "introPt": "Tell me more convida elaboração. What about you? devolve a pergunta.",
+        "examples": [
+          {
+            "en": "Tell me more.",
+            "pt": "conte mais"
+          },
+          {
+            "en": "That sounds interesting. Tell me more.",
+            "pt": "com reação"
+          },
+          {
+            "en": "What about you?",
+            "pt": "e você?"
+          },
+          {
+            "en": "And you? What do you think?",
+            "pt": "variante"
+          }
+        ]
+      },
+      {
+        "id": "em01-l02-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Conversation flow",
+        "titlePt": "Fluxo conversacional",
+        "items": [
+          {
+            "formalEn": "Answer only. Next question.",
+            "naturalEn": "React → Ask follow-up → Share → Return question",
+            "notePt": "Really? → How long? → Tell me more → What about you?"
+          },
+          {
+            "formalEn": "How long you are here?",
+            "naturalEn": "How long have you been here?",
+            "notePt": "How long + present perfect para duração até agora."
+          }
+        ],
+        "tipPt": "Follow-ups curtos (Really?, And you?) soam mais naturais que perguntas longas demais."
+      },
+      {
+        "id": "em01-l02-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "How long you live here? / Tell me more about it please now.",
+        "rightEn": "How long have you lived here? / Tell me more.",
+        "explanationPt": "Perguntas com how long precisam de auxiliar (have/has). Tell me more é curto e natural — não precisa de please now no final."
+      },
+      {
+        "id": "em01-l02-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "Really?",
+            "pt": "reação"
+          },
+          {
+            "en": "How long have you been here?",
+            "pt": "duração"
+          },
+          {
+            "en": "Tell me more.",
+            "pt": "aprofundar"
+          },
+          {
+            "en": "What about you?",
+            "pt": "devolver"
+          },
+          {
+            "en": "I've been here for a year.",
+            "pt": "resposta tempo"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em01-l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I've lived in Boston for three years."
+          },
+          {
+            "en": "Really? How long have you been here?"
+          },
+          {
+            "en": "About three years."
+          },
+          {
+            "en": "Tell me more."
+          },
+          {
+            "en": "Well, I got a job offer."
+          },
+          {
+            "en": "What about you?"
+          },
+          {
+            "en": "I've been here for about a year."
+          },
+          {
+            "en": "That's interesting!"
+          }
+        ],
+        "dialogueEn": "I've lived in Boston for three years. — Really? How long have you been here? — About three years. I moved from Chicago. — Tell me more. — Well, I got a job offer. — What about you? — I've been here for about a year."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em01-l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can keep a conversation going with follow-ups.",
+        "headlinePt": "Você consegue manter a conversa com follow-ups.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "I've lived in Boston for three years."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em01-l02-prac-01",
+      "type": "choice",
+      "promptPt": "Alex: I moved from Chicago last year.",
+      "options": [
+        {
+          "labelEn": "Really? Tell me more.",
+          "correct": true,
+          "feedbackPt": "Reação + follow-up."
+        },
+        {
+          "labelEn": "What is Chicago?",
+          "correct": false,
+          "feedbackPt": "Não é follow-up natural."
+        },
+        {
+          "labelEn": "Goodbye.",
+          "correct": false,
+          "feedbackPt": "Encerra conversa."
+        }
+      ]
+    },
+    {
+      "id": "em01-l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete follow-up duração:",
+      "templateEn": "How long ___ you been here?",
+      "blankLabel": "auxiliar",
+      "options": [
+        {
+          "labelEn": "have",
+          "correct": true,
+          "feedbackPt": "Present perfect."
+        },
+        {
+          "labelEn": "are",
+          "correct": false,
+          "feedbackPt": "Are não combina com been."
+        },
+        {
+          "labelEn": "do",
+          "correct": false,
+          "feedbackPt": "Do não combina com been."
+        }
+      ]
+    },
+    {
+      "id": "em01-l02-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: conte mais",
+      "tokens": [
+        "more.",
+        "me",
+        "Tell"
+      ],
+      "correctOrder": [
+        "Tell",
+        "me",
+        "more."
+      ],
+      "feedbackCorrectPt": "Tell me more.",
+      "feedbackWrongPt": "Tell + me + more."
+    },
+    {
+      "id": "em01-l02-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Devolver pergunta:",
+      "speaker": "You",
+      "contextEn": "Alex told you about his job.",
+      "options": [
+        {
+          "labelEn": "What about you?",
+          "correct": true,
+          "feedbackPt": "Devolve naturalmente."
+        },
+        {
+          "labelEn": "Tell me more.",
+          "correct": false,
+          "feedbackPt": "Pedir mais após resposta curta ok, mas here Alex espera reciprocidade."
+        },
+        {
+          "labelEn": "Really?",
+          "correct": false,
+          "feedbackPt": "Só reação — falta devolver."
+        }
+      ]
+    },
+    {
+      "id": "em01-l02-prac-05",
+      "type": "choice",
+      "promptPt": "Resposta sobre tempo:",
+      "options": [
+        {
+          "labelEn": "I've been here for two years.",
+          "correct": true,
+          "feedbackPt": "For + período."
+        },
+        {
+          "labelEn": "I am here two years.",
+          "correct": false,
+          "feedbackPt": "Falta have been."
+        },
+        {
+          "labelEn": "I have here two years.",
+          "correct": false,
+          "feedbackPt": "Ordem incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em01-l02-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Reação curta:",
+      "templateEn": "___, that's interesting!",
+      "blankLabel": "reação",
+      "options": [
+        {
+          "labelEn": "Really",
+          "correct": true,
+          "feedbackPt": "Really? ou Oh, really!"
+        },
+        {
+          "labelEn": "Very",
+          "correct": false,
+          "feedbackPt": "Very that's interesting não funciona."
+        },
+        {
+          "labelEn": "Much",
+          "correct": false,
+          "feedbackPt": "Much não combina."
+        }
+      ]
+    },
+    {
+      "id": "em01-l02-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Alex deu detalhes longos — você:",
+      "speaker": "You",
+      "contextEn": "Alex: Well, I got a job offer and my wife wanted a change.",
+      "options": [
+        {
+          "labelEn": "What about you? Where do you live?",
+          "correct": true,
+          "feedbackPt": "Devolve após ouvir."
+        },
+        {
+          "labelEn": "Tell me more.",
+          "correct": false,
+          "feedbackPt": "Alex já elaborou bastante."
+        },
+        {
+          "labelEn": "How old are you?",
+          "correct": false,
+          "feedbackPt": "Fora de contexto."
+        }
+      ]
+    },
+    {
+      "id": "em01-l02-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte pergunta duração:",
+      "tokens": [
+        "here?",
+        "long",
+        "been",
+        "you",
+        "have",
+        "How"
+      ],
+      "correctOrder": [
+        "How",
+        "long",
+        "have",
+        "you",
+        "been",
+        "here?"
+      ],
+      "feedbackCorrectPt": "How long have you been here?",
+      "feedbackWrongPt": "How long + have + you + been + here?"
+    },
+    {
+      "id": "em01-l02-prac-09",
+      "type": "choice",
+      "promptPt": "Melhor sequência conversacional:",
+      "options": [
+        {
+          "labelEn": "Listen → React → Follow-up → Return",
+          "correct": true,
+          "feedbackPt": "Fluxo natural."
+        },
+        {
+          "labelEn": "Question → Question → Question",
+          "correct": false,
+          "feedbackPt": "Sem reação soa interrogatório."
+        },
+        {
+          "labelEn": "Answer only → Silence",
+          "correct": false,
+          "feedbackPt": "Conversa morre."
+        }
+      ]
+    },
+    {
+      "id": "em01-l02-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Resposta curta tempo:",
+      "templateEn": "About ___ years.",
+      "blankLabel": "número",
+      "options": [
+        {
+          "labelEn": "three",
+          "correct": true,
+          "feedbackPt": "About three years."
+        },
+        {
+          "labelEn": "three of",
+          "correct": false,
+          "feedbackPt": "About three of years incorreto."
+        },
+        {
+          "labelEn": "the three",
+          "correct": false,
+          "feedbackPt": "The three years soa estranho aqui."
+        }
+      ]
+    }
+  ]
+}

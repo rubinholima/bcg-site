@@ -1,0 +1,689 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 1,
+  "goalPt": "Falar de interesses e hobbies com I'm into..., I enjoy... e Do you like...? — conversa mais natural sobre gostos.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex quer saber o que você faz fora do trabalho. Vocês trocam interesses e hobbies de forma descontraída.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can talk about interests and hobbies.",
+    "headlinePt": "Você consegue falar de interesses e hobbies.",
+    "bodyPt": "",
+    "canDo": [
+      "I'm into...",
+      "I enjoy...",
+      "Do you like...?",
+      "What about you?"
+    ],
+    "production": {
+      "introPt": "Conte seus interesses, pergunte sobre Alex e responda quando ele devolver a pergunta.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "What are you into these days?"
+        },
+        {
+          "speaker": "Alex",
+          "questionEn": "Do you like hiking?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "into",
+          "labelPt": "Seus interesses",
+          "prefixEn": "I'm into",
+          "placeholderEn": "soccer and cooking."
+        },
+        {
+          "id": "enjoy",
+          "labelPt": "O que você aprecia fazer",
+          "prefixEn": "I enjoy",
+          "placeholderEn": "playing guitar in my free time."
+        },
+        {
+          "id": "ask",
+          "labelPt": "Perguntar sobre Alex",
+          "prefixEn": "",
+          "placeholderEn": "Do you like sports?"
+        },
+        {
+          "id": "react",
+          "labelPt": "Reagir ao hobby dele",
+          "prefixEn": "",
+          "placeholderEn": "Oh, really? Tell me more."
+        }
+      ],
+      "exampleEn": "I'm into soccer and cooking. I enjoy playing guitar. Do you like sports? Oh, really? Tell me more."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em01-l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Interests & hobbies",
+        "titlePt": "Interesses e hobbies",
+        "bodyPt": "Depois dos detalhes pessoais, a conversa vira gostos e tempo livre. Aprenda formas naturais para dizer o que você curte e perguntar sobre o outro — mais inglês, menos tradução do português."
+      },
+      {
+        "id": "em01-l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team lunch · Casual conversation",
+        "scenarioPt": "Alex quer saber o que você faz fora do trabalho. Vocês trocam interesses e hobbies de forma descontraída."
+      },
+      {
+        "id": "em01-l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "So, what are you into these days?",
+        "promptPt": "Alex pergunta seus interesses atuais — forma informal comum.",
+        "options": [
+          {
+            "labelEn": "I'm into soccer and cooking.",
+            "correct": true,
+            "feedbackPt": "I'm into + atividade — natural e atual."
+          },
+          {
+            "labelEn": "I am into the soccer.",
+            "correct": false,
+            "feedbackPt": "Sem the antes de esporte/hobby genérico."
+          },
+          {
+            "labelEn": "I have interest in soccer.",
+            "correct": false,
+            "feedbackPt": "Possível, mas menos natural que I'm into."
+          }
+        ]
+      },
+      {
+        "id": "em01-l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you like hiking?",
+        "promptPt": "Alex pergunta sobre um hobby específico.",
+        "options": [
+          {
+            "labelEn": "Yes, I enjoy hiking on weekends.",
+            "correct": true,
+            "feedbackPt": "Enjoy + verbo-ing — resposta completa."
+          },
+          {
+            "labelEn": "Yes, I like hike.",
+            "correct": false,
+            "feedbackPt": "Like + verbo-ing ou to + verbo — não like hike."
+          },
+          {
+            "labelEn": "Yes, I am like hiking.",
+            "correct": false,
+            "feedbackPt": "I like, não I am like."
+          }
+        ]
+      },
+      {
+        "id": "em01-l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I'm really into photography lately.",
+        "promptPt": "Alex compartilha hobby. Como mostrar interesse?",
+        "options": [
+          {
+            "labelEn": "Oh, really? What kind of photos do you take?",
+            "correct": true,
+            "feedbackPt": "Follow-up natural sobre o hobby dele."
+          },
+          {
+            "labelEn": "I work downtown.",
+            "correct": false,
+            "feedbackPt": "Muda de assunto — Alex falou de fotografia."
+          },
+          {
+            "labelEn": "Do you like hiking?",
+            "correct": false,
+            "feedbackPt": "Pergunta ok, mas não reage ao que Alex disse."
+          }
+        ]
+      },
+      {
+        "id": "em01-l03-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Mostly street photography. What about you?",
+        "promptPt": "Alex devolve a pergunta. Como responder sobre seus hobbies?",
+        "options": [
+          {
+            "labelEn": "I enjoy playing guitar in my free time.",
+            "correct": true,
+            "feedbackPt": "Resposta completa com enjoy + -ing."
+          },
+          {
+            "labelEn": "I enjoy play guitar.",
+            "correct": false,
+            "feedbackPt": "Enjoy + playing, não play."
+          },
+          {
+            "labelEn": "I am into the guitar play.",
+            "correct": false,
+            "feedbackPt": "Ordem e forma incorretas."
+          }
+        ]
+      },
+      {
+        "id": "em01-l03-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Do you like sports?",
+        "promptPt": "Sua vez de perguntar sobre gostos de Alex.",
+        "options": [
+          {
+            "labelEn": "Do you like sports?",
+            "correct": true,
+            "feedbackPt": "Do you like + substantivo — pergunta padrão."
+          },
+          {
+            "labelEn": "You like sports?",
+            "correct": false,
+            "feedbackPt": "Falta auxiliar Do em pergunta."
+          },
+          {
+            "labelEn": "Are you like sports?",
+            "correct": false,
+            "feedbackPt": "Are you like não existe assim."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em01-l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "I'm into...",
+        "titlePt": "Estou curtindo / gosto de...",
+        "introPt": "I'm into = interesse forte ou moda atual — mais informal que I like.",
+        "examples": [
+          {
+            "en": "I'm into soccer.",
+            "pt": "curto futebol"
+          },
+          {
+            "en": "I'm into true crime podcasts.",
+            "pt": "interesse atual"
+          },
+          {
+            "en": "What are you into these days?",
+            "pt": "pergunta informal"
+          },
+          {
+            "en": "I'm not really into that.",
+            "pt": "não curto"
+          }
+        ]
+      },
+      {
+        "id": "em01-l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "I enjoy...",
+        "titlePt": "Eu gosto / aprecio...",
+        "introPt": "Enjoy + verbo-ing — atividade que você aprecia fazer.",
+        "examples": [
+          {
+            "en": "I enjoy cooking.",
+            "pt": "gosto de cozinhar"
+          },
+          {
+            "en": "I enjoy reading before bed.",
+            "pt": "com detalhe"
+          },
+          {
+            "en": "I enjoy playing guitar.",
+            "pt": "hobby musical"
+          },
+          {
+            "en": "Do you enjoy traveling?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em01-l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Do you like...?",
+        "titlePt": "Você gosta de...?",
+        "introPt": "Pergunta simples e versátil — like + substantivo ou like + -ing.",
+        "examples": [
+          {
+            "en": "Do you like sports?",
+            "pt": "esportes"
+          },
+          {
+            "en": "Do you like cooking?",
+            "pt": "cozinhar"
+          },
+          {
+            "en": "Do you like watching movies?",
+            "pt": "like + -ing"
+          },
+          {
+            "en": "Yes, I love it.",
+            "pt": "resposta entusiasta"
+          }
+        ]
+      },
+      {
+        "id": "em01-l03-learn-lf",
+        "type": "language_focus",
+        "titleEn": "into vs enjoy vs like",
+        "titlePt": "into vs enjoy vs like",
+        "items": [
+          {
+            "formalEn": "I have interest in music.",
+            "naturalEn": "I'm into music. / I enjoy listening to music.",
+            "notePt": "Into = moda/interesse forte. Enjoy = prazer na atividade."
+          },
+          {
+            "formalEn": "Do you like to hike?",
+            "naturalEn": "Do you like hiking? / Do you enjoy hiking?",
+            "notePt": "Like/enjoy + -ing é comum na fala americana."
+          }
+        ],
+        "tipPt": "I'm into soa jovem e atual; I enjoy é um pouco mais reflexivo; Do you like...? é a pergunta mais neutra."
+      },
+      {
+        "id": "em01-l03-learn-voc",
+        "type": "vocabulary",
+        "titleEn": "Hobby words",
+        "titlePt": "Vocabulário — hobbies",
+        "words": [
+          {
+            "en": "hiking",
+            "pt": "caminhada/trilha",
+            "exampleEn": "I enjoy hiking on weekends."
+          },
+          {
+            "en": "photography",
+            "pt": "fotografia",
+            "exampleEn": "I'm into photography."
+          },
+          {
+            "en": "free time",
+            "pt": "tempo livre",
+            "exampleEn": "In my free time, I read."
+          },
+          {
+            "en": "lately",
+            "pt": "ultimamente",
+            "exampleEn": "I'm into podcasts lately."
+          }
+        ]
+      },
+      {
+        "id": "em01-l03-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I like play soccer. / I am into the soccer.",
+        "rightEn": "I like playing soccer. / I'm into soccer.",
+        "explanationPt": "Like e enjoy pedem -ing (playing) ou substantivo (soccer). Into vai direto com substantivo, sem the desnecessário."
+      },
+      {
+        "id": "em01-l03-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I'm into soccer.",
+            "pt": "interesse"
+          },
+          {
+            "en": "I enjoy cooking.",
+            "pt": "prazer na atividade"
+          },
+          {
+            "en": "Do you like sports?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "I enjoy playing guitar.",
+            "pt": "enjoy + -ing"
+          },
+          {
+            "en": "What are you into these days?",
+            "pt": "pergunta informal"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em01-l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What are you into these days?"
+          },
+          {
+            "en": "I'm into soccer and cooking."
+          },
+          {
+            "en": "Do you like hiking?"
+          },
+          {
+            "en": "Yes, I enjoy hiking on weekends."
+          },
+          {
+            "en": "I'm really into photography lately."
+          },
+          {
+            "en": "Oh, really? What kind of photos do you take?"
+          },
+          {
+            "en": "Mostly street photography."
+          },
+          {
+            "en": "I enjoy playing guitar in my free time."
+          },
+          {
+            "en": "What about you?"
+          },
+          {
+            "en": "Do you like sports?"
+          }
+        ],
+        "dialogueEn": "What are you into these days? — I'm into soccer and cooking. — Do you like hiking? — Yes, I enjoy hiking on weekends. — I'm really into photography lately. — Oh, really? What kind of photos do you take? — Mostly street photography. What about you? — I enjoy playing guitar in my free time."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em01-l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can talk about interests and hobbies.",
+        "headlinePt": "Você consegue falar de interesses e hobbies.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "What are you into these days?"
+          },
+          {
+            "speaker": "Alex",
+            "questionEn": "Do you like hiking?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em01-l03-prac-01",
+      "type": "choice",
+      "promptPt": "Melhor forma de dizer interesse atual:",
+      "options": [
+        {
+          "labelEn": "I'm into podcasts lately.",
+          "correct": true,
+          "feedbackPt": "I'm into + substantivo."
+        },
+        {
+          "labelEn": "I am into the podcasts.",
+          "correct": false,
+          "feedbackPt": "Sem the desnecessário."
+        },
+        {
+          "labelEn": "I have into podcasts.",
+          "correct": false,
+          "feedbackPt": "Into não usa have."
+        }
+      ]
+    },
+    {
+      "id": "em01-l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: prazer na atividade",
+      "templateEn": "I enjoy ___ on weekends.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "hiking",
+          "correct": true,
+          "feedbackPt": "Enjoy + hiking (substantivo/gerúndio)."
+        },
+        {
+          "labelEn": "to hike",
+          "correct": false,
+          "feedbackPt": "Enjoy + -ing é mais comum que to."
+        },
+        {
+          "labelEn": "hike",
+          "correct": false,
+          "feedbackPt": "Enjoy hiking, não enjoy hike."
+        }
+      ]
+    },
+    {
+      "id": "em01-l03-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte pergunta:",
+      "tokens": [
+        "sports?",
+        "like",
+        "you",
+        "Do"
+      ],
+      "correctOrder": [
+        "Do",
+        "you",
+        "like",
+        "sports?"
+      ],
+      "feedbackCorrectPt": "Do you like sports?",
+      "feedbackWrongPt": "Do + you + like + substantivo?"
+    },
+    {
+      "id": "em01-l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: What are you into?",
+      "speaker": "You",
+      "contextEn": "Alex: What are you into these days?",
+      "options": [
+        {
+          "labelEn": "I'm into cooking and travel.",
+          "correct": true,
+          "feedbackPt": "Resposta natural."
+        },
+        {
+          "labelEn": "I like to cooking.",
+          "correct": false,
+          "feedbackPt": "Like cooking ou like to cook."
+        },
+        {
+          "labelEn": "I am interest cooking.",
+          "correct": false,
+          "feedbackPt": "Forma incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em01-l03-prac-05",
+      "type": "choice",
+      "promptPt": "Qual frase está correta?",
+      "options": [
+        {
+          "labelEn": "I enjoy reading before bed.",
+          "correct": true,
+          "feedbackPt": "Enjoy + -ing."
+        },
+        {
+          "labelEn": "I enjoy read before bed.",
+          "correct": false,
+          "feedbackPt": "Enjoy + reading."
+        },
+        {
+          "labelEn": "I am enjoy reading.",
+          "correct": false,
+          "feedbackPt": "I enjoy, não I am enjoy."
+        }
+      ]
+    },
+    {
+      "id": "em01-l03-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Resposta entusiasta:",
+      "templateEn": "Yes, I ___ it!",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "love",
+          "correct": true,
+          "feedbackPt": "Love it = adoro."
+        },
+        {
+          "labelEn": "am love",
+          "correct": false,
+          "feedbackPt": "I love, não I am love."
+        },
+        {
+          "labelEn": "liking",
+          "correct": false,
+          "feedbackPt": "I like it, não I liking."
+        }
+      ]
+    },
+    {
+      "id": "em01-l03-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: I'm into photography.",
+      "speaker": "You",
+      "contextEn": "Alex: I'm really into photography lately.",
+      "options": [
+        {
+          "labelEn": "Oh, really? What kind of photos do you take?",
+          "correct": true,
+          "feedbackPt": "Follow-up natural."
+        },
+        {
+          "labelEn": "I work at the office.",
+          "correct": false,
+          "feedbackPt": "Fora de contexto."
+        },
+        {
+          "labelEn": "Do you like the photography?",
+          "correct": false,
+          "feedbackPt": "The photography soa estranho."
+        }
+      ]
+    },
+    {
+      "id": "em01-l03-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte resposta com enjoy:",
+      "tokens": [
+        "guitar.",
+        "playing",
+        "enjoy",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "enjoy",
+        "playing",
+        "guitar."
+      ],
+      "feedbackCorrectPt": "I enjoy playing guitar.",
+      "feedbackWrongPt": "I + enjoy + playing + objeto."
+    },
+    {
+      "id": "em01-l03-prac-09",
+      "type": "choice",
+      "promptPt": "Pergunta correta sobre hobby:",
+      "options": [
+        {
+          "labelEn": "Do you enjoy traveling?",
+          "correct": true,
+          "feedbackPt": "Do you + enjoy + -ing."
+        },
+        {
+          "labelEn": "You enjoy traveling?",
+          "correct": false,
+          "feedbackPt": "Falta Do."
+        },
+        {
+          "labelEn": "Are you enjoy traveling?",
+          "correct": false,
+          "feedbackPt": "Are + enjoy incorreto."
+        }
+      ]
+    },
+    {
+      "id": "em01-l03-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Negativa informal:",
+      "templateEn": "I'm not really ___ that.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "into",
+          "correct": true,
+          "feedbackPt": "Not into = não curto."
+        },
+        {
+          "labelEn": "enjoy",
+          "correct": false,
+          "feedbackPt": "Not enjoy soa incompleto — use into ou enjoy that."
+        },
+        {
+          "labelEn": "like to",
+          "correct": false,
+          "feedbackPt": "Not like to that não funciona."
+        }
+      ]
+    }
+  ]
+}

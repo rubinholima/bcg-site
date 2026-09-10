@@ -1,0 +1,670 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 2,
+  "goalPt": "Terceira pessoa no Presente Simples — he/she works, regra do -s e erro clássico he work.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex pergunta sobre colegas — você descreve rotinas de he/she com -s.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can describe he/she routines with -s.",
+    "headlinePt": "Você consegue descrever rotinas de he/she com -s.",
+    "bodyPt": "",
+    "canDo": [
+      "He works...",
+      "She trains...",
+      "Does he/she...?"
+    ],
+    "production": {
+      "introPt": "Descreva rotinas de dois colegas (he e she) e faça uma pergunta com Does.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "Tell me about Marco and Sarah."
+        }
+      ],
+      "fields": [
+        {
+          "id": "he",
+          "labelPt": "Marco (he)",
+          "prefixEn": "He works",
+          "placeholderEn": "in marketing."
+        },
+        {
+          "id": "she",
+          "labelPt": "Sarah (she)",
+          "prefixEn": "She trains",
+          "placeholderEn": "every morning."
+        },
+        {
+          "id": "question",
+          "labelPt": "Pergunta Does",
+          "prefixEn": "",
+          "placeholderEn": "Does she work from home?"
+        },
+        {
+          "id": "you",
+          "labelPt": "Contraste — você (I)",
+          "prefixEn": "I work",
+          "placeholderEn": "every day."
+        }
+      ],
+      "exampleEn": "He works in marketing. She trains every morning. Does she work from home? I work every day."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em02-l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Third person — he/she works",
+        "titlePt": "Terceira pessoa — he/she works",
+        "bodyPt": "Com he, she, it o verbo leva -s: works, trains, plays. Regra crítica para brasileiros que esquecem o -s."
+      },
+      {
+        "id": "em02-l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Talking about teammates",
+        "scenarioPt": "Alex pergunta sobre colegas — você descreve rotinas de he/she com -s."
+      },
+      {
+        "id": "em02-l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Where does Marco work?",
+        "promptPt": "Alex pergunta sobre Marco (he).",
+        "options": [
+          {
+            "labelEn": "He works in marketing.",
+            "correct": true,
+            "feedbackPt": "He works — -s obrigatório."
+          },
+          {
+            "labelEn": "He work in marketing.",
+            "correct": false,
+            "feedbackPt": "He work — erro clássico BR."
+          },
+          {
+            "labelEn": "He working in marketing.",
+            "correct": false,
+            "feedbackPt": "Forma incompleta."
+          }
+        ]
+      },
+      {
+        "id": "em02-l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Does Sarah train every morning?",
+        "promptPt": "Alex pergunta sobre Sarah (she).",
+        "options": [
+          {
+            "labelEn": "Yes, she trains every morning.",
+            "correct": true,
+            "feedbackPt": "She trains — -s."
+          },
+          {
+            "labelEn": "Yes, she train every morning.",
+            "correct": false,
+            "feedbackPt": "She train errado."
+          },
+          {
+            "labelEn": "Yes, she training every morning.",
+            "correct": false,
+            "feedbackPt": "Training incompleto."
+          }
+        ]
+      },
+      {
+        "id": "em02-l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What time does he start work?",
+        "promptPt": "Pergunta com does — verbo base na resposta.",
+        "options": [
+          {
+            "labelEn": "He starts at 8 a.m.",
+            "correct": true,
+            "feedbackPt": "He starts — afirmativa com -s."
+          },
+          {
+            "labelEn": "He start at 8 a.m.",
+            "correct": false,
+            "feedbackPt": "He start errado."
+          },
+          {
+            "labelEn": "He does starts at 8.",
+            "correct": false,
+            "feedbackPt": "Does starts redundante."
+          }
+        ]
+      },
+      {
+        "id": "em02-l02-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Does she work from home?",
+        "promptPt": "Sua pergunta sobre colega.",
+        "options": [
+          {
+            "labelEn": "Does she work from home?",
+            "correct": true,
+            "feedbackPt": "Does + she + verbo base."
+          },
+          {
+            "labelEn": "Do she work from home?",
+            "correct": false,
+            "feedbackPt": "She = does."
+          },
+          {
+            "labelEn": "Does she works from home?",
+            "correct": false,
+            "feedbackPt": "Does + work base, não works."
+          }
+        ]
+      },
+      {
+        "id": "em02-l02-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "The team practices on Mondays.",
+        "promptPt": "Alex fala do time (it/they).",
+        "options": [
+          {
+            "labelEn": "Yes, the team practices every Monday.",
+            "correct": true,
+            "feedbackPt": "Team singular — practices."
+          },
+          {
+            "labelEn": "Yes, the team practice every Monday.",
+            "correct": false,
+            "feedbackPt": "Team = it — practices."
+          },
+          {
+            "labelEn": "Yes, the team is practice.",
+            "correct": false,
+            "feedbackPt": "Is practice errado."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em02-l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "He / She + -s",
+        "titlePt": "He / She + -s",
+        "introPt": "Terceira pessoa singular — verbo + s (works, lives, trains).",
+        "examples": [
+          {
+            "en": "He works in marketing.",
+            "pt": "ele trabalha"
+          },
+          {
+            "en": "She lives in Boston.",
+            "pt": "ela mora"
+          },
+          {
+            "en": "He trains every morning.",
+            "pt": "ele treina"
+          },
+          {
+            "en": "She plays soccer on weekends.",
+            "pt": "ela joga"
+          }
+        ]
+      },
+      {
+        "id": "em02-l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Does he/she...?",
+        "titlePt": "Does he/she...?",
+        "introPt": "Pergunta: Does + he/she + verbo BASE (sem -s).",
+        "examples": [
+          {
+            "en": "Does he work here?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "Does she train every day?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "Yes, he does. / No, he doesn't.",
+            "pt": "resposta curta"
+          },
+          {
+            "en": "What time does she start?",
+            "pt": "WH + does"
+          }
+        ]
+      },
+      {
+        "id": "em02-l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "I vs He comparison",
+        "titlePt": "I vs He — comparação",
+        "introPt": "I/you/we/they = base. He/she/it = -s.",
+        "examples": [
+          {
+            "en": "I work · He works",
+            "pt": "trabalhar"
+          },
+          {
+            "en": "I live · She lives",
+            "pt": "morar"
+          },
+          {
+            "en": "We train · He trains",
+            "pt": "treinar"
+          },
+          {
+            "en": "They play · She plays",
+            "pt": "jogar"
+          }
+        ]
+      },
+      {
+        "id": "em02-l02-learn-cmp",
+        "type": "comparison",
+        "titleEn": "I work vs He works",
+        "titlePt": "I work vs He works",
+        "left": {
+          "labelEn": "I / YOU / WE / THEY",
+          "exampleEn": "I work · They train",
+          "notePt": "Verbo base — sem -s."
+        },
+        "right": {
+          "labelEn": "HE / SHE / IT",
+          "exampleEn": "He works · She trains",
+          "notePt": "Verbo + -s — obrigatório."
+        },
+        "modelEn": "I work every day. He works in marketing. She trains every morning.",
+        "modelPt": "Brasileiros esquecem o -s na terceira pessoa."
+      },
+      {
+        "id": "em02-l02-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Does + base verb",
+        "titlePt": "Does + verbo base",
+        "items": [
+          {
+            "formalEn": "Does he works here?",
+            "naturalEn": "Does he work here?",
+            "notePt": "Does já marca 3ª pessoa — verbo volta à base."
+          },
+          {
+            "formalEn": "He work in Boston.",
+            "naturalEn": "He works in Boston.",
+            "notePt": "Afirmativa: he + works."
+          }
+        ],
+        "tipPt": "Pergunta: Does she work? Resposta: Yes, she works."
+      },
+      {
+        "id": "em02-l02-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "He work in marketing. / She train every day.",
+        "rightEn": "He works in marketing. / She trains every day.",
+        "explanationPt": "Português não marca -s na 3ª pessoa — inglês marca. He works, she trains, it practices."
+      },
+      {
+        "id": "em02-l02-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "He works in marketing.",
+            "pt": "3ª pessoa -s"
+          },
+          {
+            "en": "She trains every morning.",
+            "pt": "3ª pessoa -s"
+          },
+          {
+            "en": "Does he work here?",
+            "pt": "pergunta does"
+          },
+          {
+            "en": "I work · He works",
+            "pt": "contraste"
+          },
+          {
+            "en": "Yes, she does.",
+            "pt": "resposta curta"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em02-l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Where does Marco work?"
+          },
+          {
+            "en": "He works in marketing."
+          },
+          {
+            "en": "Does Sarah train every morning?"
+          },
+          {
+            "en": "Yes, she trains every morning."
+          },
+          {
+            "en": "What time does he start work?"
+          },
+          {
+            "en": "He starts at 8 a.m."
+          },
+          {
+            "en": "Does she work from home?"
+          },
+          {
+            "en": "Yes, she works from home on Fridays."
+          },
+          {
+            "en": "I work every day."
+          },
+          {
+            "en": "He works in marketing. She trains every morning."
+          }
+        ],
+        "dialogueEn": "Where does Marco work? — He works in marketing. — Does Sarah train every morning? — Yes, she trains every morning. — What time does he start? — He starts at 8 a.m."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em02-l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can describe he/she routines with -s.",
+        "headlinePt": "Você consegue descrever rotinas de he/she com -s.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Tell me about Marco and Sarah."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em02-l02-prac-01",
+      "type": "choice",
+      "promptPt": "Marco (he) trabalha:",
+      "options": [
+        {
+          "labelEn": "He works in marketing.",
+          "correct": true,
+          "feedbackPt": "-s obrigatório."
+        },
+        {
+          "labelEn": "He work in marketing.",
+          "correct": false,
+          "feedbackPt": "Erro clássico BR."
+        },
+        {
+          "labelEn": "He working in marketing.",
+          "correct": false,
+          "feedbackPt": "Incompleto."
+        }
+      ]
+    },
+    {
+      "id": "em02-l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Sarah (she) treina:",
+      "templateEn": "She ___ every morning.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "trains",
+          "correct": true,
+          "feedbackPt": "She trains."
+        },
+        {
+          "labelEn": "train",
+          "correct": false,
+          "feedbackPt": "She train errado."
+        },
+        {
+          "labelEn": "training",
+          "correct": false,
+          "feedbackPt": "Training incompleto."
+        }
+      ]
+    },
+    {
+      "id": "em02-l02-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte pergunta:",
+      "tokens": [
+        "here?",
+        "work",
+        "he",
+        "Does"
+      ],
+      "correctOrder": [
+        "Does",
+        "he",
+        "work",
+        "here?"
+      ],
+      "feedbackCorrectPt": "Does he work here?",
+      "feedbackWrongPt": "Does + he + work (base)."
+    },
+    {
+      "id": "em02-l02-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: Does she work from home?",
+      "speaker": "You",
+      "contextEn": "Alex: Does she work from home?",
+      "options": [
+        {
+          "labelEn": "Yes, she works from home on Fridays.",
+          "correct": true,
+          "feedbackPt": "Works na resposta."
+        },
+        {
+          "labelEn": "Yes, she work from home.",
+          "correct": false,
+          "feedbackPt": "She work errado."
+        },
+        {
+          "labelEn": "Yes, she does works.",
+          "correct": false,
+          "feedbackPt": "Does works redundante."
+        }
+      ]
+    },
+    {
+      "id": "em02-l02-prac-05",
+      "type": "choice",
+      "promptPt": "Qual está ERRADA?",
+      "options": [
+        {
+          "labelEn": "He work every day.",
+          "correct": true,
+          "feedbackPt": "Errada — He works."
+        },
+        {
+          "labelEn": "He works every day.",
+          "correct": false,
+          "feedbackPt": "Correta."
+        },
+        {
+          "labelEn": "She works every day.",
+          "correct": false,
+          "feedbackPt": "Correta."
+        }
+      ]
+    },
+    {
+      "id": "em02-l02-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Pergunta — verbo base:",
+      "templateEn": "Does he ___ in Boston?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "live",
+          "correct": true,
+          "feedbackPt": "Does + live (base)."
+        },
+        {
+          "labelEn": "lives",
+          "correct": false,
+          "feedbackPt": "Does + base, não lives."
+        },
+        {
+          "labelEn": "living",
+          "correct": false,
+          "feedbackPt": "Living errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l02-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Contraste I vs He:",
+      "speaker": "You",
+      "contextEn": "Describe you and Marco.",
+      "options": [
+        {
+          "labelEn": "I work every day. He works in marketing.",
+          "correct": true,
+          "feedbackPt": "I base, he -s."
+        },
+        {
+          "labelEn": "I works every day. He work in marketing.",
+          "correct": false,
+          "feedbackPt": "Ambos errados."
+        },
+        {
+          "labelEn": "I work. He work.",
+          "correct": false,
+          "feedbackPt": "He precisa -s."
+        }
+      ]
+    },
+    {
+      "id": "em02-l02-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte afirmativa:",
+      "tokens": [
+        "marketing.",
+        "in",
+        "works",
+        "He"
+      ],
+      "correctOrder": [
+        "He",
+        "works",
+        "in",
+        "marketing."
+      ],
+      "feedbackCorrectPt": "He works in marketing.",
+      "feedbackWrongPt": "He + works + in + lugar."
+    },
+    {
+      "id": "em02-l02-prac-09",
+      "type": "choice",
+      "promptPt": "Resposta curta:",
+      "options": [
+        {
+          "labelEn": "Yes, she does.",
+          "correct": true,
+          "feedbackPt": "Does = she does."
+        },
+        {
+          "labelEn": "Yes, she works.",
+          "correct": false,
+          "feedbackPt": "Possível mas less common as short answer."
+        },
+        {
+          "labelEn": "Yes, she do.",
+          "correct": false,
+          "feedbackPt": "She do errado."
+        }
+      ]
+    },
+    {
+      "id": "em02-l02-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Team (it):",
+      "templateEn": "The team ___ on Mondays.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "practices",
+          "correct": true,
+          "feedbackPt": "Team singular — practices."
+        },
+        {
+          "labelEn": "practice",
+          "correct": false,
+          "feedbackPt": "Team = it — practices."
+        },
+        {
+          "labelEn": "is practice",
+          "correct": false,
+          "feedbackPt": "Is practice errado."
+        }
+      ]
+    }
+  ]
+}

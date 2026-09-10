@@ -1,0 +1,687 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 2,
+  "goalPt": "Descrever rotina semanal — On Mondays I..., weekly schedule com dias da semana.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Alex pergunta como você organiza a semana — treinos, trabalho e dias específicos.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can describe your weekly schedule.",
+    "headlinePt": "Você consegue descrever sua agenda semanal.",
+    "bodyPt": "",
+    "canDo": [
+      "On Mondays I...",
+      "on weekends",
+      "I never work on Sundays"
+    ],
+    "production": {
+      "introPt": "Descreva sua semana — três dias específicos e o fim de semana.",
+      "prompts": [
+        {
+          "speaker": "Alex",
+          "questionEn": "Walk me through your week."
+        }
+      ],
+      "fields": [
+        {
+          "id": "mon",
+          "labelPt": "Segunda",
+          "prefixEn": "On Mondays I",
+          "placeholderEn": "usually have team meetings."
+        },
+        {
+          "id": "wed",
+          "labelPt": "Quarta",
+          "prefixEn": "On Wednesdays I",
+          "placeholderEn": "train in the morning."
+        },
+        {
+          "id": "fri",
+          "labelPt": "Sexta",
+          "prefixEn": "On Fridays I",
+          "placeholderEn": "usually leave early."
+        },
+        {
+          "id": "weekend",
+          "labelPt": "Fim de semana",
+          "prefixEn": "",
+          "placeholderEn": "I relax on weekends. I never work on Sundays."
+        }
+      ],
+      "exampleEn": "On Mondays I have meetings. On Wednesdays I train. On Fridays I leave early. I relax on weekends."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em02-l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Weekly routines",
+        "titlePt": "Rotinas semanais",
+        "bodyPt": "Organize sua semana em inglês — On Mondays I..., on weekends, every Tuesday. Rotina semanal clara e natural."
+      },
+      {
+        "id": "em02-l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team planning · Week overview",
+        "scenarioPt": "Alex pergunta como você organiza a semana — treinos, trabalho e dias específicos."
+      },
+      {
+        "id": "em02-l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What do you do on Mondays?",
+        "promptPt": "Alex pergunta sobre segunda-feira.",
+        "options": [
+          {
+            "labelEn": "On Mondays I usually have team meetings.",
+            "correct": true,
+            "feedbackPt": "On Mondays + rotina."
+          },
+          {
+            "labelEn": "In Mondays I have meetings.",
+            "correct": false,
+            "feedbackPt": "On Mondays, não In Mondays."
+          },
+          {
+            "labelEn": "On Monday I am have meetings.",
+            "correct": false,
+            "feedbackPt": "Am have errado."
+          }
+        ]
+      },
+      {
+        "id": "em02-l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "How about Wednesdays?",
+        "promptPt": "Alex continua pela semana.",
+        "options": [
+          {
+            "labelEn": "On Wednesdays I train in the morning.",
+            "correct": true,
+            "feedbackPt": "On + dia plural + rotina."
+          },
+          {
+            "labelEn": "On Wednesdays I am train.",
+            "correct": false,
+            "feedbackPt": "I train, não am train."
+          },
+          {
+            "labelEn": "At Wednesdays I train.",
+            "correct": false,
+            "feedbackPt": "On Wednesdays."
+          }
+        ]
+      },
+      {
+        "id": "em02-l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you work on weekends?",
+        "promptPt": "Alex pergunta sobre fim de semana.",
+        "options": [
+          {
+            "labelEn": "Sometimes I work on Saturdays, but not always.",
+            "correct": true,
+            "feedbackPt": "On Saturdays + sometimes."
+          },
+          {
+            "labelEn": "I work in weekends always.",
+            "correct": false,
+            "feedbackPt": "On weekends."
+          },
+          {
+            "labelEn": "I am work on weekend.",
+            "correct": false,
+            "feedbackPt": "I work."
+          }
+        ]
+      },
+      {
+        "id": "em02-l03-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "What do you usually do on Fridays?",
+        "promptPt": "Sua pergunta sobre sexta.",
+        "options": [
+          {
+            "labelEn": "What do you usually do on Fridays?",
+            "correct": true,
+            "feedbackPt": "Pergunta natural."
+          },
+          {
+            "labelEn": "What you do on Fridays?",
+            "correct": false,
+            "feedbackPt": "Falta do."
+          },
+          {
+            "labelEn": "What do you usually on Fridays do?",
+            "correct": false,
+            "feedbackPt": "Ordem errada."
+          }
+        ]
+      },
+      {
+        "id": "em02-l03-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I never work on Sundays.",
+        "promptPt": "Alex compartilha hábito dominical.",
+        "options": [
+          {
+            "labelEn": "Same here. I usually relax on Sundays.",
+            "correct": true,
+            "feedbackPt": "Resposta paralela."
+          },
+          {
+            "labelEn": "I never am work Sundays.",
+            "correct": false,
+            "feedbackPt": "I never work."
+          },
+          {
+            "labelEn": "Same here. I relax on the Sunday always.",
+            "correct": false,
+            "feedbackPt": "On Sundays."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em02-l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "On Mondays / On Tuesdays...",
+        "titlePt": "On Mondays / On Tuesdays...",
+        "introPt": "On + dia (plural) = todo/aquele dia da semana repetidamente.",
+        "examples": [
+          {
+            "en": "On Mondays I have meetings.",
+            "pt": "segundas"
+          },
+          {
+            "en": "On Wednesdays I train.",
+            "pt": "quartas"
+          },
+          {
+            "en": "On Fridays I leave early.",
+            "pt": "sextas"
+          },
+          {
+            "en": "What do you do on Thursdays?",
+            "pt": "pergunta"
+          }
+        ]
+      },
+      {
+        "id": "em02-l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "on weekends / weekdays",
+        "titlePt": "fim de semana / dias úteis",
+        "introPt": "On weekends = sábado e domingo. On weekdays = segunda a sexta.",
+        "examples": [
+          {
+            "en": "I relax on weekends.",
+            "pt": "descanso"
+          },
+          {
+            "en": "I work on weekdays.",
+            "pt": "dias úteis"
+          },
+          {
+            "en": "Do you train on weekends?",
+            "pt": "pergunta"
+          },
+          {
+            "en": "I usually sleep in on Sundays.",
+            "pt": "domingo"
+          }
+        ]
+      },
+      {
+        "id": "em02-l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Weekly schedule phrases",
+        "titlePt": "Frases de agenda semanal",
+        "introPt": "Monte sua semana com frases curtas conectadas.",
+        "examples": [
+          {
+            "en": "Monday: meetings. Tuesday: training. Wednesday: travel.",
+            "pt": "lista"
+          },
+          {
+            "en": "My busiest day is Thursday.",
+            "pt": "dia mais cheio"
+          },
+          {
+            "en": "I never work on Sundays.",
+            "pt": "nunca"
+          },
+          {
+            "en": "Every Tuesday I have a team call.",
+            "pt": "every + dia"
+          }
+        ]
+      },
+      {
+        "id": "em02-l03-learn-lf",
+        "type": "language_focus",
+        "titleEn": "On vs In vs At (days)",
+        "titlePt": "On vs In vs At (dias)",
+        "items": [
+          {
+            "formalEn": "In Monday I work.",
+            "naturalEn": "On Monday / On Mondays I work.",
+            "notePt": "Dias da semana = ON."
+          },
+          {
+            "formalEn": "At weekends I relax.",
+            "naturalEn": "On weekends I relax. (US)",
+            "notePt": "Americano: on weekends. Britânico também at weekends."
+          }
+        ],
+        "tipPt": "On Mondays (plural) = toda segunda. On Monday = esta/próxima segunda específica."
+      },
+      {
+        "id": "em02-l03-learn-voc",
+        "type": "vocabulary",
+        "titleEn": "Days of the week",
+        "titlePt": "Dias da semana",
+        "words": [
+          {
+            "en": "Monday",
+            "pt": "segunda",
+            "exampleEn": "On Mondays I have meetings."
+          },
+          {
+            "en": "Wednesday",
+            "pt": "quarta",
+            "exampleEn": "On Wednesdays I train."
+          },
+          {
+            "en": "weekend",
+            "pt": "fim de semana",
+            "exampleEn": "I relax on weekends."
+          },
+          {
+            "en": "weekday",
+            "pt": "dia útil",
+            "exampleEn": "I work on weekdays."
+          }
+        ]
+      },
+      {
+        "id": "em02-l03-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "In Mondays I work. / At Wednesday I train.",
+        "rightEn": "On Mondays I work. / On Wednesdays I train.",
+        "explanationPt": "Dias da semana usam ON — não in nem at (exceto at weekends em UK)."
+      },
+      {
+        "id": "em02-l03-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "On Mondays I have meetings.",
+            "pt": "on + dia"
+          },
+          {
+            "en": "I train on Wednesdays.",
+            "pt": "rotina"
+          },
+          {
+            "en": "I relax on weekends.",
+            "pt": "weekend"
+          },
+          {
+            "en": "I never work on Sundays.",
+            "pt": "never"
+          },
+          {
+            "en": "What do you do on Fridays?",
+            "pt": "pergunta"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em02-l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "What do you do on Mondays?"
+          },
+          {
+            "en": "On Mondays I usually have team meetings."
+          },
+          {
+            "en": "How about Wednesdays?"
+          },
+          {
+            "en": "On Wednesdays I train in the morning."
+          },
+          {
+            "en": "Do you work on weekends?"
+          },
+          {
+            "en": "Sometimes I work on Saturdays."
+          },
+          {
+            "en": "I never work on Sundays."
+          },
+          {
+            "en": "What do you usually do on Fridays?"
+          },
+          {
+            "en": "Same here. I usually relax on Sundays."
+          },
+          {
+            "en": "My busiest day is Thursday."
+          }
+        ],
+        "dialogueEn": "What do you do on Mondays? — On Mondays I have team meetings. — How about Wednesdays? — On Wednesdays I train. — Do you work on weekends? — Sometimes on Saturdays. I never work on Sundays."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em02-l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can describe your weekly schedule.",
+        "headlinePt": "Você consegue descrever sua agenda semanal.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Alex",
+            "questionEn": "Walk me through your week."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em02-l03-prac-01",
+      "type": "choice",
+      "promptPt": "Segunda-feira (rotina):",
+      "options": [
+        {
+          "labelEn": "On Mondays I have meetings.",
+          "correct": true,
+          "feedbackPt": "On Mondays."
+        },
+        {
+          "labelEn": "In Mondays I have meetings.",
+          "correct": false,
+          "feedbackPt": "On, não In."
+        },
+        {
+          "labelEn": "At Monday I have meetings.",
+          "correct": false,
+          "feedbackPt": "On Monday(s)."
+        }
+      ]
+    },
+    {
+      "id": "em02-l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Preposição dia:",
+      "templateEn": "___ Wednesdays I train.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "On",
+          "correct": true,
+          "feedbackPt": "On Wednesdays."
+        },
+        {
+          "labelEn": "In",
+          "correct": false,
+          "feedbackPt": "In errado."
+        },
+        {
+          "labelEn": "At",
+          "correct": false,
+          "feedbackPt": "At errado para dia."
+        }
+      ]
+    },
+    {
+      "id": "em02-l03-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte rotina:",
+      "tokens": [
+        "meetings.",
+        "have",
+        "I",
+        "Mondays",
+        "On",
+        "team"
+      ],
+      "correctOrder": [
+        "On",
+        "Mondays",
+        "I",
+        "have",
+        "team",
+        "meetings."
+      ],
+      "feedbackCorrectPt": "On Mondays I have team meetings.",
+      "feedbackWrongPt": "On + day + I + verbo."
+    },
+    {
+      "id": "em02-l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: Do you work on weekends?",
+      "speaker": "You",
+      "contextEn": "Alex: Do you work on weekends?",
+      "options": [
+        {
+          "labelEn": "Sometimes on Saturdays, but not always.",
+          "correct": true,
+          "feedbackPt": "Natural."
+        },
+        {
+          "labelEn": "I work in weekends.",
+          "correct": false,
+          "feedbackPt": "On weekends."
+        },
+        {
+          "labelEn": "I am work Saturday.",
+          "correct": false,
+          "feedbackPt": "I work on Saturdays."
+        }
+      ]
+    },
+    {
+      "id": "em02-l03-prac-05",
+      "type": "choice",
+      "promptPt": "Fim de semana:",
+      "options": [
+        {
+          "labelEn": "I relax on weekends.",
+          "correct": true,
+          "feedbackPt": "On weekends."
+        },
+        {
+          "labelEn": "I relax in weekends.",
+          "correct": false,
+          "feedbackPt": "On weekends (US)."
+        },
+        {
+          "labelEn": "I relax at the weekend always.",
+          "correct": false,
+          "feedbackPt": "Menos natural US."
+        }
+      ]
+    },
+    {
+      "id": "em02-l03-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Never + domingo:",
+      "templateEn": "I never work ___ Sundays.",
+      "blankLabel": "preposição",
+      "options": [
+        {
+          "labelEn": "on",
+          "correct": true,
+          "feedbackPt": "On Sundays."
+        },
+        {
+          "labelEn": "in",
+          "correct": false,
+          "feedbackPt": "On."
+        },
+        {
+          "labelEn": "at",
+          "correct": false,
+          "feedbackPt": "On."
+        }
+      ]
+    },
+    {
+      "id": "em02-l03-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: I never work on Sundays.",
+      "speaker": "You",
+      "contextEn": "Alex: I never work on Sundays.",
+      "options": [
+        {
+          "labelEn": "Same here. I usually relax on Sundays.",
+          "correct": true,
+          "feedbackPt": "Resposta paralela."
+        },
+        {
+          "labelEn": "I never am work.",
+          "correct": false,
+          "feedbackPt": "I never work."
+        },
+        {
+          "labelEn": "Same here. I work on Sunday always.",
+          "correct": false,
+          "feedbackPt": "Contradiz."
+        }
+      ]
+    },
+    {
+      "id": "em02-l03-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte pergunta:",
+      "tokens": [
+        "Fridays?",
+        "on",
+        "do",
+        "you",
+        "What"
+      ],
+      "correctOrder": [
+        "What",
+        "do",
+        "you",
+        "do",
+        "on",
+        "Fridays?"
+      ],
+      "feedbackCorrectPt": "What do you do on Fridays?",
+      "feedbackWrongPt": "What do you do on + day?"
+    },
+    {
+      "id": "em02-l03-prac-09",
+      "type": "choice",
+      "promptPt": "Every + dia:",
+      "options": [
+        {
+          "labelEn": "Every Tuesday I have a team call.",
+          "correct": true,
+          "feedbackPt": "Every Tuesday."
+        },
+        {
+          "labelEn": "Every Tuesdays I have calls.",
+          "correct": false,
+          "feedbackPt": "Every Tuesday singular."
+        },
+        {
+          "labelEn": "All Tuesday I have call.",
+          "correct": false,
+          "feedbackPt": "Every Tuesday."
+        }
+      ]
+    },
+    {
+      "id": "em02-l03-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Dia mais cheio:",
+      "templateEn": "My busiest day is ___.",
+      "blankLabel": "dia",
+      "options": [
+        {
+          "labelEn": "Thursday",
+          "correct": true,
+          "feedbackPt": "Thursday."
+        },
+        {
+          "labelEn": "Thursdays",
+          "correct": false,
+          "feedbackPt": "Busiest day is Thursday (singular)."
+        },
+        {
+          "labelEn": "on Thursday",
+          "correct": false,
+          "feedbackPt": "Is Thursday, não is on Thursday."
+        }
+      ]
+    }
+  ]
+}
