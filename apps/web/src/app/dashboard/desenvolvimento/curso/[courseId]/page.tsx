@@ -21,7 +21,7 @@ export default function DesenvolvimentoCursoPage({
   }
 
   return (
-    <Cup360PageShell title="Curso">
+    <Cup360PageShell className="max-w-none">
       <DesenvolvimentoCoursePlayer courseId={courseId} />
     </Cup360PageShell>
   );

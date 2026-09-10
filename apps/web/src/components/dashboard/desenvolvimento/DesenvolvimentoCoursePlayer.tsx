@@ -5,10 +5,12 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api";
 import type { LearningPlayerResponse } from "@/lib/desenvolvimento-types";
+import { PREMIUM_PILOT_LESSON_KEY, parsePremiumPlayer } from "@/lib/learning-player-types";
 import { Button } from "@/components/ui/button";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { cn } from "@/lib/utils";
 import { cup360 } from "@/lib/cup360-design-tokens";
+import { PremiumLessonPlayer } from "./player/PremiumLessonPlayer";
 
 export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) {
   const [data, setData] = useState<LearningPlayerResponse | null>(null);
@@ -40,10 +42,15 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
   );
   const activeLesson = activeIndex >= 0 ? data?.lessons[activeIndex] : null;
 
+  const premiumPlayer = useMemo(() => {
+    if (!activeLesson || activeLesson.contentKey !== PREMIUM_PILOT_LESSON_KEY) return null;
+    return parsePremiumPlayer(activeLesson.liveMeta);
+  }, [activeLesson]);
+
   useEffect(() => {
-    if (!data || !activeLessonId) return;
+    if (premiumPlayer || !data || !activeLessonId) return;
     void api.post(`/desenvolvimento/enrollments/${data.enrollment.id}/lessons/${activeLessonId}/touch`);
-  }, [data, activeLessonId]);
+  }, [data, activeLessonId, premiumPlayer]);
 
   const handleComplete = async () => {
     if (!data || !activeLesson) return;
@@ -108,11 +115,27 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
     );
   }
 
+  if (premiumPlayer) {
+    return (
+      <PremiumLessonPlayer
+        key={activeLesson.id}
+        data={data}
+        lesson={activeLesson}
+        player={premiumPlayer}
+        onLessonChange={setActiveLessonId}
+        onReload={async () => {
+          await load();
+        }}
+      />
+    );
+  }
+
   const prev = activeIndex > 0 ? data.lessons[activeIndex - 1] : null;
   const next = activeIndex < data.lessons.length - 1 ? data.lessons[activeIndex + 1] : null;
+  const modulesWithLessons = data.course.modules.filter((m) => data.lessons.some((l) => l.moduleId === m.id));
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto w-full max-w-6xl space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <Button asChild variant="ghost" size="sm" className="gap-1">
           <Link href="/dashboard/desenvolvimento/meus-cursos">
@@ -121,14 +144,14 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
           </Link>
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className={cup360.type.sectionTitle}>{data.course.title}</h1>
+          <h1 className={cup360.type.pageTitle}>{data.course.title}</h1>
           <p className={cup360.type.caption}>{data.enrollment.progressPct}% concluído</p>
         </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(220px,280px)_1fr]">
-        <aside className="rounded-lg border border-border/60 bg-muted/10 p-3 lg:max-h-[70vh] lg:overflow-y-auto">
-          {data.course.modules.map((mod) => (
+        <aside className="hidden rounded-lg border border-border/60 bg-muted/10 p-3 lg:block lg:max-h-[70vh] lg:overflow-y-auto">
+          {modulesWithLessons.map((mod) => (
             <div key={mod.id} className="mb-3 last:mb-0">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{mod.title}</p>
               <ul className="space-y-1">
@@ -142,7 +165,7 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
                           type="button"
                           onClick={() => setActiveLessonId(lesson.id)}
                           className={cn(
-                            "flex w-full items-start gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors",
+                            "flex w-full items-start gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors min-h-[44px]",
                             lesson.id === activeLessonId ? "bg-primary/15 text-foreground" : "hover:bg-muted/40",
                           )}
                         >
@@ -195,7 +218,7 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
                   <fieldset key={q.id} className="space-y-2 rounded-md border border-border/50 p-3">
                     <legend className="px-1 text-sm font-medium">{q.question}</legend>
                     {q.options.map((opt, idx) => (
-                      <label key={idx} className="flex cursor-pointer items-center gap-2 text-sm">
+                      <label key={idx} className="flex cursor-pointer items-center gap-2 text-sm min-h-[44px]">
                         <input
                           type="radio"
                           name={q.id}
@@ -222,6 +245,7 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
               size="sm"
               disabled={!prev}
               onClick={() => prev && setActiveLessonId(prev.id)}
+              className="min-h-[44px]"
             >
               <ChevronLeft className="h-4 w-4" />
               Anterior
@@ -229,7 +253,7 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
             {activeLesson.quiz ? (
               <span className="text-xs text-muted-foreground">Conclua via quiz aprovado</span>
             ) : (
-              <Button type="button" size="sm" onClick={() => void handleComplete()}>
+              <Button type="button" size="sm" onClick={() => void handleComplete()} className="min-h-[44px]">
                 Marcar como concluída
               </Button>
             )}
@@ -239,6 +263,7 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
               size="sm"
               disabled={!next}
               onClick={() => next && setActiveLessonId(next.id)}
+              className="min-h-[44px]"
             >
               Próxima
               <ChevronRight className="h-4 w-4" />

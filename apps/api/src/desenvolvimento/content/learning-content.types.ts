@@ -12,6 +12,8 @@ export type LearningLiveMeta = {
   buildPractice?: string;
   verify?: string;
   executeMission?: string;
+  /** Experiência premium do player (versionado, backward-compatible) */
+  player?: Record<string, unknown>;
 };
 
 export type LearningContentMediaRef = {

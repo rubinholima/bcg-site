@@ -658,7 +658,19 @@ export class DesenvolvimentoService {
       },
       course: enrollment.course,
       lessons: flatLessons.map((l) => ({
-        ...l,
+        id: l.id,
+        contentKey: l.contentKey,
+        moduleId: l.moduleId,
+        moduleTitle: l.moduleTitle,
+        title: l.title,
+        sortOrder: l.sortOrder,
+        lessonType: l.lessonType,
+        contentHtml: l.contentHtml,
+        liveMeta: l.liveMeta,
+        estimatedMinutes: l.estimatedMinutes,
+        fileUrl: l.fileUrl,
+        externalUrl: l.externalUrl,
+        mimeType: l.mimeType,
         progress: progressMap.get(l.id) ?? null,
         quiz: l.quiz
           ? {

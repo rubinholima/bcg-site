@@ -1,3 +1,5 @@
+import type { LearningLiveMeta } from "./learning-player-types";
+
 export type LearningCourseStatus = "draft" | "published" | "archived";
 export type LearningLessonType = "VIDEO" | "TEXT" | "DOCUMENT" | "LINK" | "QUIZ";
 export type LearningAssignmentMode = "all_tenant" | "tenant" | "role" | "user";
@@ -42,12 +44,15 @@ export interface LearningHubResponse {
 
 export interface LearningPlayerLesson {
   id: string;
+  contentKey?: string | null;
   moduleId: string;
   moduleTitle: string;
   title: string;
   sortOrder: number;
   lessonType: LearningLessonType;
   contentHtml: string | null;
+  liveMeta?: LearningLiveMeta | null;
+  estimatedMinutes?: number | null;
   fileUrl: string | null;
   externalUrl: string | null;
   mimeType: string | null;
