@@ -1,0 +1,331 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 9,
+  "goalPt": "Perguntar What did you do? e responder com I went... / I had... — conjunto limitado de verbos no passado, sem aula de gramática.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Na pausa do café, Jamie quer saber o que você fez ontem à noite.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Ask and answer about the past.",
+    "headlinePt": "Pergunte e responda sobre o passado.",
+    "bodyPt": "",
+    "canDo": [
+      "What did you do?",
+      "I went to the gym.",
+      "I had dinner with friends.",
+      "I watched a movie."
+    ],
+    "production": {
+      "introPt": "Jamie pergunta o que você fez ontem. Responda com duas atividades usando I went... ou I had...",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What did you do yesterday?" }
+      ],
+      "fields": [
+        { "id": "activity1", "labelPt": "Primeira atividade", "prefixEn": "I", "placeholderEn": "went to the gym." },
+        { "id": "activity2", "labelPt": "Segunda atividade", "prefixEn": "I", "placeholderEn": "had dinner with friends." }
+      ],
+      "exampleEn": "I went to the gym. I had dinner with friends."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m09l02-ctx-01",
+        "type": "intro",
+        "titleEn": "What did you do?",
+        "titlePt": "O que você fez?",
+        "bodyPt": "A pergunta mais comum sobre o passado recente: What did you do? Responda com frases prontas — I went..., I had..., I watched..."
+      },
+      {
+        "id": "m09l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office break room · Tuesday afternoon",
+        "scenarioPt": "Jamie traz café e pergunta sobre seu fim de semana ou ontem à noite."
+      },
+      {
+        "id": "m09l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What did you do yesterday?",
+        "promptPt": "Jamie pergunta o que você fez. Melhor resposta:",
+        "options": [
+          { "labelEn": "I went to the gym.", "correct": true, "feedbackPt": "I went + lugar — resposta natural." },
+          { "labelEn": "I go to the gym.", "correct": false, "feedbackPt": "Go é presente — a pergunta é sobre ontem." },
+          { "labelEn": "I going to the gym.", "correct": false, "feedbackPt": "Forma incorreta." }
+        ]
+      },
+      {
+        "id": "m09l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Nice! What about last night?",
+        "promptPt": "Jamie pergunta sobre ontem à noite:",
+        "options": [
+          { "labelEn": "I had dinner with friends.", "correct": true, "feedbackPt": "I had + refeição/atividade — padrão fixo." },
+          { "labelEn": "I have dinner with friends.", "correct": false, "feedbackPt": "Have é presente." },
+          { "labelEn": "I had dinner tomorrow.", "correct": false, "feedbackPt": "Tomorrow não combina com had." }
+        ]
+      },
+      {
+        "id": "m09l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Sounds fun! What did you do?",
+        "promptPt": "Jamie devolve a pergunta — como perguntar de volta:",
+        "options": [
+          { "labelEn": "What did you do?", "correct": true, "feedbackPt": "Devolve a pergunta — conversa natural." },
+          { "labelEn": "What do you do?", "correct": false, "feedbackPt": "What do you do? = profissão, não passado." },
+          { "labelEn": "What are you doing?", "correct": false, "feedbackPt": "Are you doing = agora, não ontem." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m09l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "What did you do?",
+        "titlePt": "O que você fez?",
+        "introPt": "Pergunta fixa sobre passado recente. Did + verbo base — memorize a pergunta inteira.",
+        "examples": [
+          { "en": "What did you do?", "pt": "o que você fez?" },
+          { "en": "What did you do yesterday?", "pt": "o que fez ontem?" },
+          { "en": "What did you do last night?", "pt": "o que fez ontem à noite?" },
+          { "en": "What did you do on the weekend?", "pt": "o que fez no fim de semana?" }
+        ]
+      },
+      {
+        "id": "m09l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "I went...",
+        "titlePt": "Eu fui...",
+        "introPt": "Went = passado de go. Use para lugares e atividades fora de casa.",
+        "examples": [
+          { "en": "I went to the gym.", "pt": "fui à academia" },
+          { "en": "I went to work.", "pt": "fui trabalhar" },
+          { "en": "I went to a restaurant.", "pt": "fui a um restaurante" },
+          { "en": "I went out.", "pt": "saí" }
+        ]
+      },
+      {
+        "id": "m09l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "I had...",
+        "titlePt": "Eu tive / comi / fiz...",
+        "introPt": "Had = passado de have. Muito comum para refeições e momentos.",
+        "examples": [
+          { "en": "I had dinner.", "pt": "jantei" },
+          { "en": "I had lunch with my team.", "pt": "almacei com a equipe" },
+          { "en": "I had a good time.", "pt": "me diverti" },
+          { "en": "I had coffee.", "pt": "tomei café" }
+        ]
+      },
+      {
+        "id": "m09l02-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "More past phrases",
+        "titlePt": "Mais frases de passado",
+        "introPt": "Conjunto limitado — memorize estas formas:",
+        "examples": [
+          { "en": "I watched a movie.", "pt": "assisti a um filme" },
+          { "en": "I stayed home.", "pt": "fiquei em casa" },
+          { "en": "I worked late.", "pt": "trabalhei até tarde" },
+          { "en": "I rested.", "pt": "descansei" }
+        ]
+      },
+      {
+        "id": "m09l02-learn-05",
+        "type": "comparison",
+        "titleEn": "Present vs past",
+        "titlePt": "Presente vs passado",
+        "left": {
+          "labelEn": "NOW · present",
+          "exampleEn": "I go to the gym.",
+          "notePt": "Rotina ou agora — sem did."
+        },
+        "right": {
+          "labelEn": "YESTERDAY · past",
+          "exampleEn": "I went to the gym.",
+          "notePt": "Ontem — went, had, watched."
+        },
+        "modelEn": "What did you do? — I went to the gym.",
+        "modelPt": "A pergunta usa did; a resposta usa verbo no passado."
+      },
+      {
+        "id": "m09l02-learn-06",
+        "type": "language_focus",
+        "titleEn": "Limited verb set",
+        "titlePt": "Conjunto limitado de verbos",
+        "items": [
+          { "formalEn": "I went...", "naturalEn": "I went to the gym / I went out.", "notePt": "Lugares e saídas." },
+          { "formalEn": "I had...", "naturalEn": "I had dinner / I had a good time.", "notePt": "Refeições e experiências." },
+          { "formalEn": "I watched / stayed / worked / rested", "naturalEn": "I watched a movie. I stayed home.", "notePt": "Atividades simples — memorize as formas." }
+        ],
+        "tipPt": "Não precisa saber todas as regras do passado — use as frases prontas desta lição."
+      },
+      {
+        "id": "m09l02-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "What did you do?", "pt": "o que você fez?" },
+          { "en": "I went to the gym.", "pt": "fui à academia" },
+          { "en": "I had dinner.", "pt": "jantei" },
+          { "en": "I watched a movie.", "pt": "assisti a um filme" },
+          { "en": "I stayed home.", "pt": "fiquei em casa" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m09l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Past questions & answers",
+        "titlePt": "Perguntas e respostas no passado",
+        "introPt": "Leia o diálogo em voz alta. Troque as atividades pelas suas.",
+        "phrases": [
+          { "en": "What did you do yesterday?" },
+          { "en": "I went to the gym." },
+          { "en": "What did you do last night?" },
+          { "en": "I had dinner with friends." },
+          { "en": "I watched a movie." },
+          { "en": "I stayed home." },
+          { "en": "What did you do?" },
+          { "en": "I went out. It was fun!" }
+        ],
+        "dialogueEn": "What did you do yesterday? — I went to the gym. What did you do last night? — I had dinner with friends. I watched a movie. — What did you do? — I went out. It was fun!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "m09l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Tell Jamie what you did.",
+        "headlinePt": "Conte a Jamie o que você fez.",
+        "bodyPt": "Responda com duas atividades de ontem usando I went... ou I had...",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What did you do yesterday?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m09l02-prac-01",
+      "type": "choice",
+      "promptPt": "Pergunta sobre o passado:",
+      "options": [
+        { "labelEn": "What did you do?", "correct": true, "feedbackPt": "Did + base verb — pergunta fixa." },
+        { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Do you do = profissão/rotina presente." },
+        { "labelEn": "What are you do?", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "m09l02-prac-02",
+      "type": "choice",
+      "promptPt": "Resposta — fui à academia:",
+      "options": [
+        { "labelEn": "I went to the gym.", "correct": true, "feedbackPt": "Went = passado de go." },
+        { "labelEn": "I go to the gym.", "correct": false, "feedbackPt": "Go é presente." },
+        { "labelEn": "I going to the gym.", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "m09l02-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete — jantei com amigos:",
+      "templateEn": "I ___ dinner with friends.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "had", "correct": true, "feedbackPt": "Had = passado de have." },
+        { "labelEn": "have", "correct": false, "feedbackPt": "Have é presente." },
+        { "labelEn": "has", "correct": false, "feedbackPt": "Has combina com he/she/it." }
+      ]
+    },
+    {
+      "id": "m09l02-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta — o que você fez?",
+      "tokens": ["do?", "you", "did", "What"],
+      "correctOrder": ["What", "did", "you", "do?"],
+      "feedbackCorrectPt": "What did you do? — ordem fixa.",
+      "feedbackWrongPt": "What + did + you + do?"
+    },
+    {
+      "id": "m09l02-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What did you do yesterday? — você:",
+      "speaker": "You",
+      "contextEn": "Jamie: What did you do yesterday?",
+      "options": [
+        { "labelEn": "I watched a movie.", "correct": true, "feedbackPt": "Watched = passado — resposta natural." },
+        { "labelEn": "I watch a movie.", "correct": false, "feedbackPt": "Watch é presente." },
+        { "labelEn": "I will watch a movie.", "correct": false, "feedbackPt": "Will é futuro." }
+      ]
+    },
+    {
+      "id": "m09l02-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete — fui trabalhar:",
+      "templateEn": "I ___ to work.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "went", "correct": true, "feedbackPt": "Went = passado de go." },
+        { "labelEn": "go", "correct": false, "feedbackPt": "Go é presente." },
+        { "labelEn": "going", "correct": false, "feedbackPt": "Going não funciona aqui." }
+      ]
+    },
+    {
+      "id": "m09l02-prac-07",
+      "type": "classify",
+      "promptPt": "Presente ou passado?",
+      "sentenceEn": "I had dinner.",
+      "category": "past",
+      "feedbackCorrectPt": "Had = passado.",
+      "feedbackWrongPt": "Had é forma passada de have."
+    },
+    {
+      "id": "m09l02-prac-08",
+      "type": "classify",
+      "promptPt": "Presente ou passado?",
+      "sentenceEn": "I go to work.",
+      "category": "present",
+      "feedbackCorrectPt": "Go = presente.",
+      "feedbackWrongPt": "Go é presente — went seria passado."
+    },
+    {
+      "id": "m09l02-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte — fiquei em casa:",
+      "tokens": ["home.", "stayed", "I"],
+      "correctOrder": ["I", "stayed", "home."],
+      "feedbackCorrectPt": "I stayed home. — ordem natural.",
+      "feedbackWrongPt": "I + stayed + home."
+    },
+    {
+      "id": "m09l02-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Devolva a pergunta a Jamie:",
+      "speaker": "You",
+      "contextEn": "You told Jamie about your day.",
+      "options": [
+        { "labelEn": "What did you do?", "correct": true, "feedbackPt": "Devolve a pergunta sobre o passado." },
+        { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Profissão, não passado." },
+        { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Moradia — contexto diferente." }
+      ]
+    }
+  ]
+}

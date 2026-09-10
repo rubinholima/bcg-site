@@ -1,0 +1,329 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 9,
+  "goalPt": "Usar yesterday e frases fixas Today is... / Yesterday was... para falar do dia anterior — sem gramática avançada, só expressões funcionais.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Segunda de manhã — Jamie pergunta como foi ontem e ajuda você a nomear o dia.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Talk about yesterday.",
+    "headlinePt": "Fale sobre ontem.",
+    "bodyPt": "",
+    "canDo": [
+      "Yesterday was Sunday.",
+      "Today is Monday.",
+      "Yesterday I stayed home.",
+      "Yesterday I worked."
+    ],
+    "production": {
+      "introPt": "Jamie quer saber sobre ontem. Diga qual dia era ontem e uma coisa simples que você fez.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "How was yesterday?" }
+      ],
+      "fields": [
+        { "id": "today", "labelPt": "Hoje é...", "prefixEn": "Today is", "placeholderEn": "Monday." },
+        { "id": "yesterday", "labelPt": "Ontem era...", "prefixEn": "Yesterday was", "placeholderEn": "Sunday." },
+        { "id": "activity", "labelPt": "Ontem eu...", "prefixEn": "Yesterday I", "placeholderEn": "stayed home." }
+      ],
+      "exampleEn": "Today is Monday. Yesterday was Sunday. Yesterday I stayed home."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m09l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Yesterday",
+        "titlePt": "Ontem",
+        "bodyPt": "Para falar do passado recente, comece pelo básico: yesterday (ontem) e frases fixas que nomeiam o dia — Today is... e Yesterday was..."
+      },
+      {
+        "id": "m09l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office kitchen · Monday morning",
+        "scenarioPt": "Você encontra Jamie na copa. Ela comenta o fim de semana e quer saber como foi ontem."
+      },
+      {
+        "id": "m09l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Good morning! Today is Monday. How was yesterday?",
+        "promptPt": "Jamie nomeia hoje e pergunta sobre ontem. Como responder?",
+        "options": [
+          { "labelEn": "Yesterday was Sunday. It was good!", "correct": true, "feedbackPt": "Yesterday was + dia — frase fixa e natural." },
+          { "labelEn": "Tomorrow is Tuesday.", "correct": false, "feedbackPt": "Tomorrow é futuro — a pergunta foi sobre ontem." },
+          { "labelEn": "I am Monday.", "correct": false, "feedbackPt": "Dia da semana não combina com I am." }
+        ]
+      },
+      {
+        "id": "m09l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What did you do yesterday?",
+        "promptPt": "Jamie quer uma atividade de ontem. Resposta simples:",
+        "options": [
+          { "labelEn": "Yesterday I stayed home.", "correct": true, "feedbackPt": "Yesterday I + verbo — padrão funcional para iniciantes." },
+          { "labelEn": "Yesterday I am home.", "correct": false, "feedbackPt": "Passado pede stayed, não am." },
+          { "labelEn": "Yesterday is home.", "correct": false, "feedbackPt": "Yesterday não combina com is neste contexto." }
+        ]
+      },
+      {
+        "id": "m09l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Nice! See you later!",
+        "promptPt": "Jamie encerra. Como responder?",
+        "options": [
+          { "labelEn": "See you later!", "correct": true, "feedbackPt": "Despedida natural." },
+          { "labelEn": "Yesterday was good.", "correct": false, "feedbackPt": "Não responde à despedida." },
+          { "labelEn": "Today is Monday.", "correct": false, "feedbackPt": "Repete informação — Jamie já sabe." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m09l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Yesterday",
+        "titlePt": "Ontem",
+        "introPt": "Yesterday = ontem. Use no início da frase para falar do dia anterior.",
+        "examples": [
+          { "en": "yesterday", "pt": "ontem (advérbio)" },
+          { "en": "Yesterday was Sunday.", "pt": "ontem era domingo" },
+          { "en": "Yesterday I worked.", "pt": "ontem eu trabalhei" },
+          { "en": "How was yesterday?", "pt": "como foi ontem?" }
+        ]
+      },
+      {
+        "id": "m09l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Today is...",
+        "titlePt": "Hoje é...",
+        "introPt": "Frase fixa para nomear o dia de hoje — memorize o padrão.",
+        "examples": [
+          { "en": "Today is Monday.", "pt": "hoje é segunda" },
+          { "en": "Today is Tuesday.", "pt": "hoje é terça" },
+          { "en": "Today is Friday.", "pt": "hoje é sexta" }
+        ]
+      },
+      {
+        "id": "m09l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Yesterday was...",
+        "titlePt": "Ontem era...",
+        "introPt": "Frase fixa para nomear o dia de ontem — espelho de Today is.",
+        "examples": [
+          { "en": "Yesterday was Sunday.", "pt": "ontem era domingo" },
+          { "en": "Yesterday was Saturday.", "pt": "ontem era sábado" },
+          { "en": "Yesterday was a holiday.", "pt": "ontem era feriado" }
+        ]
+      },
+      {
+        "id": "m09l01-learn-04",
+        "type": "comparison",
+        "titleEn": "Today vs Yesterday",
+        "titlePt": "Hoje vs ontem",
+        "left": {
+          "labelEn": "TODAY · present",
+          "exampleEn": "Today is Monday.",
+          "notePt": "Nomeia o dia de hoje — is + dia da semana."
+        },
+        "right": {
+          "labelEn": "YESTERDAY · past",
+          "exampleEn": "Yesterday was Sunday.",
+          "notePt": "Nomeia o dia de ontem — was + dia da semana."
+        },
+        "modelEn": "Today is Monday. Yesterday was Sunday.",
+        "modelPt": "Hoje e ontem aparecem juntos em conversas sobre o fim de semana."
+      },
+      {
+        "id": "m09l01-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Yesterday I...",
+        "titlePt": "Ontem eu...",
+        "introPt": "Para dizer o que fez ontem, use Yesterday I + verbo simples. Conjunto limitado nesta fase:",
+        "examples": [
+          { "en": "Yesterday I stayed home.", "pt": "fiquei em casa" },
+          { "en": "Yesterday I worked.", "pt": "trabalhei" },
+          { "en": "Yesterday I rested.", "pt": "descansei" },
+          { "en": "Yesterday I went out.", "pt": "saí" }
+        ]
+      },
+      {
+        "id": "m09l01-learn-06",
+        "type": "language_focus",
+        "titleEn": "Functional past — not grammar class",
+        "titlePt": "Passado funcional — não aula de gramática",
+        "items": [
+          { "formalEn": "Yesterday was Sunday.", "naturalEn": "Yesterday was Sunday. It was good!", "notePt": "Frases prontas primeiro — você não precisa dominar Past Simple agora." },
+          { "formalEn": "Today is Monday.", "naturalEn": "Good morning! Today is Monday.", "notePt": "Nomear o dia ajuda a contextualizar a conversa." }
+        ],
+        "tipPt": "Memorize pares: Today is X → Yesterday was Y. Depois adicione Yesterday I + atividade."
+      },
+      {
+        "id": "m09l01-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "yesterday", "pt": "ontem" },
+          { "en": "Today is Monday.", "pt": "hoje é segunda" },
+          { "en": "Yesterday was Sunday.", "pt": "ontem era domingo" },
+          { "en": "Yesterday I stayed home.", "pt": "ontem fiquei em casa" },
+          { "en": "How was yesterday?", "pt": "como foi ontem?" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m09l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Yesterday phrases",
+        "titlePt": "Frases de ontem",
+        "introPt": "Leia em voz alta. Adapte o dia da semana à sua realidade.",
+        "phrases": [
+          { "en": "Good morning!" },
+          { "en": "Today is Monday." },
+          { "en": "Yesterday was Sunday." },
+          { "en": "How was yesterday?" },
+          { "en": "Yesterday was good!" },
+          { "en": "Yesterday I stayed home." },
+          { "en": "Yesterday I rested." },
+          { "en": "See you later!" }
+        ],
+        "dialogueEn": "Good morning! Today is Monday. How was yesterday? — Yesterday was Sunday. It was good! Yesterday I stayed home. — See you later!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "m09l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Talk about yesterday.",
+        "headlinePt": "Fale sobre ontem.",
+        "bodyPt": "Nomeie hoje, nomeie ontem e diga uma coisa simples que você fez.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "How was yesterday?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m09l01-prac-01",
+      "type": "choice",
+      "promptPt": "Como dizer \"ontem era domingo\"?",
+      "options": [
+        { "labelEn": "Yesterday was Sunday.", "correct": true, "feedbackPt": "Yesterday was + dia — padrão fixo." },
+        { "labelEn": "Yesterday is Sunday.", "correct": false, "feedbackPt": "Ontem usa was, não is." },
+        { "labelEn": "Today was Sunday.", "correct": false, "feedbackPt": "Today was mistura hoje com passado." }
+      ]
+    },
+    {
+      "id": "m09l01-prac-02",
+      "type": "choice",
+      "promptPt": "Como dizer \"hoje é segunda\"?",
+      "options": [
+        { "labelEn": "Today is Monday.", "correct": true, "feedbackPt": "Today is + dia — presente." },
+        { "labelEn": "Today was Monday.", "correct": false, "feedbackPt": "Hoje usa is, não was." },
+        { "labelEn": "Yesterday is Monday.", "correct": false, "feedbackPt": "Yesterday combina com was." }
+      ]
+    },
+    {
+      "id": "m09l01-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete — ontem era sábado:",
+      "templateEn": "Yesterday ___ Saturday.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "was", "correct": true, "feedbackPt": "Yesterday was — passado." },
+        { "labelEn": "is", "correct": false, "feedbackPt": "Is é presente." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "Are não combina com yesterday." }
+      ]
+    },
+    {
+      "id": "m09l01-prac-04",
+      "type": "fill_blank",
+      "promptPt": "Complete — ontem fiquei em casa:",
+      "templateEn": "Yesterday I ___ home.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "stayed", "correct": true, "feedbackPt": "Stayed = ficou (passado)." },
+        { "labelEn": "stay", "correct": false, "feedbackPt": "Stay é presente." },
+        { "labelEn": "staying", "correct": false, "feedbackPt": "Staying é forma contínua — não use aqui." }
+      ]
+    },
+    {
+      "id": "m09l01-prac-05",
+      "type": "reorder",
+      "promptPt": "Monte a frase — hoje é sexta:",
+      "tokens": ["Friday.", "is", "Today"],
+      "correctOrder": ["Today", "is", "Friday."],
+      "feedbackCorrectPt": "Today is Friday. — ordem fixa.",
+      "feedbackWrongPt": "A ordem é Today + is + dia."
+    },
+    {
+      "id": "m09l01-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta How was yesterday? — responda:",
+      "speaker": "You",
+      "contextEn": "Jamie: How was yesterday?",
+      "options": [
+        { "labelEn": "Yesterday was good!", "correct": true, "feedbackPt": "Resposta simples e natural." },
+        { "labelEn": "Tomorrow is good.", "correct": false, "feedbackPt": "Tomorrow é futuro." },
+        { "labelEn": "I am good yesterday.", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "m09l01-prac-07",
+      "type": "classify",
+      "promptPt": "Esta frase fala de hoje ou ontem?",
+      "sentenceEn": "Yesterday was Sunday.",
+      "category": "yesterday",
+      "feedbackCorrectPt": "Yesterday was = ontem.",
+      "feedbackWrongPt": "A frase usa yesterday — passado."
+    },
+    {
+      "id": "m09l01-prac-08",
+      "type": "classify",
+      "promptPt": "Esta frase fala de hoje ou ontem?",
+      "sentenceEn": "Today is Monday.",
+      "category": "today",
+      "feedbackCorrectPt": "Today is = hoje.",
+      "feedbackWrongPt": "A frase usa today — presente."
+    },
+    {
+      "id": "m09l01-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta What did you do yesterday? — resposta simples:",
+      "speaker": "You",
+      "contextEn": "Jamie: What did you do yesterday?",
+      "options": [
+        { "labelEn": "Yesterday I worked.", "correct": true, "feedbackPt": "Yesterday I + verbo — padrão funcional." },
+        { "labelEn": "Yesterday I work.", "correct": false, "feedbackPt": "Passado pede worked." },
+        { "labelEn": "Tomorrow I work.", "correct": false, "feedbackPt": "Tomorrow é futuro." }
+      ]
+    },
+    {
+      "id": "m09l01-prac-10",
+      "type": "reorder",
+      "promptPt": "Monte — ontem eu descansei:",
+      "tokens": ["rested.", "I", "Yesterday"],
+      "correctOrder": ["Yesterday", "I", "rested."],
+      "feedbackCorrectPt": "Yesterday I rested. — ordem natural.",
+      "feedbackWrongPt": "Yesterday vem primeiro, depois I + verbo."
+    }
+  ]
+}

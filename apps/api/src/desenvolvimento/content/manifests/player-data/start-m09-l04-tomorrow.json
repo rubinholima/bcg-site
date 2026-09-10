@@ -1,0 +1,326 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 9,
+  "goalPt": "Usar tomorrow e frases fixas para falar do dia seguinte — introdução funcional ao futuro próximo, sem gramática avançada.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Quinta à tarde — Jamie pergunta sobre seus planos para amanhã.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Talk about tomorrow.",
+    "headlinePt": "Fale sobre amanhã.",
+    "bodyPt": "",
+    "canDo": [
+      "Tomorrow is Friday.",
+      "Tomorrow I'm going to work.",
+      "See you tomorrow!",
+      "The day after tomorrow is Saturday."
+    ],
+    "production": {
+      "introPt": "Diga qual dia é amanhã e uma coisa que você vai fazer.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What are you doing tomorrow?" }
+      ],
+      "fields": [
+        { "id": "day", "labelPt": "Amanhã é...", "prefixEn": "Tomorrow is", "placeholderEn": "Friday." },
+        { "id": "plan", "labelPt": "Amanhã eu vou...", "prefixEn": "Tomorrow I'm going to", "placeholderEn": "work." },
+        { "id": "closing", "labelPt": "Despedida", "prefixEn": "", "placeholderEn": "See you tomorrow!" }
+      ],
+      "exampleEn": "Tomorrow is Friday. Tomorrow I'm going to work. See you tomorrow!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m09l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Tomorrow",
+        "titlePt": "Amanhã",
+        "bodyPt": "Tomorrow = amanhã. Use para falar do dia seguinte e de planos próximos — frases fixas primeiro."
+      },
+      {
+        "id": "m09l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Thursday afternoon",
+        "scenarioPt": "O dia está acabando. Jamie pergunta sobre amanhã antes de ir embora."
+      },
+      {
+        "id": "m09l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "See you tomorrow! Tomorrow is Friday, right?",
+        "promptPt": "Jamie confirma o dia de amanhã:",
+        "options": [
+          { "labelEn": "Yes! Tomorrow is Friday.", "correct": true, "feedbackPt": "Tomorrow is + dia — confirmação natural." },
+          { "labelEn": "Yes! Yesterday is Friday.", "correct": false, "feedbackPt": "Yesterday é passado." },
+          { "labelEn": "Yes! Tomorrow was Friday.", "correct": false, "feedbackPt": "Was é passado — amanhã é futuro." }
+        ]
+      },
+      {
+        "id": "m09l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are you doing tomorrow?",
+        "promptPt": "Jamie pergunta sobre amanhã:",
+        "options": [
+          { "labelEn": "Tomorrow I'm going to work.", "correct": true, "feedbackPt": "Tomorrow + going to — plano futuro." },
+          { "labelEn": "Tomorrow I went to work.", "correct": false, "feedbackPt": "Went é passado." },
+          { "labelEn": "Yesterday I'm going to work.", "correct": false, "feedbackPt": "Yesterday é passado." }
+        ]
+      },
+      {
+        "id": "m09l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Great! Have a good evening!",
+        "promptPt": "Jamie se despede. Resposta com tomorrow:",
+        "options": [
+          { "labelEn": "See you tomorrow!", "correct": true, "feedbackPt": "Despedida comum quando se vê no dia seguinte." },
+          { "labelEn": "See you yesterday!", "correct": false, "feedbackPt": "Yesterday não faz sentido aqui." },
+          { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Cumprimento, não despedida." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m09l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Tomorrow",
+        "titlePt": "Amanhã",
+        "introPt": "Tomorrow = amanhã. Pode ir no início ou no fim da frase.",
+        "examples": [
+          { "en": "tomorrow", "pt": "amanhã" },
+          { "en": "Tomorrow is Friday.", "pt": "amanhã é sexta" },
+          { "en": "See you tomorrow!", "pt": "até amanhã" },
+          { "en": "What are you doing tomorrow?", "pt": "o que vai fazer amanhã?" }
+        ]
+      },
+      {
+        "id": "m09l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Tomorrow is...",
+        "titlePt": "Amanhã é...",
+        "introPt": "Espelho de Today is — para nomear o dia de amanhã.",
+        "examples": [
+          { "en": "Tomorrow is Friday.", "pt": "amanhã é sexta" },
+          { "en": "Tomorrow is Saturday.", "pt": "amanhã é sábado" },
+          { "en": "Tomorrow is a holiday.", "pt": "amanhã é feriado" }
+        ]
+      },
+      {
+        "id": "m09l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "The day after tomorrow",
+        "titlePt": "Depois de amanhã",
+        "introPt": "Expressão fixa — use quando precisar falar de dois dias à frente.",
+        "examples": [
+          { "en": "the day after tomorrow", "pt": "depois de amanhã" },
+          { "en": "The day after tomorrow is Saturday.", "pt": "depois de amanhã é sábado" },
+          { "en": "I'm going to travel the day after tomorrow.", "pt": "vou viajar depois de amanhã" }
+        ]
+      },
+      {
+        "id": "m09l04-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Tomorrow I'm going to...",
+        "titlePt": "Amanhã eu vou...",
+        "introPt": "Primeiro contato com planos futuros — going to + verbo base.",
+        "examples": [
+          { "en": "Tomorrow I'm going to work.", "pt": "vou trabalhar" },
+          { "en": "Tomorrow I'm going to rest.", "pt": "vou descansar" },
+          { "en": "Tomorrow I'm going to the gym.", "pt": "vou à academia" }
+        ]
+      },
+      {
+        "id": "m09l04-learn-05",
+        "type": "comparison",
+        "titleEn": "Yesterday vs Tomorrow",
+        "titlePt": "Ontem vs amanhã",
+        "left": {
+          "labelEn": "YESTERDAY · past",
+          "exampleEn": "Yesterday was Thursday.",
+          "notePt": "Dia que passou — was."
+        },
+        "right": {
+          "labelEn": "TOMORROW · future",
+          "exampleEn": "Tomorrow is Saturday.",
+          "notePt": "Dia que vem — is (ainda não chegou como 'hoje')."
+        },
+        "modelEn": "Today is Friday. Yesterday was Thursday. Tomorrow is Saturday.",
+        "modelPt": "Três dias em sequência — memorize o padrão."
+      },
+      {
+        "id": "m09l04-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "See you tomorrow",
+        "titlePt": "Até amanhã",
+        "introPt": "Despedida muito comum no trabalho:",
+        "examples": [
+          { "en": "See you tomorrow!", "pt": "até amanhã" },
+          { "en": "See you on Monday!", "pt": "até segunda" },
+          { "en": "Have a good evening! See you tomorrow!", "pt": "boa noite + até amanhã" }
+        ]
+      },
+      {
+        "id": "m09l04-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "tomorrow", "pt": "amanhã" },
+          { "en": "Tomorrow is Friday.", "pt": "amanhã é sexta" },
+          { "en": "Tomorrow I'm going to work.", "pt": "amanhã vou trabalhar" },
+          { "en": "See you tomorrow!", "pt": "até amanhã" },
+          { "en": "the day after tomorrow", "pt": "depois de amanhã" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m09l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Tomorrow phrases",
+        "titlePt": "Frases de amanhã",
+        "introPt": "Leia em voz alta. Adapte o dia da semana.",
+        "phrases": [
+          { "en": "Today is Thursday." },
+          { "en": "Tomorrow is Friday." },
+          { "en": "What are you doing tomorrow?" },
+          { "en": "Tomorrow I'm going to work." },
+          { "en": "The day after tomorrow is Saturday." },
+          { "en": "Have a good evening!" },
+          { "en": "See you tomorrow!" }
+        ],
+        "dialogueEn": "Today is Thursday. Tomorrow is Friday. What are you doing tomorrow? — Tomorrow I'm going to work. — Have a good evening! See you tomorrow!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "m09l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Talk about tomorrow.",
+        "headlinePt": "Fale sobre amanhã.",
+        "bodyPt": "Diga qual dia é amanhã, um plano e se despeça.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What are you doing tomorrow?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m09l04-prac-01",
+      "type": "choice",
+      "promptPt": "Como dizer \"amanhã é sexta\"?",
+      "options": [
+        { "labelEn": "Tomorrow is Friday.", "correct": true, "feedbackPt": "Tomorrow is + dia." },
+        { "labelEn": "Tomorrow was Friday.", "correct": false, "feedbackPt": "Was é passado." },
+        { "labelEn": "Yesterday is Friday.", "correct": false, "feedbackPt": "Yesterday é ontem." }
+      ]
+    },
+    {
+      "id": "m09l04-prac-02",
+      "type": "choice",
+      "promptPt": "Despedida — até amanhã:",
+      "options": [
+        { "labelEn": "See you tomorrow!", "correct": true, "feedbackPt": "Despedida comum." },
+        { "labelEn": "See you yesterday!", "correct": false, "feedbackPt": "Yesterday não faz sentido." },
+        { "labelEn": "Good night!", "correct": false, "feedbackPt": "Good night é antes de dormir." }
+      ]
+    },
+    {
+      "id": "m09l04-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete — amanhã vou trabalhar:",
+      "templateEn": "Tomorrow I'm ___ to work.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "going", "correct": true, "feedbackPt": "Going to = plano futuro." },
+        { "labelEn": "went", "correct": false, "feedbackPt": "Went é passado." },
+        { "labelEn": "go", "correct": false, "feedbackPt": "Falta going to." }
+      ]
+    },
+    {
+      "id": "m09l04-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte — amanhã é sábado:",
+      "tokens": ["Saturday.", "is", "Tomorrow"],
+      "correctOrder": ["Tomorrow", "is", "Saturday."],
+      "feedbackCorrectPt": "Tomorrow is Saturday.",
+      "feedbackWrongPt": "Tomorrow + is + dia."
+    },
+    {
+      "id": "m09l04-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What are you doing tomorrow? — você:",
+      "speaker": "You",
+      "contextEn": "Jamie: What are you doing tomorrow?",
+      "options": [
+        { "labelEn": "Tomorrow I'm going to rest.", "correct": true, "feedbackPt": "Plano futuro natural." },
+        { "labelEn": "Tomorrow I rested.", "correct": false, "feedbackPt": "Rested é passado." },
+        { "labelEn": "Yesterday I'm going to rest.", "correct": false, "feedbackPt": "Yesterday é passado." }
+      ]
+    },
+    {
+      "id": "m09l04-prac-06",
+      "type": "classify",
+      "promptPt": "Passado ou futuro?",
+      "sentenceEn": "Tomorrow is Friday.",
+      "category": "future",
+      "feedbackCorrectPt": "Tomorrow = futuro.",
+      "feedbackWrongPt": "Tomorrow indica dia futuro."
+    },
+    {
+      "id": "m09l04-prac-07",
+      "type": "classify",
+      "promptPt": "Passado ou futuro?",
+      "sentenceEn": "Yesterday was Thursday.",
+      "category": "past",
+      "feedbackCorrectPt": "Yesterday = passado.",
+      "feedbackWrongPt": "Yesterday indica dia passado."
+    },
+    {
+      "id": "m09l04-prac-08",
+      "type": "choice",
+      "promptPt": "Depois de amanhã:",
+      "options": [
+        { "labelEn": "the day after tomorrow", "correct": true, "feedbackPt": "Expressão fixa." },
+        { "labelEn": "the day before yesterday", "correct": false, "feedbackPt": "Isso é anteontem." },
+        { "labelEn": "last tomorrow", "correct": false, "feedbackPt": "Não existe." }
+      ]
+    },
+    {
+      "id": "m09l04-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte — até amanhã:",
+      "tokens": ["tomorrow!", "you", "See"],
+      "correctOrder": ["See", "you", "tomorrow!"],
+      "feedbackCorrectPt": "See you tomorrow!",
+      "feedbackWrongPt": "See + you + tomorrow."
+    },
+    {
+      "id": "m09l04-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie confirma: Tomorrow is Friday, right?",
+      "speaker": "You",
+      "contextEn": "Jamie: Tomorrow is Friday, right?",
+      "options": [
+        { "labelEn": "Yes, tomorrow is Friday!", "correct": true, "feedbackPt": "Confirmação natural." },
+        { "labelEn": "Yes, yesterday is Friday!", "correct": false, "feedbackPt": "Yesterday é passado." },
+        { "labelEn": "Yes, tomorrow was Friday!", "correct": false, "feedbackPt": "Was é passado." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,330 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 9,
+  "goalPt": "Usar last week, last weekend e outras expressões de tempo passado em frases fixas — falar de eventos recentes sem gramática intermediária.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Jamie pergunta sobre o fim de semana passado e a semana anterior.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Talk about last week.",
+    "headlinePt": "Fale sobre a semana passada.",
+    "bodyPt": "",
+    "canDo": [
+      "Last week I worked a lot.",
+      "Last weekend I went to the beach.",
+      "It was great!",
+      "Last month I traveled."
+    ],
+    "production": {
+      "introPt": "Conte a Jamie o que aconteceu no fim de semana passado e na semana passada.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "How was last weekend?" }
+      ],
+      "fields": [
+        { "id": "weekend", "labelPt": "Fim de semana passado", "prefixEn": "Last weekend I", "placeholderEn": "went to the beach." },
+        { "id": "week", "labelPt": "Semana passada", "prefixEn": "Last week I", "placeholderEn": "worked a lot." },
+        { "id": "feeling", "labelPt": "Como foi", "prefixEn": "", "placeholderEn": "It was great!" }
+      ],
+      "exampleEn": "Last weekend I went to the beach. Last week I worked a lot. It was great!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m09l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Last week & last weekend",
+        "titlePt": "Semana passada e fim de semana passado",
+        "bodyPt": "Para falar de períodos passados recentes, use expressões fixas: last week, last weekend, last month — no início da frase."
+      },
+      {
+        "id": "m09l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team meeting · Monday morning",
+        "scenarioPt": "Antes da reunião, Jamie pergunta como foi o fim de semana de todo mundo."
+      },
+      {
+        "id": "m09l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "How was last weekend?",
+        "promptPt": "Jamie pergunta sobre o fim de semana passado:",
+        "options": [
+          { "labelEn": "Last weekend I went to the beach. It was great!", "correct": true, "feedbackPt": "Last weekend + atividade + reação — fluxo natural." },
+          { "labelEn": "Next weekend I go to the beach.", "correct": false, "feedbackPt": "Next weekend é futuro." },
+          { "labelEn": "Last weekend is the beach.", "correct": false, "feedbackPt": "Forma incorreta." }
+        ]
+      },
+      {
+        "id": "m09l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "And last week — busy?",
+        "promptPt": "Jamie pergunta sobre a semana passada:",
+        "options": [
+          { "labelEn": "Last week I worked a lot.", "correct": true, "feedbackPt": "Last week I + verbo passado — padrão fixo." },
+          { "labelEn": "Last week I work a lot.", "correct": false, "feedbackPt": "Work é presente." },
+          { "labelEn": "Next week I worked a lot.", "correct": false, "feedbackPt": "Next week é futuro." }
+        ]
+      },
+      {
+        "id": "m09l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Sounds like a good balance! What about you — anything special last month?",
+        "promptPt": "Jamie pergunta sobre o mês passado:",
+        "options": [
+          { "labelEn": "Last month I traveled.", "correct": true, "feedbackPt": "Last month + atividade passada." },
+          { "labelEn": "Last month I travel.", "correct": false, "feedbackPt": "Travel é presente." },
+          { "labelEn": "Last month is travel.", "correct": false, "feedbackPt": "Forma incorreta." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m09l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Last week",
+        "titlePt": "Semana passada",
+        "introPt": "Last week = semana passada. Use no início da frase.",
+        "examples": [
+          { "en": "last week", "pt": "semana passada" },
+          { "en": "Last week I worked a lot.", "pt": "trabalhei muito" },
+          { "en": "Last week was busy.", "pt": "foi corrida" },
+          { "en": "What did you do last week?", "pt": "o que fez semana passada?" }
+        ]
+      },
+      {
+        "id": "m09l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Last weekend",
+        "titlePt": "Fim de semana passado",
+        "introPt": "Last weekend = fim de semana passado. Muito comum em conversas de segunda-feira.",
+        "examples": [
+          { "en": "last weekend", "pt": "fim de semana passado" },
+          { "en": "Last weekend I stayed home.", "pt": "fiquei em casa" },
+          { "en": "Last weekend I went out.", "pt": "saí" },
+          { "en": "How was last weekend?", "pt": "como foi o fim de semana?" }
+        ]
+      },
+      {
+        "id": "m09l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "More time expressions",
+        "titlePt": "Mais expressões de tempo",
+        "introPt": "Mesmo padrão — last + período:",
+        "examples": [
+          { "en": "last month", "pt": "mês passado" },
+          { "en": "last night", "pt": "ontem à noite" },
+          { "en": "last year", "pt": "ano passado" },
+          { "en": "Last month I traveled.", "pt": "viajei mês passado" }
+        ]
+      },
+      {
+        "id": "m09l03-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "It was...",
+        "titlePt": "Foi...",
+        "introPt": "Para reagir ou descrever um período passado:",
+        "examples": [
+          { "en": "It was great!", "pt": "foi ótimo" },
+          { "en": "It was fun!", "pt": "foi divertido" },
+          { "en": "It was busy.", "pt": "foi corrido" },
+          { "en": "Last week was busy.", "pt": "semana passada foi corrida" }
+        ]
+      },
+      {
+        "id": "m09l03-learn-05",
+        "type": "comparison",
+        "titleEn": "Last vs next",
+        "titlePt": "Last vs next",
+        "left": {
+          "labelEn": "LAST · past",
+          "exampleEn": "Last week I worked.",
+          "notePt": "Período que já passou."
+        },
+        "right": {
+          "labelEn": "NEXT · future",
+          "exampleEn": "Next week I'm going to travel.",
+          "notePt": "Período que vem — ver lição de tomorrow."
+        },
+        "modelEn": "Last week was busy. Next week I'm going to rest.",
+        "modelPt": "Last = passado. Next = futuro."
+      },
+      {
+        "id": "m09l03-learn-06",
+        "type": "language_focus",
+        "titleEn": "Fixed phrase pattern",
+        "titlePt": "Padrão de frase fixa",
+        "items": [
+          { "formalEn": "Last weekend I went...", "naturalEn": "Last weekend I went to the beach. It was great!", "notePt": "Período + atividade + reação." },
+          { "formalEn": "Last week was...", "naturalEn": "Last week was busy.", "notePt": "Descrever o período inteiro." }
+        ],
+        "tipPt": "Memorize: Last + week/weekend/month + I + verbo passado."
+      },
+      {
+        "id": "m09l03-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "last week", "pt": "semana passada" },
+          { "en": "last weekend", "pt": "fim de semana passado" },
+          { "en": "last month", "pt": "mês passado" },
+          { "en": "Last week I worked a lot.", "pt": "trabalhei muito" },
+          { "en": "It was great!", "pt": "foi ótimo" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m09l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Last week phrases",
+        "titlePt": "Frases de semana passada",
+        "introPt": "Leia em voz alta. Adapte às suas atividades reais.",
+        "phrases": [
+          { "en": "How was last weekend?" },
+          { "en": "Last weekend I went to the beach." },
+          { "en": "It was great!" },
+          { "en": "Last week I worked a lot." },
+          { "en": "Last week was busy." },
+          { "en": "Last month I traveled." },
+          { "en": "What did you do last week?" }
+        ],
+        "dialogueEn": "How was last weekend? — Last weekend I went to the beach. It was great! — And last week? — Last week I worked a lot. Last week was busy."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m09l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Talk about last week.",
+        "headlinePt": "Fale sobre a semana passada.",
+        "bodyPt": "Conte sobre o fim de semana passado e a semana passada.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "How was last weekend?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m09l03-prac-01",
+      "type": "choice",
+      "promptPt": "Como dizer \"semana passada\"?",
+      "options": [
+        { "labelEn": "last week", "correct": true, "feedbackPt": "Last week = semana passada." },
+        { "labelEn": "next week", "correct": false, "feedbackPt": "Next week = semana que vem." },
+        { "labelEn": "this week", "correct": false, "feedbackPt": "This week = esta semana." }
+      ]
+    },
+    {
+      "id": "m09l03-prac-02",
+      "type": "choice",
+      "promptPt": "Fim de semana passado — fui à praia:",
+      "options": [
+        { "labelEn": "Last weekend I went to the beach.", "correct": true, "feedbackPt": "Last weekend + I went — padrão fixo." },
+        { "labelEn": "Next weekend I went to the beach.", "correct": false, "feedbackPt": "Next = futuro." },
+        { "labelEn": "Last weekend I go to the beach.", "correct": false, "feedbackPt": "Go é presente." }
+      ]
+    },
+    {
+      "id": "m09l03-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete — semana passada trabalhei muito:",
+      "templateEn": "Last week I ___ a lot.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "worked", "correct": true, "feedbackPt": "Worked = passado." },
+        { "labelEn": "work", "correct": false, "feedbackPt": "Work é presente." },
+        { "labelEn": "working", "correct": false, "feedbackPt": "Working não funciona aqui." }
+      ]
+    },
+    {
+      "id": "m09l03-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte — foi ótimo:",
+      "tokens": ["great!", "was", "It"],
+      "correctOrder": ["It", "was", "great!"],
+      "feedbackCorrectPt": "It was great! — reação comum.",
+      "feedbackWrongPt": "It + was + adjetivo."
+    },
+    {
+      "id": "m09l03-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: How was last weekend? — você:",
+      "speaker": "You",
+      "contextEn": "Jamie: How was last weekend?",
+      "options": [
+        { "labelEn": "It was fun!", "correct": true, "feedbackPt": "Reação simples e natural." },
+        { "labelEn": "It is fun!", "correct": false, "feedbackPt": "Is é presente — fim de semana já passou." },
+        { "labelEn": "It will be fun!", "correct": false, "feedbackPt": "Will é futuro." }
+      ]
+    },
+    {
+      "id": "m09l03-prac-06",
+      "type": "classify",
+      "promptPt": "Passado ou futuro?",
+      "sentenceEn": "Last month I traveled.",
+      "category": "past",
+      "feedbackCorrectPt": "Last month = passado.",
+      "feedbackWrongPt": "Last indica período passado."
+    },
+    {
+      "id": "m09l03-prac-07",
+      "type": "classify",
+      "promptPt": "Passado ou futuro?",
+      "sentenceEn": "Next week I'm going to rest.",
+      "category": "future",
+      "feedbackCorrectPt": "Next = futuro.",
+      "feedbackWrongPt": "Next indica período futuro."
+    },
+    {
+      "id": "m09l03-prac-08",
+      "type": "fill_blank",
+      "promptPt": "Complete — mês passado viajei:",
+      "templateEn": "Last month I ___.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "traveled", "correct": true, "feedbackPt": "Traveled = passado." },
+        { "labelEn": "travel", "correct": false, "feedbackPt": "Travel é presente." },
+        { "labelEn": "travels", "correct": false, "feedbackPt": "Travels = he/she/it." }
+      ]
+    },
+    {
+      "id": "m09l03-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte — fim de semana passado saí:",
+      "tokens": ["out.", "went", "I", "Last", "weekend"],
+      "correctOrder": ["Last", "weekend", "I", "went", "out."],
+      "feedbackCorrectPt": "Last weekend I went out.",
+      "feedbackWrongPt": "Last weekend + I + went + out."
+    },
+    {
+      "id": "m09l03-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta sobre a semana passada:",
+      "speaker": "You",
+      "contextEn": "Jamie: And last week?",
+      "options": [
+        { "labelEn": "Last week was busy.", "correct": true, "feedbackPt": "Descreve o período — natural." },
+        { "labelEn": "Last week is busy.", "correct": false, "feedbackPt": "Is é presente." },
+        { "labelEn": "Next week was busy.", "correct": false, "feedbackPt": "Next = futuro." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,482 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 10,
+  "goalPt": "Missão final START — produção multi-contexto integrando encontro, vida, trabalho, comida, viagem e tempo. Sem gramática nova; ~20 min de situações práticas compactas.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Missão final — um dia completo em inglês: evento, trabalho, almoço, hotel e planos.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia o roteiro completo em voz alta.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Complete your START mission.",
+    "headlinePt": "Complete sua missão START.",
+    "bodyPt": "Seis situações reais num único dia — use apenas o inglês que você aprendeu nos Módulos 1–9.",
+    "canDo": [
+      "Greet and introduce yourself",
+      "Share personal info and routine",
+      "Ask for help at work",
+      "Order food and ask prices",
+      "Check in at a hotel and ask directions",
+      "Talk about yesterday and tomorrow"
+    ],
+    "production": {
+      "introPt": "Você vive um dia completo em inglês. Preencha cada situação com suas palavras — cumprimento, vida, trabalho, restaurante, hotel e passado/futuro. Use só material START.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Ready for your START Final Mission? Let's go through your day." },
+        { "speaker": "Jamie", "questionEn": "Scene 1 — You meet someone new at a company event." },
+        { "speaker": "Jamie", "questionEn": "Scene 2 — Small talk about your life." },
+        { "speaker": "Jamie", "questionEn": "Scene 3 — At work, you need help." },
+        { "speaker": "Jamie", "questionEn": "Scene 4 — Lunch at a restaurant." },
+        { "speaker": "Jamie", "questionEn": "Scene 5 — Hotel check-in on a business trip." },
+        { "speaker": "Jamie", "questionEn": "Scene 6 — Friday chat — past and future." }
+      ],
+      "fields": [
+        { "id": "s1-greeting", "labelPt": "Cena 1 — Cumprimento", "prefixEn": "", "placeholderEn": "Hi! Good afternoon! How are you?" },
+        { "id": "s1-name", "labelPt": "Cena 1 — Nome e prazer", "prefixEn": "My name is", "placeholderEn": "Carlos. Nice to meet you!" },
+        { "id": "s1-ask", "labelPt": "Cena 1 — Perguntar nome", "prefixEn": "", "placeholderEn": "What's your name?" },
+        { "id": "s2-origin", "labelPt": "Cena 2 — Origem", "prefixEn": "I'm from", "placeholderEn": "Brazil." },
+        { "id": "s2-live", "labelPt": "Cena 2 — Moradia", "prefixEn": "I live in", "placeholderEn": "Boston." },
+        { "id": "s2-routine", "labelPt": "Cena 2 — Rotina", "prefixEn": "", "placeholderEn": "I wake up at 7. I go to work at 9." },
+        { "id": "s2-family", "labelPt": "Cena 2 — Família", "prefixEn": "", "placeholderEn": "I'm married. I have two children." },
+        { "id": "s3-work", "labelPt": "Cena 3 — Seu trabalho", "prefixEn": "", "placeholderEn": "I work in operations." },
+        { "id": "s3-help", "labelPt": "Cena 3 — Pedir ajuda", "prefixEn": "", "placeholderEn": "Can you help me with the report, please?" },
+        { "id": "s3-repeat", "labelPt": "Cena 3 — Pedir repetição", "prefixEn": "", "placeholderEn": "I don't understand. Can you repeat, please?" },
+        { "id": "s3-meeting", "labelPt": "Cena 3 — Confirmar reunião", "prefixEn": "", "placeholderEn": "OK, I understand. The meeting is at 3 PM." },
+        { "id": "s4-order", "labelPt": "Cena 4 — Pedido", "prefixEn": "", "placeholderEn": "I'd like a salad and water, please." },
+        { "id": "s4-more", "labelPt": "Cena 4 — Encerrar pedido", "prefixEn": "", "placeholderEn": "No, thank you. That's all." },
+        { "id": "s4-price", "labelPt": "Cena 4 — Preço (loja)", "prefixEn": "", "placeholderEn": "How much is it? I'll take it." },
+        { "id": "s5-reservation", "labelPt": "Cena 5 — Reserva hotel", "prefixEn": "", "placeholderEn": "Good evening! I have a reservation under Carlos." },
+        { "id": "s5-direction", "labelPt": "Cena 5 — Pedir direção", "prefixEn": "", "placeholderEn": "Excuse me. Where is the elevator?" },
+        { "id": "s5-thanks", "labelPt": "Cena 5 — Agradecer", "prefixEn": "", "placeholderEn": "Thank you very much!" },
+        { "id": "s6-past", "labelPt": "Cena 6 — Fim de semana passado", "prefixEn": "Last weekend I", "placeholderEn": "went out. It was fun!" },
+        { "id": "s6-future", "labelPt": "Cena 6 — Planos", "prefixEn": "This weekend I'm going to", "placeholderEn": "rest." },
+        { "id": "s6-yesterday", "labelPt": "Cena 6 — Ontem", "prefixEn": "Yesterday I", "placeholderEn": "worked." },
+        { "id": "s6-tomorrow", "labelPt": "Cena 6 — Amanhã", "prefixEn": "Tomorrow I'm going to", "placeholderEn": "go to the gym." },
+        { "id": "closing", "labelPt": "Despedida final", "prefixEn": "", "placeholderEn": "Great talking to you! See you tomorrow!" }
+      ],
+      "exampleEn": "Hi! Good afternoon! My name is Carlos. Nice to meet you! — I'm from Brazil. I live in Boston. I wake up at 7. — Can you help me, please? The meeting is at 3 PM. — I'd like a salad, please. How much is it? — I have a reservation under Carlos. Where is the elevator? — Last weekend I went out. This weekend I'm going to rest. See you tomorrow!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m10l07-ctx-01",
+        "type": "intro",
+        "titleEn": "START Final Mission",
+        "titlePt": "Missão final START",
+        "bodyPt": "Seu dia em inglês — seis cenas, zero gramática nova. Tudo que você aprendeu nos 9 módulos aparece aqui: encontro, vida, trabalho, comida, viagem, passado e futuro."
+      },
+      {
+        "id": "m10l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Full day · Multiple locations",
+        "scenarioPt": "Manhã: evento da empresa. Meio-dia: trabalho e almoço. Noite: hotel em viagem. Sexta: papo com Jamie."
+      },
+      {
+        "id": "m10l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Hi! Good afternoon! I'm Alex.",
+        "promptPt": "Cena 1 — Evento. Alex cumprimenta. Você responde:",
+        "options": [
+          { "labelEn": "Hi! Good afternoon! My name is Carlos. Nice to meet you!", "correct": true, "feedbackPt": "M1 — cumprimento + nome + prazer." },
+          { "labelEn": "I'd like a coffee.", "correct": false, "feedbackPt": "M7 — contexto errado." },
+          { "labelEn": "Where is the elevator?", "correct": false, "feedbackPt": "M8 — contexto errado." }
+        ]
+      },
+      {
+        "id": "m10l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Nice to meet you! Where are you from?",
+        "promptPt": "Cena 2 — Small talk. Origem:",
+        "options": [
+          { "labelEn": "I'm from Brazil. I live in Boston.", "correct": true, "feedbackPt": "M2 — from + live in." },
+          { "labelEn": "I work in Boston.", "correct": false, "feedbackPt": "Work, não origem/moradia." },
+          { "labelEn": "Can you help me?", "correct": false, "feedbackPt": "M6 — contexto errado." }
+        ]
+      },
+      {
+        "id": "m10l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "Can you finish the report by 5 PM?",
+        "promptPt": "Cena 3 — Trabalho. Precisa de ajuda:",
+        "options": [
+          { "labelEn": "Can you help me with the report, please?", "correct": true, "feedbackPt": "M6 — pedir ajuda." },
+          { "labelEn": "I'd like a report, please.", "correct": false, "feedbackPt": "M7 — pedido de comida." },
+          { "labelEn": "I have a reservation.", "correct": false, "feedbackPt": "M8 — hotel." }
+        ]
+      },
+      {
+        "id": "m10l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "What would you like?",
+        "promptPt": "Cena 4 — Restaurante. Pedido:",
+        "options": [
+          { "labelEn": "I'd like a salad and water, please.", "correct": true, "feedbackPt": "M7 — I'd like." },
+          { "labelEn": "I like salad.", "correct": false, "feedbackPt": "Preferência, não pedido." },
+          { "labelEn": "What did you do yesterday?", "correct": false, "feedbackPt": "M9 — contexto errado." }
+        ]
+      },
+      {
+        "id": "m10l07-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Receptionist",
+        "promptEn": "Good evening! How can I help you?",
+        "promptPt": "Cena 5 — Hotel. Check-in:",
+        "options": [
+          { "labelEn": "Good evening! I have a reservation under Carlos.", "correct": true, "feedbackPt": "M8 — reserva." },
+          { "labelEn": "Good evening! My name is Carlos. Nice to meet you!", "correct": false, "feedbackPt": "M1 — apresentação social, não hotel." },
+          { "labelEn": "Good evening! Can you help me with the report?", "correct": false, "feedbackPt": "M6 — trabalho." }
+        ]
+      },
+      {
+        "id": "m10l07-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Happy Friday! What did you do last weekend? And what are you going to do this weekend?",
+        "promptPt": "Cena 6 — Passado e futuro:",
+        "options": [
+          { "labelEn": "Last weekend I went out. This weekend I'm going to rest.", "correct": true, "feedbackPt": "M9 — contraste passado/futuro." },
+          { "labelEn": "Last weekend I'm going to go out.", "correct": false, "feedbackPt": "Erro de tempo." },
+          { "labelEn": "I'd like a salad.", "correct": false, "feedbackPt": "M7 — contexto errado." }
+        ]
+      },
+      {
+        "id": "m10l07-ctx-09",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Amazing work today! See you tomorrow!",
+        "promptPt": "Encerramento — despedida final:",
+        "options": [
+          { "labelEn": "Thank you! See you tomorrow!", "correct": true, "feedbackPt": "Despedida natural." },
+          { "labelEn": "Where is the elevator?", "correct": false, "feedbackPt": "Fora de contexto." },
+          { "labelEn": "What did you do?", "correct": false, "feedbackPt": "Reabre conversa." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m10l07-learn-01",
+        "type": "review",
+        "titleEn": "Scene 1 — Meeting (M1)",
+        "titlePt": "Cena 1 — Encontro (M1)",
+        "items": [
+          { "en": "Good afternoon! / How are you?", "pt": "cumprimento" },
+          { "en": "My name is... / Nice to meet you!", "pt": "apresentação" },
+          { "en": "What's your name?", "pt": "pergunta" }
+        ]
+      },
+      {
+        "id": "m10l07-learn-02",
+        "type": "review",
+        "titleEn": "Scene 2 — My life (M2–4)",
+        "titlePt": "Cena 2 — Minha vida (M2–4)",
+        "items": [
+          { "en": "I'm from... / I live in...", "pt": "origem e moradia" },
+          { "en": "I wake up at... / I go to work at...", "pt": "rotina" },
+          { "en": "I'm married. / I have... children.", "pt": "família" }
+        ]
+      },
+      {
+        "id": "m10l07-learn-03",
+        "type": "review",
+        "titleEn": "Scene 3 — At work (M5–6)",
+        "titlePt": "Cena 3 — Trabalho (M5–6)",
+        "items": [
+          { "en": "I work in... / What do you do?", "pt": "profissão" },
+          { "en": "Can you help me, please?", "pt": "ajuda" },
+          { "en": "I don't understand. Can you repeat?", "pt": "repetição" },
+          { "en": "The meeting is at 3 PM.", "pt": "reunião" }
+        ]
+      },
+      {
+        "id": "m10l07-learn-04",
+        "type": "review",
+        "titleEn": "Scene 4 — Food & shopping (M7)",
+        "titlePt": "Cena 4 — Comida e compras (M7)",
+        "items": [
+          { "en": "I'd like..., please.", "pt": "pedido" },
+          { "en": "No, thank you. That's all.", "pt": "encerrar" },
+          { "en": "How much is it? / I'll take it.", "pt": "preço e compra" }
+        ]
+      },
+      {
+        "id": "m10l07-learn-05",
+        "type": "review",
+        "titleEn": "Scene 5 — Travel (M8)",
+        "titlePt": "Cena 5 — Viagem (M8)",
+        "items": [
+          { "en": "I have a reservation under...", "pt": "hotel" },
+          { "en": "Where is the elevator?", "pt": "direção" },
+          { "en": "Go straight. Turn left.", "pt": "instrução" },
+          { "en": "Thank you very much!", "pt": "agradecimento" }
+        ]
+      },
+      {
+        "id": "m10l07-learn-06",
+        "type": "review",
+        "titleEn": "Scene 6 — Time (M9)",
+        "titlePt": "Cena 6 — Tempo (M9)",
+        "items": [
+          { "en": "What did you do last weekend?", "pt": "passado" },
+          { "en": "Last weekend I went out.", "pt": "resposta passado" },
+          { "en": "What are you going to do this weekend?", "pt": "futuro" },
+          { "en": "This weekend I'm going to rest.", "pt": "resposta futuro" }
+        ]
+      },
+      {
+        "id": "m10l07-learn-07",
+        "type": "language_focus",
+        "titleEn": "Mission rules",
+        "titlePt": "Regras da missão",
+        "items": [
+          { "formalEn": "Only START material", "naturalEn": "No new grammar — phrases you already know.", "notePt": "Se não aprendeu no curso, não use." },
+          { "formalEn": "Six scenes, one day", "naturalEn": "Meet → Life → Work → Food → Travel → Time → Goodbye", "notePt": "Siga a ordem na produção." }
+        ],
+        "tipPt": "Adapte nomes, cidades e horários à sua realidade. O importante é produzir em inglês."
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m10l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Full day script",
+        "titlePt": "Roteiro do dia completo",
+        "introPt": "Leia todas as seis cenas em voz alta, pausando entre cada situação. Este é seu modelo para a missão.",
+        "phrases": [
+          { "en": "SCENE 1 — MEETING" },
+          { "en": "Hi! Good afternoon! My name is Carlos. Nice to meet you!" },
+          { "en": "SCENE 2 — MY LIFE" },
+          { "en": "I'm from Brazil. I live in Boston. I wake up at 7." },
+          { "en": "SCENE 3 — AT WORK" },
+          { "en": "Can you help me with the report, please? The meeting is at 3 PM." },
+          { "en": "SCENE 4 — RESTAURANT" },
+          { "en": "I'd like a salad and water, please. How much is it?" },
+          { "en": "SCENE 5 — HOTEL" },
+          { "en": "I have a reservation under Carlos. Where is the elevator?" },
+          { "en": "SCENE 6 — PAST & FUTURE" },
+          { "en": "Last weekend I went out. This weekend I'm going to rest." },
+          { "en": "See you tomorrow!" }
+        ],
+        "dialogueEn": "Hi! My name is Carlos. Nice to meet you! — I'm from Brazil. I live in Boston. — Can you help me, please? — I'd like a salad, please. — I have a reservation. Where is the elevator? — Last weekend I went out. This weekend I'm going to rest. See you tomorrow!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "m10l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your START Final Mission.",
+        "headlinePt": "Sua missão final START.",
+        "bodyPt": "Seis situações, um dia inteiro. Preencha cada cena com suas palavras — use só o inglês START.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Ready? Let's go through your day — Scene by scene." }
+        ]
+      },
+      {
+        "id": "m10l07-miss-02",
+        "type": "mission_intro",
+        "headlineEn": "Scene 1 — Meeting someone",
+        "headlinePt": "Cena 1 — Conhecendo alguém",
+        "bodyPt": "Evento da empresa. Cumprimente, diga seu nome e pergunte o nome da pessoa.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "Hi! Good afternoon! I'm Alex." }
+        ]
+      },
+      {
+        "id": "m10l07-miss-03",
+        "type": "mission_intro",
+        "headlineEn": "Scene 2 — My life",
+        "headlinePt": "Cena 2 — Minha vida",
+        "bodyPt": "Small talk — origem, moradia, rotina e família.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "Tell me about yourself." }
+        ]
+      },
+      {
+        "id": "m10l07-miss-04",
+        "type": "mission_intro",
+        "headlineEn": "Scene 3 — At work",
+        "headlinePt": "Cena 3 — No trabalho",
+        "bodyPt": "Peça ajuda, peça repetição se necessário, confirme reunião.",
+        "prompts": [
+          { "speaker": "Manager", "questionEn": "Do you need anything?" }
+        ]
+      },
+      {
+        "id": "m10l07-miss-05",
+        "type": "mission_intro",
+        "headlineEn": "Scene 4 — Restaurant & shop",
+        "headlinePt": "Cena 4 — Restaurante e loja",
+        "bodyPt": "Peça comida, encerre pedido, pergunte preço e compre.",
+        "prompts": [
+          { "speaker": "Waiter", "questionEn": "What would you like?" }
+        ]
+      },
+      {
+        "id": "m10l07-miss-06",
+        "type": "mission_intro",
+        "headlineEn": "Scene 5 — Travel",
+        "headlinePt": "Cena 5 — Viagem",
+        "bodyPt": "Check-in no hotel, peça direção, agradeça.",
+        "prompts": [
+          { "speaker": "Receptionist", "questionEn": "Good evening! How can I help you?" }
+        ]
+      },
+      {
+        "id": "m10l07-miss-07",
+        "type": "mission_intro",
+        "headlineEn": "Scene 6 — Past & future",
+        "headlinePt": "Cena 6 — Passado e futuro",
+        "bodyPt": "Conte fim de semana passado, planos, ontem e amanhã. Despeça-se.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Happy Friday! How was last weekend? Plans for this weekend?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m10l07-prac-01",
+      "type": "choice",
+      "promptPt": "Cena 1 — primeiro contato:",
+      "options": [
+        { "labelEn": "Hi! My name is Carlos. Nice to meet you!", "correct": true, "feedbackPt": "M1 — meeting." },
+        { "labelEn": "I have a reservation.", "correct": false, "feedbackPt": "M8." },
+        { "labelEn": "How much is it?", "correct": false, "feedbackPt": "M7." }
+      ]
+    },
+    {
+      "id": "m10l07-prac-02",
+      "type": "choice",
+      "promptPt": "Cena 2 — origem e moradia:",
+      "options": [
+        { "labelEn": "I'm from Brazil. I live in Boston.", "correct": true, "feedbackPt": "M2 — from + live." },
+        { "labelEn": "I work in Boston.", "correct": false, "feedbackPt": "Emprego." },
+        { "labelEn": "Turn left.", "correct": false, "feedbackPt": "M8." }
+      ]
+    },
+    {
+      "id": "m10l07-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Cena 3 — Manager pede relatório:",
+      "speaker": "You",
+      "contextEn": "Manager: Finish the report by 5 PM.",
+      "options": [
+        { "labelEn": "Can you help me with the report, please?", "correct": true, "feedbackPt": "M6 — help." },
+        { "labelEn": "I'd like a report.", "correct": false, "feedbackPt": "M7." },
+        { "labelEn": "Nice to meet you.", "correct": false, "feedbackPt": "M1." }
+      ]
+    },
+    {
+      "id": "m10l07-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Cena 4 — Garçom pergunta pedido:",
+      "speaker": "You",
+      "contextEn": "Waiter: What would you like?",
+      "options": [
+        { "labelEn": "I'd like a salad, please.", "correct": true, "feedbackPt": "M7 — order." },
+        { "labelEn": "I like salad.", "correct": false, "feedbackPt": "Preferência." },
+        { "labelEn": "Where are you from?", "correct": false, "feedbackPt": "M2." }
+      ]
+    },
+    {
+      "id": "m10l07-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Cena 5 — Recepcionista:",
+      "speaker": "You",
+      "contextEn": "Receptionist: How can I help you?",
+      "options": [
+        { "labelEn": "I have a reservation under Carlos.", "correct": true, "feedbackPt": "M8 — hotel." },
+        { "labelEn": "Can you help me with the report?", "correct": false, "feedbackPt": "M6." },
+        { "labelEn": "What did you do yesterday?", "correct": false, "feedbackPt": "M9." }
+      ]
+    },
+    {
+      "id": "m10l07-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Cena 6 — Jamie pergunta fim de semana:",
+      "speaker": "You",
+      "contextEn": "Jamie: What did you do last weekend?",
+      "options": [
+        { "labelEn": "Last weekend I went out. This weekend I'm going to rest.", "correct": true, "feedbackPt": "M9 — past + future." },
+        { "labelEn": "Last weekend I'm going to go out.", "correct": false, "feedbackPt": "Erro de tempo." },
+        { "labelEn": "I'd like a coffee.", "correct": false, "feedbackPt": "M7." }
+      ]
+    },
+    {
+      "id": "m10l07-prac-07",
+      "type": "classify",
+      "promptPt": "Qual módulo? — Can you help me?",
+      "sentenceEn": "Can you help me, please?",
+      "category": "M6",
+      "feedbackCorrectPt": "M6 — workplace.",
+      "feedbackWrongPt": "Pedido de ajuda = trabalho."
+    },
+    {
+      "id": "m10l07-prac-08",
+      "type": "classify",
+      "promptPt": "Qual módulo? — Where is the elevator?",
+      "sentenceEn": "Where is the elevator?",
+      "category": "M8",
+      "feedbackCorrectPt": "M8 — travel.",
+      "feedbackWrongPt": "Direção = viagem."
+    },
+    {
+      "id": "m10l07-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte — cena 1 completa:",
+      "tokens": ["you!", "meet", "to", "Nice", "Carlos.", "is", "name", "My"],
+      "correctOrder": ["My", "name", "is", "Carlos.", "Nice", "to", "meet", "you!"],
+      "feedbackCorrectPt": "My name is Carlos. Nice to meet you!",
+      "feedbackWrongPt": "Nome + Nice to meet you."
+    },
+    {
+      "id": "m10l07-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Cena 5 — reserva:",
+      "templateEn": "I have a reservation ___ Carlos.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "under", "correct": true, "feedbackPt": "Under + nome — hotel." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In não combina." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At combina com local." }
+      ]
+    },
+    {
+      "id": "m10l07-prac-11",
+      "type": "choice",
+      "promptPt": "Ordem correta das cenas:",
+      "options": [
+        { "labelEn": "Meet → Life → Work → Food → Travel → Time", "correct": true, "feedbackPt": "Fluxo do dia na missão." },
+        { "labelEn": "Travel → Food → Meet → Work", "correct": false, "feedbackPt": "Ordem errada." },
+        { "labelEn": "Work → Meet → Travel → Food", "correct": false, "feedbackPt": "Ordem errada." }
+      ]
+    },
+    {
+      "id": "m10l07-prac-12",
+      "type": "dialogue_complete",
+      "promptPt": "Encerramento — Jamie se despede:",
+      "speaker": "You",
+      "contextEn": "Jamie: See you tomorrow!",
+      "options": [
+        { "labelEn": "Thank you! See you tomorrow!", "correct": true, "feedbackPt": "Despedida final." },
+        { "labelEn": "Where is the bathroom?", "correct": false, "feedbackPt": "Fora de contexto." },
+        { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Reabre conversa." }
+      ]
+    }
+  ]
+}

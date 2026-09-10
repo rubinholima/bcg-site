@@ -1,0 +1,318 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 9,
+  "goalPt": "Combinar passado e futuro numa conversa curta — What are you going to do?, planos de fim de semana e contraste yesterday vs tomorrow.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Sexta à tarde — Jamie pergunta o que você fez e o que vai fazer no fim de semana.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Talk about past and future.",
+    "headlinePt": "Fale de passado e futuro.",
+    "bodyPt": "",
+    "canDo": [
+      "What are you going to do this weekend?",
+      "Last weekend I stayed home.",
+      "This weekend I'm going to go out.",
+      "Yesterday I worked. Tomorrow I'm going to rest."
+    ],
+    "production": {
+      "introPt": "Conte o que fez ontem/semana passada e o que vai fazer no fim de semana.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What did you do last weekend? And what are you going to do this weekend?" }
+      ],
+      "fields": [
+        { "id": "past", "labelPt": "Passado — fim de semana passado", "prefixEn": "Last weekend I", "placeholderEn": "stayed home." },
+        { "id": "future", "labelPt": "Futuro — este fim de semana", "prefixEn": "This weekend I'm going to", "placeholderEn": "go out with friends." },
+        { "id": "contrast", "labelPt": "Contraste ontem/amanhã", "prefixEn": "", "placeholderEn": "Yesterday I worked. Tomorrow I'm going to rest." }
+      ],
+      "exampleEn": "Last weekend I stayed home. This weekend I'm going to go out. Yesterday I worked. Tomorrow I'm going to rest."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m09l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Plans — past & future",
+        "titlePt": "Planos — passado e futuro",
+        "bodyPt": "Conversas reais misturam passado e futuro: o que você fez e o que vai fazer. Esta lição junta tudo do módulo 9."
+      },
+      {
+        "id": "m09l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Friday afternoon",
+        "scenarioPt": "Jamie pergunta sobre o fim de semana passado e os planos para este fim de semana."
+      },
+      {
+        "id": "m09l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What did you do last weekend?",
+        "promptPt": "Jamie pergunta sobre o passado:",
+        "options": [
+          { "labelEn": "Last weekend I stayed home.", "correct": true, "feedbackPt": "Last weekend + passado — resposta natural." },
+          { "labelEn": "Last weekend I'm going to stay home.", "correct": false, "feedbackPt": "Going to é futuro — last weekend é passado." },
+          { "labelEn": "Next weekend I stayed home.", "correct": false, "feedbackPt": "Next = futuro; stayed = passado." }
+        ]
+      },
+      {
+        "id": "m09l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are you going to do this weekend?",
+        "promptPt": "Jamie pergunta sobre planos futuros:",
+        "options": [
+          { "labelEn": "This weekend I'm going to go out with friends.", "correct": true, "feedbackPt": "This weekend + going to — plano futuro." },
+          { "labelEn": "This weekend I went out.", "correct": false, "feedbackPt": "Went é passado — fim de semana ainda não chegou." },
+          { "labelEn": "Last weekend I'm going to go out.", "correct": false, "feedbackPt": "Last = passado; going to = futuro." }
+        ]
+      },
+      {
+        "id": "m09l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Nice! Have a great weekend!",
+        "promptPt": "Jamie se despede para o fim de semana:",
+        "options": [
+          { "labelEn": "Thanks! You too! See you on Monday!", "correct": true, "feedbackPt": "Resposta educada + despedida." },
+          { "labelEn": "Last weekend was great.", "correct": false, "feedbackPt": "Fala do passado — Jamie desejou bom fim de semana." },
+          { "labelEn": "What did you do?", "correct": false, "feedbackPt": "Pergunta no momento de despedida." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m09l06-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "What are you going to do?",
+        "titlePt": "O que você vai fazer?",
+        "introPt": "Pergunta sobre planos futuros — variante de What are you doing?",
+        "examples": [
+          { "en": "What are you going to do?", "pt": "o que vai fazer?" },
+          { "en": "What are you going to do this weekend?", "pt": "o que vai fazer no fim de semana?" },
+          { "en": "What are you going to do tomorrow?", "pt": "o que vai fazer amanhã?" },
+          { "en": "What are you going to do next week?", "pt": "o que vai fazer semana que vem?" }
+        ]
+      },
+      {
+        "id": "m09l06-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "This weekend",
+        "titlePt": "Este fim de semana",
+        "introPt": "This weekend = fim de semana atual (futuro próximo na sexta):",
+        "examples": [
+          { "en": "this weekend", "pt": "este fim de semana" },
+          { "en": "This weekend I'm going to rest.", "pt": "vou descansar" },
+          { "en": "This weekend I'm going to travel.", "pt": "vou viajar" },
+          { "en": "What are you going to do this weekend?", "pt": "pergunta comum na sexta" }
+        ]
+      },
+      {
+        "id": "m09l06-learn-03",
+        "type": "comparison",
+        "titleEn": "Last vs this weekend",
+        "titlePt": "Fim de semana passado vs este",
+        "left": {
+          "labelEn": "LAST WEEKEND · past",
+          "exampleEn": "Last weekend I went out.",
+          "notePt": "Já aconteceu."
+        },
+        "right": {
+          "labelEn": "THIS WEEKEND · future",
+          "exampleEn": "This weekend I'm going to go out.",
+          "notePt": "Ainda vai acontecer."
+        },
+        "modelEn": "Last weekend I stayed home. This weekend I'm going to go out.",
+        "modelPt": "Contraste clássico em conversas de sexta-feira."
+      },
+      {
+        "id": "m09l06-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Past + future in one chat",
+        "titlePt": "Passado + futuro num papo",
+        "introPt": "Frases prontas para conversa completa:",
+        "examples": [
+          { "en": "Yesterday I worked. Tomorrow I'm going to rest.", "pt": "ontem trabalhei, amanhã descanso" },
+          { "en": "Last week was busy. Next week I'm going to travel.", "pt": "semana passada corrida, semana que vem viajo" },
+          { "en": "What did you do? / What are you going to do?", "pt": "perguntas passado e futuro" }
+        ]
+      },
+      {
+        "id": "m09l06-learn-05",
+        "type": "language_focus",
+        "titleEn": "Time expression map",
+        "titlePt": "Mapa de expressões de tempo",
+        "items": [
+          { "formalEn": "yesterday / last week / last weekend", "naturalEn": "Past — went, had, stayed, worked", "notePt": "Passado recente." },
+          { "formalEn": "tomorrow / next week / this weekend", "naturalEn": "Future — I'm going to...", "notePt": "Planos futuros." }
+        ],
+        "tipPt": "Last = passado. Next/this/tomorrow = futuro. Não misture tempo e verbo."
+      },
+      {
+        "id": "m09l06-learn-06",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "What are you going to do this weekend?", "pt": "planos fim de semana" },
+          { "en": "Last weekend I stayed home.", "pt": "passado" },
+          { "en": "This weekend I'm going to go out.", "pt": "futuro" },
+          { "en": "Yesterday I worked.", "pt": "ontem" },
+          { "en": "Tomorrow I'm going to rest.", "pt": "amanhã" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m09l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Past & future conversation",
+        "titlePt": "Conversa passado e futuro",
+        "introPt": "Leia o diálogo completo em voz alta.",
+        "phrases": [
+          { "en": "What did you do last weekend?" },
+          { "en": "Last weekend I stayed home." },
+          { "en": "What are you going to do this weekend?" },
+          { "en": "This weekend I'm going to go out with friends." },
+          { "en": "Yesterday I worked late." },
+          { "en": "Tomorrow I'm going to rest." },
+          { "en": "Have a great weekend!" },
+          { "en": "Thanks! You too! See you on Monday!" }
+        ],
+        "dialogueEn": "What did you do last weekend? — Last weekend I stayed home. — What are you going to do this weekend? — This weekend I'm going to go out with friends. — Have a great weekend! — Thanks! You too! See you on Monday!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "m09l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Past and future together.",
+        "headlinePt": "Passado e futuro juntos.",
+        "bodyPt": "Conte o fim de semana passado e seus planos para este fim de semana.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What did you do last weekend? And this weekend?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m09l06-prac-01",
+      "type": "choice",
+      "promptPt": "Pergunta sobre planos de fim de semana:",
+      "options": [
+        { "labelEn": "What are you going to do this weekend?", "correct": true, "feedbackPt": "Going to = planos futuros." },
+        { "labelEn": "What did you do this weekend?", "correct": false, "feedbackPt": "Did = passado — na sexta o fim de semana ainda não passou." },
+        { "labelEn": "What do you do this weekend?", "correct": false, "feedbackPt": "Rotina presente — não plano." }
+      ]
+    },
+    {
+      "id": "m09l06-prac-02",
+      "type": "choice",
+      "promptPt": "Fim de semana passado — fiquei em casa:",
+      "options": [
+        { "labelEn": "Last weekend I stayed home.", "correct": true, "feedbackPt": "Last + passado." },
+        { "labelEn": "This weekend I stayed home.", "correct": false, "feedbackPt": "This weekend na sexta = futuro." },
+        { "labelEn": "Last weekend I'm going to stay home.", "correct": false, "feedbackPt": "Going to = futuro com last = passado." }
+      ]
+    },
+    {
+      "id": "m09l06-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete — este fim de semana vou sair:",
+      "templateEn": "This weekend I'm going to ___ out.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "go", "correct": true, "feedbackPt": "Going to + verbo base (go)." },
+        { "labelEn": "went", "correct": false, "feedbackPt": "Went é passado." },
+        { "labelEn": "going", "correct": false, "feedbackPt": "Going to go — não going going." }
+      ]
+    },
+    {
+      "id": "m09l06-prac-04",
+      "type": "classify",
+      "promptPt": "Passado ou futuro?",
+      "sentenceEn": "This weekend I'm going to travel.",
+      "category": "future",
+      "feedbackCorrectPt": "This weekend + going to = futuro.",
+      "feedbackWrongPt": "Going to indica plano futuro."
+    },
+    {
+      "id": "m09l06-prac-05",
+      "type": "classify",
+      "promptPt": "Passado ou futuro?",
+      "sentenceEn": "Last weekend I went to the beach.",
+      "category": "past",
+      "feedbackCorrectPt": "Last weekend + went = passado.",
+      "feedbackWrongPt": "Last indica passado."
+    },
+    {
+      "id": "m09l06-prac-06",
+      "type": "reorder",
+      "promptPt": "Monte — ontem trabalhei, amanhã descanso:",
+      "tokens": ["rest.", "to", "going", "I'm", "Tomorrow", "worked.", "Yesterday", "I", "I"],
+      "correctOrder": ["Yesterday", "I", "worked.", "Tomorrow", "I'm", "going", "to", "rest."],
+      "feedbackCorrectPt": "Yesterday I worked. Tomorrow I'm going to rest.",
+      "feedbackWrongPt": "Duas frases: passado + futuro."
+    },
+    {
+      "id": "m09l06-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What are you going to do this weekend?",
+      "speaker": "You",
+      "contextEn": "Jamie: What are you going to do this weekend?",
+      "options": [
+        { "labelEn": "I'm going to rest this weekend.", "correct": true, "feedbackPt": "Plano futuro natural." },
+        { "labelEn": "I rested this weekend.", "correct": false, "feedbackPt": "Rested é passado." },
+        { "labelEn": "Last weekend I rested.", "correct": false, "feedbackPt": "Responde passado, não plano." }
+      ]
+    },
+    {
+      "id": "m09l06-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Have a great weekend!",
+      "speaker": "You",
+      "contextEn": "Jamie: Have a great weekend!",
+      "options": [
+        { "labelEn": "Thanks! You too! See you on Monday!", "correct": true, "feedbackPt": "Resposta educada e despedida." },
+        { "labelEn": "What did you do last weekend?", "correct": false, "feedbackPt": "Pergunta no momento de despedida." },
+        { "labelEn": "Last weekend was great.", "correct": false, "feedbackPt": "Não responde ao desejo." }
+      ]
+    },
+    {
+      "id": "m09l06-prac-09",
+      "type": "fill_blank",
+      "promptPt": "Complete a pergunta — o que vai fazer?",
+      "templateEn": "What are you ___ to do this weekend?",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "going", "correct": true, "feedbackPt": "Are you going to do?" },
+        { "labelEn": "went", "correct": false, "feedbackPt": "Went é passado." },
+        { "labelEn": "go", "correct": false, "feedbackPt": "Are you go não existe." }
+      ]
+    },
+    {
+      "id": "m09l06-prac-10",
+      "type": "choice",
+      "promptPt": "Melhor contraste passado/futuro:",
+      "options": [
+        { "labelEn": "Last weekend I stayed home. This weekend I'm going to go out.", "correct": true, "feedbackPt": "Contraste claro e natural." },
+        { "labelEn": "Last weekend I'm going to stay home.", "correct": false, "feedbackPt": "Last + going to = erro de tempo." },
+        { "labelEn": "This weekend I stayed home.", "correct": false, "feedbackPt": "This + stayed na sexta = erro." }
+      ]
+    }
+  ]
+}

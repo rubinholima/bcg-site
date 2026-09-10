@@ -1,0 +1,314 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 10,
+  "goalPt": "Consolidar informações pessoais — origem, moradia, rotina e família (revisão Módulos 1–4).",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Conversa informal — Jamie quer saber sobre sua vida, rotina e família.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Talk about your life.",
+    "headlinePt": "Fale sobre sua vida.",
+    "bodyPt": "",
+    "canDo": [
+      "I'm from Brazil. I live in Boston.",
+      "I wake up at 7. I work at 9.",
+      "I have two children.",
+      "I'm married."
+    ],
+    "production": {
+      "introPt": "Conte sobre origem, moradia, rotina e família em bloco curto.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Tell me about your life." }
+      ],
+      "fields": [
+        { "id": "origin", "labelPt": "Origem e moradia", "prefixEn": "", "placeholderEn": "I'm from Brazil. I live in Boston." },
+        { "id": "routine", "labelPt": "Rotina", "prefixEn": "", "placeholderEn": "I wake up at 7. I work at 9." },
+        { "id": "family", "labelPt": "Família", "prefixEn": "", "placeholderEn": "I'm married. I have two children." }
+      ],
+      "exampleEn": "I'm from Brazil. I live in Boston. I wake up at 7. I work at 9. I'm married. I have two children."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m10l02-ctx-01",
+        "type": "intro",
+        "titleEn": "My life",
+        "titlePt": "Minha vida",
+        "bodyPt": "Revisão dos Módulos 1–4 — origem, moradia, rotina diária e família. Tudo que você já aprendeu sobre informações pessoais."
+      },
+      {
+        "id": "m10l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Coffee break · Informal chat",
+        "scenarioPt": "Jamie quer conhecer você melhor — vida pessoal e rotina."
+      },
+      {
+        "id": "m10l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Where are you from?",
+        "promptPt": "Jamie pergunta origem:",
+        "options": [
+          { "labelEn": "I'm from Brazil.", "correct": true, "feedbackPt": "I'm from + país." },
+          { "labelEn": "I live in Brazil.", "correct": false, "feedbackPt": "Live = moradia, não origem." },
+          { "labelEn": "I work in Brazil.", "correct": false, "feedbackPt": "Work = emprego." }
+        ]
+      },
+      {
+        "id": "m10l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Where do you live?",
+        "promptPt": "Jamie pergunta moradia:",
+        "options": [
+          { "labelEn": "I live in Boston.", "correct": true, "feedbackPt": "I live in + cidade." },
+          { "labelEn": "I'm from Boston.", "correct": false, "feedbackPt": "From = origem." },
+          { "labelEn": "I work in Boston.", "correct": false, "feedbackPt": "Work = emprego." }
+        ]
+      },
+      {
+        "id": "m10l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What time do you wake up?",
+        "promptPt": "Jamie pergunta sobre rotina:",
+        "options": [
+          { "labelEn": "I wake up at 7.", "correct": true, "feedbackPt": "Rotina — I wake up at + hora." },
+          { "labelEn": "I woke up at 7.", "correct": false, "feedbackPt": "Woke é passado — rotina usa presente." },
+          { "labelEn": "I from at 7.", "correct": false, "feedbackPt": "Forma incorreta." }
+        ]
+      },
+      {
+        "id": "m10l02-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you have a family?",
+        "promptPt": "Jamie pergunta sobre família:",
+        "options": [
+          { "labelEn": "Yes, I'm married. I have two children.", "correct": true, "feedbackPt": "Família — estado civil + filhos." },
+          { "labelEn": "Yes, I live in Boston.", "correct": false, "feedbackPt": "Moradia, não família." },
+          { "labelEn": "Yes, I work at 9.", "correct": false, "feedbackPt": "Rotina, não família." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m10l02-learn-01",
+        "type": "review",
+        "titleEn": "Origin & home",
+        "titlePt": "Origem e moradia",
+        "items": [
+          { "en": "Where are you from?", "pt": "origem" },
+          { "en": "I'm from Brazil.", "pt": "resposta" },
+          { "en": "Where do you live?", "pt": "moradia" },
+          { "en": "I live in Boston.", "pt": "resposta" }
+        ]
+      },
+      {
+        "id": "m10l02-learn-02",
+        "type": "comparison",
+        "titleEn": "From vs Live",
+        "titlePt": "From vs Live",
+        "left": {
+          "labelEn": "FROM · origin",
+          "exampleEn": "I'm from Brazil.",
+          "notePt": "De onde você é."
+        },
+        "right": {
+          "labelEn": "LIVE IN · home now",
+          "exampleEn": "I live in Boston.",
+          "notePt": "Onde mora agora."
+        },
+        "modelEn": "I'm from Brazil, but I live in Boston.",
+        "modelPt": "Origem e moradia são perguntas diferentes."
+      },
+      {
+        "id": "m10l02-learn-03",
+        "type": "review",
+        "titleEn": "Daily routine",
+        "titlePt": "Rotina diária",
+        "items": [
+          { "en": "I wake up at 7.", "pt": "acordar" },
+          { "en": "I have breakfast at 8.", "pt": "café da manhã" },
+          { "en": "I go to work at 9.", "pt": "ir trabalhar" },
+          { "en": "I finish work at 6.", "pt": "terminar trabalho" }
+        ]
+      },
+      {
+        "id": "m10l02-learn-04",
+        "type": "review",
+        "titleEn": "Family",
+        "titlePt": "Família",
+        "items": [
+          { "en": "I'm married.", "pt": "casado(a)" },
+          { "en": "I'm single.", "pt": "solteiro(a)" },
+          { "en": "I have two children.", "pt": "tenho dois filhos" },
+          { "en": "I have a son and a daughter.", "pt": "tenho um filho e uma filha" }
+        ]
+      },
+      {
+        "id": "m10l02-learn-05",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I'm from Brazil. I live in Boston.", "pt": "origem + moradia" },
+          { "en": "I wake up at 7.", "pt": "rotina" },
+          { "en": "I'm married. I have two children.", "pt": "família" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m10l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "My life dialogue",
+        "titlePt": "Diálogo — minha vida",
+        "introPt": "Leia em voz alta. Adapte à sua realidade.",
+        "phrases": [
+          { "en": "Where are you from?" },
+          { "en": "I'm from Brazil." },
+          { "en": "Where do you live?" },
+          { "en": "I live in Boston." },
+          { "en": "What time do you wake up?" },
+          { "en": "I wake up at 7." },
+          { "en": "Do you have a family?" },
+          { "en": "Yes, I'm married. I have two children." }
+        ],
+        "dialogueEn": "Where are you from? — I'm from Brazil. — Where do you live? — I live in Boston. — What time do you wake up? — I wake up at 7. — Do you have a family? — Yes, I'm married. I have two children."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m10l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Talk about your life.",
+        "headlinePt": "Fale sobre sua vida.",
+        "bodyPt": "Origem, moradia, rotina e família — bloco curto em inglês.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Tell me about your life." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m10l02-prac-01",
+      "type": "classify",
+      "promptPt": "Origem ou moradia?",
+      "sentenceEn": "I'm from Brazil.",
+      "category": "from",
+      "feedbackCorrectPt": "From = origem.",
+      "feedbackWrongPt": "A frase usa from."
+    },
+    {
+      "id": "m10l02-prac-02",
+      "type": "classify",
+      "promptPt": "Origem ou moradia?",
+      "sentenceEn": "I live in Boston.",
+      "category": "live",
+      "feedbackCorrectPt": "Live in = moradia.",
+      "feedbackWrongPt": "A frase usa live in."
+    },
+    {
+      "id": "m10l02-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Where do you live?",
+      "speaker": "You",
+      "contextEn": "Jamie: Where do you live?",
+      "options": [
+        { "labelEn": "I live in Boston.", "correct": true, "feedbackPt": "Moradia atual." },
+        { "labelEn": "I'm from Boston.", "correct": false, "feedbackPt": "Origem, não moradia." },
+        { "labelEn": "I work in Boston.", "correct": false, "feedbackPt": "Emprego." }
+      ]
+    },
+    {
+      "id": "m10l02-prac-04",
+      "type": "fill_blank",
+      "promptPt": "Complete — acordo às 7:",
+      "templateEn": "I wake ___ at 7.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "up", "correct": true, "feedbackPt": "Wake up = acordar." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "Wake on não existe." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At vem depois — wake up at 7." }
+      ]
+    },
+    {
+      "id": "m10l02-prac-05",
+      "type": "choice",
+      "promptPt": "Tenho dois filhos:",
+      "options": [
+        { "labelEn": "I have two children.", "correct": true, "feedbackPt": "Have + número + children." },
+        { "labelEn": "I has two children.", "correct": false, "feedbackPt": "Com I, use have." },
+        { "labelEn": "I am two children.", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "m10l02-prac-06",
+      "type": "reorder",
+      "promptPt": "Monte — sou do Brasil:",
+      "tokens": ["Brazil.", "from", "I'm"],
+      "correctOrder": ["I'm", "from", "Brazil."],
+      "feedbackCorrectPt": "I'm from Brazil.",
+      "feedbackWrongPt": "I'm + from + país."
+    },
+    {
+      "id": "m10l02-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What time do you wake up?",
+      "speaker": "You",
+      "contextEn": "Jamie: What time do you wake up?",
+      "options": [
+        { "labelEn": "I wake up at 7.", "correct": true, "feedbackPt": "Rotina presente." },
+        { "labelEn": "I woke up at 7.", "correct": false, "feedbackPt": "Passado — rotina usa presente." },
+        { "labelEn": "I wake at 7 up.", "correct": false, "feedbackPt": "Ordem errada." }
+      ]
+    },
+    {
+      "id": "m10l02-prac-08",
+      "type": "choice",
+      "promptPt": "Estado civil — casado:",
+      "options": [
+        { "labelEn": "I'm married.", "correct": true, "feedbackPt": "Estado civil fixo." },
+        { "labelEn": "I have married.", "correct": false, "feedbackPt": "Forma incorreta." },
+        { "labelEn": "I'm marriage.", "correct": false, "feedbackPt": "Marriage é substantivo." }
+      ]
+    },
+    {
+      "id": "m10l02-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte — moro em Boston:",
+      "tokens": ["Boston.", "in", "live", "I"],
+      "correctOrder": ["I", "live", "in", "Boston."],
+      "feedbackCorrectPt": "I live in Boston.",
+      "feedbackWrongPt": "I + live + in + cidade."
+    },
+    {
+      "id": "m10l02-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Do you have a family?",
+      "speaker": "You",
+      "contextEn": "Jamie: Do you have a family?",
+      "options": [
+        { "labelEn": "Yes, I'm married. I have two children.", "correct": true, "feedbackPt": "Família completa." },
+        { "labelEn": "Yes, I live in Boston.", "correct": false, "feedbackPt": "Moradia." },
+        { "labelEn": "Yes, I wake up at 7.", "correct": false, "feedbackPt": "Rotina." }
+      ]
+    }
+  ]
+}

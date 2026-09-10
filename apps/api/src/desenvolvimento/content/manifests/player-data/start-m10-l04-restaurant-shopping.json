@@ -1,0 +1,315 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 10,
+  "goalPt": "Consolidar pedidos em restaurante e compras — I'd like, How much (revisão Módulo 7).",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Almoço de trabalho no restaurante e parada rápida na loja.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Order food and ask prices.",
+    "headlinePt": "Peça comida e pergunte preços.",
+    "bodyPt": "",
+    "canDo": [
+      "I'd like a coffee, please.",
+      "Can I have the menu?",
+      "How much is it?",
+      "I'll take it. Thank you."
+    ],
+    "production": {
+      "introPt": "Simule pedir no restaurante e perguntar preço na loja.",
+      "prompts": [
+        { "speaker": "Waiter", "questionEn": "What would you like?" }
+      ],
+      "fields": [
+        { "id": "order", "labelPt": "Pedido no restaurante", "prefixEn": "", "placeholderEn": "I'd like a salad and water, please." },
+        { "id": "price", "labelPt": "Perguntar preço", "prefixEn": "", "placeholderEn": "How much is it?" },
+        { "id": "buy", "labelPt": "Comprar na loja", "prefixEn": "", "placeholderEn": "I'll take it. Thank you." }
+      ],
+      "exampleEn": "I'd like a salad and water, please. How much is it? I'll take it. Thank you."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m10l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Restaurant & shopping",
+        "titlePt": "Restaurante e compras",
+        "bodyPt": "Revisão do Módulo 7 — pedir comida com I'd like, perguntar preço com How much, comprar com I'll take it."
+      },
+      {
+        "id": "m10l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Restaurant · Lunch break",
+        "scenarioPt": "Almoço com colegas. O garçom se aproxima."
+      },
+      {
+        "id": "m10l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "Good afternoon! What would you like?",
+        "promptPt": "Garçom pergunta o pedido:",
+        "options": [
+          { "labelEn": "I'd like a salad and water, please.", "correct": true, "feedbackPt": "I'd like + item — pedido educado." },
+          { "labelEn": "I like salad.", "correct": false, "feedbackPt": "I like = gosto de — não é pedido." },
+          { "labelEn": "How much are you?", "correct": false, "feedbackPt": "Sem sentido neste contexto." }
+        ]
+      },
+      {
+        "id": "m10l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "Anything else?",
+        "promptPt": "Garçom pergunta se quer mais algo:",
+        "options": [
+          { "labelEn": "No, thank you. That's all.", "correct": true, "feedbackPt": "Recusa educada + encerra pedido." },
+          { "labelEn": "Yes, I don't want.", "correct": false, "feedbackPt": "Forma incorreta." },
+          { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Fora de contexto." }
+        ]
+      },
+      {
+        "id": "m10l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Shop assistant",
+        "promptEn": "Can I help you?",
+        "promptPt": "Na loja — atendente pergunta. Você quer saber o preço:",
+        "options": [
+          { "labelEn": "Yes. How much is it?", "correct": true, "feedbackPt": "How much is it? — preço de um item." },
+          { "labelEn": "Yes. How much are you?", "correct": false, "feedbackPt": "Sem sentido." },
+          { "labelEn": "Yes. What is your name?", "correct": false, "feedbackPt": "Fora de contexto." }
+        ]
+      },
+      {
+        "id": "m10l04-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Shop assistant",
+        "promptEn": "It's $25.",
+        "promptPt": "Atendente informa preço. Você quer comprar:",
+        "options": [
+          { "labelEn": "OK, I'll take it. Thank you.", "correct": true, "feedbackPt": "I'll take it = vou levar/comprar." },
+          { "labelEn": "OK, I take it yesterday.", "correct": false, "feedbackPt": "Yesterday é passado." },
+          { "labelEn": "OK, I don't like.", "correct": false, "feedbackPt": "Não responde ao preço." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m10l04-learn-01",
+        "type": "review",
+        "titleEn": "Ordering food",
+        "titlePt": "Pedir comida",
+        "items": [
+          { "en": "I'd like a coffee, please.", "pt": "pedido educado" },
+          { "en": "Can I have the menu?", "pt": "pedir cardápio" },
+          { "en": "I'll have the chicken.", "pt": "vou querer o frango" },
+          { "en": "No, thank you. That's all.", "pt": "encerrar pedido" }
+        ]
+      },
+      {
+        "id": "m10l04-learn-02",
+        "type": "review",
+        "titleEn": "How much?",
+        "titlePt": "Quanto custa?",
+        "items": [
+          { "en": "How much is it?", "pt": "quanto custa? (1 item)" },
+          { "en": "How much are they?", "pt": "quanto custam? (vários)" },
+          { "en": "It's $10.", "pt": "resposta" },
+          { "en": "That's expensive.", "pt": "está caro" }
+        ]
+      },
+      {
+        "id": "m10l04-learn-03",
+        "type": "review",
+        "titleEn": "Shopping",
+        "titlePt": "Compras",
+        "items": [
+          { "en": "Can I help you?", "pt": "atendente pergunta" },
+          { "en": "I'm just looking.", "pt": "só olhando" },
+          { "en": "I'll take it.", "pt": "vou levar" },
+          { "en": "Do you accept cards?", "pt": "aceita cartão?" }
+        ]
+      },
+      {
+        "id": "m10l04-learn-04",
+        "type": "comparison",
+        "titleEn": "I'd like vs I like",
+        "titlePt": "I'd like vs I like",
+        "left": {
+          "labelEn": "I LIKE · preference",
+          "exampleEn": "I like coffee.",
+          "notePt": "Gosto de — preferência geral."
+        },
+        "right": {
+          "labelEn": "I'D LIKE · order/request",
+          "exampleEn": "I'd like a coffee, please.",
+          "notePt": "Quero/p peço agora — restaurante."
+        },
+        "modelEn": "I like coffee. → I'd like a coffee, please.",
+        "modelPt": "No restaurante use I'd like para pedir."
+      },
+      {
+        "id": "m10l04-learn-05",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I'd like a salad, please.", "pt": "pedido" },
+          { "en": "How much is it?", "pt": "preço" },
+          { "en": "I'll take it.", "pt": "comprar" },
+          { "en": "Thank you.", "pt": "agradecimento" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m10l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Restaurant & shop",
+        "titlePt": "Restaurante e loja",
+        "introPt": "Leia os dois diálogos em voz alta.",
+        "phrases": [
+          { "en": "What would you like?" },
+          { "en": "I'd like a salad and water, please." },
+          { "en": "Anything else?" },
+          { "en": "No, thank you. That's all." },
+          { "en": "Can I help you?" },
+          { "en": "How much is it?" },
+          { "en": "It's $25." },
+          { "en": "OK, I'll take it. Thank you." }
+        ],
+        "dialogueEn": "What would you like? — I'd like a salad and water, please. — Anything else? — No, thank you. — Can I help you? — How much is it? — It's $25. — I'll take it. Thank you."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m10l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Order and shop.",
+        "headlinePt": "Peça e compre.",
+        "bodyPt": "Simule restaurante e loja — pedido, preço e compra.",
+        "prompts": [
+          { "speaker": "Waiter", "questionEn": "What would you like?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m10l04-prac-01",
+      "type": "choice",
+      "promptPt": "Pedir café no restaurante:",
+      "options": [
+        { "labelEn": "I'd like a coffee, please.", "correct": true, "feedbackPt": "I'd like = pedido." },
+        { "labelEn": "I like a coffee.", "correct": false, "feedbackPt": "I like = preferência." },
+        { "labelEn": "I am a coffee.", "correct": false, "feedbackPt": "Sem sentido." }
+      ]
+    },
+    {
+      "id": "m10l04-prac-02",
+      "type": "choice",
+      "promptPt": "Perguntar preço de um item:",
+      "options": [
+        { "labelEn": "How much is it?", "correct": true, "feedbackPt": "Is = singular." },
+        { "labelEn": "How much are it?", "correct": false, "feedbackPt": "It combina com is." },
+        { "labelEn": "How many is it?", "correct": false, "feedbackPt": "Many = quantidade, não preço." }
+      ]
+    },
+    {
+      "id": "m10l04-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Garçom: What would you like?",
+      "speaker": "You",
+      "contextEn": "Waiter: What would you like?",
+      "options": [
+        { "labelEn": "I'd like the chicken, please.", "correct": true, "feedbackPt": "Pedido natural." },
+        { "labelEn": "I like the chicken.", "correct": false, "feedbackPt": "Preferência, não pedido." },
+        { "labelEn": "How much is it?", "correct": false, "feedbackPt": "Primeiro faça o pedido." }
+      ]
+    },
+    {
+      "id": "m10l04-prac-04",
+      "type": "fill_blank",
+      "promptPt": "Complete — vou levar:",
+      "templateEn": "I'll ___ it.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "take", "correct": true, "feedbackPt": "I'll take it = vou levar." },
+        { "labelEn": "took", "correct": false, "feedbackPt": "Took é passado." },
+        { "labelEn": "taking", "correct": false, "feedbackPt": "Forma contínua." }
+      ]
+    },
+    {
+      "id": "m10l04-prac-05",
+      "type": "reorder",
+      "promptPt": "Monte — gostaria de água:",
+      "tokens": ["please.", "water,", "like", "I'd"],
+      "correctOrder": ["I'd", "like", "water,", "please."],
+      "feedbackCorrectPt": "I'd like water, please.",
+      "feedbackWrongPt": "I'd + like + item + please."
+    },
+    {
+      "id": "m10l04-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Atendente: Can I help you?",
+      "speaker": "You",
+      "contextEn": "Shop assistant: Can I help you?",
+      "options": [
+        { "labelEn": "Yes. How much is it?", "correct": true, "feedbackPt": "Pergunta preço." },
+        { "labelEn": "Yes. I am help.", "correct": false, "feedbackPt": "Forma incorreta." },
+        { "labelEn": "No, I don't understand.", "correct": false, "feedbackPt": "Não responde à pergunta." }
+      ]
+    },
+    {
+      "id": "m10l04-prac-07",
+      "type": "classify",
+      "promptPt": "Pedido ou preferência?",
+      "sentenceEn": "I'd like a coffee, please.",
+      "category": "order",
+      "feedbackCorrectPt": "I'd like = pedido.",
+      "feedbackWrongPt": "Esta frase é um pedido."
+    },
+    {
+      "id": "m10l04-prac-08",
+      "type": "classify",
+      "promptPt": "Pedido ou preferência?",
+      "sentenceEn": "I like coffee.",
+      "category": "preference",
+      "feedbackCorrectPt": "I like = preferência.",
+      "feedbackWrongPt": "Esta frase é preferência geral."
+    },
+    {
+      "id": "m10l04-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Garçom: Anything else?",
+      "speaker": "You",
+      "contextEn": "Waiter: Anything else?",
+      "options": [
+        { "labelEn": "No, thank you. That's all.", "correct": true, "feedbackPt": "Encerra pedido." },
+        { "labelEn": "Yes, I don't want.", "correct": false, "feedbackPt": "Forma incorreta." },
+        { "labelEn": "How much is it?", "correct": false, "feedbackPt": "Contexto diferente." }
+      ]
+    },
+    {
+      "id": "m10l04-prac-10",
+      "type": "reorder",
+      "promptPt": "Monte — quanto custa?",
+      "tokens": ["it?", "is", "much", "How"],
+      "correctOrder": ["How", "much", "is", "it?"],
+      "feedbackCorrectPt": "How much is it?",
+      "feedbackWrongPt": "How + much + is + it?"
+    }
+  ]
+}

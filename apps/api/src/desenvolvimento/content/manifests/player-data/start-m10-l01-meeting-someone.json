@@ -1,0 +1,288 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 10,
+  "goalPt": "Consolidar primeiro contato — cumprimentos, nome e Nice to meet you (revisão Módulo 1).",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Evento da empresa — você conhece alguém novo e precisa se apresentar.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Meet someone new.",
+    "headlinePt": "Conheça alguém novo.",
+    "bodyPt": "",
+    "canDo": [
+      "Hi! Good afternoon!",
+      "My name is Carlos. What's your name?",
+      "Nice to meet you!",
+      "Nice to meet you too!"
+    ],
+    "production": {
+      "introPt": "Simule conhecer alguém novo — cumprimento, nome e prazer em conhecer.",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "Hi! I'm Alex. What's your name?" }
+      ],
+      "fields": [
+        { "id": "greeting", "labelPt": "Cumprimento", "prefixEn": "", "placeholderEn": "Hi! Good afternoon!" },
+        { "id": "name", "labelPt": "Seu nome", "prefixEn": "My name is", "placeholderEn": "Carlos." },
+        { "id": "nice", "labelPt": "Prazer em conhecer", "prefixEn": "", "placeholderEn": "Nice to meet you!" },
+        { "id": "return", "labelPt": "Perguntar o nome", "prefixEn": "", "placeholderEn": "What's your name?" }
+      ],
+      "exampleEn": "Hi! Good afternoon! My name is Carlos. Nice to meet you! What's your name?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m10l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Meeting someone",
+        "titlePt": "Conhecendo alguém",
+        "bodyPt": "Revisão do Módulo 1 — cumprimentar, dizer seu nome e responder Nice to meet you. Sem vocabulário novo."
+      },
+      {
+        "id": "m10l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Company event · Afternoon",
+        "scenarioPt": "Evento interno. Alex, colega de outro departamento, se aproxima."
+      },
+      {
+        "id": "m10l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Hi! Good afternoon!",
+        "promptPt": "Alex cumprimenta. Como responder?",
+        "options": [
+          { "labelEn": "Hi! Good afternoon!", "correct": true, "feedbackPt": "Repita o cumprimento do horário." },
+          { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Manhã não combina com tarde." },
+          { "labelEn": "My name is Carlos.", "correct": false, "feedbackPt": "Nome vem depois do cumprimento." }
+        ]
+      },
+      {
+        "id": "m10l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I'm Alex. What's your name?",
+        "promptPt": "Alex se apresenta e pergunta seu nome:",
+        "options": [
+          { "labelEn": "My name is Carlos. Nice to meet you!", "correct": true, "feedbackPt": "Nome + prazer — fluxo natural." },
+          { "labelEn": "I'm from Brazil.", "correct": false, "feedbackPt": "Origem vem depois." },
+          { "labelEn": "See you later!", "correct": false, "feedbackPt": "Encerra antes de se apresentar." }
+        ]
+      },
+      {
+        "id": "m10l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Nice to meet you too, Carlos!",
+        "promptPt": "Alex responde ao prazer. Como continuar?",
+        "options": [
+          { "labelEn": "How are you?", "correct": true, "feedbackPt": "Pergunta social natural após apresentação." },
+          { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Alex já disse o nome." },
+          { "labelEn": "Goodbye!", "correct": false, "feedbackPt": "Encerra cedo demais." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m10l01-learn-01",
+        "type": "review",
+        "titleEn": "Greetings",
+        "titlePt": "Cumprimentos",
+        "items": [
+          { "en": "Hi! / Hello!", "pt": "universal" },
+          { "en": "Good morning!", "pt": "manhã" },
+          { "en": "Good afternoon!", "pt": "tarde" },
+          { "en": "How are you?", "pt": "pergunta social" },
+          { "en": "I'm good, thank you.", "pt": "resposta" }
+        ]
+      },
+      {
+        "id": "m10l01-learn-02",
+        "type": "review",
+        "titleEn": "Names",
+        "titlePt": "Nomes",
+        "items": [
+          { "en": "What's your name?", "pt": "pergunta" },
+          { "en": "My name is Carlos.", "pt": "resposta formal" },
+          { "en": "I'm Carlos.", "pt": "resposta natural" },
+          { "en": "Nice to meet you!", "pt": "prazer" },
+          { "en": "Nice to meet you too.", "pt": "resposta" }
+        ]
+      },
+      {
+        "id": "m10l01-learn-03",
+        "type": "language_focus",
+        "titleEn": "First contact flow",
+        "titlePt": "Fluxo do primeiro contato",
+        "items": [
+          { "formalEn": "Greet → Name → Nice to meet you", "naturalEn": "Hi! → My name is... → Nice to meet you!", "notePt": "Ordem social natural." },
+          { "formalEn": "What's your name? (after greeting)", "naturalEn": "Devolva a pergunta se quiser", "notePt": "Perguntar nome é opcional se a pessoa já se apresentou." }
+        ],
+        "tipPt": "Revisão M1 — você já sabe fazer isso. Pratique fluidez."
+      },
+      {
+        "id": "m10l01-learn-04",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Hi! Good afternoon!", "pt": "cumprimento" },
+          { "en": "My name is Carlos.", "pt": "nome" },
+          { "en": "Nice to meet you!", "pt": "prazer" },
+          { "en": "How are you?", "pt": "continuar conversa" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m10l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Meeting dialogue",
+        "titlePt": "Diálogo de apresentação",
+        "introPt": "Leia em voz alta. Use seu nome real.",
+        "phrases": [
+          { "en": "Hi! Good afternoon!" },
+          { "en": "Hi! Good afternoon!" },
+          { "en": "I'm Alex. What's your name?" },
+          { "en": "My name is Carlos. Nice to meet you!" },
+          { "en": "Nice to meet you too, Carlos!" },
+          { "en": "How are you?" },
+          { "en": "I'm good, thank you. And you?" }
+        ],
+        "dialogueEn": "Hi! Good afternoon! — Hi! Good afternoon! — I'm Alex. What's your name? — My name is Carlos. Nice to meet you! — Nice to meet you too! — How are you? — I'm good, thank you."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m10l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Meet someone new.",
+        "headlinePt": "Conheça alguém novo.",
+        "bodyPt": "Monte uma apresentação completa — cumprimento, nome e prazer.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "Hi! What's your name?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m10l01-prac-01",
+      "type": "choice",
+      "promptPt": "Tarde — melhor cumprimento:",
+      "options": [
+        { "labelEn": "Good afternoon!", "correct": true, "feedbackPt": "Tarde pede Good afternoon." },
+        { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Manhã já passou." },
+        { "labelEn": "Good night!", "correct": false, "feedbackPt": "Good night é despedida." }
+      ]
+    },
+    {
+      "id": "m10l01-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: What's your name?",
+      "speaker": "You",
+      "contextEn": "Alex: What's your name?",
+      "options": [
+        { "labelEn": "My name is Carlos. Nice to meet you!", "correct": true, "feedbackPt": "Nome + prazer." },
+        { "labelEn": "I live in Boston.", "correct": false, "feedbackPt": "Moradia — pergunta foi nome." },
+        { "labelEn": "Good afternoon!", "correct": false, "feedbackPt": "Cumprimento, não nome." }
+      ]
+    },
+    {
+      "id": "m10l01-prac-03",
+      "type": "choice",
+      "promptPt": "Alex: Nice to meet you!",
+      "options": [
+        { "labelEn": "Nice to meet you too.", "correct": true, "feedbackPt": "Resposta padrão." },
+        { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Alex já se apresentou." },
+        { "labelEn": "See you later!", "correct": false, "feedbackPt": "Encerra cedo." }
+      ]
+    },
+    {
+      "id": "m10l01-prac-04",
+      "type": "fill_blank",
+      "promptPt": "Complete — meu nome é:",
+      "templateEn": "My name ___ Carlos.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "is", "correct": true, "feedbackPt": "My name is — fixo." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "Name é singular." },
+        { "labelEn": "am", "correct": false, "feedbackPt": "Am combina com I." }
+      ]
+    },
+    {
+      "id": "m10l01-prac-05",
+      "type": "reorder",
+      "promptPt": "Monte — prazer em conhecer:",
+      "tokens": ["you!", "meet", "to", "Nice"],
+      "correctOrder": ["Nice", "to", "meet", "you!"],
+      "feedbackCorrectPt": "Nice to meet you!",
+      "feedbackWrongPt": "Nice + to + meet + you."
+    },
+    {
+      "id": "m10l01-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: Hi! Good afternoon!",
+      "speaker": "You",
+      "contextEn": "Alex: Hi! Good afternoon!",
+      "options": [
+        { "labelEn": "Hi! Good afternoon!", "correct": true, "feedbackPt": "Repita cumprimento." },
+        { "labelEn": "Good evening!", "correct": false, "feedbackPt": "Horário errado." },
+        { "labelEn": "My name is Carlos.", "correct": false, "feedbackPt": "Primeiro cumprimente." }
+      ]
+    },
+    {
+      "id": "m10l01-prac-07",
+      "type": "choice",
+      "promptPt": "Melhor ordem no primeiro contato:",
+      "options": [
+        { "labelEn": "Greet → Name → Nice to meet you", "correct": true, "feedbackPt": "Fluxo social natural." },
+        { "labelEn": "Name → Goodbye → Greet", "correct": false, "feedbackPt": "Ordem invertida." },
+        { "labelEn": "Goodbye → Name → Greet", "correct": false, "feedbackPt": "Começa encerrando." }
+      ]
+    },
+    {
+      "id": "m10l01-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta — qual seu nome?",
+      "tokens": ["name?", "your", "What's"],
+      "correctOrder": ["What's", "your", "name?"],
+      "feedbackCorrectPt": "What's your name?",
+      "feedbackWrongPt": "What's + your + name?"
+    },
+    {
+      "id": "m10l01-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Após apresentação — continuar conversa:",
+      "speaker": "You",
+      "contextEn": "You and Alex exchanged names.",
+      "options": [
+        { "labelEn": "How are you?", "correct": true, "feedbackPt": "Pergunta social natural." },
+        { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Já sabe o nome." },
+        { "labelEn": "Good night!", "correct": false, "feedbackPt": "Despedida precoce." }
+      ]
+    },
+    {
+      "id": "m10l01-prac-10",
+      "type": "choice",
+      "promptPt": "Alternativa natural para My name is:",
+      "options": [
+        { "labelEn": "I'm Carlos.", "correct": true, "feedbackPt": "Forma comum na fala." },
+        { "labelEn": "I name Carlos.", "correct": false, "feedbackPt": "Forma incorreta." },
+        { "labelEn": "Me Carlos.", "correct": false, "feedbackPt": "Incompleto." }
+      ]
+    }
+  ]
+}

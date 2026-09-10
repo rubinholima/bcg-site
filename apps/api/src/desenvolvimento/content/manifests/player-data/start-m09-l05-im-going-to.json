@@ -1,0 +1,329 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 9,
+  "goalPt": "Expressar planos com I'm going to... + verbo — futuro funcional para iniciantes, sem will avançado.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Jamie pergunta sobre seus planos para a próxima semana.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Share your plans.",
+    "headlinePt": "Compartilhe seus planos.",
+    "bodyPt": "",
+    "canDo": [
+      "I'm going to work tomorrow.",
+      "I'm going to travel next week.",
+      "I'm going to rest this weekend.",
+      "I'm not going to work on Saturday."
+    ],
+    "production": {
+      "introPt": "Conte três planos concretos usando I'm going to...",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What are your plans?" }
+      ],
+      "fields": [
+        { "id": "plan1", "labelPt": "Plano 1", "prefixEn": "I'm going to", "placeholderEn": "work tomorrow." },
+        { "id": "plan2", "labelPt": "Plano 2", "prefixEn": "I'm going to", "placeholderEn": "travel next week." },
+        { "id": "plan3", "labelPt": "Plano 3", "prefixEn": "I'm going to", "placeholderEn": "rest this weekend." }
+      ],
+      "exampleEn": "I'm going to work tomorrow. I'm going to travel next week. I'm going to rest this weekend."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m09l05-ctx-01",
+        "type": "intro",
+        "titleEn": "I'm going to...",
+        "titlePt": "Eu vou...",
+        "bodyPt": "Para falar de planos futuros, use I'm going to + verbo. É a forma mais comum no dia a dia — memorize o padrão."
+      },
+      {
+        "id": "m09l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Planning chat",
+        "scenarioPt": "Jamie quer saber o que você pretende fazer nos próximos dias."
+      },
+      {
+        "id": "m09l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are your plans for tomorrow?",
+        "promptPt": "Jamie pergunta planos para amanhã:",
+        "options": [
+          { "labelEn": "I'm going to work.", "correct": true, "feedbackPt": "I'm going to + verbo — plano futuro." },
+          { "labelEn": "I went to work.", "correct": false, "feedbackPt": "Went é passado." },
+          { "labelEn": "I go to work.", "correct": false, "feedbackPt": "Go é rotina presente." }
+        ]
+      },
+      {
+        "id": "m09l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "And next week?",
+        "promptPt": "Jamie pergunta sobre a próxima semana:",
+        "options": [
+          { "labelEn": "I'm going to travel.", "correct": true, "feedbackPt": "Plano para next week — going to." },
+          { "labelEn": "I traveled last week.", "correct": false, "feedbackPt": "Passado — a pergunta é futuro." },
+          { "labelEn": "I traveling next week.", "correct": false, "feedbackPt": "Forma incorreta." }
+        ]
+      },
+      {
+        "id": "m09l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Are you going to work on Saturday?",
+        "promptPt": "Jamie pergunta se você vai trabalhar sábado:",
+        "options": [
+          { "labelEn": "No, I'm not going to work on Saturday.", "correct": true, "feedbackPt": "Negativa: I'm not going to + verbo." },
+          { "labelEn": "No, I not going to work.", "correct": false, "feedbackPt": "Falta I'm." },
+          { "labelEn": "No, I'm going to worked.", "correct": false, "feedbackPt": "Worked é passado." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m09l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "I'm going to...",
+        "titlePt": "Eu vou...",
+        "introPt": "Padrão fixo para planos: I'm going to + verbo base (sem -ed, sem -ing).",
+        "examples": [
+          { "en": "I'm going to work.", "pt": "vou trabalhar" },
+          { "en": "I'm going to travel.", "pt": "vou viajar" },
+          { "en": "I'm going to rest.", "pt": "vou descansar" },
+          { "en": "I'm going to study.", "pt": "vou estudar" }
+        ]
+      },
+      {
+        "id": "m09l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "With time expressions",
+        "titlePt": "Com expressões de tempo",
+        "introPt": "Combine going to com tomorrow, next week, this weekend:",
+        "examples": [
+          { "en": "I'm going to work tomorrow.", "pt": "vou trabalhar amanhã" },
+          { "en": "I'm going to travel next week.", "pt": "vou viajar semana que vem" },
+          { "en": "I'm going to rest this weekend.", "pt": "vou descansar neste fim de semana" },
+          { "en": "I'm going to the gym on Monday.", "pt": "vou à academia segunda" }
+        ]
+      },
+      {
+        "id": "m09l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Next week / this weekend",
+        "titlePt": "Semana que vem / este fim de semana",
+        "introPt": "Expressões de tempo futuro:",
+        "examples": [
+          { "en": "next week", "pt": "semana que vem" },
+          { "en": "this weekend", "pt": "este fim de semana" },
+          { "en": "on Monday", "pt": "na segunda" },
+          { "en": "Next week I'm going to travel.", "pt": "semana que vem vou viajar" }
+        ]
+      },
+      {
+        "id": "m09l05-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Negative — I'm not going to...",
+        "titlePt": "Negativa — não vou...",
+        "introPt": "Para dizer que NÃO vai fazer algo:",
+        "examples": [
+          { "en": "I'm not going to work on Saturday.", "pt": "não vou trabalhar sábado" },
+          { "en": "I'm not going to travel.", "pt": "não vou viajar" },
+          { "en": "I'm not going to stay late.", "pt": "não vou ficar até tarde" }
+        ]
+      },
+      {
+        "id": "m09l05-learn-05",
+        "type": "comparison",
+        "titleEn": "Past vs future plans",
+        "titlePt": "Passado vs planos futuros",
+        "left": {
+          "labelEn": "PAST · did / went",
+          "exampleEn": "Last week I traveled.",
+          "notePt": "O que já aconteceu."
+        },
+        "right": {
+          "labelEn": "FUTURE · going to",
+          "exampleEn": "Next week I'm going to travel.",
+          "notePt": "O que você planeja."
+        },
+        "modelEn": "Last week I rested. Next week I'm going to travel.",
+        "modelPt": "Passado e futuro lado a lado — last vs next."
+      },
+      {
+        "id": "m09l05-learn-06",
+        "type": "language_focus",
+        "titleEn": "Going to pattern",
+        "titlePt": "Padrão going to",
+        "items": [
+          { "formalEn": "I am going to work.", "naturalEn": "I'm going to work.", "notePt": "Contração I'm — sempre na fala." },
+          { "formalEn": "I am not going to work.", "naturalEn": "I'm not going to work.", "notePt": "Negativa com not." }
+        ],
+        "tipPt": "Memorize: I'm going to + verbo. Não mude o verbo — use a forma base (work, travel, rest)."
+      },
+      {
+        "id": "m09l05-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I'm going to work.", "pt": "vou trabalhar" },
+          { "en": "I'm going to travel next week.", "pt": "vou viajar semana que vem" },
+          { "en": "I'm not going to work on Saturday.", "pt": "não vou trabalhar sábado" },
+          { "en": "next week", "pt": "semana que vem" },
+          { "en": "this weekend", "pt": "este fim de semana" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m09l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Future plans",
+        "titlePt": "Planos futuros",
+        "introPt": "Leia em voz alta. Troque pelos seus planos reais.",
+        "phrases": [
+          { "en": "What are your plans?" },
+          { "en": "I'm going to work tomorrow." },
+          { "en": "I'm going to travel next week." },
+          { "en": "I'm going to rest this weekend." },
+          { "en": "I'm not going to work on Saturday." },
+          { "en": "Are you going to travel?" },
+          { "en": "Yes, I'm going to travel next month." }
+        ],
+        "dialogueEn": "What are your plans? — I'm going to work tomorrow. I'm going to travel next week. — Are you going to work on Saturday? — No, I'm not going to work on Saturday. I'm going to rest."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m09l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Share your plans.",
+        "headlinePt": "Compartilhe seus planos.",
+        "bodyPt": "Conte três planos usando I'm going to...",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What are your plans?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m09l05-prac-01",
+      "type": "choice",
+      "promptPt": "Plano futuro — vou trabalhar:",
+      "options": [
+        { "labelEn": "I'm going to work.", "correct": true, "feedbackPt": "Going to + verbo base." },
+        { "labelEn": "I went to work.", "correct": false, "feedbackPt": "Went é passado." },
+        { "labelEn": "I working.", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "m09l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — vou viajar semana que vem:",
+      "templateEn": "Next week I'm ___ to travel.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "going", "correct": true, "feedbackPt": "Going to = plano futuro." },
+        { "labelEn": "went", "correct": false, "feedbackPt": "Went é passado." },
+        { "labelEn": "go", "correct": false, "feedbackPt": "Falta going to." }
+      ]
+    },
+    {
+      "id": "m09l05-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte — vou descansar:",
+      "tokens": ["rest.", "to", "going", "I'm"],
+      "correctOrder": ["I'm", "going", "to", "rest."],
+      "feedbackCorrectPt": "I'm going to rest.",
+      "feedbackWrongPt": "I'm + going + to + verbo."
+    },
+    {
+      "id": "m09l05-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Are you going to work on Saturday? — você (não):",
+      "speaker": "You",
+      "contextEn": "Jamie: Are you going to work on Saturday?",
+      "options": [
+        { "labelEn": "No, I'm not going to work on Saturday.", "correct": true, "feedbackPt": "Negativa correta." },
+        { "labelEn": "No, I'm going to worked.", "correct": false, "feedbackPt": "Worked é passado." },
+        { "labelEn": "No, I not going to work.", "correct": false, "feedbackPt": "Falta I'm." }
+      ]
+    },
+    {
+      "id": "m09l05-prac-05",
+      "type": "classify",
+      "promptPt": "Passado ou futuro?",
+      "sentenceEn": "I'm going to travel next week.",
+      "category": "future",
+      "feedbackCorrectPt": "Going to = futuro/plano.",
+      "feedbackWrongPt": "Going to indica plano futuro."
+    },
+    {
+      "id": "m09l05-prac-06",
+      "type": "classify",
+      "promptPt": "Passado ou futuro?",
+      "sentenceEn": "Last week I traveled.",
+      "category": "past",
+      "feedbackCorrectPt": "Last week = passado.",
+      "feedbackWrongPt": "Last indica passado."
+    },
+    {
+      "id": "m09l05-prac-07",
+      "type": "choice",
+      "promptPt": "Semana que vem:",
+      "options": [
+        { "labelEn": "next week", "correct": true, "feedbackPt": "Next week = semana que vem." },
+        { "labelEn": "last week", "correct": false, "feedbackPt": "Last week = semana passada." },
+        { "labelEn": "this week", "correct": false, "feedbackPt": "This week = esta semana." }
+      ]
+    },
+    {
+      "id": "m09l05-prac-08",
+      "type": "fill_blank",
+      "promptPt": "Complete — não vou viajar:",
+      "templateEn": "I'm ___ going to travel.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "not", "correct": true, "feedbackPt": "I'm not going to = negativa." },
+        { "labelEn": "no", "correct": false, "feedbackPt": "Use not, não no." },
+        { "labelEn": "don't", "correct": false, "feedbackPt": "Com going to, use not." }
+      ]
+    },
+    {
+      "id": "m09l05-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte — vou trabalhar amanhã:",
+      "tokens": ["tomorrow.", "work", "to", "going", "I'm"],
+      "correctOrder": ["I'm", "going", "to", "work", "tomorrow."],
+      "feedbackCorrectPt": "I'm going to work tomorrow.",
+      "feedbackWrongPt": "I'm going to + verbo + tempo."
+    },
+    {
+      "id": "m09l05-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What are your plans for this weekend?",
+      "speaker": "You",
+      "contextEn": "Jamie: What are your plans for this weekend?",
+      "options": [
+        { "labelEn": "I'm going to rest this weekend.", "correct": true, "feedbackPt": "Plano + expressão de tempo." },
+        { "labelEn": "I rested this weekend.", "correct": false, "feedbackPt": "Rested é passado." },
+        { "labelEn": "I rest this weekend.", "correct": false, "feedbackPt": "Presente simples — use going to para planos." }
+      ]
+    }
+  ]
+}

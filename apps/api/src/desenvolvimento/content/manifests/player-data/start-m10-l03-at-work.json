@@ -1,0 +1,301 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 10,
+  "goalPt": "Consolidar comunicação no trabalho — pedir ajuda, confirmar instruções e reuniões (revisão Módulos 5–6).",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Dia de trabalho — você precisa pedir ajuda e confirmar uma instrução.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Communicate at work.",
+    "headlinePt": "Comunique-se no trabalho.",
+    "bodyPt": "",
+    "canDo": [
+      "Can you help me, please?",
+      "I don't understand. Can you repeat?",
+      "The meeting is at 3 PM.",
+      "OK, I understand. Thank you."
+    ],
+    "production": {
+      "introPt": "Simule pedir ajuda, pedir repetição e confirmar horário de reunião.",
+      "prompts": [
+        { "speaker": "Manager", "questionEn": "Do you need help with the report?" }
+      ],
+      "fields": [
+        { "id": "help", "labelPt": "Pedir ajuda", "prefixEn": "", "placeholderEn": "Can you help me, please?" },
+        { "id": "repeat", "labelPt": "Pedir repetição", "prefixEn": "", "placeholderEn": "I don't understand. Can you repeat?" },
+        { "id": "confirm", "labelPt": "Confirmar reunião", "prefixEn": "", "placeholderEn": "The meeting is at 3 PM. OK, I understand." }
+      ],
+      "exampleEn": "Can you help me, please? I don't understand. Can you repeat? The meeting is at 3 PM. OK, I understand. Thank you."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m10l03-ctx-01",
+        "type": "intro",
+        "titleEn": "At work",
+        "titlePt": "No trabalho",
+        "bodyPt": "Revisão dos Módulos 5–6 — pedir ajuda, confirmar instruções, falar de reuniões. Sem gramática nova."
+      },
+      {
+        "id": "m10l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Workday",
+        "scenarioPt": "Seu manager passa instruções sobre um relatório e uma reunião."
+      },
+      {
+        "id": "m10l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "Can you finish the report today?",
+        "promptPt": "Manager pede o relatório. Você precisa de ajuda:",
+        "options": [
+          { "labelEn": "Can you help me, please?", "correct": true, "feedbackPt": "Pedido educado de ajuda." },
+          { "labelEn": "I help you, please.", "correct": false, "feedbackPt": "Você precisa de ajuda, não oferece." },
+          { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Cumprimento, não pedido." }
+        ]
+      },
+      {
+        "id": "m10l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "Send it to the team by email.",
+        "promptPt": "Instrução rápida — você não entendeu:",
+        "options": [
+          { "labelEn": "I don't understand. Can you repeat, please?", "correct": true, "feedbackPt": "Pedir repetição — essencial no trabalho." },
+          { "labelEn": "Yes, I understand everything.", "correct": false, "feedbackPt": "Fingir entender causa erro depois." },
+          { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Fora de contexto." }
+        ]
+      },
+      {
+        "id": "m10l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Manager",
+        "promptEn": "The meeting is at 3 PM. OK?",
+        "promptPt": "Manager confirma horário da reunião:",
+        "options": [
+          { "labelEn": "OK, I understand. The meeting is at 3 PM. Thank you.", "correct": true, "feedbackPt": "Confirmação clara + agradecimento." },
+          { "labelEn": "The meeting is at 3 AM.", "correct": false, "feedbackPt": "Horário errado." },
+          { "labelEn": "I don't know.", "correct": false, "feedbackPt": "Manager acabou de informar." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m10l03-learn-01",
+        "type": "review",
+        "titleEn": "Asking for help",
+        "titlePt": "Pedir ajuda",
+        "items": [
+          { "en": "Can you help me, please?", "pt": "pedido educado" },
+          { "en": "I need help.", "pt": "preciso de ajuda" },
+          { "en": "Could you help me?", "pt": "mais formal" },
+          { "en": "Thank you for your help.", "pt": "agradecimento" }
+        ]
+      },
+      {
+        "id": "m10l03-learn-02",
+        "type": "review",
+        "titleEn": "Understanding & repeating",
+        "titlePt": "Entender e repetir",
+        "items": [
+          { "en": "I don't understand.", "pt": "não entendo" },
+          { "en": "Can you repeat, please?", "pt": "pode repetir?" },
+          { "en": "Can you speak slowly?", "pt": "pode falar devagar?" },
+          { "en": "OK, I understand.", "pt": "confirmação" }
+        ]
+      },
+      {
+        "id": "m10l03-learn-03",
+        "type": "review",
+        "titleEn": "Meetings & schedule",
+        "titlePt": "Reuniões e agenda",
+        "items": [
+          { "en": "The meeting is at 3 PM.", "pt": "horário" },
+          { "en": "We have a meeting today.", "pt": "reunião hoje" },
+          { "en": "The meeting is on Monday.", "pt": "dia da semana" },
+          { "en": "See you at the meeting.", "pt": "até a reunião" }
+        ]
+      },
+      {
+        "id": "m10l03-learn-04",
+        "type": "review",
+        "titleEn": "Work requests",
+        "titlePt": "Pedidos no trabalho",
+        "items": [
+          { "en": "Can you send me the file?", "pt": "pedido" },
+          { "en": "Please finish by Friday.", "pt": "prazo" },
+          { "en": "I will send it today.", "pt": "compromisso" },
+          { "en": "No problem.", "pt": "sem problema" }
+        ]
+      },
+      {
+        "id": "m10l03-learn-05",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Can you help me, please?", "pt": "ajuda" },
+          { "en": "I don't understand. Can you repeat?", "pt": "repetição" },
+          { "en": "The meeting is at 3 PM.", "pt": "reunião" },
+          { "en": "OK, I understand. Thank you.", "pt": "confirmação" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m10l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Work communication",
+        "titlePt": "Comunicação no trabalho",
+        "introPt": "Leia o diálogo em voz alta.",
+        "phrases": [
+          { "en": "Can you finish the report today?" },
+          { "en": "Can you help me, please?" },
+          { "en": "Send it to the team by email." },
+          { "en": "I don't understand. Can you repeat, please?" },
+          { "en": "Send the report to the team by email before 5 PM." },
+          { "en": "OK, I understand." },
+          { "en": "The meeting is at 3 PM. OK?" },
+          { "en": "OK. The meeting is at 3 PM. Thank you." }
+        ],
+        "dialogueEn": "Can you finish the report? — Can you help me, please? — Send it to the team by email. — I don't understand. Can you repeat? — Send the report to the team by email before 5 PM. — OK, I understand. — The meeting is at 3 PM. — OK. Thank you."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m10l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Communicate at work.",
+        "headlinePt": "Comunique-se no trabalho.",
+        "bodyPt": "Peça ajuda, peça repetição e confirme a reunião.",
+        "prompts": [
+          { "speaker": "Manager", "questionEn": "Do you need help?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m10l03-prac-01",
+      "type": "choice",
+      "promptPt": "Pedir ajuda educadamente:",
+      "options": [
+        { "labelEn": "Can you help me, please?", "correct": true, "feedbackPt": "Can you + verbo + please." },
+        { "labelEn": "You help me.", "correct": false, "feedbackPt": "Soa mandão." },
+        { "labelEn": "Help me now.", "correct": false, "feedbackPt": "Falta educação." }
+      ]
+    },
+    {
+      "id": "m10l03-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Não entendeu — peça repetição:",
+      "speaker": "You",
+      "contextEn": "Manager gave quick instructions.",
+      "options": [
+        { "labelEn": "I don't understand. Can you repeat, please?", "correct": true, "feedbackPt": "Essencial no trabalho." },
+        { "labelEn": "Yes, yes, OK.", "correct": false, "feedbackPt": "Fingir entender." },
+        { "labelEn": "Goodbye!", "correct": false, "feedbackPt": "Fora de contexto." }
+      ]
+    },
+    {
+      "id": "m10l03-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete — reunião às 15h:",
+      "templateEn": "The meeting is ___ 3 PM.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "at", "correct": true, "feedbackPt": "At + hora." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In combina com período." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "On combina com dia." }
+      ]
+    },
+    {
+      "id": "m10l03-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte — pode me ajudar?",
+      "tokens": ["please?", "me", "help", "you", "Can"],
+      "correctOrder": ["Can", "you", "help", "me", "please?"],
+      "feedbackCorrectPt": "Can you help me, please?",
+      "feedbackWrongPt": "Can + you + help + me + please?"
+    },
+    {
+      "id": "m10l03-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Manager: The meeting is at 3 PM.",
+      "speaker": "You",
+      "contextEn": "Manager: The meeting is at 3 PM.",
+      "options": [
+        { "labelEn": "OK, I understand. Thank you.", "correct": true, "feedbackPt": "Confirmação + agradecimento." },
+        { "labelEn": "I don't understand.", "correct": false, "feedbackPt": "Instrução clara." },
+        { "labelEn": "Where are you from?", "correct": false, "feedbackPt": "Fora de contexto." }
+      ]
+    },
+    {
+      "id": "m10l03-prac-06",
+      "type": "choice",
+      "promptPt": "Confirmar que entendeu:",
+      "options": [
+        { "labelEn": "OK, I understand.", "correct": true, "feedbackPt": "Confirmação clara." },
+        { "labelEn": "OK, I am understand.", "correct": false, "feedbackPt": "Forma incorreta." },
+        { "labelEn": "OK, I understanding.", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "m10l03-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Complete — não entendo:",
+      "templateEn": "I don't ___.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "understand", "correct": true, "feedbackPt": "Don't understand — fixo." },
+        { "labelEn": "understood", "correct": false, "feedbackPt": "Understood é passado." },
+        { "labelEn": "understanding", "correct": false, "feedbackPt": "Forma contínua." }
+      ]
+    },
+    {
+      "id": "m10l03-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte — pode repetir?",
+      "tokens": ["please?", "repeat,", "you", "Can"],
+      "correctOrder": ["Can", "you", "repeat,", "please?"],
+      "feedbackCorrectPt": "Can you repeat, please?",
+      "feedbackWrongPt": "Can + you + repeat + please."
+    },
+    {
+      "id": "m10l03-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Precisa de ajuda com relatório:",
+      "speaker": "You",
+      "contextEn": "You need help with a report.",
+      "options": [
+        { "labelEn": "Can you help me with the report, please?", "correct": true, "feedbackPt": "Pedido específico." },
+        { "labelEn": "I help the report.", "correct": false, "feedbackPt": "Forma incorreta." },
+        { "labelEn": "The report is help.", "correct": false, "feedbackPt": "Sem sentido." }
+      ]
+    },
+    {
+      "id": "m10l03-prac-10",
+      "type": "choice",
+      "promptPt": "Agradecer pela ajuda:",
+      "options": [
+        { "labelEn": "Thank you for your help.", "correct": true, "feedbackPt": "Agradecimento educado." },
+        { "labelEn": "Help you thank.", "correct": false, "feedbackPt": "Forma incorreta." },
+        { "labelEn": "I don't understand.", "correct": false, "feedbackPt": "Não agradece." }
+      ]
+    }
+  ]
+}

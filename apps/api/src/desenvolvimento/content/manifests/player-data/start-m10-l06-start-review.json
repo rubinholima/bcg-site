@@ -1,0 +1,344 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 10,
+  "goalPt": "Revisão ampla dos Módulos 1–9 — pontos-chave de cada área antes da missão final.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Revisão geral START — percorrer mentalmente tudo que você aprendeu.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Review everything you learned.",
+    "headlinePt": "Revise tudo que aprendeu.",
+    "bodyPt": "",
+    "canDo": [
+      "Greetings, names, from/live, routine, work, I'd like, directions, yesterday, going to"
+    ],
+    "production": {
+      "introPt": "Monte um mini-resumo da sua jornada START — uma frase de cada área principal.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Let's review your English. One sentence from each area." }
+      ],
+      "fields": [
+        { "id": "greet", "labelPt": "Cumprimento (M1)", "prefixEn": "", "placeholderEn": "Good afternoon! My name is Carlos." },
+        { "id": "life", "labelPt": "Vida pessoal (M2–4)", "prefixEn": "", "placeholderEn": "I'm from Brazil. I wake up at 7." },
+        { "id": "work", "labelPt": "Trabalho (M5–6)", "prefixEn": "", "placeholderEn": "Can you help me, please?" },
+        { "id": "daily", "labelPt": "Dia a dia (M7)", "prefixEn": "", "placeholderEn": "I'd like a coffee, please." },
+        { "id": "travel", "labelPt": "Viagem (M8)", "prefixEn": "", "placeholderEn": "Where is the elevator?" },
+        { "id": "time", "labelPt": "Tempo (M9)", "prefixEn": "", "placeholderEn": "Yesterday I worked. Tomorrow I'm going to rest." }
+      ],
+      "exampleEn": "Good afternoon! My name is Carlos. I'm from Brazil. Can you help me? I'd like a coffee. Where is the elevator? Yesterday I worked. Tomorrow I'm going to rest."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m10l06-ctx-01",
+        "type": "intro",
+        "titleEn": "START Review",
+        "titlePt": "Revisão START",
+        "bodyPt": "Antes da missão final, percorra os 9 módulos — cumprimentos, vida, trabalho, compras, viagem, passado e futuro."
+      },
+      {
+        "id": "m10l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Study session · Before final mission",
+        "scenarioPt": "Jamie guia uma revisão rápida de tudo que você aprendeu no START."
+      },
+      {
+        "id": "m10l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Module 1 — how do you greet someone in the afternoon?",
+        "promptPt": "Revisão M1 — cumprimento:",
+        "options": [
+          { "labelEn": "Good afternoon! How are you?", "correct": true, "feedbackPt": "Cumprimento + pergunta social." },
+          { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Manhã, não tarde." },
+          { "labelEn": "I'd like a coffee.", "correct": false, "feedbackPt": "M7 — pedido." }
+        ]
+      },
+      {
+        "id": "m10l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Modules 2–4 — origin or home?",
+        "promptPt": "Revisão M2–4 — origem vs moradia:",
+        "options": [
+          { "labelEn": "I'm from Brazil, but I live in Boston.", "correct": true, "feedbackPt": "From + live in — ambos corretos." },
+          { "labelEn": "I live from Brazil.", "correct": false, "feedbackPt": "Forma incorreta." },
+          { "labelEn": "I'm from live in Boston.", "correct": false, "feedbackPt": "Mistura incorreta." }
+        ]
+      },
+      {
+        "id": "m10l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Module 7 — how do you order food?",
+        "promptPt": "Revisão M7 — restaurante:",
+        "options": [
+          { "labelEn": "I'd like a salad, please.", "correct": true, "feedbackPt": "I'd like = pedido." },
+          { "labelEn": "I like a salad.", "correct": false, "feedbackPt": "Preferência, não pedido." },
+          { "labelEn": "Where is the salad?", "correct": false, "feedbackPt": "Direção, não pedido." }
+        ]
+      },
+      {
+        "id": "m10l06-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Module 9 — past or future?",
+        "promptPt": "Revisão M9 — passado e futuro:",
+        "options": [
+          { "labelEn": "Last weekend I went out. This weekend I'm going to rest.", "correct": true, "feedbackPt": "Contraste passado/futuro perfeito." },
+          { "labelEn": "Last weekend I'm going to go out.", "correct": false, "feedbackPt": "Erro de tempo." },
+          { "labelEn": "This weekend I went out.", "correct": false, "feedbackPt": "Erro de tempo." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m10l06-learn-01",
+        "type": "review",
+        "titleEn": "M1 — Greetings & names",
+        "titlePt": "M1 — Cumprimentos e nomes",
+        "items": [
+          { "en": "Good morning / afternoon / evening", "pt": "cumprimentos" },
+          { "en": "My name is... / Nice to meet you", "pt": "apresentação" },
+          { "en": "How are you? / See you later!", "pt": "social + despedida" }
+        ]
+      },
+      {
+        "id": "m10l06-learn-02",
+        "type": "review",
+        "titleEn": "M2–4 — Personal life",
+        "titlePt": "M2–4 — Vida pessoal",
+        "items": [
+          { "en": "I'm from... / I live in...", "pt": "origem e moradia" },
+          { "en": "I wake up at 7. / I go to work.", "pt": "rotina" },
+          { "en": "I'm married. / I have two children.", "pt": "família" }
+        ]
+      },
+      {
+        "id": "m10l06-learn-03",
+        "type": "review",
+        "titleEn": "M5–6 — Work",
+        "titlePt": "M5–6 — Trabalho",
+        "items": [
+          { "en": "What do you do? / I work in...", "pt": "profissão" },
+          { "en": "Can you help me, please?", "pt": "pedir ajuda" },
+          { "en": "I don't understand. Can you repeat?", "pt": "repetição" },
+          { "en": "The meeting is at 3 PM.", "pt": "reunião" }
+        ]
+      },
+      {
+        "id": "m10l06-learn-04",
+        "type": "review",
+        "titleEn": "M7 — Food & shopping",
+        "titlePt": "M7 — Comida e compras",
+        "items": [
+          { "en": "I'd like..., please.", "pt": "pedido" },
+          { "en": "How much is it?", "pt": "preço" },
+          { "en": "I'll take it.", "pt": "comprar" }
+        ]
+      },
+      {
+        "id": "m10l06-learn-05",
+        "type": "review",
+        "titleEn": "M8 — Travel",
+        "titlePt": "M8 — Viagem",
+        "items": [
+          { "en": "I have a reservation under...", "pt": "hotel" },
+          { "en": "Where is the...?", "pt": "direções" },
+          { "en": "Go straight. Turn left.", "pt": "instruções" }
+        ]
+      },
+      {
+        "id": "m10l06-learn-06",
+        "type": "review",
+        "titleEn": "M9 — Past & future",
+        "titlePt": "M9 — Passado e futuro",
+        "items": [
+          { "en": "Yesterday I worked. / What did you do?", "pt": "passado" },
+          { "en": "Tomorrow I'm going to rest.", "pt": "futuro" },
+          { "en": "Last weekend / This weekend", "pt": "expressões tempo" }
+        ]
+      },
+      {
+        "id": "m10l06-learn-07",
+        "type": "language_focus",
+        "titleEn": "You are ready",
+        "titlePt": "Você está pronto",
+        "items": [
+          { "formalEn": "9 modules", "naturalEn": "Greet → Life → Work → Food → Travel → Time", "notePt": "Tudo conectado na missão final." }
+        ],
+        "tipPt": "A missão final usa SOMENTE o que você revisou — sem gramática nova."
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m10l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "START highlights",
+        "titlePt": "Destaques START",
+        "introPt": "Leia uma frase de cada módulo em voz alta.",
+        "phrases": [
+          { "en": "Good afternoon! My name is Carlos. Nice to meet you!" },
+          { "en": "I'm from Brazil. I live in Boston." },
+          { "en": "I wake up at 7. I go to work at 9." },
+          { "en": "What do you do? I work in operations." },
+          { "en": "Can you help me, please?" },
+          { "en": "I'd like a coffee, please. How much is it?" },
+          { "en": "I have a reservation. Where is the elevator?" },
+          { "en": "Yesterday I worked. Tomorrow I'm going to rest." }
+        ],
+        "dialogueEn": "Good afternoon! My name is Carlos. — I'm from Brazil. I live in Boston. — Can you help me? — I'd like a coffee. — Where is the elevator? — Yesterday I worked. Tomorrow I'm going to rest."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m10l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Review your START journey.",
+        "headlinePt": "Revise sua jornada START.",
+        "bodyPt": "Uma frase de cada área — preparação para a missão final.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "One sentence from each area." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m10l06-prac-01",
+      "type": "choice",
+      "promptPt": "M1 — cumprimento de tarde:",
+      "options": [
+        { "labelEn": "Good afternoon!", "correct": true, "feedbackPt": "M1 — greetings." },
+        { "labelEn": "Good night!", "correct": false, "feedbackPt": "Despedida, não cumprimento." },
+        { "labelEn": "I'd like...", "correct": false, "feedbackPt": "M7." }
+      ]
+    },
+    {
+      "id": "m10l06-prac-02",
+      "type": "choice",
+      "promptPt": "M2 — origem:",
+      "options": [
+        { "labelEn": "I'm from Brazil.", "correct": true, "feedbackPt": "From = origem." },
+        { "labelEn": "I live in Brazil.", "correct": false, "feedbackPt": "Live = moradia." },
+        { "labelEn": "I work in Brazil.", "correct": false, "feedbackPt": "Work = emprego." }
+      ]
+    },
+    {
+      "id": "m10l06-prac-03",
+      "type": "choice",
+      "promptPt": "M6 — pedir ajuda:",
+      "options": [
+        { "labelEn": "Can you help me, please?", "correct": true, "feedbackPt": "M6 — workplace." },
+        { "labelEn": "Where is the elevator?", "correct": false, "feedbackPt": "M8 — travel." },
+        { "labelEn": "Nice to meet you.", "correct": false, "feedbackPt": "M1." }
+      ]
+    },
+    {
+      "id": "m10l06-prac-04",
+      "type": "choice",
+      "promptPt": "M7 — pedir comida:",
+      "options": [
+        { "labelEn": "I'd like a salad, please.", "correct": true, "feedbackPt": "M7 — ordering." },
+        { "labelEn": "I like salad.", "correct": false, "feedbackPt": "Preferência." },
+        { "labelEn": "I went to a restaurant.", "correct": false, "feedbackPt": "M9 — past." }
+      ]
+    },
+    {
+      "id": "m10l06-prac-05",
+      "type": "choice",
+      "promptPt": "M8 — hotel:",
+      "options": [
+        { "labelEn": "I have a reservation under Carlos.", "correct": true, "feedbackPt": "M8 — reservation." },
+        { "labelEn": "Can you help me?", "correct": false, "feedbackPt": "M6." },
+        { "labelEn": "I'm from Brazil.", "correct": false, "feedbackPt": "M2." }
+      ]
+    },
+    {
+      "id": "m10l06-prac-06",
+      "type": "choice",
+      "promptPt": "M9 — passado:",
+      "options": [
+        { "labelEn": "What did you do yesterday?", "correct": true, "feedbackPt": "M9 — past." },
+        { "labelEn": "What are you going to do?", "correct": false, "feedbackPt": "Futuro, não passado." },
+        { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Profissão." }
+      ]
+    },
+    {
+      "id": "m10l06-prac-07",
+      "type": "choice",
+      "promptPt": "M9 — futuro:",
+      "options": [
+        { "labelEn": "I'm going to travel next week.", "correct": true, "feedbackPt": "M9 — going to." },
+        { "labelEn": "I traveled last week.", "correct": false, "feedbackPt": "Passado." },
+        { "labelEn": "I travel every week.", "correct": false, "feedbackPt": "Rotina presente." }
+      ]
+    },
+    {
+      "id": "m10l06-prac-08",
+      "type": "classify",
+      "promptPt": "Qual módulo? — I'd like a coffee.",
+      "sentenceEn": "I'd like a coffee, please.",
+      "category": "M7",
+      "feedbackCorrectPt": "M7 — food & shopping.",
+      "feedbackWrongPt": "Pedido de comida = M7."
+    },
+    {
+      "id": "m10l06-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte — prazer em conhecer (M1):",
+      "tokens": ["you!", "meet", "to", "Nice"],
+      "correctOrder": ["Nice", "to", "meet", "you!"],
+      "feedbackCorrectPt": "Nice to meet you!",
+      "feedbackWrongPt": "M1 — introduction."
+    },
+    {
+      "id": "m10l06-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Revisão completa — melhor resposta:",
+      "speaker": "You",
+      "contextEn": "Jamie: Tell me one thing from each module.",
+      "options": [
+        { "labelEn": "I'm Carlos from Brazil. I work in ops. I'd like coffee. I have a reservation. Yesterday I worked.", "correct": true, "feedbackPt": "Cobre vários módulos." },
+        { "labelEn": "Goodbye.", "correct": false, "feedbackPt": "Muito curto." },
+        { "labelEn": "I am English.", "correct": false, "feedbackPt": "Não revisa conteúdo." }
+      ]
+    },
+    {
+      "id": "m10l06-prac-11",
+      "type": "fill_blank",
+      "promptPt": "M4 — rotina — acordo às 7:",
+      "templateEn": "I wake ___ at 7.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "up", "correct": true, "feedbackPt": "Wake up — M4 routine." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "Incorreto." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At vem depois." }
+      ]
+    },
+    {
+      "id": "m10l06-prac-12",
+      "type": "choice",
+      "promptPt": "Pronto para missão final?",
+      "options": [
+        { "labelEn": "Yes — I can greet, talk about life, work, order food, travel, and use past/future.", "correct": true, "feedbackPt": "Tudo que START cobre." },
+        { "labelEn": "No — I only know greetings.", "correct": false, "feedbackPt": "Você revisou muito mais." },
+        { "labelEn": "I need new grammar.", "correct": false, "feedbackPt": "Missão final usa só material ensinado." }
+      ]
+    }
+  ]
+}
