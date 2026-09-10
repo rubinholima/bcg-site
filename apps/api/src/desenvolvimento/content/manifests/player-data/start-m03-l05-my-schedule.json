@@ -1,0 +1,336 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 3,
+  "goalPt": "Descrever agenda semanal simples — I start at..., I finish at..., I have... on..., from... to...",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Alex pergunta sobre sua rotina de trabalho e treino na semana.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can describe your schedule.",
+    "headlinePt": "Você consegue descrever sua agenda.",
+    "bodyPt": "",
+    "canDo": ["I start at 8 a.m.", "I finish at 5 p.m.", "I have training on Tuesday.", "I'm free from 6 to 7."],
+    "production": {
+      "introPt": "Descreva sua agenda para Alex — horários de trabalho e treino.",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "What's your schedule like?" },
+        { "speaker": "Alex", "questionEn": "When are you free?" }
+      ],
+      "fields": [
+        { "id": "start", "labelPt": "Horário de início", "prefixEn": "I start at", "placeholderEn": "8 a.m." },
+        { "id": "finish", "labelPt": "Horário de término", "prefixEn": "I finish at", "placeholderEn": "5 p.m." },
+        { "id": "training", "labelPt": "Treino / compromisso", "prefixEn": "I have training", "placeholderEn": "on Tuesday at 6 p.m." }
+      ],
+      "exampleEn": "I start at 8 a.m. and finish at 5 p.m. I have training on Tuesday at 6 p.m."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m03l05-ctx-01",
+        "type": "intro",
+        "titleEn": "My schedule",
+        "titlePt": "Minha agenda",
+        "bodyPt": "Alex quer entender sua disponibilidade na semana. Você aprende a dizer quando começa, termina e o que tem na agenda."
+      },
+      {
+        "id": "m03l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Planning the week",
+        "scenarioPt": "Vocês precisam alinhar horários antes de marcar uma reunião extra."
+      },
+      {
+        "id": "m03l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What time do you start work?",
+        "promptPt": "Alex pergunta quando você começa a trabalhar.",
+        "options": [
+          { "labelEn": "I start at 8 a.m.", "correct": true, "feedbackPt": "Start at + hora — padrão." },
+          { "labelEn": "I start in 8 a.m.", "correct": false, "feedbackPt": "Horário usa at, não in." },
+          { "labelEn": "I start on 8 a.m.", "correct": false, "feedbackPt": "On combina com dia, não hora." }
+        ]
+      },
+      {
+        "id": "m03l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "And when do you finish?",
+        "promptPt": "Alex pergunta quando termina.",
+        "options": [
+          { "labelEn": "I finish at 5 p.m.", "correct": true, "feedbackPt": "Finish at + hora." },
+          { "labelEn": "I finish on 5 p.m.", "correct": false, "feedbackPt": "Use at para hora." },
+          { "labelEn": "I finish 5 p.m.", "correct": false, "feedbackPt": "Falta at antes da hora." }
+        ]
+      },
+      {
+        "id": "m03l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you have anything on Wednesday?",
+        "promptPt": "Alex pergunta sobre compromissos na quarta.",
+        "options": [
+          { "labelEn": "I have a meeting on Wednesday at 2 p.m.", "correct": true, "feedbackPt": "On + dia + at + hora." },
+          { "labelEn": "I have a meeting in Wednesday.", "correct": false, "feedbackPt": "Dia da semana = on." },
+          { "labelEn": "I have a meeting at Wednesday.", "correct": false, "feedbackPt": "At combina com hora, não dia." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m03l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "I start / I finish",
+        "titlePt": "Eu começo / eu termino",
+        "introPt": "Descrever início e fim de trabalho ou atividade.",
+        "examples": [
+          { "en": "I start at 8 a.m.", "pt": "começo às 8" },
+          { "en": "I finish at 5 p.m.", "pt": "termino às 17h" },
+          { "en": "I start work at 9.", "pt": "começo trabalho" },
+          { "en": "I finish training at 7 p.m.", "pt": "termino treino" }
+        ]
+      },
+      {
+        "id": "m03l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "I have... on...",
+        "titlePt": "Eu tenho... na...",
+        "introPt": "Compromissos na agenda — have + evento + on + dia.",
+        "examples": [
+          { "en": "I have a meeting on Monday.", "pt": "reunião segunda" },
+          { "en": "I have training on Tuesday.", "pt": "treino terça" },
+          { "en": "I have a game on Saturday.", "pt": "jogo sábado" },
+          { "en": "I have nothing on Friday.", "pt": "livre sexta" }
+        ]
+      },
+      {
+        "id": "m03l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "from... to...",
+        "titlePt": "de... até...",
+        "introPt": "Intervalo de tempo — disponibilidade ou duração.",
+        "examples": [
+          { "en": "I'm free from 6 to 7.", "pt": "livre das 6 às 7" },
+          { "en": "I work from 9 a.m. to 5 p.m.", "pt": "trabalho 9–17h" },
+          { "en": "Training is from 6 to 8 p.m.", "pt": "treino 18–20h" },
+          { "en": "The meeting is from 2 to 3.", "pt": "reunião 14–15h" }
+        ]
+      },
+      {
+        "id": "m03l05-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "schedule & free time",
+        "titlePt": "Agenda e tempo livre",
+        "introPt": "Falar da agenda geral e disponibilidade.",
+        "examples": [
+          { "en": "What's your schedule like?", "pt": "como é sua agenda?" },
+          { "en": "I'm busy on Wednesday.", "pt": "ocupado quarta" },
+          { "en": "I'm free on Friday.", "pt": "livre sexta" },
+          { "en": "When are you free?", "pt": "quando está livre?" }
+        ]
+      },
+      {
+        "id": "m03l05-learn-05",
+        "type": "comparison",
+        "titleEn": "at vs from...to",
+        "titlePt": "at vs from...to",
+        "left": {
+          "labelEn": "POINT · AT",
+          "exampleEn": "I start at 8 a.m.",
+          "notePt": "Um momento — início ou fim."
+        },
+        "right": {
+          "labelEn": "RANGE · FROM...TO",
+          "exampleEn": "I work from 9 to 5.",
+          "notePt": "Intervalo — duração ou disponibilidade."
+        },
+        "modelEn": "I start at 8. I work from 9 to 5. I'm free from 6 to 7.",
+        "modelPt": "At = ponto; from...to = intervalo."
+      },
+      {
+        "id": "m03l05-learn-06",
+        "type": "language_focus",
+        "titleEn": "Combining day + time",
+        "titlePt": "Dia + hora juntos",
+        "items": [
+          { "formalEn": "I have training Tuesday 6 p.m.", "naturalEn": "I have training on Tuesday at 6 p.m.", "notePt": "On + dia; at + hora — ambos necessários." },
+          { "formalEn": "Meeting Wednesday 2.", "naturalEn": "Meeting on Wednesday at 2 p.m.", "notePt": "Preposições não são opcionais." }
+        ],
+        "tipPt": "Padrão completo: I have [event] on [day] at [time]."
+      },
+      {
+        "id": "m03l05-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I start in 8 a.m. / I have meeting in Monday.",
+        "rightEn": "I start at 8 a.m. / I have a meeting on Monday.",
+        "explanationPt": "AT para horários; ON para dias da semana. Brasileiros confundem preposições — memorize: at + time, on + day."
+      },
+      {
+        "id": "m03l05-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I start at 8 a.m.", "pt": "início" },
+          { "en": "I finish at 5 p.m.", "pt": "fim" },
+          { "en": "I have training on Tuesday.", "pt": "compromisso" },
+          { "en": "from 9 to 5", "pt": "intervalo" },
+          { "en": "I'm free on Friday.", "pt": "disponível" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m03l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte horários à sua realidade.",
+        "phrases": [
+          { "en": "I start at 8 a.m." },
+          { "en": "I finish at 5 p.m." },
+          { "en": "I have training on Tuesday." },
+          { "en": "I have a meeting on Wednesday at 2 p.m." },
+          { "en": "I work from 9 a.m. to 5 p.m." },
+          { "en": "I'm free from 6 to 7." },
+          { "en": "I'm busy on Thursday." }
+        ],
+        "dialogueEn": "What time do you start? — I start at 8 a.m. — When do you finish? — I finish at 5 p.m. — Do you have training? — I have training on Tuesday at 6 p.m."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m03l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — describe your schedule.",
+        "headlinePt": "Sua vez — descreva sua agenda.",
+        "bodyPt": "Conte para Alex quando trabalha, treina e quando está livre.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "What's your schedule like?" },
+          { "speaker": "Alex", "questionEn": "When are you free this week?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m03l05-prac-01",
+      "type": "fill_blank",
+      "promptPt": "Começo às 8h:",
+      "templateEn": "I start ___ 8 a.m.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "at", "correct": true, "feedbackPt": "At + hora." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "On = dia." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In não combina com hora." }
+      ]
+    },
+    {
+      "id": "m03l05-prac-02",
+      "type": "choice",
+      "promptPt": "Treino na terça — melhor frase:",
+      "options": [
+        { "labelEn": "I have training on Tuesday.", "correct": true, "feedbackPt": "On + dia." },
+        { "labelEn": "I have training in Tuesday.", "correct": false, "feedbackPt": "Use on." },
+        { "labelEn": "I have training at Tuesday.", "correct": false, "feedbackPt": "At = hora." }
+      ]
+    },
+    {
+      "id": "m03l05-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: termino às 17h",
+      "tokens": ["p.m.", "at", "I", "5", "finish"],
+      "correctOrder": ["I", "finish", "at", "5", "p.m."],
+      "feedbackCorrectPt": "I finish at 5 p.m.",
+      "feedbackWrongPt": "Ordem: I finish at + hora."
+    },
+    {
+      "id": "m03l05-prac-04",
+      "type": "fill_blank",
+      "promptPt": "Trabalho das 9 às 17h:",
+      "templateEn": "I work from 9 a.m. ___ 5 p.m.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "to", "correct": true, "feedbackPt": "From...to = intervalo." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At marca ponto, não intervalo." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "On = dia." }
+      ]
+    },
+    {
+      "id": "m03l05-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Reunião quarta às 14h — complete:",
+      "speaker": "You",
+      "contextEn": "Alex: What's on your schedule?",
+      "options": [
+        { "labelEn": "I have a meeting on Wednesday at 2 p.m.", "correct": true, "feedbackPt": "On + dia + at + hora." },
+        { "labelEn": "I have a meeting at Wednesday 2 p.m.", "correct": false, "feedbackPt": "On Wednesday, not at." },
+        { "labelEn": "I have a meeting in Wednesday.", "correct": false, "feedbackPt": "Use on." }
+      ]
+    },
+    {
+      "id": "m03l05-prac-06",
+      "type": "choice",
+      "promptPt": "Livre das 18h às 19h:",
+      "options": [
+        { "labelEn": "I'm free from 6 to 7 p.m.", "correct": true, "feedbackPt": "From...to para intervalo." },
+        { "labelEn": "I'm free at 6 to 7.", "correct": false, "feedbackPt": "Use from...to." },
+        { "labelEn": "I'm free on 6 to 7.", "correct": false, "feedbackPt": "On = dia." }
+      ]
+    },
+    {
+      "id": "m03l05-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte: tenho treino na terça",
+      "tokens": ["Tuesday.", "on", "training", "have", "I"],
+      "correctOrder": ["I", "have", "training", "on", "Tuesday."],
+      "feedbackCorrectPt": "I have training on Tuesday.",
+      "feedbackWrongPt": "Ordem: I have + evento + on + dia."
+    },
+    {
+      "id": "m03l05-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Alex pergunta When are you free? — sexta livre:",
+      "speaker": "You",
+      "contextEn": "Alex: When are you free?",
+      "options": [
+        { "labelEn": "I'm free on Friday.", "correct": true, "feedbackPt": "Free on + dia." },
+        { "labelEn": "I'm free at Friday.", "correct": false, "feedbackPt": "Use on Friday." },
+        { "labelEn": "I'm free in Friday.", "correct": false, "feedbackPt": "Use on." }
+      ]
+    },
+    {
+      "id": "m03l05-prac-09",
+      "type": "choice",
+      "promptPt": "Ocupado na quinta:",
+      "options": [
+        { "labelEn": "I'm busy on Thursday.", "correct": true, "feedbackPt": "Busy on + dia." },
+        { "labelEn": "I'm busy at Thursday.", "correct": false, "feedbackPt": "Use on." },
+        { "labelEn": "I'm busy in Thursday.", "correct": false, "feedbackPt": "Use on." }
+      ]
+    },
+    {
+      "id": "m03l05-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Complete: termino às...",
+      "templateEn": "I ___ at 5 p.m.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "finish", "correct": true, "feedbackPt": "I finish at = termino às." },
+        { "labelEn": "start", "correct": false, "feedbackPt": "Start = começo, não término." },
+        { "labelEn": "have", "correct": false, "feedbackPt": "Have não combina aqui." }
+      ]
+    }
+  ]
+}

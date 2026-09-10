@@ -1,0 +1,334 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 3,
+  "goalPt": "Combinar horário de reunião ou evento — What time?, Let's meet at..., Is ... okay?",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você e Jamie precisam combinar horário de uma reunião.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can schedule a meeting time.",
+    "headlinePt": "Você consegue combinar horário de reunião.",
+    "bodyPt": "",
+    "canDo": ["What time is the meeting?", "Let's meet at 3 p.m.", "Is 10 a.m. okay?", "That works for me."],
+    "production": {
+      "introPt": "Combine um horário com Jamie. Proponha, confirme ou negocie.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What time is the meeting?" },
+        { "speaker": "Jamie", "questionEn": "Is 3 p.m. okay?" }
+      ],
+      "fields": [
+        { "id": "propose", "labelPt": "Propor horário", "prefixEn": "Let's meet at", "placeholderEn": "3 p.m." },
+        { "id": "confirm", "labelPt": "Confirmar ou negociar", "prefixEn": "", "placeholderEn": "Yes, that works for me." }
+      ],
+      "exampleEn": "What time is the meeting? — Let's meet at 3 p.m. — Is 10 a.m. okay? — Yes, that works for me."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m03l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Meeting time",
+        "titlePt": "Horário da reunião",
+        "bodyPt": "Jamie envia mensagem sobre uma reunião de equipe. Você aprende a perguntar, propor e confirmar horários com at + time."
+      },
+      {
+        "id": "m03l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team chat · Scheduling",
+        "scenarioPt": "A reunião ainda não tem hora definida — vocês precisam combinar."
+      },
+      {
+        "id": "m03l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What time is the meeting?",
+        "promptPt": "Jamie pergunta o horário da reunião.",
+        "options": [
+          { "labelEn": "It's at 3 p.m.", "correct": true, "feedbackPt": "At + hora para evento marcado." },
+          { "labelEn": "It's 3 p.m.", "correct": false, "feedbackPt": "Funciona, mas at deixa claro que é horário do evento." },
+          { "labelEn": "It's on 3 p.m.", "correct": false, "feedbackPt": "On combina com dia/data, não hora." }
+        ]
+      },
+      {
+        "id": "m03l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Can we meet at 10 a.m.?",
+        "promptPt": "Jamie propõe um horário.",
+        "options": [
+          { "labelEn": "Yes, that works for me.", "correct": true, "feedbackPt": "Confirmação natural." },
+          { "labelEn": "Yes, I work at 10.", "correct": false, "feedbackPt": "Work at fala emprego, não confirmação de horário." },
+          { "labelEn": "Yes, on 10 a.m.", "correct": false, "feedbackPt": "Horário usa at, não on." }
+        ]
+      },
+      {
+        "id": "m03l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Is 2 p.m. okay for you?",
+        "promptPt": "Jamie verifica se o horário serve.",
+        "options": [
+          { "labelEn": "Yes, 2 p.m. is fine.", "correct": true, "feedbackPt": "Confirmação educada." },
+          { "labelEn": "No, I'm 2 p.m.", "correct": false, "feedbackPt": "Gramática incorreta." },
+          { "labelEn": "Yes, at fine.", "correct": false, "feedbackPt": "Frase incompleta." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m03l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "What time is the meeting?",
+        "titlePt": "Que horas é a reunião?",
+        "introPt": "Pergunta sobre horário de evento específico — meeting, training, game.",
+        "examples": [
+          { "en": "What time is the meeting?", "pt": "reunião" },
+          { "en": "What time is training?", "pt": "treino" },
+          { "en": "What time does it start?", "pt": "quando começa" },
+          { "en": "What time is the game?", "pt": "jogo" }
+        ]
+      },
+      {
+        "id": "m03l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "at + time",
+        "titlePt": "at + hora",
+        "introPt": "Para marcar horário de evento, use at — não it's (that's for telling current time).",
+        "examples": [
+          { "en": "at 3 p.m.", "pt": "às 15h" },
+          { "en": "at 10 a.m.", "pt": "às 10h da manhã" },
+          { "en": "at noon", "pt": "ao meio-dia" },
+          { "en": "The meeting is at 2 p.m.", "pt": "reunião às 14h" }
+        ]
+      },
+      {
+        "id": "m03l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Let's meet at...",
+        "titlePt": "Vamos nos encontrar às...",
+        "introPt": "Propor horário de encontro — forma colaborativa e comum.",
+        "examples": [
+          { "en": "Let's meet at 3 p.m.", "pt": "proposta" },
+          { "en": "Let's meet at noon.", "pt": "meio-dia" },
+          { "en": "Can we meet at 10 a.m.?", "pt": "pergunta educada" },
+          { "en": "How about 4 p.m.?", "pt": "alternativa" }
+        ]
+      },
+      {
+        "id": "m03l04-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Is ... okay?",
+        "titlePt": "Serve ...?",
+        "introPt": "Verificar se o horário funciona para a outra pessoa.",
+        "examples": [
+          { "en": "Is 3 p.m. okay?", "pt": "serve?" },
+          { "en": "Is 10 a.m. okay for you?", "pt": "para você" },
+          { "en": "Does 2 p.m. work?", "pt": "funciona?" },
+          { "en": "Is that time good for you?", "pt": "alternativa" }
+        ]
+      },
+      {
+        "id": "m03l04-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Confirming & declining",
+        "titlePt": "Confirmar e recusar",
+        "introPt": "Respostas naturais ao combinar horário.",
+        "examples": [
+          { "en": "Yes, that works for me.", "pt": "serve" },
+          { "en": "Yes, 3 p.m. is fine.", "pt": "confirmar hora" },
+          { "en": "Sorry, I can't at 2 p.m.", "pt": "recusar" },
+          { "en": "How about 4 p.m. instead?", "pt": "contrapropor" }
+        ]
+      },
+      {
+        "id": "m03l04-learn-06",
+        "type": "comparison",
+        "titleEn": "It's vs at",
+        "titlePt": "It's vs at",
+        "left": {
+          "labelEn": "CURRENT TIME · IT'S",
+          "exampleEn": "What time is it? — It's 3 p.m.",
+          "notePt": "Hora agora — relógio."
+        },
+        "right": {
+          "labelEn": "SCHEDULED · AT",
+          "exampleEn": "The meeting is at 3 p.m.",
+          "notePt": "Horário marcado — evento."
+        },
+        "modelEn": "What time is it? — It's 2 p.m. — The meeting is at 3 p.m.",
+        "modelPt": "It's = agora; at = compromisso."
+      },
+      {
+        "id": "m03l04-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "The meeting is on 3 p.m. / Let's meet in 3 p.m.",
+        "rightEn": "The meeting is at 3 p.m. / Let's meet at 3 p.m.",
+        "explanationPt": "Horários usam AT — at 3 p.m., at 10 a.m. ON combina com dias (on Monday) e datas (on March 15th), não com hora."
+      },
+      {
+        "id": "m03l04-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "What time is the meeting?", "pt": "pergunta" },
+          { "en": "at 3 p.m.", "pt": "horário" },
+          { "en": "Let's meet at 10 a.m.", "pt": "propor" },
+          { "en": "Is 2 p.m. okay?", "pt": "verificar" },
+          { "en": "Yes, that works for me.", "pt": "confirmar" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m03l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia em voz alta.",
+        "phrases": [
+          { "en": "What time is the meeting?" },
+          { "en": "The meeting is at 3 p.m." },
+          { "en": "Let's meet at 10 a.m." },
+          { "en": "Is 2 p.m. okay?" },
+          { "en": "Yes, that works for me." },
+          { "en": "How about 4 p.m.?" },
+          { "en": "Sorry, I can't at 2 p.m." }
+        ],
+        "dialogueEn": "What time is the meeting? — Let's meet at 3 p.m. — Is 10 a.m. okay? — Yes, that works for me."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m03l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — schedule the meeting.",
+        "headlinePt": "Sua vez — combine a reunião.",
+        "bodyPt": "Proponha um horário e confirme com Jamie.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What time should we meet?" },
+          { "speaker": "Jamie", "questionEn": "Is 3 p.m. okay?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m03l04-prac-01",
+      "type": "choice",
+      "promptPt": "Reunião às 15h — melhor frase:",
+      "options": [
+        { "labelEn": "The meeting is at 3 p.m.", "correct": true, "feedbackPt": "At + hora." },
+        { "labelEn": "The meeting is on 3 p.m.", "correct": false, "feedbackPt": "Horário usa at." },
+        { "labelEn": "The meeting is in 3 p.m.", "correct": false, "feedbackPt": "In não combina com hora." }
+      ]
+    },
+    {
+      "id": "m03l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Propor encontro às 10h:",
+      "templateEn": "Let's meet ___ 10 a.m.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "at", "correct": true, "feedbackPt": "At + hora." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "On = dia/data." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In não combina." }
+      ]
+    },
+    {
+      "id": "m03l04-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta What time is the meeting? — responda 2 p.m.:",
+      "speaker": "You",
+      "contextEn": "Jamie: What time is the meeting?",
+      "options": [
+        { "labelEn": "It's at 2 p.m.", "correct": true, "feedbackPt": "At para horário de evento." },
+        { "labelEn": "It's on 2 p.m.", "correct": false, "feedbackPt": "Use at." },
+        { "labelEn": "It's in Monday.", "correct": false, "feedbackPt": "Resposta errada para a pergunta." }
+      ]
+    },
+    {
+      "id": "m03l04-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte a proposta:",
+      "tokens": ["3", "at", "p.m.", "meet", "Let's"],
+      "correctOrder": ["Let's", "meet", "at", "3", "p.m."],
+      "feedbackCorrectPt": "Let's meet at 3 p.m.",
+      "feedbackWrongPt": "Ordem: Let's meet at + hora."
+    },
+    {
+      "id": "m03l04-prac-05",
+      "type": "choice",
+      "promptPt": "Jamie pergunta Is 3 p.m. okay? — você concorda:",
+      "options": [
+        { "labelEn": "Yes, that works for me.", "correct": true, "feedbackPt": "Confirmação natural." },
+        { "labelEn": "Yes, I am 3 p.m.", "correct": false, "feedbackPt": "Gramática incorreta." },
+        { "labelEn": "Yes, on 3 p.m.", "correct": false, "feedbackPt": "At/on errado aqui." }
+      ]
+    },
+    {
+      "id": "m03l04-prac-06",
+      "type": "classify",
+      "promptPt": "Esta frase fala hora atual ou horário marcado?",
+      "sentenceEn": "The training is at 6 p.m.",
+      "category": "live",
+      "feedbackCorrectPt": "At 6 p.m. = horário marcado do treino.",
+      "feedbackWrongPt": "Hora atual seria It's 6 p.m."
+    },
+    {
+      "id": "m03l04-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Verificar horário:",
+      "templateEn": "Is 10 a.m. ___?",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "okay", "correct": true, "feedbackPt": "Is ... okay? — padrão." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At já está implícito no horário." },
+        { "labelEn": "time", "correct": false, "feedbackPt": "Is 10 a.m. time? incorreto." }
+      ]
+    },
+    {
+      "id": "m03l04-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Você não pode às 14h — responda:",
+      "speaker": "You",
+      "contextEn": "Jamie: Is 2 p.m. okay?",
+      "options": [
+        { "labelEn": "Sorry, I can't at 2 p.m. How about 4 p.m.?", "correct": true, "feedbackPt": "Recusa + contraproposta." },
+        { "labelEn": "Yes, I don't.", "correct": false, "feedbackPt": "Yes e don't contradizem." },
+        { "labelEn": "No, on 4 p.m.", "correct": false, "feedbackPt": "Use at 4 p.m." }
+      ]
+    },
+    {
+      "id": "m03l04-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta sobre reunião:",
+      "tokens": ["meeting?", "the", "time", "is", "What"],
+      "correctOrder": ["What", "time", "is", "the", "meeting?"],
+      "feedbackCorrectPt": "What time is the meeting?",
+      "feedbackWrongPt": "Ordem fixa."
+    },
+    {
+      "id": "m03l04-prac-10",
+      "type": "choice",
+      "promptPt": "Alternativa a Let's meet at 3 p.m.:",
+      "options": [
+        { "labelEn": "How about 3 p.m.?", "correct": true, "feedbackPt": "Proposta alternativa natural." },
+        { "labelEn": "What time is it?", "correct": false, "feedbackPt": "Pergunta hora atual, não propõe." },
+        { "labelEn": "It's on Monday.", "correct": false, "feedbackPt": "Fala dia, não hora." }
+      ]
+    }
+  ]
+}

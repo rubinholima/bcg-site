@@ -1,0 +1,333 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 4,
+  "goalPt": "Negar rotinas e hábitos — I don't..., don't vs doesn't no Presente Simples negativo.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Alex pergunta sobre hábitos — incluindo o que você NÃO faz.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can say what you don't do.",
+    "headlinePt": "Você consegue dizer o que não faz.",
+    "bodyPt": "",
+    "canDo": ["I don't work on weekends.", "I don't have breakfast.", "He doesn't train on Sundays.", "She doesn't watch TV."],
+    "production": {
+      "introPt": "Diga o que você NÃO faz regularmente — e o que um colega não faz (he/she).",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "What don't you do on weekends?" }
+      ],
+      "fields": [
+        { "id": "you", "labelPt": "O que você não faz (I)", "prefixEn": "I don't", "placeholderEn": "work on weekends." },
+        { "id": "he", "labelPt": "O que ele não faz (he)", "prefixEn": "He doesn't", "placeholderEn": "train on Sundays." },
+        { "id": "she", "labelPt": "O que ela não faz (she)", "prefixEn": "She doesn't", "placeholderEn": "watch TV." }
+      ],
+      "exampleEn": "I don't work on weekends. I don't have breakfast at home. He doesn't train on Sundays. She doesn't watch TV."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m04l04-ctx-01",
+        "type": "intro",
+        "titleEn": "I don't...",
+        "titlePt": "Eu não...",
+        "bodyPt": "Alex quer saber o que você NÃO faz na rotina — e o que seus colegas também não fazem. Você aprende don't (I/you/we/they) e doesn't (he/she/it)."
+      },
+      {
+        "id": "m04l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Locker room · Casual chat",
+        "scenarioPt": "Conversa sobre hábitos — o que cada um faz e não faz."
+      },
+      {
+        "id": "m04l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you work on weekends?",
+        "promptPt": "Alex pergunta se você trabalha no fim de semana.",
+        "options": [
+          { "labelEn": "No, I don't work on weekends.", "correct": true, "feedbackPt": "Negativa curta: No, I don't + verbo." },
+          { "labelEn": "No, I don't works on weekends.", "correct": false, "feedbackPt": "Após don't, verbo na forma base — work." },
+          { "labelEn": "No, I not work on weekends.", "correct": false, "feedbackPt": "Precisa de don't — não 'not' sozinho." }
+        ]
+      },
+      {
+        "id": "m04l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Does Marco train on Sundays?",
+        "promptPt": "Alex pergunta sobre Marco (he) — resposta negativa.",
+        "options": [
+          { "labelEn": "No, he doesn't train on Sundays.", "correct": true, "feedbackPt": "He doesn't + verbo base." },
+          { "labelEn": "No, he don't train on Sundays.", "correct": false, "feedbackPt": "He/she usa doesn't, não don't." },
+          { "labelEn": "No, he doesn't trains on Sundays.", "correct": false, "feedbackPt": "Após doesn't, verbo base — train." }
+        ]
+      },
+      {
+        "id": "m04l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Does Sarah watch TV every day?",
+        "promptPt": "Alex pergunta sobre Sarah (she) — negativa.",
+        "options": [
+          { "labelEn": "No, she doesn't watch TV.", "correct": true, "feedbackPt": "She doesn't + verbo base." },
+          { "labelEn": "No, she don't watch TV.", "correct": false, "feedbackPt": "She usa doesn't." },
+          { "labelEn": "No, she doesn't watches TV.", "correct": false, "feedbackPt": "Após doesn't, sem -s no verbo." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m04l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "I don't / You don't",
+        "titlePt": "Eu não / Você não",
+        "introPt": "Don't = do not. Usado com I, you, we, they. Verbo fica na forma BASE (sem -s).",
+        "examples": [
+          { "en": "I don't work on weekends.", "pt": "não trabalho fds" },
+          { "en": "I don't have breakfast.", "pt": "não tomo café" },
+          { "en": "You don't train on Sundays.", "pt": "você não treina" },
+          { "en": "We don't watch TV.", "pt": "nós não assistimos" }
+        ]
+      },
+      {
+        "id": "m04l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "He doesn't / She doesn't",
+        "titlePt": "Ele não / Ela não",
+        "introPt": "Doesn't = does not. Usado com he, she, it. Verbo fica na forma BASE.",
+        "examples": [
+          { "en": "He doesn't train on Sundays.", "pt": "ele não treina domingo" },
+          { "en": "She doesn't watch TV.", "pt": "ela não assiste TV" },
+          { "en": "Marco doesn't work on weekends.", "pt": "Marco" },
+          { "en": "Sarah doesn't cook dinner.", "pt": "Sarah" }
+        ]
+      },
+      {
+        "id": "m04l04-learn-03",
+        "type": "comparison",
+        "titleEn": "don't vs doesn't",
+        "titlePt": "don't vs doesn't",
+        "left": {
+          "labelEn": "DON'T · I/you/we/they",
+          "exampleEn": "I don't work. · They don't train.",
+          "notePt": "Primeira e segunda pessoa + plural."
+        },
+        "right": {
+          "labelEn": "DOESN'T · he/she/it",
+          "exampleEn": "He doesn't work. · She doesn't train.",
+          "notePt": "Terceira pessoa singular."
+        },
+        "modelEn": "I don't work on weekends, but he doesn't train on Sundays either.",
+        "modelPt": "Escolha don't ou doesn't conforme o sujeito."
+      },
+      {
+        "id": "m04l04-learn-04",
+        "type": "language_focus",
+        "titleEn": "Negative rule",
+        "titlePt": "Regra da negativa",
+        "items": [
+          { "formalEn": "I don't works on weekends.", "naturalEn": "I don't work on weekends.", "notePt": "Após don't/doesn't, verbo SEMPRE na base — sem -s." },
+          { "formalEn": "He don't train.", "naturalEn": "He doesn't train.", "notePt": "He/she/it = doesn't, nunca don't." }
+        ],
+        "tipPt": "Fórmula: Sujeito + don't/doesn't + verbo base."
+      },
+      {
+        "id": "m04l04-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Short answers",
+        "titlePt": "Respostas curtas",
+        "introPt": "Respostas negativas curtas em conversas.",
+        "examples": [
+          { "en": "Do you work on weekends? — No, I don't.", "pt": "pergunta + resposta" },
+          { "en": "Does he train on Sundays? — No, he doesn't.", "pt": "3ª pessoa" },
+          { "en": "Do they watch TV? — No, they don't.", "pt": "plural" }
+        ]
+      },
+      {
+        "id": "m04l04-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "Common negatives",
+        "titlePt": "Negativas comuns",
+        "introPt": "Rotinas que muitas pessoas negam.",
+        "examples": [
+          { "en": "I don't have breakfast.", "pt": "não tomo café" },
+          { "en": "I don't drink coffee.", "pt": "não bebo café" },
+          { "en": "I don't work on weekends.", "pt": "não trabalho fds" },
+          { "en": "She doesn't eat meat.", "pt": "ela não come carne" }
+        ]
+      },
+      {
+        "id": "m04l04-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "He don't train. / I don't works. / She doesn't watches TV.",
+        "rightEn": "He doesn't train. / I don't work. / She doesn't watch TV.",
+        "explanationPt": "Três erros clássicos: (1) he/she com don't em vez de doesn't; (2) verbo com -s após don't/doesn't; (3) usar 'not' sem do/does. A negativa em inglês SEMPRE precisa de don't ou doesn't."
+      },
+      {
+        "id": "m04l04-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I don't work on weekends.", "pt": "I/you/we/they" },
+          { "en": "He doesn't train on Sundays.", "pt": "he/she/it" },
+          { "en": "No, I don't.", "pt": "resposta curta" },
+          { "en": "No, he doesn't.", "pt": "resposta curta" },
+          { "en": "don't/doesn't + verbo base", "pt": "regra" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m04l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — atenção ao don't/doesn't e verbo base.",
+        "phrases": [
+          { "en": "I don't work on weekends." },
+          { "en": "I don't have breakfast." },
+          { "en": "I don't watch TV every day." },
+          { "en": "He doesn't train on Sundays." },
+          { "en": "She doesn't watch TV." },
+          { "en": "No, I don't." },
+          { "en": "No, he doesn't." }
+        ],
+        "dialogueEn": "Do you work on weekends? — No, I don't work on weekends. — Does Marco train on Sundays? — No, he doesn't train on Sundays."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m04l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — what you don't do.",
+        "headlinePt": "Sua vez — o que você não faz.",
+        "bodyPt": "Diga o que você e um colega NÃO fazem regularmente.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "Tell me what you don't do in your routine." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m04l04-prac-01",
+      "type": "fill_blank",
+      "promptPt": "Eu não trabalho no fim de semana:",
+      "templateEn": "I ___ work on weekends.",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "don't", "correct": true, "feedbackPt": "I + don't." },
+        { "labelEn": "doesn't", "correct": false, "feedbackPt": "Doesn't é para he/she/it." },
+        { "labelEn": "not", "correct": false, "feedbackPt": "Precisa de don't." }
+      ]
+    },
+    {
+      "id": "m04l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Ele não treina domingo:",
+      "templateEn": "He ___ train on Sundays.",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "doesn't", "correct": true, "feedbackPt": "He + doesn't." },
+        { "labelEn": "don't", "correct": false, "feedbackPt": "He usa doesn't." },
+        { "labelEn": "isn't", "correct": false, "feedbackPt": "Isn't + adj/adv, não verbo." }
+      ]
+    },
+    {
+      "id": "m04l04-prac-03",
+      "type": "choice",
+      "promptPt": "Qual frase está correta?",
+      "options": [
+        { "labelEn": "She doesn't watch TV.", "correct": true, "feedbackPt": "Doesn't + verbo base." },
+        { "labelEn": "She don't watch TV.", "correct": false, "feedbackPt": "She usa doesn't." },
+        { "labelEn": "She doesn't watches TV.", "correct": false, "feedbackPt": "Sem -s após doesn't." }
+      ]
+    },
+    {
+      "id": "m04l04-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: eu não tomo café da manhã",
+      "tokens": ["breakfast.", "have", "don't", "I"],
+      "correctOrder": ["I", "don't", "have", "breakfast."],
+      "feedbackCorrectPt": "I don't have breakfast.",
+      "feedbackWrongPt": "I + don't + verbo base."
+    },
+    {
+      "id": "m04l04-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: Do you work on weekends? — negue:",
+      "speaker": "You",
+      "contextEn": "Alex: Do you work on weekends?",
+      "options": [
+        { "labelEn": "No, I don't work on weekends.", "correct": true, "feedbackPt": "Negativa completa." },
+        { "labelEn": "No, I don't works on weekends.", "correct": false, "feedbackPt": "Verbo base após don't." },
+        { "labelEn": "No, I not work.", "correct": false, "feedbackPt": "Precisa de don't." }
+      ]
+    },
+    {
+      "id": "m04l04-prac-06",
+      "type": "choice",
+      "promptPt": "Resposta curta: Does he train on Sundays? — No, ...",
+      "options": [
+        { "labelEn": "No, he doesn't.", "correct": true, "feedbackPt": "Resposta curta padrão." },
+        { "labelEn": "No, he don't.", "correct": false, "feedbackPt": "He usa doesn't." },
+        { "labelEn": "No, he not.", "correct": false, "feedbackPt": "Incompleto." }
+      ]
+    },
+    {
+      "id": "m04l04-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Após doesn't, o verbo fica:",
+      "templateEn": "She doesn't ___ TV.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "watch", "correct": true, "feedbackPt": "Forma base — sem -s." },
+        { "labelEn": "watches", "correct": false, "feedbackPt": "Sem -s após doesn't." },
+        { "labelEn": "watching", "correct": false, "feedbackPt": "Forma base no presente simples." }
+      ]
+    },
+    {
+      "id": "m04l04-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Marco não treina domingo — diga em inglês:",
+      "speaker": "You",
+      "contextEn": "Alex asks about Marco.",
+      "options": [
+        { "labelEn": "He doesn't train on Sundays.", "correct": true, "feedbackPt": "He doesn't + base." },
+        { "labelEn": "He don't train on Sundays.", "correct": false, "feedbackPt": "He = doesn't." },
+        { "labelEn": "He doesn't trains on Sundays.", "correct": false, "feedbackPt": "Sem -s após doesn't." }
+      ]
+    },
+    {
+      "id": "m04l04-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte: ela não assiste TV",
+      "tokens": ["TV.", "watch", "doesn't", "She"],
+      "correctOrder": ["She", "doesn't", "watch", "TV."],
+      "feedbackCorrectPt": "She doesn't watch TV.",
+      "feedbackWrongPt": "She + doesn't + verbo base."
+    },
+    {
+      "id": "m04l04-prac-10",
+      "type": "choice",
+      "promptPt": "They ___ eat meat.",
+      "options": [
+        { "labelEn": "don't", "correct": true, "feedbackPt": "They + don't." },
+        { "labelEn": "doesn't", "correct": false, "feedbackPt": "They usa don't." },
+        { "labelEn": "not", "correct": false, "feedbackPt": "Precisa de don't." }
+      ]
+    }
+  ]
+}

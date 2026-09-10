@@ -1,0 +1,337 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 4,
+  "goalPt": "Falar de frequência — How often...? com always, usually, sometimes, never.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Alex pergunta com que frequência você faz certas atividades.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can talk about frequency.",
+    "headlinePt": "Você consegue falar de frequência.",
+    "bodyPt": "",
+    "canDo": ["How often do you train?", "I always train on weekdays.", "I sometimes watch TV.", "I never work on Sundays."],
+    "production": {
+      "introPt": "Responda How often sobre treino, TV e trabalho — use always, usually, sometimes, never.",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "How often do you train?" },
+        { "speaker": "Alex", "questionEn": "How often do you watch TV?" }
+      ],
+      "fields": [
+        { "id": "train", "labelPt": "Frequência de treino", "prefixEn": "I", "placeholderEn": "always train on weekdays." },
+        { "id": "tv", "labelPt": "Frequência de TV", "prefixEn": "I", "placeholderEn": "sometimes watch TV." },
+        { "id": "work", "labelPt": "Trabalho domingo", "prefixEn": "I", "placeholderEn": "never work on Sundays." }
+      ],
+      "exampleEn": "How often do you train? — I always train on weekdays. — How often do you watch TV? — I sometimes watch TV. I never work on Sundays."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m04l06-ctx-01",
+        "type": "intro",
+        "titleEn": "How often?",
+        "titlePt": "Com que frequência?",
+        "bodyPt": "Alex quer saber não só O QUE você faz, mas COM QUE FREQUÊNCIA. Você aprende How often...? e os advérbios always, usually, sometimes, never."
+      },
+      {
+        "id": "m04l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Gym · Post-training chat",
+        "scenarioPt": "Conversa sobre hábitos de treino e lazer."
+      },
+      {
+        "id": "m04l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "How often do you train?",
+        "promptPt": "Alex pergunta frequência de treino.",
+        "options": [
+          { "labelEn": "I always train on weekdays.", "correct": true, "feedbackPt": "Always = sempre — 100%." },
+          { "labelEn": "I always I train.", "correct": false, "feedbackPt": "Sem repetir I." },
+          { "labelEn": "Always I train on weekdays.", "correct": false, "feedbackPt": "Ordem: I always train." }
+        ]
+      },
+      {
+        "id": "m04l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "How often do you watch TV?",
+        "promptPt": "Alex pergunta sobre TV.",
+        "options": [
+          { "labelEn": "I sometimes watch TV.", "correct": true, "feedbackPt": "Sometimes = às vezes." },
+          { "labelEn": "I watch sometimes TV.", "correct": false, "feedbackPt": "Advérbio antes do verbo: I sometimes watch." },
+          { "labelEn": "I sometimes watches TV.", "correct": false, "feedbackPt": "I + verbo base." }
+        ]
+      },
+      {
+        "id": "m04l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you ever work on Sundays?",
+        "promptPt": "Alex pergunta sobre domingo — resposta com never:",
+        "options": [
+          { "labelEn": "No, I never work on Sundays.", "correct": true, "feedbackPt": "Never = nunca — 0%." },
+          { "labelEn": "No, I ever work on Sundays.", "correct": false, "feedbackPt": "Never, não ever (ever = alguma vez?)." },
+          { "labelEn": "No, never I work.", "correct": false, "feedbackPt": "Ordem: I never work." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m04l06-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "How often...?",
+        "titlePt": "Com que frequência...?",
+        "introPt": "Pergunta sobre frequência — How often + Do you + verbo?",
+        "examples": [
+          { "en": "How often do you train?", "pt": "treina?" },
+          { "en": "How often do you watch TV?", "pt": "assiste TV?" },
+          { "en": "How often do you study English?", "pt": "estuda inglês?" },
+          { "en": "How often does she cook?", "pt": "ela cozinha?" }
+        ]
+      },
+      {
+        "id": "m04l06-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "always · usually",
+        "titlePt": "sempre · geralmente",
+        "introPt": "Always = 100% do tempo. Usually = na maioria das vezes (~80-90%).",
+        "examples": [
+          { "en": "I always train on weekdays.", "pt": "sempre treino" },
+          { "en": "I usually go home after work.", "pt": "geralmente vou" },
+          { "en": "She always has breakfast.", "pt": "ela sempre" },
+          { "en": "He usually watches TV at night.", "pt": "ele geralmente" }
+        ]
+      },
+      {
+        "id": "m04l06-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "sometimes · never",
+        "titlePt": "às vezes · nunca",
+        "introPt": "Sometimes = ocasionalmente (~30-50%). Never = 0% — nunca.",
+        "examples": [
+          { "en": "I sometimes watch TV.", "pt": "às vezes assisto" },
+          { "en": "I never work on Sundays.", "pt": "nunca trabalho" },
+          { "en": "She sometimes cooks dinner.", "pt": "ela às vezes" },
+          { "en": "He never drinks coffee.", "pt": "ele nunca" }
+        ]
+      },
+      {
+        "id": "m04l06-learn-04",
+        "type": "comparison",
+        "titleEn": "Frequency scale",
+        "titlePt": "Escala de frequência",
+        "left": {
+          "labelEn": "HIGH · always / usually",
+          "exampleEn": "I always train. · I usually go home.",
+          "notePt": "Quase sempre ou sempre."
+        },
+        "right": {
+          "labelEn": "LOW · sometimes / never",
+          "exampleEn": "I sometimes watch TV. · I never work Sundays.",
+          "notePt": "Raramente ou nunca."
+        },
+        "modelEn": "always → usually → sometimes → never",
+        "modelPt": "Do 100% ao 0% — escala visual."
+      },
+      {
+        "id": "m04l06-learn-05",
+        "type": "language_focus",
+        "titleEn": "Position of adverbs",
+        "titlePt": "Posição dos advérbios",
+        "items": [
+          { "formalEn": "I watch sometimes TV.", "naturalEn": "I sometimes watch TV.", "notePt": "Advérbio de frequência ANTES do verbo principal." },
+          { "formalEn": "She never works Sundays.", "naturalEn": "She never works on Sundays.", "notePt": "Com he/she, verbo ainda leva -s." }
+        ],
+        "tipPt": "Ordem: Sujeito + always/usually/sometimes/never + verbo."
+      },
+      {
+        "id": "m04l06-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "How often + third person",
+        "titlePt": "How often + terceira pessoa",
+        "introPt": "Com he/she: How often does + sujeito + verbo base?",
+        "examples": [
+          { "en": "How often does he train?", "pt": "ele treina?" },
+          { "en": "He always trains on weekdays.", "pt": "resposta" },
+          { "en": "How often does she watch TV?", "pt": "ela assiste?" },
+          { "en": "She never watches TV.", "pt": "resposta" }
+        ]
+      },
+      {
+        "id": "m04l06-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I watch TV sometimes. / How often you train?",
+        "rightEn": "I sometimes watch TV. / How often do you train?",
+        "explanationPt": "Advérbio de frequência vem ANTES do verbo (I sometimes watch). Na pergunta, não esqueça DO: How often do you...? — mesmo padrão do Do you."
+      },
+      {
+        "id": "m04l06-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "How often do you train?", "pt": "pergunta" },
+          { "en": "always · usually · sometimes · never", "pt": "escala" },
+          { "en": "I always train on weekdays.", "pt": "100%" },
+          { "en": "I sometimes watch TV.", "pt": "~50%" },
+          { "en": "I never work on Sundays.", "pt": "0%" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m04l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — pratique a escala de frequência.",
+        "phrases": [
+          { "en": "How often do you train?" },
+          { "en": "I always train on weekdays." },
+          { "en": "I usually go home after work." },
+          { "en": "I sometimes watch TV." },
+          { "en": "I never work on Sundays." },
+          { "en": "How often does she cook?" },
+          { "en": "She usually cooks dinner." },
+          { "en": "He never drinks coffee." }
+        ],
+        "dialogueEn": "How often do you train? — I always train on weekdays. — How often do you watch TV? — I sometimes watch TV. — Do you work on Sundays? — No, I never work on Sundays."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m04l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — talk about frequency.",
+        "headlinePt": "Sua vez — fale de frequência.",
+        "bodyPt": "Responda How often sobre treino, TV e trabalho no domingo.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "How often do you train?" },
+          { "speaker": "Alex", "questionEn": "How often do you watch TV?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m04l06-prac-01",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta:",
+      "tokens": ["train?", "you", "often", "do", "How"],
+      "correctOrder": ["How", "often", "do", "you", "train?"],
+      "feedbackCorrectPt": "How often do you train?",
+      "feedbackWrongPt": "How often + do + you + verbo."
+    },
+    {
+      "id": "m04l06-prac-02",
+      "type": "choice",
+      "promptPt": "100% do tempo — qual advérbio?",
+      "options": [
+        { "labelEn": "always", "correct": true, "feedbackPt": "Always = sempre." },
+        { "labelEn": "sometimes", "correct": false, "feedbackPt": "Sometimes = às vezes." },
+        { "labelEn": "never", "correct": false, "feedbackPt": "Never = nunca." }
+      ]
+    },
+    {
+      "id": "m04l06-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Nunca trabalho domingo:",
+      "templateEn": "I ___ work on Sundays.",
+      "blankLabel": "advérbio",
+      "options": [
+        { "labelEn": "never", "correct": true, "feedbackPt": "Never = 0%." },
+        { "labelEn": "always", "correct": false, "feedbackPt": "Always = sempre — oposto." },
+        { "labelEn": "ever", "correct": false, "feedbackPt": "Ever = alguma vez (pergunta)." }
+      ]
+    },
+    {
+      "id": "m04l06-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: às vezes assisto TV",
+      "tokens": ["TV.", "watch", "sometimes", "I"],
+      "correctOrder": ["I", "sometimes", "watch", "TV."],
+      "feedbackCorrectPt": "I sometimes watch TV.",
+      "feedbackWrongPt": "I + advérbio + verbo."
+    },
+    {
+      "id": "m04l06-prac-05",
+      "type": "choice",
+      "promptPt": "Ordem na escala: always → ? → sometimes → never",
+      "options": [
+        { "labelEn": "usually", "correct": true, "feedbackPt": "Always > usually > sometimes > never." },
+        { "labelEn": "every day", "correct": false, "feedbackPt": "Every day é expressão, não advérbio da escala." },
+        { "labelEn": "sometimes", "correct": false, "feedbackPt": "Sometimes vem depois de usually." }
+      ]
+    },
+    {
+      "id": "m04l06-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: How often do you train? — sempre dias úteis:",
+      "speaker": "You",
+      "contextEn": "Alex: How often do you train?",
+      "options": [
+        { "labelEn": "I always train on weekdays.", "correct": true, "feedbackPt": "Always + rotina." },
+        { "labelEn": "I train always on weekdays.", "correct": false, "feedbackPt": "Always antes do verbo." },
+        { "labelEn": "Always I train weekdays.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]
+    },
+    {
+      "id": "m04l06-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Ela cozinha com que frequência? — pergunta:",
+      "templateEn": "How often ___ she cook?",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "does", "correct": true, "feedbackPt": "She → does." },
+        { "labelEn": "do", "correct": false, "feedbackPt": "She usa does." },
+        { "labelEn": "is", "correct": false, "feedbackPt": "Is + -ing." }
+      ]
+    },
+    {
+      "id": "m04l06-prac-08",
+      "type": "choice",
+      "promptPt": "Ele nunca bebe café:",
+      "options": [
+        { "labelEn": "He never drinks coffee.", "correct": true, "feedbackPt": "He never + verbo -s." },
+        { "labelEn": "He never drink coffee.", "correct": false, "feedbackPt": "He precisa de -s." },
+        { "labelEn": "He drinks never coffee.", "correct": false, "feedbackPt": "Never antes do verbo." }
+      ]
+    },
+    {
+      "id": "m04l06-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "0% — qual resposta?",
+      "speaker": "You",
+      "contextEn": "Alex: Do you work on Sundays?",
+      "options": [
+        { "labelEn": "No, I never work on Sundays.", "correct": true, "feedbackPt": "Never = nunca." },
+        { "labelEn": "No, I sometimes work on Sundays.", "correct": false, "feedbackPt": "Sometimes ≠ nunca." },
+        { "labelEn": "No, I always work on Sundays.", "correct": false, "feedbackPt": "Always contradiz No." }
+      ]
+    },
+    {
+      "id": "m04l06-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Geralmente vou para casa:",
+      "templateEn": "I ___ go home after work.",
+      "blankLabel": "advérbio",
+      "options": [
+        { "labelEn": "usually", "correct": true, "feedbackPt": "Usually = geralmente." },
+        { "labelEn": "never", "correct": false, "feedbackPt": "Never = nunca — oposto." },
+        { "labelEn": "always", "correct": false, "feedbackPt": "Always = sempre — mais forte." }
+      ]
+    }
+  ]
+}

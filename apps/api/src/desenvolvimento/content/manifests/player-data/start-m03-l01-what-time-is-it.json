@@ -1,0 +1,344 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 3,
+  "goalPt": "Perguntar e dizer horas — o'clock, half past e noção básica de a.m./p.m. em contexto cotidiano.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Você está no corredor do escritório e precisa saber que horas são.",
+    "dialogue": []
+  },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can ask and tell the time.",
+    "headlinePt": "Você consegue perguntar e dizer horas.",
+    "bodyPt": "",
+    "canDo": [
+      "What time is it?",
+      "It's three o'clock.",
+      "It's half past two.",
+      "It's 8 a.m.",
+      "It's 3 p.m."
+    ],
+    "production": {
+      "introPt": "Alex pergunta e você responde sobre horários. Use frases completas em inglês.",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "What time is it?" },
+        { "speaker": "Alex", "questionEn": "Is it morning or afternoon?" }
+      ],
+      "fields": [
+        { "id": "askTime", "labelPt": "Perguntar as horas", "prefixEn": "", "placeholderEn": "What time is it?" },
+        { "id": "tellTime", "labelPt": "Dizer a hora", "prefixEn": "It's", "placeholderEn": "three o'clock." },
+        { "id": "halfPast", "labelPt": "Meia hora (opcional)", "prefixEn": "It's", "placeholderEn": "half past two." }
+      ],
+      "exampleEn": "What time is it? — It's three o'clock. — It's half past two."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m03l01-ctx-01",
+        "type": "intro",
+        "titleEn": "What time is it?",
+        "titlePt": "Que horas são?",
+        "bodyPt": "Você chega cedo ao escritório e precisa confirmar a hora antes da reunião. Nesta lição, você aprende a perguntar e dizer horas em inglês — o'clock, half past e a.m./p.m."
+      },
+      {
+        "id": "m03l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office hallway · Morning · Real life",
+        "scenarioPt": "Alex olha no relógio e percebe que você também precisa saber a hora."
+      },
+      {
+        "id": "m03l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What time is it?",
+        "promptPt": "Alex pergunta as horas. Como você pergunta de volta?",
+        "options": [
+          { "labelEn": "What time is it?", "correct": true, "feedbackPt": "Pergunta padrão — use time, não hour." },
+          { "labelEn": "What hour is it?", "correct": false, "feedbackPt": "Em inglês dizemos What time is it?, não what hour." },
+          { "labelEn": "How time is it?", "correct": false, "feedbackPt": "How não combina — a pergunta fixa é What time is it?" }
+        ]
+      },
+      {
+        "id": "m03l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "It's nine o'clock.",
+        "promptPt": "Alex responde. Como você confirma que entendeu?",
+        "options": [
+          { "labelEn": "It's nine o'clock.", "correct": true, "feedbackPt": "Repetir a hora confirma — It's + hora + o'clock." },
+          { "labelEn": "It's nine hours.", "correct": false, "feedbackPt": "Para dizer horas use o'clock, não hours." },
+          { "labelEn": "At nine o'clock.", "correct": false, "feedbackPt": "At combina com compromisso — para dizer a hora use It's." }
+        ]
+      },
+      {
+        "id": "m03l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "It's half past eight.",
+        "promptPt": "São 8:30. Como se diz isso em inglês?",
+        "options": [
+          { "labelEn": "It's half past eight.", "correct": true, "feedbackPt": "Half past = e meia — padrão britânico/americano comum." },
+          { "labelEn": "It's eight and half.", "correct": false, "feedbackPt": "A ordem correta é half past + hora." },
+          { "labelEn": "It's half to eight.", "correct": false, "feedbackPt": "Half to seria 7:30, não 8:30." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m03l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "What time is it?",
+        "titlePt": "Que horas são?",
+        "introPt": "Pergunta universal para saber a hora. Responda com It's + hora.",
+        "examples": [
+          { "en": "What time is it?", "pt": "pergunta" },
+          { "en": "What time is it now?", "pt": "agora" },
+          { "en": "Do you have the time?", "pt": "alternativa educada" },
+          { "en": "Excuse me, what time is it?", "pt": "com cortesia" }
+        ]
+      },
+      {
+        "id": "m03l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "It's ... o'clock",
+        "titlePt": "São ... horas em ponto",
+        "introPt": "Para horas cheias (1:00, 2:00...), use It's + número + o'clock.",
+        "examples": [
+          { "en": "It's one o'clock.", "pt": "1:00" },
+          { "en": "It's three o'clock.", "pt": "3:00" },
+          { "en": "It's twelve o'clock.", "pt": "12:00" },
+          { "en": "It's seven o'clock.", "pt": "7:00" }
+        ]
+      },
+      {
+        "id": "m03l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Half past",
+        "titlePt": "E meia",
+        "introPt": "Half past + hora = :30. Muito comum na fala real.",
+        "examples": [
+          { "en": "It's half past one.", "pt": "1:30" },
+          { "en": "It's half past six.", "pt": "6:30" },
+          { "en": "It's half past nine.", "pt": "9:30" },
+          { "en": "It's half past twelve.", "pt": "12:30" }
+        ]
+      },
+      {
+        "id": "m03l01-learn-04",
+        "type": "comparison",
+        "titleEn": "Telling vs scheduling",
+        "titlePt": "Dizer hora vs marcar horário",
+        "left": {
+          "labelEn": "TELLING TIME · IT'S",
+          "exampleEn": "It's three o'clock.",
+          "notePt": "Responde What time is it? — hora atual."
+        },
+        "right": {
+          "labelEn": "SCHEDULING · AT",
+          "exampleEn": "Let's meet at three o'clock.",
+          "notePt": "Marca compromisso — at + hora (lição 4)."
+        },
+        "modelEn": "What time is it? — It's three o'clock. — Let's meet at three.",
+        "modelPt": "It's para dizer; at para combinar encontro."
+      },
+      {
+        "id": "m03l01-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "a.m. / p.m.",
+        "titlePt": "Manhã e tarde/noite",
+        "introPt": "a.m. = da meia-noite ao meio-dia. p.m. = do meio-dia à meia-noite. Evita confusão.",
+        "examples": [
+          { "en": "It's 8 a.m.", "pt": "8 da manhã" },
+          { "en": "It's 3 p.m.", "pt": "3 da tarde" },
+          { "en": "It's 12 p.m.", "pt": "meio-dia" },
+          { "en": "It's 12 a.m.", "pt": "meia-noite" }
+        ]
+      },
+      {
+        "id": "m03l01-learn-06",
+        "type": "language_focus",
+        "titleEn": "Numbers for time",
+        "titlePt": "Números nas horas",
+        "items": [
+          { "formalEn": "It's one o'clock.", "naturalEn": "It's one.", "notePt": "O'clock pode ser omitido quando o contexto é claro." },
+          { "formalEn": "It's thirteen o'clock.", "naturalEn": "It's one p.m. / It's one.", "notePt": "Relógio de 12 horas — não use 13 o'clock." }
+        ],
+        "tipPt": "No dia a dia, o'clock aparece mais em horas cheias formais. Half past sempre deixa claro."
+      },
+      {
+        "id": "m03l01-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "What hour is it? / It's nine hours.",
+        "rightEn": "What time is it? / It's nine o'clock.",
+        "explanationPt": "Em inglês usamos time (não hour) na pergunta. Para responder horas cheias, use o'clock — não hours. Hours significa 'horas' como duração (two hours = duas horas de tempo)."
+      },
+      {
+        "id": "m03l01-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "What time is it?", "pt": "pergunta" },
+          { "en": "It's three o'clock.", "pt": "hora cheia" },
+          { "en": "It's half past two.", "pt": "e meia" },
+          { "en": "It's 8 a.m.", "pt": "manhã" },
+          { "en": "It's 3 p.m.", "pt": "tarde" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m03l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia em voz alta, pausa curta entre frases.",
+        "phrases": [
+          { "en": "What time is it?" },
+          { "en": "It's one o'clock." },
+          { "en": "It's three o'clock." },
+          { "en": "It's half past two." },
+          { "en": "It's half past six." },
+          { "en": "It's 8 a.m." },
+          { "en": "It's 3 p.m." },
+          { "en": "It's twelve o'clock." }
+        ],
+        "dialogueEn": "What time is it? — It's three o'clock. — What time is it now? — It's half past two."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m03l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — tell the time.",
+        "headlinePt": "Sua vez — diga as horas.",
+        "bodyPt": "Alex precisa confirmar horários. Pergunte e responda em inglês.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "What time is it?" },
+          { "speaker": "Alex", "questionEn": "What time is the meeting?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m03l01-prac-01",
+      "type": "choice",
+      "promptPt": "Como perguntar as horas corretamente?",
+      "options": [
+        { "labelEn": "What time is it?", "correct": true, "feedbackPt": "Padrão fixo em inglês." },
+        { "labelEn": "What hour is it?", "correct": false, "feedbackPt": "Hour não entra nesta pergunta." },
+        { "labelEn": "How many time?", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "m03l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "São 5 horas em ponto — complete:",
+      "templateEn": "It's five ___.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "o'clock", "correct": true, "feedbackPt": "Hora cheia = o'clock." },
+        { "labelEn": "hours", "correct": false, "feedbackPt": "Hours é duração, não hora do relógio." },
+        { "labelEn": "time", "correct": false, "feedbackPt": "It's five time não existe." }
+      ]
+    },
+    {
+      "id": "m03l01-prac-03",
+      "type": "choice",
+      "promptPt": "São 4:30. Melhor forma:",
+      "options": [
+        { "labelEn": "It's half past four.", "correct": true, "feedbackPt": "Half past four = 4:30." },
+        { "labelEn": "It's four and half.", "correct": false, "feedbackPt": "Ordem errada — use half past." },
+        { "labelEn": "It's half to four.", "correct": false, "feedbackPt": "Half to four = 3:30." }
+      ]
+    },
+    {
+      "id": "m03l01-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte a resposta para 7:00:",
+      "tokens": ["o'clock.", "It's", "seven"],
+      "correctOrder": ["It's", "seven", "o'clock."],
+      "feedbackCorrectPt": "It's seven o'clock. — ordem natural.",
+      "feedbackWrongPt": "A ordem é It's + número + o'clock."
+    },
+    {
+      "id": "m03l01-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Alguém pergunta What time is it? — você responde 9:00:",
+      "speaker": "You",
+      "contextEn": "Colleague: What time is it?",
+      "options": [
+        { "labelEn": "It's nine o'clock.", "correct": true, "feedbackPt": "Resposta natural para hora cheia." },
+        { "labelEn": "At nine o'clock.", "correct": false, "feedbackPt": "At marca compromisso — aqui use It's." },
+        { "labelEn": "It's nine hours.", "correct": false, "feedbackPt": "Use o'clock, não hours." }
+      ]
+    },
+    {
+      "id": "m03l01-prac-06",
+      "type": "choice",
+      "promptPt": "8 da manhã — melhor forma:",
+      "options": [
+        { "labelEn": "It's 8 a.m.", "correct": true, "feedbackPt": "a.m. = manhã." },
+        { "labelEn": "It's 8 p.m.", "correct": false, "feedbackPt": "p.m. seria tarde/noite." },
+        { "labelEn": "It's 20 o'clock.", "correct": false, "feedbackPt": "Relógio de 12 horas — não 20 o'clock." }
+      ]
+    },
+    {
+      "id": "m03l01-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Complete a pergunta:",
+      "templateEn": "What ___ is it?",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "time", "correct": true, "feedbackPt": "What time is it? — fixo." },
+        { "labelEn": "hour", "correct": false, "feedbackPt": "Hour não entra na pergunta padrão." },
+        { "labelEn": "clock", "correct": false, "feedbackPt": "What clock is it? não existe." }
+      ]
+    },
+    {
+      "id": "m03l01-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: são 2:30",
+      "tokens": ["past", "It's", "two.", "half"],
+      "correctOrder": ["It's", "half", "past", "two."],
+      "feedbackCorrectPt": "It's half past two. — ordem fixa.",
+      "feedbackWrongPt": "Half past vem antes da hora."
+    },
+    {
+      "id": "m03l01-prac-09",
+      "type": "choice",
+      "promptPt": "Meio-dia — qual opção?",
+      "options": [
+        { "labelEn": "It's twelve o'clock.", "correct": true, "feedbackPt": "12:00 = twelve o'clock (ou noon)." },
+        { "labelEn": "It's zero o'clock.", "correct": false, "feedbackPt": "Zero não se usa assim." },
+        { "labelEn": "It's twenty-four o'clock.", "correct": false, "feedbackPt": "Relógio de 12 horas." }
+      ]
+    },
+    {
+      "id": "m03l01-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "São 6:30. Alex pergunta — você responde:",
+      "speaker": "You",
+      "contextEn": "Alex: What time is it?",
+      "options": [
+        { "labelEn": "It's half past six.", "correct": true, "feedbackPt": "6:30 = half past six." },
+        { "labelEn": "It's six at half.", "correct": false, "feedbackPt": "Forma incorreta." },
+        { "labelEn": "It's half to six.", "correct": false, "feedbackPt": "Half to six = 5:30." }
+      ]
+    }
+  ]
+}

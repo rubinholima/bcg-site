@@ -1,0 +1,331 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 3,
+  "goalPt": "Usar dias da semana em frases simples — on Monday, What day is it? — para falar de compromissos.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie quer marcar um treino e precisa saber que dia da semana é.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can use days of the week.",
+    "headlinePt": "Você consegue usar os dias da semana.",
+    "bodyPt": "",
+    "canDo": ["What day is it?", "It's Monday.", "on Monday", "I have training on Tuesday."],
+    "production": {
+      "introPt": "Responda Jamie sobre o dia da semana e um compromisso. Use on + dia.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What day is it today?" },
+        { "speaker": "Jamie", "questionEn": "When do you have training?" }
+      ],
+      "fields": [
+        { "id": "today", "labelPt": "Que dia é hoje", "prefixEn": "It's", "placeholderEn": "Wednesday." },
+        { "id": "event", "labelPt": "Compromisso + dia", "prefixEn": "I have training", "placeholderEn": "on Tuesday." }
+      ],
+      "exampleEn": "What day is it? — It's Wednesday. — I have training on Tuesday."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m03l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Days of the week",
+        "titlePt": "Dias da semana",
+        "bodyPt": "Jamie precisa combinar um treino e pergunta que dia é hoje. Você aprende os sete dias e como usá-los com on."
+      },
+      {
+        "id": "m03l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Training room · Weekday",
+        "scenarioPt": "Vocês olham a agenda da semana no quadro."
+      },
+      {
+        "id": "m03l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What day is it today?",
+        "promptPt": "Jamie pergunta que dia é hoje.",
+        "options": [
+          { "labelEn": "It's Monday.", "correct": true, "feedbackPt": "Resposta padrão — It's + dia." },
+          { "labelEn": "It's on Monday.", "correct": false, "feedbackPt": "On Monday marca compromisso — para 'hoje é' use It's Monday." },
+          { "labelEn": "Today is Monday day.", "correct": false, "feedbackPt": "Redundante — It's Monday basta." }
+        ]
+      },
+      {
+        "id": "m03l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "When do you have training?",
+        "promptPt": "Jamie pergunta quando você treina.",
+        "options": [
+          { "labelEn": "I have training on Tuesday.", "correct": true, "feedbackPt": "Compromisso recorrente — on + dia." },
+          { "labelEn": "I have training in Tuesday.", "correct": false, "feedbackPt": "Dias da semana usam on, não in." },
+          { "labelEn": "I have training at Tuesday.", "correct": false, "feedbackPt": "At combina com hora, não dia da semana." }
+        ]
+      },
+      {
+        "id": "m03l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What about the weekend?",
+        "promptPt": "Jamie pergunta sobre fim de semana.",
+        "options": [
+          { "labelEn": "I'm free on Saturday.", "correct": true, "feedbackPt": "On Saturday — dia específico." },
+          { "labelEn": "I'm free in Saturday.", "correct": false, "feedbackPt": "Use on com dias da semana." },
+          { "labelEn": "I'm free on weekend.", "correct": false, "feedbackPt": "Falta the — on the weekend." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m03l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Monday to Friday",
+        "titlePt": "Segunda a sexta",
+        "introPt": "Dias úteis — sempre com inicial maiúscula em inglês.",
+        "examples": [
+          { "en": "Monday", "pt": "segunda-feira" },
+          { "en": "Tuesday", "pt": "terça-feira" },
+          { "en": "Wednesday", "pt": "quarta-feira" },
+          { "en": "Thursday", "pt": "quinta-feira" },
+          { "en": "Friday", "pt": "sexta-feira" }
+        ]
+      },
+      {
+        "id": "m03l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Saturday & Sunday",
+        "titlePt": "Sábado e domingo",
+        "introPt": "Fim de semana — weekend = sábado + domingo.",
+        "examples": [
+          { "en": "Saturday", "pt": "sábado" },
+          { "en": "Sunday", "pt": "domingo" },
+          { "en": "the weekend", "pt": "fim de semana" },
+          { "en": "on the weekend", "pt": "no fim de semana" }
+        ]
+      },
+      {
+        "id": "m03l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "What day is it?",
+        "titlePt": "Que dia é?",
+        "introPt": "Pergunta sobre o dia da semana. Responda com It's + dia.",
+        "examples": [
+          { "en": "What day is it?", "pt": "pergunta" },
+          { "en": "What day is it today?", "pt": "hoje" },
+          { "en": "It's Thursday.", "pt": "resposta" },
+          { "en": "Today is Friday.", "pt": "alternativa comum" }
+        ]
+      },
+      {
+        "id": "m03l02-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "on + day",
+        "titlePt": "on + dia",
+        "introPt": "Para compromissos em dias específicos, use on + Monday/Tuesday...",
+        "examples": [
+          { "en": "on Monday", "pt": "na segunda" },
+          { "en": "I work on Monday.", "pt": "trabalho segunda" },
+          { "en": "The meeting is on Wednesday.", "pt": "reunião quarta" },
+          { "en": "See you on Friday!", "pt": "até sexta" }
+        ]
+      },
+      {
+        "id": "m03l02-learn-05",
+        "type": "comparison",
+        "titleEn": "Today vs on Monday",
+        "titlePt": "Hoje é vs na segunda",
+        "left": {
+          "labelEn": "TODAY IS · IT'S",
+          "exampleEn": "It's Monday.",
+          "notePt": "Identifica o dia de hoje — sem on."
+        },
+        "right": {
+          "labelEn": "EVENT · ON",
+          "exampleEn": "I have a meeting on Monday.",
+          "notePt": "Marca quando acontece algo — com on."
+        },
+        "modelEn": "What day is it? — It's Monday. — I have training on Tuesday.",
+        "modelPt": "It's para identificar; on para eventos."
+      },
+      {
+        "id": "m03l02-learn-06",
+        "type": "vocabulary",
+        "titleEn": "Useful words",
+        "titlePt": "Vocabulário em contexto",
+        "words": [
+          { "en": "today", "pt": "hoje", "exampleEn": "What day is it today?" },
+          { "en": "tomorrow", "pt": "amanhã", "exampleEn": "See you tomorrow!" },
+          { "en": "weekday", "pt": "dia útil", "exampleEn": "I work on weekdays." },
+          { "en": "weekend", "pt": "fim de semana", "exampleEn": "I'm free on the weekend." }
+        ]
+      },
+      {
+        "id": "m03l02-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I have training in Tuesday. / on weekend",
+        "rightEn": "I have training on Tuesday. / on the weekend",
+        "explanationPt": "Dias da semana sempre com ON — nunca in Monday/Tuesday. Para fim de semana: on the weekend (ou at the weekend no UK)."
+      },
+      {
+        "id": "m03l02-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Monday … Sunday", "pt": "7 dias" },
+          { "en": "What day is it?", "pt": "pergunta" },
+          { "en": "It's Wednesday.", "pt": "resposta" },
+          { "en": "on Monday", "pt": "compromisso" },
+          { "en": "on the weekend", "pt": "fim de semana" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m03l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia em voz alta. Dias sempre com inicial maiúscula.",
+        "phrases": [
+          { "en": "Monday" }, { "en": "Tuesday" }, { "en": "Wednesday" },
+          { "en": "Thursday" }, { "en": "Friday" }, { "en": "Saturday" }, { "en": "Sunday" },
+          { "en": "What day is it?" }, { "en": "It's Friday." },
+          { "en": "I have training on Tuesday." }, { "en": "See you on Monday!" }
+        ],
+        "dialogueEn": "What day is it today? — It's Wednesday. — When do you have training? — I have training on Tuesday."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m03l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — talk about days.",
+        "headlinePt": "Sua vez — fale dos dias.",
+        "bodyPt": "Diga que dia é hoje e quando você tem um compromisso.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What day is it today?" },
+          { "speaker": "Jamie", "questionEn": "When do you have training?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m03l02-prac-01",
+      "type": "choice",
+      "promptPt": "Compromisso na terça — melhor frase:",
+      "options": [
+        { "labelEn": "I have a meeting on Tuesday.", "correct": true, "feedbackPt": "On + dia da semana." },
+        { "labelEn": "I have a meeting in Tuesday.", "correct": false, "feedbackPt": "Use on, não in." },
+        { "labelEn": "I have a meeting at Tuesday.", "correct": false, "feedbackPt": "At combina com hora." }
+      ]
+    },
+    {
+      "id": "m03l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete a pergunta:",
+      "templateEn": "What ___ is it?",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "day", "correct": true, "feedbackPt": "What day is it? — padrão." },
+        { "labelEn": "time", "correct": false, "feedbackPt": "Time pergunta horas, não dia." },
+        { "labelEn": "week", "correct": false, "feedbackPt": "What week is it? muda o sentido." }
+      ]
+    },
+    {
+      "id": "m03l02-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: treino na quinta",
+      "tokens": ["Thursday.", "on", "training", "I", "have"],
+      "correctOrder": ["I", "have", "training", "on", "Thursday."],
+      "feedbackCorrectPt": "I have training on Thursday.",
+      "feedbackWrongPt": "Ordem: I have + atividade + on + dia."
+    },
+    {
+      "id": "m03l02-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta What day is it? — responda quinta:",
+      "speaker": "You",
+      "contextEn": "Jamie: What day is it?",
+      "options": [
+        { "labelEn": "It's Thursday.", "correct": true, "feedbackPt": "It's + dia — sem on." },
+        { "labelEn": "On Thursday.", "correct": false, "feedbackPt": "On Thursday responde 'when?', não 'what day?'" },
+        { "labelEn": "It's on Thursday.", "correct": false, "feedbackPt": "Para identificar hoje, It's Thursday basta." }
+      ]
+    },
+    {
+      "id": "m03l02-prac-05",
+      "type": "choice",
+      "promptPt": "Fim de semana livre — melhor opção:",
+      "options": [
+        { "labelEn": "I'm free on the weekend.", "correct": true, "feedbackPt": "On the weekend — padrão US." },
+        { "labelEn": "I'm free on weekend.", "correct": false, "feedbackPt": "Falta the." },
+        { "labelEn": "I'm free in the weekend.", "correct": false, "feedbackPt": "Use on the weekend." }
+      ]
+    },
+    {
+      "id": "m03l02-prac-06",
+      "type": "classify",
+      "promptPt": "Esta frase identifica o dia ou marca compromisso?",
+      "sentenceEn": "It's Monday.",
+      "category": "from",
+      "feedbackCorrectPt": "It's Monday = identifica o dia de hoje.",
+      "feedbackWrongPt": "Compromisso usaria on Monday."
+    },
+    {
+      "id": "m03l02-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Reunião na sexta — complete:",
+      "templateEn": "The meeting is ___ Friday.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "on", "correct": true, "feedbackPt": "On Friday — dia da semana." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In não combina com dias." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At combina com hora." }
+      ]
+    },
+    {
+      "id": "m03l02-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta:",
+      "tokens": ["it?", "day", "What", "is"],
+      "correctOrder": ["What", "day", "is", "it?"],
+      "feedbackCorrectPt": "What day is it?",
+      "feedbackWrongPt": "Ordem fixa: What + day + is + it?"
+    },
+    {
+      "id": "m03l02-prac-09",
+      "type": "choice",
+      "promptPt": "Qual dia vem depois de Wednesday?",
+      "options": [
+        { "labelEn": "Thursday", "correct": true, "feedbackPt": "Quarta → quinta." },
+        { "labelEn": "Tuesday", "correct": false, "feedbackPt": "Tuesday vem antes." },
+        { "labelEn": "Friday", "correct": false, "feedbackPt": "Friday vem depois de Thursday." }
+      ]
+    },
+    {
+      "id": "m03l02-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Despedida — até segunda:",
+      "speaker": "You",
+      "contextEn": "Jamie: See you!",
+      "options": [
+        { "labelEn": "See you on Monday!", "correct": true, "feedbackPt": "On + dia para encontro futuro." },
+        { "labelEn": "See you in Monday!", "correct": false, "feedbackPt": "Use on Monday." },
+        { "labelEn": "See you at Monday!", "correct": false, "feedbackPt": "At combina com hora." }
+      ]
+    }
+  ]
+}

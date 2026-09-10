@@ -1,0 +1,335 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 4,
+  "goalPt": "Perguntar e responder sobre hábitos com usually — What do you usually do? e atividades diárias.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie pergunta o que você costuma fazer depois do trabalho.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can talk about what you usually do.",
+    "headlinePt": "Você consegue falar do que costuma fazer.",
+    "bodyPt": "",
+    "canDo": ["What do you usually do?", "I usually go home.", "I usually watch TV.", "She usually trains in the evening."],
+    "production": {
+      "introPt": "Descreva sua rotina típica com usually — manhã, tarde e noite.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What do you usually do after work?" }
+      ],
+      "fields": [
+        { "id": "afterWork", "labelPt": "Depois do trabalho", "prefixEn": "I usually", "placeholderEn": "go home and rest." },
+        { "id": "evening", "labelPt": "À noite", "prefixEn": "I usually", "placeholderEn": "watch TV or study English." },
+        { "id": "weekend", "labelPt": "Fim de semana", "prefixEn": "I usually", "placeholderEn": "spend time with my family." }
+      ],
+      "exampleEn": "What do you usually do after work? — I usually go home. I usually watch TV in the evening. On the weekend, I usually rest."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m04l03-ctx-01",
+        "type": "intro",
+        "titleEn": "What do you usually do?",
+        "titlePt": "O que você costuma fazer?",
+        "bodyPt": "Jamie quer conhecer sua rotina típica — não hoje especificamente, mas o que você normalmente faz. Você aprende usually e a pergunta What do you usually do?"
+      },
+      {
+        "id": "m04l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · End of day",
+        "scenarioPt": "Final da tarde — conversa informal sobre rotina."
+      },
+      {
+        "id": "m04l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What do you usually do after work?",
+        "promptPt": "Jamie pergunta o que você costuma fazer depois do trabalho.",
+        "options": [
+          { "labelEn": "I usually go home and rest.", "correct": true, "feedbackPt": "Usually + verbo base — hábito típico." },
+          { "labelEn": "I am usually go home.", "correct": false, "feedbackPt": "Usually vem antes do verbo principal, sem am." },
+          { "labelEn": "I usually going home.", "correct": false, "feedbackPt": "Usually + verbo base: go." }
+        ]
+      },
+      {
+        "id": "m04l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you usually watch TV?",
+        "promptPt": "Jamie pergunta sobre hábito de TV.",
+        "options": [
+          { "labelEn": "Yes, I usually watch TV in the evening.", "correct": true, "feedbackPt": "Confirmação + usually + rotina." },
+          { "labelEn": "Yes, I usually watches TV.", "correct": false, "feedbackPt": "I + verbo base — watch, não watches." },
+          { "labelEn": "Yes, usually I am watch TV.", "correct": false, "feedbackPt": "Gramática incorreta." }
+        ]
+      },
+      {
+        "id": "m04l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What does your wife usually do on weekends?",
+        "promptPt": "Jamie pergunta sobre terceira pessoa (she).",
+        "options": [
+          { "labelEn": "She usually spends time with the family.", "correct": true, "feedbackPt": "She usually + verbo com -s." },
+          { "labelEn": "She usually spend time with the family.", "correct": false, "feedbackPt": "She precisa de spends." },
+          { "labelEn": "She usually is spend time.", "correct": false, "feedbackPt": "Sem is — usually + verbo." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m04l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "usually",
+        "titlePt": "geralmente / costumo",
+        "introPt": "Usually = na maioria das vezes, habitualmente. Vai ANTES do verbo principal.",
+        "examples": [
+          { "en": "I usually wake up at 6.", "pt": "costumo acordar" },
+          { "en": "I usually go home after work.", "pt": "costumo ir" },
+          { "en": "She usually trains in the evening.", "pt": "ela costuma" },
+          { "en": "We usually eat at home.", "pt": "nós costumamos" }
+        ]
+      },
+      {
+        "id": "m04l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "What do you usually do?",
+        "titlePt": "O que você costuma fazer?",
+        "introPt": "Pergunta sobre rotina típica — do + you + verbo base.",
+        "examples": [
+          { "en": "What do you usually do?", "pt": "pergunta geral" },
+          { "en": "What do you usually do after work?", "pt": "depois do trabalho" },
+          { "en": "What do you usually do on weekends?", "pt": "fim de semana" },
+          { "en": "What do you usually do in the morning?", "pt": "de manhã" }
+        ]
+      },
+      {
+        "id": "m04l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Daily activities",
+        "titlePt": "Atividades diárias",
+        "introPt": "Verbos comuns para descrever rotina.",
+        "examples": [
+          { "en": "go home", "pt": "ir para casa" },
+          { "en": "watch TV", "pt": "assistir TV" },
+          { "en": "cook dinner", "pt": "fazer jantar" },
+          { "en": "study English", "pt": "estudar inglês" },
+          { "en": "spend time with family", "pt": "tempo com família" }
+        ]
+      },
+      {
+        "id": "m04l03-learn-04",
+        "type": "comparison",
+        "titleEn": "every day vs usually",
+        "titlePt": "every day vs usually",
+        "left": {
+          "labelEn": "EVERY DAY · 100%",
+          "exampleEn": "I work every day.",
+          "notePt": "Todos os dias, sem exceção."
+        },
+        "right": {
+          "labelEn": "USUALLY · MOST TIMES",
+          "exampleEn": "I usually go home after work.",
+          "notePt": "Na maioria das vezes — pode haver exceções."
+        },
+        "modelEn": "I work every day, but I usually go home at 6.",
+        "modelPt": "Every day = sempre; usually = quase sempre."
+      },
+      {
+        "id": "m04l03-learn-05",
+        "type": "language_focus",
+        "titleEn": "Position of usually",
+        "titlePt": "Posição do usually",
+        "items": [
+          { "formalEn": "I go usually home.", "naturalEn": "I usually go home.", "notePt": "Usually vem ANTES do verbo principal." },
+          { "formalEn": "She usually spend time.", "naturalEn": "She usually spends time.", "notePt": "Com she/he, verbo ainda leva -s." }
+        ],
+        "tipPt": "Ordem: Sujeito + usually + verbo. Ex.: I usually watch TV."
+      },
+      {
+        "id": "m04l03-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "What does he/she usually do?",
+        "titlePt": "O que ele/ela costuma fazer?",
+        "introPt": "Pergunta na terceira pessoa — does + he/she + verbo base.",
+        "examples": [
+          { "en": "What does he usually do?", "pt": "ele" },
+          { "en": "What does she usually do after work?", "pt": "ela" },
+          { "en": "He usually plays soccer.", "pt": "resposta" },
+          { "en": "She usually cooks dinner.", "pt": "resposta" }
+        ]
+      },
+      {
+        "id": "m04l03-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I usually watches TV. / What you usually do?",
+        "rightEn": "I usually watch TV. / What do you usually do?",
+        "explanationPt": "Com I/you, verbo sem -s mesmo com usually. Na pergunta, não esqueça DO: What do you usually do? — brasileiros omitem o auxiliar."
+      },
+      {
+        "id": "m04l03-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "What do you usually do?", "pt": "pergunta" },
+          { "en": "I usually go home.", "pt": "resposta" },
+          { "en": "She usually trains in the evening.", "pt": "3ª pessoa" },
+          { "en": "usually + verbo base (I/you)", "pt": "regra" },
+          { "en": "usually + verbo -s (he/she)", "pt": "regra" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m04l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte à sua rotina real.",
+        "phrases": [
+          { "en": "What do you usually do?" },
+          { "en": "What do you usually do after work?" },
+          { "en": "I usually go home." },
+          { "en": "I usually watch TV in the evening." },
+          { "en": "I usually cook dinner." },
+          { "en": "She usually trains in the evening." },
+          { "en": "He usually plays soccer on weekends." }
+        ],
+        "dialogueEn": "What do you usually do after work? — I usually go home. I usually watch TV in the evening. — What does she usually do? — She usually trains in the evening."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m04l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — your usual routine.",
+        "headlinePt": "Sua vez — sua rotina típica.",
+        "bodyPt": "Descreva o que você costuma fazer — depois do trabalho, à noite e no fim de semana.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What do you usually do after work?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m04l03-prac-01",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta:",
+      "tokens": ["do?", "you", "usually", "What", "do"],
+      "correctOrder": ["What", "do", "you", "usually", "do?"],
+      "feedbackCorrectPt": "What do you usually do?",
+      "feedbackWrongPt": "Ordem: What + do + you + usually + do?"
+    },
+    {
+      "id": "m04l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Costumo ir para casa:",
+      "templateEn": "I usually ___ home.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "go", "correct": true, "feedbackPt": "I + usually + go." },
+        { "labelEn": "goes", "correct": false, "feedbackPt": "I não leva -s." },
+        { "labelEn": "going", "correct": false, "feedbackPt": "Verbo base após usually." }
+      ]
+    },
+    {
+      "id": "m04l03-prac-03",
+      "type": "choice",
+      "promptPt": "Ela costuma cozinhar:",
+      "options": [
+        { "labelEn": "She usually cooks dinner.", "correct": true, "feedbackPt": "She + usually + cooks." },
+        { "labelEn": "She usually cook dinner.", "correct": false, "feedbackPt": "She precisa de -s." },
+        { "labelEn": "She usually is cook dinner.", "correct": false, "feedbackPt": "Sem is." }
+      ]
+    },
+    {
+      "id": "m04l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What do you usually do after work?",
+      "speaker": "You",
+      "contextEn": "Jamie: What do you usually do after work?",
+      "options": [
+        { "labelEn": "I usually go home and rest.", "correct": true, "feedbackPt": "Resposta natural com usually." },
+        { "labelEn": "I am usually go home.", "correct": false, "feedbackPt": "Usually + verbo base." },
+        { "labelEn": "What time is it?", "correct": false, "feedbackPt": "Não responde à pergunta." }
+      ]
+    },
+    {
+      "id": "m04l03-prac-05",
+      "type": "fill_blank",
+      "promptPt": "Posição do usually:",
+      "templateEn": "I ___ watch TV in the evening.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "usually", "correct": true, "feedbackPt": "Antes do verbo principal." },
+        { "labelEn": "watch usually", "correct": false, "feedbackPt": "Usually vem antes do verbo." },
+        { "labelEn": "am usually", "correct": false, "feedbackPt": "Sem am." }
+      ]
+    },
+    {
+      "id": "m04l03-prac-06",
+      "type": "choice",
+      "promptPt": "Every day vs usually — qual indica exceções possíveis?",
+      "options": [
+        { "labelEn": "usually", "correct": true, "feedbackPt": "Usually = na maioria das vezes." },
+        { "labelEn": "every day", "correct": false, "feedbackPt": "Every day = todos os dias." },
+        { "labelEn": "always", "correct": false, "feedbackPt": "Always = sempre (lição 6)." }
+      ]
+    },
+    {
+      "id": "m04l03-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte: ela costuma treinar à noite",
+      "tokens": ["evening.", "the", "in", "trains", "usually", "She"],
+      "correctOrder": ["She", "usually", "trains", "in", "the", "evening."],
+      "feedbackCorrectPt": "She usually trains in the evening.",
+      "feedbackWrongPt": "She + usually + trains + in the evening."
+    },
+    {
+      "id": "m04l03-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Perguntar o que ele costuma fazer:",
+      "speaker": "You",
+      "contextEn": "You want to ask about Marco's routine.",
+      "options": [
+        { "labelEn": "What does he usually do after work?", "correct": true, "feedbackPt": "Does + he + verbo base." },
+        { "labelEn": "What he usually do after work?", "correct": false, "feedbackPt": "Falta does." },
+        { "labelEn": "What do he usually does?", "correct": false, "feedbackPt": "Does + verbo base (do)." }
+      ]
+    },
+    {
+      "id": "m04l03-prac-09",
+      "type": "fill_blank",
+      "promptPt": "Costumo assistir TV:",
+      "templateEn": "I usually watch ___.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "TV", "correct": true, "feedbackPt": "Watch TV — expressão fixa." },
+        { "labelEn": "the TV", "correct": false, "feedbackPt": "Watch TV é mais comum sem the." },
+        { "labelEn": "television the", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]
+    },
+    {
+      "id": "m04l03-prac-10",
+      "type": "choice",
+      "promptPt": "Qual frase está correta?",
+      "options": [
+        { "labelEn": "I usually study English at night.", "correct": true, "feedbackPt": "Ordem e gramática corretas." },
+        { "labelEn": "I usually studies English at night.", "correct": false, "feedbackPt": "I + verbo base." },
+        { "labelEn": "Usually I am study English.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]
+    }
+  ]
+}

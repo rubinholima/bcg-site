@@ -1,0 +1,331 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 3,
+  "goalPt": "Dizer e perguntar datas — meses, What's the date?, January 5th — em contexto de agenda.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Alex precisa confirmar a data de um evento no calendário.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can say and ask dates.",
+    "headlinePt": "Você consegue dizer e perguntar datas.",
+    "bodyPt": "",
+    "canDo": ["What's the date?", "It's January 5th.", "January", "on January 5th"],
+    "production": {
+      "introPt": "Responda Alex sobre a data de hoje e de um evento.",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "What's the date today?" },
+        { "speaker": "Alex", "questionEn": "When is the match?" }
+      ],
+      "fields": [
+        { "id": "today", "labelPt": "Data de hoje", "prefixEn": "It's", "placeholderEn": "January 5th." },
+        { "id": "event", "labelPt": "Data do evento", "prefixEn": "The match is on", "placeholderEn": "March 15th." }
+      ],
+      "exampleEn": "What's the date? — It's January 5th. — The match is on March 15th."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m03l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Months & dates",
+        "titlePt": "Meses e datas",
+        "bodyPt": "Alex abre o calendário do clube e precisa confirmar datas. Você aprende os meses e como dizer January 5th — ordem americana com ordinal."
+      },
+      {
+        "id": "m03l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Calendar on screen",
+        "scenarioPt": "Um jogo está marcado e a data precisa ser confirmada em inglês."
+      },
+      {
+        "id": "m03l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What's the date today?",
+        "promptPt": "Alex pergunta a data de hoje.",
+        "options": [
+          { "labelEn": "It's January 5th.", "correct": true, "feedbackPt": "Mês + ordinal — ordem inglesa." },
+          { "labelEn": "It's 5 January.", "correct": false, "feedbackPt": "Ordem BR — em inglês mês vem primeiro." },
+          { "labelEn": "It's 05/01.", "correct": false, "feedbackPt": "Formato numérico confunde — prefira January 5th." }
+        ]
+      },
+      {
+        "id": "m03l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "When is the match?",
+        "promptPt": "Alex pergunta quando é o jogo.",
+        "options": [
+          { "labelEn": "The match is on March 15th.", "correct": true, "feedbackPt": "Evento em data específica — on + mês + dia." },
+          { "labelEn": "The match is in March 15th.", "correct": false, "feedbackPt": "Data específica usa on, não in." },
+          { "labelEn": "The match is at March 15th.", "correct": false, "feedbackPt": "At combina com hora/lugar, não data completa." }
+        ]
+      },
+      {
+        "id": "m03l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What month is it?",
+        "promptPt": "Alex pergunta só o mês.",
+        "options": [
+          { "labelEn": "It's January.", "correct": true, "feedbackPt": "It's + mês — resposta direta." },
+          { "labelEn": "It's on January.", "correct": false, "feedbackPt": "Identificar mês atual — sem on." },
+          { "labelEn": "It's January 5th month.", "correct": false, "feedbackPt": "Redundante — It's January basta." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m03l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Months (Jan–Jun)",
+        "titlePt": "Meses (jan–jun)",
+        "introPt": "Primeiros seis meses — sempre com inicial maiúscula.",
+        "examples": [
+          { "en": "January", "pt": "janeiro" }, { "en": "February", "pt": "fevereiro" },
+          { "en": "March", "pt": "março" }, { "en": "April", "pt": "abril" },
+          { "en": "May", "pt": "maio" }, { "en": "June", "pt": "junho" }
+        ]
+      },
+      {
+        "id": "m03l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Months (Jul–Dec)",
+        "titlePt": "Meses (jul–dez)",
+        "introPt": "Segunda metade do ano.",
+        "examples": [
+          { "en": "July", "pt": "julho" }, { "en": "August", "pt": "agosto" },
+          { "en": "September", "pt": "setembro" }, { "en": "October", "pt": "outubro" },
+          { "en": "November", "pt": "novembro" }, { "en": "December", "pt": "dezembro" }
+        ]
+      },
+      {
+        "id": "m03l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "What's the date?",
+        "titlePt": "Qual é a data?",
+        "introPt": "Pergunta sobre data completa. Responda It's + mês + dia ordinal.",
+        "examples": [
+          { "en": "What's the date?", "pt": "pergunta" },
+          { "en": "What's the date today?", "pt": "hoje" },
+          { "en": "It's January 5th.", "pt": "5 de janeiro" },
+          { "en": "It's March 15th.", "pt": "15 de março" }
+        ]
+      },
+      {
+        "id": "m03l03-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Ordinal dates",
+        "titlePt": "Dias ordinais",
+        "introPt": "Datas usam ordinais: 1st, 2nd, 3rd, 4th, 5th... Na fala: January fifth ou January 5th.",
+        "examples": [
+          { "en": "January 1st", "pt": "1º de janeiro" },
+          { "en": "February 2nd", "pt": "2 de fevereiro" },
+          { "en": "March 3rd", "pt": "3 de março" },
+          { "en": "April 4th", "pt": "4 de abril" },
+          { "en": "January 5th", "pt": "5 de janeiro" }
+        ]
+      },
+      {
+        "id": "m03l03-learn-05",
+        "type": "comparison",
+        "titleEn": "BR order vs EN order",
+        "titlePt": "Ordem BR vs ordem EN",
+        "left": {
+          "labelEn": "BRAZIL · DAY/MONTH",
+          "exampleEn": "5 de janeiro → 05/01",
+          "notePt": "Dia primeiro — padrão brasileiro."
+        },
+        "right": {
+          "labelEn": "ENGLISH · MONTH/DAY",
+          "exampleEn": "January 5th",
+          "notePt": "Mês primeiro — sempre nesta lição."
+        },
+        "modelEn": "It's January 5th. — The match is on March 15th.",
+        "modelPt": "Em inglês: mês + dia ordinal."
+      },
+      {
+        "id": "m03l03-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "on + date",
+        "titlePt": "on + data",
+        "introPt": "Eventos em datas específicas: on January 5th, on March 15th.",
+        "examples": [
+          { "en": "on January 5th", "pt": "no dia 5 de janeiro" },
+          { "en": "The game is on Saturday, March 15th.", "pt": "dia + data" },
+          { "en": "My birthday is on July 20th.", "pt": "aniversário" },
+          { "en": "See you on April 1st!", "pt": "encontro" }
+        ]
+      },
+      {
+        "id": "m03l03-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "It's 5 January. / The match is in March 15th.",
+        "rightEn": "It's January 5th. / The match is on March 15th.",
+        "explanationPt": "Ordem inglesa: mês + dia. Data específica usa ON (on March 15th). IN combina com mês sem dia (in March), mas para data completa use on."
+      },
+      {
+        "id": "m03l03-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "January … December", "pt": "12 meses" },
+          { "en": "What's the date?", "pt": "pergunta" },
+          { "en": "It's January 5th.", "pt": "resposta" },
+          { "en": "on March 15th", "pt": "evento" },
+          { "en": "1st, 2nd, 3rd, 4th, 5th", "pt": "ordinais" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m03l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia meses e datas em voz alta.",
+        "phrases": [
+          { "en": "January" }, { "en": "February" }, { "en": "March" },
+          { "en": "What's the date?" }, { "en": "It's January 5th." },
+          { "en": "It's March 15th." }, { "en": "The match is on March 15th." },
+          { "en": "My birthday is on July 20th." }
+        ],
+        "dialogueEn": "What's the date today? — It's January 5th. — When is the match? — The match is on March 15th."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m03l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — say the date.",
+        "headlinePt": "Sua vez — diga a data.",
+        "bodyPt": "Informe a data de hoje e quando acontece um evento.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "What's the date today?" },
+          { "speaker": "Alex", "questionEn": "When is the match?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m03l03-prac-01",
+      "type": "choice",
+      "promptPt": "5 de janeiro em inglês:",
+      "options": [
+        { "labelEn": "January 5th", "correct": true, "feedbackPt": "Mês + dia ordinal." },
+        { "labelEn": "5 January", "correct": false, "feedbackPt": "Ordem BR — em inglês mês primeiro." },
+        { "labelEn": "January five month", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "m03l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete a pergunta:",
+      "templateEn": "What's the ___?",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "date", "correct": true, "feedbackPt": "What's the date?" },
+        { "labelEn": "day", "correct": false, "feedbackPt": "Day pergunta segunda/terça." },
+        { "labelEn": "month", "correct": false, "feedbackPt": "Month pergunta só o mês." }
+      ]
+    },
+    {
+      "id": "m03l03-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte a resposta: 15 de março",
+      "tokens": ["15th.", "March", "It's"],
+      "correctOrder": ["It's", "March", "15th."],
+      "feedbackCorrectPt": "It's March 15th.",
+      "feedbackWrongPt": "Ordem: It's + mês + dia ordinal."
+    },
+    {
+      "id": "m03l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jogo no dia 15 de março — complete:",
+      "speaker": "You",
+      "contextEn": "Alex: When is the match?",
+      "options": [
+        { "labelEn": "The match is on March 15th.", "correct": true, "feedbackPt": "On + data específica." },
+        { "labelEn": "The match is in March 15th.", "correct": false, "feedbackPt": "Data específica = on." },
+        { "labelEn": "The match is March 15th.", "correct": false, "feedbackPt": "Falta on para evento." }
+      ]
+    },
+    {
+      "id": "m03l03-prac-05",
+      "type": "choice",
+      "promptPt": "Qual ordinal para o dia 3?",
+      "options": [
+        { "labelEn": "3rd", "correct": true, "feedbackPt": "Third = 3rd." },
+        { "labelEn": "3th", "correct": false, "feedbackPt": "3rd, não 3th." },
+        { "labelEn": "3st", "correct": false, "feedbackPt": "1st é first; 3 é 3rd." }
+      ]
+    },
+    {
+      "id": "m03l03-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Aniversário em 20 de julho:",
+      "templateEn": "My birthday is ___ July 20th.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "on", "correct": true, "feedbackPt": "On + data específica." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In July = no mês (sem dia)." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At combina com hora." }
+      ]
+    },
+    {
+      "id": "m03l03-prac-07",
+      "type": "choice",
+      "promptPt": "Mês que vem depois de February:",
+      "options": [
+        { "labelEn": "March", "correct": true, "feedbackPt": "Fev → mar." },
+        { "labelEn": "January", "correct": false, "feedbackPt": "January vem antes." },
+        { "labelEn": "April", "correct": false, "feedbackPt": "April vem depois de March." }
+      ]
+    },
+    {
+      "id": "m03l03-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta sobre data:",
+      "tokens": ["date?", "the", "What's"],
+      "correctOrder": ["What's", "the", "date?"],
+      "feedbackCorrectPt": "What's the date?",
+      "feedbackWrongPt": "Ordem fixa."
+    },
+    {
+      "id": "m03l03-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Alex pergunta What's the date? — responda 1º de janeiro:",
+      "speaker": "You",
+      "contextEn": "Alex: What's the date?",
+      "options": [
+        { "labelEn": "It's January 1st.", "correct": true, "feedbackPt": "1st = first." },
+        { "labelEn": "It's 1 January.", "correct": false, "feedbackPt": "Ordem inglesa: January 1st." },
+        { "labelEn": "It's on January 1st.", "correct": false, "feedbackPt": "Para 'hoje é' use It's, sem on." }
+      ]
+    },
+    {
+      "id": "m03l03-prac-10",
+      "type": "choice",
+      "promptPt": "Evento em março (só o mês, sem dia):",
+      "options": [
+        { "labelEn": "in March", "correct": true, "feedbackPt": "In + mês (sem dia específico)." },
+        { "labelEn": "on March", "correct": false, "feedbackPt": "On precisa de dia (on March 15th)." },
+        { "labelEn": "at March", "correct": false, "feedbackPt": "At não combina com mês." }
+      ]
+    }
+  ]
+}

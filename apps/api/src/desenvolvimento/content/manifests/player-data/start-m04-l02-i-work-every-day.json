@@ -1,0 +1,335 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 4,
+  "goalPt": "Expressar frequência e hábito com every day — Presente Simples afirmativo e terceira pessoa -s (he/she works).",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Alex pergunta sobre sua rotina de trabalho e treino.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can talk about daily habits.",
+    "headlinePt": "Você consegue falar de hábitos diários.",
+    "bodyPt": "",
+    "canDo": ["I work every day.", "I train on weekdays.", "He works in marketing.", "She trains every morning."],
+    "production": {
+      "introPt": "Descreva seus hábitos diários e de um colega (he/she).",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "Do you work every day?" },
+        { "speaker": "Alex", "questionEn": "What about your teammate?" }
+      ],
+      "fields": [
+        { "id": "you", "labelPt": "Seu hábito (I)", "prefixEn": "I work", "placeholderEn": "every day." },
+        { "id": "he", "labelPt": "Colega masculino (he)", "prefixEn": "He works", "placeholderEn": "in marketing." },
+        { "id": "she", "labelPt": "Colega feminina (she)", "prefixEn": "She trains", "placeholderEn": "every morning." }
+      ],
+      "exampleEn": "I work every day. I train on weekdays. He works in marketing. She trains every morning."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m04l02-ctx-01",
+        "type": "intro",
+        "titleEn": "I work every day",
+        "titlePt": "Eu trabalho todo dia",
+        "bodyPt": "Alex quer entender sua rotina de trabalho e treino. Você aprende every day e a regra do -s na terceira pessoa: he works, she trains."
+      },
+      {
+        "id": "m04l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Training facility · Weekday",
+        "scenarioPt": "Conversa sobre rotina entre jogos e trabalho."
+      },
+      {
+        "id": "m04l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Do you work every day?",
+        "promptPt": "Alex pergunta se você trabalha todo dia.",
+        "options": [
+          { "labelEn": "Yes, I work every day.", "correct": true, "feedbackPt": "Every day = todos os dias — hábito." },
+          { "labelEn": "Yes, I work every days.", "correct": false, "feedbackPt": "Every day — day no singular." },
+          { "labelEn": "Yes, I works every day.", "correct": false, "feedbackPt": "Com I, verbo sem -s." }
+        ]
+      },
+      {
+        "id": "m04l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What about Marco? Does he train every day?",
+        "promptPt": "Alex pergunta sobre um colega (he).",
+        "options": [
+          { "labelEn": "Yes, he trains every day.", "correct": true, "feedbackPt": "He + verbo com -s: trains." },
+          { "labelEn": "Yes, he train every day.", "correct": false, "feedbackPt": "He/she/it precisa de -s no verbo." },
+          { "labelEn": "Yes, he training every day.", "correct": false, "feedbackPt": "Forma incompleta." }
+        ]
+      },
+      {
+        "id": "m04l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "And Sarah? Where does she work?",
+        "promptPt": "Alex pergunta sobre Sarah (she).",
+        "options": [
+          { "labelEn": "She works in marketing.", "correct": true, "feedbackPt": "She works — terceira pessoa com -s." },
+          { "labelEn": "She work in marketing.", "correct": false, "feedbackPt": "She precisa de works." },
+          { "labelEn": "She working in marketing.", "correct": false, "feedbackPt": "Forma incompleta." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m04l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "every day",
+        "titlePt": "todo dia",
+        "introPt": "Every day expressa hábito diário — sempre no final ou início da frase.",
+        "examples": [
+          { "en": "I work every day.", "pt": "trabalho todo dia" },
+          { "en": "I train every day.", "pt": "treino todo dia" },
+          { "en": "Every day I wake up at 6.", "pt": "posição alternativa" },
+          { "en": "I study English every day.", "pt": "estudo inglês" }
+        ]
+      },
+      {
+        "id": "m04l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "I / You / We / They",
+        "titlePt": "Primeira e segunda pessoa",
+        "introPt": "Com I, you, we, they — verbo na forma base, SEM -s.",
+        "examples": [
+          { "en": "I work in operations.", "pt": "eu trabalho" },
+          { "en": "You train hard.", "pt": "você treina" },
+          { "en": "We work together.", "pt": "nós trabalhamos" },
+          { "en": "They train on weekdays.", "pt": "eles treinam" }
+        ]
+      },
+      {
+        "id": "m04l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "He / She / It + -s",
+        "titlePt": "Terceira pessoa + -s",
+        "introPt": "Com he, she, it — verbo leva -s (works, trains, plays). Regra crítica para brasileiros.",
+        "examples": [
+          { "en": "He works in marketing.", "pt": "ele trabalha" },
+          { "en": "She trains every morning.", "pt": "ela treina" },
+          { "en": "Marco plays soccer.", "pt": "ele joga" },
+          { "en": "The team practices on Monday.", "pt": "it + -s" }
+        ]
+      },
+      {
+        "id": "m04l02-learn-04",
+        "type": "comparison",
+        "titleEn": "I work vs He works",
+        "titlePt": "I work vs He works",
+        "left": {
+          "labelEn": "I / YOU / WE / THEY",
+          "exampleEn": "I work · They train",
+          "notePt": "Verbo base — sem -s."
+        },
+        "right": {
+          "labelEn": "HE / SHE / IT",
+          "exampleEn": "He works · She trains",
+          "notePt": "Verbo + -s — obrigatório."
+        },
+        "modelEn": "I work every day. He works in marketing. She trains every morning.",
+        "modelPt": "Brasileiros esquecem o -s na terceira pessoa."
+      },
+      {
+        "id": "m04l02-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "work / train",
+        "titlePt": "trabalhar / treinar",
+        "introPt": "Verbos comuns de rotina profissional e esportiva.",
+        "examples": [
+          { "en": "I work from 9 to 5.", "pt": "horário" },
+          { "en": "I train on weekdays.", "pt": "dias úteis" },
+          { "en": "He works at the club.", "pt": "local" },
+          { "en": "She trains in the morning.", "pt": "periodo" }
+        ]
+      },
+      {
+        "id": "m04l02-learn-06",
+        "type": "language_focus",
+        "titleEn": "Spelling -s / -es",
+        "titlePt": "Ortografia do -s",
+        "items": [
+          { "formalEn": "He watch TV.", "naturalEn": "He watches TV.", "notePt": "Verbos terminados em ch, sh, s, x, z, o → -es." },
+          { "formalEn": "She study English.", "naturalEn": "She studies English.", "notePt": "Consoante + y → -ies (study → studies)." }
+        ],
+        "tipPt": "Na lição START, foque em works, trains, plays — padrão regular + -s."
+      },
+      {
+        "id": "m04l02-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "He work every day. / She train in the morning.",
+        "rightEn": "He works every day. / She trains in the morning.",
+        "explanationPt": "Em português o verbo não muda com ele/ela — em inglês, he/she/it SEMPRE leva -s no Presente Simples. Esquecer o -s é o erro #1 de brasileiros."
+      },
+      {
+        "id": "m04l02-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I work every day.", "pt": "eu — sem -s" },
+          { "en": "He works in marketing.", "pt": "ele — com -s" },
+          { "en": "She trains every morning.", "pt": "ela — com -s" },
+          { "en": "every day", "pt": "todo dia" },
+          { "en": "on weekdays", "pt": "dias úteis" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m04l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — preste atenção no -s com he/she.",
+        "phrases": [
+          { "en": "I work every day." },
+          { "en": "I train on weekdays." },
+          { "en": "He works in marketing." },
+          { "en": "She trains every morning." },
+          { "en": "They work together." },
+          { "en": "Marco plays soccer every day." },
+          { "en": "Sarah studies English." }
+        ],
+        "dialogueEn": "Do you work every day? — Yes, I work every day. — Does Marco train every day? — Yes, he trains every day. — Where does Sarah work? — She works in marketing."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m04l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — daily habits.",
+        "headlinePt": "Sua vez — hábitos diários.",
+        "bodyPt": "Fale da sua rotina (I) e de um colega (he/she).",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "Tell me about your daily routine." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m04l02-prac-01",
+      "type": "fill_blank",
+      "promptPt": "Ele trabalha todo dia:",
+      "templateEn": "He ___ every day.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "works", "correct": true, "feedbackPt": "He + works (-s)." },
+        { "labelEn": "work", "correct": false, "feedbackPt": "He precisa de -s." },
+        { "labelEn": "working", "correct": false, "feedbackPt": "Forma incompleta." }
+      ]
+    },
+    {
+      "id": "m04l02-prac-02",
+      "type": "choice",
+      "promptPt": "Eu treino todo dia:",
+      "options": [
+        { "labelEn": "I train every day.", "correct": true, "feedbackPt": "I + verbo base." },
+        { "labelEn": "I trains every day.", "correct": false, "feedbackPt": "I não leva -s." },
+        { "labelEn": "I train every days.", "correct": false, "feedbackPt": "Every day — singular." }
+      ]
+    },
+    {
+      "id": "m04l02-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Ela treina de manhã:",
+      "templateEn": "She ___ every morning.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "trains", "correct": true, "feedbackPt": "She + trains." },
+        { "labelEn": "train", "correct": false, "feedbackPt": "She precisa de -s." },
+        { "labelEn": "training", "correct": false, "feedbackPt": "Forma incompleta." }
+      ]
+    },
+    {
+      "id": "m04l02-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: ele trabalha em marketing",
+      "tokens": ["marketing.", "in", "works", "He"],
+      "correctOrder": ["He", "works", "in", "marketing."],
+      "feedbackCorrectPt": "He works in marketing.",
+      "feedbackWrongPt": "He + works + in + área."
+    },
+    {
+      "id": "m04l02-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Alex pergunta sobre Marco (he) — responda:",
+      "speaker": "You",
+      "contextEn": "Alex: Does Marco train every day?",
+      "options": [
+        { "labelEn": "Yes, he trains every day.", "correct": true, "feedbackPt": "He trains — com -s." },
+        { "labelEn": "Yes, he train every day.", "correct": false, "feedbackPt": "Falta -s." },
+        { "labelEn": "Yes, I train every day.", "correct": false, "feedbackPt": "Pergunta sobre Marco (he)." }
+      ]
+    },
+    {
+      "id": "m04l02-prac-06",
+      "type": "choice",
+      "promptPt": "Qual frase está correta?",
+      "options": [
+        { "labelEn": "I work every day.", "correct": true, "feedbackPt": "I + work (sem -s)." },
+        { "labelEn": "I works every day.", "correct": false, "feedbackPt": "I não leva -s." },
+        { "labelEn": "He work every day.", "correct": false, "feedbackPt": "He precisa de works." }
+      ]
+    },
+    {
+      "id": "m04l02-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Todo dia — expressão:",
+      "templateEn": "I wake up early ___ day.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "every", "correct": true, "feedbackPt": "Every day = todo dia." },
+        { "labelEn": "all", "correct": false, "feedbackPt": "All day = o dia inteiro (diferente)." },
+        { "labelEn": "each", "correct": false, "feedbackPt": "Each day funciona, mas every day é mais comum aqui." }
+      ]
+    },
+    {
+      "id": "m04l02-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: eu trabalho todo dia",
+      "tokens": ["day.", "every", "work", "I"],
+      "correctOrder": ["I", "work", "every", "day."],
+      "feedbackCorrectPt": "I work every day.",
+      "feedbackWrongPt": "I + work + every day."
+    },
+    {
+      "id": "m04l02-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Onde Sarah trabalha (she)?",
+      "speaker": "You",
+      "contextEn": "Alex: Where does Sarah work?",
+      "options": [
+        { "labelEn": "She works in marketing.", "correct": true, "feedbackPt": "She works — terceira pessoa." },
+        { "labelEn": "She work in marketing.", "correct": false, "feedbackPt": "Falta -s." },
+        { "labelEn": "I work in marketing.", "correct": false, "feedbackPt": "Pergunta sobre Sarah." }
+      ]
+    },
+    {
+      "id": "m04l02-prac-10",
+      "type": "choice",
+      "promptPt": "They ___ on weekdays.",
+      "options": [
+        { "labelEn": "train", "correct": true, "feedbackPt": "They + verbo base." },
+        { "labelEn": "trains", "correct": false, "feedbackPt": "They não leva -s." },
+        { "labelEn": "training", "correct": false, "feedbackPt": "Forma incompleta." }
+      ]
+    }
+  ]
+}

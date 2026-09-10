@@ -1,0 +1,379 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 4,
+  "goalPt": "Revisão cumulativa — descrever rotina completa com Presente Simples, frequência, perguntas e negativas. Sem vocabulário novo.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Desafio do módulo — descrever rotina completa com Jamie.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia o diálogo completo em voz alta.", "phrases": [] },
+  "practice": { "introPt": "Revisão cumulativa — feedback imediato.", "items": [] },
+  "mission": {
+    "headlineEn": "You can describe your full routine.",
+    "headlinePt": "Você consegue descrever sua rotina completa.",
+    "bodyPt": "",
+    "canDo": [
+      "I wake up at 6. I have breakfast at 7.",
+      "I work every day. He works in marketing.",
+      "What do you usually do? I usually go home.",
+      "I don't work on weekends. Do you train?",
+      "How often do you train? I always train on weekdays."
+    ],
+    "production": {
+      "introPt": "Monte sua rotina completa em inglês — manhã, trabalho, hábitos, negativas, perguntas e frequência. Use apenas lições 1 a 6.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Tell me about your daily routine." }
+      ],
+      "fields": [
+        { "id": "morning", "labelPt": "Manhã", "prefixEn": "", "placeholderEn": "I wake up at 6. I have breakfast at 7." },
+        { "id": "work", "labelPt": "Trabalho / treino", "prefixEn": "", "placeholderEn": "I work every day. I always train on weekdays." },
+        { "id": "evening", "labelPt": "Rotina típica + negativa", "prefixEn": "", "placeholderEn": "I usually go home. I don't work on weekends." },
+        { "id": "question", "labelPt": "Uma pergunta sua", "prefixEn": "", "placeholderEn": "Do you train on weekends?" }
+      ],
+      "exampleEn": "I wake up at 6 and have breakfast at 7. I work every day. I usually go home after work. I don't work on weekends. I always train on weekdays. Do you train on weekends?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m04l07-ctx-01",
+        "type": "intro",
+        "titleEn": "Module challenge",
+        "titlePt": "Desafio do módulo",
+        "bodyPt": "Hora de juntar tudo: rotina matinal, hábitos diários, usually, negativas, perguntas Do/Does e frequência — numa conversa real. Sem vocabulário novo."
+      },
+      {
+        "id": "m04l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office café · Getting to know you",
+        "scenarioPt": "Jamie quer entender sua rotina completa — do acordar ao fim de semana."
+      },
+      {
+        "id": "m04l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What do you do in the morning?",
+        "promptPt": "Passo 1 — rotina matinal.",
+        "options": [
+          { "labelEn": "I wake up at 6 and have breakfast at 7.", "correct": true, "feedbackPt": "Sequência matinal natural." },
+          { "labelEn": "I am wake up at 6.", "correct": false, "feedbackPt": "Presente simples: I wake up." },
+          { "labelEn": "What time is it?", "correct": false, "feedbackPt": "Não descreve rotina." }
+        ]
+      },
+      {
+        "id": "m04l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you work every day?",
+        "promptPt": "Passo 2 — hábito diário.",
+        "options": [
+          { "labelEn": "Yes, I work every day.", "correct": true, "feedbackPt": "Confirmação + every day." },
+          { "labelEn": "Yes, I works every day.", "correct": false, "feedbackPt": "I + verbo base." },
+          { "labelEn": "Yes, I am work.", "correct": false, "feedbackPt": "Gramática incorreta." }
+        ]
+      },
+      {
+        "id": "m04l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What do you usually do after work?",
+        "promptPt": "Passo 3 — rotina típica com usually.",
+        "options": [
+          { "labelEn": "I usually go home and rest.", "correct": true, "feedbackPt": "Usually + verbo base." },
+          { "labelEn": "I usually goes home.", "correct": false, "feedbackPt": "I + go, não goes." },
+          { "labelEn": "Usually I am go home.", "correct": false, "feedbackPt": "Gramática incorreta." }
+        ]
+      },
+      {
+        "id": "m04l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you work on weekends?",
+        "promptPt": "Passo 4 — negativa.",
+        "options": [
+          { "labelEn": "No, I don't work on weekends.", "correct": true, "feedbackPt": "Don't + verbo base." },
+          { "labelEn": "No, I don't works on weekends.", "correct": false, "feedbackPt": "Sem -s após don't." },
+          { "labelEn": "No, I not work.", "correct": false, "feedbackPt": "Precisa de don't." }
+        ]
+      },
+      {
+        "id": "m04l07-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "How often do you train?",
+        "promptPt": "Passo 5 — frequência.",
+        "options": [
+          { "labelEn": "I always train on weekdays.", "correct": true, "feedbackPt": "Always + rotina." },
+          { "labelEn": "I train always on weekdays.", "correct": false, "feedbackPt": "Always antes do verbo." },
+          { "labelEn": "I always trains on weekdays.", "correct": false, "feedbackPt": "I + train, sem -s." }
+        ]
+      },
+      {
+        "id": "m04l07-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Does Marco train on Sundays?",
+        "promptPt": "Passo 6 — terceira pessoa + resposta.",
+        "options": [
+          { "labelEn": "No, he doesn't train on Sundays.", "correct": true, "feedbackPt": "Doesn't + verbo base." },
+          { "labelEn": "No, he don't train on Sundays.", "correct": false, "feedbackPt": "He usa doesn't." },
+          { "labelEn": "No, he doesn't trains.", "correct": false, "feedbackPt": "Sem -s após doesn't." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m04l07-learn-01",
+        "type": "review",
+        "titleEn": "Step 1 — Morning",
+        "titlePt": "Passo 1 — Manhã",
+        "items": [
+          { "en": "I wake up at 6.", "pt": "acordar" },
+          { "en": "I get up at 6:30.", "pt": "levantar" },
+          { "en": "I have breakfast at 7.", "pt": "café da manhã" },
+          { "en": "I go to work at 8.", "pt": "ir trabalhar" }
+        ]
+      },
+      {
+        "id": "m04l07-learn-02",
+        "type": "review",
+        "titleEn": "Step 2 — Habits",
+        "titlePt": "Passo 2 — Hábitos",
+        "items": [
+          { "en": "I work every day.", "pt": "I — sem -s" },
+          { "en": "He works in marketing.", "pt": "he — com -s" },
+          { "en": "She trains every morning.", "pt": "she — com -s" },
+          { "en": "every day · on weekdays", "pt": "frequência" }
+        ]
+      },
+      {
+        "id": "m04l07-learn-03",
+        "type": "review",
+        "titleEn": "Step 3 — Usually",
+        "titlePt": "Passo 3 — Usually",
+        "items": [
+          { "en": "What do you usually do?", "pt": "pergunta" },
+          { "en": "I usually go home.", "pt": "resposta" },
+          { "en": "She usually cooks dinner.", "pt": "3ª pessoa" }
+        ]
+      },
+      {
+        "id": "m04l07-learn-04",
+        "type": "comparison",
+        "titleEn": "Affirmative vs Negative",
+        "titlePt": "Afirmativa vs negativa",
+        "left": {
+          "labelEn": "AFFIRMATIVE",
+          "exampleEn": "I work. · He works.",
+          "notePt": "Verbo base (I) ou -s (he/she)."
+        },
+        "right": {
+          "labelEn": "NEGATIVE",
+          "exampleEn": "I don't work. · He doesn't work.",
+          "notePt": "Don't/doesn't + verbo base."
+        },
+        "modelEn": "I work every day, but I don't work on weekends.",
+        "modelPt": "Afirmativa e negativa na mesma conversa."
+      },
+      {
+        "id": "m04l07-learn-05",
+        "type": "review",
+        "titleEn": "Step 4 — Questions",
+        "titlePt": "Passo 4 — Perguntas",
+        "items": [
+          { "en": "Do you work every day?", "pt": "I/you" },
+          { "en": "Does he train on Sundays?", "pt": "he/she" },
+          { "en": "Yes, I do. / No, I don't.", "pt": "respostas curtas" },
+          { "en": "Yes, he does. / No, he doesn't.", "pt": "respostas curtas" }
+        ]
+      },
+      {
+        "id": "m04l07-learn-06",
+        "type": "review",
+        "titleEn": "Step 5 — Frequency",
+        "titlePt": "Passo 5 — Frequência",
+        "items": [
+          { "en": "How often do you train?", "pt": "pergunta" },
+          { "en": "always · usually · sometimes · never", "pt": "escala" },
+          { "en": "I always train on weekdays.", "pt": "exemplo" },
+          { "en": "I never work on Sundays.", "pt": "exemplo" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m04l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Full routine conversation",
+        "titlePt": "Conversa completa de rotina",
+        "introPt": "Leia o diálogo inteiro em voz alta — adapte à sua realidade.",
+        "phrases": [
+          { "en": "What do you do in the morning?" },
+          { "en": "I wake up at 6 and have breakfast at 7." },
+          { "en": "Do you work every day?" },
+          { "en": "Yes, I work every day." },
+          { "en": "What do you usually do after work?" },
+          { "en": "I usually go home." },
+          { "en": "Do you work on weekends?" },
+          { "en": "No, I don't work on weekends." },
+          { "en": "How often do you train?" },
+          { "en": "I always train on weekdays." },
+          { "en": "Does Marco train on Sundays?" },
+          { "en": "No, he doesn't train on Sundays." }
+        ],
+        "dialogueEn": "What do you do in the morning? — I wake up at 6 and have breakfast at 7. — Do you work every day? — Yes, I work every day. — What do you usually do after work? — I usually go home. — Do you work on weekends? — No, I don't. — How often do you train? — I always train on weekdays. — Does Marco train on Sundays? — No, he doesn't."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m04l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "My Routine challenge.",
+        "headlinePt": "Desafio Minha Rotina.",
+        "bodyPt": "Descreva sua rotina completa — manhã, trabalho, usually, negativas, frequência e uma pergunta.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Ready? Tell me about your routine." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m04l07-prac-01",
+      "type": "choice",
+      "promptPt": "Rotina matinal — melhor frase:",
+      "options": [
+        { "labelEn": "I wake up at 6 and have breakfast at 7.", "correct": true, "feedbackPt": "Presente simples + sequência." },
+        { "labelEn": "I am wake up at 6.", "correct": false, "feedbackPt": "I wake up, não I am wake up." },
+        { "labelEn": "I have the breakfast at 7.", "correct": false, "feedbackPt": "Have breakfast — sem the." }
+      ]
+    },
+    {
+      "id": "m04l07-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Ele trabalha em marketing:",
+      "templateEn": "He ___ in marketing.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "works", "correct": true, "feedbackPt": "He + works." },
+        { "labelEn": "work", "correct": false, "feedbackPt": "He precisa de -s." },
+        { "labelEn": "working", "correct": false, "feedbackPt": "Forma incompleta." }
+      ]
+    },
+    {
+      "id": "m04l07-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: o que você costuma fazer?",
+      "tokens": ["do?", "you", "usually", "What", "do"],
+      "correctOrder": ["What", "do", "you", "usually", "do?"],
+      "feedbackCorrectPt": "What do you usually do?",
+      "feedbackWrongPt": "What + do + you + usually + do?"
+    },
+    {
+      "id": "m04l07-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Negativa: não trabalho fds",
+      "speaker": "You",
+      "contextEn": "Jamie: Do you work on weekends?",
+      "options": [
+        { "labelEn": "No, I don't work on weekends.", "correct": true, "feedbackPt": "Don't + base." },
+        { "labelEn": "No, I don't works on weekends.", "correct": false, "feedbackPt": "Sem -s após don't." },
+        { "labelEn": "No, I not work.", "correct": false, "feedbackPt": "Precisa de don't." }
+      ]
+    },
+    {
+      "id": "m04l07-prac-05",
+      "type": "choice",
+      "promptPt": "Pergunta sobre Marco (he):",
+      "options": [
+        { "labelEn": "Does he train on Sundays?", "correct": true, "feedbackPt": "Does + he + base." },
+        { "labelEn": "Do he train on Sundays?", "correct": false, "feedbackPt": "He usa Does." },
+        { "labelEn": "Does he trains on Sundays?", "correct": false, "feedbackPt": "Sem -s após Does." }
+      ]
+    },
+    {
+      "id": "m04l07-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Sempre treino dias úteis:",
+      "templateEn": "I ___ train on weekdays.",
+      "blankLabel": "advérbio",
+      "options": [
+        { "labelEn": "always", "correct": true, "feedbackPt": "Always = 100%." },
+        { "labelEn": "never", "correct": false, "feedbackPt": "Never = nunca." },
+        { "labelEn": "sometimes", "correct": false, "feedbackPt": "Sometimes = às vezes." }
+      ]
+    },
+    {
+      "id": "m04l07-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Resposta curta: Do you work? — sim",
+      "speaker": "You",
+      "contextEn": "Jamie: Do you work every day?",
+      "options": [
+        { "labelEn": "Yes, I do.", "correct": true, "feedbackPt": "Resposta curta." },
+        { "labelEn": "Yes, I does.", "correct": false, "feedbackPt": "I usa do." },
+        { "labelEn": "Yes, I am.", "correct": false, "feedbackPt": "Do → I do." }
+      ]
+    },
+    {
+      "id": "m04l07-prac-08",
+      "type": "choice",
+      "promptPt": "Ela não assiste TV:",
+      "options": [
+        { "labelEn": "She doesn't watch TV.", "correct": true, "feedbackPt": "Doesn't + base." },
+        { "labelEn": "She don't watch TV.", "correct": false, "feedbackPt": "She usa doesn't." },
+        { "labelEn": "She doesn't watches TV.", "correct": false, "feedbackPt": "Sem -s após doesn't." }
+      ]
+    },
+    {
+      "id": "m04l07-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte: nunca trabalho domingo",
+      "tokens": ["Sundays.", "on", "work", "never", "I"],
+      "correctOrder": ["I", "never", "work", "on", "Sundays."],
+      "feedbackCorrectPt": "I never work on Sundays.",
+      "feedbackWrongPt": "I + never + verbo + on + dia."
+    },
+    {
+      "id": "m04l07-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Com que frequência você treina?",
+      "templateEn": "How often ___ you train?",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "do", "correct": true, "feedbackPt": "You → do." },
+        { "labelEn": "does", "correct": false, "feedbackPt": "You usa do." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "Are + -ing." }
+      ]
+    },
+    {
+      "id": "m04l07-prac-11",
+      "type": "dialogue_complete",
+      "promptPt": "Resposta curta: Does he train? — não",
+      "speaker": "You",
+      "contextEn": "Jamie: Does Marco train on Sundays?",
+      "options": [
+        { "labelEn": "No, he doesn't.", "correct": true, "feedbackPt": "Does → doesn't." },
+        { "labelEn": "No, he don't.", "correct": false, "feedbackPt": "He usa doesn't." },
+        { "labelEn": "No, I don't.", "correct": false, "feedbackPt": "Pergunta sobre he." }
+      ]
+    },
+    {
+      "id": "m04l07-prac-12",
+      "type": "choice",
+      "promptPt": "Melhor integração — rotina completa:",
+      "options": [
+        { "labelEn": "I wake up at 6, work every day, usually go home, don't work weekends, and always train on weekdays.", "correct": true, "feedbackPt": "Integra manhã, hábito, usually, negativa e frequência." },
+        { "labelEn": "I am wake up 6 work every days.", "correct": false, "feedbackPt": "Múltiplos erros gramaticais." },
+        { "labelEn": "What time is it?", "correct": false, "feedbackPt": "Não descreve rotina." }
+      ]
+    }
+  ]
+}

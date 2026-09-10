@@ -1,0 +1,334 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 4,
+  "goalPt": "Fazer perguntas yes/no sobre rotina — Do you...?, Does he/she...? e respostas curtas Yes, I do / No, I don't.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie faz perguntas sobre rotina — sim ou não.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can ask yes/no questions about routines.",
+    "headlinePt": "Você consegue fazer perguntas sim/não sobre rotina.",
+    "bodyPt": "",
+    "canDo": ["Do you work every day?", "Yes, I do. / No, I don't.", "Does he train on Sundays?", "Yes, he does. / No, he doesn't."],
+    "production": {
+      "introPt": "Faça perguntas sobre rotina e responda com Yes/No + do/does.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Ask me about my routine." },
+        { "speaker": "Jamie", "questionEn": "Do you train on weekends?" }
+      ],
+      "fields": [
+        { "id": "question", "labelPt": "Sua pergunta (Do you...?)", "prefixEn": "", "placeholderEn": "Do you work every day?" },
+        { "id": "answer", "labelPt": "Sua resposta", "prefixEn": "", "placeholderEn": "Yes, I do. I train on weekdays." }
+      ],
+      "exampleEn": "Do you work every day? — Yes, I do. — Does Marco train on Sundays? — No, he doesn't."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m04l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Do you...?",
+        "titlePt": "Você...?",
+        "bodyPt": "Jamie quer saber sobre sua rotina com perguntas sim/não. Você aprende o auxiliar DO — Do you...? e Does he/she...? — essencial e diferente do português."
+      },
+      {
+        "id": "m04l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team meeting · Icebreaker",
+        "scenarioPt": "Perguntas rápidas sobre hábitos do time."
+      },
+      {
+        "id": "m04l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you work every day?",
+        "promptPt": "Jamie pergunta se você trabalha todo dia.",
+        "options": [
+          { "labelEn": "Yes, I do.", "correct": true, "feedbackPt": "Resposta curta — repete o auxiliar do." },
+          { "labelEn": "Yes, I work.", "correct": false, "feedbackPt": "Funciona, mas Yes, I do é a resposta curta padrão." },
+          { "labelEn": "Yes, I am.", "correct": false, "feedbackPt": "Am não responde Do you work?" }
+        ]
+      },
+      {
+        "id": "m04l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you train on weekends?",
+        "promptPt": "Resposta negativa curta:",
+        "options": [
+          { "labelEn": "No, I don't.", "correct": true, "feedbackPt": "No, I don't — resposta curta negativa." },
+          { "labelEn": "No, I do.", "correct": false, "feedbackPt": "No contradiz do — use don't." },
+          { "labelEn": "No, I not.", "correct": false, "feedbackPt": "Precisa de don't." }
+        ]
+      },
+      {
+        "id": "m04l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Does Marco train on Sundays?",
+        "promptPt": "Pergunta sobre Marco (he) — responda:",
+        "options": [
+          { "labelEn": "Yes, he does.", "correct": true, "feedbackPt": "Does → resposta com does." },
+          { "labelEn": "Yes, he do.", "correct": false, "feedbackPt": "He usa does, não do." },
+          { "labelEn": "Yes, he trains does.", "correct": false, "feedbackPt": "Resposta curta: Yes, he does." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m04l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Do you...?",
+        "titlePt": "Você...?",
+        "introPt": "Perguntas yes/no com I/you/we/they — Do + sujeito + verbo BASE.",
+        "examples": [
+          { "en": "Do you work every day?", "pt": "trabalha todo dia?" },
+          { "en": "Do you train on weekends?", "pt": "treina fds?" },
+          { "en": "Do you have breakfast?", "pt": "toma café?" },
+          { "en": "Do you watch TV?", "pt": "assiste TV?" }
+        ]
+      },
+      {
+        "id": "m04l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Does he/she...?",
+        "titlePt": "Ele/ela...?",
+        "introPt": "Perguntas com he/she/it — Does + sujeito + verbo BASE (sem -s).",
+        "examples": [
+          { "en": "Does he train on Sundays?", "pt": "ele treina domingo?" },
+          { "en": "Does she work on weekends?", "pt": "ela trabalha fds?" },
+          { "en": "Does Marco play soccer?", "pt": "Marco joga?" },
+          { "en": "Does Sarah cook dinner?", "pt": "Sarah cozinha?" }
+        ]
+      },
+      {
+        "id": "m04l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Short answers",
+        "titlePt": "Respostas curtas",
+        "introPt": "Respostas sim/não repetem o auxiliar — do ou does.",
+        "examples": [
+          { "en": "Do you work? — Yes, I do.", "pt": "sim" },
+          { "en": "Do you work? — No, I don't.", "pt": "não" },
+          { "en": "Does he train? — Yes, he does.", "pt": "sim (ele)" },
+          { "en": "Does she cook? — No, she doesn't.", "pt": "não (ela)" }
+        ]
+      },
+      {
+        "id": "m04l05-learn-04",
+        "type": "comparison",
+        "titleEn": "Do vs Does",
+        "titlePt": "Do vs Does",
+        "left": {
+          "labelEn": "DO · I/you/we/they",
+          "exampleEn": "Do you work? — Yes, I do.",
+          "notePt": "Pergunta e resposta com do/don't."
+        },
+        "right": {
+          "labelEn": "DOES · he/she/it",
+          "exampleEn": "Does he work? — Yes, he does.",
+          "notePt": "Pergunta e resposta com does/doesn't."
+        },
+        "modelEn": "Do you train? — Yes, I do. — Does she train? — No, she doesn't.",
+        "modelPt": "O auxiliar muda com o sujeito."
+      },
+      {
+        "id": "m04l05-learn-05",
+        "type": "language_focus",
+        "titleEn": "DO auxiliary rule",
+        "titlePt": "Regra do auxiliar DO",
+        "items": [
+          { "formalEn": "You work every day?", "naturalEn": "Do you work every day?", "notePt": "Perguntas em inglês PRECISAM de Do/Does — não basta inverter como em português." },
+          { "formalEn": "Does he trains?", "naturalEn": "Does he train?", "notePt": "Após Does, verbo na base — sem -s." }
+        ],
+        "tipPt": "Fórmula: Do/Does + sujeito + verbo base?"
+      },
+      {
+        "id": "m04l05-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "Full answers",
+        "titlePt": "Respostas completas",
+        "introPt": "Além da resposta curta, você pode dar resposta completa.",
+        "examples": [
+          { "en": "Yes, I do. I work every day.", "pt": "curta + completa" },
+          { "en": "No, I don't. I don't work on weekends.", "pt": "negativa completa" },
+          { "en": "Yes, he does. He trains on weekdays.", "pt": "sobre ele" }
+        ]
+      },
+      {
+        "id": "m04l05-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "You work every day? / Does he trains on Sundays?",
+        "rightEn": "Do you work every day? / Does he train on Sundays?",
+        "explanationPt": "Brasileiros omitem Do/Does porque em português basta entonação ('Você trabalha?'). Em inglês, Do/Does é OBRIGATÓRIO. E após Does, verbo sem -s."
+      },
+      {
+        "id": "m04l05-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Do you work every day?", "pt": "pergunta I/you" },
+          { "en": "Does he train on Sundays?", "pt": "pergunta he/she" },
+          { "en": "Yes, I do. / No, I don't.", "pt": "resposta curta" },
+          { "en": "Yes, he does. / No, he doesn't.", "pt": "resposta curta" },
+          { "en": "Do/Does + sujeito + verbo base", "pt": "fórmula" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m04l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — pratique perguntas e respostas curtas.",
+        "phrases": [
+          { "en": "Do you work every day?" },
+          { "en": "Yes, I do." },
+          { "en": "No, I don't." },
+          { "en": "Do you train on weekends?" },
+          { "en": "Does he train on Sundays?" },
+          { "en": "Yes, he does." },
+          { "en": "No, he doesn't." },
+          { "en": "Does she watch TV?" }
+        ],
+        "dialogueEn": "Do you work every day? — Yes, I do. — Do you train on weekends? — No, I don't. — Does Marco train on Sundays? — Yes, he does."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m04l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — ask and answer.",
+        "headlinePt": "Sua vez — pergunte e responda.",
+        "bodyPt": "Faça perguntas sim/não sobre rotina e responda com Yes/No + do/does.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Do you train on weekends?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m04l05-prac-01",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta: você trabalha todo dia?",
+      "tokens": ["day?", "every", "work", "you", "Do"],
+      "correctOrder": ["Do", "you", "work", "every", "day?"],
+      "feedbackCorrectPt": "Do you work every day?",
+      "feedbackWrongPt": "Do + sujeito + verbo base."
+    },
+    {
+      "id": "m04l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Ele treina domingo? — pergunta:",
+      "templateEn": "___ he train on Sundays?",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "Does", "correct": true, "feedbackPt": "He → Does." },
+        { "labelEn": "Do", "correct": false, "feedbackPt": "He usa Does." },
+        { "labelEn": "Is", "correct": false, "feedbackPt": "Is + adj, não verbo rotina." }
+      ]
+    },
+    {
+      "id": "m04l05-prac-03",
+      "type": "choice",
+      "promptPt": "Do you work? — resposta curta sim:",
+      "options": [
+        { "labelEn": "Yes, I do.", "correct": true, "feedbackPt": "Resposta curta padrão." },
+        { "labelEn": "Yes, I am.", "correct": false, "feedbackPt": "Do → resposta com do." },
+        { "labelEn": "Yes, I does.", "correct": false, "feedbackPt": "I usa do, não does." }
+      ]
+    },
+    {
+      "id": "m04l05-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Does she cook dinner? — responda não (curto):",
+      "speaker": "You",
+      "contextEn": "Jamie: Does she cook dinner?",
+      "options": [
+        { "labelEn": "No, she doesn't.", "correct": true, "feedbackPt": "Does → doesn't." },
+        { "labelEn": "No, she don't.", "correct": false, "feedbackPt": "She usa doesn't." },
+        { "labelEn": "No, she not.", "correct": false, "feedbackPt": "Incompleto." }
+      ]
+    },
+    {
+      "id": "m04l05-prac-05",
+      "type": "fill_blank",
+      "promptPt": "Após Does, o verbo fica:",
+      "templateEn": "Does he ___ on Sundays?",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "train", "correct": true, "feedbackPt": "Forma base." },
+        { "labelEn": "trains", "correct": false, "feedbackPt": "Sem -s após Does." },
+        { "labelEn": "training", "correct": false, "feedbackPt": "Base no presente simples." }
+      ]
+    },
+    {
+      "id": "m04l05-prac-06",
+      "type": "reorder",
+      "promptPt": "Monte: ela assiste TV?",
+      "tokens": ["TV?", "watch", "she", "Does"],
+      "correctOrder": ["Does", "she", "watch", "TV?"],
+      "feedbackCorrectPt": "Does she watch TV?",
+      "feedbackWrongPt": "Does + she + verbo base."
+    },
+    {
+      "id": "m04l05-prac-07",
+      "type": "choice",
+      "promptPt": "Qual pergunta está correta?",
+      "options": [
+        { "labelEn": "Do you have breakfast?", "correct": true, "feedbackPt": "Do + you + have." },
+        { "labelEn": "You have breakfast?", "correct": false, "feedbackPt": "Falta Do." },
+        { "labelEn": "Do you has breakfast?", "correct": false, "feedbackPt": "Após Do, verbo base: have." }
+      ]
+    },
+    {
+      "id": "m04l05-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Does Marco play soccer? — sim (curto):",
+      "speaker": "You",
+      "contextEn": "Jamie: Does Marco play soccer?",
+      "options": [
+        { "labelEn": "Yes, he does.", "correct": true, "feedbackPt": "Does → he does." },
+        { "labelEn": "Yes, he do.", "correct": false, "feedbackPt": "He usa does." },
+        { "labelEn": "Yes, I do.", "correct": false, "feedbackPt": "Pergunta sobre Marco (he)." }
+      ]
+    },
+    {
+      "id": "m04l05-prac-09",
+      "type": "choice",
+      "promptPt": "Do they train on weekdays? — No, ...",
+      "options": [
+        { "labelEn": "No, they don't.", "correct": true, "feedbackPt": "They + don't." },
+        { "labelEn": "No, they doesn't.", "correct": false, "feedbackPt": "They usa don't." },
+        { "labelEn": "No, they not.", "correct": false, "feedbackPt": "Incompleto." }
+      ]
+    },
+    {
+      "id": "m04l05-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Você treina fds? — pergunta:",
+      "templateEn": "___ you train on weekends?",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "Do", "correct": true, "feedbackPt": "You → Do." },
+        { "labelEn": "Does", "correct": false, "feedbackPt": "You usa Do." },
+        { "labelEn": "Are", "correct": false, "feedbackPt": "Are + -ing, não rotina." }
+      ]
+    }
+  ]
+}

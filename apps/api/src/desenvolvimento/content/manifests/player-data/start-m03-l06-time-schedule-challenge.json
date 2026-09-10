@@ -1,0 +1,381 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 3,
+  "goalPt": "Revisão cumulativa — combinar horário, dia, data e agenda numa situação real. Sem vocabulário novo.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Desafio do módulo — combinar treino, reunião e agenda completa.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia o diálogo completo em voz alta.", "phrases": [] },
+  "practice": { "introPt": "Revisão cumulativa — feedback imediato.", "items": [] },
+  "mission": {
+    "headlineEn": "You can manage time and schedule in English.",
+    "headlinePt": "Você consegue gerir tempo e agenda em inglês.",
+    "bodyPt": "",
+    "canDo": [
+      "What time is it?",
+      "It's half past three.",
+      "What day is it?",
+      "It's January 5th.",
+      "Let's meet at 3 p.m. on Monday.",
+      "I start at 8 a.m. and finish at 5 p.m."
+    ],
+    "production": {
+      "introPt": "Monte uma conversa completa sobre agenda — hora, dia, data e compromissos. Use apenas o que aprendeu nas lições 1 a 5.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Let's plan the week together." }
+      ],
+      "fields": [
+        { "id": "time", "labelPt": "Perguntar/responder hora", "prefixEn": "", "placeholderEn": "What time is it? — It's half past two." },
+        { "id": "day", "labelPt": "Dia da semana", "prefixEn": "", "placeholderEn": "What day is it? — It's Wednesday." },
+        { "id": "date", "labelPt": "Data", "prefixEn": "", "placeholderEn": "What's the date? — It's March 15th." },
+        { "id": "meeting", "labelPt": "Combinar reunião", "prefixEn": "", "placeholderEn": "Let's meet at 3 p.m. on Monday." },
+        { "id": "schedule", "labelPt": "Sua agenda", "prefixEn": "", "placeholderEn": "I start at 8 a.m. I have training on Tuesday at 6 p.m." }
+      ],
+      "exampleEn": "What time is it? — It's half past two. — What day is it? — It's Wednesday. — Let's meet at 3 p.m. on Monday. — I start at 8 a.m. and finish at 5 p.m."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m03l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Module challenge",
+        "titlePt": "Desafio do módulo",
+        "bodyPt": "Hora de juntar tudo: horas, dias, datas, reuniões e agenda — numa conversa real com Jamie. Sem vocabulário novo."
+      },
+      {
+        "id": "m03l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Week planning",
+        "scenarioPt": "Jamie precisa alinhar a semana — treino, reunião e disponibilidade."
+      },
+      {
+        "id": "m03l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What time is it?",
+        "promptPt": "Passo 1 — Jamie pergunta as horas.",
+        "options": [
+          { "labelEn": "It's half past two.", "correct": true, "feedbackPt": "Resposta natural com half past." },
+          { "labelEn": "It's two and half.", "correct": false, "feedbackPt": "Use half past two." },
+          { "labelEn": "At half past two.", "correct": false, "feedbackPt": "Para dizer hora atual use It's." }
+        ]
+      },
+      {
+        "id": "m03l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What day is it today?",
+        "promptPt": "Passo 2 — que dia é hoje?",
+        "options": [
+          { "labelEn": "It's Wednesday.", "correct": true, "feedbackPt": "It's + dia — sem on." },
+          { "labelEn": "On Wednesday.", "correct": false, "feedbackPt": "On Wednesday responde 'when?', não 'what day?'" },
+          { "labelEn": "It's on Wednesday.", "correct": false, "feedbackPt": "Para identificar hoje, It's Wednesday." }
+        ]
+      },
+      {
+        "id": "m03l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What's the date?",
+        "promptPt": "Passo 3 — qual a data?",
+        "options": [
+          { "labelEn": "It's March 15th.", "correct": true, "feedbackPt": "Mês + dia ordinal." },
+          { "labelEn": "It's 15 March.", "correct": false, "feedbackPt": "Ordem inglesa: March 15th." },
+          { "labelEn": "It's on March 15th.", "correct": false, "feedbackPt": "Para 'hoje é' use It's, sem on." }
+        ]
+      },
+      {
+        "id": "m03l06-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What time is the meeting?",
+        "promptPt": "Passo 4 — horário da reunião.",
+        "options": [
+          { "labelEn": "It's at 3 p.m.", "correct": true, "feedbackPt": "At + hora para evento." },
+          { "labelEn": "It's on 3 p.m.", "correct": false, "feedbackPt": "Horário = at." },
+          { "labelEn": "It's 3 p.m. o'clock.", "correct": false, "feedbackPt": "Redundante — 3 p.m. basta." }
+        ]
+      },
+      {
+        "id": "m03l06-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Let's meet on Monday. Is 10 a.m. okay?",
+        "promptPt": "Passo 5 — confirmar horário.",
+        "options": [
+          { "labelEn": "Yes, that works for me.", "correct": true, "feedbackPt": "Confirmação natural." },
+          { "labelEn": "Yes, on 10 a.m.", "correct": false, "feedbackPt": "At 10 a.m., não on." },
+          { "labelEn": "Yes, I'm Monday.", "correct": false, "feedbackPt": "Gramática incorreta." }
+        ]
+      },
+      {
+        "id": "m03l06-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What's your schedule like this week?",
+        "promptPt": "Passo 6 — descrever agenda.",
+        "options": [
+          { "labelEn": "I start at 8 a.m. I have training on Tuesday at 6 p.m.", "correct": true, "feedbackPt": "Start at + have on + at — completo." },
+          { "labelEn": "I start in 8. Training in Tuesday.", "correct": false, "feedbackPt": "Preposições erradas — at e on." },
+          { "labelEn": "I work every Monday time.", "correct": false, "feedbackPt": "Forma confusa." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m03l06-learn-01",
+        "type": "review",
+        "titleEn": "Step 1 — Time",
+        "titlePt": "Passo 1 — Horas",
+        "items": [
+          { "en": "What time is it?", "pt": "pergunta" },
+          { "en": "It's three o'clock.", "pt": "hora cheia" },
+          { "en": "It's half past two.", "pt": "e meia" },
+          { "en": "It's 8 a.m. / 3 p.m.", "pt": "manhã/tarde" }
+        ]
+      },
+      {
+        "id": "m03l06-learn-02",
+        "type": "review",
+        "titleEn": "Step 2 — Days",
+        "titlePt": "Passo 2 — Dias",
+        "items": [
+          { "en": "What day is it?", "pt": "pergunta" },
+          { "en": "It's Monday.", "pt": "identificar" },
+          { "en": "on Monday", "pt": "compromisso" },
+          { "en": "on the weekend", "pt": "fim de semana" }
+        ]
+      },
+      {
+        "id": "m03l06-learn-03",
+        "type": "review",
+        "titleEn": "Step 3 — Dates",
+        "titlePt": "Passo 3 — Datas",
+        "items": [
+          { "en": "What's the date?", "pt": "pergunta" },
+          { "en": "It's January 5th.", "pt": "resposta" },
+          { "en": "on March 15th", "pt": "evento" },
+          { "en": "January … December", "pt": "meses" }
+        ]
+      },
+      {
+        "id": "m03l06-learn-04",
+        "type": "review",
+        "titleEn": "Step 4 — Meetings",
+        "titlePt": "Passo 4 — Reuniões",
+        "items": [
+          { "en": "What time is the meeting?", "pt": "pergunta" },
+          { "en": "Let's meet at 3 p.m.", "pt": "propor" },
+          { "en": "Is 10 a.m. okay?", "pt": "verificar" },
+          { "en": "Yes, that works for me.", "pt": "confirmar" }
+        ]
+      },
+      {
+        "id": "m03l06-learn-05",
+        "type": "comparison",
+        "titleEn": "Prepositions recap",
+        "titlePt": "Revisão de preposições",
+        "left": {
+          "labelEn": "AT · time",
+          "exampleEn": "at 3 p.m. · I start at 8.",
+          "notePt": "Horários e pontos no tempo."
+        },
+        "right": {
+          "labelEn": "ON · day/date",
+          "exampleEn": "on Monday · on March 15th",
+          "notePt": "Dias da semana e datas específicas."
+        },
+        "modelEn": "Let's meet at 3 p.m. on Monday, March 15th.",
+        "modelPt": "At + hora; on + dia/data."
+      },
+      {
+        "id": "m03l06-learn-06",
+        "type": "review",
+        "titleEn": "Step 5 — Schedule",
+        "titlePt": "Passo 5 — Agenda",
+        "items": [
+          { "en": "I start at 8 a.m.", "pt": "início" },
+          { "en": "I finish at 5 p.m.", "pt": "fim" },
+          { "en": "I have training on Tuesday.", "pt": "compromisso" },
+          { "en": "from 9 to 5", "pt": "intervalo" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m03l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Full schedule conversation",
+        "titlePt": "Conversa completa de agenda",
+        "introPt": "Leia o diálogo inteiro em voz alta — pausa entre turnos.",
+        "phrases": [
+          { "en": "What time is it?" },
+          { "en": "It's half past two." },
+          { "en": "What day is it today?" },
+          { "en": "It's Wednesday." },
+          { "en": "What's the date?" },
+          { "en": "It's March 15th." },
+          { "en": "What time is the meeting?" },
+          { "en": "Let's meet at 3 p.m. on Monday." },
+          { "en": "Is 10 a.m. okay?" },
+          { "en": "Yes, that works for me." },
+          { "en": "I start at 8 a.m. and finish at 5 p.m." },
+          { "en": "I have training on Tuesday at 6 p.m." }
+        ],
+        "dialogueEn": "What time is it? — It's half past two. — What day is it? — It's Wednesday. — What's the date? — It's March 15th. — What time is the meeting? — Let's meet at 3 p.m. on Monday. — Is 10 a.m. okay? — Yes, that works for me. — I start at 8 a.m. I have training on Tuesday at 6 p.m."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m03l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Time & Schedule challenge.",
+        "headlinePt": "Desafio Tempo e Agenda.",
+        "bodyPt": "Monte uma conversa completa — hora, dia, data, reunião e sua agenda.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Ready? Let's plan the week." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m03l06-prac-01",
+      "type": "choice",
+      "promptPt": "São 3:30 — melhor resposta:",
+      "options": [
+        { "labelEn": "It's half past three.", "correct": true, "feedbackPt": "Half past three = 3:30." },
+        { "labelEn": "It's three and half.", "correct": false, "feedbackPt": "Use half past." },
+        { "labelEn": "At half past three.", "correct": false, "feedbackPt": "Use It's para hora atual." }
+      ]
+    },
+    {
+      "id": "m03l06-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Treino na terça:",
+      "templateEn": "I have training ___ Tuesday.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "on", "correct": true, "feedbackPt": "On + dia." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At = hora." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In não combina." }
+      ]
+    },
+    {
+      "id": "m03l06-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What day is it? — responda:",
+      "speaker": "You",
+      "contextEn": "Jamie: What day is it?",
+      "options": [
+        { "labelEn": "It's Friday.", "correct": true, "feedbackPt": "It's + dia." },
+        { "labelEn": "On Friday.", "correct": false, "feedbackPt": "Responde 'when?', não 'what day?'" },
+        { "labelEn": "It's at Friday.", "correct": false, "feedbackPt": "Sem at/on após It's." }
+      ]
+    },
+    {
+      "id": "m03l06-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: 15 de março",
+      "tokens": ["15th.", "March", "It's"],
+      "correctOrder": ["It's", "March", "15th."],
+      "feedbackCorrectPt": "It's March 15th.",
+      "feedbackWrongPt": "Mês + dia ordinal."
+    },
+    {
+      "id": "m03l06-prac-05",
+      "type": "choice",
+      "promptPt": "Reunião às 15h segunda:",
+      "options": [
+        { "labelEn": "Let's meet at 3 p.m. on Monday.", "correct": true, "feedbackPt": "At + hora; on + dia." },
+        { "labelEn": "Let's meet on 3 p.m. at Monday.", "correct": false, "feedbackPt": "Preposições invertidas." },
+        { "labelEn": "Let's meet in Monday 3.", "correct": false, "feedbackPt": "Preposições erradas." }
+      ]
+    },
+    {
+      "id": "m03l06-prac-06",
+      "type": "classify",
+      "promptPt": "It's vs at — esta frase é hora atual ou marcada?",
+      "sentenceEn": "The meeting is at 2 p.m.",
+      "category": "live",
+      "feedbackCorrectPt": "At 2 p.m. = horário marcado.",
+      "feedbackWrongPt": "Hora atual seria It's 2 p.m."
+    },
+    {
+      "id": "m03l06-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Trabalho das 9 às 17h:",
+      "templateEn": "I work from 9 a.m. ___ 5 p.m.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "to", "correct": true, "feedbackPt": "From...to." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At = ponto." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "On = dia." }
+      ]
+    },
+    {
+      "id": "m03l06-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Is 3 p.m. okay? — confirme:",
+      "speaker": "You",
+      "contextEn": "Jamie: Is 3 p.m. okay?",
+      "options": [
+        { "labelEn": "Yes, that works for me.", "correct": true, "feedbackPt": "Confirmação padrão." },
+        { "labelEn": "Yes, on 3 p.m.", "correct": false, "feedbackPt": "Sem on com hora." },
+        { "labelEn": "Yes, What time is it?", "correct": false, "feedbackPt": "Não responde à pergunta." }
+      ]
+    },
+    {
+      "id": "m03l06-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta sobre hora:",
+      "tokens": ["it?", "time", "What", "is"],
+      "correctOrder": ["What", "time", "is", "it?"],
+      "feedbackCorrectPt": "What time is it?",
+      "feedbackWrongPt": "Ordem fixa."
+    },
+    {
+      "id": "m03l06-prac-10",
+      "type": "choice",
+      "promptPt": "Começo às 8h:",
+      "options": [
+        { "labelEn": "I start at 8 a.m.", "correct": true, "feedbackPt": "Start at + hora." },
+        { "labelEn": "I start on 8 a.m.", "correct": false, "feedbackPt": "Use at." },
+        { "labelEn": "I start in 8 a.m.", "correct": false, "feedbackPt": "Use at." }
+      ]
+    },
+    {
+      "id": "m03l06-prac-11",
+      "type": "fill_blank",
+      "promptPt": "Jogo no dia 15 de março:",
+      "templateEn": "The game is ___ March 15th.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "on", "correct": true, "feedbackPt": "On + data." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At = hora." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In March = só mês." }
+      ]
+    },
+    {
+      "id": "m03l06-prac-12",
+      "type": "dialogue_complete",
+      "promptPt": "Agenda completa — melhor resposta:",
+      "speaker": "You",
+      "contextEn": "Jamie: What's your schedule this week?",
+      "options": [
+        { "labelEn": "I start at 8 a.m. I have training on Tuesday at 6 p.m. I'm free on Friday.", "correct": true, "feedbackPt": "Integra start, have on, at e free on." },
+        { "labelEn": "I start in 8. Training Tuesday 6.", "correct": false, "feedbackPt": "Preposições faltando." },
+        { "labelEn": "What time is it?", "correct": false, "feedbackPt": "Não descreve agenda." }
+      ]
+    }
+  ]
+}

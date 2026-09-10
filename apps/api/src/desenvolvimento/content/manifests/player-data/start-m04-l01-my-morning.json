@@ -1,0 +1,334 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 4,
+  "goalPt": "Descrever início do dia com rotinas simples — wake up, get up, have breakfast — introdução ao Presente Simples.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie pergunta como é sua manhã antes do trabalho.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can describe your morning routine.",
+    "headlinePt": "Você consegue descrever sua rotina matinal.",
+    "bodyPt": "",
+    "canDo": ["I wake up at 6 a.m.", "I get up at 6:30.", "I have breakfast at 7.", "I go to work at 8."],
+    "production": {
+      "introPt": "Descreva sua manhã para Jamie — do acordar até sair de casa.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What do you do in the morning?" }
+      ],
+      "fields": [
+        { "id": "wake", "labelPt": "Acordar", "prefixEn": "I wake up at", "placeholderEn": "6 a.m." },
+        { "id": "breakfast", "labelPt": "Café da manhã", "prefixEn": "I have breakfast at", "placeholderEn": "7 a.m." },
+        { "id": "leave", "labelPt": "Sair / ir trabalhar", "prefixEn": "I go to work at", "placeholderEn": "8 a.m." }
+      ],
+      "exampleEn": "I wake up at 6 a.m. I get up at 6:30. I have breakfast at 7. I go to work at 8."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "m04l01-ctx-01",
+        "type": "intro",
+        "titleEn": "My morning",
+        "titlePt": "Minha manhã",
+        "bodyPt": "Jamie quer saber como você começa o dia. Você aprende verbos de rotina matinal no Presente Simples — I wake up, I get up, I have breakfast."
+      },
+      {
+        "id": "m04l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office café · Morning chat",
+        "scenarioPt": "Conversa informal sobre rotina antes da reunião."
+      },
+      {
+        "id": "m04l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What time do you wake up?",
+        "promptPt": "Jamie pergunta que horas você acorda.",
+        "options": [
+          { "labelEn": "I wake up at 6 a.m.", "correct": true, "feedbackPt": "Wake up at + hora — rotina." },
+          { "labelEn": "I wake up in 6 a.m.", "correct": false, "feedbackPt": "Horário usa at." },
+          { "labelEn": "I am wake up at 6.", "correct": false, "feedbackPt": "Presente simples: I wake up, não I am wake up." }
+        ]
+      },
+      {
+        "id": "m04l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "And when do you get up?",
+        "promptPt": "Jamie pergunta quando você levanta da cama.",
+        "options": [
+          { "labelEn": "I get up at 6:30.", "correct": true, "feedbackPt": "Get up = levantar da cama." },
+          { "labelEn": "I get up in 6:30.", "correct": false, "feedbackPt": "Use at para hora." },
+          { "labelEn": "I get up on 6:30.", "correct": false, "feedbackPt": "On = dia, não hora." }
+        ]
+      },
+      {
+        "id": "m04l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you have breakfast at home?",
+        "promptPt": "Jamie pergunta sobre café da manhã.",
+        "options": [
+          { "labelEn": "Yes, I have breakfast at home at 7.", "correct": true, "feedbackPt": "Have breakfast — rotina matinal." },
+          { "labelEn": "Yes, I have the breakfast.", "correct": false, "feedbackPt": "Sem the — have breakfast." },
+          { "labelEn": "Yes, I am breakfast at 7.", "correct": false, "feedbackPt": "Have breakfast, não am breakfast." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "m04l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Wake up / Get up",
+        "titlePt": "Acordar / Levantar",
+        "introPt": "Wake up = acordar (abrir os olhos). Get up = levantar da cama. Rotinas usam Presente Simples.",
+        "examples": [
+          { "en": "I wake up at 6 a.m.", "pt": "acordo às 6" },
+          { "en": "I get up at 6:30.", "pt": "levanto 6:30" },
+          { "en": "I wake up early.", "pt": "acordo cedo" },
+          { "en": "I get up late on weekends.", "pt": "fim de semana" }
+        ]
+      },
+      {
+        "id": "m04l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Have breakfast",
+        "titlePt": "Tomar café da manhã",
+        "introPt": "Have breakfast/lunch/dinner — refeições com have, não eat (eat também funciona, have é comum).",
+        "examples": [
+          { "en": "I have breakfast at 7.", "pt": "café 7h" },
+          { "en": "I have breakfast at home.", "pt": "em casa" },
+          { "en": "I have coffee in the morning.", "pt": "café de manhã" },
+          { "en": "I don't have breakfast. (preview)", "pt": "não tomo (lição 4)" }
+        ]
+      },
+      {
+        "id": "m04l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Morning activities",
+        "titlePt": "Atividades da manhã",
+        "introPt": "Outros verbos comuns de rotina matinal.",
+        "examples": [
+          { "en": "I take a shower.", "pt": "tomar banho" },
+          { "en": "I brush my teeth.", "pt": "escovar dentes" },
+          { "en": "I get dressed.", "pt": "vestir-se" },
+          { "en": "I go to work at 8.", "pt": "ir trabalhar" }
+        ]
+      },
+      {
+        "id": "m04l01-learn-04",
+        "type": "language_focus",
+        "titleEn": "Simple Present intro",
+        "titlePt": "Introdução ao Presente Simples",
+        "items": [
+          { "formalEn": "I wake up at 6 every day.", "naturalEn": "I wake up at 6.", "notePt": "Presente simples descreve rotina e hábito — verbo na forma base com I/you/we/they." },
+          { "formalEn": "He wake up at 6.", "naturalEn": "He wakes up at 6.", "notePt": "Com he/she/it, o verbo leva -s (lição 2)." }
+        ],
+        "tipPt": "Rotina = Presente Simples. I + verbo base: I wake up, I get up, I have."
+      },
+      {
+        "id": "m04l01-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "What do you do in the morning?",
+        "titlePt": "O que você faz de manhã?",
+        "introPt": "Pergunta sobre rotina matinal.",
+        "examples": [
+          { "en": "What do you do in the morning?", "pt": "pergunta geral" },
+          { "en": "What time do you wake up?", "pt": "hora de acordar" },
+          { "en": "I wake up, have breakfast, and go to work.", "pt": "sequência" }
+        ]
+      },
+      {
+        "id": "m04l01-learn-06",
+        "type": "comparison",
+        "titleEn": "Wake up vs Get up",
+        "titlePt": "Wake up vs Get up",
+        "left": {
+          "labelEn": "WAKE UP · acordar",
+          "exampleEn": "I wake up at 6.",
+          "notePt": "Parar de dormir — abrir os olhos."
+        },
+        "right": {
+          "labelEn": "GET UP · levantar",
+          "exampleEn": "I get up at 6:30.",
+          "notePt": "Sair da cama — pode ser depois de acordar."
+        },
+        "modelEn": "I wake up at 6, but I get up at 6:30.",
+        "modelPt": "Acordar e levantar podem ser horários diferentes."
+      },
+      {
+        "id": "m04l01-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I am wake up at 6. / I have the breakfast.",
+        "rightEn": "I wake up at 6. / I have breakfast.",
+        "explanationPt": "Rotina usa Presente Simples (I wake up), não I am + verbo. Refeições: have breakfast — sem the. Brasileiros confundem com progressivo (I am waking up = agora, neste momento)."
+      },
+      {
+        "id": "m04l01-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I wake up at 6 a.m.", "pt": "acordar" },
+          { "en": "I get up at 6:30.", "pt": "levantar" },
+          { "en": "I have breakfast at 7.", "pt": "café da manhã" },
+          { "en": "I go to work at 8.", "pt": "ir trabalhar" },
+          { "en": "What do you do in the morning?", "pt": "pergunta" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "m04l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte horários à sua rotina real.",
+        "phrases": [
+          { "en": "I wake up at 6 a.m." },
+          { "en": "I get up at 6:30." },
+          { "en": "I take a shower." },
+          { "en": "I have breakfast at 7." },
+          { "en": "I brush my teeth." },
+          { "en": "I get dressed." },
+          { "en": "I go to work at 8." },
+          { "en": "What do you do in the morning?" }
+        ],
+        "dialogueEn": "What do you do in the morning? — I wake up at 6. I get up at 6:30. I have breakfast at 7. I go to work at 8."
+      }
+    ],
+    "mission": [
+      {
+        "id": "m04l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — describe your morning.",
+        "headlinePt": "Sua vez — descreva sua manhã.",
+        "bodyPt": "Conte para Jamie sua rotina matinal em inglês.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What do you do in the morning?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "m04l01-prac-01",
+      "type": "choice",
+      "promptPt": "Acordar às 6h — melhor frase:",
+      "options": [
+        { "labelEn": "I wake up at 6 a.m.", "correct": true, "feedbackPt": "Presente simples + at + hora." },
+        { "labelEn": "I am wake up at 6.", "correct": false, "feedbackPt": "Use I wake up, não I am wake up." },
+        { "labelEn": "I wake up in 6 a.m.", "correct": false, "feedbackPt": "At + hora." }
+      ]
+    },
+    {
+      "id": "m04l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Café da manhã às 7h:",
+      "templateEn": "I have ___ at 7.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "breakfast", "correct": true, "feedbackPt": "Have breakfast — sem the." },
+        { "labelEn": "the breakfast", "correct": false, "feedbackPt": "Sem artigo." },
+        { "labelEn": "a breakfast", "correct": false, "feedbackPt": "Have breakfast é fixo." }
+      ]
+    },
+    {
+      "id": "m04l01-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: levanto às 6:30",
+      "tokens": ["6:30.", "at", "up", "get", "I"],
+      "correctOrder": ["I", "get", "up", "at", "6:30."],
+      "feedbackCorrectPt": "I get up at 6:30.",
+      "feedbackWrongPt": "Ordem: I get up at + hora."
+    },
+    {
+      "id": "m04l01-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta What time do you wake up? — responda 6h:",
+      "speaker": "You",
+      "contextEn": "Jamie: What time do you wake up?",
+      "options": [
+        { "labelEn": "I wake up at 6 a.m.", "correct": true, "feedbackPt": "Resposta natural." },
+        { "labelEn": "I am waking up at 6.", "correct": false, "feedbackPt": "Rotina = presente simples." },
+        { "labelEn": "I wake up on 6 a.m.", "correct": false, "feedbackPt": "Use at." }
+      ]
+    },
+    {
+      "id": "m04l01-prac-05",
+      "type": "choice",
+      "promptPt": "Diferença: wake up vs get up",
+      "options": [
+        { "labelEn": "Wake up = acordar; get up = levantar da cama", "correct": true, "feedbackPt": "Distinção correta." },
+        { "labelEn": "They mean exactly the same.", "correct": false, "feedbackPt": "Get up vem depois de wake up." },
+        { "labelEn": "Get up = acordar; wake up = dormir", "correct": false, "feedbackPt": "Invertido." }
+      ]
+    },
+    {
+      "id": "m04l01-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Ir trabalhar às 8h:",
+      "templateEn": "I go to work ___ 8.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "at", "correct": true, "feedbackPt": "At + hora." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "On = dia." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In não combina." }
+      ]
+    },
+    {
+      "id": "m04l01-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta sobre manhã:",
+      "tokens": ["morning?", "the", "in", "do", "you", "What"],
+      "correctOrder": ["What", "do", "you", "do", "in", "the", "morning?"],
+      "feedbackCorrectPt": "What do you do in the morning?",
+      "feedbackWrongPt": "Ordem: What do you do in the morning?"
+    },
+    {
+      "id": "m04l01-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Sequência matinal — complete:",
+      "speaker": "You",
+      "contextEn": "Jamie: Tell me about your morning.",
+      "options": [
+        { "labelEn": "I wake up at 6, have breakfast at 7, and go to work at 8.", "correct": true, "feedbackPt": "Sequência natural de rotina." },
+        { "labelEn": "I am wake up 6 breakfast 7.", "correct": false, "feedbackPt": "Gramática incorreta." },
+        { "labelEn": "What time is it?", "correct": false, "feedbackPt": "Não descreve rotina." }
+      ]
+    },
+    {
+      "id": "m04l01-prac-09",
+      "type": "choice",
+      "promptPt": "Tomar banho de manhã:",
+      "options": [
+        { "labelEn": "I take a shower.", "correct": true, "feedbackPt": "Take a shower — comum US." },
+        { "labelEn": "I make a shower.", "correct": false, "feedbackPt": "Take a shower, não make." },
+        { "labelEn": "I do a shower.", "correct": false, "feedbackPt": "Take, não do." }
+      ]
+    },
+    {
+      "id": "m04l01-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Presente simples com I:",
+      "templateEn": "I ___ up at 6 every day.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "wake", "correct": true, "feedbackPt": "I + verbo base." },
+        { "labelEn": "wakes", "correct": false, "feedbackPt": "Wakes é para he/she/it." },
+        { "labelEn": "waking", "correct": false, "feedbackPt": "Waking precisa de am/is/are." }
+      ]
+    }
+  ]
+}
