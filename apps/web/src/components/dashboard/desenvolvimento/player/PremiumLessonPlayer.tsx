@@ -5,7 +5,13 @@ import Link from "next/link";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api";
 import type { LearningPlayerLesson, LearningPlayerResponse } from "@/lib/desenvolvimento-types";
-import type { LearningPlayerExperience, LearningPlayerStepId } from "@/lib/learning-player-types";
+import {
+  getPracticeItems,
+  getStepScreens,
+  isDeepPlayer,
+  type LearningPlayerExperience,
+  type LearningPlayerStepId,
+} from "@/lib/learning-player-types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LearningPlayerSidebar } from "./LearningPlayerSidebar";
@@ -18,8 +24,11 @@ import {
 } from "./LearningAudioPhrase";
 import { NativeSelect } from "@/components/ui/native-select";
 import { LearningPracticeActivity } from "./LearningPracticeActivity";
+import { LearningPracticeInteractionView } from "./LearningPracticeInteractionView";
 import { LearningQuizFlow } from "./LearningQuizFlow";
 import { LearningMissionScreen } from "./LearningMissionScreen";
+import { LearningMissionProduction } from "./LearningMissionProduction";
+import { LearningMicroScreenStep } from "./LearningMicroScreenStep";
 
 type Props = {
   data: LearningPlayerResponse;
@@ -36,10 +45,18 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
     lesson.progress?.status === "completed" ? steps.length - 1 : 0,
   );
   const [practiceIndex, setPracticeIndex] = useState(0);
+  const [practiceStepComplete, setPracticeStepComplete] = useState(
+    () => lesson.progress?.status === "completed",
+  );
+  const [stepMicroComplete, setStepMicroComplete] = useState<Partial<Record<LearningPlayerStepId, boolean>>>(() => {
+    if (lesson.progress?.status !== "completed") return {};
+    return Object.fromEntries(steps.map((s) => [s.id, true])) as Partial<Record<LearningPlayerStepId, boolean>>;
+  });
   const [verifyPassed, setVerifyPassed] = useState(
     () => lesson.progress?.status === "completed",
   );
   const hasAudio = playerExperienceHasAudio(player);
+  const deep = isDeepPlayer(player);
 
   const step = steps[stepIndex];
   const stepId = step?.id as LearningPlayerStepId | undefined;
@@ -81,7 +98,7 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
   const goNextStep = () => {
     const next = Math.min(steps.length - 1, stepIndex + 1);
     const nextId = steps[next]?.id as LearningPlayerStepId | undefined;
-    if (stepId === "verify" && !verifyPassed) return;
+    if (!canAdvanceFromCurrentStep) return;
     if (nextId === "mission" && lesson.quiz && !verifyPassed) return;
     setMaxStepReached((m) => Math.max(m, next));
     goToStep(next);
@@ -109,8 +126,19 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
     [data.enrollment.id, lesson.id, lesson.quiz, onReload],
   );
 
-  const practiceItems = player.practice.items;
+  const practiceItems = getPracticeItems(player);
   const currentPractice = practiceItems[practiceIndex];
+  const currentStepScreens = stepId ? getStepScreens(player, stepId) : null;
+
+  const markStepMicroComplete = useCallback((id: LearningPlayerStepId) => {
+    setStepMicroComplete((prev) => ({ ...prev, [id]: true }));
+  }, []);
+
+  const canAdvanceFromCurrentStep =
+    !stepId ||
+    (!(currentStepScreens && !stepMicroComplete[stepId]) &&
+      !(stepId === "practice" && deep && !practiceStepComplete) &&
+      !(stepId === "verify" && !verifyPassed));
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4 lg:space-y-6">
@@ -215,14 +243,30 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-400 mb-1">{step?.label}</p>
             <h2 className="text-lg font-semibold text-foreground mb-6">{step?.labelPt}</h2>
 
-            {stepId === "context" ? (
+            {stepId === "context" && currentStepScreens ? (
+              <LearningMicroScreenStep
+                key={`context-${lesson.id}`}
+                screens={currentStepScreens}
+                onComplete={() => markStepMicroComplete("context")}
+              />
+            ) : null}
+
+            {stepId === "context" && !currentStepScreens ? (
               <div className="mx-auto max-w-2xl space-y-6">
                 <p className="text-sm leading-relaxed text-muted-foreground">{player.context.scenarioPt}</p>
                 <LearningDialogue lines={player.context.dialogue} />
               </div>
             ) : null}
 
-            {stepId === "learn" ? (
+            {stepId === "learn" && currentStepScreens ? (
+              <LearningMicroScreenStep
+                key={`learn-${lesson.id}`}
+                screens={currentStepScreens}
+                onComplete={() => markStepMicroComplete("learn")}
+              />
+            ) : null}
+
+            {stepId === "learn" && !currentStepScreens ? (
               <div className="mx-auto max-w-3xl space-y-5">
                 <p className="text-sm text-muted-foreground">{player.learn.introPt}</p>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -234,7 +278,15 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
               </div>
             ) : null}
 
-            {stepId === "imitate" ? (
+            {stepId === "imitate" && currentStepScreens ? (
+              <LearningMicroScreenStep
+                key={`imitate-${lesson.id}`}
+                screens={currentStepScreens}
+                onComplete={() => markStepMicroComplete("imitate")}
+              />
+            ) : null}
+
+            {stepId === "imitate" && !currentStepScreens ? (
               <div className="mx-auto max-w-2xl space-y-4">
                 <p className="text-sm text-muted-foreground">{player.imitate.introPt}</p>
                 {!hasAudio ? <LearningAudioUnavailableNote /> : null}
@@ -266,15 +318,29 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
                 <p className="text-xs text-muted-foreground">
                   Atividade {practiceIndex + 1} de {practiceItems.length}
                 </p>
-                <LearningPracticeActivity
-                  key={currentPractice.id}
-                  item={currentPractice}
-                  onComplete={() => {
-                    if (practiceIndex < practiceItems.length - 1) {
-                      setPracticeIndex((i) => i + 1);
-                    }
-                  }}
-                />
+                {deep ? (
+                  <LearningPracticeInteractionView
+                    key={currentPractice.id}
+                    item={currentPractice}
+                    onComplete={() => {
+                      if (practiceIndex < practiceItems.length - 1) {
+                        setPracticeIndex((i) => i + 1);
+                      } else {
+                        setPracticeStepComplete(true);
+                      }
+                    }}
+                  />
+                ) : currentPractice.type === "choice" ? (
+                  <LearningPracticeActivity
+                    key={currentPractice.id}
+                    item={currentPractice}
+                    onComplete={() => {
+                      if (practiceIndex < practiceItems.length - 1) {
+                        setPracticeIndex((i) => i + 1);
+                      }
+                    }}
+                  />
+                ) : null}
               </div>
             ) : null}
 
@@ -291,7 +357,25 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
               </div>
             ) : null}
 
-            {stepId === "mission" ? (
+            {stepId === "mission" && currentStepScreens && !stepMicroComplete.mission ? (
+              <LearningMicroScreenStep
+                key={`mission-intro-${lesson.id}`}
+                screens={currentStepScreens}
+                onComplete={() => markStepMicroComplete("mission")}
+              />
+            ) : null}
+
+            {stepId === "mission" && player.mission.production && (stepMicroComplete.mission || !currentStepScreens) ? (
+              <div className="mx-auto max-w-2xl">
+                <LearningMissionProduction
+                  mission={player.mission}
+                  production={player.mission.production}
+                  lessonCompleted={verifyPassed || lesson.progress?.status === "completed"}
+                />
+              </div>
+            ) : null}
+
+            {stepId === "mission" && !player.mission.production && (stepMicroComplete.mission || !currentStepScreens) ? (
               <div className="mx-auto max-w-2xl">
                 <LearningMissionScreen
                   mission={player.mission}
@@ -318,11 +402,13 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
               <span className="text-xs text-muted-foreground">Missão concluída quando você executar na vida real</span>
             ) : stepId === "verify" && !verifyPassed ? (
               <span className="text-xs text-muted-foreground">Aprove o quiz para continuar</span>
+            ) : !canAdvanceFromCurrentStep ? (
+              <span className="text-xs text-muted-foreground">Conclua esta etapa para continuar</span>
             ) : (
               <Button
                 type="button"
                 size="sm"
-                disabled={stepIndex >= steps.length - 1 || (stepId === "verify" && !verifyPassed)}
+                disabled={stepIndex >= steps.length - 1 || !canAdvanceFromCurrentStep}
                 onClick={() => goNextStep()}
                 className="min-h-[44px]"
               >

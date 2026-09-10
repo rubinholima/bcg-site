@@ -1,6 +1,6 @@
 {
   "manifestId": "cup360-english-start-v1",
-  "manifestVersion": "1.1.3",
+  "manifestVersion": "1.1.4",
   "course": {
     "contentKey": "cup360-english-start-v1",
     "title": "CUP360 English",
@@ -602,7 +602,7 @@
           "title": "I'm from Brazil",
           "sortOrder": 2,
           "lessonType": "TEXT",
-          "estimatedMinutes": 10,
+          "estimatedMinutes": 12,
           "contentHtml": "<p class=\"mb-4 rounded-md border border-violet-500/30 bg-violet-500/5 px-3 py-2 text-sm\"><strong>Objetivo (≈10 min):</strong> Dizer de onde você é, onde mora e responder sim/não de forma curta.</p><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Real Life — Vida real</h3><p>Jamie quer saber mais sobre você no café.</p><blockquote class=\"border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm\"><p><strong>Jamie:</strong> Where are you from?</p><p><strong>Carlos:</strong> I'm from Brazil.</p><p><strong>Jamie:</strong> Where do you live?</p><p><strong>Carlos:</strong> I live in Boston.</p><p><strong>Jamie:</strong> Do you live here?</p><p><strong>Carlos:</strong> Yes, I do.</p></blockquote></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Learn — Aprenda</h3><ul class=\"list-disc pl-5 space-y-2\"><li><strong>Where are you from?</strong> — de onde você é?</li><li><strong>I'm from...</strong> — sou de…</li><li><strong>Where do you live?</strong> — onde você mora?</li><li><strong>I live in...</strong> — moro em…</li><li><strong>I'm Brazilian.</strong> — sou brasileiro(a).</li><li><strong>I live in Boston.</strong> — moro em Boston.</li><li><strong>Do you live here?</strong> — você mora aqui?</li><li><strong>Yes, I do.</strong> / <strong>No, I don't.</strong> — sim / não (resposta curta)</li></ul><aside class=\"my-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm\"><strong class=\"text-amber-400\">Language Tip:</strong> País: <em>I'm from Brazil</em>. Cidade: <em>I live in Boston</em>. Não inverta.</aside></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Imitate — Imite</h3><ol class=\"list-decimal pl-5 space-y-2\"><li><span class=\"font-medium\">I'm from Brazil.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l03-a01]</em></li><li><span class=\"font-medium\">I live in Boston.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l03-a02]</em></li><li><span class=\"font-medium\">I'm Brazilian.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l03-a03]</em></li><li><span class=\"font-medium\">Do you live here? — Yes, I do.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l03-a04]</em></li><li><span class=\"font-medium\">No, I don't.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l03-a05]</em></li></ol></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Build / Practice — Pratique</h3><p>Responda em voz alta:</p><ul class=\"list-disc pl-5 text-sm\"><li>Where are you from? → (seu país)</li><li>Where do you live? → (sua cidade)</li><li>Do you live here? → Yes, I do. / No, I don't.</li></ul><p class=\"mt-2 text-sm\">Exemplos neutros: Brazil, United States, Boston — adapte à sua realidade.</p></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Execute — Missão</h3><p><strong>Missão:</strong> em uma conversa curta, diga de onde você é, onde mora e responda se mora na cidade atual (<em>Yes, I do</em> / <em>No, I don't</em>).</p></section>",
           "live": {
             "realLifeContext": "Conversa informal no café com colega.",
@@ -612,10 +612,10 @@
             "verify": "Quiz de 5 questões.",
             "executeMission": "Origem + moradia + resposta sim/não.",
             "player": {
-              "version": 1,
+              "version": 2,
               "levelLabel": "START",
               "moduleNumber": 1,
-              "goalPt": "Dizer de onde você é, onde mora e responder sim/não de forma curta.",
+              "goalPt": "Perguntar e responder origem, moradia e nacionalidade — e distinguir FROM de LIVE IN em uma apresentação pessoal curta.",
               "steps": [
                 {
                   "id": "context",
@@ -629,8 +629,8 @@
                 },
                 {
                   "id": "imitate",
-                  "label": "Listen / Imitate",
-                  "labelPt": "Ouça / Imite"
+                  "label": "Read & Repeat",
+                  "labelPt": "Leia e repita"
                 },
                 {
                   "id": "practice",
@@ -649,135 +649,126 @@
                 }
               ],
               "context": {
-                "scenarioPt": "Jamie quer saber mais sobre você no café.",
-                "dialogue": [
-                  {
-                    "speaker": "Jamie",
-                    "textEn": "Where are you from?"
-                  },
-                  {
-                    "speaker": "Carlos",
-                    "textEn": "I'm from Brazil."
-                  },
-                  {
-                    "speaker": "Jamie",
-                    "textEn": "Where do you live?"
-                  },
-                  {
-                    "speaker": "Carlos",
-                    "textEn": "I live in Boston."
-                  },
-                  {
-                    "speaker": "Jamie",
-                    "textEn": "Do you live here?"
-                  },
-                  {
-                    "speaker": "Carlos",
-                    "textEn": "Yes, I do."
-                  }
-                ]
+                "scenarioPt": "Jamie encontra você no café.",
+                "dialogue": []
               },
               "learn": {
-                "introPt": "Origem (from) e moradia (live in) são perguntas diferentes — responda com a frase certa.",
-                "phrases": [
-                  {
-                    "en": "Where are you from?",
-                    "pt": "de onde você é?"
-                  },
-                  {
-                    "en": "I'm from...",
-                    "pt": "sou de…"
-                  },
-                  {
-                    "en": "Where do you live?",
-                    "pt": "onde você mora?"
-                  },
-                  {
-                    "en": "I live in...",
-                    "pt": "moro em…"
-                  },
-                  {
-                    "en": "I'm Brazilian.",
-                    "pt": "sou brasileiro(a)."
-                  },
-                  {
-                    "en": "I live in Boston.",
-                    "pt": "moro em Boston."
-                  },
-                  {
-                    "en": "Do you live here?",
-                    "pt": "você mora aqui?"
-                  },
-                  {
-                    "en": "Yes, I do. / No, I don't.",
-                    "pt": "sim / não (resposta curta)"
-                  }
-                ],
-                "languageTip": "I'm from… fala origem; I live in… fala onde mora agora — não são intercambiáveis."
+                "introPt": "",
+                "phrases": []
               },
               "imitate": {
-                "introPt": "Repita em voz alta. Adapte país e cidade à sua realidade.",
-                "phrases": [
-                  {
-                    "en": "I'm from Brazil.",
-                    "audioKey": "start-m01-l03-a01"
-                  },
-                  {
-                    "en": "I live in Boston.",
-                    "audioKey": "start-m01-l03-a02"
-                  },
-                  {
-                    "en": "I'm Brazilian.",
-                    "audioKey": "start-m01-l03-a03"
-                  },
-                  {
-                    "en": "Do you live here? — Yes, I do.",
-                    "audioKey": "start-m01-l03-a04"
-                  },
-                  {
-                    "en": "No, I don't.",
-                    "audioKey": "start-m01-l03-a05"
-                  }
-                ],
-                "dialogueEn": "Where are you from? — I'm from Brazil. — Where do you live? — I live in Boston. — Do you live here? — Yes, I do."
+                "introPt": "Leia em voz alta e repita cada frase.",
+                "phrases": []
               },
               "practice": {
-                "introPt": "Escolha a resposta mais natural. Feedback imediato — sem nota.",
-                "items": [
+                "introPt": "Interações guiadas — feedback imediato, sem nota.",
+                "items": []
+              },
+              "mission": {
+                "headlineEn": "Introduce yourself — origin and home.",
+                "headlinePt": "Apresente-se — origem e moradia.",
+                "bodyPt": "",
+                "canDo": [
+                  "Where are you from?",
+                  "I'm from Brazil.",
+                  "I live in Boston.",
+                  "Yes, I do. / No, I don't.",
+                  "I'm Brazilian."
+                ],
+                "production": {
+                  "introPt": "Responda como se Jamie estivesse falando com você. Depois monte sua apresentação pessoal em inglês.",
+                  "prompts": [
+                    {
+                      "speaker": "Jamie",
+                      "questionEn": "Where are you from?"
+                    },
+                    {
+                      "speaker": "Jamie",
+                      "questionEn": "Where do you live?"
+                    },
+                    {
+                      "speaker": "Jamie",
+                      "questionEn": "Do you live here?"
+                    }
+                  ],
+                  "fields": [
+                    {
+                      "id": "name",
+                      "labelPt": "Seu nome",
+                      "prefixEn": "Hi! I'm",
+                      "placeholderEn": "Carlos"
+                    },
+                    {
+                      "id": "from",
+                      "labelPt": "País de origem",
+                      "prefixEn": "I'm from",
+                      "placeholderEn": "Brazil"
+                    },
+                    {
+                      "id": "live",
+                      "labelPt": "Cidade onde mora",
+                      "prefixEn": "I live in",
+                      "placeholderEn": "Boston"
+                    }
+                  ],
+                  "exampleEn": "Hi! I'm Carlos. I'm from Brazil. I live in Boston."
+                }
+              },
+              "stepScreens": {
+                "context": [
                   {
-                    "id": "start-m01-l03-p01",
-                    "promptPt": "Jamie pergunta \"Where are you from?\" — você responde:",
+                    "id": "l03-ctx-01",
+                    "type": "intro",
+                    "titleEn": "You meet Jamie",
+                    "titlePt": "Você encontra Jamie",
+                    "bodyPt": "Você está no café do escritório. Jamie, colega internacional, se aproxima para conversar — em inglês. Nesta lição, você responde sobre origem, moradia e nacionalidade."
+                  },
+                  {
+                    "id": "l03-ctx-02",
+                    "type": "scenario",
+                    "settingEn": "Office café · Real life",
+                    "scenarioPt": "Jamie olha para você com um sorriso e abre a conversa."
+                  },
+                  {
+                    "id": "l03-ctx-03",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "Hi! Where are you from?",
+                    "promptPt": "Jamie pergunta de onde você é.",
                     "options": [
                       {
                         "labelEn": "I'm from Brazil.",
                         "correct": true,
-                        "feedbackPt": "Origem — use I'm from…"
+                        "feedbackPt": "Origem — use I'm from + país."
                       },
                       {
                         "labelEn": "I live in Brazil.",
                         "correct": false,
-                        "feedbackPt": "Live in indica moradia atual, não origem."
+                        "feedbackPt": "Live in fala moradia, não origem."
                       },
                       {
-                        "labelEn": "I work in Brazil.",
+                        "labelEn": "I'm Brazilian live.",
                         "correct": false,
-                        "feedbackPt": "Work indica emprego, não origem."
+                        "feedbackPt": "Forma confusa — separe origem e moradia."
                       }
                     ]
                   },
                   {
-                    "id": "start-m01-l03-p02",
-                    "promptPt": "Dizer que mora em Boston:",
+                    "id": "l03-ctx-04",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "Where do you live?",
+                    "promptPt": "Agora Jamie quer saber onde você mora.",
                     "options": [
                       {
                         "labelEn": "I live in Boston.",
                         "correct": true,
-                        "feedbackPt": "Moradia atual — I live in…"
+                        "feedbackPt": "Moradia atual — I live in + cidade."
                       },
                       {
                         "labelEn": "I'm from Boston.",
                         "correct": false,
-                        "feedbackPt": "From indica origem, não necessariamente onde mora."
+                        "feedbackPt": "From indica origem, não necessariamente moradia."
                       },
                       {
                         "labelEn": "I work in Boston.",
@@ -787,39 +778,441 @@
                     ]
                   },
                   {
-                    "id": "start-m01-l03-p03",
-                    "promptPt": "\"Do you live here?\" — você mora aqui:",
+                    "id": "l03-ctx-05",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "Do you live here?",
+                    "promptPt": "Jamie pergunta se você mora na cidade atual. Resposta curta e natural:",
                     "options": [
                       {
                         "labelEn": "Yes, I do.",
                         "correct": true,
-                        "feedbackPt": "Resposta curta e natural."
+                        "feedbackPt": "Resposta curta padrão — repete o verbo do auxiliar."
                       },
                       {
-                        "labelEn": "Nice to meet you.",
+                        "labelEn": "No, I don't.",
                         "correct": false,
-                        "feedbackPt": "Não responde sim/não."
+                        "feedbackPt": "Também é válido na vida real se você não mora aqui — neste fluxo praticamos Yes, I do."
                       },
                       {
-                        "labelEn": "I'm Alex.",
+                        "labelEn": "I'm from here.",
                         "correct": false,
-                        "feedbackPt": "Isso é apresentação, não resposta sim/não."
+                        "feedbackPt": "From here não responde sim/não de forma clara."
+                      }
+                    ]
+                  }
+                ],
+                "learn": [
+                  {
+                    "id": "l03-learn-01",
+                    "type": "phrase_examples",
+                    "titleEn": "Where are you from?",
+                    "titlePt": "De onde você é?",
+                    "introPt": "Use para perguntar origem. Responda com I'm from + país.",
+                    "examples": [
+                      {
+                        "en": "Where are you from?",
+                        "pt": "pergunta"
+                      },
+                      {
+                        "en": "I'm from Brazil.",
+                        "pt": "Brasil"
+                      },
+                      {
+                        "en": "I'm from Argentina.",
+                        "pt": "Argentina"
+                      },
+                      {
+                        "en": "I'm from Mexico.",
+                        "pt": "México"
+                      },
+                      {
+                        "en": "I'm from the United States.",
+                        "pt": "Estados Unidos"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l03-learn-02",
+                    "type": "phrase_examples",
+                    "titleEn": "Where do you live?",
+                    "titlePt": "Onde você mora?",
+                    "introPt": "Pergunta diferente — moradia atual. Responda com I live in + cidade ou país.",
+                    "examples": [
+                      {
+                        "en": "Where do you live?",
+                        "pt": "pergunta"
+                      },
+                      {
+                        "en": "I live in Boston.",
+                        "pt": "Boston"
+                      },
+                      {
+                        "en": "I live in New York.",
+                        "pt": "Nova York"
+                      },
+                      {
+                        "en": "I live in Brazil.",
+                        "pt": "quando mora no país"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l03-learn-03",
+                    "type": "comparison",
+                    "titleEn": "FROM vs LIVE",
+                    "titlePt": "Origem vs moradia",
+                    "left": {
+                      "labelEn": "ORIGIN · FROM",
+                      "exampleEn": "I'm from Brazil.",
+                      "notePt": "De onde você é — origem, passaporte, raízes."
+                    },
+                    "right": {
+                      "labelEn": "CURRENT HOME · LIVE IN",
+                      "exampleEn": "I live in Boston.",
+                      "notePt": "Onde mora agora — endereço atual."
+                    },
+                    "modelEn": "I'm from Brazil, but I live in Boston.",
+                    "modelPt": "Modelo integrado — origem e moradia na mesma conversa."
+                  },
+                  {
+                    "id": "l03-learn-04",
+                    "type": "nationality",
+                    "titleEn": "Nationality",
+                    "titlePt": "Nacionalidade",
+                    "introPt": "Forma simples de dizer sua nacionalidade — introdução, não lista completa.",
+                    "pairs": [
+                      {
+                        "countryEn": "Brazil",
+                        "nationalityEn": "Brazilian"
+                      },
+                      {
+                        "countryEn": "United States",
+                        "nationalityEn": "American"
+                      },
+                      {
+                        "countryEn": "Argentina",
+                        "nationalityEn": "Argentine / Argentinian"
+                      },
+                      {
+                        "countryEn": "Mexico",
+                        "nationalityEn": "Mexican"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l03-learn-05",
+                    "type": "language_focus",
+                    "titleEn": "I am → I'm",
+                    "titlePt": "Contração natural",
+                    "items": [
+                      {
+                        "formalEn": "I am from Brazil.",
+                        "naturalEn": "I'm from Brazil.",
+                        "notePt": "Na fala real, contrações são padrão."
+                      },
+                      {
+                        "formalEn": "I am Brazilian.",
+                        "naturalEn": "I'm Brazilian.",
+                        "notePt": "Mesma regra para nacionalidade."
+                      }
+                    ],
+                    "tipPt": "Use live IN + cidade ou país: I live in Boston · I live in Brazil."
+                  },
+                  {
+                    "id": "l03-learn-06",
+                    "type": "vocabulary",
+                    "titleEn": "Useful words",
+                    "titlePt": "Vocabulário em contexto",
+                    "words": [
+                      {
+                        "en": "country",
+                        "pt": "país",
+                        "exampleEn": "I'm from Brazil — my country."
+                      },
+                      {
+                        "en": "city",
+                        "pt": "cidade",
+                        "exampleEn": "I live in Boston — a big city."
+                      },
+                      {
+                        "en": "from",
+                        "pt": "de / origem",
+                        "exampleEn": "Where are you from?"
+                      },
+                      {
+                        "en": "live",
+                        "pt": "morar",
+                        "exampleEn": "I live in New York."
+                      },
+                      {
+                        "en": "here",
+                        "pt": "aqui",
+                        "exampleEn": "Do you live here?"
+                      },
+                      {
+                        "en": "Brazilian",
+                        "pt": "brasileiro(a)",
+                        "exampleEn": "I'm Brazilian."
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l03-learn-07",
+                    "type": "mistake",
+                    "titlePt": "Erro comum de brasileiros",
+                    "wrongEn": "I live in Brazil. (when asked: Where are you from?)",
+                    "rightEn": "I'm from Brazil.",
+                    "explanationPt": "Where are you from? pede origem — responda com I'm from. I live in fala onde mora agora, que pode ser outro lugar."
+                  },
+                  {
+                    "id": "l03-learn-08",
+                    "type": "review",
+                    "titleEn": "Quick review",
+                    "titlePt": "Revisão rápida",
+                    "items": [
+                      {
+                        "en": "Where are you from?",
+                        "pt": "origem"
+                      },
+                      {
+                        "en": "I'm from Brazil.",
+                        "pt": "resposta origem"
+                      },
+                      {
+                        "en": "Where do you live?",
+                        "pt": "moradia"
+                      },
+                      {
+                        "en": "I live in Boston.",
+                        "pt": "resposta moradia"
+                      },
+                      {
+                        "en": "Do you live here?",
+                        "pt": "sim/não"
+                      },
+                      {
+                        "en": "Yes, I do. / No, I don't.",
+                        "pt": "respostas curtas"
+                      }
+                    ]
+                  }
+                ],
+                "imitate": [
+                  {
+                    "id": "l03-imit-01",
+                    "type": "read_repeat",
+                    "titleEn": "Read & Repeat",
+                    "titlePt": "Leia e repita",
+                    "introPt": "Sem áudio ainda — leia em voz alta, pausa curta entre frases. Adapte país e cidade à sua realidade.",
+                    "phrases": [
+                      {
+                        "en": "Where are you from?"
+                      },
+                      {
+                        "en": "I'm from Brazil."
+                      },
+                      {
+                        "en": "Where do you live?"
+                      },
+                      {
+                        "en": "I live in Boston."
+                      },
+                      {
+                        "en": "I'm Brazilian."
+                      },
+                      {
+                        "en": "Do you live here?"
+                      },
+                      {
+                        "en": "Yes, I do."
+                      },
+                      {
+                        "en": "No, I don't."
+                      }
+                    ],
+                    "dialogueEn": "Where are you from? — I'm from Brazil. — Where do you live? — I live in Boston. — Do you live here? — Yes, I do."
+                  }
+                ],
+                "mission": [
+                  {
+                    "id": "l03-miss-01",
+                    "type": "mission_intro",
+                    "headlineEn": "Your turn — introduce yourself.",
+                    "headlinePt": "Sua vez — apresente-se.",
+                    "bodyPt": "Jamie fez três perguntas. Agora monte sua resposta completa em inglês — nome, origem e moradia.",
+                    "prompts": [
+                      {
+                        "speaker": "Jamie",
+                        "questionEn": "Where are you from?"
+                      },
+                      {
+                        "speaker": "Jamie",
+                        "questionEn": "Where do you live?"
+                      },
+                      {
+                        "speaker": "Jamie",
+                        "questionEn": "Do you live here?"
                       }
                     ]
                   }
                 ]
               },
-              "mission": {
-                "headlineEn": "You can talk about where you're from.",
-                "headlinePt": "Você consegue falar de onde é e onde mora.",
-                "bodyPt": "Missão: em uma conversa curta, diga de onde você é, onde mora e responda se mora na cidade atual (Yes, I do / No, I don't).",
-                "canDo": [
-                  "I'm from Brazil.",
-                  "I live in Boston.",
-                  "Yes, I do.",
-                  "No, I don't."
-                ]
-              }
+              "practiceInteractions": [
+                {
+                  "id": "l03-prac-01",
+                  "type": "choice",
+                  "promptPt": "Jamie pergunta origem — melhor resposta:",
+                  "options": [
+                    {
+                      "labelEn": "I'm from Brazil.",
+                      "correct": true,
+                      "feedbackPt": "Origem clara com I'm from."
+                    },
+                    {
+                      "labelEn": "I live in Brazil.",
+                      "correct": false,
+                      "feedbackPt": "Isso responde moradia, não origem."
+                    },
+                    {
+                      "labelEn": "What do you do?",
+                      "correct": false,
+                      "feedbackPt": "Isso pergunta profissão."
+                    }
+                  ]
+                },
+                {
+                  "id": "l03-prac-02",
+                  "type": "fill_blank",
+                  "promptPt": "Complete a pergunta sobre moradia:",
+                  "templateEn": "Where do you ___?",
+                  "blankLabel": "verbo",
+                  "options": [
+                    {
+                      "labelEn": "live",
+                      "correct": true,
+                      "feedbackPt": "Where do you live? — padrão fixo."
+                    },
+                    {
+                      "labelEn": "from",
+                      "correct": false,
+                      "feedbackPt": "From não combina com do you ___ nesta pergunta."
+                    },
+                    {
+                      "labelEn": "work",
+                      "correct": false,
+                      "feedbackPt": "Work muda o significado para emprego."
+                    }
+                  ]
+                },
+                {
+                  "id": "l03-prac-03",
+                  "type": "classify",
+                  "promptPt": "Esta frase fala de origem ou moradia?",
+                  "sentenceEn": "I'm from Argentina.",
+                  "category": "from",
+                  "feedbackCorrectPt": "I'm from = origem (FROM).",
+                  "feedbackWrongPt": "Live in seria moradia — esta frase usa from."
+                },
+                {
+                  "id": "l03-prac-04",
+                  "type": "classify",
+                  "promptPt": "Esta frase fala de origem ou moradia?",
+                  "sentenceEn": "I live in New York.",
+                  "category": "live",
+                  "feedbackCorrectPt": "I live in = moradia atual (LIVE IN).",
+                  "feedbackWrongPt": "I'm from seria origem — esta frase usa live in."
+                },
+                {
+                  "id": "l03-prac-05",
+                  "type": "reorder",
+                  "promptPt": "Monte a pergunta correta sobre origem:",
+                  "tokens": [
+                    "you",
+                    "Where",
+                    "from?",
+                    "are"
+                  ],
+                  "correctOrder": [
+                    "Where",
+                    "are",
+                    "you",
+                    "from?"
+                  ],
+                  "feedbackCorrectPt": "Where are you from? — ordem fixa em inglês.",
+                  "feedbackWrongPt": "A ordem em inglês é Where + are + you + from?"
+                },
+                {
+                  "id": "l03-prac-06",
+                  "type": "dialogue_complete",
+                  "promptPt": "Jamie pergunta sobre moradia — você responde:",
+                  "speaker": "You",
+                  "contextEn": "Jamie: Where do you live?",
+                  "options": [
+                    {
+                      "labelEn": "I live in Boston.",
+                      "correct": true,
+                      "feedbackPt": "Resposta natural para moradia."
+                    },
+                    {
+                      "labelEn": "I'm from Boston.",
+                      "correct": false,
+                      "feedbackPt": "From indica origem — a pergunta foi live."
+                    },
+                    {
+                      "labelEn": "Yes, I do.",
+                      "correct": false,
+                      "feedbackPt": "Yes/No responde Do you live here?, não Where do you live?"
+                    }
+                  ]
+                },
+                {
+                  "id": "l03-prac-07",
+                  "type": "choice",
+                  "promptPt": "Dizer nacionalidade brasileira:",
+                  "options": [
+                    {
+                      "labelEn": "I'm Brazilian.",
+                      "correct": true,
+                      "feedbackPt": "Nacionalidade com -ian."
+                    },
+                    {
+                      "labelEn": "I'm Brazil.",
+                      "correct": false,
+                      "feedbackPt": "Brazil é país, não nacionalidade."
+                    },
+                    {
+                      "labelEn": "I live Brazilian.",
+                      "correct": false,
+                      "feedbackPt": "Forma gramatical incorreta."
+                    }
+                  ]
+                },
+                {
+                  "id": "l03-prac-08",
+                  "type": "fill_blank",
+                  "promptPt": "Modelo integrado — complete:",
+                  "templateEn": "I'm from Brazil, but I ___ in Boston.",
+                  "blankLabel": "verbo",
+                  "options": [
+                    {
+                      "labelEn": "live",
+                      "correct": true,
+                      "feedbackPt": "Origem + moradia no mesmo turno — padrão real."
+                    },
+                    {
+                      "labelEn": "from",
+                      "correct": false,
+                      "feedbackPt": "Já usou from para origem — agora precisa de live."
+                    },
+                    {
+                      "labelEn": "am",
+                      "correct": false,
+                      "feedbackPt": "I am in Boston soa menos natural que I live in."
+                    }
+                  ]
+                }
+              ]
             }
           },
           "quiz": {
@@ -833,7 +1226,7 @@
                 "options": [
                   "Where are you from?",
                   "What do you do?",
-                  "What's your name?"
+                  "Where do you live?"
                 ],
                 "correctIndex": 0
               },
@@ -851,33 +1244,66 @@
               {
                 "contentKey": "start-m01-l03-q03",
                 "sortOrder": 2,
-                "question": "Dizer nacionalidade:",
+                "question": "Dizer nacionalidade brasileira:",
                 "options": [
                   "I'm Brazilian.",
-                  "I'm from Boston.",
-                  "I'm good, thank you."
+                  "I'm Brazil.",
+                  "I'm from Brazilian."
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l03-q04",
                 "sortOrder": 3,
-                "question": "Resposta curta e natural a \"Do you live here?\" (morando aqui):",
+                "question": "Resposta curta a \"Do you live here?\" (morando aqui):",
                 "options": [
                   "Yes, I do.",
                   "Nice to meet you.",
-                  "I'm Alex."
+                  "I'm from here."
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l03-q05",
                 "sortOrder": 4,
-                "question": "Diferença correta:",
+                "question": "Diferença correta entre from e live in:",
                 "options": [
                   "I'm from Brazil = origem; I live in Boston = moradia atual",
                   "I'm from Brazil = trabalho; I live in Boston = nome",
                   "São a mesma pergunta"
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l03-q06",
+                "sortOrder": 5,
+                "question": "Perguntar onde alguém mora:",
+                "options": [
+                  "Where do you live?",
+                  "Where are you from?",
+                  "What's your name?"
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l03-q07",
+                "sortOrder": 6,
+                "question": "Modelo integrado — origem e moradia:",
+                "options": [
+                  "I'm from Brazil, but I live in Boston.",
+                  "I live from Brazil in Boston.",
+                  "I'm Boston from Brazil."
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l03-q08",
+                "sortOrder": 7,
+                "question": "Forma natural (contração):",
+                "options": [
+                  "I'm from Brazil.",
+                  "I am from Brazil always only.",
+                  "I from Brazil."
                 ],
                 "correctIndex": 0
               }

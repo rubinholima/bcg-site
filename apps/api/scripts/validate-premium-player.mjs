@@ -43,5 +43,14 @@ const report = {
   quizIdsUnique: new Set(lessons.flatMap((l) => l.quiz?.questions?.map((q) => q.contentKey) ?? [])).size,
 };
 
+const l3 = lessons.find((l) => l.contentKey === 'start-m01-l03-im-from-brazil');
+report.lesson3Deep = {
+  version: l3?.liveMeta?.player?.version,
+  contextScreens: l3?.liveMeta?.player?.stepScreens?.context?.length ?? 0,
+  learnScreens: l3?.liveMeta?.player?.stepScreens?.learn?.length ?? 0,
+  practiceInteractions: l3?.liveMeta?.player?.practiceInteractions?.length ?? 0,
+  quizQuestions: l3?.quiz?.questions?.length ?? 0,
+};
+
 console.log(JSON.stringify(report, null, 2));
 await p.$disconnect();
