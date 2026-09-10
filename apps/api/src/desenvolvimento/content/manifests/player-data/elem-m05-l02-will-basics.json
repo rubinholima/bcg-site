@@ -1,0 +1,173 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 5,
+  "goalPt": "Usar will para decisões espontâneas, promessas, ofertas e previsões — e distinguir de going to para planos já decididos.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Sua colega precisa de ajuda urgente — você decide na hora, promete e faz previsões sobre o projeto.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Make a promise and an offer.",
+    "headlinePt": "Faça uma promessa e uma oferta.",
+    "bodyPt": "",
+    "canDo": [
+      "I'll help you with that.",
+      "Don't worry — I'll send it today.",
+      "I think it will be ready by Friday.",
+      "Will you join the call?",
+      "Yes, I'll be there."
+    ],
+    "production": {
+      "introPt": "Um colega precisa de ajuda. Ofereça ajuda, faça uma promessa e uma previsão.",
+      "prompts": [{ "speaker": "Colleague", "questionEn": "I'm stuck on this presentation. Can someone help?" }],
+      "fields": [
+        { "id": "offer", "labelPt": "Oferta espontânea", "prefixEn": "", "placeholderEn": "I'll help you with that." },
+        { "id": "promise", "labelPt": "Promessa", "prefixEn": "", "placeholderEn": "Don't worry — I'll send you the file by 5 pm." },
+        { "id": "prediction", "labelPt": "Previsão", "prefixEn": "", "placeholderEn": "I think it will be ready by Friday." }
+      ],
+      "exampleEn": "I'll help you with that. Don't worry — I'll send you the file by 5 pm. I think it will be ready by Friday."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em05l02-ctx-01", "type": "intro", "titleEn": "Will — spontaneous decisions", "titlePt": "Will — decisões espontâneas", "bodyPt": "Will não é só 'futuro genérico'. No dia a dia, usamos will quando decidimos na hora, prometemos ou oferecemos ajuda." },
+      { "id": "em05l02-ctx-02", "type": "scenario", "settingEn": "Office · Urgent deadline", "scenarioPt": "Sua colega Sarah está nervosa com uma apresentação para amanhã." },
+      { "id": "em05l02-ctx-03", "type": "dialogue_choice", "speaker": "Sarah", "promptEn": "I'm completely stuck. I don't know what to do.", "promptPt": "Sarah pede ajuda — você decide na hora:", "options": [
+        { "labelEn": "Don't worry — I'll help you with the slides.", "correct": true, "feedbackPt": "Decisão espontânea + I'll = will." },
+        { "labelEn": "I'm going to help you yesterday.", "correct": false, "feedbackPt": "Yesterday é passado." },
+        { "labelEn": "I help you with slides.", "correct": false, "feedbackPt": "Presente simples — falta compromisso futuro." }
+      ]},
+      { "id": "em05l02-ctx-04", "type": "dialogue_choice", "speaker": "Sarah", "promptEn": "Really? That would be amazing. When can you look at it?", "promptPt": "Sarah agradece — você promete:", "options": [
+        { "labelEn": "I'll review it this afternoon and send you feedback by 5.", "correct": true, "feedbackPt": "Promessa com prazo — will natural." },
+        { "labelEn": "I reviewed it this afternoon.", "correct": false, "feedbackPt": "Reviewed é passado." },
+        { "labelEn": "I will reviewed it.", "correct": false, "feedbackPt": "Will + verbo base, não passado." }
+      ]},
+      { "id": "em05l02-ctx-05", "type": "dialogue_choice", "speaker": "Sarah", "promptEn": "Do you think we'll finish in time for tomorrow's meeting?", "promptPt": "Sarah pede previsão:", "options": [
+        { "labelEn": "Yes, I think we'll finish tonight. It won't take long.", "correct": true, "feedbackPt": "Previsão com will — positiva e negativa." },
+        { "labelEn": "Yes, I think we finish tonight.", "correct": false, "feedbackPt": "Previsão usa will, não presente." },
+        { "labelEn": "Yes, we finished tonight.", "correct": false, "feedbackPt": "Finished é passado." }
+      ]},
+      { "id": "em05l02-ctx-06", "type": "dialogue_choice", "speaker": "Sarah", "promptEn": "Will you join the prep call at 4?", "promptPt": "Sarah pergunta com will:", "options": [
+        { "labelEn": "Sure, I'll be there. I'll bring the updated data.", "correct": true, "feedbackPt": "Resposta afirmativa + promessa extra." },
+        { "labelEn": "Sure, I be there.", "correct": false, "feedbackPt": "Falta will/'ll." },
+        { "labelEn": "Sure, I'm going to be there yesterday.", "correct": false, "feedbackPt": "Yesterday contradiz o convite." }
+      ]},
+      { "id": "em05l02-ctx-07", "type": "dialogue_choice", "speaker": "Sarah", "promptEn": "Thank you so much. You're a lifesaver!", "promptPt": "Encerramento:", "options": [
+        { "labelEn": "No problem! We'll get it done together.", "correct": true, "feedbackPt": "Encerramento positivo com will." },
+        { "labelEn": "We got it done yesterday.", "correct": false, "feedbackPt": "Ainda não terminaram." },
+        { "labelEn": "I'm going to help you last week.", "correct": false, "feedbackPt": "Last week é passado." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em05l02-learn-01", "type": "phrase_examples", "titleEn": "Spontaneous decisions — I'll...", "titlePt": "Decisões espontâneas — I'll...", "introPt": "Decidiu na hora? Use will:", "examples": [
+        { "en": "I'll help you.", "pt": "vou te ajudar (decidi agora)" },
+        { "en": "I'll get the coffee.", "pt": "eu pego o café" },
+        { "en": "I'll call them right now.", "pt": "vou ligar agora" },
+        { "en": "OK, I'll do it.", "pt": "ok, eu faço" }
+      ]},
+      { "id": "em05l02-learn-02", "type": "phrase_examples", "titleEn": "Promises — I will / I won't", "titlePt": "Promessas — I will / I won't", "introPt": "Compromisso que você assume:", "examples": [
+        { "en": "I'll send it today.", "pt": "vou enviar hoje" },
+        { "en": "I won't forget.", "pt": "não vou esquecer" },
+        { "en": "Don't worry — I'll take care of it.", "pt": "eu cuido disso" },
+        { "en": "I promise I'll be on time.", "pt": "prometo chegar no horário" }
+      ]},
+      { "id": "em05l02-learn-03", "type": "phrase_examples", "titleEn": "Predictions — I think it will...", "titlePt": "Previsões — I think it will...", "introPt": "Opinião sobre o futuro:", "examples": [
+        { "en": "I think it will rain.", "pt": "acho que vai chover" },
+        { "en": "It won't take long.", "pt": "não vai demorar" },
+        { "en": "She'll love it.", "pt": "ela vai adorar" },
+        { "en": "The project will be ready by Friday.", "pt": "projeto pronto até sexta" }
+      ]},
+      { "id": "em05l02-learn-04", "type": "comparison", "titleEn": "Will vs going to", "titlePt": "Will vs going to", "left": {
+        "labelEn": "WILL · decided now",
+        "exampleEn": "The phone is ringing. I'll answer it.",
+        "notePt": "Decisão no momento."
+      }, "right": {
+        "labelEn": "GOING TO · already planned",
+        "exampleEn": "I'm going to visit my parents this weekend.",
+        "notePt": "Plano já existia."
+      }, "modelEn": "I'm going to travel next month. (plan) — Oh, the taxi is here! I'll take it. (now)", "modelPt": "Plano prévio = going to. Decisão instantânea = will." },
+      { "id": "em05l02-learn-05", "type": "language_focus", "titleEn": "Will form", "titlePt": "Forma do will", "items": [
+        { "formalEn": "I will help you.", "naturalEn": "I'll help you.", "notePt": "Contração I'll — sempre na fala." },
+        { "formalEn": "Will you join?", "naturalEn": "Will you be there?", "notePt": "Perguntas: Will + sujeito + verbo base." },
+        { "formalEn": "I will not forget.", "naturalEn": "I won't forget.", "notePt": "Negativa: won't = will not." },
+        { "formalEn": "will + base verb", "naturalEn": "will help / send / finish", "notePt": "Verbo base — igual going to." }
+      ], "tipPt": "Will é igual para todos os sujeitos: I/you/he/she/it/we/they will." },
+      { "id": "em05l02-learn-06", "type": "mistake", "titlePt": "Erro comum", "wrongEn": "I'll sending the file today.", "rightEn": "I'll send the file today.", "explanationPt": "Will + verbo base (send), nunca -ing." },
+      { "id": "em05l02-learn-07", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "I'll help you.", "pt": "oferta espontânea" },
+        { "en": "I'll send it by 5 pm.", "pt": "promessa" },
+        { "en": "I think it will be ready.", "pt": "previsão" },
+        { "en": "Will you join the call?", "pt": "pergunta" },
+        { "en": "It won't take long.", "pt": "negativa" }
+      ]}
+    ],
+    "imitate": [{ "id": "em05l02-imit-01", "type": "read_repeat", "titleEn": "Help & promises dialogue", "titlePt": "Diálogo de ajuda e promessas", "introPt": "Leia o diálogo completo em voz alta.", "phrases": [
+      { "en": "I'm completely stuck. I don't know what to do." },
+      { "en": "Don't worry — I'll help you with the slides." },
+      { "en": "When can you look at it?" },
+      { "en": "I'll review it this afternoon and send feedback by 5." },
+      { "en": "Do you think we'll finish in time?" },
+      { "en": "Yes, I think we'll finish tonight. It won't take long." },
+      { "en": "Will you join the prep call at 4?" },
+      { "en": "Sure, I'll be there." },
+      { "en": "Thank you so much!" },
+      { "en": "No problem! We'll get it done together." }
+    ], "dialogueEn": "I'm completely stuck. — Don't worry — I'll help you with the slides. — When can you look at it? — I'll review it this afternoon and send feedback by 5. — Do you think we'll finish in time? — Yes, I think we'll finish tonight. It won't take long. — Will you join the call at 4? — Sure, I'll be there. — Thank you! — No problem! We'll get it done together." }],
+    "mission": [{ "id": "em05l02-miss-01", "type": "mission_intro", "headlineEn": "Offer, promise, predict.", "headlinePt": "Ofereça, prometa, preveja.", "bodyPt": "Três frases com will em contextos diferentes.", "prompts": [{ "speaker": "Colleague", "questionEn": "I'm stuck on this presentation. Can someone help?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em05l02-prac-01", "type": "choice", "promptPt": "Decisão espontânea — vou te ajudar:", "options": [
+      { "labelEn": "I'll help you with that.", "correct": true, "feedbackPt": "Will para decisão na hora." },
+      { "labelEn": "I help you with that.", "correct": false, "feedbackPt": "Presente — falta futuro." },
+      { "labelEn": "I helped you with that.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l02-prac-02", "type": "fill_blank", "promptPt": "Complete a promessa:", "templateEn": "Don't worry — I ___ send it today.", "blankLabel": "verbo", "options": [
+      { "labelEn": "'ll", "correct": true, "feedbackPt": "I'll = I will." },
+      { "labelEn": "'m", "correct": false, "feedbackPt": "'m = am — não promessa." },
+      { "labelEn": "'ve", "correct": false, "feedbackPt": "'ve = have." }
+    ]},
+    { "id": "em05l02-prac-03", "type": "reorder", "promptPt": "Monte — acho que vai ficar pronto:", "tokens": ["ready.", "be", "will", "it", "think", "I"], "correctOrder": ["I", "think", "it", "will", "be", "ready."], "feedbackCorrectPt": "I think it will be ready.", "feedbackWrongPt": "I think + will + verbo base." },
+    { "id": "em05l02-prac-04", "type": "dialogue_complete", "promptPt": "Sarah: Will you join the call at 4?", "speaker": "You", "contextEn": "Sarah: Will you join the call at 4?", "options": [
+      { "labelEn": "Sure, I'll be there.", "correct": true, "feedbackPt": "Resposta afirmativa natural." },
+      { "labelEn": "Sure, I be there.", "correct": false, "feedbackPt": "Falta will." },
+      { "labelEn": "Sure, I'm there.", "correct": false, "feedbackPt": "Presente — pergunta é futuro." }
+    ]},
+    { "id": "em05l02-prac-05", "type": "classify", "promptPt": "Will ou going to?", "sentenceEn": "I'm going to visit my parents this weekend.", "category": "going_to", "feedbackCorrectPt": "Plano já decidido = going to.", "feedbackWrongPt": "Plano prévio, não decisão na hora." },
+    { "id": "em05l02-prac-06", "type": "classify", "promptPt": "Will ou going to?", "sentenceEn": "The phone is ringing. I'll answer it.", "category": "will", "feedbackCorrectPt": "Decisão instantânea = will.", "feedbackWrongPt": "Decidiu na hora = will." },
+    { "id": "em05l02-prac-07", "type": "fill_blank", "promptPt": "Complete — não vai demorar:", "templateEn": "It ___ take long.", "blankLabel": "verbo", "options": [
+      { "labelEn": "won't", "correct": true, "feedbackPt": "Won't = will not." },
+      { "labelEn": "isn't", "correct": false, "feedbackPt": "Previsão usa won't." },
+      { "labelEn": "don't", "correct": false, "feedbackPt": "It + won't." }
+    ]},
+    { "id": "em05l02-prac-08", "type": "choice", "promptPt": "Previsão sobre o tempo:", "options": [
+      { "labelEn": "I think it will rain tomorrow.", "correct": true, "feedbackPt": "I think + will + verbo base." },
+      { "labelEn": "I think it rains tomorrow.", "correct": false, "feedbackPt": "Previsão usa will." },
+      { "labelEn": "I think it will raining.", "correct": false, "feedbackPt": "Verbo base após will." }
+    ]},
+    { "id": "em05l02-prac-09", "type": "dialogue_complete", "promptPt": "Colega nervoso — você oferece:", "speaker": "You", "contextEn": "Colleague: I'm stuck on this report.", "options": [
+      { "labelEn": "Don't worry — I'll help you.", "correct": true, "feedbackPt": "Oferta espontânea com will." },
+      { "labelEn": "Don't worry — I helped you.", "correct": false, "feedbackPt": "Passado." },
+      { "labelEn": "Don't worry — I'm help you.", "correct": false, "feedbackPt": "Forma incorreta." }
+    ]},
+    { "id": "em05l02-prac-10", "type": "reorder", "promptPt": "Monte a pergunta:", "tokens": ["call?", "the", "join", "you", "Will"], "correctOrder": ["Will", "you", "join", "the", "call?"], "feedbackCorrectPt": "Will you join the call?", "feedbackWrongPt": "Will + sujeito + verbo base." },
+    { "id": "em05l02-prac-11", "type": "choice", "promptPt": "Qual usa will corretamente?", "options": [
+      { "labelEn": "I'll send you the file by 5 pm.", "correct": true, "feedbackPt": "Promessa com prazo." },
+      { "labelEn": "I'll sending you the file.", "correct": false, "feedbackPt": "Verbo base após will." },
+      { "labelEn": "I will sent the file.", "correct": false, "feedbackPt": "Sent é passado." }
+    ]},
+    { "id": "em05l02-prac-12", "type": "dialogue_complete", "promptPt": "Follow-up — previsão positiva:", "speaker": "You", "contextEn": "Sarah: Do you think we'll finish in time?", "options": [
+      { "labelEn": "Yes, I think we'll finish tonight.", "correct": true, "feedbackPt": "Previsão com we'll." },
+      { "labelEn": "Yes, I think we finish tonight.", "correct": false, "feedbackPt": "Previsão = will." },
+      { "labelEn": "Yes, we finished tonight.", "correct": false, "feedbackPt": "Passado." }
+    ]}
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 6,
+  "goalPt": "Descrever casa e bairro — tipos de moradia, cômodos, vizinhança e o que há por perto com there is/are.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Novo colega pergunta onde você mora e como é seu bairro.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Describe your home and neighborhood.",
+    "headlinePt": "Descreva sua casa e bairro.",
+    "bodyPt": "",
+    "canDo": [
+      "I live in an apartment near the stadium.",
+      "There are two bedrooms and a small balcony.",
+      "The neighborhood is quiet and safe.",
+      "There's a supermarket and a gym nearby.",
+      "It's about 20 minutes from the office."
+    ],
+    "production": {
+      "introPt": "Descreva onde mora, sua casa e o que tem no bairro.",
+      "prompts": [{ "speaker": "Colleague", "questionEn": "Where do you live? What's your neighborhood like?" }],
+      "fields": [
+        { "id": "home", "labelPt": "Onde mora", "prefixEn": "I live in", "placeholderEn": "an apartment near the stadium." },
+        { "id": "rooms", "labelPt": "Cômodos", "prefixEn": "There are", "placeholderEn": "two bedrooms and a small balcony." },
+        { "id": "neighborhood", "labelPt": "Bairro", "prefixEn": "The neighborhood is", "placeholderEn": "quiet and safe. There's a supermarket nearby." }
+      ],
+      "exampleEn": "I live in an apartment near the stadium. There are two bedrooms and a small balcony. The neighborhood is quiet and safe. There's a supermarket nearby."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em06l01-ctx-01", "type": "intro", "titleEn": "Home & neighborhood", "titlePt": "Casa e bairro", "bodyPt": "Falar de onde você mora é conversa comum no trabalho — especialmente com colegas novos ou em viagens." },
+      { "id": "em06l01-ctx-02", "type": "scenario", "settingEn": "Office · Getting to know a colleague", "scenarioPt": "Um colega recém-contratado quer saber mais sobre você." },
+      { "id": "em06l01-ctx-03", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "So — where do you live?", "promptPt": "Colega pergunta onde mora:", "options": [
+        { "labelEn": "I live in an apartment near the stadium — about 20 minutes from here.", "correct": true, "feedbackPt": "Tipo + localização + distância." },
+        { "labelEn": "I live apartment stadium.", "correct": false, "feedbackPt": "Faltam preposições." },
+        { "labelEn": "I lived near stadium yesterday.", "correct": false, "feedbackPt": "Lived é passado — pergunta é presente." }
+      ]},
+      { "id": "em06l01-ctx-04", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "Nice! What's the apartment like?", "promptPt": "Follow-up — descrever a casa:", "options": [
+        { "labelEn": "It's small but cozy. There are two bedrooms and a balcony with a nice view.", "correct": true, "feedbackPt": "There are + cômodos + detalhe." },
+        { "labelEn": "It small cozy two bedroom.", "correct": false, "feedbackPt": "Frases incompletas." },
+        { "labelEn": "There is two bedrooms.", "correct": false, "feedbackPt": "Plural → There are." }
+      ]},
+      { "id": "em06l01-ctx-05", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "And the neighborhood — is it good?", "promptPt": "Sobre o bairro:", "options": [
+        { "labelEn": "Yes — it's quiet and safe. There are lots of parks and a great supermarket nearby.", "correct": true, "feedbackPt": "Adjetivos + there are + lugares." },
+        { "labelEn": "Neighborhood good yes.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "It was quiet when I lived there last year.", "correct": false, "feedbackPt": "Ainda mora lá — use presente." }
+      ]},
+      { "id": "em06l01-ctx-06", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "Is there a gym or anything like that?", "promptPt": "Follow-up — facilities:", "options": [
+        { "labelEn": "Yes — there's a gym two blocks away, and there are a few restaurants on the main street.", "correct": true, "feedbackPt": "There's + There are — singular e plural." },
+        { "labelEn": "Yes — there are a gym.", "correct": false, "feedbackPt": "Singular → there's." },
+        { "labelEn": "Gym is exercise place.", "correct": false, "feedbackPt": "Não responde localização." }
+      ]},
+      { "id": "em06l01-ctx-07", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "Sounds like a great area! Do you like living there?", "promptPt": "Encerramento:", "options": [
+        { "labelEn": "Yes, I love it. It's convenient for work and there's everything I need nearby.", "correct": true, "feedbackPt": "Opinião + razões." },
+        { "labelEn": "I liked it before I moved.", "correct": false, "feedbackPt": "Ainda mora lá." },
+        { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Devolva a pergunta depois." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em06l01-learn-01", "type": "phrase_examples", "titleEn": "Types of home", "titlePt": "Tipos de moradia", "introPt": "Vocabulário básico:", "examples": [
+        { "en": "apartment / flat", "pt": "apartamento" },
+        { "en": "house", "pt": "casa" },
+        { "en": "condo / condominium", "pt": "condomínio" },
+        { "en": "I live in a house in the suburbs.", "pt": "moro em casa no subúrbio" }
+      ]},
+      { "id": "em06l01-learn-02", "type": "phrase_examples", "titleEn": "Rooms & features", "titlePt": "Cômodos e características", "introPt": "Descrever espaços:", "examples": [
+        { "en": "bedroom / bathroom / kitchen / living room", "pt": "cômodos" },
+        { "en": "balcony / garage / backyard", "pt": "áreas extras" },
+        { "en": "There are two bedrooms.", "pt": "dois quartos" },
+        { "en": "There's a small balcony.", "pt": "varanda pequena" }
+      ]},
+      { "id": "em06l01-learn-03", "type": "phrase_examples", "titleEn": "Neighborhood", "titlePt": "Bairro", "introPt": "Como é a vizinhança:", "examples": [
+        { "en": "quiet / safe / busy / convenient", "pt": "adjetivos" },
+        { "en": "The neighborhood is quiet and safe.", "pt": "modelo" },
+        { "en": "It's a nice area.", "pt": "bairro agradável" },
+        { "en": "nearby / close to / far from", "pt": "distância" }
+      ]},
+      { "id": "em06l01-learn-04", "type": "phrase_examples", "titleEn": "There is / There are nearby", "titlePt": "There is / There are por perto", "introPt": "O que existe no bairro:", "examples": [
+        { "en": "There's a supermarket nearby.", "pt": "supermercado perto" },
+        { "en": "There are two parks.", "pt": "dois parques" },
+        { "en": "Is there a pharmacy?", "pt": "tem farmácia?" },
+        { "en": "There aren't many restaurants.", "pt": "poucos restaurantes" }
+      ]},
+      { "id": "em06l01-learn-05", "type": "language_focus", "titleEn": "There is vs There are", "titlePt": "There is vs There are", "items": [
+        { "formalEn": "There's a gym.", "naturalEn": "Singular → there's.", "notePt": "A gym = singular." },
+        { "formalEn": "There are two parks.", "naturalEn": "Plural → there are.", "notePt": "Two parks = plural." },
+        { "formalEn": "There isn't / There aren't", "naturalEn": "Negative forms", "notePt": "Negativa segue singular/plural." }
+      ], "tipPt": "There's = 1 coisa. There are = 2+. Pergunte: Is there...? / Are there...?" },
+      { "id": "em06l01-learn-06", "type": "mistake", "titlePt": "Erro comum", "wrongEn": "There is two bedrooms and there are a balcony.", "rightEn": "There are two bedrooms and there's a balcony.", "explanationPt": "Two bedrooms = plural (are). A balcony = singular (is)." },
+      { "id": "em06l01-learn-07", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "I live in an apartment near the stadium.", "pt": "onde mora" },
+        { "en": "There are two bedrooms.", "pt": "cômodos" },
+        { "en": "The neighborhood is quiet and safe.", "pt": "bairro" },
+        { "en": "There's a gym nearby.", "pt": "facilities" },
+        { "en": "It's about 20 minutes from the office.", "pt": "distância" }
+      ]}
+    ],
+    "imitate": [{ "id": "em06l01-imit-01", "type": "read_repeat", "titleEn": "Home & neighborhood dialogue", "titlePt": "Diálogo casa e bairro", "introPt": "Leia o diálogo completo.", "phrases": [
+      { "en": "Where do you live?" },
+      { "en": "I live in an apartment near the stadium." },
+      { "en": "What's the apartment like?" },
+      { "en": "There are two bedrooms and a balcony with a nice view." },
+      { "en": "And the neighborhood?" },
+      { "en": "It's quiet and safe. There are lots of parks." },
+      { "en": "Is there a gym nearby?" },
+      { "en": "Yes — there's a gym two blocks away." },
+      { "en": "Do you like living there?" },
+      { "en": "Yes — it's convenient and there's everything I need." }
+    ], "dialogueEn": "Where do you live? — Apartment near the stadium. — What's it like? — Two bedrooms, balcony with a view. — Neighborhood? — Quiet and safe, lots of parks. — Gym nearby? — Yes, two blocks away. — Like it? — Yes, very convenient!" }],
+    "mission": [{ "id": "em06l01-miss-01", "type": "mission_intro", "headlineEn": "Describe where you live.", "headlinePt": "Descreva onde mora.", "bodyPt": "Casa + bairro + facilities.", "prompts": [{ "speaker": "Colleague", "questionEn": "Where do you live?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em06l01-prac-01", "type": "choice", "promptPt": "Onde mora:", "options": [
+      { "labelEn": "I live in an apartment near the stadium.", "correct": true, "feedbackPt": "Live in + tipo + local." },
+      { "labelEn": "I live on apartment stadium.", "correct": false, "feedbackPt": "In apartment, near stadium." },
+      { "labelEn": "I living apartment.", "correct": false, "feedbackPt": "Live, não living." }
+    ]},
+    { "id": "em06l01-prac-02", "type": "fill_blank", "promptPt": "Complete — dois quartos:", "templateEn": "There ___ two bedrooms.", "blankLabel": "verbo", "options": [
+      { "labelEn": "are", "correct": true, "feedbackPt": "Plural → are." },
+      { "labelEn": "is", "correct": false, "feedbackPt": "Two = plural." },
+      { "labelEn": "has", "correct": false, "feedbackPt": "Use there are." }
+    ]},
+    { "id": "em06l01-prac-03", "type": "fill_blank", "promptPt": "Complete — academia perto:", "templateEn": "There ___ a gym nearby.", "blankLabel": "verbo", "options": [
+      { "labelEn": "'s", "correct": true, "feedbackPt": "Singular → there's." },
+      { "labelEn": "'re", "correct": false, "feedbackPt": "A gym = singular." },
+      { "labelEn": "are", "correct": false, "feedbackPt": "Singular → is." }
+    ]},
+    { "id": "em06l01-prac-04", "type": "dialogue_complete", "promptPt": "Colega: What's the apartment like?", "speaker": "You", "contextEn": "Colleague: What's the apartment like?", "options": [
+      { "labelEn": "It's small but cozy. There are two bedrooms and a balcony.", "correct": true, "feedbackPt": "Descrição completa." },
+      { "labelEn": "There is two bedrooms.", "correct": false, "feedbackPt": "Plural → are." },
+      { "labelEn": "Apartment small cozy.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "em06l01-prac-05", "type": "reorder", "promptPt": "Monte — bairro tranquilo e seguro:", "tokens": ["safe.", "and", "quiet", "is", "neighborhood", "The"], "correctOrder": ["The", "neighborhood", "is", "quiet", "and", "safe."], "feedbackCorrectPt": "The neighborhood is quiet and safe.", "feedbackWrongPt": "The + noun + is + adjetivos." },
+    { "id": "em06l01-prac-06", "type": "choice", "promptPt": "Pergunta — tem farmácia?", "options": [
+      { "labelEn": "Is there a pharmacy nearby?", "correct": true, "feedbackPt": "Is there + singular." },
+      { "labelEn": "Are there a pharmacy?", "correct": false, "feedbackPt": "A pharmacy = singular." },
+      { "labelEn": "There is pharmacy?", "correct": false, "feedbackPt": "Falta Is no início." }
+    ]},
+    { "id": "em06l01-prac-07", "type": "dialogue_complete", "promptPt": "Follow-up — gym:", "speaker": "You", "contextEn": "Colleague: Is there a gym nearby?", "options": [
+      { "labelEn": "Yes — there's a gym two blocks away.", "correct": true, "feedbackPt": "There's + localização." },
+      { "labelEn": "Yes — there are a gym.", "correct": false, "feedbackPt": "Singular → there's." },
+      { "labelEn": "Gym is two blocks.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "em06l01-prac-08", "type": "choice", "promptPt": "Distância do trabalho:", "options": [
+      { "labelEn": "It's about 20 minutes from the office.", "correct": true, "feedbackPt": "About + tempo + from." },
+      { "labelEn": "It's about 20 minutes to the office from.", "correct": false, "feedbackPt": "From the office." },
+      { "labelEn": "About 20 office minutes.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l01-prac-09", "type": "classify", "promptPt": "Singular ou plural?", "sentenceEn": "There are lots of parks.", "category": "plural", "feedbackCorrectPt": "Lots of parks = plural.", "feedbackWrongPt": "Parks = plural → are." },
+    { "id": "em06l01-prac-10", "type": "fill_blank", "promptPt": "Complete — não tem muitos restaurantes:", "templateEn": "There ___ many restaurants.", "blankLabel": "verbo", "options": [
+      { "labelEn": "aren't", "correct": true, "feedbackPt": "Many restaurants = plural negativo." },
+      { "labelEn": "isn't", "correct": false, "feedbackPt": "Restaurants = plural." },
+      { "labelEn": "don't", "correct": false, "feedbackPt": "There + isn't/aren't." }
+    ]},
+    { "id": "em06l01-prac-11", "type": "dialogue_complete", "promptPt": "Encerramento — gosta de morar lá?", "speaker": "You", "contextEn": "Colleague: Do you like living there?", "options": [
+      { "labelEn": "Yes — it's convenient and there's everything I need nearby.", "correct": true, "feedbackPt": "Opinião + razão." },
+      { "labelEn": "I liked it before.", "correct": false, "feedbackPt": "Ainda mora lá." },
+      { "labelEn": "Living there yes.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l01-prac-12", "type": "choice", "promptPt": "Descrição completa correta:", "options": [
+      { "labelEn": "I live in an apartment. There are two bedrooms. The neighborhood is quiet.", "correct": true, "feedbackPt": "Três ideias claras." },
+      { "labelEn": "I live apartment two bedroom quiet.", "correct": false, "feedbackPt": "Sem estrutura." },
+      { "labelEn": "There is two bedrooms in quiet apartment I live.", "correct": false, "feedbackPt": "Erros de there is/are." }
+    ]}
+  ]
+}

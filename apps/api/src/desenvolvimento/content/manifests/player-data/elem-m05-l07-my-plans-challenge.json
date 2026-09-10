@@ -1,0 +1,178 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 5,
+  "goalPt": "Desafio do Módulo 5 — integrar going to, will, expressões de tempo, convites, arranjos e conversa sobre futuro num diálogo completo.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Desafio — conversa completa de planejamento: semana, convite, remarcação e promessas.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia o diálogo completo em voz alta.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Tell your full plan story.",
+    "headlinePt": "Conte sua história de planos.",
+    "bodyPt": "",
+    "canDo": [
+      "What are you going to do this week?",
+      "Would you like to join us for dinner?",
+      "I'm meeting the client on Thursday.",
+      "I'll send the invite right now.",
+      "Can we move it to Friday?",
+      "I think it will all work out."
+    ],
+    "production": {
+      "introPt": "Monte conversa completa: planos da semana, convite, arranjo, promessa e previsão. Use going to, will e present continuous.",
+      "prompts": [{ "speaker": "Jamie", "questionEn": "Let's plan — tell me about your week and what's coming up." }],
+      "fields": [
+        { "id": "weekPlans", "labelPt": "Planos da semana (going to)", "prefixEn": "This week I'm going to", "placeholderEn": "finish the report and prepare the presentation." },
+        { "id": "arrangement", "labelPt": "Compromisso marcado", "prefixEn": "", "placeholderEn": "I'm meeting the client on Thursday at 2." },
+        { "id": "invite", "labelPt": "Convite ou resposta", "prefixEn": "", "placeholderEn": "Would you like to join us for dinner on Friday?" },
+        { "id": "promise", "labelPt": "Promessa (will)", "prefixEn": "", "placeholderEn": "I'll send the calendar invite right now." },
+        { "id": "reschedule", "labelPt": "Remarcar ou confirmar", "prefixEn": "", "placeholderEn": "Can we move it to Friday morning? — No problem." },
+        { "id": "prediction", "labelPt": "Previsão", "prefixEn": "", "placeholderEn": "I think everything will work out fine." }
+      ],
+      "exampleEn": "This week I'm going to finish the report. I'm meeting the client on Thursday at 2. Would you like to join us for dinner Friday? I'll send the invite now. Can we move to Friday morning? No problem. I think everything will work out."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em05l07-ctx-01", "type": "intro", "titleEn": "Module 5 challenge", "titlePt": "Desafio do Módulo 5", "bodyPt": "Plans & Future — hora de juntar going to, will, tempo futuro, convites e arranjos numa conversa real." },
+      { "id": "em05l07-ctx-02", "type": "scenario", "settingEn": "Office · Week planning session", "scenarioPt": "Jamie senta com você para alinhar a semana e eventos sociais." },
+      { "id": "em05l07-ctx-03", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "What are you going to do this week?", "promptPt": "Passo 1 — planos gerais:", "options": [
+        { "labelEn": "I'm going to finish the report by Wednesday and prepare the presentation.", "correct": true, "feedbackPt": "Going to + prazos concretos." },
+        { "labelEn": "I finish report Wednesday.", "correct": false, "feedbackPt": "Falta going to." },
+        { "labelEn": "I finished the report next week.", "correct": false, "feedbackPt": "Tempo e verbo incorretos." }
+      ]},
+      { "id": "em05l07-ctx-04", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Any meetings scheduled?", "promptPt": "Passo 2 — arranjos:", "options": [
+        { "labelEn": "Yes — I'm meeting the client on Thursday at 2, and we're having a team sync on Friday.", "correct": true, "feedbackPt": "Dois arranjos com present continuous." },
+        { "labelEn": "Yes — I meet client Thursday.", "correct": false, "feedbackPt": "Arranjo precisa continuous." },
+        { "labelEn": "Yes — I met the client tomorrow.", "correct": false, "feedbackPt": "Met + tomorrow incorreto." }
+      ]},
+      { "id": "em05l07-ctx-05", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Would you like to join us for dinner on Friday?", "promptPt": "Passo 3 — convite:", "options": [
+        { "labelEn": "Sure! I'd love to. What time and where?", "correct": true, "feedbackPt": "Aceita + follow-up." },
+        { "labelEn": "No I don't dinner.", "correct": false, "feedbackPt": "Recusa sem educação." },
+        { "labelEn": "Would you like dinner me?", "correct": false, "feedbackPt": "Jamie convidou — você responde." }
+      ]},
+      { "id": "em05l07-ctx-06", "type": "dialogue_choice", "speaker": "Client (phone)", "promptEn": "Hi — can we move Thursday's meeting to Friday morning?", "promptPt": "Passo 4 — remarcar:", "options": [
+        { "labelEn": "No problem. I'm free Friday at 10. I'll update the invite.", "correct": true, "feedbackPt": "Flexível + promessa com will." },
+        { "labelEn": "No. Thursday only meeting.", "correct": false, "feedbackPt": "Inflexível." },
+        { "labelEn": "I moved Friday yesterday.", "correct": false, "feedbackPt": "Tempo incorreto." }
+      ]},
+      { "id": "em05l07-ctx-07", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Busy week! Do you think you'll manage everything?", "promptPt": "Passo 5 — previsão:", "options": [
+        { "labelEn": "I think it will all work out. I'll let you know if anything changes.", "correct": true, "feedbackPt": "Previsão + promessa." },
+        { "labelEn": "I think it worked out last year.", "correct": false, "feedbackPt": "Passado." },
+        { "labelEn": "I think managing everything.", "correct": false, "feedbackPt": "Frase incompleta." }
+      ]},
+      { "id": "em05l07-ctx-08", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Great. See you at dinner Friday!", "promptPt": "Encerramento:", "options": [
+        { "labelEn": "See you then! I'm looking forward to it.", "correct": true, "feedbackPt": "Encerramento positivo." },
+        { "labelEn": "I saw you at dinner.", "correct": false, "feedbackPt": "Passado — jantar é sexta." },
+        { "labelEn": "What are you going to do?", "correct": false, "feedbackPt": "Conversa já encerrada." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em05l07-learn-01", "type": "review", "titleEn": "Lesson 1 — Going to", "titlePt": "Lição 1 — Going to", "items": [
+        { "en": "I'm going to finish the report.", "pt": "planos" },
+        { "en": "What are you going to do?", "pt": "pergunta" },
+        { "en": "I'm not going to travel.", "pt": "negativa" }
+      ]},
+      { "id": "em05l07-learn-02", "type": "review", "titleEn": "Lesson 2 — Will", "titlePt": "Lição 2 — Will", "items": [
+        { "en": "I'll help you.", "pt": "oferta" },
+        { "en": "I'll send it today.", "pt": "promessa" },
+        { "en": "I think it will work.", "pt": "previsão" }
+      ]},
+      { "id": "em05l07-learn-03", "type": "review", "titleEn": "Lesson 3 — Future time", "titlePt": "Lição 3 — Tempo futuro", "items": [
+        { "en": "by Friday / in two days", "pt": "prazos" },
+        { "en": "next week / tomorrow morning", "pt": "datas" }
+      ]},
+      { "id": "em05l07-learn-04", "type": "review", "titleEn": "Lesson 4 — Invitations", "titlePt": "Lição 4 — Convites", "items": [
+        { "en": "Would you like to join us?", "pt": "convite" },
+        { "en": "Sure! I'd love to.", "pt": "aceitar" },
+        { "en": "Sorry, I can't — I have plans.", "pt": "recusar" }
+      ]},
+      { "id": "em05l07-learn-05", "type": "review", "titleEn": "Lesson 5 — Arrangements", "titlePt": "Lição 5 — Arranjos", "items": [
+        { "en": "I'm meeting the client on Thursday.", "pt": "arranjo" },
+        { "en": "Can we move it to Friday?", "pt": "remarcar" },
+        { "en": "Thursday at 2 works for me.", "pt": "confirmar" }
+      ]},
+      { "id": "em05l07-learn-06", "type": "language_focus", "titleEn": "Module 5 flow", "titlePt": "Fluxo do Módulo 5", "items": [
+        { "formalEn": "Plan → Arrange → Invite → Promise → Predict", "naturalEn": "Going to → Continuous → Would you like → Will → I think it will", "notePt": "Ordem natural de conversa sobre futuro." },
+        { "formalEn": "One form per function", "naturalEn": "Don't mix randomly", "notePt": "Cada forma tem seu papel." }
+      ], "tipPt": "Desafio = conversa completa, não lista de frases soltas." },
+      { "id": "em05l07-learn-07", "type": "mistake", "titlePt": "Erro comum no desafio", "wrongEn": "I'm going to meeting the client and I'll sent the invite and would you like dinner Friday all good.", "rightEn": "I'm meeting the client on Thursday. I'll send the invite. Would you like to join us for dinner on Friday?", "explanationPt": "Separe ideias. Arranjo = continuous. Promessa = will. Convite = would you like to." },
+      { "id": "em05l07-learn-08", "type": "review", "titleEn": "Quick review — full module", "titlePt": "Revisão — módulo completo", "items": [
+        { "en": "I'm going to finish by Wednesday.", "pt": "plano + prazo" },
+        { "en": "I'm meeting the client on Thursday at 2.", "pt": "arranjo" },
+        { "en": "Would you like to join us for dinner?", "pt": "convite" },
+        { "en": "I'll send the invite right now.", "pt": "promessa" },
+        { "en": "Can we move it to Friday?", "pt": "remarcar" },
+        { "en": "I think it will all work out.", "pt": "previsão" }
+      ]}
+    ],
+    "imitate": [{ "id": "em05l07-imit-01", "type": "read_repeat", "titleEn": "Full module dialogue", "titlePt": "Diálogo completo do módulo", "introPt": "Leia a conversa inteira em voz alta.", "phrases": [
+      { "en": "What are you going to do this week?" },
+      { "en": "I'm going to finish the report by Wednesday." },
+      { "en": "I'm meeting the client on Thursday at 2." },
+      { "en": "Would you like to join us for dinner on Friday?" },
+      { "en": "Sure! I'd love to. What time?" },
+      { "en": "Can we move Thursday's meeting to Friday?" },
+      { "en": "No problem. I'm free Friday at 10. I'll update the invite." },
+      { "en": "Do you think you'll manage everything?" },
+      { "en": "I think it will all work out." },
+      { "en": "See you at dinner Friday!" }
+    ], "dialogueEn": "What are you going to do this week? — Finish the report by Wednesday. I'm meeting the client Thursday at 2. — Join us for dinner Friday? — Sure! I'd love to. — Can we move the meeting to Friday? — No problem. I'll update the invite. — Think you'll manage? — I think it'll work out. — See you Friday!" }],
+    "mission": [{ "id": "em05l07-miss-01", "type": "mission_intro", "headlineEn": "Complete plan story.", "headlinePt": "História completa de planos.", "bodyPt": "Integre todo o Módulo 5.", "prompts": [{ "speaker": "Jamie", "questionEn": "Tell me about your week and what's coming up." }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em05l07-prac-01", "type": "choice", "promptPt": "Plano com prazo:", "options": [
+      { "labelEn": "I'm going to finish the report by Wednesday.", "correct": true, "feedbackPt": "Going to + by." },
+      { "labelEn": "I finish the report by Wednesday.", "correct": false, "feedbackPt": "Falta going to." },
+      { "labelEn": "I'm going to finished by Wednesday.", "correct": false, "feedbackPt": "Verbo base após to." }
+    ]},
+    { "id": "em05l07-prac-02", "type": "classify", "promptPt": "Going to, will ou continuous?", "sentenceEn": "I'm meeting the client on Thursday at 2.", "category": "arrangement", "feedbackCorrectPt": "Arranjo fixo.", "feedbackWrongPt": "Data/hora = continuous." },
+    { "id": "em05l07-prac-03", "type": "dialogue_complete", "promptPt": "Convite — aceitar:", "speaker": "You", "contextEn": "Jamie: Would you like to join us for dinner on Friday?", "options": [
+      { "labelEn": "Sure! I'd love to. What time?", "correct": true, "feedbackPt": "Aceita + follow-up." },
+      { "labelEn": "No dinner.", "correct": false, "feedbackPt": "Sem educação." },
+      { "labelEn": "Would you like to join me?", "correct": false, "feedbackPt": "Jamie convidou — responda." }
+    ]},
+    { "id": "em05l07-prac-04", "type": "fill_blank", "promptPt": "Promessa — vou enviar agora:", "templateEn": "I ___ send the invite right now.", "blankLabel": "contração", "options": [
+      { "labelEn": "'ll", "correct": true, "feedbackPt": "I'll = promessa." },
+      { "labelEn": "'m", "correct": false, "feedbackPt": "'m não é promessa." },
+      { "labelEn": "'ve", "correct": false, "feedbackPt": "'ve = have." }
+    ]},
+    { "id": "em05l07-prac-05", "type": "dialogue_complete", "promptPt": "Remarcar reunião:", "speaker": "You", "contextEn": "Client: Can we move it to Friday morning?", "options": [
+      { "labelEn": "No problem. I'm free Friday at 10.", "correct": true, "feedbackPt": "Flexível + horário." },
+      { "labelEn": "No. Only Thursday.", "correct": false, "feedbackPt": "Inflexível." },
+      { "labelEn": "I moved it yesterday.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l07-prac-06", "type": "reorder", "promptPt": "Monte — acho que vai dar certo:", "tokens": ["out.", "work", "will", "it", "all", "think", "I"], "correctOrder": ["I", "think", "it", "will", "all", "work", "out."], "feedbackCorrectPt": "I think it will all work out.", "feedbackWrongPt": "I think + will + verbo." },
+    { "id": "em05l07-prac-07", "type": "classify", "promptPt": "Going to, will ou continuous?", "sentenceEn": "I'll update the invite.", "category": "will", "feedbackCorrectPt": "Promessa = will.", "feedbackWrongPt": "Ação decidida agora = will." },
+    { "id": "em05l07-prac-08", "type": "choice", "promptPt": "Melhor resposta integrada:", "options": [
+      { "labelEn": "I'm going to finish the report. I'm meeting the client Thursday. I'll send the invite now.", "correct": true, "feedbackPt": "Três formas corretas." },
+      { "labelEn": "I finish report. I meeting client. I send invite.", "correct": false, "feedbackPt": "Formas incorretas." },
+      { "labelEn": "I'm going to meeting and I'll sent invite.", "correct": false, "feedbackPt": "Erros de forma." }
+    ]},
+    { "id": "em05l07-prac-09", "type": "fill_blank", "promptPt": "Complete convite:", "templateEn": "Would you like ___ join us for dinner?", "blankLabel": "palavra", "options": [
+      { "labelEn": "to", "correct": true, "feedbackPt": "Like to + verbo." },
+      { "labelEn": "for", "correct": false, "feedbackPt": "Like to, não for." },
+      { "labelEn": "ing", "correct": false, "feedbackPt": "Verbo base." }
+    ]},
+    { "id": "em05l07-prac-10", "type": "dialogue_complete", "promptPt": "Previsão — Jamie pergunta:", "speaker": "You", "contextEn": "Jamie: Do you think you'll manage everything?", "options": [
+      { "labelEn": "I think it will all work out.", "correct": true, "feedbackPt": "Previsão positiva." },
+      { "labelEn": "I think it worked out.", "correct": false, "feedbackPt": "Passado." },
+      { "labelEn": "I think managing.", "correct": false, "feedbackPt": "Incompleto." }
+    ]},
+    { "id": "em05l07-prac-11", "type": "classify", "promptPt": "Going to, will ou continuous?", "sentenceEn": "I'm going to finish by Wednesday.", "category": "going_to", "feedbackCorrectPt": "Plano.", "feedbackWrongPt": "Going to = intenção." },
+    { "id": "em05l07-prac-12", "type": "choice", "promptPt": "Encerramento do desafio:", "options": [
+      { "labelEn": "See you at dinner Friday! I'm looking forward to it.", "correct": true, "feedbackPt": "Encerramento natural." },
+      { "labelEn": "I saw you at dinner.", "correct": false, "feedbackPt": "Passado." },
+      { "labelEn": "Dinner Friday see.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]}
+  ]
+}

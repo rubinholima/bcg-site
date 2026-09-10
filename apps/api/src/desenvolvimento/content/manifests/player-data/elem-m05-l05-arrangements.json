@@ -1,0 +1,171 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 5,
+  "goalPt": "Marcar compromissos com present continuous — I'm meeting..., We're having..., confirmar horários e remarcar educadamente.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você agenda reunião com cliente, confirma horário e precisa remarcar por conflito.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Make and confirm an arrangement.",
+    "headlinePt": "Marque e confirme um compromisso.",
+    "bodyPt": "",
+    "canDo": [
+      "I'm meeting the client on Thursday at 2.",
+      "We're having a team lunch on Wednesday.",
+      "Does Thursday at 3 work for you?",
+      "Can we move it to Friday morning?",
+      "Thursday at 2 works perfectly for me."
+    ],
+    "production": {
+      "introPt": "Marque um compromisso, confirme horário e inclua uma pergunta de follow-up.",
+      "prompts": [{ "speaker": "Client", "questionEn": "When can we meet to discuss the proposal?" }],
+      "fields": [
+        { "id": "arrange", "labelPt": "Marcar", "prefixEn": "I'm meeting you", "placeholderEn": "on Thursday at 2 pm." },
+        { "id": "confirm", "labelPt": "Confirmar", "prefixEn": "", "placeholderEn": "Thursday at 2 works perfectly for me." },
+        { "id": "followup", "labelPt": "Follow-up", "prefixEn": "", "placeholderEn": "Should I send the agenda beforehand?" }
+      ],
+      "exampleEn": "I'm meeting you on Thursday at 2 pm. Thursday at 2 works perfectly for me. Should I send the agenda beforehand?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em05l05-ctx-01", "type": "intro", "titleEn": "Fixed arrangements", "titlePt": "Compromissos marcados", "bodyPt": "Quando data e hora já estão definidos, o present continuous substitui going to — I'm meeting..., We're having..." },
+      { "id": "em05l05-ctx-02", "type": "scenario", "settingEn": "Office · Client scheduling", "scenarioPt": "Cliente quer agendar reunião sobre proposta comercial." },
+      { "id": "em05l05-ctx-03", "type": "dialogue_choice", "speaker": "Client", "promptEn": "When can we meet to go over the proposal?", "promptPt": "Cliente pergunta disponibilidade:", "options": [
+        { "labelEn": "I'm meeting another client on Tuesday. How about Thursday at 2?", "correct": true, "feedbackPt": "Informa conflito + sugere alternativa." },
+        { "labelEn": "I meet client Thursday 2.", "correct": false, "feedbackPt": "Presente simples — use continuous para arranjo." },
+        { "labelEn": "I met the client Thursday.", "correct": false, "feedbackPt": "Met é passado." }
+      ]},
+      { "id": "em05l05-ctx-04", "type": "dialogue_choice", "speaker": "Client", "promptEn": "Thursday at 2 works for me. Where should we meet?", "promptPt": "Cliente confirma — você responde local:", "options": [
+        { "labelEn": "Let's meet at our office — room 204. I'll send you the address.", "correct": true, "feedbackPt": "Local + promessa de detalhes." },
+        { "labelEn": "We meet office room.", "correct": false, "feedbackPt": "Frase incompleta." },
+        { "labelEn": "I met at the office yesterday.", "correct": false, "feedbackPt": "Passado — reunião é quinta." }
+      ]},
+      { "id": "em05l05-ctx-05", "type": "dialogue_choice", "speaker": "Client", "promptEn": "Actually, can we move it to Friday morning? Something came up.", "promptPt": "Cliente pede remarcação:", "options": [
+        { "labelEn": "No problem. I'm free Friday at 10. Does that work?", "correct": true, "feedbackPt": "Flexível + confirma novo horário." },
+        { "labelEn": "No. Thursday only.", "correct": false, "feedbackPt": "Muito inflexível." },
+        { "labelEn": "I moved Friday morning.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]},
+      { "id": "em05l05-ctx-06", "type": "dialogue_choice", "speaker": "Client", "promptEn": "Friday at 10 is perfect. See you then!", "promptPt": "Confirmação final:", "options": [
+        { "labelEn": "Great! I'm sending the calendar invite now. See you Friday!", "correct": true, "feedbackPt": "Confirma + ação imediata." },
+        { "labelEn": "I sent invite yesterday.", "correct": false, "feedbackPt": "Ainda não enviou." },
+        { "labelEn": "See you Thursday.", "correct": false, "feedbackPt": "Horário mudou para sexta." }
+      ]},
+      { "id": "em05l05-ctx-07", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "What's on your schedule this week?", "promptPt": "Colega pergunta agenda — você resume:", "options": [
+        { "labelEn": "I'm meeting the client on Friday, and we're having a team lunch on Wednesday.", "correct": true, "feedbackPt": "Dois arranjos com present continuous." },
+        { "labelEn": "I meet client and lunch team.", "correct": false, "feedbackPt": "Falta continuous e detalhes." },
+        { "labelEn": "I met the client last week.", "correct": false, "feedbackPt": "Passado — pergunta é esta semana." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em05l05-learn-01", "type": "phrase_examples", "titleEn": "I'm meeting... / We're having...", "titlePt": "I'm meeting... / We're having...", "introPt": "Present continuous para compromissos fixos:", "examples": [
+        { "en": "I'm meeting the client on Thursday.", "pt": "tenho reunião quinta" },
+        { "en": "We're having a team lunch on Wednesday.", "pt": "almoço de equipe quarta" },
+        { "en": "She's flying to São Paulo on the 15th.", "pt": "voo marcado" },
+        { "en": "They're presenting at the conference next week.", "pt": "apresentação agendada" }
+      ]},
+      { "id": "em05l05-learn-02", "type": "phrase_examples", "titleEn": "Suggesting times", "titlePt": "Sugerir horários", "introPt": "Propor e confirmar:", "examples": [
+        { "en": "How about Thursday at 2?", "pt": "que tal quinta às 14h?" },
+        { "en": "Does Friday morning work for you?", "pt": "sexta de manhã serve?" },
+        { "en": "Thursday at 2 works for me.", "pt": "quinta às 14h me serve" },
+        { "en": "What time suits you best?", "pt": "qual horário prefere?" }
+      ]},
+      { "id": "em05l05-learn-03", "type": "phrase_examples", "titleEn": "Rescheduling", "titlePt": "Remarcar", "introPt": "Mudar horário educadamente:", "examples": [
+        { "en": "Can we move it to Friday?", "pt": "podemos mudar para sexta?" },
+        { "en": "Something came up — can we reschedule?", "pt": "imprevisto" },
+        { "en": "I'm afraid I can't make Thursday.", "pt": "não posso quinta" },
+        { "en": "No problem. How about Friday at 10?", "pt": "flexível" }
+      ]},
+      { "id": "em05l05-learn-04", "type": "comparison", "titleEn": "Going to vs present continuous", "titlePt": "Going to vs present continuous", "left": {
+        "labelEn": "GOING TO · intention",
+        "exampleEn": "I'm going to meet the client sometime next week.",
+        "notePt": "Plano geral, hora indefinida."
+      }, "right": {
+        "labelEn": "PRESENT CONTINUOUS · fixed",
+        "exampleEn": "I'm meeting the client on Thursday at 2.",
+        "notePt": "Data e hora definidas."
+      }, "modelEn": "I'm going to contact them. → I'm meeting them on Thursday at 2.", "modelPt": "Intenção vira arranjo quando horário fecha." },
+      { "id": "em05l05-learn-05", "type": "language_focus", "titleEn": "Form & stative verbs", "titlePt": "Forma e verbos de estado", "items": [
+        { "formalEn": "I'm meeting / We're having / She's flying", "naturalEn": "am/is/are + -ing", "notePt": "Mesma forma do present continuous." },
+        { "formalEn": "I know the client.", "naturalEn": "NOT: I'm knowing.", "notePt": "Know, want, like = stative — não usam -ing." },
+        { "formalEn": "I'm having a meeting.", "naturalEn": "Have = event → having ok.", "notePt": "Have com sentido de evento permite -ing." }
+      ], "tipPt": "Arranjo fixo = am/is/are + -ing + data/hora." },
+      { "id": "em05l05-learn-06", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "I'm meeting the client on Thursday at 2.", "pt": "arranjo" },
+        { "en": "Does Friday morning work for you?", "pt": "sugerir" },
+        { "en": "Can we move it to Friday?", "pt": "remarcar" },
+        { "en": "Thursday at 2 works for me.", "pt": "confirmar" },
+        { "en": "We're having a team lunch on Wednesday.", "pt": "evento marcado" }
+      ]}
+    ],
+    "imitate": [{ "id": "em05l05-imit-01", "type": "read_repeat", "titleEn": "Scheduling dialogue", "titlePt": "Diálogo de agendamento", "introPt": "Leia agendamento, confirmação e remarcação.", "phrases": [
+      { "en": "When can we meet to go over the proposal?" },
+      { "en": "How about Thursday at 2?" },
+      { "en": "Thursday at 2 works for me." },
+      { "en": "Let's meet at our office — room 204." },
+      { "en": "Can we move it to Friday morning?" },
+      { "en": "No problem. I'm free Friday at 10." },
+      { "en": "Does that work?" },
+      { "en": "Friday at 10 is perfect. See you then!" },
+      { "en": "I'm sending the calendar invite now." },
+      { "en": "I'm meeting the client on Friday." }
+    ], "dialogueEn": "When can we meet? — How about Thursday at 2? — Works for me. — Let's meet at room 204. — Can we move to Friday morning? — No problem. Friday at 10? — Perfect! See you then! — I'm sending the invite now." }],
+    "mission": [{ "id": "em05l05-miss-01", "type": "mission_intro", "headlineEn": "Schedule a meeting.", "headlinePt": "Agende uma reunião.", "bodyPt": "Marcar + confirmar + follow-up.", "prompts": [{ "speaker": "Client", "questionEn": "When can we meet?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em05l05-prac-01", "type": "choice", "promptPt": "Compromisso marcado — reunião quinta:", "options": [
+      { "labelEn": "I'm meeting the client on Thursday at 2.", "correct": true, "feedbackPt": "Present continuous + data/hora." },
+      { "labelEn": "I meet the client on Thursday.", "correct": false, "feedbackPt": "Arranjo usa continuous." },
+      { "labelEn": "I'm going to met the client Thursday.", "correct": false, "feedbackPt": "Met é passado." }
+    ]},
+    { "id": "em05l05-prac-02", "type": "fill_blank", "promptPt": "Complete — almoço de equipe quarta:", "templateEn": "We ___ having a team lunch on Wednesday.", "blankLabel": "verbo", "options": [
+      { "labelEn": "'re", "correct": true, "feedbackPt": "We're having." },
+      { "labelEn": "'s", "correct": false, "feedbackPt": "We + are." },
+      { "labelEn": "'m", "correct": false, "feedbackPt": "'m = I am." }
+    ]},
+    { "id": "em05l05-prac-03", "type": "classify", "promptPt": "Plano ou arranjo?", "sentenceEn": "I'm going to call the client next week.", "category": "plan", "feedbackCorrectPt": "Going to = intenção sem hora fixa.", "feedbackWrongPt": "Sem data/hora definida = plano." },
+    { "id": "em05l05-prac-04", "type": "classify", "promptPt": "Plano ou arranjo?", "sentenceEn": "I'm meeting the client on Thursday at 2.", "category": "arrangement", "feedbackCorrectPt": "Data e hora = arranjo.", "feedbackWrongPt": "Horário definido = present continuous." },
+    { "id": "em05l05-prac-05", "type": "dialogue_complete", "promptPt": "Cliente: Can we move it to Friday?", "speaker": "You", "contextEn": "Client: Can we move it to Friday morning?", "options": [
+      { "labelEn": "No problem. I'm free Friday at 10. Does that work?", "correct": true, "feedbackPt": "Flexível + novo horário." },
+      { "labelEn": "No. Only Thursday.", "correct": false, "feedbackPt": "Inflexível demais." },
+      { "labelEn": "I free Friday 10.", "correct": false, "feedbackPt": "Falta am/is/are." }
+    ]},
+    { "id": "em05l05-prac-06", "type": "reorder", "promptPt": "Monte — quinta às 14h me serve:", "tokens": ["me.", "for", "works", "2", "at", "Thursday"], "correctOrder": ["Thursday", "at", "2", "works", "for", "me."], "feedbackCorrectPt": "Thursday at 2 works for me.", "feedbackWrongPt": "Dia + at + hora + works for me." },
+    { "id": "em05l05-prac-07", "type": "choice", "promptPt": "Sugerir horário:", "options": [
+      { "labelEn": "How about Thursday at 2?", "correct": true, "feedbackPt": "Sugestão natural." },
+      { "labelEn": "How about Thursday in 2?", "correct": false, "feedbackPt": "Hora usa at." },
+      { "labelEn": "Thursday 2 how about?", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em05l05-prac-08", "type": "dialogue_complete", "promptPt": "Confirmar local:", "speaker": "You", "contextEn": "Client: Where should we meet?", "options": [
+      { "labelEn": "Let's meet at our office — room 204.", "correct": true, "feedbackPt": "Local específico." },
+      { "labelEn": "We meet office.", "correct": false, "feedbackPt": "Incompleto." },
+      { "labelEn": "I met at the office.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l05-prac-09", "type": "fill_blank", "promptPt": "Complete — podemos remarcar?", "templateEn": "Can we ___ it to Friday?", "blankLabel": "verbo", "options": [
+      { "labelEn": "move", "correct": true, "feedbackPt": "Move it = remarcar." },
+      { "labelEn": "moving", "correct": false, "feedbackPt": "Can + verbo base." },
+      { "labelEn": "moved", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l05-prac-10", "type": "choice", "promptPt": "Qual frase é arranjo fixo?", "options": [
+      { "labelEn": "She's flying to São Paulo on the 15th.", "correct": true, "feedbackPt": "Voo marcado = continuous." },
+      { "labelEn": "She's going to fly someday.", "correct": false, "feedbackPt": "Plano vago." },
+      { "labelEn": "She flew to São Paulo.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l05-prac-11", "type": "dialogue_complete", "promptPt": "Follow-up — enviar convite:", "speaker": "You", "contextEn": "Client: Friday at 10 is perfect!", "options": [
+      { "labelEn": "Great! I'm sending the calendar invite now.", "correct": true, "feedbackPt": "Ação imediata." },
+      { "labelEn": "I sent it last week.", "correct": false, "feedbackPt": "Ainda não enviou." },
+      { "labelEn": "Great sending invite.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "em05l05-prac-12", "type": "reorder", "promptPt": "Monte — reunião com cliente sexta:", "tokens": ["Friday.", "on", "client", "the", "meeting", "I'm"], "correctOrder": ["I'm", "meeting", "the", "client", "on", "Friday."], "feedbackCorrectPt": "I'm meeting the client on Friday.", "feedbackWrongPt": "I'm meeting + objeto + on + dia." }
+  ]
+}

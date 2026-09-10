@@ -1,0 +1,163 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 5,
+  "goalPt": "Misturar going to, will e present continuous numa conversa fluida sobre planos, promessas e compromissos — escolhendo a forma certa.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Conversa completa com Jamie — planos do mês, promessa espontânea e compromissos já marcados.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Talk naturally about the future.",
+    "headlinePt": "Fale naturalmente sobre o futuro.",
+    "bodyPt": "",
+    "canDo": [
+      "I'm going to take a course next month.",
+      "I'll send you the details right now.",
+      "I'm meeting the trainer on Monday.",
+      "I think the project will finish on time.",
+      "We're not going to change the deadline."
+    ],
+    "production": {
+      "introPt": "Conte planos (going to), faça uma promessa (will) e mencione um compromisso marcado (present continuous).",
+      "prompts": [{ "speaker": "Jamie", "questionEn": "Tell me about your plans and what's coming up." }],
+      "fields": [
+        { "id": "plan", "labelPt": "Plano (going to)", "prefixEn": "Next month I'm going to", "placeholderEn": "take an English course." },
+        { "id": "promise", "labelPt": "Promessa (will)", "prefixEn": "", "placeholderEn": "I'll send you the course link right now." },
+        { "id": "arrangement", "labelPt": "Compromisso (continuous)", "prefixEn": "", "placeholderEn": "I'm meeting the trainer on Monday at 6." }
+      ],
+      "exampleEn": "Next month I'm going to take an English course. I'll send you the link right now. I'm meeting the trainer on Monday at 6."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em05l06-ctx-01", "type": "intro", "titleEn": "Future talk — putting it together", "titlePt": "Falar do futuro — juntando tudo", "bodyPt": "Conversas reais misturam going to, will e present continuous. A chave é saber qual usar em cada momento." },
+      { "id": "em05l06-ctx-02", "type": "scenario", "settingEn": "Office · Coffee break", "scenarioPt": "Jamie pergunta sobre seus planos profissionais e pessoais." },
+      { "id": "em05l06-ctx-03", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Any big plans for next month?", "promptPt": "Jamie pergunta planos gerais:", "options": [
+        { "labelEn": "Yes — I'm going to take an advanced English course. I've already signed up.", "correct": true, "feedbackPt": "Going to = plano decidido." },
+        { "labelEn": "Yes — I take English course next month.", "correct": false, "feedbackPt": "Presente simples não indica plano." },
+        { "labelEn": "Yes — I took English course.", "correct": false, "feedbackPt": "Passado." }
+      ]},
+      { "id": "em05l06-ctx-04", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "That sounds great! Can you send me the link?", "promptPt": "Jamie pede algo — você decide na hora:", "options": [
+        { "labelEn": "Sure — I'll send it to you right now.", "correct": true, "feedbackPt": "Will = decisão/promessa instantânea." },
+        { "labelEn": "I'm going to sent it yesterday.", "correct": false, "feedbackPt": "Sent é passado." },
+        { "labelEn": "I sending it now.", "correct": false, "feedbackPt": "Falta will/am." }
+      ]},
+      { "id": "em05l06-ctx-05", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "When does the course start?", "promptPt": "Jamie pergunta início — compromisso marcado:", "options": [
+        { "labelEn": "I'm meeting the trainer for an intro session on Monday at 6.", "correct": true, "feedbackPt": "Present continuous = arranjo com data/hora." },
+        { "labelEn": "I'm going to meet the trainer sometime.", "correct": false, "feedbackPt": "Plano vago — falta horário." },
+        { "labelEn": "I met the trainer Monday.", "correct": false, "feedbackPt": "Passado — sessão é segunda." }
+      ]},
+      { "id": "em05l06-ctx-06", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Do you think you'll have time with the project deadline?", "promptPt": "Jamie pede previsão:", "options": [
+        { "labelEn": "I think it will be fine. We're not going to change the deadline.", "correct": true, "feedbackPt": "Will = previsão + going to negativo = plano firme." },
+        { "labelEn": "I think it is fine yesterday.", "correct": false, "feedbackPt": "Tempo errado." },
+        { "labelEn": "We not change deadline.", "correct": false, "feedbackPt": "Falta going to/will." }
+      ]},
+      { "id": "em05l06-ctx-07", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Good luck with the course! Let me know how it goes.", "promptPt": "Encerramento:", "options": [
+        { "labelEn": "Thanks! I'll keep you posted. I'm sure it'll be useful.", "correct": true, "feedbackPt": "Promessa + previsão positiva." },
+        { "labelEn": "I kept you posted last year.", "correct": false, "feedbackPt": "Passado." },
+        { "labelEn": "Thanks I going course.", "correct": false, "feedbackPt": "Frase incompleta." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em05l06-learn-01", "type": "comparison", "titleEn": "Three future forms", "titlePt": "Três formas de futuro", "left": {
+        "labelEn": "GOING TO · plan",
+        "exampleEn": "I'm going to take a course.",
+        "notePt": "Intenção/plano."
+      }, "right": {
+        "labelEn": "WILL · now / predict",
+        "exampleEn": "I'll send it right now.",
+        "notePt": "Decisão na hora ou previsão."
+      }, "modelEn": "I'm meeting the trainer on Monday. (arrangement)", "modelPt": "Present continuous = terceira forma para compromissos fixos." },
+      { "id": "em05l06-learn-02", "type": "phrase_examples", "titleEn": "Mixed conversation", "titlePt": "Conversa mista", "introPt": "Frases que convivem num papo real:", "examples": [
+        { "en": "I'm going to travel next month.", "pt": "plano" },
+        { "en": "Oh — the phone's ringing. I'll get it.", "pt": "decisão na hora" },
+        { "en": "I'm flying to Rio on the 20th.", "pt": "arranjo" },
+        { "en": "I think it'll rain tomorrow.", "pt": "previsão" }
+      ]},
+      { "id": "em05l06-learn-03", "type": "language_focus", "titleEn": "Decision guide", "titlePt": "Guia de decisão", "items": [
+        { "formalEn": "Already decided + no fixed time?", "naturalEn": "going to", "notePt": "Plano geral." },
+        { "formalEn": "Decided now / offering / promising?", "naturalEn": "will", "notePt": "Espontâneo." },
+        { "formalEn": "Date and time fixed?", "naturalEn": "present continuous", "notePt": "Compromisso na agenda." },
+        { "formalEn": "Opinion about future?", "naturalEn": "will (I think it will...)", "notePt": "Previsão." }
+      ], "tipPt": "Na dúvida: plano = going to · agora = will · agenda = continuous." },
+      { "id": "em05l06-learn-04", "type": "mistake", "titlePt": "Erro comum", "wrongEn": "I'm going to meeting the client on Monday.", "rightEn": "I'm meeting the client on Monday.", "explanationPt": "Arranjo fixo = present continuous, não going to + -ing." },
+      { "id": "em05l06-learn-05", "type": "phrase_examples", "titleEn": "Follow-up questions", "titlePt": "Perguntas de follow-up", "introPt": "Aprofundar conversa sobre futuro:", "examples": [
+        { "en": "What are you going to do about it?", "pt": "o que vai fazer?" },
+        { "en": "When are you meeting them?", "pt": "quando é a reunião?" },
+        { "en": "Do you think it'll work?", "pt": "acha que vai dar certo?" },
+        { "en": "Will you let me know?", "pt": "me avisa?" }
+      ]},
+      { "id": "em05l06-learn-06", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "I'm going to take a course.", "pt": "plano" },
+        { "en": "I'll send it right now.", "pt": "promessa" },
+        { "en": "I'm meeting the trainer on Monday.", "pt": "arranjo" },
+        { "en": "I think it will be fine.", "pt": "previsão" },
+        { "en": "We're not going to change the deadline.", "pt": "plano negativo" }
+      ]}
+    ],
+    "imitate": [{ "id": "em05l06-imit-01", "type": "read_repeat", "titleEn": "Full future conversation", "titlePt": "Conversa completa sobre futuro", "introPt": "Leia diálogo com as três formas.", "phrases": [
+      { "en": "Any big plans for next month?" },
+      { "en": "I'm going to take an advanced English course." },
+      { "en": "Can you send me the link?" },
+      { "en": "Sure — I'll send it to you right now." },
+      { "en": "When does the course start?" },
+      { "en": "I'm meeting the trainer on Monday at 6." },
+      { "en": "Do you think you'll have time?" },
+      { "en": "I think it will be fine." },
+      { "en": "We're not going to change the deadline." },
+      { "en": "Thanks! I'll keep you posted." }
+    ], "dialogueEn": "Any big plans? — I'm going to take an English course. — Send me the link? — I'll send it now. — When does it start? — I'm meeting the trainer Monday at 6. — Time with the deadline? — I think it'll be fine. We're not changing it. — Good luck! — Thanks! I'll keep you posted." }],
+    "mission": [{ "id": "em05l06-miss-01", "type": "mission_intro", "headlineEn": "Mix future forms.", "headlinePt": "Misture formas de futuro.", "bodyPt": "Going to + will + continuous.", "prompts": [{ "speaker": "Jamie", "questionEn": "Tell me about your plans." }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em05l06-prac-01", "type": "classify", "promptPt": "Plano, will ou arranjo?", "sentenceEn": "I'm going to take a course next month.", "category": "going_to", "feedbackCorrectPt": "Plano decidido.", "feedbackWrongPt": "Going to = plano." },
+    { "id": "em05l06-prac-02", "type": "classify", "promptPt": "Plano, will ou arranjo?", "sentenceEn": "I'll send it to you right now.", "category": "will", "feedbackCorrectPt": "Decisão na hora.", "feedbackWrongPt": "Will = espontâneo." },
+    { "id": "em05l06-prac-03", "type": "classify", "promptPt": "Plano, will ou arranjo?", "sentenceEn": "I'm meeting the trainer on Monday at 6.", "category": "arrangement", "feedbackCorrectPt": "Data/hora fixa.", "feedbackWrongPt": "Continuous = compromisso." },
+    { "id": "em05l06-prac-04", "type": "choice", "promptPt": "Telefone tocando — você atende:", "options": [
+      { "labelEn": "I'll get it.", "correct": true, "feedbackPt": "Decisão instantânea = will." },
+      { "labelEn": "I'm going to get it.", "correct": false, "feedbackPt": "Possível, mas will é mais natural na hora." },
+      { "labelEn": "I get it yesterday.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l06-prac-05", "type": "dialogue_complete", "promptPt": "Jamie: Can you send me the link?", "speaker": "You", "contextEn": "Jamie: Can you send me the link?", "options": [
+      { "labelEn": "Sure — I'll send it to you right now.", "correct": true, "feedbackPt": "Promessa com will." },
+      { "labelEn": "I sent it tomorrow.", "correct": false, "feedbackPt": "Contradição temporal." },
+      { "labelEn": "I'm sending it last week.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l06-prac-06", "type": "fill_blank", "promptPt": "Complete — previsão:", "templateEn": "I think it ___ be fine.", "blankLabel": "verbo", "options": [
+      { "labelEn": "will", "correct": true, "feedbackPt": "Previsão = will." },
+      { "labelEn": "is", "correct": false, "feedbackPt": "Futuro usa will." },
+      { "labelEn": "was", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l06-prac-07", "type": "choice", "promptPt": "Arranjo fixo correto:", "options": [
+      { "labelEn": "I'm meeting the trainer on Monday at 6.", "correct": true, "feedbackPt": "Present continuous." },
+      { "labelEn": "I'm going to meeting the trainer Monday.", "correct": false, "feedbackPt": "Arranjo = continuous, não going to + -ing." },
+      { "labelEn": "I meet the trainer on Monday.", "correct": false, "feedbackPt": "Falta continuous para arranjo." }
+    ]},
+    { "id": "em05l06-prac-08", "type": "reorder", "promptPt": "Monte — não vamos mudar o prazo:", "tokens": ["deadline.", "the", "change", "to", "going", "not", "We're"], "correctOrder": ["We're", "not", "going", "to", "change", "the", "deadline."], "feedbackCorrectPt": "We're not going to change the deadline.", "feedbackWrongPt": "Not going to + verbo base." },
+    { "id": "em05l06-prac-09", "type": "dialogue_complete", "promptPt": "Follow-up — quando é a sessão?", "speaker": "You", "contextEn": "Jamie: When does the course start?", "options": [
+      { "labelEn": "I'm meeting the trainer on Monday at 6.", "correct": true, "feedbackPt": "Arranjo com data/hora." },
+      { "labelEn": "I'm going to meet the trainer sometime.", "correct": false, "feedbackPt": "Muito vago." },
+      { "labelEn": "I met the trainer.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l06-prac-10", "type": "choice", "promptPt": "Conversa mista — qual conjunto está correto?", "options": [
+      { "labelEn": "I'm going to travel. I'm flying on the 20th. I'll book tonight.", "correct": true, "feedbackPt": "Plano + arranjo + promessa." },
+      { "labelEn": "I travel. I flew on 20. I book tonight.", "correct": false, "feedbackPt": "Tempos incorretos." },
+      { "labelEn": "I'm going to flying. I'll booked tonight.", "correct": false, "feedbackPt": "Formas incorretas." }
+    ]},
+    { "id": "em05l06-prac-11", "type": "dialogue_complete", "promptPt": "Encerramento — promessa:", "speaker": "You", "contextEn": "Jamie: Let me know how it goes!", "options": [
+      { "labelEn": "Thanks! I'll keep you posted.", "correct": true, "feedbackPt": "Promessa natural." },
+      { "labelEn": "I kept you posted.", "correct": false, "feedbackPt": "Passado." },
+      { "labelEn": "Thanks keeping posted.", "correct": false, "feedbackPt": "Incompleto." }
+    ]},
+    { "id": "em05l06-prac-12", "type": "classify", "promptPt": "Previsão:", "sentenceEn": "I think it'll rain tomorrow.", "category": "will", "feedbackCorrectPt": "I think + will = previsão.", "feedbackWrongPt": "Opinião sobre futuro = will." }
+  ]
+}

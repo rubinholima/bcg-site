@@ -1,0 +1,175 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 6,
+  "goalPt": "Descrever lugares com adjetivos, there is/are e posição — recomendar bairros, restaurantes e pontos da cidade.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Visitante de outra cidade pede recomendações de lugares para comer, relaxar e visitar.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Recommend places in your city.",
+    "headlinePt": "Recomende lugares na sua cidade.",
+    "bodyPt": "",
+    "canDo": [
+      "There's a great restaurant near the park.",
+      "The area is lively and full of cafes.",
+      "It's a beautiful old neighborhood with cobblestone streets.",
+      "There aren't many tourist traps — it's mostly local.",
+      "I'd recommend the waterfront — it's really peaceful."
+    ],
+    "production": {
+      "introPt": "Recomende dois lugares na sua cidade — descreva cada um com adjetivos e o que tem por perto.",
+      "prompts": [{ "speaker": "Visitor", "questionEn": "What places would you recommend in this city?" }],
+      "fields": [
+        { "id": "place1", "labelPt": "Lugar 1", "prefixEn": "", "placeholderEn": "There's a great restaurant near the park — the area is lively and full of cafes." },
+        { "id": "place2", "labelPt": "Lugar 2", "prefixEn": "", "placeholderEn": "I'd recommend the waterfront — it's peaceful and beautiful, especially at sunset." }
+      ],
+      "exampleEn": "There's a great restaurant near the park — lively area with cafes. I'd recommend the waterfront — peaceful and beautiful at sunset."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em06l04-ctx-01", "type": "intro", "titleEn": "Describing places", "titlePt": "Descrever lugares", "bodyPt": "Adjetivos + there is/are + posição — monte imagem mental do lugar para quem não conhece." },
+      { "id": "em06l04-ctx-02", "type": "scenario", "settingEn": "City · Visitor asking for tips", "scenarioPt": "Parceiro comercial visita a cidade pela primeira vez." },
+      { "id": "em06l04-ctx-03", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Any good restaurants you'd recommend?", "promptPt": "Visitante pede restaurante:", "options": [
+        { "labelEn": "Yes — there's a great Italian place near the park. The area is lively, with lots of outdoor cafes.", "correct": true, "feedbackPt": "There's + adjetivos + descrição da área." },
+        { "labelEn": "Restaurant Italian park good.", "correct": false, "feedbackPt": "Sem estrutura." },
+        { "labelEn": "There are a great restaurant.", "correct": false, "feedbackPt": "Singular → there's." }
+      ]},
+      { "id": "em06l04-ctx-04", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "What's the neighborhood like around there?", "promptPt": "Follow-up — bairro:", "options": [
+        { "labelEn": "It's a beautiful old area — cobblestone streets, historic buildings, very walkable.", "correct": true, "feedbackPt": "Sequência de adjetivos e características." },
+        { "labelEn": "Neighborhood old beautiful walk.", "correct": false, "feedbackPt": "Frases soltas." },
+        { "labelEn": "It was beautiful when I visited.", "correct": false, "feedbackPt": "Ainda é — use presente." }
+      ]},
+      { "id": "em06l04-ctx-05", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Anywhere quiet to relax after work?", "promptPt": "Lugar tranquilo:", "options": [
+        { "labelEn": "I'd recommend the waterfront — it's really peaceful, especially at sunset. There are benches and a nice walking path.", "correct": true, "feedbackPt": "Recomendação + adjetivos + there are." },
+        { "labelEn": "Waterfront peaceful go there.", "correct": false, "feedbackPt": "Incompleto." },
+        { "labelEn": "There is benches and paths.", "correct": false, "feedbackPt": "Plural → there are." }
+      ]},
+      { "id": "em06l04-ctx-06", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Is it safe to walk around at night?", "promptPt": "Segurança:", "options": [
+        { "labelEn": "Yes — it's generally safe. The main streets are well lit, and there are usually people around.", "correct": true, "feedbackPt": "Opinião + detalhes concretos." },
+        { "labelEn": "Safe yes walk night.", "correct": false, "feedbackPt": "Telegráfico." },
+        { "labelEn": "It was safe last year.", "correct": false, "feedbackPt": "Pergunta é presente geral." }
+      ]},
+      { "id": "em06l04-ctx-07", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Perfect — I'll check those out. Thanks!", "promptPt": "Encerramento:", "options": [
+        { "labelEn": "You're welcome! Let me know if you need more recommendations.", "correct": true, "feedbackPt": "Encerramento + oferta de ajuda." },
+        { "labelEn": "Restaurant park Italian.", "correct": false, "feedbackPt": "Repete info desnecessária." },
+        { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Muda assunto abruptamente." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em06l04-learn-01", "type": "phrase_examples", "titleEn": "Describing adjectives", "titlePt": "Adjetivos descritivos", "introPt": "Características de lugares:", "examples": [
+        { "en": "lively / quiet / peaceful / crowded", "pt": "atmosfera" },
+        { "en": "beautiful / ugly / modern / historic", "pt": "aparência" },
+        { "en": "convenient / remote / walkable", "pt": "praticidade" },
+        { "en": "safe / dangerous / friendly", "pt": "segurança/social" }
+      ]},
+      { "id": "em06l04-learn-02", "type": "phrase_examples", "titleEn": "There's / There are", "titlePt": "There's / There are", "introPt": "O que existe no lugar:", "examples": [
+        { "en": "There's a great restaurant.", "pt": "tem um ótimo restaurante" },
+        { "en": "There are lots of cafes.", "pt": "muitos cafés" },
+        { "en": "There aren't many tourists.", "pt": "poucos turistas" },
+        { "en": "Is there a park nearby?", "pt": "tem parque perto?" }
+      ]},
+      { "id": "em06l04-learn-03", "type": "phrase_examples", "titleEn": "Recommending", "titlePt": "Recomendar", "introPt": "Sugerir lugares:", "examples": [
+        { "en": "I'd recommend the waterfront.", "pt": "recomendo o calçadão" },
+        { "en": "You should check out the old town.", "pt": "vale visitar o centro histórico" },
+        { "en": "It's worth a visit.", "pt": "vale a pena" },
+        { "en": "It's one of my favorite areas.", "pt": "uma das minhas áreas favoritas" }
+      ]},
+      { "id": "em06l04-learn-04", "type": "phrase_examples", "titleEn": "Location phrases", "titlePt": "Frases de localização", "introPt": "Onde fica:", "examples": [
+        { "en": "near the park / by the river", "pt": "perto do parque/rio" },
+        { "en": "in the city center", "pt": "no centro" },
+        { "en": "on the waterfront", "pt": "no calçadão" },
+        { "en": "around the corner", "pt": "virando a esquina" }
+      ]},
+      { "id": "em06l04-learn-05", "type": "language_focus", "titleEn": "Building descriptions", "titlePt": "Construir descrições", "items": [
+        { "formalEn": "Place + is + adjective", "naturalEn": "The area is lively and safe.", "notePt": "Sujeito + is + adj(s)." },
+        { "formalEn": "There is/are + features", "naturalEn": "There are cafes and restaurants.", "notePt": "O que tem no lugar." },
+        { "formalEn": "Adjective order", "naturalEn": "a beautiful old neighborhood", "notePt": "Opinion before age/size." }
+      ], "tipPt": "Descreva = adjetivo + o que tem + onde fica. Três camadas." },
+      { "id": "em06l04-learn-06", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "There's a great restaurant near the park.", "pt": "recomendação" },
+        { "en": "The area is lively and walkable.", "pt": "adjetivos" },
+        { "en": "There are lots of cafes.", "pt": "there are" },
+        { "en": "I'd recommend the waterfront.", "pt": "sugestão" },
+        { "en": "It's peaceful, especially at sunset.", "pt": "detalhe" }
+      ]}
+    ],
+    "imitate": [{ "id": "em06l04-imit-01", "type": "read_repeat", "titleEn": "Describing places dialogue", "titlePt": "Diálogo descrevendo lugares", "introPt": "Leia recomendações completas.", "phrases": [
+      { "en": "Any good restaurants you'd recommend?" },
+      { "en": "There's a great Italian place near the park." },
+      { "en": "The area is lively, with lots of outdoor cafes." },
+      { "en": "What's the neighborhood like?" },
+      { "en": "It's a beautiful old area — cobblestone streets, very walkable." },
+      { "en": "Anywhere quiet to relax?" },
+      { "en": "I'd recommend the waterfront — peaceful, especially at sunset." },
+      { "en": "There are benches and a nice walking path." },
+      { "en": "Is it safe at night?" },
+      { "en": "Yes — main streets are well lit." }
+    ], "dialogueEn": "Good restaurants? — Italian near the park, lively area with cafes. — Neighborhood? — Beautiful old area, walkable. — Quiet place? — Waterfront, peaceful at sunset. — Safe at night? — Yes, well lit." }],
+    "mission": [{ "id": "em06l04-miss-01", "type": "mission_intro", "headlineEn": "Recommend two places.", "headlinePt": "Recomende dois lugares.", "bodyPt": "Adjetivos + there is/are.", "prompts": [{ "speaker": "Visitor", "questionEn": "What places would you recommend?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em06l04-prac-01", "type": "choice", "promptPt": "Recomendar restaurante:", "options": [
+      { "labelEn": "There's a great restaurant near the park.", "correct": true, "feedbackPt": "There's + adj + near." },
+      { "labelEn": "There are a great restaurant.", "correct": false, "feedbackPt": "Singular → there's." },
+      { "labelEn": "Restaurant great park near.", "correct": false, "feedbackPt": "Sem estrutura." }
+    ]},
+    { "id": "em06l04-prac-02", "type": "fill_blank", "promptPt": "Complete — área animada:", "templateEn": "The area is lively and ___ cafes.", "blankLabel": "palavra", "options": [
+      { "labelEn": "full of", "correct": true, "feedbackPt": "Full of = cheio de." },
+      { "labelEn": "fulled", "correct": false, "feedbackPt": "Full of, não fulled." },
+      { "labelEn": "fill of", "correct": false, "feedbackPt": "Full of." }
+    ]},
+    { "id": "em06l04-prac-03", "type": "dialogue_complete", "promptPt": "Visitante: Anywhere quiet?", "speaker": "You", "contextEn": "Visitor: Anywhere quiet to relax?", "options": [
+      { "labelEn": "I'd recommend the waterfront — it's really peaceful.", "correct": true, "feedbackPt": "I'd recommend + descrição." },
+      { "labelEn": "Waterfront quiet go.", "correct": false, "feedbackPt": "Incompleto." },
+      { "labelEn": "I recommended waterfront.", "correct": false, "feedbackPt": "Passado desnecessário." }
+    ]},
+    { "id": "em06l04-prac-04", "type": "reorder", "promptPt": "Monte — muitos cafés:", "tokens": ["cafes.", "of", "lots", "are", "There"], "correctOrder": ["There", "are", "lots", "of", "cafes."], "feedbackCorrectPt": "There are lots of cafes.", "feedbackWrongPt": "There are + lots of + plural." },
+    { "id": "em06l04-prac-05", "type": "choice", "promptPt": "Descrever bairro antigo:", "options": [
+      { "labelEn": "It's a beautiful old neighborhood with cobblestone streets.", "correct": true, "feedbackPt": "Adjetivos + with + feature." },
+      { "labelEn": "Neighborhood old beautiful cobblestone.", "correct": false, "feedbackPt": "Sem verbo." },
+      { "labelEn": "It is beautifully old neighborhood.", "correct": false, "feedbackPt": "Beautiful (adj), não beautifully." }
+    ]},
+    { "id": "em06l04-prac-06", "type": "fill_blank", "promptPt": "Complete — poucos turistas:", "templateEn": "There ___ many tourist traps.", "blankLabel": "verbo", "options": [
+      { "labelEn": "aren't", "correct": true, "feedbackPt": "There aren't many = poucos." },
+      { "labelEn": "isn't", "correct": false, "feedbackPt": "Many traps = plural." },
+      { "labelEn": "don't", "correct": false, "feedbackPt": "There + aren't." }
+    ]},
+    { "id": "em06l04-prac-07", "type": "dialogue_complete", "promptPt": "Follow-up — bairro:", "speaker": "You", "contextEn": "Visitor: What's the neighborhood like?", "options": [
+      { "labelEn": "It's a beautiful old area — very walkable, with historic buildings.", "correct": true, "feedbackPt": "Descrição rica." },
+      { "labelEn": "Neighborhood like old.", "correct": false, "feedbackPt": "Incompleto." },
+      { "labelEn": "It was walkable.", "correct": false, "feedbackPt": "Presente geral." }
+    ]},
+    { "id": "em06l04-prac-08", "type": "choice", "promptPt": "Segurança à noite:", "options": [
+      { "labelEn": "Yes — it's generally safe. The streets are well lit.", "correct": true, "feedbackPt": "Opinião + detalhe." },
+      { "labelEn": "Safe night yes.", "correct": false, "feedbackPt": "Telegráfico." },
+      { "labelEn": "It is safe dangerous not.", "correct": false, "feedbackPt": "Confuso." }
+    ]},
+    { "id": "em06l04-prac-09", "type": "reorder", "promptPt": "Monte — recomendo o calçadão:", "tokens": ["waterfront.", "the", "recommend", "I'd"], "correctOrder": ["I'd", "recommend", "the", "waterfront."], "feedbackCorrectPt": "I'd recommend the waterfront.", "feedbackWrongPt": "I'd recommend + place." },
+    { "id": "em06l04-prac-10", "type": "fill_blank", "promptPt": "Complete — bancos e caminho:", "templateEn": "There ___ benches and a walking path.", "blankLabel": "verbo", "options": [
+      { "labelEn": "are", "correct": true, "feedbackPt": "Benches = plural." },
+      { "labelEn": "is", "correct": false, "feedbackPt": "Benches plural → are." },
+      { "labelEn": "'s", "correct": false, "feedbackPt": "Plural → are." }
+    ]},
+    { "id": "em06l04-prac-11", "type": "dialogue_complete", "promptPt": "Encerramento:", "speaker": "You", "contextEn": "Visitor: Thanks for the tips!", "options": [
+      { "labelEn": "You're welcome! Let me know if you need more recommendations.", "correct": true, "feedbackPt": "Educado + oferta." },
+      { "labelEn": "Restaurant park.", "correct": false, "feedbackPt": "Não encerra." },
+      { "labelEn": "Tips you welcome.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l04-prac-12", "type": "choice", "promptPt": "Descrição completa:", "options": [
+      { "labelEn": "There's a lively area near the park with cafes. The waterfront is peaceful.", "correct": true, "feedbackPt": "Dois lugares descritos." },
+      { "labelEn": "Park lively waterfront peaceful.", "correct": false, "feedbackPt": "Palavras soltas." },
+      { "labelEn": "There is cafes and peaceful waterfront are.", "correct": false, "feedbackPt": "Erros there is/are." }
+    ]}
+  ]
+}

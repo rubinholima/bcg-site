@@ -1,0 +1,176 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 5,
+  "goalPt": "Convidar e responder com Would you like to...?, Do you want to...?, Sure!, I'd love to, Sorry I can't — incluindo recusas educadas.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Sexta à tarde — colegas convidam você para jantar e evento do fim de semana.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Invite someone and respond.",
+    "headlinePt": "Convide alguém e responda.",
+    "bodyPt": "",
+    "canDo": [
+      "Would you like to join us for dinner?",
+      "Sure! I'd love to.",
+      "Do you want to come to the match on Saturday?",
+      "Sorry, I can't — I have plans.",
+      "Maybe next time!"
+    ],
+    "production": {
+      "introPt": "Convide um colega para algo e escreva duas respostas possíveis (aceitar e recusar educadamente).",
+      "prompts": [{ "speaker": "You", "questionEn": "(Invite a colleague to something this weekend.)" }],
+      "fields": [
+        { "id": "invite", "labelPt": "Convite", "prefixEn": "", "placeholderEn": "Would you like to join us for dinner on Friday?" },
+        { "id": "accept", "labelPt": "Resposta — aceitar", "prefixEn": "", "placeholderEn": "Sure! I'd love to. What time?" },
+        { "id": "decline", "labelPt": "Resposta — recusar", "prefixEn": "", "placeholderEn": "Sorry, I can't — I have plans. Maybe next time!" }
+      ],
+      "exampleEn": "Would you like to join us for dinner on Friday? — Sure! I'd love to. What time? / Sorry, I can't — I have plans. Maybe next time!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em05l04-ctx-01", "type": "intro", "titleEn": "Invitations", "titlePt": "Convites", "bodyPt": "Would you like to...? é educado e natural. Aprenda a convidar, aceitar com entusiasmo e recusar sem constranger." },
+      { "id": "em05l04-ctx-02", "type": "scenario", "settingEn": "Office · Friday afternoon", "scenarioPt": "Colegas planejam sair depois do trabalho e no fim de semana." },
+      { "id": "em05l04-ctx-03", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "Hey! Would you like to join us for dinner tonight?", "promptPt": "Alex convida para jantar:", "options": [
+        { "labelEn": "Sure! I'd love to. Where are you going?", "correct": true, "feedbackPt": "Aceita + pergunta follow-up." },
+        { "labelEn": "Yes I like dinner.", "correct": false, "feedbackPt": "Resposta incompleta — use I'd love to." },
+        { "labelEn": "I dinner tonight.", "correct": false, "feedbackPt": "Frase sem verbo." }
+      ]},
+      { "id": "em05l04-ctx-04", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "There's a new Italian place near the stadium. Around 7?", "promptPt": "Alex dá detalhes — você confirma:", "options": [
+        { "labelEn": "Perfect! See you at 7. Should I meet you at the office?", "correct": true, "feedbackPt": "Confirma horário + pergunta logística." },
+        { "labelEn": "Perfect 7 office meet.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "I went at 7 yesterday.", "correct": false, "feedbackPt": "Passado — convite é hoje." }
+      ]},
+      { "id": "em05l04-ctx-05", "type": "dialogue_choice", "speaker": "Maria", "promptEn": "Do you want to come to the match on Saturday?", "promptPt": "Maria convida de outra forma:", "options": [
+        { "labelEn": "Sorry, I can't — I'm visiting my family this weekend.", "correct": true, "feedbackPt": "Recusa educada + razão breve." },
+        { "labelEn": "No I don't want.", "correct": false, "feedbackPt": "Muito direto — falta educação." },
+        { "labelEn": "Sorry I can't because no.", "correct": false, "feedbackPt": "Razão vaga — dê motivo simples." }
+      ]},
+      { "id": "em05l04-ctx-06", "type": "dialogue_choice", "speaker": "Maria", "promptEn": "No problem! Maybe next time?", "promptPt": "Maria aceita a recusa — você responde:", "options": [
+        { "labelEn": "Definitely! Have fun at the match!", "correct": true, "feedbackPt": "Encerra positivo + deseja boa experiência." },
+        { "labelEn": "I don't like football.", "correct": false, "feedbackPt": "Desnecessariamente negativo." },
+        { "labelEn": "Maybe next time I can't.", "correct": false, "feedbackPt": "Contraditório." }
+      ]},
+      { "id": "em05l04-ctx-07", "type": "dialogue_choice", "speaker": "You", "promptEn": "(You want to invite Jamie to the team lunch.)", "promptPt": "Agora você convida:", "options": [
+        { "labelEn": "Jamie, would you like to come to our team lunch on Wednesday?", "correct": true, "feedbackPt": "Would you like to — convite educado." },
+        { "labelEn": "Jamie, you come lunch Wednesday.", "correct": false, "feedbackPt": "Imperativo — falta educação." },
+        { "labelEn": "Jamie, you like lunch?", "correct": false, "feedbackPt": "Não é convite claro." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em05l04-learn-01", "type": "phrase_examples", "titleEn": "Would you like to...?", "titlePt": "Would you like to...?", "introPt": "Forma mais educada de convidar:", "examples": [
+        { "en": "Would you like to join us?", "pt": "quer se juntar a nós?" },
+        { "en": "Would you like to come to dinner?", "pt": "quer jantar conosco?" },
+        { "en": "Would you like to grab coffee?", "pt": "quer tomar um café?" },
+        { "en": "Would you like to see the game?", "pt": "quer ver o jogo?" }
+      ]},
+      { "id": "em05l04-learn-02", "type": "phrase_examples", "titleEn": "Do you want to...?", "titlePt": "Do you want to...?", "introPt": "Mais informal — amigos e colegas próximos:", "examples": [
+        { "en": "Do you want to come?", "pt": "quer vir?" },
+        { "en": "Do you want to join us for lunch?", "pt": "almoço conosco?" },
+        { "en": "Do you want to hang out this weekend?", "pt": "sair no fim de semana?" },
+        { "en": "Do you fancy going out? (UK)", "pt": "variante britânica" }
+      ]},
+      { "id": "em05l04-learn-03", "type": "phrase_examples", "titleEn": "Accepting — Sure! I'd love to.", "titlePt": "Aceitar — Sure! I'd love to.", "introPt": "Respostas positivas naturais:", "examples": [
+        { "en": "Sure!", "pt": "claro!" },
+        { "en": "I'd love to!", "pt": "adoraria!" },
+        { "en": "That sounds great!", "pt": "parece ótimo!" },
+        { "en": "Sure! What time?", "pt": "aceita + pergunta detalhe" }
+      ]},
+      { "id": "em05l04-learn-04", "type": "phrase_examples", "titleEn": "Declining politely", "titlePt": "Recusar educadamente", "introPt": "Sorry + razão breve + alternativa:", "examples": [
+        { "en": "Sorry, I can't.", "pt": "desculpa, não posso" },
+        { "en": "Sorry, I can't — I have plans.", "pt": "tenho compromisso" },
+        { "en": "I'd love to, but I'm busy that day.", "pt": "recusa suave" },
+        { "en": "Maybe next time!", "pt": "deixa porta aberta" }
+      ]},
+      { "id": "em05l04-learn-05", "type": "language_focus", "titleEn": "Would you like vs Do you want", "titlePt": "Would you like vs Do you want", "items": [
+        { "formalEn": "Would you like to join us for dinner?", "naturalEn": "More polite — clients, new colleagues.", "notePt": "Would you like = mais formal/educado." },
+        { "formalEn": "Do you want to grab lunch?", "naturalEn": "Casual — close teammates.", "notePt": "Do you want = informal ok." },
+        { "formalEn": "Would you like + to + verb", "naturalEn": "Would you like to come?", "notePt": "Like + to + verbo base." }
+      ], "tipPt": "Em dúvida, use Would you like to — nunca soa errado." },
+      { "id": "em05l04-learn-06", "type": "mistake", "titlePt": "Erro comum", "wrongEn": "Would you like come to dinner?", "rightEn": "Would you like to come to dinner?", "explanationPt": "Would you like + to + verbo base." },
+      { "id": "em05l04-learn-07", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Would you like to join us?", "pt": "convite educado" },
+        { "en": "Sure! I'd love to.", "pt": "aceitar" },
+        { "en": "Sorry, I can't — I have plans.", "pt": "recusar" },
+        { "en": "Maybe next time!", "pt": "alternativa" },
+        { "en": "What time?", "pt": "follow-up" }
+      ]}
+    ],
+    "imitate": [{ "id": "em05l04-imit-01", "type": "read_repeat", "titleEn": "Invitations dialogue", "titlePt": "Diálogo de convites", "introPt": "Leia convite, aceitação e recusa em voz alta.", "phrases": [
+      { "en": "Would you like to join us for dinner tonight?" },
+      { "en": "Sure! I'd love to. Where are you going?" },
+      { "en": "There's a new Italian place. Around 7?" },
+      { "en": "Perfect! See you at 7." },
+      { "en": "Do you want to come to the match on Saturday?" },
+      { "en": "Sorry, I can't — I'm visiting my family." },
+      { "en": "No problem! Maybe next time?" },
+      { "en": "Definitely! Have fun!" },
+      { "en": "Would you like to come to our team lunch on Wednesday?" }
+    ], "dialogueEn": "Would you like to join us for dinner? — Sure! I'd love to. Where? — Italian place, around 7. — Perfect! See you at 7. — Do you want to come to the match Saturday? — Sorry, I can't — family visit. — Maybe next time? — Definitely! Have fun!" }],
+    "mission": [{ "id": "em05l04-miss-01", "type": "mission_intro", "headlineEn": "Invite and respond.", "headlinePt": "Convide e responda.", "bodyPt": "Um convite + aceitar + recusar.", "prompts": [{ "speaker": "You", "questionEn": "Invite a colleague to something this weekend." }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em05l04-prac-01", "type": "choice", "promptPt": "Convite educado:", "options": [
+      { "labelEn": "Would you like to join us for dinner?", "correct": true, "feedbackPt": "Would you like to + verbo." },
+      { "labelEn": "Would you like join us dinner?", "correct": false, "feedbackPt": "Falta to." },
+      { "labelEn": "You like dinner us?", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em05l04-prac-02", "type": "choice", "promptPt": "Aceitar convite:", "options": [
+      { "labelEn": "Sure! I'd love to.", "correct": true, "feedbackPt": "Resposta entusiasta natural." },
+      { "labelEn": "Yes I like.", "correct": false, "feedbackPt": "Incompleto." },
+      { "labelEn": "Sure I love.", "correct": false, "feedbackPt": "Falta to ou it." }
+    ]},
+    { "id": "em05l04-prac-03", "type": "fill_blank", "promptPt": "Complete o convite:", "templateEn": "Would you like ___ come to the match?", "blankLabel": "palavra", "options": [
+      { "labelEn": "to", "correct": true, "feedbackPt": "Like to + verbo." },
+      { "labelEn": "for", "correct": false, "feedbackPt": "Like to, não for." },
+      { "labelEn": "ing", "correct": false, "feedbackPt": "Verbo base após to." }
+    ]},
+    { "id": "em05l04-prac-04", "type": "dialogue_complete", "promptPt": "Alex: Would you like to join us for dinner?", "speaker": "You", "contextEn": "Alex: Would you like to join us for dinner?", "options": [
+      { "labelEn": "Sure! I'd love to. Where are you going?", "correct": true, "feedbackPt": "Aceita + follow-up." },
+      { "labelEn": "No I don't like dinner.", "correct": false, "feedbackPt": "Muito rude." },
+      { "labelEn": "I dinner yesterday.", "correct": false, "feedbackPt": "Não responde ao convite." }
+    ]},
+    { "id": "em05l04-prac-05", "type": "dialogue_complete", "promptPt": "Maria: Do you want to come to the match?", "speaker": "You", "contextEn": "Maria: Do you want to come to the match on Saturday?", "options": [
+      { "labelEn": "Sorry, I can't — I have plans this weekend.", "correct": true, "feedbackPt": "Recusa educada com razão." },
+      { "labelEn": "No. I hate football.", "correct": false, "feedbackPt": "Muito direto." },
+      { "labelEn": "Yes I can't.", "correct": false, "feedbackPt": "Contraditório." }
+    ]},
+    { "id": "em05l04-prac-06", "type": "reorder", "promptPt": "Monte — quer jantar conosco?", "tokens": ["dinner?", "for", "us", "join", "to", "like", "you", "Would"], "correctOrder": ["Would", "you", "like", "to", "join", "us", "for", "dinner?"], "feedbackCorrectPt": "Would you like to join us for dinner?", "feedbackWrongPt": "Would you like to + verbo + complemento." },
+    { "id": "em05l04-prac-07", "type": "choice", "promptPt": "Recusa educada:", "options": [
+      { "labelEn": "I'd love to, but I'm busy that day. Maybe next time!", "correct": true, "feedbackPt": "Suave + alternativa." },
+      { "labelEn": "No. Go away.", "correct": false, "feedbackPt": "Grosseria." },
+      { "labelEn": "I not come.", "correct": false, "feedbackPt": "Gramática incorreta." }
+    ]},
+    { "id": "em05l04-prac-08", "type": "dialogue_complete", "promptPt": "Follow-up após aceitar — horário:", "speaker": "You", "contextEn": "Alex: Around 7?", "options": [
+      { "labelEn": "Perfect! See you at 7.", "correct": true, "feedbackPt": "Confirma horário." },
+      { "labelEn": "I saw you at 7.", "correct": false, "feedbackPt": "Saw é passado." },
+      { "labelEn": "Perfect 7 see.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em05l04-prac-09", "type": "fill_blank", "promptPt": "Complete — adoraria:", "templateEn": "Sure! I ___ love to.", "blankLabel": "contração", "options": [
+      { "labelEn": "'d", "correct": true, "feedbackPt": "I'd = I would." },
+      { "labelEn": "'m", "correct": false, "feedbackPt": "'m = am." },
+      { "labelEn": "'ll", "correct": false, "feedbackPt": "'ll = will." }
+    ]},
+    { "id": "em05l04-prac-10", "type": "choice", "promptPt": "Você convida Jamie:", "options": [
+      { "labelEn": "Would you like to come to our team lunch on Wednesday?", "correct": true, "feedbackPt": "Convite completo." },
+      { "labelEn": "You come lunch Wednesday.", "correct": false, "feedbackPt": "Imperativo." },
+      { "labelEn": "Would you like coming lunch?", "correct": false, "feedbackPt": "Like to + base verb." }
+    ]},
+    { "id": "em05l04-prac-11", "type": "dialogue_complete", "promptPt": "Maria: Maybe next time?", "speaker": "You", "contextEn": "Maria: No problem! Maybe next time?", "options": [
+      { "labelEn": "Definitely! Have fun at the match!", "correct": true, "feedbackPt": "Encerra positivo." },
+      { "labelEn": "No next time never.", "correct": false, "feedbackPt": "Negativo demais." },
+      { "labelEn": "I can't definitely.", "correct": false, "feedbackPt": "Confuso." }
+    ]},
+    { "id": "em05l04-prac-12", "type": "classify", "promptPt": "Formal ou informal?", "sentenceEn": "Do you want to grab lunch?", "category": "informal", "feedbackCorrectPt": "Do you want = informal.", "feedbackWrongPt": "Want to = mais casual que would like." }
+  ]
+}

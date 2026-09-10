@@ -1,0 +1,183 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 6,
+  "goalPt": "Desafio do Módulo 6 — integrar casa, bairro, serviços, comparativos, descrição de lugares, problemas e pedidos de ajuda numa conversa completa.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Desafio — colega novo chega, você orienta sobre bairro, compara opções, reporta problema no prédio e pede ajuda.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia o diálogo completo em voz alta.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Help a newcomer and solve a problem.",
+    "headlinePt": "Ajude um recém-chegado e resolva um problema.",
+    "bodyPt": "",
+    "canDo": [
+      "I live in an apartment near the stadium.",
+      "Downtown is more expensive than the suburbs.",
+      "There's a great restaurant near the park.",
+      "Something is wrong with the heating.",
+      "Could you send someone to fix it?"
+    ],
+    "production": {
+      "introPt": "Monte conversa completa: descreva onde mora, compare bairros, recomende um lugar, reporte um problema e peça ajuda.",
+      "prompts": [{ "speaker": "New colleague", "questionEn": "I'm new in town — can you help me get oriented?" }],
+      "fields": [
+        { "id": "home", "labelPt": "Casa e bairro", "prefixEn": "I live in", "placeholderEn": "an apartment near the stadium. The neighborhood is quiet and safe." },
+        { "id": "compare", "labelPt": "Comparar áreas", "prefixEn": "", "placeholderEn": "Downtown is more convenient but more expensive than the suburbs." },
+        { "id": "recommend", "labelPt": "Recomendar lugar", "prefixEn": "", "placeholderEn": "There's a great restaurant near the park — the area is lively." },
+        { "id": "services", "labelPt": "Serviços", "prefixEn": "", "placeholderEn": "There's a bank on Main Street and a pharmacy two blocks away." },
+        { "id": "problem", "labelPt": "Reportar problema", "prefixEn": "", "placeholderEn": "By the way — something is wrong with the heating in my building." },
+        { "id": "help", "labelPt": "Pedir ajuda", "prefixEn": "", "placeholderEn": "Could you tell me who I should contact? Is there anyone available today?" }
+      ],
+      "exampleEn": "I live near the stadium — quiet neighborhood. Downtown is more expensive than suburbs. Great restaurant near the park. Bank on Main Street. Something is wrong with the heating — could you tell me who to contact?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em06l07-ctx-01", "type": "intro", "titleEn": "Module 6 challenge", "titlePt": "Desafio do Módulo 6", "bodyPt": "Home, City & Problems — junte descrição de lugares, comparações, serviços, problemas e pedidos de ajuda num fluxo natural." },
+      { "id": "em06l07-ctx-02", "type": "scenario", "settingEn": "Office · New colleague orientation", "scenarioPt": "Colega recém-chegado + você precisa resolver problema no prédio." },
+      { "id": "em06l07-ctx-03", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "I'm new here — where do you live? What's the area like?", "promptPt": "Passo 1 — casa e bairro:", "options": [
+        { "labelEn": "I live in an apartment near the stadium. The neighborhood is quiet, and there's a gym and supermarket nearby.", "correct": true, "feedbackPt": "Moradia + bairro + there is/are." },
+        { "labelEn": "I live apartment stadium quiet.", "correct": false, "feedbackPt": "Sem estrutura." },
+        { "labelEn": "There is two gyms near I live.", "correct": false, "feedbackPt": "Plural → are." }
+      ]},
+      { "id": "em06l07-ctx-04", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "Should I look downtown or in the suburbs?", "promptPt": "Passo 2 — comparar:", "options": [
+        { "labelEn": "Downtown is more convenient but more expensive. The suburbs are quieter and cheaper.", "correct": true, "feedbackPt": "Comparativos corretos." },
+        { "labelEn": "Downtown more convenient expensive suburbs.", "correct": false, "feedbackPt": "Faltam than e verbos." },
+        { "labelEn": "Suburbs are more quiet than downtown.", "correct": false, "feedbackPt": "Quiet → quieter." }
+      ]},
+      { "id": "em06l07-ctx-05", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "Any good places to eat? And where's the nearest bank?", "promptPt": "Passo 3 — recomendar + serviços:", "options": [
+        { "labelEn": "There's a great restaurant near the park. The bank is on Main Street, two blocks from the subway.", "correct": true, "feedbackPt": "Lugar + serviço + localização." },
+        { "labelEn": "Restaurant park bank Main.", "correct": false, "feedbackPt": "Incompleto." },
+        { "labelEn": "There are a bank on Main.", "correct": false, "feedbackPt": "Singular → there's/is." }
+      ]},
+      { "id": "em06l07-ctx-06", "type": "dialogue_choice", "speaker": "You", "promptEn": "(You remember the heating problem — you ask the colleague who knows the building manager.)", "promptPt": "Passo 4 — reportar problema:", "options": [
+        { "labelEn": "By the way — something is wrong with the heating in my building. The hot water isn't working either.", "correct": true, "feedbackPt": "Something is wrong with + detalhe." },
+        { "labelEn": "Heating wrong my building.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "Something wrong heating no with.", "correct": false, "feedbackPt": "Falta with." }
+      ]},
+      { "id": "em06l07-ctx-07", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "Oh no — do you know who to contact?", "promptPt": "Passo 5 — pedir ajuda:", "options": [
+        { "labelEn": "Could you give me the building manager's number? I'd really appreciate it — it's urgent.", "correct": true, "feedbackPt": "Could you + urgência educada." },
+        { "labelEn": "Give me number manager now!", "correct": false, "feedbackPt": "Rude." },
+        { "labelEn": "Could you to give number?", "correct": false, "feedbackPt": "Could + base verb." }
+      ]},
+      { "id": "em06l07-ctx-08", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "Sure — here it is. And welcome to the city! Let me know if you need anything else.", "promptPt": "Encerramento:", "options": [
+        { "labelEn": "Thank you so much! This was really helpful. I'll call the manager right away.", "correct": true, "feedbackPt": "Agradece + ação." },
+        { "labelEn": "Manager call I later maybe.", "correct": false, "feedbackPt": "Incompleto." },
+        { "labelEn": "Restaurant bank heating.", "correct": false, "feedbackPt": "Não encerra." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em06l07-learn-01", "type": "review", "titleEn": "Lesson 1 — Home & neighborhood", "titlePt": "Lição 1 — Casa e bairro", "items": [
+        { "en": "I live in an apartment.", "pt": "moradia" },
+        { "en": "There are two bedrooms.", "pt": "cômodos" },
+        { "en": "The neighborhood is quiet.", "pt": "bairro" }
+      ]},
+      { "id": "em06l07-learn-02", "type": "review", "titleEn": "Lesson 2 — City services", "titlePt": "Lição 2 — Serviços", "items": [
+        { "en": "Where's the nearest bank?", "pt": "pergunta" },
+        { "en": "You can take the subway.", "pt": "transporte" },
+        { "en": "It opens at 9.", "pt": "horário" }
+      ]},
+      { "id": "em06l07-learn-03", "type": "review", "titleEn": "Lesson 3 — Comparatives", "titlePt": "Lição 3 — Comparativos", "items": [
+        { "en": "more expensive than", "pt": "longos" },
+        { "en": "quieter than / bigger than", "pt": "curtos" },
+        { "en": "better than", "pt": "irregular" }
+      ]},
+      { "id": "em06l07-learn-04", "type": "review", "titleEn": "Lesson 4 — Describing places", "titlePt": "Lição 4 — Descrever lugares", "items": [
+        { "en": "There's a great restaurant.", "pt": "recomendar" },
+        { "en": "The area is lively.", "pt": "adjetivos" },
+        { "en": "I'd recommend the waterfront.", "pt": "sugestão" }
+      ]},
+      { "id": "em06l07-learn-05", "type": "review", "titleEn": "Lesson 5 — Problems", "titlePt": "Lição 5 — Problemas", "items": [
+        { "en": "Something is wrong with the heating.", "pt": "reportar" },
+        { "en": "The AC doesn't work.", "pt": "não funciona" },
+        { "en": "There's a leak.", "pt": "vazamento" }
+      ]},
+      { "id": "em06l07-learn-06", "type": "review", "titleEn": "Lesson 6 — Asking for help", "titlePt": "Lição 6 — Pedir ajuda", "items": [
+        { "en": "Could you send someone?", "pt": "pedido" },
+        { "en": "Is there anyone available?", "pt": "disponibilidade" },
+        { "en": "It's urgent.", "pt": "urgência" }
+      ]},
+      { "id": "em06l07-learn-07", "type": "language_focus", "titleEn": "Module 6 flow", "titlePt": "Fluxo do Módulo 6", "items": [
+        { "formalEn": "Describe → Compare → Recommend → Report → Request", "naturalEn": "Home → Areas → Places → Problem → Help", "notePt": "Ordem natural ao orientar recém-chegado." },
+        { "formalEn": "One topic at a time", "naturalEn": "Answer what they ask, then add your problem", "notePt": "Não despeje tudo — siga a conversa." }
+      ], "tipPt": "Desafio = orientar colega + resolver seu problema — duas trilhas num diálogo." },
+      { "id": "em06l07-learn-08", "type": "mistake", "titlePt": "Erro comum no desafio", "wrongEn": "I live apartment near stadium downtown more expensive restaurant park heating wrong could you help.", "rightEn": "I live near the stadium. Downtown is more expensive. There's a restaurant near the park. Something is wrong with the heating — could you help?", "explanationPt": "Separe ideias em frases. Use with em wrong with. Comparativos precisam de than." },
+      { "id": "em06l07-learn-09", "type": "review", "titleEn": "Quick review — full module", "titlePt": "Revisão — módulo completo", "items": [
+        { "en": "I live in an apartment near the stadium.", "pt": "casa" },
+        { "en": "Downtown is more expensive than the suburbs.", "pt": "comparar" },
+        { "en": "There's a bank on Main Street.", "pt": "serviços" },
+        { "en": "There's a lively area near the park.", "pt": "descrever" },
+        { "en": "Something is wrong with the heating.", "pt": "problema" },
+        { "en": "Could you send someone to fix it?", "pt": "ajuda" }
+      ]}
+    ],
+    "imitate": [{ "id": "em06l07-imit-01", "type": "read_repeat", "titleEn": "Full module dialogue", "titlePt": "Diálogo completo do módulo", "introPt": "Leia orientação + problema + pedido de ajuda.", "phrases": [
+      { "en": "Where do you live? What's the area like?" },
+      { "en": "I live near the stadium — quiet neighborhood, gym and supermarket nearby." },
+      { "en": "Downtown or suburbs?" },
+      { "en": "Downtown is more convenient but more expensive. Suburbs are quieter." },
+      { "en": "Good restaurants? Nearest bank?" },
+      { "en": "Restaurant near the park. Bank on Main Street, near the subway." },
+      { "en": "Something is wrong with the heating — no hot water." },
+      { "en": "Could you give me the building manager's number?" },
+      { "en": "It's urgent — I'd really appreciate it." },
+      { "en": "Thank you! I'll call right away." }
+    ], "dialogueEn": "Where do you live? — Near stadium, quiet area. — Downtown or suburbs? — Downtown pricier, suburbs quieter. — Restaurants? Bank? — Restaurant by park, bank on Main. — Heating broken, no hot water. — Manager's number? — Urgent, thanks! — Call right away!" }],
+    "mission": [{ "id": "em06l07-miss-01", "type": "mission_intro", "headlineEn": "Orient and solve.", "headlinePt": "Oriente e resolva.", "bodyPt": "Integre todo o Módulo 6.", "prompts": [{ "speaker": "Colleague", "questionEn": "I'm new — can you help me get oriented?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em06l07-prac-01", "type": "choice", "promptPt": "Descrever moradia:", "options": [
+      { "labelEn": "I live in an apartment near the stadium.", "correct": true, "feedbackPt": "Live in + place." },
+      { "labelEn": "I live on apartment stadium.", "correct": false, "feedbackPt": "In + near." },
+      { "labelEn": "Living apartment I stadium.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l07-prac-02", "type": "classify", "promptPt": "Qual lição?", "sentenceEn": "Downtown is more expensive than the suburbs.", "category": "comparatives", "feedbackCorrectPt": "More expensive than.", "feedbackWrongPt": "Comparativo." },
+    { "id": "em06l07-prac-03", "type": "classify", "promptPt": "Qual lição?", "sentenceEn": "Something is wrong with the heating.", "category": "problems", "feedbackCorrectPt": "Wrong with pattern.", "feedbackWrongPt": "Reportar problema." },
+    { "id": "em06l07-prac-04", "type": "dialogue_complete", "promptPt": "Recomendar restaurante:", "speaker": "You", "contextEn": "Colleague: Any good places to eat?", "options": [
+      { "labelEn": "There's a great restaurant near the park — the area is lively.", "correct": true, "feedbackPt": "There's + descrição." },
+      { "labelEn": "There are a great restaurant.", "correct": false, "feedbackPt": "Singular." },
+      { "labelEn": "Restaurant good park.", "correct": false, "feedbackPt": "Incompleto." }
+    ]},
+    { "id": "em06l07-prac-05", "type": "fill_blank", "promptPt": "Complete — banco na Main Street:", "templateEn": "The bank is ___ Main Street.", "blankLabel": "preposição", "options": [
+      { "labelEn": "on", "correct": true, "feedbackPt": "On + street." },
+      { "labelEn": "in", "correct": false, "feedbackPt": "Streets use on." },
+      { "labelEn": "at", "correct": false, "feedbackPt": "On Main Street." }
+    ]},
+    { "id": "em06l07-prac-06", "type": "dialogue_complete", "promptPt": "Reportar problema:", "speaker": "You", "contextEn": "(You need to mention the heating.)", "options": [
+      { "labelEn": "Something is wrong with the heating — the hot water isn't working.", "correct": true, "feedbackPt": "Wrong with + detalhe." },
+      { "labelEn": "Something wrong heating.", "correct": false, "feedbackPt": "Falta with." },
+      { "labelEn": "Heating is wrong something.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l07-prac-07", "type": "reorder", "promptPt": "Monte — pedir número do síndico:", "tokens": ["number?", "manager's", "the", "me", "give", "you", "Could"], "correctOrder": ["Could", "you", "give", "me", "the", "manager's", "number?"], "feedbackCorrectPt": "Could you give me the manager's number?", "feedbackWrongPt": "Could you + verb + object." },
+    { "id": "em06l07-prac-08", "type": "choice", "promptPt": "Comparar bairros:", "options": [
+      { "labelEn": "The suburbs are quieter and cheaper than downtown.", "correct": true, "feedbackPt": "Dois comparativos + than." },
+      { "labelEn": "Suburbs more quiet cheap downtown.", "correct": false, "feedbackPt": "Sem estrutura." },
+      { "labelEn": "Suburbs are more quieter.", "correct": false, "feedbackPt": "Quieter, não more quieter." }
+    ]},
+    { "id": "em06l07-prac-09", "type": "dialogue_complete", "promptPt": "Follow-up — urgência:", "speaker": "You", "contextEn": "Colleague: Here's the number.", "options": [
+      { "labelEn": "Thank you! It's urgent — I'll call right away.", "correct": true, "feedbackPt": "Agradece + ação." },
+      { "labelEn": "Urgent call maybe later.", "correct": false, "feedbackPt": "Contraditório." },
+      { "labelEn": "Thank urgent.", "correct": false, "feedbackPt": "Incompleto." }
+    ]},
+    { "id": "em06l07-prac-10", "type": "fill_blank", "promptPt": "Complete — farmácia perto:", "templateEn": "There ___ a pharmacy two blocks away.", "blankLabel": "verbo", "options": [
+      { "labelEn": "'s", "correct": true, "feedbackPt": "Singular." },
+      { "labelEn": "'re", "correct": false, "feedbackPt": "A pharmacy = singular." },
+      { "labelEn": "has", "correct": false, "feedbackPt": "There's." }
+    ]},
+    { "id": "em06l07-prac-11", "type": "choice", "promptPt": "Resposta integrada correta:", "options": [
+      { "labelEn": "I live near the stadium. Downtown is pricier. There's a restaurant by the park. Something is wrong with the heating — could you help?", "correct": true, "feedbackPt": "Cinco elementos do módulo." },
+      { "labelEn": "Live stadium downtown restaurant heating help.", "correct": false, "feedbackPt": "Palavras soltas." },
+      { "labelEn": "I live stadium more expensive restaurant there is heating wrong.", "correct": false, "feedbackPt": "Erros gramaticais." }
+    ]},
+    { "id": "em06l07-prac-12", "type": "classify", "promptPt": "Qual lição?", "sentenceEn": "Could you send someone to fix it?", "category": "asking_help", "feedbackCorrectPt": "Could you = pedir ajuda.", "feedbackWrongPt": "Pedido de ajuda." }
+  ]
+}

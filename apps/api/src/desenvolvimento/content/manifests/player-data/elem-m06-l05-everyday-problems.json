@@ -1,0 +1,176 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 6,
+  "goalPt": "Reportar problemas do dia a dia — Something is wrong with..., It doesn't work, There's a problem with... — em casa, no trabalho e na cidade.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Problemas em casa e no apartamento — você reporta ao síndico e descreve o que não funciona.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Report a problem clearly.",
+    "headlinePt": "Reporte um problema claramente.",
+    "bodyPt": "",
+    "canDo": [
+      "Something is wrong with the heating.",
+      "The air conditioning doesn't work.",
+      "There's a leak in the bathroom.",
+      "The internet connection is very slow.",
+      "The elevator is out of order."
+    ],
+    "production": {
+      "introPt": "Reporte dois problemas — um em casa e um no trabalho — com detalhes.",
+      "prompts": [{ "speaker": "Building manager", "questionEn": "What's the problem?" }],
+      "fields": [
+        { "id": "home", "labelPt": "Problema em casa", "prefixEn": "", "placeholderEn": "Something is wrong with the heating — it's not working at all." },
+        { "id": "work", "labelPt": "Problema no trabalho", "prefixEn": "", "placeholderEn": "The internet connection is very slow today — I can't join video calls." }
+      ],
+      "exampleEn": "Something is wrong with the heating — it's not working. The internet at work is very slow — I can't join video calls."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em06l05-ctx-01", "type": "intro", "titleEn": "Everyday problems", "titlePt": "Problemas do dia a dia", "bodyPt": "Something is wrong with... e It doesn't work — frases essenciais para reportar problemas em casa, no prédio ou no trabalho." },
+      { "id": "em06l05-ctx-02", "type": "scenario", "settingEn": "Apartment · Calling building manager", "scenarioPt": "Inverno chegou e o aquecimento parou de funcionar." },
+      { "id": "em06l05-ctx-03", "type": "dialogue_choice", "speaker": "You", "promptEn": "(You call the building manager.)", "promptPt": "Abrir chamado — aquecimento:", "options": [
+        { "labelEn": "Hi — something is wrong with the heating. It's not working at all.", "correct": true, "feedbackPt": "Something is wrong with + detalhe." },
+        { "labelEn": "Heating wrong something.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "The heating worked fine yesterday.", "correct": false, "feedbackPt": "Não reporta o problema atual." }
+      ]},
+      { "id": "em06l05-ctx-04", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "I'm sorry to hear that. Anything else?", "promptPt": "Follow-up — outro problema:", "options": [
+        { "labelEn": "Yes — there's also a leak in the bathroom. Water is dripping from the ceiling.", "correct": true, "feedbackPt": "There's a leak + descrição." },
+        { "labelEn": "Yes — leak bathroom water.", "correct": false, "feedbackPt": "Frase incompleta." },
+        { "labelEn": "There is leaks in bathroom.", "correct": false, "feedbackPt": "A leak = singular." }
+      ]},
+      { "id": "em06l05-ctx-05", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "When did you first notice these problems?", "promptPt": "Manager pergunta quando:", "options": [
+        { "labelEn": "The heating stopped working two days ago. I noticed the leak this morning.", "correct": true, "feedbackPt": "Tempos diferentes — natural." },
+        { "labelEn": "Problems notice yesterday always.", "correct": false, "feedbackPt": "Confuso." },
+        { "labelEn": "The heating stops two days.", "correct": false, "feedbackPt": "Parou = stopped (passado)." }
+      ]},
+      { "id": "em06l05-ctx-06", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "(At work — your video keeps freezing.)", "promptPt": "Problema no trabalho — internet:", "options": [
+        { "labelEn": "The internet connection is really slow today — my video keeps freezing.", "correct": true, "feedbackPt": "Is + adjetivo + consequência." },
+        { "labelEn": "Internet slow video freeze.", "correct": false, "feedbackPt": "Incompleto." },
+        { "labelEn": "The internet was slow tomorrow.", "correct": false, "feedbackPt": "Tempo incorreto." }
+      ]},
+      { "id": "em06l05-ctx-07", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "I'll send a technician tomorrow morning. Is that OK?", "promptPt": "Confirmação:", "options": [
+        { "labelEn": "Yes, that works. Thank you — I really appreciate it.", "correct": true, "feedbackPt": "Confirma + agradece." },
+        { "labelEn": "No technician never.", "correct": false, "feedbackPt": "Rude." },
+        { "labelEn": "Heating leak problem.", "correct": false, "feedbackPt": "Não responde." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em06l05-learn-01", "type": "phrase_examples", "titleEn": "Something is wrong with...", "titlePt": "Something is wrong with...", "introPt": "Padrão principal para reportar:", "examples": [
+        { "en": "Something is wrong with the heating.", "pt": "algo errado com aquecimento" },
+        { "en": "Something is wrong with my computer.", "pt": "computador com problema" },
+        { "en": "Something is wrong with the elevator.", "pt": "elevador" },
+        { "en": "Is something wrong with the Wi-Fi?", "pt": "pergunta" }
+      ]},
+      { "id": "em06l05-learn-02", "type": "phrase_examples", "titleEn": "It doesn't work / isn't working", "titlePt": "It doesn't work / isn't working", "introPt": "Algo parou ou não funciona:", "examples": [
+        { "en": "The AC doesn't work.", "pt": "ar condicionado não funciona" },
+        { "en": "The printer isn't working.", "pt": "impressora não está funcionando" },
+        { "en": "My phone won't turn on.", "pt": "celular não liga" },
+        { "en": "The hot water isn't working.", "pt": "água quente" }
+      ]},
+      { "id": "em06l05-learn-03", "type": "phrase_examples", "titleEn": "There's a problem / leak / issue", "titlePt": "There's a problem / leak / issue", "introPt": "Problemas específicos:", "examples": [
+        { "en": "There's a leak in the bathroom.", "pt": "vazamento" },
+        { "en": "There's a problem with the plumbing.", "pt": "encanamento" },
+        { "en": "There's an issue with the login system.", "pt": "sistema" },
+        { "en": "The elevator is out of order.", "pt": "elevador fora de serviço" }
+      ]},
+      { "id": "em06l05-learn-04", "type": "phrase_examples", "titleEn": "Describing the issue", "titlePt": "Descrever o problema", "introPt": "Mais detalhes:", "examples": [
+        { "en": "It's making a strange noise.", "pt": "barulho estranho" },
+        { "en": "Water is dripping from the ceiling.", "pt": "gotejando" },
+        { "en": "The connection is very slow.", "pt": "conexão lenta" },
+        { "en": "It stopped working two days ago.", "pt": "quando começou" }
+      ]},
+      { "id": "em06l05-learn-05", "type": "language_focus", "titleEn": "Wrong with vs wrong", "titlePt": "Wrong with vs wrong", "items": [
+        { "formalEn": "Something is wrong with the heating.", "naturalEn": "with + thing that has problem", "notePt": "Wrong WITH something." },
+        { "formalEn": "Something is wrong the heating.", "naturalEn": "Missing 'with' — incorrect.", "notePt": "Sempre wrong WITH." },
+        { "formalEn": "doesn't work vs isn't working", "naturalEn": "Both ok — doesn't = general, isn't = right now.", "notePt": "Interchangeable na prática." }
+      ], "tipPt": "Something is wrong WITH... · It doesn't work · There's a leak/issue." },
+      { "id": "em06l05-learn-06", "type": "mistake", "titlePt": "Erro comum", "wrongEn": "Something is wrong the heating.", "rightEn": "Something is wrong with the heating.", "explanationPt": "Wrong always needs with before the thing." },
+      { "id": "em06l05-learn-07", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Something is wrong with the heating.", "pt": "padrão principal" },
+        { "en": "The AC doesn't work.", "pt": "não funciona" },
+        { "en": "There's a leak in the bathroom.", "pt": "vazamento" },
+        { "en": "The internet is very slow.", "pt": "descrição" },
+        { "en": "It stopped working two days ago.", "pt": "quando" }
+      ]}
+    ],
+    "imitate": [{ "id": "em06l05-imit-01", "type": "read_repeat", "titleEn": "Reporting problems", "titlePt": "Reportando problemas", "introPt": "Leia reportes completos.", "phrases": [
+      { "en": "Something is wrong with the heating." },
+      { "en": "It's not working at all." },
+      { "en": "There's also a leak in the bathroom." },
+      { "en": "Water is dripping from the ceiling." },
+      { "en": "The heating stopped working two days ago." },
+      { "en": "I noticed the leak this morning." },
+      { "en": "The internet connection is really slow today." },
+      { "en": "My video keeps freezing." },
+      { "en": "The elevator is out of order." },
+      { "en": "I'll send a technician tomorrow." }
+    ], "dialogueEn": "Something is wrong with the heating — not working. Also a leak in the bathroom, water dripping. Heating stopped two days ago, leak this morning. At work — internet slow, video freezing. Technician tomorrow? — Yes, thanks!" }],
+    "mission": [{ "id": "em06l05-miss-01", "type": "mission_intro", "headlineEn": "Report two problems.", "headlinePt": "Reporte dois problemas.", "bodyPt": "Casa + trabalho.", "prompts": [{ "speaker": "Manager", "questionEn": "What's the problem?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em06l05-prac-01", "type": "choice", "promptPt": "Reportar aquecimento:", "options": [
+      { "labelEn": "Something is wrong with the heating.", "correct": true, "feedbackPt": "Wrong with + thing." },
+      { "labelEn": "Something is wrong the heating.", "correct": false, "feedbackPt": "Falta with." },
+      { "labelEn": "Something wrong is heating.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l05-prac-02", "type": "fill_blank", "promptPt": "Complete — ar condicionado não funciona:", "templateEn": "The air conditioning ___ work.", "blankLabel": "verbo", "options": [
+      { "labelEn": "doesn't", "correct": true, "feedbackPt": "Doesn't work." },
+      { "labelEn": "isn't", "correct": false, "feedbackPt": "Isn't working ok, mas aqui doesn't work." },
+      { "labelEn": "don't", "correct": false, "feedbackPt": "It + doesn't." }
+    ]},
+    { "id": "em06l05-prac-03", "type": "choice", "promptPt": "Vazamento no banheiro:", "options": [
+      { "labelEn": "There's a leak in the bathroom.", "correct": true, "feedbackPt": "There's a leak in." },
+      { "labelEn": "There are a leak in bathroom.", "correct": false, "feedbackPt": "A leak = singular." },
+      { "labelEn": "Leak is bathroom there.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l05-prac-04", "type": "dialogue_complete", "promptPt": "Manager: Anything else?", "speaker": "You", "contextEn": "Manager: Anything else wrong?", "options": [
+      { "labelEn": "Yes — water is dripping from the bathroom ceiling.", "correct": true, "feedbackPt": "Detalhe concreto." },
+      { "labelEn": "Yes — drip water ceiling.", "correct": false, "feedbackPt": "Incompleto." },
+      { "labelEn": "Yes — everything fine.", "correct": false, "feedbackPt": "Contraditório." }
+    ]},
+    { "id": "em06l05-prac-05", "type": "reorder", "promptPt": "Monte — conexão muito lenta:", "tokens": ["slow.", "very", "is", "connection", "internet", "The"], "correctOrder": ["The", "internet", "connection", "is", "very", "slow."], "feedbackCorrectPt": "The internet connection is very slow.", "feedbackWrongPt": "Subject + is + adjective." },
+    { "id": "em06l05-prac-06", "type": "choice", "promptPt": "Elevador fora de serviço:", "options": [
+      { "labelEn": "The elevator is out of order.", "correct": true, "feedbackPt": "Expressão fixa." },
+      { "labelEn": "The elevator is out from order.", "correct": false, "feedbackPt": "Out of order." },
+      { "labelEn": "Elevator order out.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l05-prac-07", "type": "fill_blank", "promptPt": "Complete — parou de funcionar:", "templateEn": "It ___ working two days ago.", "blankLabel": "verbo", "options": [
+      { "labelEn": "stopped", "correct": true, "feedbackPt": "Stopped working = passado." },
+      { "labelEn": "stops", "correct": false, "feedbackPt": "Two days ago = passado." },
+      { "labelEn": "stop", "correct": false, "feedbackPt": "Passado needed." }
+    ]},
+    { "id": "em06l05-prac-08", "type": "dialogue_complete", "promptPt": "Trabalho — video congelando:", "speaker": "You", "contextEn": "(Video keeps freezing on the call.)", "options": [
+      { "labelEn": "The internet is really slow — my video keeps freezing.", "correct": true, "feedbackPt": "Problema + consequência." },
+      { "labelEn": "Internet slow freeze.", "correct": false, "feedbackPt": "Incompleto." },
+      { "labelEn": "Video frozen yesterday.", "correct": false, "feedbackPt": "Keeps = presente contínuo." }
+    ]},
+    { "id": "em06l05-prac-09", "type": "choice", "promptPt": "Perguntar se algo está errado:", "options": [
+      { "labelEn": "Is something wrong with the Wi-Fi?", "correct": true, "feedbackPt": "Is something wrong with." },
+      { "labelEn": "Is something wrong the Wi-Fi?", "correct": false, "feedbackPt": "Falta with." },
+      { "labelEn": "Something wrong Wi-Fi is?", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l05-prac-10", "type": "reorder", "promptPt": "Monte — impressora não funciona:", "tokens": ["working.", "isn't", "printer", "The"], "correctOrder": ["The", "printer", "isn't", "working."], "feedbackCorrectPt": "The printer isn't working.", "feedbackWrongPt": "Isn't + -ing." },
+    { "id": "em06l05-prac-11", "type": "dialogue_complete", "promptPt": "Manager: When did it start?", "speaker": "You", "contextEn": "Manager: When did you first notice?", "options": [
+      { "labelEn": "The heating stopped two days ago. I noticed the leak this morning.", "correct": true, "feedbackPt": "Tempos claros." },
+      { "labelEn": "Two days morning heating leak.", "correct": false, "feedbackPt": "Incompleto." },
+      { "labelEn": "It starts two days.", "correct": false, "feedbackPt": "Stopped, não starts." }
+    ]},
+    { "id": "em06l05-prac-12", "type": "choice", "promptPt": "Reporte completo:", "options": [
+      { "labelEn": "Something is wrong with the heating, and there's a leak in the bathroom.", "correct": true, "feedbackPt": "Dois problemas claros." },
+      { "labelEn": "Heating wrong leak bathroom.", "correct": false, "feedbackPt": "Sem estrutura." },
+      { "labelEn": "Something wrong heating and leak are.", "correct": false, "feedbackPt": "Gramática incorreta." }
+    ]}
+  ]
+}

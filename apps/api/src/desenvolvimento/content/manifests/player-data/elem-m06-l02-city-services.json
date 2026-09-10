@@ -1,0 +1,176 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 6,
+  "goalPt": "Falar de serviços urbanos — banco, correios, hospital, transporte — perguntar onde ficam e o que oferecem.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Colega recém-chegado precisa encontrar banco, farmácia e transporte na cidade.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Guide someone to city services.",
+    "headlinePt": "Oriente alguém sobre serviços urbanos.",
+    "bodyPt": "",
+    "canDo": [
+      "Where's the nearest bank?",
+      "There's a pharmacy on Main Street.",
+      "The hospital is about 10 minutes by car.",
+      "You can take the subway to the city center.",
+      "The post office opens at 9 and closes at 5."
+    ],
+    "production": {
+      "introPt": "Oriente um colega novo: indique três serviços e como chegar.",
+      "prompts": [{ "speaker": "New colleague", "questionEn": "I'm new here — where can I find a bank and a pharmacy?" }],
+      "fields": [
+        { "id": "bank", "labelPt": "Banco", "prefixEn": "", "placeholderEn": "There's a bank on Main Street, next to the supermarket." },
+        { "id": "pharmacy", "labelPt": "Farmácia", "prefixEn": "", "placeholderEn": "The nearest pharmacy is two blocks from here." },
+        { "id": "transport", "labelPt": "Transporte", "prefixEn": "", "placeholderEn": "You can take the subway — the station is five minutes away." }
+      ],
+      "exampleEn": "There's a bank on Main Street. The nearest pharmacy is two blocks away. You can take the subway — the station is five minutes from here."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em06l02-ctx-01", "type": "intro", "titleEn": "City services", "titlePt": "Serviços urbanos", "bodyPt": "Banco, farmácia, hospital, transporte — vocabulário essencial para viver e trabalhar numa cidade nova." },
+      { "id": "em06l02-ctx-02", "type": "scenario", "settingEn": "Office · New colleague orientation", "scenarioPt": "Colega acabou de se mudar e precisa resolver coisas básicas na cidade." },
+      { "id": "em06l02-ctx-03", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "Where's the nearest bank? I need to open an account.", "promptPt": "Colega pergunta banco:", "options": [
+        { "labelEn": "There's one on Main Street — next to the supermarket. About a 10-minute walk.", "correct": true, "feedbackPt": "Local + referência + distância." },
+        { "labelEn": "Bank is money place Main Street.", "correct": false, "feedbackPt": "Frase incompleta." },
+        { "labelEn": "The bank was on Main Street.", "correct": false, "feedbackPt": "Was = passado — ainda existe." }
+      ]},
+      { "id": "em06l02-ctx-04", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "And a pharmacy? I need to get some medicine.", "promptPt": "Follow-up — farmácia:", "options": [
+        { "labelEn": "There's a pharmacy two blocks from here, on the corner of Oak and Main.", "correct": true, "feedbackPt": "Distância + endereço." },
+        { "labelEn": "Pharmacy medicine two blocks.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "There are a pharmacy on corner.", "correct": false, "feedbackPt": "Singular → there's." }
+      ]},
+      { "id": "em06l02-ctx-05", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "What about public transport? How do I get to the city center?", "promptPt": "Transporte público:", "options": [
+        { "labelEn": "You can take the subway — the nearest station is five minutes from the office.", "correct": true, "feedbackPt": "You can take + local da estação." },
+        { "labelEn": "Subway go city center.", "correct": false, "feedbackPt": "Frase incompleta." },
+        { "labelEn": "You take subway yesterday.", "correct": false, "feedbackPt": "Passado." }
+      ]},
+      { "id": "em06l02-ctx-06", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "Is there a hospital nearby, just in case?", "promptPt": "Hospital:", "options": [
+        { "labelEn": "Yes — the city hospital is about 10 minutes by car, near the stadium.", "correct": true, "feedbackPt": "Distância + referência." },
+        { "labelEn": "Hospital is sick people.", "correct": false, "feedbackPt": "Não responde localização." },
+        { "labelEn": "No hospital in city.", "correct": false, "feedbackPt": "Provavelmente existe — verifique contexto." }
+      ]},
+      { "id": "em06l02-ctx-07", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "This is really helpful. What are the opening hours for the post office?", "promptPt": "Horário de funcionamento:", "options": [
+        { "labelEn": "It opens at 9 and closes at 5, Monday to Friday.", "correct": true, "feedbackPt": "Opens/closes + horários + dias." },
+        { "labelEn": "Post office 9 to 5 open.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "It opened at 9 yesterday.", "correct": false, "feedbackPt": "Pergunta é horário regular." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em06l02-learn-01", "type": "phrase_examples", "titleEn": "Common services", "titlePt": "Serviços comuns", "introPt": "Vocabulário essencial:", "examples": [
+        { "en": "bank / ATM", "pt": "banco / caixa eletrônico" },
+        { "en": "pharmacy / drugstore", "pt": "farmácia" },
+        { "en": "hospital / clinic", "pt": "hospital / clínica" },
+        { "en": "post office", "pt": "correios" }
+      ]},
+      { "id": "em06l02-learn-02", "type": "phrase_examples", "titleEn": "Transport", "titlePt": "Transporte", "introPt": "Como se locomover:", "examples": [
+        { "en": "subway / metro / bus / taxi", "pt": "transporte" },
+        { "en": "You can take the subway.", "pt": "pode pegar o metrô" },
+        { "en": "The station is five minutes away.", "pt": "estação a 5 min" },
+        { "en": "How do I get to the city center?", "pt": "como chego ao centro?" }
+      ]},
+      { "id": "em06l02-learn-03", "type": "phrase_examples", "titleEn": "Asking & giving directions", "titlePt": "Perguntar e dar direções", "introPt": "Encontrar serviços:", "examples": [
+        { "en": "Where's the nearest bank?", "pt": "cadê o banco mais perto?" },
+        { "en": "Is there a pharmacy nearby?", "pt": "tem farmácia perto?" },
+        { "en": "It's on Main Street.", "pt": "fica na Main Street" },
+        { "en": "Two blocks from here.", "pt": "a duas quadras" }
+      ]},
+      { "id": "em06l02-learn-04", "type": "phrase_examples", "titleEn": "Opening hours", "titlePt": "Horário de funcionamento", "introPt": "Quando abre e fecha:", "examples": [
+        { "en": "It opens at 9.", "pt": "abre às 9" },
+        { "en": "It closes at 5.", "pt": "fecha às 17h" },
+        { "en": "Monday to Friday", "pt": "segunda a sexta" },
+        { "en": "It's open 24 hours.", "pt": "aberto 24h" }
+      ]},
+      { "id": "em06l02-learn-05", "type": "language_focus", "titleEn": "Where's vs Where is", "titlePt": "Where's vs Where is", "items": [
+        { "formalEn": "Where is the nearest bank?", "naturalEn": "Where's the nearest bank?", "notePt": "Contração natural na fala." },
+        { "formalEn": "There is a pharmacy on Main Street.", "naturalEn": "There's a pharmacy on Main Street.", "notePt": "There's comum em direções." },
+        { "formalEn": "You can take the subway.", "naturalEn": "Can = possibility/suggestion.", "notePt": "You can = você pode (sugestão)." }
+      ], "tipPt": "Nearest = mais próximo. Nearby = por perto. On + rua. At + número/horário." },
+      { "id": "em06l02-learn-06", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Where's the nearest bank?", "pt": "pergunta" },
+        { "en": "There's a pharmacy on Main Street.", "pt": "localização" },
+        { "en": "You can take the subway.", "pt": "transporte" },
+        { "en": "It opens at 9 and closes at 5.", "pt": "horário" },
+        { "en": "About 10 minutes by car.", "pt": "distância" }
+      ]}
+    ],
+    "imitate": [{ "id": "em06l02-imit-01", "type": "read_repeat", "titleEn": "City services dialogue", "titlePt": "Diálogo serviços urbanos", "introPt": "Leia orientação completa.", "phrases": [
+      { "en": "Where's the nearest bank?" },
+      { "en": "There's one on Main Street, next to the supermarket." },
+      { "en": "And a pharmacy?" },
+      { "en": "There's a pharmacy two blocks from here." },
+      { "en": "How do I get to the city center?" },
+      { "en": "You can take the subway — the station is five minutes away." },
+      { "en": "Is there a hospital nearby?" },
+      { "en": "Yes — about 10 minutes by car." },
+      { "en": "What are the post office hours?" },
+      { "en": "It opens at 9 and closes at 5, Monday to Friday." }
+    ], "dialogueEn": "Nearest bank? — Main Street, next to supermarket. — Pharmacy? — Two blocks from here. — City center? — Take the subway, station 5 min away. — Hospital? — 10 min by car. — Post office hours? — 9 to 5, Mon-Fri." }],
+    "mission": [{ "id": "em06l02-miss-01", "type": "mission_intro", "headlineEn": "Guide to city services.", "headlinePt": "Oriente sobre serviços.", "bodyPt": "Banco + farmácia + transporte.", "prompts": [{ "speaker": "Colleague", "questionEn": "Where can I find a bank and pharmacy?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em06l02-prac-01", "type": "choice", "promptPt": "Perguntar banco mais perto:", "options": [
+      { "labelEn": "Where's the nearest bank?", "correct": true, "feedbackPt": "Where's + nearest." },
+      { "labelEn": "Where bank nearest?", "correct": false, "feedbackPt": "Ordem incorreta." },
+      { "labelEn": "Where is nearest bank is?", "correct": false, "feedbackPt": "Duplo verbo." }
+    ]},
+    { "id": "em06l02-prac-02", "type": "fill_blank", "promptPt": "Complete — farmácia na Main Street:", "templateEn": "There ___ a pharmacy on Main Street.", "blankLabel": "verbo", "options": [
+      { "labelEn": "'s", "correct": true, "feedbackPt": "Singular." },
+      { "labelEn": "'re", "correct": false, "feedbackPt": "A pharmacy = singular." },
+      { "labelEn": "has", "correct": false, "feedbackPt": "Use there's." }
+    ]},
+    { "id": "em06l02-prac-03", "type": "dialogue_complete", "promptPt": "Colega: How do I get to the city center?", "speaker": "You", "contextEn": "Colleague: How do I get to the city center?", "options": [
+      { "labelEn": "You can take the subway — the station is five minutes away.", "correct": true, "feedbackPt": "You can take + local." },
+      { "labelEn": "Subway city center five minutes.", "correct": false, "feedbackPt": "Incompleto." },
+      { "labelEn": "You took the subway.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em06l02-prac-04", "type": "reorder", "promptPt": "Monte — abre às 9, fecha às 5:", "tokens": ["5.", "at", "closes", "and", "9", "at", "opens", "It"], "correctOrder": ["It", "opens", "at", "9", "and", "closes", "at", "5."], "feedbackCorrectPt": "It opens at 9 and closes at 5.", "feedbackWrongPt": "Opens at + closes at." },
+    { "id": "em06l02-prac-05", "type": "choice", "promptPt": "Distância de carro:", "options": [
+      { "labelEn": "The hospital is about 10 minutes by car.", "correct": true, "feedbackPt": "By car = de carro." },
+      { "labelEn": "The hospital is about 10 minutes with car.", "correct": false, "feedbackPt": "By car, não with." },
+      { "labelEn": "Hospital 10 car minutes.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l02-prac-06", "type": "fill_blank", "promptPt": "Complete — duas quadras daqui:", "templateEn": "The pharmacy is two blocks ___ here.", "blankLabel": "preposição", "options": [
+      { "labelEn": "from", "correct": true, "feedbackPt": "From here." },
+      { "labelEn": "to", "correct": false, "feedbackPt": "From = distância de." },
+      { "labelEn": "at", "correct": false, "feedbackPt": "Blocks from here." }
+    ]},
+    { "id": "em06l02-prac-07", "type": "dialogue_complete", "promptPt": "Follow-up — hospital:", "speaker": "You", "contextEn": "Colleague: Is there a hospital nearby?", "options": [
+      { "labelEn": "Yes — it's about 10 minutes by car, near the stadium.", "correct": true, "feedbackPt": "Distância + referência." },
+      { "labelEn": "Hospital is for sick.", "correct": false, "feedbackPt": "Não responde onde." },
+      { "labelEn": "There are a hospital.", "correct": false, "feedbackPt": "Singular → there's/it." }
+    ]},
+    { "id": "em06l02-prac-08", "type": "choice", "promptPt": "Localização com referência:", "options": [
+      { "labelEn": "There's a bank on Main Street, next to the supermarket.", "correct": true, "feedbackPt": "On + rua + next to." },
+      { "labelEn": "Bank Main Street supermarket next.", "correct": false, "feedbackPt": "Sem estrutura." },
+      { "labelEn": "There's bank on the supermarket Main.", "correct": false, "feedbackPt": "Ordem confusa." }
+    ]},
+    { "id": "em06l02-prac-09", "type": "reorder", "promptPt": "Monte — estação a 5 minutos:", "tokens": ["away.", "minutes", "five", "is", "station", "The"], "correctOrder": ["The", "station", "is", "five", "minutes", "away."], "feedbackCorrectPt": "The station is five minutes away.", "feedbackWrongPt": "Subject + is + time + away." },
+    { "id": "em06l02-prac-10", "type": "dialogue_complete", "promptPt": "Horário dos correios:", "speaker": "You", "contextEn": "Colleague: What are the post office hours?", "options": [
+      { "labelEn": "It opens at 9 and closes at 5, Monday to Friday.", "correct": true, "feedbackPt": "Horário completo." },
+      { "labelEn": "Post office 9-5.", "correct": false, "feedbackPt": "Muito telegráfico." },
+      { "labelEn": "It opened 9 closed 5.", "correct": false, "feedbackPt": "Opens/closes para horário regular." }
+    ]},
+    { "id": "em06l02-prac-11", "type": "choice", "promptPt": "Pergunta — tem farmácia perto?", "options": [
+      { "labelEn": "Is there a pharmacy nearby?", "correct": true, "feedbackPt": "Is there + singular." },
+      { "labelEn": "Are there a pharmacy nearby?", "correct": false, "feedbackPt": "A pharmacy = singular." },
+      { "labelEn": "Has there pharmacy nearby?", "correct": false, "feedbackPt": "Is there, não has." }
+    ]},
+    { "id": "em06l02-prac-12", "type": "choice", "promptPt": "Orientação completa:", "options": [
+      { "labelEn": "Bank on Main Street. Pharmacy two blocks away. Take the subway to the center.", "correct": true, "feedbackPt": "Três serviços claros." },
+      { "labelEn": "Bank pharmacy subway all somewhere.", "correct": false, "feedbackPt": "Sem detalhes." },
+      { "labelEn": "There are bank and there is pharmacies.", "correct": false, "feedbackPt": "Erros there is/are." }
+    ]}
+  ]
+}

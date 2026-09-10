@@ -1,0 +1,176 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 6,
+  "goalPt": "Pedir ajuda para problemas — Could you...?, Can someone help?, I need someone to... — com contexto e follow-up.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Problemas em casa e no prédio — você pede ajuda ao síndico, técnico e colegas.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Ask for help with a problem.",
+    "headlinePt": "Peça ajuda com um problema.",
+    "bodyPt": "",
+    "canDo": [
+      "Could you send someone to fix the heating?",
+      "Can someone help me with this leak?",
+      "I need someone to look at the plumbing.",
+      "Would it be possible to come today?",
+      "Is there anyone available this afternoon?"
+    ],
+    "production": {
+      "introPt": "Descreva um problema e peça ajuda de forma educada — inclua urgência e follow-up.",
+      "prompts": [{ "speaker": "Building manager", "questionEn": "How can I help?" }],
+      "fields": [
+        { "id": "problem", "labelPt": "Descrever problema", "prefixEn": "", "placeholderEn": "Something is wrong with the heating — it's not working at all." },
+        { "id": "request", "labelPt": "Pedir ajuda", "prefixEn": "", "placeholderEn": "Could you send someone to fix it? Is there anyone available today?" },
+        { "id": "followup", "labelPt": "Follow-up", "prefixEn": "", "placeholderEn": "It's urgent — we have no hot water." }
+      ],
+      "exampleEn": "Something is wrong with the heating. Could you send someone to fix it? Is there anyone available today? It's urgent — we have no hot water."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em06l06-ctx-01", "type": "intro", "titleEn": "Asking for help", "titlePt": "Pedir ajuda", "bodyPt": "Reportar o problema é metade — a outra é pedir ajuda clara: quem, quando, o quê." },
+      { "id": "em06l06-ctx-02", "type": "scenario", "settingEn": "Apartment · Emergency call", "scenarioPt": "Aquecimento parou e não há água quente — você liga para o síndico." },
+      { "id": "em06l06-ctx-03", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Building management — how can I help?", "promptPt": "Manager atende — você explica:", "options": [
+        { "labelEn": "Hi — something is wrong with the heating, and there's a leak in the bathroom.", "correct": true, "feedbackPt": "Dois problemas claros." },
+        { "labelEn": "Help heating leak.", "correct": false, "feedbackPt": "Incompleto." },
+        { "labelEn": "Everything is fine but help.", "correct": false, "feedbackPt": "Contraditório." }
+      ]},
+      { "id": "em06l06-ctx-04", "type": "dialogue_choice", "speaker": "You", "promptEn": "(You need someone to come quickly.)", "promptPt": "Pedir técnico:", "options": [
+        { "labelEn": "Could you send someone to fix the heating? It's urgent — we have no hot water.", "correct": true, "feedbackPt": "Could you + urgência." },
+        { "labelEn": "Send someone fix heating now!", "correct": false, "feedbackPt": "Imperativo rude." },
+        { "labelEn": "You could sent someone.", "correct": false, "feedbackPt": "Could + verbo base." }
+      ]},
+      { "id": "em06l06-ctx-05", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "I'll check availability. When would work for you?", "promptPt": "Manager pergunta horário:", "options": [
+        { "labelEn": "Is there anyone available this afternoon? I'm home after 2.", "correct": true, "feedbackPt": "Pergunta + disponibilidade pessoal." },
+        { "labelEn": "Anyone available afternoon is?", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "I available yesterday 2.", "correct": false, "feedbackPt": "Tempo errado." }
+      ]},
+      { "id": "em06l06-ctx-06", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "We can send a plumber at 3 pm. Would that work?", "promptPt": "Confirmar horário:", "options": [
+        { "labelEn": "Yes, 3 pm works perfectly. Should I do anything to prepare?", "correct": true, "feedbackPt": "Confirma + follow-up útil." },
+        { "labelEn": "3 pm no.", "correct": false, "feedbackPt": "Rude/incompleto." },
+        { "labelEn": "Plumber 3 yesterday.", "correct": false, "feedbackPt": "Passado." }
+      ]},
+      { "id": "em06l06-ctx-07", "type": "dialogue_choice", "speaker": "Colleague", "promptEn": "(At work — you need help moving equipment.)", "promptPt": "Pedir ajuda a colega:", "options": [
+        { "labelEn": "Hey — could you give me a hand with this? I need to move the equipment to room 204.", "correct": true, "feedbackPt": "Could you + contexto." },
+        { "labelEn": "Move equipment you help.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "You help me equipment moving.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em06l06-learn-01", "type": "phrase_examples", "titleEn": "Could you...?", "titlePt": "Could you...?", "introPt": "Pedido educado — ideal para síndico, técnico, manager:", "examples": [
+        { "en": "Could you send someone to fix it?", "pt": "enviar alguém" },
+        { "en": "Could you take a look?", "pt": "dar uma olhada" },
+        { "en": "Could you call me back?", "pt": "retornar ligação" },
+        { "en": "Could you give me a hand?", "pt": "me ajudar" }
+      ]},
+      { "id": "em06l06-learn-02", "type": "phrase_examples", "titleEn": "Can someone...? / I need someone to...", "titlePt": "Can someone...? / I need someone to...", "introPt": "Quando não sabe quem vai ajudar:", "examples": [
+        { "en": "Can someone help me with this?", "pt": "alguém pode ajudar?" },
+        { "en": "I need someone to look at the plumbing.", "pt": "preciso de alguém" },
+        { "en": "Is there anyone available?", "pt": "tem alguém disponível?" },
+        { "en": "Do you know who I should contact?", "pt": "quem contatar" }
+      ]},
+      { "id": "em06l06-learn-03", "type": "phrase_examples", "titleEn": "Would it be possible...?", "titlePt": "Would it be possible...?", "introPt": "Ainda mais formal/educado:", "examples": [
+        { "en": "Would it be possible to come today?", "pt": "vir hoje?" },
+        { "en": "Would it be possible to send a technician?", "pt": "enviar técnico?" },
+        { "en": "Would you mind taking a look?", "pt": "se importa de olhar?" },
+        { "en": "When would be a good time?", "pt": "qual horário?" }
+      ]},
+      { "id": "em06l06-learn-04", "type": "phrase_examples", "titleEn": "Adding urgency politely", "titlePt": "Urgência com educação", "introPt": "Quando é importante:", "examples": [
+        { "en": "It's urgent — we have no hot water.", "pt": "urgente" },
+        { "en": "As soon as possible, please.", "pt": "o mais rápido possível" },
+        { "en": "I'd really appreciate it if someone could come today.", "pt": "agradeceria" },
+        { "en": "It's affecting my work.", "pt": "impacto" }
+      ]},
+      { "id": "em06l06-learn-05", "type": "language_focus", "titleEn": "Could vs Can for requests", "titlePt": "Could vs Can para pedidos", "items": [
+        { "formalEn": "Could you send someone?", "naturalEn": "More polite than Can you.", "notePt": "Could = mais educado." },
+        { "formalEn": "Can you help me?", "naturalEn": "Ok with colleagues.", "notePt": "Can = informal ok." },
+        { "formalEn": "Could you to send someone?", "naturalEn": "Could you send — no 'to'.", "notePt": "Could + subject + base verb." }
+      ], "tipPt": "Problema + Could you...? + urgência (se necessário) + follow-up sobre horário." },
+      { "id": "em06l06-learn-06", "type": "mistake", "titlePt": "Erro comum", "wrongEn": "Could you to send someone to fix it?", "rightEn": "Could you send someone to fix it?", "explanationPt": "Could you + verbo base — sem to." },
+      { "id": "em06l06-learn-07", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Could you send someone to fix it?", "pt": "pedido educado" },
+        { "en": "Is there anyone available today?", "pt": "disponibilidade" },
+        { "en": "I need someone to look at the plumbing.", "pt": "preciso de alguém" },
+        { "en": "It's urgent — no hot water.", "pt": "urgência" },
+        { "en": "3 pm works perfectly.", "pt": "confirmar horário" }
+      ]}
+    ],
+    "imitate": [{ "id": "em06l06-imit-01", "type": "read_repeat", "titleEn": "Asking for help dialogue", "titlePt": "Diálogo pedindo ajuda", "introPt": "Leia pedido completo de ajuda.", "phrases": [
+      { "en": "Something is wrong with the heating." },
+      { "en": "Could you send someone to fix it?" },
+      { "en": "It's urgent — we have no hot water." },
+      { "en": "Is there anyone available this afternoon?" },
+      { "en": "We can send a plumber at 3 pm." },
+      { "en": "Yes, 3 pm works perfectly." },
+      { "en": "Should I do anything to prepare?" },
+      { "en": "Could you give me a hand with this equipment?" },
+      { "en": "I need to move it to room 204." }
+    ], "dialogueEn": "Heating broken, leak in bathroom. — Could you send someone? Urgent, no hot water. — Anyone available? — Plumber at 3 pm. — Perfect. Prepare anything? — Could you help move equipment to room 204?" }],
+    "mission": [{ "id": "em06l06-miss-01", "type": "mission_intro", "headlineEn": "Ask for help clearly.", "headlinePt": "Peça ajuda claramente.", "bodyPt": "Problema + pedido + urgência.", "prompts": [{ "speaker": "Manager", "questionEn": "How can I help?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em06l06-prac-01", "type": "choice", "promptPt": "Pedido educado — enviar técnico:", "options": [
+      { "labelEn": "Could you send someone to fix the heating?", "correct": true, "feedbackPt": "Could you + base verb." },
+      { "labelEn": "Could you to send someone?", "correct": false, "feedbackPt": "Sem to após could you." },
+      { "labelEn": "Send someone could you?", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l06-prac-02", "type": "fill_blank", "promptPt": "Complete — alguém disponível?", "templateEn": "Is there ___ available this afternoon?", "blankLabel": "palavra", "options": [
+      { "labelEn": "anyone", "correct": true, "feedbackPt": "Anyone = alguém." },
+      { "labelEn": "someone", "correct": false, "feedbackPt": "Anyone em pergunta." },
+      { "labelEn": "everyone", "correct": false, "feedbackPt": "Everyone = todos." }
+    ]},
+    { "id": "em06l06-prac-03", "type": "dialogue_complete", "promptPt": "Manager: How can I help?", "speaker": "You", "contextEn": "Manager: Building management — how can I help?", "options": [
+      { "labelEn": "Something is wrong with the heating. Could you send someone?", "correct": true, "feedbackPt": "Problema + pedido." },
+      { "labelEn": "Help me now heating.", "correct": false, "feedbackPt": "Rude/incompleto." },
+      { "labelEn": "Fine thanks help.", "correct": false, "feedbackPt": "Não faz sentido." }
+    ]},
+    { "id": "em06l06-prac-04", "type": "reorder", "promptPt": "Monte — preciso de alguém para olhar:", "tokens": ["plumbing.", "the", "at", "look", "to", "someone", "need", "I"], "correctOrder": ["I", "need", "someone", "to", "look", "at", "the", "plumbing."], "feedbackCorrectPt": "I need someone to look at the plumbing.", "feedbackWrongPt": "Need someone to + verbo." },
+    { "id": "em06l06-prac-05", "type": "choice", "promptPt": "Urgência educada:", "options": [
+      { "labelEn": "It's urgent — we have no hot water.", "correct": true, "feedbackPt": "Urgente + razão." },
+      { "labelEn": "Urgent now fix!", "correct": false, "feedbackPt": "Rude." },
+      { "labelEn": "It urgent hot no water.", "correct": false, "feedbackPt": "Sem estrutura." }
+    ]},
+    { "id": "em06l06-prac-06", "type": "dialogue_complete", "promptPt": "Confirmar horário:", "speaker": "You", "contextEn": "Manager: We can send someone at 3 pm.", "options": [
+      { "labelEn": "Yes, 3 pm works perfectly.", "correct": true, "feedbackPt": "Confirmação natural." },
+      { "labelEn": "3 pm works perfect.", "correct": false, "feedbackPt": "Perfectly (adv)." },
+      { "labelEn": "No 3 pm yesterday.", "correct": false, "feedbackPt": "Tempo errado." }
+    ]},
+    { "id": "em06l06-prac-07", "type": "fill_blank", "promptPt": "Complete — me dá uma mão?", "templateEn": "Could you give me a ___ with this?", "blankLabel": "palavra", "options": [
+      { "labelEn": "hand", "correct": true, "feedbackPt": "Give me a hand = ajudar." },
+      { "labelEn": "help", "correct": false, "feedbackPt": "Idiom: a hand." },
+      { "labelEn": "arm", "correct": false, "feedbackPt": "Give me a hand." }
+    ]},
+    { "id": "em06l06-prac-08", "type": "choice", "promptPt": "Mais formal:", "options": [
+      { "labelEn": "Would it be possible to come today?", "correct": true, "feedbackPt": "Would it be possible." },
+      { "labelEn": "Would it possible come today?", "correct": false, "feedbackPt": "Be possible to." },
+      { "labelEn": "Possible would come today it.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l06-prac-09", "type": "dialogue_complete", "promptPt": "Follow-up — preparar algo?", "speaker": "You", "contextEn": "Manager: Plumber at 3 pm. OK?", "options": [
+      { "labelEn": "Yes. Should I do anything to prepare?", "correct": true, "feedbackPt": "Follow-up proativo." },
+      { "labelEn": "Yes prepare nothing.", "correct": false, "feedbackPt": "Confuso." },
+      { "labelEn": "Prepare I should anything.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em06l06-prac-10", "type": "reorder", "promptPt": "Monte — o mais rápido possível:", "tokens": ["please.", "possible,", "as", "soon", "as"], "correctOrder": ["as", "soon", "as", "possible,", "please."], "feedbackCorrectPt": "As soon as possible, please.", "feedbackWrongPt": "Expressão fixa." },
+    { "id": "em06l06-prac-11", "type": "choice", "promptPt": "Could vs Can — com síndico:", "options": [
+      { "labelEn": "Could you send a technician?", "correct": true, "feedbackPt": "Could = mais educado." },
+      { "labelEn": "Can you sending technician?", "correct": false, "feedbackPt": "Can + base verb." },
+      { "labelEn": "You could to send.", "correct": false, "feedbackPt": "Sem to." }
+    ]},
+    { "id": "em06l06-prac-12", "type": "dialogue_complete", "promptPt": "Colega — mover equipamento:", "speaker": "You", "contextEn": "(You need help moving heavy equipment.)", "options": [
+      { "labelEn": "Could you give me a hand? I need to move this to room 204.", "correct": true, "feedbackPt": "Pedido + contexto." },
+      { "labelEn": "Move equipment help.", "correct": false, "feedbackPt": "Incompleto." },
+      { "labelEn": "Hand give me could.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]}
+  ]
+}

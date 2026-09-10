@@ -1,0 +1,176 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 5,
+  "goalPt": "Combinar expressões de tempo futuro (tomorrow, next week, in two days, by Friday) com going to e will em conversas naturais.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Reunião de planejamento — você e Jamie alinham prazos e datas para entregas.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Set deadlines with time expressions.",
+    "headlinePt": "Defina prazos com expressões de tempo.",
+    "bodyPt": "",
+    "canDo": [
+      "I'm going to finish it by Friday.",
+      "We'll send the draft in two days.",
+      "The meeting is next Tuesday at 10.",
+      "I'll have it ready tomorrow morning.",
+      "In three weeks we're launching the campaign."
+    ],
+    "production": {
+      "introPt": "Defina três prazos usando expressões de tempo diferentes.",
+      "prompts": [{ "speaker": "Jamie", "questionEn": "When can we expect the deliverables?" }],
+      "fields": [
+        { "id": "deadline1", "labelPt": "Prazo com by", "prefixEn": "I'm going to finish it", "placeholderEn": "by Friday." },
+        { "id": "deadline2", "labelPt": "Prazo com in", "prefixEn": "We'll send the draft", "placeholderEn": "in two days." },
+        { "id": "deadline3", "labelPt": "Data específica", "prefixEn": "The launch is", "placeholderEn": "next month, on the 15th." }
+      ],
+      "exampleEn": "I'm going to finish it by Friday. We'll send the draft in two days. The launch is next month, on the 15th."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em05l03-ctx-01", "type": "intro", "titleEn": "Future time expressions", "titlePt": "Expressões de tempo futuro", "bodyPt": "Prazos e datas tornam suas frases concretas. By, in, next, tomorrow — cada uma tem um significado preciso." },
+      { "id": "em05l03-ctx-02", "type": "scenario", "settingEn": "Office · Planning meeting", "scenarioPt": "Jamie quer alinhar cronograma do projeto." },
+      { "id": "em05l03-ctx-03", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "When are you going to finish the first draft?", "promptPt": "Jamie pergunta prazo:", "options": [
+        { "labelEn": "I'm going to finish it by Friday — probably Thursday evening.", "correct": true, "feedbackPt": "By = até/no máximo. Detalhe extra natural." },
+        { "labelEn": "I'm going to finish it on Friday by.", "correct": false, "feedbackPt": "By vem depois do dia, não antes." },
+        { "labelEn": "I finished it by Friday.", "correct": false, "feedbackPt": "Finished é passado." }
+      ]},
+      { "id": "em05l03-ctx-04", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "And when will the client get the final version?", "promptPt": "Follow-up — entrega ao cliente:", "options": [
+        { "labelEn": "We'll send it in two days — so by Wednesday.", "correct": true, "feedbackPt": "In + período = daqui a X tempo." },
+        { "labelEn": "We send it in two days ago.", "correct": false, "feedbackPt": "Ago é passado." },
+        { "labelEn": "We'll sending it two days.", "correct": false, "feedbackPt": "Will + verbo base." }
+      ]},
+      { "id": "em05l03-ctx-05", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "What about the launch meeting?", "promptPt": "Data de reunião:", "options": [
+        { "labelEn": "It's next Tuesday at 10 am. I'll send the invite tomorrow.", "correct": true, "feedbackPt": "Next + dia + will para ação futura." },
+        { "labelEn": "It's last Tuesday at 10.", "correct": false, "feedbackPt": "Last = passado." },
+        { "labelEn": "It's Tuesday next at 10 am invite.", "correct": false, "feedbackPt": "Ordem: next Tuesday." }
+      ]},
+      { "id": "em05l03-ctx-06", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "When is the campaign going live?", "promptPt": "Lançamento da campanha:", "options": [
+        { "labelEn": "In three weeks — on March 20th.", "correct": true, "feedbackPt": "In + duração + data específica." },
+        { "labelEn": "In three weeks ago.", "correct": false, "feedbackPt": "Ago é passado." },
+        { "labelEn": "On three weeks March.", "correct": false, "feedbackPt": "In three weeks, não on." }
+      ]},
+      { "id": "em05l03-ctx-07", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Perfect. I'll update the timeline. Anything else?", "promptPt": "Você confirma um prazo pessoal:", "options": [
+        { "labelEn": "I'll have my section ready tomorrow morning.", "correct": true, "feedbackPt": "Tomorrow morning — prazo claro." },
+        { "labelEn": "I had my section yesterday morning.", "correct": false, "feedbackPt": "Had é passado." },
+        { "labelEn": "I'll have ready tomorrow section.", "correct": false, "feedbackPt": "Ordem: my section ready." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em05l03-learn-01", "type": "phrase_examples", "titleEn": "Tomorrow / today / tonight", "titlePt": "Amanhã / hoje / hoje à noite", "introPt": "Futuro imediato:", "examples": [
+        { "en": "tomorrow", "pt": "amanhã" },
+        { "en": "tomorrow morning / afternoon / evening", "pt": "amanhã de manhã/tarde/noite" },
+        { "en": "tonight", "pt": "hoje à noite" },
+        { "en": "I'll call you tomorrow.", "pt": "ligo amanhã" }
+      ]},
+      { "id": "em05l03-learn-02", "type": "phrase_examples", "titleEn": "Next week / next month", "titlePt": "Semana/mês que vem", "introPt": "Next = próximo período:", "examples": [
+        { "en": "next week", "pt": "semana que vem" },
+        { "en": "next month", "pt": "mês que vem" },
+        { "en": "next Tuesday", "pt": "próxima terça" },
+        { "en": "next year", "pt": "ano que vem" }
+      ]},
+      { "id": "em05l03-learn-03", "type": "phrase_examples", "titleEn": "In two days / in three weeks", "titlePt": "Daqui a dois dias / três semanas", "introPt": "In + período = daqui a X tempo:", "examples": [
+        { "en": "in two days", "pt": "daqui a dois dias" },
+        { "en": "in a week", "pt": "daqui a uma semana" },
+        { "en": "in three weeks", "pt": "daqui a três semanas" },
+        { "en": "We'll finish in five days.", "pt": "terminamos em cinco dias" }
+      ]},
+      { "id": "em05l03-learn-04", "type": "phrase_examples", "titleEn": "By Friday / by the end of...", "titlePt": "Até sexta / até o fim de...", "introPt": "By = prazo limite (no máximo até):", "examples": [
+        { "en": "by Friday", "pt": "até sexta" },
+        { "en": "by 5 pm", "pt": "até as 17h" },
+        { "en": "by the end of the month", "pt": "até fim do mês" },
+        { "en": "Finish it by Thursday.", "pt": "termine até quinta" }
+      ]},
+      { "id": "em05l03-learn-05", "type": "comparison", "titleEn": "In vs by", "titlePt": "In vs by", "left": {
+        "labelEn": "IN · duration from now",
+        "exampleEn": "I'll finish in two days.",
+        "notePt": "Daqui a 2 dias = duração."
+      }, "right": {
+        "labelEn": "BY · deadline",
+        "exampleEn": "I'll finish by Friday.",
+        "notePt": "Até sexta = limite."
+      }, "modelEn": "I'll send the draft in two days. I need it finished by Wednesday.", "modelPt": "In = quanto tempo. By = data limite." },
+      { "id": "em05l03-learn-06", "type": "language_focus", "titleEn": "Position in the sentence", "titlePt": "Posição na frase", "items": [
+        { "formalEn": "I'm going to finish by Friday.", "naturalEn": "Time at end is most common.", "notePt": "Expressão de tempo geralmente no final." },
+        { "formalEn": "Next Tuesday I'm meeting the client.", "naturalEn": "Time at start = emphasis.", "notePt": "Início da frase enfatiza o quando." },
+        { "formalEn": "on March 15th / at 10 am", "naturalEn": "on + date · at + time", "notePt": "Preposições fixas para data e hora." }
+      ], "tipPt": "By = deadline. In = duration. Next = próximo. Tomorrow = amanhã." },
+      { "id": "em05l03-learn-07", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "by Friday", "pt": "até sexta" },
+        { "en": "in two days", "pt": "daqui a dois dias" },
+        { "en": "next Tuesday", "pt": "próxima terça" },
+        { "en": "tomorrow morning", "pt": "amanhã de manhã" },
+        { "en": "in three weeks", "pt": "daqui a três semanas" }
+      ]}
+    ],
+    "imitate": [{ "id": "em05l03-imit-01", "type": "read_repeat", "titleEn": "Planning deadlines", "titlePt": "Planejando prazos", "introPt": "Leia o diálogo de planejamento completo.", "phrases": [
+      { "en": "When are you going to finish the first draft?" },
+      { "en": "I'm going to finish it by Friday." },
+      { "en": "When will the client get the final version?" },
+      { "en": "We'll send it in two days — by Wednesday." },
+      { "en": "What about the launch meeting?" },
+      { "en": "It's next Tuesday at 10 am." },
+      { "en": "When is the campaign going live?" },
+      { "en": "In three weeks — on March 20th." },
+      { "en": "I'll have my section ready tomorrow morning." }
+    ], "dialogueEn": "When are you going to finish the draft? — By Friday. — When will the client get the final version? — In two days, by Wednesday. — Launch meeting? — Next Tuesday at 10. — Campaign? — In three weeks, March 20th. — I'll have my section ready tomorrow morning." }],
+    "mission": [{ "id": "em05l03-miss-01", "type": "mission_intro", "headlineEn": "Set three deadlines.", "headlinePt": "Defina três prazos.", "bodyPt": "Use by, in e next/on.", "prompts": [{ "speaker": "Jamie", "questionEn": "When can we expect the deliverables?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em05l03-prac-01", "type": "choice", "promptPt": "Prazo limite — até sexta:", "options": [
+      { "labelEn": "I'm going to finish it by Friday.", "correct": true, "feedbackPt": "By = deadline." },
+      { "labelEn": "I'm going to finish it in Friday.", "correct": false, "feedbackPt": "Dia da semana usa by ou on, não in." },
+      { "labelEn": "I finished it by Friday.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l03-prac-02", "type": "choice", "promptPt": "Daqui a dois dias:", "options": [
+      { "labelEn": "We'll send it in two days.", "correct": true, "feedbackPt": "In + período." },
+      { "labelEn": "We'll send it by two days.", "correct": false, "feedbackPt": "By = limite, não duração." },
+      { "labelEn": "We sent it in two days.", "correct": false, "feedbackPt": "Passado." }
+    ]},
+    { "id": "em05l03-prac-03", "type": "fill_blank", "promptPt": "Complete — próxima terça:", "templateEn": "The meeting is ___ Tuesday at 10.", "blankLabel": "palavra", "options": [
+      { "labelEn": "next", "correct": true, "feedbackPt": "Next Tuesday." },
+      { "labelEn": "last", "correct": false, "feedbackPt": "Last = passado." },
+      { "labelEn": "in", "correct": false, "feedbackPt": "Next, não in, com dia da semana." }
+    ]},
+    { "id": "em05l03-prac-04", "type": "classify", "promptPt": "In ou by?", "sentenceEn": "I need it finished by Wednesday.", "category": "by", "feedbackCorrectPt": "By = prazo limite.", "feedbackWrongPt": "By indica deadline." },
+    { "id": "em05l03-prac-05", "type": "classify", "promptPt": "In ou by?", "sentenceEn": "The project will be done in five days.", "category": "in", "feedbackCorrectPt": "In = duração a partir de agora.", "feedbackWrongPt": "In + número + dias/semanas." },
+    { "id": "em05l03-prac-06", "type": "reorder", "promptPt": "Monte — amanhã de manhã:", "tokens": ["morning.", "ready", "tomorrow", "I'll", "have", "it"], "correctOrder": ["I'll", "have", "it", "ready", "tomorrow", "morning."], "feedbackCorrectPt": "I'll have it ready tomorrow morning.", "feedbackWrongPt": "Tempo no final da frase." },
+    { "id": "em05l03-prac-07", "type": "dialogue_complete", "promptPt": "Jamie: When is the campaign going live?", "speaker": "You", "contextEn": "Jamie: When is the campaign going live?", "options": [
+      { "labelEn": "In three weeks — on March 20th.", "correct": true, "feedbackPt": "In + semanas + data." },
+      { "labelEn": "In three weeks ago.", "correct": false, "feedbackPt": "Ago é passado." },
+      { "labelEn": "By three weeks March.", "correct": false, "feedbackPt": "Forma incorreta." }
+    ]},
+    { "id": "em05l03-prac-08", "type": "fill_blank", "promptPt": "Complete — daqui a uma semana:", "templateEn": "We're launching ___ a week.", "blankLabel": "preposição", "options": [
+      { "labelEn": "in", "correct": true, "feedbackPt": "In a week." },
+      { "labelEn": "by", "correct": false, "feedbackPt": "By a week não soa natural aqui." },
+      { "labelEn": "on", "correct": false, "feedbackPt": "On + dia, não duração." }
+    ]},
+    { "id": "em05l03-prac-09", "type": "choice", "promptPt": "Data e hora corretas:", "options": [
+      { "labelEn": "Next Tuesday at 10 am.", "correct": true, "feedbackPt": "Next + dia + at + hora." },
+      { "labelEn": "Next Tuesday in 10 am.", "correct": false, "feedbackPt": "Hora usa at." },
+      { "labelEn": "In next Tuesday 10.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em05l03-prac-10", "type": "dialogue_complete", "promptPt": "Follow-up — prazo pessoal:", "speaker": "You", "contextEn": "Jamie: When will your section be ready?", "options": [
+      { "labelEn": "I'll have it ready tomorrow morning.", "correct": true, "feedbackPt": "Tomorrow morning claro." },
+      { "labelEn": "I had it ready tomorrow.", "correct": false, "feedbackPt": "Had é passado." },
+      { "labelEn": "I'll have ready it morning tomorrow.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "em05l03-prac-11", "type": "reorder", "promptPt": "Monte — terminar até quinta:", "tokens": ["Thursday.", "by", "it", "finish", "to", "going", "I'm"], "correctOrder": ["I'm", "going", "to", "finish", "it", "by", "Thursday."], "feedbackCorrectPt": "I'm going to finish it by Thursday.", "feedbackWrongPt": "By antes do dia." },
+    { "id": "em05l03-prac-12", "type": "choice", "promptPt": "Contraste in vs by:", "options": [
+      { "labelEn": "I'll finish in two days. I need it by Wednesday.", "correct": true, "feedbackPt": "In = duração, by = limite." },
+      { "labelEn": "I'll finish by two days.", "correct": false, "feedbackPt": "By two days incorreto." },
+      { "labelEn": "I'll finish in Wednesday.", "correct": false, "feedbackPt": "Dia usa on ou by." }
+    ]}
+  ]
+}

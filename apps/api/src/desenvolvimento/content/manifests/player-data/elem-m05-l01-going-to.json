@@ -1,0 +1,172 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 5,
+  "goalPt": "Usar going to com naturalidade — planos pessoais e profissionais, perguntas de follow-up e contraste com present continuous para planos imediatos.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Segunda de manhã — Jamie pergunta sobre seus planos da semana e do fim de semana.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Talk about your week ahead.",
+    "headlinePt": "Fale sobre sua semana.",
+    "bodyPt": "",
+    "canDo": [
+      "What are you going to do this week?",
+      "I'm going to finish the report on Wednesday.",
+      "Are you going to travel next month?",
+      "No, I'm not going to travel — I'm going to stay here.",
+      "We're going to have a team meeting on Friday."
+    ],
+    "production": {
+      "introPt": "Conte três planos concretos da semana usando going to — inclua um plano negativo.",
+      "prompts": [{ "speaker": "Jamie", "questionEn": "So — what are you going to do this week?" }],
+      "fields": [
+        { "id": "plan1", "labelPt": "Plano 1 (trabalho)", "prefixEn": "I'm going to", "placeholderEn": "finish the report on Wednesday." },
+        { "id": "plan2", "labelPt": "Plano 2 (pessoal)", "prefixEn": "This weekend I'm going to", "placeholderEn": "visit my family." },
+        { "id": "plan3", "labelPt": "Plano negativo", "prefixEn": "I'm not going to", "placeholderEn": "travel next month." }
+      ],
+      "exampleEn": "I'm going to finish the report on Wednesday. This weekend I'm going to visit my family. I'm not going to travel next month."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em05l01-ctx-01", "type": "intro", "titleEn": "Going to — plans & intentions", "titlePt": "Going to — planos e intenções", "bodyPt": "No nível Elementary, going to não é só fórmula — é conversa real sobre o que você pretende fazer, com follow-up e detalhes." },
+      { "id": "em05l01-ctx-02", "type": "scenario", "settingEn": "Office · Monday morning coffee", "scenarioPt": "Jamie encontra você na copa e pergunta sobre a semana." },
+      { "id": "em05l01-ctx-03", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Hey! What are you going to do this week?", "promptPt": "Jamie abre com pergunta ampla:", "options": [
+        { "labelEn": "I'm going to finish the quarterly report and meet with the team on Friday.", "correct": true, "feedbackPt": "Dois planos concretos — natural e completo." },
+        { "labelEn": "I finish report week.", "correct": false, "feedbackPt": "Falta going to e estrutura de frase." },
+        { "labelEn": "I went to finish the report.", "correct": false, "feedbackPt": "Went é passado — pergunta é futuro." }
+      ]},
+      { "id": "em05l01-ctx-04", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Oh nice. Are you going to work late on Wednesday?", "promptPt": "Follow-up — Jamie aprofunda:", "options": [
+        { "labelEn": "Probably. I'm going to stay until about 7.", "correct": true, "feedbackPt": "Resposta honesta + going to com horário." },
+        { "labelEn": "Yes, I staying late Wednesday.", "correct": false, "feedbackPt": "Falta am/is/are." },
+        { "labelEn": "I stayed late Wednesday.", "correct": false, "feedbackPt": "Stayed é passado — quarta ainda não chegou." }
+      ]},
+      { "id": "em05l01-ctx-05", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "What about the weekend? Any plans?", "promptPt": "Jamie muda para o fim de semana:", "options": [
+        { "labelEn": "This weekend I'm going to visit my parents. I haven't seen them in a month.", "correct": true, "feedbackPt": "Plano + contexto extra — conversa natural." },
+        { "labelEn": "This weekend I visit parents.", "correct": false, "feedbackPt": "Presente simples soa como rotina — use going to para plano." },
+        { "labelEn": "Last weekend I'm going to visit.", "correct": false, "feedbackPt": "Last weekend = passado." }
+      ]},
+      { "id": "em05l01-ctx-06", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Are you going to travel anywhere next month?", "promptPt": "Jamie pergunta sobre mês que vem:", "options": [
+        { "labelEn": "No, I'm not going to travel. I'm going to save money this month.", "correct": true, "feedbackPt": "Negativa + razão — resposta completa." },
+        { "labelEn": "No, I not going travel.", "correct": false, "feedbackPt": "Falta I'm not going to." },
+        { "labelEn": "Yes, I traveled next month.", "correct": false, "feedbackPt": "Traveled é passado." }
+      ]},
+      { "id": "em05l01-ctx-07", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Sounds like a busy week! Good luck with the report.", "promptPt": "Encerramento da conversa:", "options": [
+        { "labelEn": "Thanks! I'll let you know when I'm going to send it.", "correct": true, "feedbackPt": "Agradece + mantém tema futuro." },
+        { "labelEn": "I sent the report yesterday.", "correct": false, "feedbackPt": "Contradiz o plano de terminar na quarta." },
+        { "labelEn": "What are you going to do?", "correct": false, "feedbackPt": "Jamie já se despediu — encerre educadamente." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em05l01-learn-01", "type": "phrase_examples", "titleEn": "Affirmative — I'm going to...", "titlePt": "Afirmativa — I'm going to...", "introPt": "Padrão central para planos e intenções:", "examples": [
+        { "en": "I'm going to finish the report.", "pt": "vou terminar o relatório" },
+        { "en": "She's going to call you tomorrow.", "pt": "ela vai te ligar amanhã" },
+        { "en": "We're going to have a meeting on Friday.", "pt": "vamos ter reunião sexta" },
+        { "en": "They're going to launch the project next month.", "pt": "vão lançar o projeto mês que vem" }
+      ]},
+      { "id": "em05l01-learn-02", "type": "phrase_examples", "titleEn": "Questions — Are you going to...?", "titlePt": "Perguntas — Are you going to...?", "introPt": "Inverta sujeito e am/is/are:", "examples": [
+        { "en": "Are you going to travel?", "pt": "vai viajar?" },
+        { "en": "What are you going to do this week?", "pt": "o que vai fazer esta semana?" },
+        { "en": "When are you going to finish?", "pt": "quando vai terminar?" },
+        { "en": "Is she going to join the call?", "pt": "ela vai entrar na call?" }
+      ]},
+      { "id": "em05l01-learn-03", "type": "phrase_examples", "titleEn": "Negative — I'm not going to...", "titlePt": "Negativa — I'm not going to...", "introPt": "Not vai depois de am/is/are:", "examples": [
+        { "en": "I'm not going to work late tonight.", "pt": "não vou ficar até tarde" },
+        { "en": "We're not going to change the schedule.", "pt": "não vamos mudar a agenda" },
+        { "en": "He's not going to attend.", "pt": "ele não vai comparecer" },
+        { "en": "They aren't going to travel this year.", "pt": "não vão viajar este ano" }
+      ]},
+      { "id": "em05l01-learn-04", "type": "comparison", "titleEn": "Going to vs present continuous", "titlePt": "Going to vs present continuous", "left": {
+        "labelEn": "GOING TO · plan / intention",
+        "exampleEn": "I'm going to visit my parents this weekend.",
+        "notePt": "Decisão ou plano — pode ser longe no tempo."
+      }, "right": {
+        "labelEn": "PRESENT CONTINUOUS · fixed arrangement",
+        "exampleEn": "I'm meeting the client at 3 pm.",
+        "notePt": "Compromisso já marcado — horário definido."
+      }, "modelEn": "I'm going to travel next month. I'm flying to São Paulo on the 15th.", "modelPt": "Plano geral + arranjo específico — os dois convivem." },
+      { "id": "em05l01-learn-05", "type": "language_focus", "titleEn": "Form & pronunciation", "titlePt": "Forma e pronúncia", "items": [
+        { "formalEn": "I am going to work.", "naturalEn": "I'm gonna work. (informal speech)", "notePt": "Gonna é informal — ok na fala, evite em email formal." },
+        { "formalEn": "What are you going to do?", "naturalEn": "What're you gonna do?", "notePt": "Contrações naturais na conversa." },
+        { "formalEn": "going to + base verb", "naturalEn": "going to work / travel / finish", "notePt": "Verbo sempre na forma base — nunca -ed ou -ing depois de to." }
+      ], "tipPt": "Going to + verbo base. Não confunda com 'going' sozinho (I'm going = estou indo)." },
+      { "id": "em05l01-learn-06", "type": "mistake", "titlePt": "Erro comum", "wrongEn": "I'm going to finished the report on Wednesday.", "rightEn": "I'm going to finish the report on Wednesday.", "explanationPt": "Depois de to, use verbo base (finish), nunca passado (finished)." },
+      { "id": "em05l01-learn-07", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "What are you going to do this week?", "pt": "pergunta ampla" },
+        { "en": "I'm going to finish the report.", "pt": "plano afirmativo" },
+        { "en": "I'm not going to travel.", "pt": "negativa" },
+        { "en": "Are you going to work late?", "pt": "pergunta yes/no" },
+        { "en": "We're going to have a meeting on Friday.", "pt": "plural" }
+      ]}
+    ],
+    "imitate": [{ "id": "em05l01-imit-01", "type": "read_repeat", "titleEn": "Week plans conversation", "titlePt": "Conversa sobre planos da semana", "introPt": "Leia o diálogo completo. Troque pelos seus planos reais.", "phrases": [
+      { "en": "What are you going to do this week?" },
+      { "en": "I'm going to finish the quarterly report on Wednesday." },
+      { "en": "Are you going to work late?" },
+      { "en": "Probably. I'm going to stay until about 7." },
+      { "en": "What about the weekend?" },
+      { "en": "This weekend I'm going to visit my parents." },
+      { "en": "Are you going to travel next month?" },
+      { "en": "No, I'm not going to travel. I'm going to save money." },
+      { "en": "Sounds like a busy week! Good luck!" },
+      { "en": "Thanks! I'll let you know when I'm going to send it." }
+    ], "dialogueEn": "What are you going to do this week? — I'm going to finish the quarterly report on Wednesday. — Are you going to work late? — Probably. I'm going to stay until about 7. — What about the weekend? — This weekend I'm going to visit my parents. — Are you going to travel next month? — No, I'm not going to travel. I'm going to save money. — Sounds like a busy week! Good luck! — Thanks!" }],
+    "mission": [{ "id": "em05l01-miss-01", "type": "mission_intro", "headlineEn": "Share your week ahead.", "headlinePt": "Compartilhe sua semana.", "bodyPt": "Três planos concretos — um negativo.", "prompts": [{ "speaker": "Jamie", "questionEn": "What are you going to do this week?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em05l01-prac-01", "type": "choice", "promptPt": "Plano profissional esta semana:", "options": [
+      { "labelEn": "I'm going to finish the report on Wednesday.", "correct": true, "feedbackPt": "Going to + verbo + tempo." },
+      { "labelEn": "I finished the report on Wednesday.", "correct": false, "feedbackPt": "Finished é passado." },
+      { "labelEn": "I'm going to finished the report.", "correct": false, "feedbackPt": "Verbo base após to." }
+    ]},
+    { "id": "em05l01-prac-02", "type": "fill_blank", "promptPt": "Complete — não vou viajar:", "templateEn": "No, I'm ___ going to travel next month.", "blankLabel": "palavra", "options": [
+      { "labelEn": "not", "correct": true, "feedbackPt": "I'm not going to." },
+      { "labelEn": "no", "correct": false, "feedbackPt": "Use not, não no." },
+      { "labelEn": "don't", "correct": false, "feedbackPt": "Com going to, not vem após am/is/are." }
+    ]},
+    { "id": "em05l01-prac-03", "type": "reorder", "promptPt": "Monte a pergunta — o que vai fazer esta semana?", "tokens": ["week?", "this", "do", "to", "going", "you", "are", "What"], "correctOrder": ["What", "are", "you", "going", "to", "do", "this", "week?"], "feedbackCorrectPt": "What are you going to do this week?", "feedbackWrongPt": "What + are + subject + going to + verbo." },
+    { "id": "em05l01-prac-04", "type": "dialogue_complete", "promptPt": "Jamie: Are you going to work late on Wednesday?", "speaker": "You", "contextEn": "Jamie: Are you going to work late on Wednesday?", "options": [
+      { "labelEn": "Probably. I'm going to stay until about 7.", "correct": true, "feedbackPt": "Resposta natural com detalhe." },
+      { "labelEn": "I stayed until 7.", "correct": false, "feedbackPt": "Passado — quarta ainda não chegou." },
+      { "labelEn": "Yes, I going to stay.", "correct": false, "feedbackPt": "Falta am/is/are." }
+    ]},
+    { "id": "em05l01-prac-05", "type": "classify", "promptPt": "Plano ou arranjo fixo?", "sentenceEn": "I'm meeting the client at 3 pm tomorrow.", "category": "arrangement", "feedbackCorrectPt": "Present continuous = compromisso marcado.", "feedbackWrongPt": "Horário definido = arranjo, não plano geral." },
+    { "id": "em05l01-prac-06", "type": "classify", "promptPt": "Plano ou arranjo fixo?", "sentenceEn": "I'm going to travel next month.", "category": "plan", "feedbackCorrectPt": "Going to = intenção/plano.", "feedbackWrongPt": "Going to indica plano, não compromisso com horário." },
+    { "id": "em05l01-prac-07", "type": "fill_blank", "promptPt": "Complete — vamos ter reunião sexta:", "templateEn": "We ___ going to have a meeting on Friday.", "blankLabel": "verbo", "options": [
+      { "labelEn": "'re", "correct": true, "feedbackPt": "We're = We are." },
+      { "labelEn": "'s", "correct": false, "feedbackPt": "'s = is — we usa are." },
+      { "labelEn": "is", "correct": false, "feedbackPt": "We + are, não is." }
+    ]},
+    { "id": "em05l01-prac-08", "type": "dialogue_complete", "promptPt": "Jamie: What about the weekend?", "speaker": "You", "contextEn": "Jamie: What about the weekend?", "options": [
+      { "labelEn": "This weekend I'm going to visit my parents.", "correct": true, "feedbackPt": "Plano de fim de semana natural." },
+      { "labelEn": "Last weekend I visit parents.", "correct": false, "feedbackPt": "Last = passado." },
+      { "labelEn": "This weekend I visited my parents.", "correct": false, "feedbackPt": "Visited é passado." }
+    ]},
+    { "id": "em05l01-prac-09", "type": "reorder", "promptPt": "Monte — ela vai te ligar amanhã:", "tokens": ["tomorrow.", "you", "call", "to", "going", "She's"], "correctOrder": ["She's", "going", "to", "call", "you", "tomorrow."], "feedbackCorrectPt": "She's going to call you tomorrow.", "feedbackWrongPt": "She's + going to + verbo base." },
+    { "id": "em05l01-prac-10", "type": "choice", "promptPt": "Qual frase está correta?", "options": [
+      { "labelEn": "I'm going to finish the report on Wednesday.", "correct": true, "feedbackPt": "Forma perfeita." },
+      { "labelEn": "I'm going to finishing the report.", "correct": false, "feedbackPt": "Verbo base após to." },
+      { "labelEn": "I'm going finish the report.", "correct": false, "feedbackPt": "Falta to." }
+    ]},
+    { "id": "em05l01-prac-11", "type": "dialogue_complete", "promptPt": "Follow-up — Jamie quer saber quando:", "speaker": "You", "contextEn": "Jamie: When are you going to send the report?", "options": [
+      { "labelEn": "I'm going to send it on Thursday morning.", "correct": true, "feedbackPt": "When + going to + tempo específico." },
+      { "labelEn": "I sent it on Thursday.", "correct": false, "feedbackPt": "Passado — ainda não enviou." },
+      { "labelEn": "I send it Thursday morning.", "correct": false, "feedbackPt": "Presente simples — use going to para plano." }
+    ]},
+    { "id": "em05l01-prac-12", "type": "choice", "promptPt": "Resposta completa com razão:", "options": [
+      { "labelEn": "No, I'm not going to travel. I'm going to save money.", "correct": true, "feedbackPt": "Negativa + plano alternativo." },
+      { "labelEn": "No travel.", "correct": false, "feedbackPt": "Muito curto — incomplete sentence." },
+      { "labelEn": "No, I'm not going to traveling.", "correct": false, "feedbackPt": "Verbo base após to." }
+    ]}
+  ]
+}

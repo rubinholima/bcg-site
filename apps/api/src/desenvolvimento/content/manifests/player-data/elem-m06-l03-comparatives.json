@@ -1,0 +1,171 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 6,
+  "goalPt": "Comparativos — bigger than, more expensive than, better than — para comparar bairros, preços, serviços e opções.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você e Jamie comparam bairros e opções de moradia para um colega que vai se mudar.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Compare two neighborhoods.",
+    "headlinePt": "Compare dois bairros.",
+    "bodyPt": "",
+    "canDo": [
+      "Downtown is more expensive than the suburbs.",
+      "The suburbs are quieter than downtown.",
+      "My apartment is bigger than yours.",
+      "This area is better for families.",
+      "The rent here is cheaper than near the stadium."
+    ],
+    "production": {
+      "introPt": "Compare dois bairros ou opções usando pelo menos três comparativos diferentes.",
+      "prompts": [{ "speaker": "Jamie", "questionEn": "Which neighborhood would you recommend — downtown or the suburbs?" }],
+      "fields": [
+        { "id": "compare1", "labelPt": "Comparativo 1", "prefixEn": "", "placeholderEn": "Downtown is more expensive than the suburbs." },
+        { "id": "compare2", "labelPt": "Comparativo 2", "prefixEn": "", "placeholderEn": "The suburbs are quieter and safer." },
+        { "id": "compare3", "labelPt": "Comparativo 3", "prefixEn": "", "placeholderEn": "But downtown is better for nightlife and restaurants." }
+      ],
+      "exampleEn": "Downtown is more expensive than the suburbs. The suburbs are quieter. But downtown is better for restaurants and nightlife."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "em06l03-ctx-01", "type": "intro", "titleEn": "Comparatives", "titlePt": "Comparativos", "bodyPt": "Bigger than, more expensive than — comparar opções é essencial ao escolher onde morar, comprar ou trabalhar." },
+      { "id": "em06l03-ctx-02", "type": "scenario", "settingEn": "Office · Housing discussion", "scenarioPt": "Colega vai se mudar e pede opinião sobre bairros." },
+      { "id": "em06l03-ctx-03", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Should I live downtown or in the suburbs?", "promptPt": "Jamie pede comparação:", "options": [
+        { "labelEn": "Downtown is more convenient, but the suburbs are quieter and cheaper.", "correct": true, "feedbackPt": "Dois comparativos + contraste." },
+        { "labelEn": "Downtown convenient suburbs quiet.", "correct": false, "feedbackPt": "Faltam comparativos." },
+        { "labelEn": "Downtown is more convenient than the suburbs are more quiet.", "correct": false, "feedbackPt": "Estrutura confusa — separe frases." }
+      ]},
+      { "id": "em06l03-ctx-04", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "What about rent — is downtown much more expensive?", "promptPt": "Follow-up — preço:", "options": [
+        { "labelEn": "Yes — rent downtown is about 30% more expensive than in the suburbs.", "correct": true, "feedbackPt": "More expensive than — comparativo correto." },
+        { "labelEn": "Yes — rent downtown is more expensive as suburbs.", "correct": false, "feedbackPt": "Use than, não as." },
+        { "labelEn": "Rent downtown expensive more.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]},
+      { "id": "em06l03-ctx-05", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "And apartments — are they bigger in the suburbs?", "promptPt": "Tamanho dos apartamentos:", "options": [
+        { "labelEn": "Usually, yes. Suburban apartments tend to be bigger than downtown ones.", "correct": true, "feedbackPt": "Bigger than — adj curto + -er." },
+        { "labelEn": "Suburban apartments more big.", "correct": false, "feedbackPt": "Big → bigger, não more big." },
+        { "labelEn": "Apartments suburbs big more than.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]},
+      { "id": "em06l03-ctx-06", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Which is better for someone with kids?", "promptPt": "Melhor opção para famílias:", "options": [
+        { "labelEn": "The suburbs are definitely better — there are more parks and schools.", "correct": true, "feedbackPt": "Better = comparativo irregular." },
+        { "labelEn": "Suburbs are gooder for kids.", "correct": false, "feedbackPt": "Good → better, não gooder." },
+        { "labelEn": "Downtown more good for kids.", "correct": false, "feedbackPt": "Good → better." }
+      ]},
+      { "id": "em06l03-ctx-07", "type": "dialogue_choice", "speaker": "Jamie", "promptEn": "Thanks — that's really helpful!", "promptPt": "Encerramento:", "options": [
+        { "labelEn": "No problem! The suburbs are farther from work, but I think it's worth it.", "correct": true, "feedbackPt": "Comparativo farther + opinião." },
+        { "labelEn": "Suburbs far work worth.", "correct": false, "feedbackPt": "Incompleto." },
+        { "labelEn": "Downtown was better yesterday.", "correct": false, "feedbackPt": "Passado — comparação é geral." }
+      ]}
+    ],
+    "learn": [
+      { "id": "em06l03-learn-01", "type": "phrase_examples", "titleEn": "Short adjectives — -er than", "titlePt": "Adjetivos curtos — -er than", "introPt": "1 sílaba ou 2 sílabas terminadas em -y:", "examples": [
+        { "en": "big → bigger than", "pt": "maior que" },
+        { "en": "small → smaller than", "pt": "menor que" },
+        { "en": "cheap → cheaper than", "pt": "mais barato que" },
+        { "en": "quiet → quieter than", "pt": "mais tranquilo que" }
+      ]},
+      { "id": "em06l03-learn-02", "type": "phrase_examples", "titleEn": "Long adjectives — more ... than", "titlePt": "Adjetivos longos — more ... than", "introPt": "2+ sílabas (exceto -y):", "examples": [
+        { "en": "expensive → more expensive than", "pt": "mais caro que" },
+        { "en": "convenient → more convenient than", "pt": "mais conveniente" },
+        { "en": "comfortable → more comfortable than", "pt": "mais confortável" },
+        { "en": "crowded → more crowded than", "pt": "mais lotado" }
+      ]},
+      { "id": "em06l03-learn-03", "type": "phrase_examples", "titleEn": "Irregular comparatives", "titlePt": "Comparativos irregulares", "introPt": "Memorize — não seguem regra:", "examples": [
+        { "en": "good → better than", "pt": "melhor que" },
+        { "en": "bad → worse than", "pt": "pior que" },
+        { "en": "far → farther/further than", "pt": "mais longe que" },
+        { "en": "little → less than", "pt": "menos que" }
+      ]},
+      { "id": "em06l03-learn-04", "type": "comparison", "titleEn": "-er vs more", "titlePt": "-er vs more", "left": {
+        "labelEn": "SHORT · -er than",
+        "exampleEn": "My apartment is bigger than yours.",
+        "notePt": "big, small, old, new, cheap."
+      }, "right": {
+        "labelEn": "LONG · more ... than",
+        "exampleEn": "Downtown is more expensive than the suburbs.",
+        "notePt": "expensive, beautiful, convenient."
+      }, "modelEn": "The suburbs are quieter. Downtown is more exciting.", "modelPt": "Curto = -er. Longo = more + adj + than." },
+      { "id": "em06l03-learn-05", "type": "language_focus", "titleEn": "Than — not then or that", "titlePt": "Than — não then ou that", "items": [
+        { "formalEn": "bigger than", "naturalEn": "Always than in comparisons.", "notePt": "Than = do que. Then = então." },
+        { "formalEn": "more expensive than", "naturalEn": "more + adjective + than", "notePt": "Ordem fixa." },
+        { "formalEn": "The suburbs are cheaper.", "naturalEn": "Comparative without than = general.", "notePt": "Com than = compara dois things." }
+      ], "tipPt": "Than sempre na comparação entre duas coisas. More big ❌ → bigger ✅" },
+      { "id": "em06l03-learn-06", "type": "mistake", "titlePt": "Erro comum", "wrongEn": "Downtown is more expensive as the suburbs.", "rightEn": "Downtown is more expensive than the suburbs.", "explanationPt": "Comparação usa than, não as." },
+      { "id": "em06l03-learn-07", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "bigger than / smaller than", "pt": "curtos" },
+        { "en": "more expensive than", "pt": "longos" },
+        { "en": "better than / worse than", "pt": "irregulares" },
+        { "en": "Downtown is more crowded.", "pt": "modelo" },
+        { "en": "The suburbs are quieter.", "pt": "modelo" }
+      ]}
+    ],
+    "imitate": [{ "id": "em06l03-imit-01", "type": "read_repeat", "titleEn": "Comparing neighborhoods", "titlePt": "Comparando bairros", "introPt": "Leia comparações completas.", "phrases": [
+      { "en": "Should I live downtown or in the suburbs?" },
+      { "en": "Downtown is more convenient, but the suburbs are quieter." },
+      { "en": "Is downtown much more expensive?" },
+      { "en": "Yes — rent is about 30% more expensive than in the suburbs." },
+      { "en": "Are apartments bigger in the suburbs?" },
+      { "en": "Yes — they're usually bigger than downtown ones." },
+      { "en": "Which is better for families?" },
+      { "en": "The suburbs are definitely better — more parks and schools." },
+      { "en": "The suburbs are farther from work, but it's worth it." }
+    ], "dialogueEn": "Downtown or suburbs? — Downtown more convenient, suburbs quieter. — More expensive? — Yes, 30% more. — Bigger apartments? — Usually bigger in suburbs. — Better for families? — Suburbs, definitely. — Farther from work, but worth it." }],
+    "mission": [{ "id": "em06l03-miss-01", "type": "mission_intro", "headlineEn": "Compare two areas.", "headlinePt": "Compare duas áreas.", "bodyPt": "Três comparativos diferentes.", "prompts": [{ "speaker": "Jamie", "questionEn": "Downtown or suburbs?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "em06l03-prac-01", "type": "choice", "promptPt": "Mais caro que:", "options": [
+      { "labelEn": "Downtown is more expensive than the suburbs.", "correct": true, "feedbackPt": "More + adj + than." },
+      { "labelEn": "Downtown is more expensive as the suburbs.", "correct": false, "feedbackPt": "Than, não as." },
+      { "labelEn": "Downtown is expensiver than suburbs.", "correct": false, "feedbackPt": "Expensive → more expensive." }
+    ]},
+    { "id": "em06l03-prac-02", "type": "choice", "promptPt": "Maior que:", "options": [
+      { "labelEn": "My apartment is bigger than yours.", "correct": true, "feedbackPt": "Big → bigger than." },
+      { "labelEn": "My apartment is more big than yours.", "correct": false, "feedbackPt": "More big ❌ → bigger." },
+      { "labelEn": "My apartment is big than yours.", "correct": false, "feedbackPt": "Falta -er." }
+    ]},
+    { "id": "em06l03-prac-03", "type": "fill_blank", "promptPt": "Complete — melhor para famílias:", "templateEn": "The suburbs are ___ for families.", "blankLabel": "comparativo", "options": [
+      { "labelEn": "better", "correct": true, "feedbackPt": "Good → better." },
+      { "labelEn": "gooder", "correct": false, "feedbackPt": "Irregular — better." },
+      { "labelEn": "more good", "correct": false, "feedbackPt": "Good → better, não more good." }
+    ]},
+    { "id": "em06l03-prac-04", "type": "classify", "promptPt": "Curto (-er) ou longo (more)?", "sentenceEn": "more expensive than", "category": "long", "feedbackCorrectPt": "Expensive = longo → more.", "feedbackWrongPt": "3 sílabas = more + adj." },
+    { "id": "em06l03-prac-05", "type": "classify", "promptPt": "Curto (-er) ou longo (more)?", "sentenceEn": "quieter than", "category": "short", "feedbackCorrectPt": "Quiet → quieter (-y → -ier).", "feedbackWrongPt": "Adjetivo curto com -y → -ier." },
+    { "id": "em06l03-prac-06", "type": "reorder", "promptPt": "Monte — centro é mais conveniente:", "tokens": ["suburbs.", "the", "than", "convenient", "more", "is", "Downtown"], "correctOrder": ["Downtown", "is", "more", "convenient", "than", "the", "suburbs."], "feedbackCorrectPt": "Downtown is more convenient than the suburbs.", "feedbackWrongPt": "More + adj + than." },
+    { "id": "em06l03-prac-07", "type": "dialogue_complete", "promptPt": "Jamie: Are apartments bigger in the suburbs?", "speaker": "You", "contextEn": "Jamie: Are apartments bigger in the suburbs?", "options": [
+      { "labelEn": "Yes — they're usually bigger than downtown ones.", "correct": true, "feedbackPt": "Bigger than." },
+      { "labelEn": "Yes — they are more big.", "correct": false, "feedbackPt": "Bigger, não more big." },
+      { "labelEn": "Yes — big apartments suburbs.", "correct": false, "feedbackPt": "Incompleto." }
+    ]},
+    { "id": "em06l03-prac-08", "type": "fill_blank", "promptPt": "Complete — mais barato:", "templateEn": "Rent here is ___ than near the stadium.", "blankLabel": "comparativo", "options": [
+      { "labelEn": "cheaper", "correct": true, "feedbackPt": "Cheap → cheaper." },
+      { "labelEn": "more cheap", "correct": false, "feedbackPt": "Cheaper, não more cheap." },
+      { "labelEn": "cheapest", "correct": false, "feedbackPt": "Superlativo — aqui é comparativo." }
+    ]},
+    { "id": "em06l03-prac-09", "type": "choice", "promptPt": "Comparativo irregular — pior:", "options": [
+      { "labelEn": "The traffic downtown is worse than in the suburbs.", "correct": true, "feedbackPt": "Bad → worse." },
+      { "labelEn": "The traffic is badder than.", "correct": false, "feedbackPt": "Worse, não badder." },
+      { "labelEn": "The traffic is more bad.", "correct": false, "feedbackPt": "Bad → worse." }
+    ]},
+    { "id": "em06l03-prac-10", "type": "dialogue_complete", "promptPt": "Follow-up — qual recomenda?", "speaker": "You", "contextEn": "Jamie: Which would you recommend?", "options": [
+      { "labelEn": "The suburbs are quieter and cheaper, but downtown is better for nightlife.", "correct": true, "feedbackPt": "Três comparativos." },
+      { "labelEn": "Suburbs quiet cheap downtown night.", "correct": false, "feedbackPt": "Sem comparativos." },
+      { "labelEn": "Suburbs more gooder.", "correct": false, "feedbackPt": "Gooder não existe." }
+    ]},
+    { "id": "em06l03-prac-11", "type": "reorder", "promptPt": "Monte — mais tranquilo:", "tokens": ["downtown.", "than", "quieter", "is", "area", "This"], "correctOrder": ["This", "area", "is", "quieter", "than", "downtown."], "feedbackCorrectPt": "This area is quieter than downtown.", "feedbackWrongPt": "Adj + -er + than." },
+    { "id": "em06l03-prac-12", "type": "choice", "promptPt": "Than ou then?", "options": [
+      { "labelEn": "The rent is higher than last year.", "correct": true, "feedbackPt": "Than = comparação." },
+      { "labelEn": "The rent is higher then last year.", "correct": false, "feedbackPt": "Then = então/depois." },
+      { "labelEn": "The rent is higher that last year.", "correct": false, "feedbackPt": "That ≠ comparação." }
+    ]}
+  ]
+}
