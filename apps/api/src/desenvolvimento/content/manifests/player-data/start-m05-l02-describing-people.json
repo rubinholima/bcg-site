@@ -1,0 +1,149 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 5,
+  "goalPt": "Descrever pessoas com adjetivos simples — aparência e personalidade — usando He is / She is e She has...",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você precisa descrever colegas para um visitante que ainda não os conhece.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Describe a coworker.",
+    "headlinePt": "Descreva um colega.",
+    "bodyPt": "",
+    "canDo": ["He is tall.", "She is friendly.", "She is young.", "He is nice.", "She has brown hair.", "He is very professional.", "They are helpful.", "Describe appearance and personality"],
+    "production": {
+      "introPt": "Um visitante pergunta sobre sua colega Maria. Descreva aparência e personalidade em duas frases.",
+      "prompts": [{ "speaker": "Visitor", "questionEn": "What is Maria like?" }],
+      "fields": [
+        { "id": "appearance", "labelPt": "Aparência", "prefixEn": "She is", "placeholderEn": "tall and young." },
+        { "id": "personality", "labelPt": "Personalidade", "prefixEn": "She is very", "placeholderEn": "friendly and helpful." }
+      ],
+      "exampleEn": "She is tall and young. She is very friendly and helpful."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m05l02-ctx-01", "type": "intro", "titleEn": "Describing people", "titlePt": "Descrever pessoas", "bodyPt": "No trabalho, você descreve colegas para visitantes, novos funcionários ou em reuniões online. Adjetivos simples resolvem — tall, friendly, young." },
+      { "id": "m05l02-ctx-02", "type": "scenario", "settingEn": "Office reception · Visitor arrival", "scenarioPt": "Um parceiro comercial chega e pergunta quem é a pessoa na sala ao lado." },
+      { "id": "m05l02-ctx-03", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Who is the tall woman near the window?", "promptPt": "Visitante descreve aparência. Como responder?", "options": [
+        { "labelEn": "That's Maria. She is very friendly.", "correct": true, "feedbackPt": "Identifica + personalidade — resposta natural." },
+        { "labelEn": "She is a window.", "correct": false, "feedbackPt": "Window é objeto, não pessoa." },
+        { "labelEn": "Maria is tall woman.", "correct": false, "feedbackPt": "Falta artigo — a tall woman." }
+      ]},
+      { "id": "m05l02-ctx-04", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Is he young or older?", "promptPt": "Visitante pergunta idade aproximada. Melhor resposta:", "options": [
+        { "labelEn": "He is young — maybe in his thirties.", "correct": true, "feedbackPt": "He is young responde direto." },
+        { "labelEn": "He young is.", "correct": false, "feedbackPt": "Ordem errada — He is young." },
+        { "labelEn": "He has young.", "correct": false, "feedbackPt": "Has combina com característica física, não idade assim." }
+      ]},
+      { "id": "m05l02-ctx-05", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "She looks nice. Is she on your team?", "promptPt": "Nice aqui significa simpática. Como confirmar?", "options": [
+        { "labelEn": "Yes, she is. She is very nice and helpful.", "correct": true, "feedbackPt": "Nice = simpática/agradável no trabalho." },
+        { "labelEn": "No, she is ugly.", "correct": false, "feedbackPt": "Rude e fora de contexto profissional." },
+        { "labelEn": "She is a nice.", "correct": false, "feedbackPt": "Nice é adjetivo — sem artigo a." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m05l02-learn-01", "type": "phrase_examples", "titleEn": "He is / She is", "titlePt": "Ele é / Ela é", "introPt": "Padrão base para descrever pessoas — adjetivo depois do verbo is.", "examples": [
+        { "en": "He is tall.", "pt": "ele é alto" },
+        { "en": "She is friendly.", "pt": "ela é simpática" },
+        { "en": "He is young.", "pt": "ele é jovem" },
+        { "en": "She is very professional.", "pt": "muito profissional" }
+      ]},
+      { "id": "m05l02-learn-02", "type": "phrase_examples", "titleEn": "Tall / short", "titlePt": "Alto / baixo", "introPt": "Adjetivos de altura — comuns para identificar alguém.", "examples": [
+        { "en": "He is tall.", "pt": "alto" },
+        { "en": "She is short.", "pt": "baixa" },
+        { "en": "A tall man in a blue shirt.", "pt": "identificação visual" },
+        { "en": "Not very tall.", "pt": "não muito alto" }
+      ]},
+      { "id": "m05l02-learn-03", "type": "phrase_examples", "titleEn": "Friendly / nice", "titlePt": "Simpático / agradável", "introPt": "Personalidade no ambiente de trabalho — friendly e nice são seguros e positivos.", "examples": [
+        { "en": "She is very friendly.", "pt": "muito simpática" },
+        { "en": "He is a nice guy.", "pt": "pessoa legal" },
+        { "en": "Everyone is friendly here.", "pt": "ambiente acolhedor" },
+        { "en": "Nice to work with.", "pt": "bom de trabalhar junto" }
+      ]},
+      { "id": "m05l02-learn-04", "type": "phrase_examples", "titleEn": "Young / older", "titlePt": "Jovem / mais experiente", "introPt": "Falar de idade de forma educada — young ou older, sem números se não souber.", "examples": [
+        { "en": "She is young.", "pt": "jovem" },
+        { "en": "He is older.", "pt": "mais experiente/idade" },
+        { "en": "A young colleague.", "pt": "colega jovem" },
+        { "en": "In his forties.", "pt": "com quarenta e poucos" }
+      ]},
+      { "id": "m05l02-learn-05", "type": "phrase_examples", "titleEn": "She has... / He has...", "titlePt": "Ela tem... / Ele tem...", "introPt": "Use has para cabelo, olhos e características físicas.", "examples": [
+        { "en": "She has brown hair.", "pt": "cabelo castanho" },
+        { "en": "He has dark hair.", "pt": "cabelo escuro" },
+        { "en": "She has glasses.", "pt": "usa óculos" },
+        { "en": "He has a beard.", "pt": "tem barba" }
+      ]},
+      { "id": "m05l02-learn-06", "type": "comparison", "titleEn": "Appearance vs personality", "titlePt": "Aparência vs personalidade", "left": { "labelEn": "LOOKS · APPEARANCE", "exampleEn": "She is tall. She has brown hair.", "notePt": "Como a pessoa parece fisicamente." }, "right": { "labelEn": "CHARACTER · PERSONALITY", "exampleEn": "She is friendly and helpful.", "notePt": "Como a pessoa age — simpática, profissional." }, "modelEn": "Maria is tall and friendly. She has brown hair.", "modelPt": "Combine os dois tipos na descrição real." },
+      { "id": "m05l02-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "He is very high.", "rightEn": "He is very tall.", "explanationPt": "High descreve objetos, preços ou posição (high floor). Para pessoas altas, use tall." },
+      { "id": "m05l02-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "He is tall.", "pt": "aparência" },
+        { "en": "She is friendly.", "pt": "personalidade" },
+        { "en": "She is young.", "pt": "idade" },
+        { "en": "She has brown hair.", "pt": "característica física" },
+        { "en": "He is nice.", "pt": "simpático" },
+        { "en": "very + adjective", "pt": "intensificador" },
+        { "en": "What is she like?", "pt": "pergunta sobre pessoa" }
+      ]}
+    ],
+    "imitate": [{ "id": "m05l02-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Leia em voz alta. Troque nomes e adjetivos conforme seus colegas.", "phrases": [
+      { "en": "He is tall." }, { "en": "She is friendly." }, { "en": "She is young." }, { "en": "He is very nice." }, { "en": "She has brown hair." }, { "en": "He is professional." }, { "en": "What is she like?" }, { "en": "She is tall and very friendly." }
+    ], "dialogueEn": "What is Maria like? — She is tall and young. She is very friendly. She has brown hair." }],
+    "mission": [{ "id": "m05l02-miss-01", "type": "mission_intro", "headlineEn": "Describe Maria.", "headlinePt": "Descreva Maria.", "bodyPt": "Use He is/She is para aparência e personalidade.", "prompts": [{ "speaker": "Visitor", "questionEn": "What is Maria like?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m05l02-prac-01", "type": "choice", "promptPt": "Descrever um homem alto:", "options": [
+      { "labelEn": "He is tall.", "correct": true, "feedbackPt": "He is + adjetivo." },
+      { "labelEn": "He is high.", "correct": false, "feedbackPt": "High não descreve altura de pessoa." },
+      { "labelEn": "He tall is.", "correct": false, "feedbackPt": "Ordem: He is tall." }
+    ]},
+    { "id": "m05l02-prac-02", "type": "fill_blank", "promptPt": "Ela é simpática:", "templateEn": "She is ___.", "blankLabel": "adjetivo", "options": [
+      { "labelEn": "friendly", "correct": true, "feedbackPt": "Friendly = simpática." },
+      { "labelEn": "friend", "correct": false, "feedbackPt": "Friend é substantivo — amigo(a)." },
+      { "labelEn": "friendship", "correct": false, "feedbackPt": "Friendship = amizade." }
+    ]},
+    { "id": "m05l02-prac-03", "type": "choice", "promptPt": "Cabelo castanho:", "options": [
+      { "labelEn": "She has brown hair.", "correct": true, "feedbackPt": "She has + característica." },
+      { "labelEn": "She is brown hair.", "correct": false, "feedbackPt": "Is não combina com hair assim." },
+      { "labelEn": "She have brown hair.", "correct": false, "feedbackPt": "She combina com has, não have." }
+    ]},
+    { "id": "m05l02-prac-04", "type": "reorder", "promptPt": "Monte a descrição:", "tokens": ["young.", "is", "He", "very"], "correctOrder": ["He", "is", "very", "young."], "feedbackCorrectPt": "He is very young.", "feedbackWrongPt": "Ordem: He + is + very + young." },
+    { "id": "m05l02-prac-05", "type": "dialogue_complete", "promptPt": "Visitante pergunta What is he like?", "speaker": "You", "contextEn": "Visitor: What is he like?", "options": [
+      { "labelEn": "He is friendly and professional.", "correct": true, "feedbackPt": "Personalidade — resposta natural." },
+      { "labelEn": "He is the office.", "correct": false, "feedbackPt": "Office é lugar." },
+      { "labelEn": "He works friendly.", "correct": false, "feedbackPt": "Friendly é adjetivo, não advérbio de work." }
+    ]},
+    { "id": "m05l02-prac-06", "type": "fill_blank", "promptPt": "Pessoa baixa:", "templateEn": "She is ___.", "blankLabel": "adjetivo", "options": [
+      { "labelEn": "short", "correct": true, "feedbackPt": "Short = baixa." },
+      { "labelEn": "small", "correct": false, "feedbackPt": "Small funciona, mas short é padrão para altura." },
+      { "labelEn": "little", "correct": false, "feedbackPt": "Little soa estranho para adultos." }
+    ]},
+    { "id": "m05l02-prac-07", "type": "choice", "promptPt": "Intensificar adjetivo:", "options": [
+      { "labelEn": "She is very friendly.", "correct": true, "feedbackPt": "Very + adjetivo." },
+      { "labelEn": "She is very friend.", "correct": false, "feedbackPt": "Friend é substantivo." },
+      { "labelEn": "She very is friendly.", "correct": false, "feedbackPt": "Very fica antes do adjetivo." }
+    ]},
+    { "id": "m05l02-prac-08", "type": "dialogue_complete", "promptPt": "Identificar pessoa alta:", "speaker": "You", "contextEn": "Visitor: Who is the tall woman?", "options": [
+      { "labelEn": "That's Maria. She is on our team.", "correct": true, "feedbackPt": "Identifica + contexto." },
+      { "labelEn": "Tall is Maria.", "correct": false, "feedbackPt": "Ordem incorreta." },
+      { "labelEn": "Maria is tall woman.", "correct": false, "feedbackPt": "Precisa de artigo: a tall woman." }
+    ]},
+    { "id": "m05l02-prac-09", "type": "fill_blank", "promptPt": "Ele tem barba:", "templateEn": "He ___ a beard.", "blankLabel": "verbo", "options": [
+      { "labelEn": "has", "correct": true, "feedbackPt": "He has = ele tem." },
+      { "labelEn": "have", "correct": false, "feedbackPt": "He usa has." },
+      { "labelEn": "is", "correct": false, "feedbackPt": "Is não indica posse." }
+    ]},
+    { "id": "m05l02-prac-10", "type": "choice", "promptPt": "Nice no trabalho geralmente significa:", "options": [
+      { "labelEn": "Kind and pleasant.", "correct": true, "feedbackPt": "Nice = simpático/agradável." },
+      { "labelEn": "Beautiful only.", "correct": false, "feedbackPt": "Nice inclui personalidade, não só aparência." },
+      { "labelEn": "Expensive.", "correct": false, "feedbackPt": "Expensive = caro — outro sentido." }
+    ]}
+  ]
+}

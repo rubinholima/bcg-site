@@ -1,0 +1,180 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 6,
+  "goalPt": "Integrar tudo do Módulo 6 — workplace, tarefas, ajuda, pedidos, instruções e reunião — num dia de trabalho simulado.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Desafio do módulo — simule um dia de trabalho completo em inglês.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia o diálogo completo em voz alta.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Simulate your workday in English.",
+    "headlinePt": "Simule seu dia de trabalho em inglês.",
+    "bodyPt": "",
+    "canDo": ["Describe workplace", "Say what you're working on", "Ask for help", "Request a file", "Confirm instructions", "Participate in a meeting"],
+    "production": {
+      "introPt": "Monte um dia de trabalho em 4 momentos: tarefa atual, pedido de ajuda, pedido por email e confirmação de instruções.",
+      "prompts": [{ "speaker": "Scenario", "questionEn": "Walk through your workday." }],
+      "fields": [
+        { "id": "task", "labelPt": "Tarefa atual", "prefixEn": "", "placeholderEn": "I'm working on the travel report right now." },
+        { "id": "help", "labelPt": "Pedir ajuda", "prefixEn": "", "placeholderEn": "Can you help me with this file?" },
+        { "id": "request", "labelPt": "Pedir arquivo", "prefixEn": "", "placeholderEn": "Could you send me the updated spreadsheet?" },
+        { "id": "confirm", "labelPt": "Confirmar instruções", "prefixEn": "", "placeholderEn": "Got it — I'll send the list by 3 PM." }
+      ],
+      "exampleEn": "I'm working on the travel report. Can you help me with this file? Could you send me the updated spreadsheet? Got it — I'll send the list by 3 PM."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m06l07-ctx-01", "type": "intro", "titleEn": "Workday challenge", "titlePt": "Desafio do dia de trabalho", "bodyPt": "Junte workplace, tarefas, ajuda, pedidos, instruções e reunião — num fluxo real de um dia. Sem vocabulário novo." },
+      { "id": "m06l07-ctx-02", "type": "scenario", "settingEn": "Full workday · Club operations", "scenarioPt": "Manhã de terça — reunião, relatório, Slack e pedido de ajuda." },
+      { "id": "m06l07-ctx-03", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "What are you working on?", "promptPt": "Passo 1 — Tarefa atual:", "options": [
+        { "labelEn": "I'm working on the travel report. I need to finish it today.", "correct": true, "feedbackPt": "Working on + prazo." },
+        { "labelEn": "I work report travel.", "correct": false, "feedbackPt": "Use I'm working on." },
+        { "labelEn": "Workday is work.", "correct": false, "feedbackPt": "Sem conteúdo." }
+      ]},
+      { "id": "m06l07-ctx-04", "type": "dialogue_choice", "speaker": "You", "promptEn": "(You're stuck on the file.)", "promptPt": "Passo 2 — Pedir ajuda:", "options": [
+        { "labelEn": "Can you help me with this file?", "correct": true, "feedbackPt": "Can you help me with..." },
+        { "labelEn": "Help file me.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "I need help for file.", "correct": false, "feedbackPt": "Help with, não for." }
+      ]},
+      { "id": "m06l07-ctx-05", "type": "dialogue_choice", "speaker": "You", "promptEn": "(You write a Slack message.)", "promptPt": "Passo 3 — Pedir arquivo:", "options": [
+        { "labelEn": "Could you send me the updated spreadsheet, please?", "correct": true, "feedbackPt": "Could + send me + please." },
+        { "labelEn": "Send spreadsheet now!", "correct": false, "feedbackPt": "Muito abrupto." },
+        { "labelEn": "Me send you file.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]},
+      { "id": "m06l07-ctx-06", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Please send the list by 3 PM. Don't forget to cc me.", "promptPt": "Passo 4 — Confirmar instruções:", "options": [
+        { "labelEn": "Got it — will do.", "correct": true, "feedbackPt": "Confirmação curta." },
+        { "labelEn": "Please forget don't.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "List is 3.", "correct": false, "feedbackPt": "Frase incompleta." }
+      ]},
+      { "id": "m06l07-ctx-07", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Let's start. Here's the agenda. Any questions?", "promptPt": "Passo 5 — Reunião:", "options": [
+        { "labelEn": "No questions from me — sounds good.", "correct": true, "feedbackPt": "Resposta de reunião natural." },
+        { "labelEn": "Let's finish.", "correct": false, "feedbackPt": "Reunião acabou de começar." },
+        { "labelEn": "Send me the file.", "correct": false, "feedbackPt": "Assunto diferente." }
+      ]},
+      { "id": "m06l07-ctx-08", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Thanks, everyone.", "promptPt": "Encerrar o dia:", "options": [
+        { "labelEn": "Thanks, everyone. See you tomorrow.", "correct": true, "feedbackPt": "Encerramento profissional." },
+        { "labelEn": "What are you working on?", "correct": false, "feedbackPt": "Reabre tarefa — reunião encerrou." },
+        { "labelEn": "Can you help me?", "correct": false, "feedbackPt": "Momento diferente." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m06l07-learn-01", "type": "review", "titleEn": "Lesson 1 — Workplace", "titlePt": "Lição 1 — Ambiente", "items": [
+        { "en": "workplace / department", "pt": "vocabulário" },
+        { "en": "I work with the operations team.", "pt": "equipe" },
+        { "en": "front office / training room", "pt": "clube" },
+        { "en": "conference room / open office", "pt": "escritório" }
+      ]},
+      { "id": "m06l07-learn-02", "type": "review", "titleEn": "Lesson 2 — Working on", "titlePt": "Lição 2 — Tarefa atual", "items": [
+        { "en": "What are you working on?", "pt": "pergunta" },
+        { "en": "I'm working on a report.", "pt": "resposta" },
+        { "en": "right now / today", "pt": "tempo" },
+        { "en": "I'm busy right now.", "pt": "ocupado" }
+      ]},
+      { "id": "m06l07-learn-03", "type": "review", "titleEn": "Lesson 3 — Help", "titlePt": "Lição 3 — Ajuda", "items": [
+        { "en": "Can you help me?", "pt": "pedido" },
+        { "en": "I need help with the report.", "pt": "especificar" },
+        { "en": "Could you show me?", "pt": "educado" },
+        { "en": "Sure, no problem.", "pt": "resposta" }
+      ]},
+      { "id": "m06l07-learn-04", "type": "review", "titleEn": "Lesson 4 — Send me", "titlePt": "Lição 4 — Enviar arquivo", "items": [
+        { "en": "Can you send me the file?", "pt": "pedido" },
+        { "en": "Could you email me the report?", "pt": "email" },
+        { "en": "please / when you get a chance", "pt": "educação" },
+        { "en": "Sure, I'll send it.", "pt": "confirmação" }
+      ]},
+      { "id": "m06l07-learn-05", "type": "review", "titleEn": "Lesson 5 — Instructions", "titlePt": "Lição 5 — Instruções", "items": [
+        { "en": "Please send the list.", "pt": "instrução" },
+        { "en": "Don't forget to cc me.", "pt": "lembrete" },
+        { "en": "Make sure the file is attached.", "pt": "verificar" },
+        { "en": "Got it. / Will do.", "pt": "confirmar" }
+      ]},
+      { "id": "m06l07-learn-06", "type": "review", "titleEn": "Lesson 6 — Meeting", "titlePt": "Lição 6 — Reunião", "items": [
+        { "en": "Let's start.", "pt": "abrir" },
+        { "en": "Here's the agenda.", "pt": "pauta" },
+        { "en": "Can we move on?", "pt": "avançar" },
+        { "en": "Any questions? / Thanks, everyone.", "pt": "fechar" }
+      ]},
+      { "id": "m06l07-learn-07", "type": "language_focus", "titleEn": "Workday flow", "titlePt": "Fluxo do dia", "items": [
+        { "formalEn": "Task → Help → Request → Instructions → Meeting", "naturalEn": "Morning stand-up → deep work → Slack requests → confirm → wrap up", "notePt": "Dia real alterna esses momentos — não precisa ser nesta ordem exata." },
+        { "formalEn": "One clear sentence per action", "naturalEn": "Short messages win in Slack", "notePt": "Mensagens curtas e claras — padrão US workplace." }
+      ], "tipPt": "Cada lição do módulo 6 cobre um momento do dia — junte conforme sua rotina real." },
+      { "id": "m06l07-learn-08", "type": "review", "titleEn": "Quick review — full module", "titlePt": "Revisão — módulo completo", "items": [
+        { "en": "I'm in the operations department.", "pt": "workplace" },
+        { "en": "I'm working on the travel report.", "pt": "task" },
+        { "en": "Can you help me with this file?", "pt": "help" },
+        { "en": "Could you send me the spreadsheet?", "pt": "request" },
+        { "en": "Got it — will do.", "pt": "instructions" },
+        { "en": "Any questions? No questions from me.", "pt": "meeting" },
+        { "en": "Thanks, everyone.", "pt": "close" }
+      ]}
+    ],
+    "imitate": [{ "id": "m06l07-imit-01", "type": "read_repeat", "titleEn": "Full workday dialogue", "titlePt": "Diálogo do dia completo", "introPt": "Leia o fluxo inteiro em voz alta.", "phrases": [
+      { "en": "What are you working on?" }, { "en": "I'm working on the travel report." }, { "en": "Can you help me with this file?" }, { "en": "Could you send me the updated spreadsheet?" }, { "en": "Please send the list by 3 PM." }, { "en": "Got it — will do." }, { "en": "Let's start. Any questions?" }, { "en": "Thanks, everyone. See you tomorrow." }
+    ], "dialogueEn": "What are you working on? — I'm working on the travel report. — Can you help me with this file? — Sure! — Could you send me the spreadsheet? — Sending it now. — Please send the list by 3 PM. — Got it. — Let's start. Any questions? — No questions. — Thanks, everyone!" }],
+    "mission": [{ "id": "m06l07-miss-01", "type": "mission_intro", "headlineEn": "Your workday in English.", "headlinePt": "Seu dia de trabalho em inglês.", "bodyPt": "Simule tarefa, ajuda, pedido e confirmação.", "prompts": [{ "speaker": "Scenario", "questionEn": "Walk through your workday." }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m06l07-prac-01", "type": "choice", "promptPt": "Tarefa em andamento:", "options": [
+      { "labelEn": "I'm working on the travel report.", "correct": true, "feedbackPt": "Present continuous." },
+      { "labelEn": "I work on the travel report now.", "correct": false, "feedbackPt": "Agora → working on." },
+      { "labelEn": "Working I on report.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "m06l07-prac-02", "type": "dialogue_complete", "promptPt": "Pedir ajuda com arquivo:", "speaker": "You", "contextEn": "You're stuck on a file upload.", "options": [
+      { "labelEn": "Can you help me with this file?", "correct": true, "feedbackPt": "Help with + file." },
+      { "labelEn": "Help me for file.", "correct": false, "feedbackPt": "Help with." },
+      { "labelEn": "File help can.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "m06l07-prac-03", "type": "fill_blank", "promptPt": "Pedir planilha:", "templateEn": "Could you send ___ the spreadsheet?", "blankLabel": "pronome", "options": [
+      { "labelEn": "me", "correct": true, "feedbackPt": "Send me." },
+      { "labelEn": "I", "correct": false, "feedbackPt": "Send me, não I." },
+      { "labelEn": "my", "correct": false, "feedbackPt": "My = possessivo." }
+    ]},
+    { "id": "m06l07-prac-04", "type": "choice", "promptPt": "Confirmar instrução do manager:", "options": [
+      { "labelEn": "Got it — will do.", "correct": true, "feedbackPt": "Confirmação padrão." },
+      { "labelEn": "Please don't list.", "correct": false, "feedbackPt": "Sem sentido." },
+      { "labelEn": "Meeting agenda start.", "correct": false, "feedbackPt": "Assunto diferente." }
+    ]},
+    { "id": "m06l07-prac-05", "type": "reorder", "promptPt": "Monte resposta de reunião:", "tokens": ["me.", "from", "questions", "No"], "correctOrder": ["No", "questions", "from", "me."], "feedbackCorrectPt": "No questions from me.", "feedbackWrongPt": "Ordem: No + questions + from + me." },
+    { "id": "m06l07-prac-06", "type": "dialogue_complete", "promptPt": "Descrever departamento:", "speaker": "You", "contextEn": "Partner: Which department are you in?", "options": [
+      { "labelEn": "I'm in the operations department.", "correct": true, "feedbackPt": "In the + department." },
+      { "labelEn": "Department operations am.", "correct": false, "feedbackPt": "Ordem incorreta." },
+      { "labelEn": "I working operations.", "correct": false, "feedbackPt": "Gramática incorreta." }
+    ]},
+    { "id": "m06l07-prac-07", "type": "fill_blank", "promptPt": "Não esqueça de copiar:", "templateEn": "Don't forget to ___ me.", "blankLabel": "verbo", "options": [
+      { "labelEn": "cc", "correct": true, "feedbackPt": "Cc = copiar no email." },
+      { "labelEn": "copy", "correct": false, "feedbackPt": "Cc é o termo padrão em email." },
+      { "labelEn": "send", "correct": false, "feedbackPt": "Cc é específico para cópia." }
+    ]},
+    { "id": "m06l07-prac-08", "type": "choice", "promptPt": "Ocupado agora — adiar conversa:", "options": [
+      { "labelEn": "I'm busy right now — can we talk later?", "correct": true, "feedbackPt": "Right now + later." },
+      { "labelEn": "Busy I am later now.", "correct": false, "feedbackPt": "Ordem incorreta." },
+      { "labelEn": "Later busy always.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "m06l07-prac-09", "type": "dialogue_complete", "promptPt": "Encerrar reunião:", "speaker": "You", "contextEn": "Manager: Thanks, everyone.", "options": [
+      { "labelEn": "Thanks, everyone. See you tomorrow.", "correct": true, "feedbackPt": "Encerramento natural." },
+      { "labelEn": "Let's start.", "correct": false, "feedbackPt": "Reunião encerrou." },
+      { "labelEn": "Could you send me the file?", "correct": false, "feedbackPt": "Momento diferente." }
+    ]},
+    { "id": "m06l07-prac-10", "type": "choice", "promptPt": "Melhor fluxo do módulo 6:", "options": [
+      { "labelEn": "Workplace → task → help → request → instructions → meeting.", "correct": true, "feedbackPt": "Cobertura completa do módulo." },
+      { "labelEn": "Only greetings.", "correct": false, "feedbackPt": "Módulo 6 é comunicação no trabalho." },
+      { "labelEn": "Only places and directions.", "correct": false, "feedbackPt": "Isso é módulo 5." }
+    ]},
+    { "id": "m06l07-prac-11", "type": "fill_blank", "promptPt": "Certifique-se do anexo:", "templateEn": "Make sure the file is ___.", "blankLabel": "palavra", "options": [
+      { "labelEn": "attached", "correct": true, "feedbackPt": "Attached = anexado." },
+      { "labelEn": "attachment", "correct": false, "feedbackPt": "Attached = adjetivo/participio aqui." },
+      { "labelEn": "attach", "correct": false, "feedbackPt": "Is attached — participio." }
+    ]},
+    { "id": "m06l07-prac-12", "type": "reorder", "promptPt": "Monte pedido educado:", "tokens": ["me", "send", "you", "Can", "file?", "the"], "correctOrder": ["Can", "you", "send", "me", "the", "file?"], "feedbackCorrectPt": "Can you send me the file?", "feedbackWrongPt": "Ordem: Can + you + send + me + the + file?" }
+  ]
+}

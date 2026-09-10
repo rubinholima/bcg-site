@@ -1,0 +1,149 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 5,
+  "goalPt": "Nomear colegas, manager e equipe no ambiente de trabalho — e apresentar alguém com This is...",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Seu primeiro dia no escritório do clube — Alex apresenta as pessoas da equipe.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Name the people at work.",
+    "headlinePt": "Nomeie as pessoas no trabalho.",
+    "bodyPt": "",
+    "canDo": ["colleague", "manager", "team", "This is...", "He is our...", "She works with...", "people at work", "my coworkers"],
+    "production": {
+      "introPt": "Alex pede para você apresentar dois colegas. Use This is... e diga a função de cada um.",
+      "prompts": [{ "speaker": "Alex", "questionEn": "Can you introduce two people on our team?" }],
+      "fields": [
+        { "id": "intro1", "labelPt": "Apresentar colega 1", "prefixEn": "This is", "placeholderEn": "Maria. She is our physiotherapist." },
+        { "id": "intro2", "labelPt": "Apresentar colega 2", "prefixEn": "This is", "placeholderEn": "James. He is our manager." }
+      ],
+      "exampleEn": "This is Maria. She is our physiotherapist. This is James. He is our manager."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m05l01-ctx-01", "type": "intro", "titleEn": "People at work", "titlePt": "Pessoas no trabalho", "bodyPt": "No escritório ou no clube, você convive com colegas, manager e equipe. Nesta lição, você aprende a nomear essas pessoas e apresentá-las com This is..." },
+      { "id": "m05l01-ctx-02", "type": "scenario", "settingEn": "Club office · First week · Real life", "scenarioPt": "Alex, colega da operations, te leva pelo corredor e apresenta quem trabalha ali." },
+      { "id": "m05l01-ctx-03", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "This is Maria. She's on our team.", "promptPt": "Alex apresenta uma colega. Como confirmar que entendeu?", "options": [
+        { "labelEn": "Nice to meet you, Maria!", "correct": true, "feedbackPt": "Resposta educada após apresentação." },
+        { "labelEn": "I am Maria.", "correct": false, "feedbackPt": "Maria é ela — não você." },
+        { "labelEn": "Where is Maria?", "correct": false, "feedbackPt": "Alex acabou de apresentá-la — ela está ali." }
+      ]},
+      { "id": "m05l01-ctx-04", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "James is our manager. He works with the whole team.", "promptPt": "Alex fala do manager. O que é manager?", "options": [
+        { "labelEn": "The person who leads the team.", "correct": true, "feedbackPt": "Manager = chefe/gestor da equipe." },
+        { "labelEn": "A place in the building.", "correct": false, "feedbackPt": "Manager é pessoa, não lugar." },
+        { "labelEn": "A type of food.", "correct": false, "feedbackPt": "Manager é função no trabalho." }
+      ]},
+      { "id": "m05l01-ctx-05", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "We have about twenty people at work here.", "promptPt": "Alex fala de people at work. Melhor tradução:", "options": [
+        { "labelEn": "People who work here.", "correct": true, "feedbackPt": "People at work = pessoas que trabalham no local." },
+        { "labelEn": "People who live here.", "correct": false, "feedbackPt": "At work = no trabalho, não em casa." },
+        { "labelEn": "People on vacation.", "correct": false, "feedbackPt": "At work indica ambiente profissional." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m05l01-learn-01", "type": "phrase_examples", "titleEn": "Colleague / coworker", "titlePt": "Colega de trabalho", "introPt": "Colleague e coworker significam colega — pessoa com quem você trabalha no mesmo lugar.", "examples": [
+        { "en": "She is my colleague.", "pt": "colega" },
+        { "en": "He's a coworker from marketing.", "pt": "colega do marketing" },
+        { "en": "My colleagues are friendly.", "pt": "meus colegas" },
+        { "en": "I have lunch with my coworkers.", "pt": "almoço com colegas" }
+      ]},
+      { "id": "m05l01-learn-02", "type": "phrase_examples", "titleEn": "Manager", "titlePt": "Gestor / chefe", "introPt": "Manager é quem lidera a equipe ou departamento — chefe imediato no dia a dia.", "examples": [
+        { "en": "James is our manager.", "pt": "nosso gestor" },
+        { "en": "I need to talk to my manager.", "pt": "falar com o chefe" },
+        { "en": "The manager is in a meeting.", "pt": "gestor em reunião" },
+        { "en": "She manages the operations team.", "pt": "gerencia a equipe" }
+      ]},
+      { "id": "m05l01-learn-03", "type": "phrase_examples", "titleEn": "Team", "titlePt": "Equipe", "introPt": "Team = grupo de pessoas que trabalham juntas — comum em clube, hospital e escritório.", "examples": [
+        { "en": "I'm on the operations team.", "pt": "faço parte da equipe" },
+        { "en": "Our team has ten people.", "pt": "tamanho da equipe" },
+        { "en": "The medical team is great.", "pt": "equipe médica" },
+        { "en": "We work as a team.", "pt": "trabalhamos em equipe" }
+      ]},
+      { "id": "m05l01-learn-04", "type": "phrase_examples", "titleEn": "This is...", "titlePt": "Este(a) é...", "introPt": "Use This is... para apresentar alguém — presencialmente ou em videochamada.", "examples": [
+        { "en": "This is Maria.", "pt": "apresentação básica" },
+        { "en": "This is James, our manager.", "pt": "nome + função" },
+        { "en": "Alex, this is Carlos.", "pt": "apresentar a terceiro" },
+        { "en": "This is the team.", "pt": "apresentar grupo" }
+      ]},
+      { "id": "m05l01-learn-05", "type": "phrase_examples", "titleEn": "He is / She is + role", "titlePt": "Ele é / Ela é + função", "introPt": "Depois de apresentar, diga a função com He is ou She is.", "examples": [
+        { "en": "He is our coach.", "pt": "treinador" },
+        { "en": "She is an administrator.", "pt": "administradora" },
+        { "en": "He works in finance.", "pt": "trabalha no financeiro" },
+        { "en": "She works with athletes.", "pt": "trabalha com atletas" }
+      ]},
+      { "id": "m05l01-learn-06", "type": "comparison", "titleEn": "Colleague vs Manager", "titlePt": "Colega vs gestor", "left": { "labelEn": "COLLEAGUE · PEER", "exampleEn": "Maria is my colleague.", "notePt": "Mesmo nível — trabalham juntos no dia a dia." }, "right": { "labelEn": "MANAGER · LEADER", "exampleEn": "James is our manager.", "notePt": "Lidera a equipe — reporta-se a ele(a)." }, "modelEn": "Maria is my colleague. James is our manager.", "modelPt": "Colega e manager são papéis diferentes — ambos são people at work." },
+      { "id": "m05l01-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "He is a colleague of me.", "rightEn": "He is my colleague.", "explanationPt": "Em inglês use my colleague — não 'colleague of me'. O possessivo my já indica relação." },
+      { "id": "m05l01-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "colleague / coworker", "pt": "colega" },
+        { "en": "manager", "pt": "gestor" },
+        { "en": "team", "pt": "equipe" },
+        { "en": "This is Maria.", "pt": "apresentar" },
+        { "en": "He is our manager.", "pt": "função" },
+        { "en": "people at work", "pt": "pessoas no trabalho" },
+        { "en": "Nice to meet you!", "pt": "após apresentação" }
+      ]}
+    ],
+    "imitate": [{ "id": "m05l01-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Leia em voz alta. Adapte nomes e funções à sua realidade.", "phrases": [
+      { "en": "This is Maria." }, { "en": "She is my colleague." }, { "en": "James is our manager." }, { "en": "He works with the team." }, { "en": "I'm on the operations team." }, { "en": "We have great people at work." }, { "en": "Nice to meet you!" }, { "en": "This is Carlos. He is on our team." }
+    ], "dialogueEn": "This is Maria. She is my colleague. — James is our manager. He works with the team. — Nice to meet you, Maria!" }],
+    "mission": [{ "id": "m05l01-miss-01", "type": "mission_intro", "headlineEn": "Introduce two coworkers.", "headlinePt": "Apresente dois colegas.", "bodyPt": "Use This is... e diga a função de cada pessoa.", "prompts": [{ "speaker": "Alex", "questionEn": "Can you introduce two people on our team?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m05l01-prac-01", "type": "choice", "promptPt": "Como dizer 'colega de trabalho' em inglês:", "options": [
+      { "labelEn": "colleague", "correct": true, "feedbackPt": "Colleague = colega." },
+      { "labelEn": "college", "correct": false, "feedbackPt": "College = faculdade — palavra diferente." },
+      { "labelEn": "calendar", "correct": false, "feedbackPt": "Calendar = calendário." }
+    ]},
+    { "id": "m05l01-prac-02", "type": "fill_blank", "promptPt": "Apresentar alguém:", "templateEn": "___ is Maria.", "blankLabel": "palavra", "options": [
+      { "labelEn": "This", "correct": true, "feedbackPt": "This is Maria — apresentação padrão." },
+      { "labelEn": "These", "correct": false, "feedbackPt": "These é plural — Maria é uma pessoa." },
+      { "labelEn": "That", "correct": false, "feedbackPt": "That funciona à distância — apresentação usa This is." }
+    ]},
+    { "id": "m05l01-prac-03", "type": "choice", "promptPt": "Quem lidera a equipe no dia a dia?", "options": [
+      { "labelEn": "the manager", "correct": true, "feedbackPt": "Manager = gestor/chefe." },
+      { "labelEn": "the cafeteria", "correct": false, "feedbackPt": "Cafeteria é lugar, não pessoa." },
+      { "labelEn": "the stadium", "correct": false, "feedbackPt": "Stadium é local, não função." }
+    ]},
+    { "id": "m05l01-prac-04", "type": "dialogue_complete", "promptPt": "Alex apresenta Maria — você responde:", "speaker": "You", "contextEn": "Alex: This is Maria.", "options": [
+      { "labelEn": "Nice to meet you, Maria!", "correct": true, "feedbackPt": "Resposta educada após apresentação." },
+      { "labelEn": "I am Maria.", "correct": false, "feedbackPt": "Você não é Maria." },
+      { "labelEn": "Where is the team?", "correct": false, "feedbackPt": "Não responde à apresentação." }
+    ]},
+    { "id": "m05l01-prac-05", "type": "reorder", "promptPt": "Monte a frase sobre função:", "tokens": ["manager.", "our", "is", "James"], "correctOrder": ["James", "is", "our", "manager."], "feedbackCorrectPt": "James is our manager.", "feedbackWrongPt": "Ordem: nome + is + our + manager." },
+    { "id": "m05l01-prac-06", "type": "fill_blank", "promptPt": "Ela faz parte da equipe:", "templateEn": "She is on our ___.", "blankLabel": "palavra", "options": [
+      { "labelEn": "team", "correct": true, "feedbackPt": "On our team = na nossa equipe." },
+      { "labelEn": "office", "correct": false, "feedbackPt": "Office é lugar — team é o grupo." },
+      { "labelEn": "floor", "correct": false, "feedbackPt": "Floor é andar do prédio." }
+    ]},
+    { "id": "m05l01-prac-07", "type": "choice", "promptPt": "Dizer função de um homem:", "options": [
+      { "labelEn": "He is our coach.", "correct": true, "feedbackPt": "He is + função." },
+      { "labelEn": "She is our coach.", "correct": false, "feedbackPt": "She = mulher — use He para homem." },
+      { "labelEn": "He are our coach.", "correct": false, "feedbackPt": "He combina com is, não are." }
+    ]},
+    { "id": "m05l01-prac-08", "type": "dialogue_complete", "promptPt": "Apresentar colega e função:", "speaker": "You", "contextEn": "New hire asks: Who is James?", "options": [
+      { "labelEn": "This is James. He is our manager.", "correct": true, "feedbackPt": "Apresentação + função — completo." },
+      { "labelEn": "James is a office.", "correct": false, "feedbackPt": "Office não é função de pessoa." },
+      { "labelEn": "This is manager.", "correct": false, "feedbackPt": "Falta artigo/nome — This is James." }
+    ]},
+    { "id": "m05l01-prac-09", "type": "fill_blank", "promptPt": "Colega de trabalho:", "templateEn": "She is my ___.", "blankLabel": "palavra", "options": [
+      { "labelEn": "colleague", "correct": true, "feedbackPt": "My colleague = minha colega." },
+      { "labelEn": "manager", "correct": false, "feedbackPt": "Manager é chefe — colega é peer." },
+      { "labelEn": "stadium", "correct": false, "feedbackPt": "Stadium é lugar." }
+    ]},
+    { "id": "m05l01-prac-10", "type": "choice", "promptPt": "People at work significa:", "options": [
+      { "labelEn": "People who work here.", "correct": true, "feedbackPt": "Pessoas que trabalham no local." },
+      { "labelEn": "People on break.", "correct": false, "feedbackPt": "At work = ambiente de trabalho em geral." },
+      { "labelEn": "People at home.", "correct": false, "feedbackPt": "Work ≠ home." }
+    ]}
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 5,
+  "goalPt": "Nomear lugares do dia a dia no trabalho — office, stadium, cafeteria — e usar near e next to para localização.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Um novo colega pergunta onde ficam as áreas principais do clube e do escritório.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Talk about places at work.",
+    "headlinePt": "Fale dos lugares no trabalho.",
+    "bodyPt": "",
+    "canDo": ["office", "stadium", "cafeteria", "near", "next to", "training room", "The cafeteria is next to the office.", "It's near the stadium."],
+    "production": {
+      "introPt": "Descreva onde ficam dois lugares do seu trabalho usando near ou next to.",
+      "prompts": [{ "speaker": "New colleague", "questionEn": "Where are things around here?" }],
+      "fields": [
+        { "id": "place1", "labelPt": "Primeiro lugar", "prefixEn": "The", "placeholderEn": "cafeteria is next to the office." },
+        { "id": "place2", "labelPt": "Segundo lugar", "prefixEn": "The stadium is", "placeholderEn": "near the training room." }
+      ],
+      "exampleEn": "The cafeteria is next to the office. The stadium is near the training room."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m05l03-ctx-01", "type": "intro", "titleEn": "Places around me", "titlePt": "Lugares ao redor", "bodyPt": "Office, stadium, cafeteria — você precisa nomear e localizar esses lugares para colegas, visitantes e atletas." },
+      { "id": "m05l03-ctx-02", "type": "scenario", "settingEn": "Sports club campus · Orientation tour", "scenarioPt": "Alex guia um novo colega pelo campus — escritório, refeitório e estádio." },
+      { "id": "m05l03-ctx-03", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "The office is on the second floor.", "promptPt": "Office aqui significa:", "options": [
+        { "labelEn": "The place where we work at desks.", "correct": true, "feedbackPt": "Office = escritório/área administrativa." },
+        { "labelEn": "The soccer field.", "correct": false, "feedbackPt": "Field = campo — office é administrativo." },
+        { "labelEn": "A type of meeting.", "correct": false, "feedbackPt": "Meeting é reunião, não lugar fixo." }
+      ]},
+      { "id": "m05l03-ctx-04", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "The cafeteria is next to the office.", "promptPt": "Next to significa:", "options": [
+        { "labelEn": "Beside it — very close.", "correct": true, "feedbackPt": "Next to = ao lado de." },
+        { "labelEn": "Far away.", "correct": false, "feedbackPt": "Next to indica proximidade imediata." },
+        { "labelEn": "Inside it.", "correct": false, "feedbackPt": "Inside = dentro — next to é ao lado." }
+      ]},
+      { "id": "m05l03-ctx-05", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "The stadium is near the training room.", "promptPt": "Near significa:", "options": [
+        { "labelEn": "Close to — not far.", "correct": true, "feedbackPt": "Near = perto de." },
+        { "labelEn": "On top of.", "correct": false, "feedbackPt": "On top of = em cima de." },
+        { "labelEn": "Under.", "correct": false, "feedbackPt": "Under = embaixo de." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m05l03-learn-01", "type": "phrase_examples", "titleEn": "Office", "titlePt": "Escritório", "introPt": "Office = área administrativa — mesas, computadores, reuniões. Vale para clube e empresa.", "examples": [
+        { "en": "I work in the office.", "pt": "trabalho no escritório" },
+        { "en": "The office is on the second floor.", "pt": "localização" },
+        { "en": "Meet me at the office.", "pt": "encontro" },
+        { "en": "Our office is downtown.", "pt": "escritório central" }
+      ]},
+      { "id": "m05l03-learn-02", "type": "phrase_examples", "titleEn": "Stadium / field", "titlePt": "Estádio / campo", "introPt": "No contexto esportivo — stadium ou field para jogos e treinos.", "examples": [
+        { "en": "The stadium is huge.", "pt": "estádio" },
+        { "en": "We train on the field.", "pt": "campo" },
+        { "en": "The game is at the stadium.", "pt": "evento" },
+        { "en": "Meet at the main entrance.", "pt": "entrada principal" }
+      ]},
+      { "id": "m05l03-learn-03", "type": "phrase_examples", "titleEn": "Cafeteria / break room", "titlePt": "Refeitório / copa", "introPt": "Onde as pessoas comem e fazem pausa — cafeteria (grande) ou break room (menor).", "examples": [
+        { "en": "Let's go to the cafeteria.", "pt": "refeitório" },
+        { "en": "The break room is small.", "pt": "copa" },
+        { "en": "Coffee is in the break room.", "pt": "café na copa" },
+        { "en": "Lunch is in the cafeteria.", "pt": "almoço" }
+      ]},
+      { "id": "m05l03-learn-04", "type": "phrase_examples", "titleEn": "Near", "titlePt": "Perto de", "introPt": "Near indica proximidade — não precisa ser colado.", "examples": [
+        { "en": "The stadium is near the office.", "pt": "perto do escritório" },
+        { "en": "I live near work.", "pt": "perto do trabalho" },
+        { "en": "Is there a parking lot near here?", "pt": "pergunta" },
+        { "en": "It's not far — it's near.", "pt": "não é longe" }
+      ]},
+      { "id": "m05l03-learn-05", "type": "phrase_examples", "titleEn": "Next to", "titlePt": "Ao lado de", "introPt": "Next to = imediatamente ao lado — mais específico que near.", "examples": [
+        { "en": "The cafeteria is next to the office.", "pt": "ao lado" },
+        { "en": "Sit next to me.", "pt": "sentar ao lado" },
+        { "en": "The gym is next to the locker room.", "pt": "academia" },
+        { "en": "Right next to the elevator.", "pt": "bem ao lado" }
+      ]},
+      { "id": "m05l03-learn-06", "type": "comparison", "titleEn": "Near vs next to", "titlePt": "Near vs next to", "left": { "labelEn": "NEAR · CLOSE", "exampleEn": "The stadium is near the office.", "notePt": "Perto — pode ser alguns minutos a pé." }, "right": { "labelEn": "NEXT TO · BESIDE", "exampleEn": "The cafeteria is next to the office.", "notePt": "Imediatamente ao lado — vizinho direto." }, "modelEn": "The gym is near the stadium. The locker room is next to the gym.", "modelPt": "Near = proximidade geral; next to = posição exata." },
+      { "id": "m05l03-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "The cafeteria is beside of the office.", "rightEn": "The cafeteria is next to the office. / beside the office.", "explanationPt": "Next to é o padrão mais comum. Beside funciona sem of — nunca beside of." },
+      { "id": "m05l03-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "office", "pt": "escritório" },
+        { "en": "stadium / field", "pt": "estádio / campo" },
+        { "en": "cafeteria / break room", "pt": "refeitório / copa" },
+        { "en": "near", "pt": "perto de" },
+        { "en": "next to", "pt": "ao lado de" },
+        { "en": "The cafeteria is next to the office.", "pt": "modelo" },
+        { "en": "training room", "pt": "sala de treino" }
+      ]}
+    ],
+    "imitate": [{ "id": "m05l03-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Adapte aos lugares do seu trabalho.", "phrases": [
+      { "en": "The office is on the second floor." }, { "en": "The stadium is near the training room." }, { "en": "The cafeteria is next to the office." }, { "en": "The break room is near here." }, { "en": "Let's go to the cafeteria." }, { "en": "I work in the office." }, { "en": "The gym is next to the locker room." }, { "en": "Everything is near the main entrance." }
+    ], "dialogueEn": "Where is the cafeteria? — The cafeteria is next to the office. — And the stadium? — It's near the training room." }],
+    "mission": [{ "id": "m05l03-miss-01", "type": "mission_intro", "headlineEn": "Describe two places.", "headlinePt": "Descreva dois lugares.", "bodyPt": "Use near ou next to para localizar.", "prompts": [{ "speaker": "New colleague", "questionEn": "Where are things around here?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m05l03-prac-01", "type": "choice", "promptPt": "Onde se trabalha com mesas e computadores:", "options": [
+      { "labelEn": "the office", "correct": true, "feedbackPt": "Office = escritório." },
+      { "labelEn": "the stadium", "correct": false, "feedbackPt": "Stadium = estádio/campo." },
+      { "labelEn": "the cafeteria", "correct": false, "feedbackPt": "Cafeteria = refeitório." }
+    ]},
+    { "id": "m05l03-prac-02", "type": "fill_blank", "promptPt": "Ao lado de:", "templateEn": "The gym is ___ the locker room.", "blankLabel": "preposição", "options": [
+      { "labelEn": "next to", "correct": true, "feedbackPt": "Next to = ao lado de." },
+      { "labelEn": "next", "correct": false, "feedbackPt": "Precisa de to: next to." },
+      { "labelEn": "near to", "correct": false, "feedbackPt": "Near não usa to — near the..." }
+    ]},
+    { "id": "m05l03-prac-03", "type": "choice", "promptPt": "Perto de — sem ser colado:", "options": [
+      { "labelEn": "near", "correct": true, "feedbackPt": "Near = perto de." },
+      { "labelEn": "inside", "correct": false, "feedbackPt": "Inside = dentro." },
+      { "labelEn": "behind", "correct": false, "feedbackPt": "Behind = atrás de." }
+    ]},
+    { "id": "m05l03-prac-04", "type": "reorder", "promptPt": "Monte a frase:", "tokens": ["office.", "next", "the", "to", "is", "cafeteria", "The"], "correctOrder": ["The", "cafeteria", "is", "next", "to", "the", "office."], "feedbackCorrectPt": "The cafeteria is next to the office.", "feedbackWrongPt": "Ordem: The + lugar + is + next to + the + lugar." },
+    { "id": "m05l03-prac-05", "type": "dialogue_complete", "promptPt": "Colega pergunta onde almoçar:", "speaker": "You", "contextEn": "Colleague: Where can I get lunch?", "options": [
+      { "labelEn": "The cafeteria is next to the office.", "correct": true, "feedbackPt": "Indica lugar + localização." },
+      { "labelEn": "Lunch is friendly.", "correct": false, "feedbackPt": "Não responde onde." },
+      { "labelEn": "I am cafeteria.", "correct": false, "feedbackPt": "Gramática incorreta." }
+    ]},
+    { "id": "m05l03-prac-06", "type": "fill_blank", "promptPt": "Estádio perto da sala de treino:", "templateEn": "The stadium is ___ the training room.", "blankLabel": "preposição", "options": [
+      { "labelEn": "near", "correct": true, "feedbackPt": "Near = perto de." },
+      { "labelEn": "nearly", "correct": false, "feedbackPt": "Nearly = quase — advérbio diferente." },
+      { "labelEn": "next", "correct": false, "feedbackPt": "Precisa de to: next to." }
+    ]},
+    { "id": "m05l03-prac-07", "type": "choice", "promptPt": "Break room é:", "options": [
+      { "labelEn": "A small room for coffee and breaks.", "correct": true, "feedbackPt": "Copa/sala de descanso." },
+      { "labelEn": "The main soccer field.", "correct": false, "feedbackPt": "Field = campo." },
+      { "labelEn": "The manager's desk.", "correct": false, "feedbackPt": "Desk = mesa individual." }
+    ]},
+    { "id": "m05l03-prac-08", "type": "dialogue_complete", "promptPt": "Visitante pergunta sobre o campus:", "speaker": "You", "contextEn": "Visitor: Is the stadium far?", "options": [
+      { "labelEn": "No, it's near the office.", "correct": true, "feedbackPt": "Near indica proximidade." },
+      { "labelEn": "No, it's next the office.", "correct": false, "feedbackPt": "Falta to — next to." },
+      { "labelEn": "No, stadium office.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "m05l03-prac-09", "type": "fill_blank", "promptPt": "Trabalho no escritório:", "templateEn": "I work in the ___.", "blankLabel": "lugar", "options": [
+      { "labelEn": "office", "correct": true, "feedbackPt": "Work in the office." },
+      { "labelEn": "stadium", "correct": false, "feedbackPt": "Possível, mas a frase pede escritório." },
+      { "labelEn": "near", "correct": false, "feedbackPt": "Near é preposição, não lugar." }
+    ]},
+    { "id": "m05l03-prac-10", "type": "choice", "promptPt": "Diferença: next to vs near", "options": [
+      { "labelEn": "Next to = immediately beside; near = close.", "correct": true, "feedbackPt": "Next to é mais específico." },
+      { "labelEn": "They mean exactly the same.", "correct": false, "feedbackPt": "Next to é mais preciso que near." },
+      { "labelEn": "Near means inside.", "correct": false, "feedbackPt": "Near = perto, não dentro." }
+    ]}
+  ]
+}

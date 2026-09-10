@@ -1,0 +1,154 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 6,
+  "goalPt": "Fazer pedidos por email ou mensagem — Can you send me...?, Could you...? — arquivos e informações.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você precisa pedir um arquivo por Slack/email a um colega.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Request a file by message.",
+    "headlinePt": "Peça um arquivo por mensagem.",
+    "bodyPt": "",
+    "canDo": ["Can you send me the file?", "Could you email me the report?", "please", "attachment", "When you get a chance", "Sure, I'll send it.", "Request files politely"],
+    "production": {
+      "introPt": "Escreva uma mensagem curta pedindo o relatório de viagem por email. Seja educado.",
+      "prompts": [{ "speaker": "You", "questionEn": "(Write a message to Alex.)" }],
+      "fields": [
+        { "id": "request", "labelPt": "Pedido", "prefixEn": "Hi Alex — could you", "placeholderEn": "send me the travel report?" },
+        { "id": "polite", "labelPt": "Fechamento educado", "prefixEn": "", "placeholderEn": "Please send it when you get a chance. Thanks!" }
+      ],
+      "exampleEn": "Hi Alex — could you send me the travel report? Please send it when you get a chance. Thanks!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m06l04-ctx-01", "type": "intro", "titleEn": "Can you send me...?", "titlePt": "Pode me enviar...?", "bodyPt": "No trabalho, pedidos por email e Slack usam Can/Could you send me... — direto e educado com please." },
+      { "id": "m06l04-ctx-02", "type": "scenario", "settingEn": "Slack / Email · File request", "scenarioPt": "Você precisa do relatório de viagem que Alex terminou ontem." },
+      { "id": "m06l04-ctx-03", "type": "dialogue_choice", "speaker": "You", "promptEn": "(You write a Slack message.)", "promptPt": "Melhor abertura do pedido:", "options": [
+        { "labelEn": "Hi Alex — could you send me the travel report?", "correct": true, "feedbackPt": "Could + send me + arquivo." },
+        { "labelEn": "Send me the report now!", "correct": false, "feedbackPt": "Muito abrupto — falta Could/Please." },
+        { "labelEn": "You send report me.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]},
+      { "id": "m06l04-ctx-04", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "Sure! Do you need the PDF or the Excel file?", "promptPt": "Especificar formato:", "options": [
+        { "labelEn": "The PDF, please.", "correct": true, "feedbackPt": "Específico + please." },
+        { "labelEn": "PDF the please is.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "Send everything always.", "correct": false, "feedbackPt": "Responda o que Alex perguntou." }
+      ]},
+      { "id": "m06l04-ctx-05", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "I'll email it in a few minutes.", "promptPt": "Agradecer:", "options": [
+        { "labelEn": "Perfect — thanks!", "correct": true, "feedbackPt": "Agradecimento curto e natural." },
+        { "labelEn": "You are email.", "correct": false, "feedbackPt": "Sem sentido." },
+        { "labelEn": "Send me again.", "correct": false, "feedbackPt": "Alex já vai enviar." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m06l04-learn-01", "type": "phrase_examples", "titleEn": "Can you send me...?", "titlePt": "Pode me enviar...?", "introPt": "Pedido padrão para arquivos e links.", "examples": [
+        { "en": "Can you send me the file?", "pt": "arquivo" },
+        { "en": "Can you send me the link?", "pt": "link" },
+        { "en": "Can you send me the updated version?", "pt": "versão atualizada" },
+        { "en": "Can you send it to me?", "pt": "variação" }
+      ]},
+      { "id": "m06l04-learn-02", "type": "phrase_examples", "titleEn": "Could you email me...?", "titlePt": "Poderia me enviar por email...?", "introPt": "Could you + email/send — mais formal que can.", "examples": [
+        { "en": "Could you email me the report?", "pt": "por email" },
+        { "en": "Could you send me the details?", "pt": "detalhes" },
+        { "en": "Could you forward me that email?", "pt": "encaminhar" },
+        { "en": "Could you share the document?", "pt": "compartilhar" }
+      ]},
+      { "id": "m06l04-learn-03", "type": "phrase_examples", "titleEn": "Email / file / attachment", "titlePt": "Email / arquivo / anexo", "introPt": "Vocabulário de mensagens profissionais.", "examples": [
+        { "en": "email", "pt": "correio eletrônico" },
+        { "en": "file", "pt": "arquivo" },
+        { "en": "attachment", "pt": "anexo" },
+        { "en": "PDF / Excel / spreadsheet", "pt": "formatos comuns" }
+      ]},
+      { "id": "m06l04-learn-04", "type": "phrase_examples", "titleEn": "Please", "titlePt": "Por favor", "introPt": "Please deixa pedidos educados — no fim ou no meio da frase.", "examples": [
+        { "en": "Can you send me the file, please?", "pt": "no fim" },
+        { "en": "Please send it today.", "pt": "no início" },
+        { "en": "The PDF, please.", "pt": "resposta curta" },
+        { "en": "Please let me know.", "pt": "avise-me" }
+      ]},
+      { "id": "m06l04-learn-05", "type": "phrase_examples", "titleEn": "When you get a chance", "titlePt": "Quando puder", "introPt": "Suaviza o pedido — não exige urgência imediata.", "examples": [
+        { "en": "When you get a chance, please send it.", "pt": "quando puder" },
+        { "en": "No rush — when you can.", "pt": "sem pressa" },
+        { "en": "If you have a minute...", "pt": "se tiver um minuto" },
+        { "en": "By end of day, if possible.", "pt": "até fim do dia" }
+      ]},
+      { "id": "m06l04-learn-06", "type": "phrase_examples", "titleEn": "Responses", "titlePt": "Respostas", "introPt": "Como confirmar envio.", "examples": [
+        { "en": "Sure, I'll send it.", "pt": "vou enviar" },
+        { "en": "Sending it now.", "pt": "enviando agora" },
+        { "en": "Attached is the file.", "pt": "em email" },
+        { "en": "Let me know if you got it.", "pt": "confirme recebimento" }
+      ]},
+      { "id": "m06l04-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "Can you send me the report by email please urgent?", "rightEn": "Could you email me the report when you get a chance? Thanks!", "explanationPt": "Separe ideias. Uma frase clara + please/when you get a chance soa profissional — não amontoe tudo." },
+      { "id": "m06l04-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Can you send me the file?", "pt": "pedido" },
+        { "en": "Could you email me the report?", "pt": "email" },
+        { "en": "attachment / PDF", "pt": "vocabulário" },
+        { "en": "please", "pt": "educação" },
+        { "en": "when you get a chance", "pt": "sem pressa" },
+        { "en": "Sure, I'll send it.", "pt": "resposta" },
+        { "en": "Thanks!", "pt": "agradecer" }
+      ]}
+    ],
+    "imitate": [{ "id": "m06l04-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Pratique pedidos por mensagem.", "phrases": [
+      { "en": "Can you send me the file?" }, { "en": "Could you email me the report?" }, { "en": "The PDF, please." }, { "en": "When you get a chance, please send it." }, { "en": "Sure, I'll send it." }, { "en": "Attached is the file." }, { "en": "Thanks!" }, { "en": "Could you forward me that email?" }
+    ], "dialogueEn": "Hi Alex — could you send me the travel report? The PDF, please. — Sure, I'll email it in a few minutes. — Perfect, thanks!" }],
+    "mission": [{ "id": "m06l04-miss-01", "type": "mission_intro", "headlineEn": "Write your request.", "headlinePt": "Escreva seu pedido.", "bodyPt": "Peça o relatório por email com Could e please.", "prompts": [{ "speaker": "You", "questionEn": "(Write a message to Alex.)" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m06l04-prac-01", "type": "choice", "promptPt": "Pedir arquivo por mensagem:", "options": [
+      { "labelEn": "Can you send me the file?", "correct": true, "feedbackPt": "Send me + file." },
+      { "labelEn": "Can you send the file to I?", "correct": false, "feedbackPt": "Use me, não I." },
+      { "labelEn": "Send file you can me?", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "m06l04-prac-02", "type": "fill_blank", "promptPt": "Enviar por email:", "templateEn": "Could you ___ me the report?", "blankLabel": "verbo", "options": [
+      { "labelEn": "email", "correct": true, "feedbackPt": "Email me = enviar por email." },
+      { "labelEn": "mail", "correct": false, "feedbackPt": "Mail existe, mas email me é padrão." },
+      { "labelEn": "message", "correct": false, "feedbackPt": "Message me = outro sentido." }
+    ]},
+    { "id": "m06l04-prac-03", "type": "choice", "promptPt": "Anexo em email:", "options": [
+      { "labelEn": "attachment", "correct": true, "feedbackPt": "Attachment = anexo." },
+      { "labelEn": "attach", "correct": false, "feedbackPt": "Attach = verbo; attachment = substantivo." },
+      { "labelEn": "attaching", "correct": false, "feedbackPt": "Gerúndio — use attachment." }
+    ]},
+    { "id": "m06l04-prac-04", "type": "reorder", "promptPt": "Monte o pedido:", "tokens": ["file?", "the", "me", "send", "you", "Can"], "correctOrder": ["Can", "you", "send", "me", "the", "file?"], "feedbackCorrectPt": "Can you send me the file?", "feedbackWrongPt": "Ordem: Can + you + send + me + the + file?" },
+    { "id": "m06l04-prac-05", "type": "dialogue_complete", "promptPt": "Suavizar pedido — sem urgência:", "speaker": "You", "contextEn": "You need the report but it's not urgent.", "options": [
+      { "labelEn": "Could you send it when you get a chance?", "correct": true, "feedbackPt": "When you get a chance = quando puder." },
+      { "labelEn": "Send now urgent immediately!", "correct": false, "feedbackPt": "Muito agressivo." },
+      { "labelEn": "When chance you get send.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "m06l04-prac-06", "type": "fill_blank", "promptPt": "Educado — por favor:", "templateEn": "The PDF, ___.", "blankLabel": "palavra", "options": [
+      { "labelEn": "please", "correct": true, "feedbackPt": "Please no fim — natural." },
+      { "labelEn": "pleaseful", "correct": false, "feedbackPt": "Pleaseful não existe." },
+      { "labelEn": "pleasing", "correct": false, "feedbackPt": "Pleasing = agradável — outro sentido." }
+    ]},
+    { "id": "m06l04-prac-07", "type": "choice", "promptPt": "Resposta confirmando envio:", "options": [
+      { "labelEn": "Sure, I'll send it.", "correct": true, "feedbackPt": "Confirmação natural." },
+      { "labelEn": "No, I won't never.", "correct": false, "feedbackPt": "Recusa — contexto era aceitar." },
+      { "labelEn": "File is send.", "correct": false, "feedbackPt": "Gramática incorreta." }
+    ]},
+    { "id": "m06l04-prac-08", "type": "dialogue_complete", "promptPt": "Pedir versão atualizada:", "speaker": "You", "contextEn": "You need the latest version of the spreadsheet.", "options": [
+      { "labelEn": "Could you send me the updated spreadsheet?", "correct": true, "feedbackPt": "Could + send me + updated." },
+      { "labelEn": "Spreadsheet updated send could.", "correct": false, "feedbackPt": "Ordem incorreta." },
+      { "labelEn": "I am spreadsheet.", "correct": false, "feedbackPt": "Sem sentido." }
+    ]},
+    { "id": "m06l04-prac-09", "type": "fill_blank", "promptPt": "Send me — pronome:", "templateEn": "Can you send it to ___?", "blankLabel": "pronome", "options": [
+      { "labelEn": "me", "correct": true, "feedbackPt": "To me = para mim." },
+      { "labelEn": "I", "correct": false, "feedbackPt": "Após to, use me." },
+      { "labelEn": "my", "correct": false, "feedbackPt": "My = possessivo." }
+    ]},
+    { "id": "m06l04-prac-10", "type": "choice", "promptPt": "Could you vs Can you para email:", "options": [
+      { "labelEn": "Both work — Could is slightly more polite.", "correct": true, "feedbackPt": "Could soa mais suave." },
+      { "labelEn": "Could you is wrong in email.", "correct": false, "feedbackPt": "Could you é comum e correto." },
+      { "labelEn": "Can you is rude always.", "correct": false, "feedbackPt": "Can you é ok entre colegas." }
+    ]}
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 5,
+  "goalPt": "Perguntar e responder localização com Where is...?, It's on the first floor e next to — dentro de prédios e campus.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Um visitante está perdido no prédio e você precisa dar direções simples.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Give directions inside a building.",
+    "headlinePt": "Dê direções dentro do prédio.",
+    "bodyPt": "",
+    "canDo": ["Where is the cafeteria?", "It's on the first floor.", "It's next to the elevator.", "It's in room 204.", "Turn left.", "Go straight.", "The restroom is down the hall.", "Give basic directions"],
+    "production": {
+      "introPt": "Um visitante pergunta onde fica a cafeteria. Responda com andar e referência.",
+      "prompts": [{ "speaker": "Visitor", "questionEn": "Where is the cafeteria?" }],
+      "fields": [
+        { "id": "location", "labelPt": "Localização — andar", "prefixEn": "It's on the", "placeholderEn": "first floor." },
+        { "id": "reference", "labelPt": "Referência", "prefixEn": "It's", "placeholderEn": "next to the elevator." }
+      ],
+      "exampleEn": "It's on the first floor. It's next to the elevator."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m05l05-ctx-01", "type": "intro", "titleEn": "Where is it?", "titlePt": "Onde fica?", "bodyPt": "Visitantes, entregadores e colegas novos perguntam Where is...? Você responde com andar, sala e pontos de referência." },
+      { "id": "m05l05-ctx-02", "type": "scenario", "settingEn": "Office building · Lost visitor", "scenarioPt": "Um fornecedor chega com caixas e não acha a sala de recepção." },
+      { "id": "m05l05-ctx-03", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Where is the reception?", "promptPt": "Melhor resposta:", "options": [
+        { "labelEn": "It's on the first floor, next to the elevator.", "correct": true, "feedbackPt": "Andar + referência — direção clara." },
+        { "labelEn": "Reception is good.", "correct": false, "feedbackPt": "Não responde onde fica." },
+        { "labelEn": "Where is you?", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]},
+      { "id": "m05l05-ctx-04", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Is the meeting room on the second floor?", "promptPt": "Confirmar localização:", "options": [
+        { "labelEn": "Yes, it's in room 204.", "correct": true, "feedbackPt": "It's in room = dentro da sala." },
+        { "labelEn": "Yes, it's on room 204.", "correct": false, "feedbackPt": "Room usa in, não on." },
+        { "labelEn": "Yes, room is second.", "correct": false, "feedbackPt": "Frase incompleta." }
+      ]},
+      { "id": "m05l05-ctx-05", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Thanks! Where is the restroom?", "promptPt": "Banheiro no corredor:", "options": [
+        { "labelEn": "It's down the hall, on your left.", "correct": true, "feedbackPt": "Direção simples dentro do prédio." },
+        { "labelEn": "Restroom is water.", "correct": false, "feedbackPt": "Sem sentido." },
+        { "labelEn": "It's in the left down.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m05l05-learn-01", "type": "phrase_examples", "titleEn": "Where is...?", "titlePt": "Onde fica...?", "introPt": "Pergunta padrão para localizar lugar ou objeto — singular.", "examples": [
+        { "en": "Where is the cafeteria?", "pt": "onde fica a cafeteria?" },
+        { "en": "Where is the meeting room?", "pt": "sala de reunião" },
+        { "en": "Where is the restroom?", "pt": "banheiro" },
+        { "en": "Where is your office?", "pt": "seu escritório" }
+      ]},
+      { "id": "m05l05-learn-02", "type": "phrase_examples", "titleEn": "It's on the... floor", "titlePt": "Fica no... andar", "introPt": "On the + ordinal + floor — first, second, third.", "examples": [
+        { "en": "It's on the first floor.", "pt": "térreo/1º andar (US)" },
+        { "en": "It's on the second floor.", "pt": "2º andar" },
+        { "en": "The office is on the third floor.", "pt": "3º andar" },
+        { "en": "Go to the second floor.", "pt": "instrução" }
+      ]},
+      { "id": "m05l05-learn-03", "type": "phrase_examples", "titleEn": "It's in room...", "titlePt": "Fica na sala...", "introPt": "In + room number — dentro de uma sala específica.", "examples": [
+        { "en": "It's in room 204.", "pt": "sala 204" },
+        { "en": "The meeting is in room 3.", "pt": "reunião" },
+        { "en": "She's in her office.", "pt": "no escritório dela" },
+        { "en": "Wait in the lobby.", "pt": "saguão" }
+      ]},
+      { "id": "m05l05-learn-04", "type": "phrase_examples", "titleEn": "Next to / near", "titlePt": "Ao lado / perto", "introPt": "Referência visual — next to the elevator, near the stairs.", "examples": [
+        { "en": "It's next to the elevator.", "pt": "ao lado do elevador" },
+        { "en": "It's near the stairs.", "pt": "perto da escada" },
+        { "en": "Right next to the entrance.", "pt": "bem na entrada" },
+        { "en": "Across from the cafeteria.", "pt": "em frente à cafeteria" }
+      ]},
+      { "id": "m05l05-learn-05", "type": "phrase_examples", "titleEn": "Go straight / Turn left", "titlePt": "Siga em frente / Vire à esquerda", "introPt": "Instruções de caminho dentro do prédio.", "examples": [
+        { "en": "Go straight.", "pt": "siga em frente" },
+        { "en": "Turn left.", "pt": "vire à esquerda" },
+        { "en": "Turn right at the corner.", "pt": "vire à direita" },
+        { "en": "Go down the hall.", "pt": "siga pelo corredor" }
+      ]},
+      { "id": "m05l05-learn-06", "type": "comparison", "titleEn": "On the floor vs in the room", "titlePt": "No andar vs na sala", "left": { "labelEn": "ON THE FLOOR", "exampleEn": "It's on the second floor.", "notePt": "Andar do prédio — nível." }, "right": { "labelEn": "IN THE ROOM", "exampleEn": "It's in room 204.", "notePt": "Sala específica — número." }, "modelEn": "The office is on the second floor, in room 204.", "modelPt": "Combine andar + sala quando necessário." },
+      { "id": "m05l05-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "It's on the room 204.", "rightEn": "It's in room 204.", "explanationPt": "Room usa in (dentro da sala). On combina com floor: on the second floor." },
+      { "id": "m05l05-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Where is the cafeteria?", "pt": "pergunta" },
+        { "en": "It's on the first floor.", "pt": "andar" },
+        { "en": "It's in room 204.", "pt": "sala" },
+        { "en": "It's next to the elevator.", "pt": "referência" },
+        { "en": "Go straight.", "pt": "direção" },
+        { "en": "Turn left.", "pt": "virar" },
+        { "en": "down the hall", "pt": "pelo corredor" }
+      ]}
+    ],
+    "imitate": [{ "id": "m05l05-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Pratique perguntas e respostas de localização.", "phrases": [
+      { "en": "Where is the cafeteria?" }, { "en": "It's on the first floor." }, { "en": "It's next to the elevator." }, { "en": "It's in room 204." }, { "en": "Go straight." }, { "en": "Turn left." }, { "en": "It's down the hall." }, { "en": "The restroom is on your left." }
+    ], "dialogueEn": "Where is the cafeteria? — It's on the first floor. It's next to the elevator. — Thanks! — You're welcome." }],
+    "mission": [{ "id": "m05l05-miss-01", "type": "mission_intro", "headlineEn": "Direct a visitor.", "headlinePt": "Oriente um visitante.", "bodyPt": "Responda Where is the cafeteria? com andar e referência.", "prompts": [{ "speaker": "Visitor", "questionEn": "Where is the cafeteria?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m05l05-prac-01", "type": "choice", "promptPt": "Perguntar onde fica a cafeteria:", "options": [
+      { "labelEn": "Where is the cafeteria?", "correct": true, "feedbackPt": "Where is + singular." },
+      { "labelEn": "Where are the cafeteria?", "correct": false, "feedbackPt": "Cafeteria singular → is." },
+      { "labelEn": "What is the cafeteria?", "correct": false, "feedbackPt": "What pergunta o quê, não onde." }
+    ]},
+    { "id": "m05l05-prac-02", "type": "fill_blank", "promptPt": "Primeiro andar:", "templateEn": "It's on the ___ floor.", "blankLabel": "ordinal", "options": [
+      { "labelEn": "first", "correct": true, "feedbackPt": "First floor = 1º andar (US)." },
+      { "labelEn": "one", "correct": false, "feedbackPt": "Use ordinal: first, second." },
+      { "labelEn": "floor", "correct": false, "feedbackPt": "Floor já está na frase." }
+    ]},
+    { "id": "m05l05-prac-03", "type": "choice", "promptPt": "Sala 204:", "options": [
+      { "labelEn": "It's in room 204.", "correct": true, "feedbackPt": "In room = dentro da sala." },
+      { "labelEn": "It's on room 204.", "correct": false, "feedbackPt": "Room usa in, não on." },
+      { "labelEn": "It's at room 204.", "correct": false, "feedbackPt": "In room é o padrão." }
+    ]},
+    { "id": "m05l05-prac-04", "type": "reorder", "promptPt": "Monte a resposta:", "tokens": ["elevator.", "the", "to", "next", "It's"], "correctOrder": ["It's", "next", "to", "the", "elevator."], "feedbackCorrectPt": "It's next to the elevator.", "feedbackWrongPt": "Ordem: It's + next to + the + elevator." },
+    { "id": "m05l05-prac-05", "type": "dialogue_complete", "promptPt": "Visitante perdido — oriente:", "speaker": "You", "contextEn": "Visitor: Where is the reception?", "options": [
+      { "labelEn": "It's on the first floor, next to the elevator.", "correct": true, "feedbackPt": "Andar + referência." },
+      { "labelEn": "Reception is nice.", "correct": false, "feedbackPt": "Não indica local." },
+      { "labelEn": "It's on the room one.", "correct": false, "feedbackPt": "Use in room ou on the floor." }
+    ]},
+    { "id": "m05l05-prac-06", "type": "fill_blank", "promptPt": "Siga em frente:", "templateEn": "Go ___.", "blankLabel": "palavra", "options": [
+      { "labelEn": "straight", "correct": true, "feedbackPt": "Go straight = siga em frente." },
+      { "labelEn": "right", "correct": false, "feedbackPt": "Go right existe, mas straight = em frente." },
+      { "labelEn": "forwardly", "correct": false, "feedbackPt": "Go straight é o padrão." }
+    ]},
+    { "id": "m05l05-prac-07", "type": "choice", "promptPt": "Virar à esquerda:", "options": [
+      { "labelEn": "Turn left.", "correct": true, "feedbackPt": "Turn left = vire à esquerda." },
+      { "labelEn": "Turn the left.", "correct": false, "feedbackPt": "Sem the — Turn left." },
+      { "labelEn": "Left turn.", "correct": false, "feedbackPt": "Possível em sinalização, mas Turn left é instrução falada." }
+    ]},
+    { "id": "m05l05-prac-08", "type": "dialogue_complete", "promptPt": "Confirmar andar da reunião:", "speaker": "You", "contextEn": "Colleague: Is the meeting on the second floor?", "options": [
+      { "labelEn": "Yes, it's in room 204.", "correct": true, "feedbackPt": "Confirma + sala." },
+      { "labelEn": "Yes, it's on room 204.", "correct": false, "feedbackPt": "Room → in." },
+      { "labelEn": "Yes, meeting floor.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "m05l05-prac-09", "type": "fill_blank", "promptPt": "Perto da escada:", "templateEn": "It's ___ the stairs.", "blankLabel": "preposição", "options": [
+      { "labelEn": "near", "correct": true, "feedbackPt": "Near = perto de." },
+      { "labelEn": "next", "correct": false, "feedbackPt": "Precisa de to: next to." },
+      { "labelEn": "in", "correct": false, "feedbackPt": "In = dentro — stairs é referência externa." }
+    ]},
+    { "id": "m05l05-prac-10", "type": "choice", "promptPt": "Banheiro no corredor:", "options": [
+      { "labelEn": "It's down the hall, on your left.", "correct": true, "feedbackPt": "Direção clara." },
+      { "labelEn": "Restroom is the hall.", "correct": false, "feedbackPt": "Gramática incorreta." },
+      { "labelEn": "Where hall restroom?", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]}
+  ]
+}

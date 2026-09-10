@@ -1,0 +1,149 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 6,
+  "goalPt": "Descrever o ambiente de trabalho — clube ou escritório — departamentos, áreas e com quem você trabalha.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Um novo parceiro pergunta como é o seu ambiente de trabalho — clube ou empresa.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Describe your workplace.",
+    "headlinePt": "Descreva seu ambiente de trabalho.",
+    "bodyPt": "",
+    "canDo": ["workplace", "department", "training room", "front office", "I work with the medical team.", "We have a big stadium.", "operations department", "Describe where you work"],
+    "production": {
+      "introPt": "Descreva seu workplace em duas frases — ambiente e equipe.",
+      "prompts": [{ "speaker": "Partner", "questionEn": "What is your workplace like?" }],
+      "fields": [
+        { "id": "environment", "labelPt": "Ambiente / estrutura", "prefixEn": "We have", "placeholderEn": "a big stadium and a modern office." },
+        { "id": "team", "labelPt": "Com quem trabalha", "prefixEn": "I work with", "placeholderEn": "the operations team." }
+      ],
+      "exampleEn": "We have a big stadium and a modern office. I work with the operations team."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m06l01-ctx-01", "type": "intro", "titleEn": "My workplace", "titlePt": "Meu ambiente de trabalho", "bodyPt": "Clube de futebol ou escritório corporativo — workplace, department e equipe aparecem todo dia em conversas profissionais." },
+      { "id": "m06l01-ctx-02", "type": "scenario", "settingEn": "Video call · Partner onboarding", "scenarioPt": "Um parceiro comercial entra na call e pergunta sobre sua estrutura." },
+      { "id": "m06l01-ctx-03", "type": "dialogue_choice", "speaker": "Partner", "promptEn": "What is your workplace like?", "promptPt": "Workplace significa:", "options": [
+        { "labelEn": "The place and environment where you work.", "correct": true, "feedbackPt": "Workplace = ambiente de trabalho." },
+        { "labelEn": "Only your home office.", "correct": false, "feedbackPt": "Workplace inclui clube, hospital, empresa." },
+        { "labelEn": "Your job title.", "correct": false, "feedbackPt": "Job title = cargo, não ambiente." }
+      ]},
+      { "id": "m06l01-ctx-04", "type": "dialogue_choice", "speaker": "Partner", "promptEn": "Which department are you in?", "promptPt": "Melhor resposta:", "options": [
+        { "labelEn": "I'm in the operations department.", "correct": true, "feedbackPt": "Department = departamento/setor." },
+        { "labelEn": "I'm department operations.", "correct": false, "feedbackPt": "Use in the + department." },
+        { "labelEn": "Department is me.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]},
+      { "id": "m06l01-ctx-05", "type": "dialogue_choice", "speaker": "Partner", "promptEn": "Who do you work with?", "promptPt": "Resposta natural:", "options": [
+        { "labelEn": "I work with the medical team and the coaches.", "correct": true, "feedbackPt": "I work with + equipe." },
+        { "labelEn": "I work the medical.", "correct": false, "feedbackPt": "Precisa de with + team." },
+        { "labelEn": "Work with I medical.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m06l01-learn-01", "type": "phrase_examples", "titleEn": "Workplace", "titlePt": "Ambiente de trabalho", "introPt": "Workplace = o local e ambiente onde você trabalha — físico e organizacional.", "examples": [
+        { "en": "My workplace is great.", "pt": "ambiente bom" },
+        { "en": "We have a modern workplace.", "pt": "estrutura moderna" },
+        { "en": "The workplace is near downtown.", "pt": "localização" },
+        { "en": "It's a friendly workplace.", "pt": "clima acolhedor" }
+      ]},
+      { "id": "m06l01-learn-02", "type": "phrase_examples", "titleEn": "Department", "titlePt": "Departamento / setor", "introPt": "Department = área organizada — finance, operations, medical.", "examples": [
+        { "en": "I'm in the finance department.", "pt": "financeiro" },
+        { "en": "The operations department is busy.", "pt": "operações" },
+        { "en": "HR department", "pt": "recursos humanos" },
+        { "en": "Which department are you in?", "pt": "pergunta" }
+      ]},
+      { "id": "m06l01-learn-03", "type": "phrase_examples", "titleEn": "Football club areas", "titlePt": "Áreas do clube", "introPt": "Vocabulário comum em clubes esportivos nos EUA.", "examples": [
+        { "en": "training room", "pt": "sala de treino" },
+        { "en": "locker room", "pt": "vestiário" },
+        { "en": "front office", "pt": "administração" },
+        { "en": "the field / the stadium", "pt": "campo / estádio" }
+      ]},
+      { "id": "m06l01-learn-04", "type": "phrase_examples", "titleEn": "Office areas", "titlePt": "Áreas de escritório", "introPt": "Vocabulário comum em empresas e hospitais.", "examples": [
+        { "en": "open office", "pt": "escritório aberto" },
+        { "en": "conference room", "pt": "sala de reunião" },
+        { "en": "reception area", "pt": "recepção" },
+        { "en": "break room", "pt": "copa" }
+      ]},
+      { "id": "m06l01-learn-05", "type": "phrase_examples", "titleEn": "I work with...", "titlePt": "Trabalho com...", "introPt": "Descreve equipe ou área com quem você colabora.", "examples": [
+        { "en": "I work with the medical team.", "pt": "equipe médica" },
+        { "en": "I work with coaches and analysts.", "pt": "treinadores e analistas" },
+        { "en": "I work with the finance team.", "pt": "financeiro" },
+        { "en": "I work with athletes every day.", "pt": "atletas" }
+      ]},
+      { "id": "m06l01-learn-06", "type": "comparison", "titleEn": "Club vs corporate office", "titlePt": "Clube vs escritório", "left": { "labelEn": "FOOTBALL CLUB", "exampleEn": "stadium, training room, locker room, front office", "notePt": "Ambiente esportivo — campo e administração juntos." }, "right": { "labelEn": "CORPORATE OFFICE", "exampleEn": "open office, conference room, reception, break room", "notePt": "Ambiente corporativo — mesas e reuniões." }, "modelEn": "I work at a football club. We have a stadium and a front office. / I work at a tech company. We have an open office.", "modelPt": "Adapte o vocabulário ao seu workplace real." },
+      { "id": "m06l01-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I work in the operations.", "rightEn": "I work in operations. / I'm in the operations department.", "explanationPt": "Operations sozinho = área. Department precisa de the: the operations department." },
+      { "id": "m06l01-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "workplace", "pt": "ambiente de trabalho" },
+        { "en": "department", "pt": "departamento" },
+        { "en": "training room / front office", "pt": "clube" },
+        { "en": "conference room / reception", "pt": "escritório" },
+        { "en": "I work with the team.", "pt": "equipe" },
+        { "en": "Which department are you in?", "pt": "pergunta" },
+        { "en": "We have a big stadium.", "pt": "estrutura" }
+      ]}
+    ],
+    "imitate": [{ "id": "m06l01-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Adapte ao seu workplace — clube ou escritório.", "phrases": [
+      { "en": "My workplace is great." }, { "en": "I'm in the operations department." }, { "en": "We have a big stadium." }, { "en": "I work with the medical team." }, { "en": "The front office is on the second floor." }, { "en": "We have a modern open office." }, { "en": "Which department are you in?" }, { "en": "I work with coaches and analysts." }
+    ], "dialogueEn": "What is your workplace like? — We have a stadium and a modern office. I'm in the operations department. I work with the medical team and the coaches." }],
+    "mission": [{ "id": "m06l01-miss-01", "type": "mission_intro", "headlineEn": "Talk about your workplace.", "headlinePt": "Fale do seu ambiente.", "bodyPt": "Descreva estrutura e equipe.", "prompts": [{ "speaker": "Partner", "questionEn": "What is your workplace like?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m06l01-prac-01", "type": "choice", "promptPt": "Ambiente de trabalho em inglês:", "options": [
+      { "labelEn": "workplace", "correct": true, "feedbackPt": "Workplace = ambiente de trabalho." },
+      { "labelEn": "workplacee", "correct": false, "feedbackPt": "Grafia incorreta." },
+      { "labelEn": "worktime", "correct": false, "feedbackPt": "Worktime não é a palavra padrão." }
+    ]},
+    { "id": "m06l01-prac-02", "type": "fill_blank", "promptPt": "Departamento de operações:", "templateEn": "I'm in the operations ___.", "blankLabel": "palavra", "options": [
+      { "labelEn": "department", "correct": true, "feedbackPt": "Operations department." },
+      { "labelEn": "office", "correct": false, "feedbackPt": "Office é possível, mas department é mais preciso." },
+      { "labelEn": "team", "correct": false, "feedbackPt": "Team = equipe — department = setor." }
+    ]},
+    { "id": "m06l01-prac-03", "type": "choice", "promptPt": "Administração do clube:", "options": [
+      { "labelEn": "front office", "correct": true, "feedbackPt": "Front office = administração (esporte)." },
+      { "labelEn": "front door", "correct": false, "feedbackPt": "Front door = porta da frente." },
+      { "labelEn": "front desk only", "correct": false, "feedbackPt": "Front office é mais amplo." }
+    ]},
+    { "id": "m06l01-prac-04", "type": "reorder", "promptPt": "Monte a frase:", "tokens": ["medical", "the", "with", "team.", "I", "work"], "correctOrder": ["I", "work", "with", "the", "medical", "team."], "feedbackCorrectPt": "I work with the medical team.", "feedbackWrongPt": "Ordem: I + work + with + the + team." },
+    { "id": "m06l01-prac-05", "type": "dialogue_complete", "promptPt": "Parceiro pergunta sobre departamento:", "speaker": "You", "contextEn": "Partner: Which department are you in?", "options": [
+      { "labelEn": "I'm in the finance department.", "correct": true, "feedbackPt": "In the + department." },
+      { "labelEn": "I'm finance department.", "correct": false, "feedbackPt": "Precisa de in the." },
+      { "labelEn": "Department finance I.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "m06l01-prac-06", "type": "fill_blank", "promptPt": "Sala de treino:", "templateEn": "The athletes are in the ___ room.", "blankLabel": "palavra", "options": [
+      { "labelEn": "training", "correct": true, "feedbackPt": "Training room." },
+      { "labelEn": "train", "correct": false, "feedbackPt": "Training = adjetivo/nome composto." },
+      { "labelEn": "trained", "correct": false, "feedbackPt": "Trained = treinado — não é o lugar." }
+    ]},
+    { "id": "m06l01-prac-07", "type": "choice", "promptPt": "Escritório aberto:", "options": [
+      { "labelEn": "open office", "correct": true, "feedbackPt": "Open office = layout sem paredes." },
+      { "labelEn": "opened office", "correct": false, "feedbackPt": "Open office é termo fixo." },
+      { "labelEn": "office open", "correct": false, "feedbackPt": "Ordem: open office." }
+    ]},
+    { "id": "m06l01-prac-08", "type": "dialogue_complete", "promptPt": "Descrever workplace do clube:", "speaker": "You", "contextEn": "Partner: What is your workplace like?", "options": [
+      { "labelEn": "We have a stadium and a training facility. I work with the coaches.", "correct": true, "feedbackPt": "Estrutura + equipe." },
+      { "labelEn": "Workplace is work.", "correct": false, "feedbackPt": "Sem conteúdo." },
+      { "labelEn": "I am stadium.", "correct": false, "feedbackPt": "Gramática incorreta." }
+    ]},
+    { "id": "m06l01-prac-09", "type": "fill_blank", "promptPt": "Trabalhar com analistas:", "templateEn": "I work ___ the analytics team.", "blankLabel": "preposição", "options": [
+      { "labelEn": "with", "correct": true, "feedbackPt": "Work with = colaborar com." },
+      { "labelEn": "in", "correct": false, "feedbackPt": "In = área; with = pessoas/equipe." },
+      { "labelEn": "for", "correct": false, "feedbackPt": "For = empregador." }
+    ]},
+    { "id": "m06l01-prac-10", "type": "choice", "promptPt": "Conference room é:", "options": [
+      { "labelEn": "A room for meetings.", "correct": true, "feedbackPt": "Sala de reunião." },
+      { "labelEn": "The soccer field.", "correct": false, "feedbackPt": "Field = campo." },
+      { "labelEn": "The cafeteria.", "correct": false, "feedbackPt": "Cafeteria = refeitório." }
+    ]}
+  ]
+}

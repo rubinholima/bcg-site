@@ -1,0 +1,174 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 5,
+  "goalPt": "Integrar tudo do Módulo 5 — pessoas, descrições, lugares, there is/are e direções — num tour completo do ambiente de trabalho.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Desafio do módulo — você guia um visitante pelo campus, apresenta pessoas e localiza salas.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia o diálogo completo em voz alta.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Guide a visitor through your workplace.",
+    "headlinePt": "Guie um visitante pelo seu ambiente de trabalho.",
+    "bodyPt": "",
+    "canDo": ["This is Maria, our manager.", "She is friendly and professional.", "There is a cafeteria on the first floor.", "The gym is next to the office.", "Where is the meeting room?", "It's in room 204.", "Describe people and places"],
+    "production": {
+      "introPt": "Monte um tour completo: apresente uma pessoa, descreva-a, diga o que existe no prédio e onde fica uma sala.",
+      "prompts": [{ "speaker": "Visitor", "questionEn": "Can you show me around?" }],
+      "fields": [
+        { "id": "intro", "labelPt": "Apresentar alguém", "prefixEn": "This is", "placeholderEn": "James. He is our manager." },
+        { "id": "describe", "labelPt": "Descrever a pessoa", "prefixEn": "He is", "placeholderEn": "very friendly and professional." },
+        { "id": "facilities", "labelPt": "O que tem no prédio", "prefixEn": "There is", "placeholderEn": "a cafeteria on the first floor." },
+        { "id": "directions", "labelPt": "Onde fica a sala de reunião", "prefixEn": "It's", "placeholderEn": "in room 204, next to the elevator." }
+      ],
+      "exampleEn": "This is James. He is our manager. He is very friendly. There is a cafeteria on the first floor. The meeting room is in room 204, next to the elevator."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m05l06-ctx-01", "type": "intro", "titleEn": "Module challenge", "titlePt": "Desafio do módulo", "bodyPt": "Hora de juntar pessoas, descrições, lugares, there is/are e direções — num tour real. Sem vocabulário novo." },
+      { "id": "m05l06-ctx-02", "type": "scenario", "settingEn": "Club campus · Visitor tour", "scenarioPt": "Um parceiro comercial chega pela primeira vez. Você faz o tour completo." },
+      { "id": "m05l06-ctx-03", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Who is that?", "promptPt": "Passo 1 — Apresentar alguém:", "options": [
+        { "labelEn": "This is Maria. She is our operations manager.", "correct": true, "feedbackPt": "This is + função." },
+        { "labelEn": "Maria is that.", "correct": false, "feedbackPt": "Use This is para apresentar." },
+        { "labelEn": "She is Maria this.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]},
+      { "id": "m05l06-ctx-04", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "What's she like?", "promptPt": "Passo 2 — Descrever personalidade:", "options": [
+        { "labelEn": "She is very friendly and professional.", "correct": true, "feedbackPt": "She is + adjetivos." },
+        { "labelEn": "She is the cafeteria.", "correct": false, "feedbackPt": "Cafeteria é lugar." },
+        { "labelEn": "Friendly she is very.", "correct": false, "feedbackPt": "Ordem: She is very friendly." }
+      ]},
+      { "id": "m05l06-ctx-05", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "What's in this building?", "promptPt": "Passo 3 — Instalações:", "options": [
+        { "labelEn": "There is a cafeteria and there are two meeting rooms.", "correct": true, "feedbackPt": "There is + There are." },
+        { "labelEn": "There are a cafeteria.", "correct": false, "feedbackPt": "Singular → There is." },
+        { "labelEn": "Building has cafeteria.", "correct": false, "feedbackPt": "Use There is/are." }
+      ]},
+      { "id": "m05l06-ctx-06", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Where is the cafeteria?", "promptPt": "Passo 4 — Localização:", "options": [
+        { "labelEn": "It's on the first floor, next to the elevator.", "correct": true, "feedbackPt": "Andar + referência." },
+        { "labelEn": "Cafeteria is food.", "correct": false, "feedbackPt": "Não responde onde." },
+        { "labelEn": "It's on the room one.", "correct": false, "feedbackPt": "Use on the floor ou in room." }
+      ]},
+      { "id": "m05l06-ctx-07", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "And the gym?", "promptPt": "Passo 5 — Lugar + posição:", "options": [
+        { "labelEn": "The gym is near the stadium, next to the training room.", "correct": true, "feedbackPt": "Near + next to." },
+        { "labelEn": "Gym is exercise.", "correct": false, "feedbackPt": "Não indica local." },
+        { "labelEn": "There is near gym.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]},
+      { "id": "m05l06-ctx-08", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Perfect. Thanks for the tour!", "promptPt": "Encerrar educadamente:", "options": [
+        { "labelEn": "You're welcome! Let me know if you need anything.", "correct": true, "feedbackPt": "Encerramento profissional." },
+        { "labelEn": "Where is the cafeteria?", "correct": false, "feedbackPt": "Repete pergunta — visitante já sabe." },
+        { "labelEn": "This is Maria.", "correct": false, "feedbackPt": "Reabre apresentação." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m05l06-learn-01", "type": "review", "titleEn": "Lesson 1 — People", "titlePt": "Lição 1 — Pessoas", "items": [
+        { "en": "colleague / manager / team", "pt": "vocabulário" },
+        { "en": "This is Maria.", "pt": "apresentar" },
+        { "en": "He is our manager.", "pt": "função" },
+        { "en": "Nice to meet you!", "pt": "resposta" }
+      ]},
+      { "id": "m05l06-learn-02", "type": "review", "titleEn": "Lesson 2 — Describing", "titlePt": "Lição 2 — Descrição", "items": [
+        { "en": "He is tall.", "pt": "aparência" },
+        { "en": "She is friendly.", "pt": "personalidade" },
+        { "en": "She has brown hair.", "pt": "característica" },
+        { "en": "What is she like?", "pt": "pergunta" }
+      ]},
+      { "id": "m05l06-learn-03", "type": "review", "titleEn": "Lesson 3 — Places", "titlePt": "Lição 3 — Lugares", "items": [
+        { "en": "office / stadium / cafeteria", "pt": "lugares" },
+        { "en": "near / next to", "pt": "posição" },
+        { "en": "The cafeteria is next to the office.", "pt": "modelo" }
+      ]},
+      { "id": "m05l06-learn-04", "type": "review", "titleEn": "Lesson 4 — There is/are", "titlePt": "Lição 4 — There is/are", "items": [
+        { "en": "There is a cafeteria.", "pt": "singular" },
+        { "en": "There are two gyms.", "pt": "plural" },
+        { "en": "Is there a parking lot?", "pt": "pergunta" },
+        { "en": "There isn't a pool.", "pt": "negativo" }
+      ]},
+      { "id": "m05l06-learn-05", "type": "review", "titleEn": "Lesson 5 — Where is it?", "titlePt": "Lição 5 — Onde fica?", "items": [
+        { "en": "Where is the cafeteria?", "pt": "pergunta" },
+        { "en": "It's on the first floor.", "pt": "andar" },
+        { "en": "It's in room 204.", "pt": "sala" },
+        { "en": "Go straight. Turn left.", "pt": "direção" }
+      ]},
+      { "id": "m05l06-learn-06", "type": "language_focus", "titleEn": "Tour flow", "titlePt": "Fluxo do tour", "items": [
+        { "formalEn": "Introduce → Describe → Facilities → Directions", "naturalEn": "This is... → She is... → There is... → It's on...", "notePt": "Ordem natural de um tour no trabalho." },
+        { "formalEn": "One topic at a time", "naturalEn": "Answer what they ask", "notePt": "Responda a pergunta do visitante — não despeje tudo de uma vez." }
+      ], "tipPt": "Tour = apresentar pessoas + descrever lugares + dar direções. Um passo de cada vez." },
+      { "id": "m05l06-learn-07", "type": "mistake", "titlePt": "Erro comum no desafio", "wrongEn": "There are a cafeteria on the first floor next to elevator room 204.", "rightEn": "There is a cafeteria on the first floor, next to the elevator.", "explanationPt": "Separe as ideias: There is (singular) + localização clara. Não misture tudo numa frase só." },
+      { "id": "m05l06-learn-08", "type": "review", "titleEn": "Quick review — full module", "titlePt": "Revisão — módulo completo", "items": [
+        { "en": "This is James. He is our manager.", "pt": "pessoas" },
+        { "en": "She is friendly and tall.", "pt": "descrição" },
+        { "en": "The gym is near the stadium.", "pt": "lugares" },
+        { "en": "There are two meeting rooms.", "pt": "there is/are" },
+        { "en": "Where is the restroom?", "pt": "direções" },
+        { "en": "It's on the second floor.", "pt": "andar" },
+        { "en": "It's next to the elevator.", "pt": "referência" }
+      ]}
+    ],
+    "imitate": [{ "id": "m05l06-imit-01", "type": "read_repeat", "titleEn": "Full tour dialogue", "titlePt": "Diálogo do tour completo", "introPt": "Leia o tour inteiro em voz alta. Adapte nomes e lugares.", "phrases": [
+      { "en": "Welcome! Let me show you around." }, { "en": "This is Maria. She is our manager." }, { "en": "She is very friendly and professional." }, { "en": "There is a cafeteria on the first floor." }, { "en": "There are two meeting rooms upstairs." }, { "en": "The gym is near the stadium." }, { "en": "Where is the restroom? — It's down the hall." }, { "en": "The meeting room is in room 204, next to the elevator." }
+    ], "dialogueEn": "Welcome! This is Maria. She is our manager — very friendly. There is a cafeteria on the first floor. There are two meeting rooms upstairs. The gym is near the stadium, next to the training room. Where is the meeting room? — It's in room 204, next to the elevator." }],
+    "mission": [{ "id": "m05l06-miss-01", "type": "mission_intro", "headlineEn": "Give the full tour.", "headlinePt": "Faça o tour completo.", "bodyPt": "Apresente, descreva, liste instalações e dê direções.", "prompts": [{ "speaker": "Visitor", "questionEn": "Can you show me around?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m05l06-prac-01", "type": "choice", "promptPt": "Apresentar o manager:", "options": [
+      { "labelEn": "This is James. He is our manager.", "correct": true, "feedbackPt": "This is + função." },
+      { "labelEn": "James is manager this.", "correct": false, "feedbackPt": "Ordem incorreta." },
+      { "labelEn": "He manager is James.", "correct": false, "feedbackPt": "Use This is para apresentar." }
+    ]},
+    { "id": "m05l06-prac-02", "type": "dialogue_complete", "promptPt": "Descrever colega:", "speaker": "You", "contextEn": "Visitor: What is Maria like?", "options": [
+      { "labelEn": "She is friendly and professional.", "correct": true, "feedbackPt": "She is + adjetivos." },
+      { "labelEn": "She is the office.", "correct": false, "feedbackPt": "Office é lugar." },
+      { "labelEn": "Maria like friendly.", "correct": false, "feedbackPt": "Gramática incorreta." }
+    ]},
+    { "id": "m05l06-prac-03", "type": "fill_blank", "promptPt": "Instalações — singular:", "templateEn": "There ___ a cafeteria on the first floor.", "blankLabel": "verbo", "options": [
+      { "labelEn": "is", "correct": true, "feedbackPt": "Singular → is." },
+      { "labelEn": "are", "correct": false, "feedbackPt": "A cafeteria = singular." },
+      { "labelEn": "have", "correct": false, "feedbackPt": "Use There is." }
+    ]},
+    { "id": "m05l06-prac-04", "type": "choice", "promptPt": "Gym perto do estádio:", "options": [
+      { "labelEn": "The gym is near the stadium.", "correct": true, "feedbackPt": "Near = perto de." },
+      { "labelEn": "The gym is near to the stadium.", "correct": false, "feedbackPt": "Near não usa to." },
+      { "labelEn": "Near gym stadium.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "m05l06-prac-05", "type": "reorder", "promptPt": "Monte a pergunta de localização:", "tokens": ["cafeteria?", "the", "is", "Where"], "correctOrder": ["Where", "is", "the", "cafeteria?"], "feedbackCorrectPt": "Where is the cafeteria?", "feedbackWrongPt": "Ordem: Where + is + the + cafeteria?" },
+    { "id": "m05l06-prac-06", "type": "dialogue_complete", "promptPt": "Responder Where is the meeting room?", "speaker": "You", "contextEn": "Visitor: Where is the meeting room?", "options": [
+      { "labelEn": "It's in room 204, on the second floor.", "correct": true, "feedbackPt": "Sala + andar." },
+      { "labelEn": "Meeting room is meeting.", "correct": false, "feedbackPt": "Não responde onde." },
+      { "labelEn": "It's on room 204.", "correct": false, "feedbackPt": "Room → in." }
+    ]},
+    { "id": "m05l06-prac-07", "type": "fill_blank", "promptPt": "Cafeteria ao lado do elevador:", "templateEn": "It's next ___ the elevator.", "blankLabel": "preposição", "options": [
+      { "labelEn": "to", "correct": true, "feedbackPt": "Next to = ao lado de." },
+      { "labelEn": "of", "correct": false, "feedbackPt": "Next to — não next of." },
+      { "labelEn": "the", "correct": false, "feedbackPt": "Next to the..." }
+    ]},
+    { "id": "m05l06-prac-08", "type": "choice", "promptPt": "Duas salas de reunião:", "options": [
+      { "labelEn": "There are two meeting rooms.", "correct": true, "feedbackPt": "Plural → There are." },
+      { "labelEn": "There is two meeting rooms.", "correct": false, "feedbackPt": "Two = plural → are." },
+      { "labelEn": "There are a meeting room.", "correct": false, "feedbackPt": "Singular → is." }
+    ]},
+    { "id": "m05l06-prac-09", "type": "dialogue_complete", "promptPt": "Tour — apresentar e localizar:", "speaker": "You", "contextEn": "Visitor: Who works in the office?", "options": [
+      { "labelEn": "Maria and James. The office is on the second floor.", "correct": true, "feedbackPt": "Pessoas + local." },
+      { "labelEn": "Office is people.", "correct": false, "feedbackPt": "Sem sentido." },
+      { "labelEn": "There is Maria office.", "correct": false, "feedbackPt": "Gramática incorreta." }
+    ]},
+    { "id": "m05l06-prac-10", "type": "reorder", "promptPt": "Monte descrição completa:", "tokens": ["professional.", "is", "very", "She", "and", "friendly"], "correctOrder": ["She", "is", "very", "friendly", "and", "professional."], "feedbackCorrectPt": "She is very friendly and professional.", "feedbackWrongPt": "Ordem: She + is + very + adjetivos." },
+    { "id": "m05l06-prac-11", "type": "choice", "promptPt": "Melhor fluxo do tour:", "options": [
+      { "labelEn": "Introduce people → describe → show facilities → give directions.", "correct": true, "feedbackPt": "Ordem natural." },
+      { "labelEn": "Give directions → introduce → describe.", "correct": false, "feedbackPt": "Apresente antes de direções complexas." },
+      { "labelEn": "Only say goodbye.", "correct": false, "feedbackPt": "Tour precisa de conteúdo." }
+    ]},
+    { "id": "m05l06-prac-12", "type": "fill_blank", "promptPt": "Primeiro andar:", "templateEn": "The cafeteria is on the ___ floor.", "blankLabel": "ordinal", "options": [
+      { "labelEn": "first", "correct": true, "feedbackPt": "First floor." },
+      { "labelEn": "one", "correct": false, "feedbackPt": "Use ordinal." },
+      { "labelEn": "floor", "correct": false, "feedbackPt": "Floor já está na frase." }
+    ]}
+  ]
+}

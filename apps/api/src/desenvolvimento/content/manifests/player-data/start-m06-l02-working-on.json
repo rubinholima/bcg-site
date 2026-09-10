@@ -1,0 +1,149 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 6,
+  "goalPt": "Falar da tarefa atual com I'm working on..., right now e today — introdução ao present continuous no trabalho.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Colega pergunta no corredor no que você está trabalhando agora.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Say what you're working on.",
+    "headlinePt": "Diga no que está trabalhando.",
+    "bodyPt": "",
+    "canDo": ["What are you working on?", "I'm working on a report.", "right now", "today", "project", "I'm busy right now.", "present continuous at work"],
+    "production": {
+      "introPt": "Colega pergunta What are you working on? Responda com tarefa e prazo (right now / today).",
+      "prompts": [{ "speaker": "Alex", "questionEn": "What are you working on?" }],
+      "fields": [
+        { "id": "task", "labelPt": "Tarefa atual", "prefixEn": "I'm working on", "placeholderEn": "the travel report." },
+        { "id": "time", "labelPt": "Quando", "prefixEn": "", "placeholderEn": "Right now — I need to finish it today." }
+      ],
+      "exampleEn": "I'm working on the travel report. Right now — I need to finish it today."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m06l02-ctx-01", "type": "intro", "titleEn": "What are you working on?", "titlePt": "No que você está trabalhando?", "bodyPt": "No trabalho, colegas perguntam o que você está fazendo agora — report, project, schedule. Use I'm working on..." },
+      { "id": "m06l02-ctx-02", "type": "scenario", "settingEn": "Office hallway · Mid-morning", "scenarioPt": "Alex encontra você indo para a copa e pergunta sobre sua tarefa atual." },
+      { "id": "m06l02-ctx-03", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "What are you working on?", "promptPt": "Melhor resposta:", "options": [
+        { "labelEn": "I'm working on the travel report.", "correct": true, "feedbackPt": "Working on + tarefa." },
+        { "labelEn": "I work on the travel report.", "correct": false, "feedbackPt": "Work = rotina; working on = agora." },
+        { "labelEn": "I'm work the report.", "correct": false, "feedbackPt": "Precisa de working on." }
+      ]},
+      { "id": "m06l02-ctx-04", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "Is it urgent?", "promptPt": "Dizer que é para hoje:", "options": [
+        { "labelEn": "Yes, I need to finish it today.", "correct": true, "feedbackPt": "Today = prazo de hoje." },
+        { "labelEn": "Yes, I finish today it.", "correct": false, "feedbackPt": "Ordem: finish it today." },
+        { "labelEn": "Yes, today working.", "correct": false, "feedbackPt": "Frase incompleta." }
+      ]},
+      { "id": "m06l02-ctx-05", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "Can we talk later?", "promptPt": "Dizer que está ocupado agora:", "options": [
+        { "labelEn": "Sure — I'm busy right now, but later works.", "correct": true, "feedbackPt": "Right now = neste momento." },
+        { "labelEn": "I busy am now right.", "correct": false, "feedbackPt": "Ordem: I'm busy right now." },
+        { "labelEn": "Later is busy.", "correct": false, "feedbackPt": "Sem sentido claro." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m06l02-learn-01", "type": "phrase_examples", "titleEn": "What are you working on?", "titlePt": "No que está trabalhando?", "introPt": "Pergunta comum sobre tarefa em andamento — não rotina geral.", "examples": [
+        { "en": "What are you working on?", "pt": "pergunta" },
+        { "en": "What are you working on today?", "pt": "hoje" },
+        { "en": "What's your project?", "pt": "variação" },
+        { "en": "Are you busy?", "pt": "está ocupado?" }
+      ]},
+      { "id": "m06l02-learn-02", "type": "phrase_examples", "titleEn": "I'm working on...", "titlePt": "Estou trabalhando em...", "introPt": "Present continuous — ação acontecendo agora ou neste período.", "examples": [
+        { "en": "I'm working on a report.", "pt": "relatório" },
+        { "en": "I'm working on the schedule.", "pt": "agenda" },
+        { "en": "I'm working on a new project.", "pt": "projeto novo" },
+        { "en": "I'm working on the budget.", "pt": "orçamento" }
+      ]},
+      { "id": "m06l02-learn-03", "type": "phrase_examples", "titleEn": "Right now", "titlePt": "Agora / neste momento", "introPt": "Right now enfatiza o momento presente.", "examples": [
+        { "en": "I'm busy right now.", "pt": "ocupado agora" },
+        { "en": "Right now, I'm finishing a report.", "pt": "neste momento" },
+        { "en": "Can we talk later? I'm in a meeting right now.", "pt": "adiar conversa" },
+        { "en": "Not right now — maybe at 3?", "pt": "negar + alternativa" }
+      ]},
+      { "id": "m06l02-learn-04", "type": "phrase_examples", "titleEn": "Today", "titlePt": "Hoje", "introPt": "Today para prazo ou foco do dia.", "examples": [
+        { "en": "I need to finish it today.", "pt": "prazo hoje" },
+        { "en": "Today's priority is the report.", "pt": "prioridade" },
+        { "en": "I'm working on emails today.", "pt": "foco do dia" },
+        { "en": "What are you doing today?", "pt": "pergunta" }
+      ]},
+      { "id": "m06l02-learn-05", "type": "phrase_examples", "titleEn": "Project / report / task", "titlePt": "Projeto / relatório / tarefa", "introPt": "Substantivos comuns para working on.", "examples": [
+        { "en": "a project", "pt": "projeto" },
+        { "en": "a report", "pt": "relatório" },
+        { "en": "a presentation", "pt": "apresentação" },
+        { "en": "the travel schedule", "pt": "agenda de viagem" }
+      ]},
+      { "id": "m06l02-learn-06", "type": "comparison", "titleEn": "I work on vs I'm working on", "titlePt": "Rotina vs agora", "left": { "labelEn": "ROUTINE · I WORK ON", "exampleEn": "I work on reports every week.", "notePt": "Hábito ou rotina — Simple Present." }, "right": { "labelEn": "NOW · I'M WORKING ON", "exampleEn": "I'm working on a report right now.", "notePt": "Ação em andamento — Present Continuous." }, "modelEn": "I usually work on reports. Right now, I'm working on the travel report.", "modelPt": "Working on + -ing indica tarefa atual." },
+      { "id": "m06l02-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I'm working in a report.", "rightEn": "I'm working on a report.", "explanationPt": "Work on + tarefa/projeto. In combina com área: I work in marketing." },
+      { "id": "m06l02-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "What are you working on?", "pt": "pergunta" },
+        { "en": "I'm working on a report.", "pt": "resposta" },
+        { "en": "right now", "pt": "agora" },
+        { "en": "today", "pt": "hoje" },
+        { "en": "project / report", "pt": "tarefas" },
+        { "en": "I'm busy right now.", "pt": "ocupado" },
+        { "en": "I need to finish it today.", "pt": "prazo" }
+      ]}
+    ],
+    "imitate": [{ "id": "m06l02-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Adapte à sua tarefa real do dia.", "phrases": [
+      { "en": "What are you working on?" }, { "en": "I'm working on a report." }, { "en": "I'm working on the schedule." }, { "en": "Right now, I'm busy." }, { "en": "I need to finish it today." }, { "en": "Can we talk later?" }, { "en": "I'm working on a new project." }, { "en": "Today's priority is the presentation." }
+    ], "dialogueEn": "What are you working on? — I'm working on the travel report. — Is it for today? — Yes, I need to finish it today. I'm busy right now." }],
+    "mission": [{ "id": "m06l02-miss-01", "type": "mission_intro", "headlineEn": "Talk about your current task.", "headlinePt": "Fale da tarefa atual.", "bodyPt": "Responda What are you working on? com prazo.", "prompts": [{ "speaker": "Alex", "questionEn": "What are you working on?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m06l02-prac-01", "type": "choice", "promptPt": "Perguntar tarefa atual:", "options": [
+      { "labelEn": "What are you working on?", "correct": true, "feedbackPt": "Pergunta padrão." },
+      { "labelEn": "What do you working on?", "correct": false, "feedbackPt": "Precisa de are: What are you..." },
+      { "labelEn": "What you work on?", "correct": false, "feedbackPt": "Falta are." }
+    ]},
+    { "id": "m06l02-prac-02", "type": "fill_blank", "promptPt": "Trabalhando em relatório:", "templateEn": "I'm working ___ a report.", "blankLabel": "preposição", "options": [
+      { "labelEn": "on", "correct": true, "feedbackPt": "Work on + tarefa." },
+      { "labelEn": "in", "correct": false, "feedbackPt": "In = área, não tarefa." },
+      { "labelEn": "at", "correct": false, "feedbackPt": "At = local." }
+    ]},
+    { "id": "m06l02-prac-03", "type": "choice", "promptPt": "Ocupado neste momento:", "options": [
+      { "labelEn": "I'm busy right now.", "correct": true, "feedbackPt": "Right now = agora." },
+      { "labelEn": "I'm busy right.", "correct": false, "feedbackPt": "Precisa de now." },
+      { "labelEn": "I busy now right.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "m06l02-prac-04", "type": "reorder", "promptPt": "Monte a resposta:", "tokens": ["report.", "the", "on", "working", "I'm", "travel"], "correctOrder": ["I'm", "working", "on", "the", "travel", "report."], "feedbackCorrectPt": "I'm working on the travel report.", "feedbackWrongPt": "Ordem: I'm + working + on + tarefa." },
+    { "id": "m06l02-prac-05", "type": "dialogue_complete", "promptPt": "Alex pergunta sobre tarefa:", "speaker": "You", "contextEn": "Alex: What are you working on?", "options": [
+      { "labelEn": "I'm working on the budget. I need to finish it today.", "correct": true, "feedbackPt": "Tarefa + prazo." },
+      { "labelEn": "I work budget every day.", "correct": false, "feedbackPt": "Rotina — pergunta é sobre agora." },
+      { "labelEn": "Working on I am.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "m06l02-prac-06", "type": "fill_blank", "promptPt": "Prazo hoje:", "templateEn": "I need to finish it ___.", "blankLabel": "palavra", "options": [
+      { "labelEn": "today", "correct": true, "feedbackPt": "Today = hoje." },
+      { "labelEn": "tomorrow", "correct": false, "feedbackPt": "Tomorrow = amanhã — contexto pedia today." },
+      { "labelEn": "now", "correct": false, "feedbackPt": "Now = momento; today = dia." }
+    ]},
+    { "id": "m06l02-prac-07", "type": "choice", "promptPt": "Present continuous — forma correta:", "options": [
+      { "labelEn": "I'm working on a project.", "correct": true, "feedbackPt": "Am/is/are + -ing." },
+      { "labelEn": "I working on a project.", "correct": false, "feedbackPt": "Falta am: I'm." },
+      { "labelEn": "I'm work on a project.", "correct": false, "feedbackPt": "Precisa de -ing: working." }
+    ]},
+    { "id": "m06l02-prac-08", "type": "dialogue_complete", "promptPt": "Adiar conversa — ocupado:", "speaker": "You", "contextEn": "Colleague: Got a minute?", "options": [
+      { "labelEn": "Not right now — I'm working on a report. Maybe later?", "correct": true, "feedbackPt": "Right now + tarefa + alternativa." },
+      { "labelEn": "Yes, I am free always.", "correct": false, "feedbackPt": "Contradiz estar ocupado." },
+      { "labelEn": "Report working now.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "m06l02-prac-09", "type": "fill_blank", "promptPt": "Pergunta com are:", "templateEn": "What ___ you working on?", "blankLabel": "verbo", "options": [
+      { "labelEn": "are", "correct": true, "feedbackPt": "What are you working on?" },
+      { "labelEn": "is", "correct": false, "feedbackPt": "You → are." },
+      { "labelEn": "am", "correct": false, "feedbackPt": "Am combina com I." }
+    ]},
+    { "id": "m06l02-prac-10", "type": "choice", "promptPt": "Work on vs work in:", "options": [
+      { "labelEn": "Work on = task; work in = area/department.", "correct": true, "feedbackPt": "Distinção correta." },
+      { "labelEn": "They mean the same.", "correct": false, "feedbackPt": "Significados diferentes." },
+      { "labelEn": "Work on = location.", "correct": false, "feedbackPt": "Work on = tarefa/projeto." }
+    ]}
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 5,
+  "goalPt": "Dizer o que existe em um lugar com There is / There are — singular e plural — usando a, an e some.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você mostra as instalações do clube para um visitante e descreve o que tem em cada área.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Describe what's in a place.",
+    "headlinePt": "Descreva o que tem em um lugar.",
+    "bodyPt": "",
+    "canDo": ["There is a cafeteria.", "There are two gyms.", "There isn't a pool.", "Are there any offices?", "a / an / some", "singular vs plural", "describe facilities"],
+    "production": {
+      "introPt": "Descreva o que existe no prédio do clube — uma coisa no singular e uma no plural.",
+      "prompts": [{ "speaker": "Visitor", "questionEn": "What's in this building?" }],
+      "fields": [
+        { "id": "singular", "labelPt": "Singular (There is...)", "prefixEn": "There is", "placeholderEn": "a cafeteria on the first floor." },
+        { "id": "plural", "labelPt": "Plural (There are...)", "prefixEn": "There are", "placeholderEn": "three meeting rooms upstairs." }
+      ],
+      "exampleEn": "There is a cafeteria on the first floor. There are three meeting rooms upstairs."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m05l04-ctx-01", "type": "intro", "titleEn": "There is / There are", "titlePt": "Tem / Existem", "bodyPt": "Para dizer o que existe em um lugar — uma sala, várias salas, equipamentos — use There is (singular) e There are (plural)." },
+      { "id": "m05l04-ctx-02", "type": "scenario", "settingEn": "Club facility tour · Building walkthrough", "scenarioPt": "Alex guia um visitante pelo prédio administrativo e descreve as instalações." },
+      { "id": "m05l04-ctx-03", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "There is a cafeteria on the first floor.", "promptPt": "There is combina com:", "options": [
+        { "labelEn": "One cafeteria (singular).", "correct": true, "feedbackPt": "There is + singular." },
+        { "labelEn": "Many cafeterias (plural).", "correct": false, "feedbackPt": "Plural usa There are." },
+        { "labelEn": "No cafeteria.", "correct": false, "feedbackPt": "A frase afirma que existe uma." }
+      ]},
+      { "id": "m05l04-ctx-04", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "There are two gyms in the building.", "promptPt": "There are combina com:", "options": [
+        { "labelEn": "Two gyms (plural).", "correct": true, "feedbackPt": "There are + plural." },
+        { "labelEn": "One gym only.", "correct": false, "feedbackPt": "Singular usa There is." },
+        { "labelEn": "Zero gyms.", "correct": false, "feedbackPt": "Two indica plural." }
+      ]},
+      { "id": "m05l04-ctx-05", "type": "dialogue_choice", "speaker": "Visitor", "promptEn": "Is there a parking lot?", "promptPt": "Melhor resposta se NÃO existe:", "options": [
+        { "labelEn": "No, there isn't a parking lot here.", "correct": true, "feedbackPt": "There isn't = negativo singular." },
+        { "labelEn": "No, there aren't a parking lot.", "correct": false, "feedbackPt": "Parking lot é singular — use isn't." },
+        { "labelEn": "No, there is not parking lots.", "correct": false, "feedbackPt": "Forma confusa — use there isn't a..." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m05l04-learn-01", "type": "phrase_examples", "titleEn": "There is (singular)", "titlePt": "There is — singular", "introPt": "Use There is + uma coisa — one item.", "examples": [
+        { "en": "There is a cafeteria.", "pt": "tem uma cafeteria" },
+        { "en": "There is an office upstairs.", "pt": "tem um escritório" },
+        { "en": "There is a meeting room.", "pt": "tem uma sala" },
+        { "en": "There is a gym near the field.", "pt": "tem uma academia" }
+      ]},
+      { "id": "m05l04-learn-02", "type": "phrase_examples", "titleEn": "There are (plural)", "titlePt": "There are — plural", "introPt": "Use There are + duas ou mais coisas.", "examples": [
+        { "en": "There are two gyms.", "pt": "existem duas academias" },
+        { "en": "There are three floors.", "pt": "três andares" },
+        { "en": "There are many offices.", "pt": "muitos escritórios" },
+        { "en": "There are some chairs here.", "pt": "algumas cadeiras" }
+      ]},
+      { "id": "m05l04-learn-03", "type": "phrase_examples", "titleEn": "a / an", "titlePt": "a / an", "introPt": "A antes de consoante; an antes de vogal — com There is.", "examples": [
+        { "en": "There is a cafeteria.", "pt": "c começa com consoante" },
+        { "en": "There is an office.", "pt": "o começa com vogal" },
+        { "en": "There is a gym.", "pt": "a + gym" },
+        { "en": "There is an elevator.", "pt": "an + elevator" }
+      ]},
+      { "id": "m05l04-learn-04", "type": "phrase_examples", "titleEn": "some", "titlePt": "some — alguns/as", "introPt": "Some com plural ou quantidade indefinida — There are some...", "examples": [
+        { "en": "There are some desks.", "pt": "algumas mesas" },
+        { "en": "There are some meeting rooms.", "pt": "algumas salas" },
+        { "en": "There is some coffee.", "pt": "um pouco de café" },
+        { "en": "There are some people waiting.", "pt": "algumas pessoas" }
+      ]},
+      { "id": "m05l04-learn-05", "type": "phrase_examples", "titleEn": "There isn't / There aren't", "titlePt": "Negativo", "introPt": "Negar existência — isn't (singular) ou aren't (plural).", "examples": [
+        { "en": "There isn't a pool.", "pt": "não tem piscina" },
+        { "en": "There aren't any elevators.", "pt": "não tem elevadores" },
+        { "en": "There isn't an cafeteria.", "pt": "ERRADO — use a cafeteria" },
+        { "en": "There aren't many parking spots.", "pt": "poucas vagas" }
+      ]},
+      { "id": "m05l04-learn-06", "type": "phrase_examples", "titleEn": "Is there / Are there?", "titlePt": "Perguntas", "introPt": "Inverter para perguntar — Is there...? / Are there...?", "examples": [
+        { "en": "Is there a cafeteria?", "pt": "tem cafeteria?" },
+        { "en": "Are there any restrooms?", "pt": "tem banheiros?" },
+        { "en": "Is there an ATM nearby?", "pt": "caixa eletrônico?" },
+        { "en": "Are there two entrances?", "pt": "duas entradas?" }
+      ]},
+      { "id": "m05l04-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "There are a cafeteria.", "rightEn": "There is a cafeteria.", "explanationPt": "A cafeteria = singular → There is. There are só com plural (two cafeterias, some cafeterias)." },
+      { "id": "m05l04-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "There is a...", "pt": "singular" },
+        { "en": "There are two...", "pt": "plural" },
+        { "en": "a / an", "pt": "artigo" },
+        { "en": "some", "pt": "alguns" },
+        { "en": "There isn't...", "pt": "negativo singular" },
+        { "en": "Are there any...?", "pt": "pergunta plural" },
+        { "en": "describe facilities", "pt": "descrever instalações" }
+      ]}
+    ],
+    "imitate": [{ "id": "m05l04-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Adapte às instalações do seu trabalho.", "phrases": [
+      { "en": "There is a cafeteria." }, { "en": "There is an office upstairs." }, { "en": "There are two gyms." }, { "en": "There are some meeting rooms." }, { "en": "Is there a parking lot?" }, { "en": "There isn't a pool." }, { "en": "Are there any restrooms?" }, { "en": "There are three floors." }
+    ], "dialogueEn": "What's in this building? — There is a cafeteria on the first floor. There are two gyms. There isn't a pool, but there are some meeting rooms upstairs." }],
+    "mission": [{ "id": "m05l04-miss-01", "type": "mission_intro", "headlineEn": "Describe the building.", "headlinePt": "Descreva o prédio.", "bodyPt": "Use There is e There are.", "prompts": [{ "speaker": "Visitor", "questionEn": "What's in this building?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m05l04-prac-01", "type": "choice", "promptPt": "Uma cafeteria no prédio:", "options": [
+      { "labelEn": "There is a cafeteria.", "correct": true, "feedbackPt": "Singular → There is." },
+      { "labelEn": "There are a cafeteria.", "correct": false, "feedbackPt": "Singular não usa are." },
+      { "labelEn": "There is cafeteria.", "correct": false, "feedbackPt": "Precisa de artigo: a cafeteria." }
+    ]},
+    { "id": "m05l04-prac-02", "type": "fill_blank", "promptPt": "Duas academias:", "templateEn": "There ___ two gyms.", "blankLabel": "verbo", "options": [
+      { "labelEn": "are", "correct": true, "feedbackPt": "Plural → There are." },
+      { "labelEn": "is", "correct": false, "feedbackPt": "Two gyms = plural → are." },
+      { "labelEn": "am", "correct": false, "feedbackPt": "There never uses am." }
+    ]},
+    { "id": "m05l04-prac-03", "type": "choice", "promptPt": "Escritório (office) — artigo correto:", "options": [
+      { "labelEn": "There is an office.", "correct": true, "feedbackPt": "Office começa com vogal → an." },
+      { "labelEn": "There is a office.", "correct": false, "feedbackPt": "Office → an, não a." },
+      { "labelEn": "There are an office.", "correct": false, "feedbackPt": "Office singular → is." }
+    ]},
+    { "id": "m05l04-prac-04", "type": "reorder", "promptPt": "Monte a pergunta:", "tokens": ["cafeteria?", "a", "there", "Is"], "correctOrder": ["Is", "there", "a", "cafeteria?"], "feedbackCorrectPt": "Is there a cafeteria?", "feedbackWrongPt": "Ordem: Is + there + a + cafeteria?" },
+    { "id": "m05l04-prac-05", "type": "dialogue_complete", "promptPt": "Visitante pergunta sobre piscina — não tem:", "speaker": "You", "contextEn": "Visitor: Is there a pool?", "options": [
+      { "labelEn": "No, there isn't a pool.", "correct": true, "feedbackPt": "Negativo singular correto." },
+      { "labelEn": "No, there aren't a pool.", "correct": false, "feedbackPt": "Pool singular → isn't." },
+      { "labelEn": "No, there is not pools.", "correct": false, "feedbackPt": "Forma confusa." }
+    ]},
+    { "id": "m05l04-prac-06", "type": "fill_blank", "promptPt": "Algumas salas de reunião:", "templateEn": "There are ___ meeting rooms.", "blankLabel": "palavra", "options": [
+      { "labelEn": "some", "correct": true, "feedbackPt": "Some = algumas." },
+      { "labelEn": "a", "correct": false, "feedbackPt": "A é singular — meeting rooms é plural." },
+      { "labelEn": "an", "correct": false, "feedbackPt": "An é singular." }
+    ]},
+    { "id": "m05l04-prac-07", "type": "choice", "promptPt": "Três andares:", "options": [
+      { "labelEn": "There are three floors.", "correct": true, "feedbackPt": "Plural → There are." },
+      { "labelEn": "There is three floors.", "correct": false, "feedbackPt": "Three = plural → are." },
+      { "labelEn": "There have three floors.", "correct": false, "feedbackPt": "There is/are — não have." }
+    ]},
+    { "id": "m05l04-prac-08", "type": "dialogue_complete", "promptPt": "Descrever instalações:", "speaker": "You", "contextEn": "Visitor: What's on the first floor?", "options": [
+      { "labelEn": "There is a cafeteria and a break room.", "correct": true, "feedbackPt": "There is + lista singular." },
+      { "labelEn": "There are a cafeteria.", "correct": false, "feedbackPt": "Singular → is." },
+      { "labelEn": "Have a cafeteria.", "correct": false, "feedbackPt": "Use There is, não Have." }
+    ]},
+    { "id": "m05l04-prac-09", "type": "fill_blank", "promptPt": "Elevador — artigo:", "templateEn": "There is ___ elevator.", "blankLabel": "artigo", "options": [
+      { "labelEn": "an", "correct": true, "feedbackPt": "Elevator → an." },
+      { "labelEn": "a", "correct": false, "feedbackPt": "Elevator começa com vogal." },
+      { "labelEn": "some", "correct": false, "feedbackPt": "One elevator → a/an." }
+    ]},
+    { "id": "m05l04-prac-10", "type": "choice", "promptPt": "Perguntar banheiros (plural):", "options": [
+      { "labelEn": "Are there any restrooms?", "correct": true, "feedbackPt": "Plural → Are there." },
+      { "labelEn": "Is there any restrooms?", "correct": false, "feedbackPt": "Restrooms plural → Are." },
+      { "labelEn": "There are restrooms?", "correct": false, "feedbackPt": "Inverta: Are there...?" }
+    ]}
+  ]
+}

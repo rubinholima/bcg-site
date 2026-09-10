@@ -1,0 +1,164 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 6,
+  "goalPt": "Participar de reunião curta — Let's start, agenda, Can we...?, Any questions? e encerramento.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Reunião rápida de equipe — 15 minutos — para alinhar agenda da semana.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Participate in a short meeting.",
+    "headlinePt": "Participe de uma reunião curta.",
+    "bodyPt": "",
+    "canDo": ["Let's start.", "Here's the agenda.", "Can we move on?", "Any questions?", "I agree.", "Thanks, everyone.", "meeting basics", "Wrap up a meeting"],
+    "production": {
+      "introPt": "Participe da mini-reunião: confirme que entendeu a agenda e encerre educadamente.",
+      "prompts": [
+        { "speaker": "Manager", "questionEn": "Let's start. Here's the agenda for today." },
+        { "speaker": "Manager", "questionEn": "Any questions?" },
+        { "speaker": "Manager", "questionEn": "Thanks, everyone. See you tomorrow." }
+      ],
+      "fields": [
+        { "id": "agree", "labelPt": "Concordar / confirmar", "prefixEn": "", "placeholderEn": "Sounds good — I agree." },
+        { "id": "question", "labelPt": "Pergunta ou 'sem perguntas'", "prefixEn": "", "placeholderEn": "No questions from me." },
+        { "id": "close", "labelPt": "Encerrar", "prefixEn": "", "placeholderEn": "Thanks, everyone. See you tomorrow." }
+      ],
+      "exampleEn": "Sounds good — I agree. — No questions from me. — Thanks, everyone. See you tomorrow."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m06l06-ctx-01", "type": "intro", "titleEn": "A simple meeting", "titlePt": "Uma reunião simples", "bodyPt": "Reuniões curtas seguem frases fixas — Let's start, agenda, Any questions?, Thanks everyone. Você não precisa falar muito — precisa entender e responder." },
+      { "id": "m06l06-ctx-02", "type": "scenario", "settingEn": "Conference room · 15-min stand-up", "scenarioPt": "Manager convoca equipe de operations para alinhar prioridades da semana." },
+      { "id": "m06l06-ctx-03", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Let's start. Here's the agenda.", "promptPt": "Let's start significa:", "options": [
+        { "labelEn": "Let's begin the meeting.", "correct": true, "feedbackPt": "Let's start = vamos começar." },
+        { "labelEn": "Let's stop.", "correct": false, "feedbackPt": "Start = começar, não parar." },
+        { "labelEn": "Let's leave.", "correct": false, "feedbackPt": "Start abre reunião, não encerra." }
+      ]},
+      { "id": "m06l06-ctx-04", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "First item: travel schedule. Can we move on?", "promptPt": "Can we move on? = ", "options": [
+        { "labelEn": "Can we go to the next topic?", "correct": true, "feedbackPt": "Move on = passar para próximo assunto." },
+        { "labelEn": "Can we leave the building?", "correct": false, "feedbackPt": "Move on = próximo tópico." },
+        { "labelEn": "Can we start again?", "correct": false, "feedbackPt": "Move on avança, não reinicia." }
+      ]},
+      { "id": "m06l06-ctx-05", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Any questions?", "promptPt": "Você entendeu tudo — melhor resposta:", "options": [
+        { "labelEn": "No questions from me — thanks.", "correct": true, "feedbackPt": "Confirma sem perguntas." },
+        { "labelEn": "Any questions is me.", "correct": false, "feedbackPt": "Gramática incorreta." },
+        { "labelEn": "Questions any no.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]},
+      { "id": "m06l06-ctx-06", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Thanks, everyone. Good work.", "promptPt": "Encerrar a reunião:", "options": [
+        { "labelEn": "Thanks, everyone. See you tomorrow.", "correct": true, "feedbackPt": "Encerramento natural." },
+        { "labelEn": "Let's start.", "correct": false, "feedbackPt": "Start abre — manager já encerrou." },
+        { "labelEn": "Any questions?", "correct": false, "feedbackPt": "Manager já passou dessa etapa." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m06l06-learn-01", "type": "phrase_examples", "titleEn": "Meeting", "titlePt": "Reunião", "introPt": "Meeting = reunião — presencial ou online.", "examples": [
+        { "en": "We have a meeting at 10.", "pt": "reunião às 10" },
+        { "en": "The meeting is on Zoom.", "pt": "online" },
+        { "en": "It's a short meeting.", "pt": "reunião curta" },
+        { "en": "Join the meeting, please.", "pt": "participar" }
+      ]},
+      { "id": "m06l06-learn-02", "type": "phrase_examples", "titleEn": "Let's start", "titlePt": "Vamos começar", "introPt": "Abertura padrão — quem lidera diz Let's start.", "examples": [
+        { "en": "Let's start.", "pt": "vamos começar" },
+        { "en": "OK, let's get started.", "pt": "variação" },
+        { "en": "Shall we start?", "pt": "pergunta formal" },
+        { "en": "Let's begin with the agenda.", "pt": "começar pela agenda" }
+      ]},
+      { "id": "m06l06-learn-03", "type": "phrase_examples", "titleEn": "Agenda", "titlePt": "Pauta / agenda", "introPt": "Agenda = lista de assuntos da reunião.", "examples": [
+        { "en": "Here's the agenda.", "pt": "aqui está a pauta" },
+        { "en": "First on the agenda: travel.", "pt": "primeiro item" },
+        { "en": "Anything else for the agenda?", "pt": "mais algum item?" },
+        { "en": "Let's stick to the agenda.", "pt": "seguir a pauta" }
+      ]},
+      { "id": "m06l06-learn-04", "type": "phrase_examples", "titleEn": "Can we...?", "titlePt": "Podemos...?", "introPt": "Sugerir ou pedir algo na reunião — educado.", "examples": [
+        { "en": "Can we move on?", "pt": "próximo assunto" },
+        { "en": "Can we go back to that?", "pt": "voltar ao tópico" },
+        { "en": "Can we schedule another meeting?", "pt": "marcar outra" },
+        { "en": "Can we keep this short?", "pt": "ser breve" }
+      ]},
+      { "id": "m06l06-learn-05", "type": "phrase_examples", "titleEn": "Any questions?", "titlePt": "Alguma pergunta?", "introPt": "Manager pergunta no fim de cada tópico ou da reunião.", "examples": [
+        { "en": "Any questions?", "pt": "pergunta aberta" },
+        { "en": "Any questions so far?", "pt": "até agora" },
+        { "en": "No questions from me.", "pt": "resposta" },
+        { "en": "I have one question.", "pt": "tenho uma pergunta" }
+      ]},
+      { "id": "m06l06-learn-06", "type": "phrase_examples", "titleEn": "I agree / Sounds good", "titlePt": "Concordo / Parece bom", "introPt": "Concordar sem discurso longo.", "examples": [
+        { "en": "I agree.", "pt": "concordo" },
+        { "en": "Sounds good.", "pt": "parece bom" },
+        { "en": "That works for me.", "pt": "funciona pra mim" },
+        { "en": "OK, got it.", "pt": "entendi" }
+      ]},
+      { "id": "m06l06-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "Thanks for all. The meeting is finish.", "rightEn": "Thanks, everyone. That's all for today.", "explanationPt": "Thanks, everyone é o encerramento padrão. Evite 'the meeting is finish' — use That's all ou Good meeting." },
+      { "id": "m06l06-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Let's start.", "pt": "abrir" },
+        { "en": "Here's the agenda.", "pt": "pauta" },
+        { "en": "Can we move on?", "pt": "próximo tópico" },
+        { "en": "Any questions?", "pt": "perguntas" },
+        { "en": "I agree. / Sounds good.", "pt": "concordar" },
+        { "en": "Thanks, everyone.", "pt": "encerrar" },
+        { "en": "See you tomorrow.", "pt": "despedida" }
+      ]}
+    ],
+    "imitate": [{ "id": "m06l06-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Leia o fluxo da reunião em voz alta.", "phrases": [
+      { "en": "Let's start." }, { "en": "Here's the agenda for today." }, { "en": "First item: travel schedule." }, { "en": "Can we move on?" }, { "en": "Any questions?" }, { "en": "No questions from me." }, { "en": "Sounds good — I agree." }, { "en": "Thanks, everyone. See you tomorrow." }
+    ], "dialogueEn": "Let's start. Here's the agenda. First item: travel schedule. Can we move on? Any questions? — No questions from me. — Thanks, everyone. See you tomorrow." }],
+    "mission": [{ "id": "m06l06-miss-01", "type": "mission_intro", "headlineEn": "Join the meeting.", "headlinePt": "Participe da reunião.", "bodyPt": "Concorde, responda Any questions? e encerre.", "prompts": [{ "speaker": "Manager", "questionEn": "Let's start. Any questions?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m06l06-prac-01", "type": "choice", "promptPt": "Abrir reunião:", "options": [
+      { "labelEn": "Let's start.", "correct": true, "feedbackPt": "Abertura padrão." },
+      { "labelEn": "Let's finish.", "correct": false, "feedbackPt": "Finish encerra — não abre." },
+      { "labelEn": "Let's stop.", "correct": false, "feedbackPt": "Stop encerra." }
+    ]},
+    { "id": "m06l06-prac-02", "type": "fill_blank", "promptPt": "Pauta da reunião:", "templateEn": "Here's the ___.", "blankLabel": "palavra", "options": [
+      { "labelEn": "agenda", "correct": true, "feedbackPt": "Agenda = pauta." },
+      { "labelEn": "agendaing", "correct": false, "feedbackPt": "Agendaing não existe." },
+      { "labelEn": "meet", "correct": false, "feedbackPt": "Meet = encontrar — agenda é o substantivo." }
+    ]},
+    { "id": "m06l06-prac-03", "type": "choice", "promptPt": "Passar para próximo assunto:", "options": [
+      { "labelEn": "Can we move on?", "correct": true, "feedbackPt": "Move on = avançar." },
+      { "labelEn": "Can we move in?", "correct": false, "feedbackPt": "Move in = mudar de casa." },
+      { "labelEn": "Can we move it?", "correct": false, "feedbackPt": "Move on é a expressão." }
+    ]},
+    { "id": "m06l06-prac-04", "type": "reorder", "promptPt": "Monte a pergunta:", "tokens": ["questions?", "Any"], "correctOrder": ["Any", "questions?"], "feedbackCorrectPt": "Any questions?", "feedbackWrongPt": "Any questions? — ordem fixa." },
+    { "id": "m06l06-prac-05", "type": "dialogue_complete", "promptPt": "Manager pergunta Any questions?", "speaker": "You", "contextEn": "Manager: Any questions?", "options": [
+      { "labelEn": "No questions from me — thanks.", "correct": true, "feedbackPt": "Resposta clara." },
+      { "labelEn": "Questions any I no.", "correct": false, "feedbackPt": "Ordem incorreta." },
+      { "labelEn": "Let's start.", "correct": false, "feedbackPt": "Reunião já está em andamento." }
+    ]},
+    { "id": "m06l06-prac-06", "type": "fill_blank", "promptPt": "Concordar:", "templateEn": "Sounds ___ — I agree.", "blankLabel": "palavra", "options": [
+      { "labelEn": "good", "correct": true, "feedbackPt": "Sounds good = parece bom." },
+      { "labelEn": "well", "correct": false, "feedbackPt": "Sounds good — good é adjetivo aqui." },
+      { "labelEn": "nice", "correct": false, "feedbackPt": "Sounds good é o par fixo." }
+    ]},
+    { "id": "m06l06-prac-07", "type": "choice", "promptPt": "Encerrar reunião:", "options": [
+      { "labelEn": "Thanks, everyone.", "correct": true, "feedbackPt": "Encerramento padrão." },
+      { "labelEn": "Hello, everyone.", "correct": false, "feedbackPt": "Hello abre — não encerra." },
+      { "labelEn": "Any questions?", "correct": false, "feedbackPt": "Pergunta — não encerramento final." }
+    ]},
+    { "id": "m06l06-prac-08", "type": "dialogue_complete", "promptPt": "Confirmar entendimento da agenda:", "speaker": "You", "contextEn": "Manager: Here's the agenda for today.", "options": [
+      { "labelEn": "Sounds good — I agree.", "correct": true, "feedbackPt": "Concordância natural." },
+      { "labelEn": "Agenda is agenda.", "correct": false, "feedbackPt": "Sem conteúdo." },
+      { "labelEn": "Let's finish.", "correct": false, "feedbackPt": "Reunião acabou de começar." }
+    ]},
+    { "id": "m06l06-prac-09", "type": "fill_blank", "promptPt": "Vamos começar:", "templateEn": "Let's ___.", "blankLabel": "verbo", "options": [
+      { "labelEn": "start", "correct": true, "feedbackPt": "Let's start." },
+      { "labelEn": "starting", "correct": false, "feedbackPt": "Let's + base form." },
+      { "labelEn": "started", "correct": false, "feedbackPt": "Let's + infinitivo base." }
+    ]},
+    { "id": "m06l06-prac-10", "type": "choice", "promptPt": "Meeting significa:", "options": [
+      { "labelEn": "A scheduled work discussion.", "correct": true, "feedbackPt": "Reunião de trabalho." },
+      { "labelEn": "A lunch break.", "correct": false, "feedbackPt": "Lunch = almoço." },
+      { "labelEn": "A vacation day.", "correct": false, "feedbackPt": "Vacation = férias." }
+    ]}
+  ]
+}

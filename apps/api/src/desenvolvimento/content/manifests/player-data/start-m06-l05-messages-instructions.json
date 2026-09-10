@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 6,
+  "goalPt": "Entender e dar instruções curtas — Please..., Don't forget..., Make sure... — e confirmar com Got it.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Seu manager envia instruções por Slack antes de um evento — você precisa entender e confirmar.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Confirm instructions.",
+    "headlinePt": "Confirme instruções.",
+    "bodyPt": "",
+    "canDo": ["Please send the list by 3 PM.", "Don't forget to cc the manager.", "Make sure the file is attached.", "Got it.", "Will do.", "Understood.", "Give and confirm instructions"],
+    "production": {
+      "introPt": "Seu manager deu três instruções. Confirme que entendeu em uma resposta curta.",
+      "prompts": [
+        { "speaker": "Manager", "questionEn": "Please send the list by 3 PM. Don't forget to cc me. Make sure the file is attached." }
+      ],
+      "fields": [
+        { "id": "confirm", "labelPt": "Confirmação", "prefixEn": "", "placeholderEn": "Got it — I'll send the list by 3 PM with the file attached and cc you." }
+      ],
+      "exampleEn": "Got it — I'll send the list by 3 PM with the file attached and cc you."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m06l05-ctx-01", "type": "intro", "titleEn": "Messages & instructions", "titlePt": "Mensagens e instruções", "bodyPt": "Please, Don't forget e Make sure aparecem todo dia em Slack, email e reuniões. Saber confirmar com Got it ou Will do evita erro." },
+      { "id": "m06l05-ctx-02", "type": "scenario", "settingEn": "Slack · Pre-event instructions", "scenarioPt": "Manager manda instruções sobre envio de lista de convocados antes do jogo." },
+      { "id": "m06l05-ctx-03", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Please send the list by 3 PM.", "promptPt": "Please aqui indica:", "options": [
+        { "labelEn": "A polite instruction — do this.", "correct": true, "feedbackPt": "Please = por favor, faça isto." },
+        { "labelEn": "A question.", "correct": false, "feedbackPt": "Please + imperativo = instrução." },
+        { "labelEn": "Goodbye.", "correct": false, "feedbackPt": "É pedido/instrução." }
+      ]},
+      { "id": "m06l05-ctx-04", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Don't forget to cc me on the email.", "promptPt": "Melhor confirmação:", "options": [
+        { "labelEn": "Got it — I'll cc you.", "correct": true, "feedbackPt": "Got it = entendi." },
+        { "labelEn": "Forget I don't.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "What is cc?", "correct": false, "feedbackPt": "Cc = copiar no email — confirme se souber." }
+      ]},
+      { "id": "m06l05-ctx-05", "type": "dialogue_choice", "speaker": "Manager", "promptEn": "Make sure the file is attached.", "promptPt": "Make sure significa:", "options": [
+        { "labelEn": "Check that it is done — confirm.", "correct": true, "feedbackPt": "Make sure = certifique-se de que." },
+        { "labelEn": "Make something new.", "correct": false, "feedbackPt": "Make sure = verificar/garantir." },
+        { "labelEn": "Sure is making.", "correct": false, "feedbackPt": "Sem sentido." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m06l05-learn-01", "type": "phrase_examples", "titleEn": "Please...", "titlePt": "Por favor...", "introPt": "Please + verbo = instrução educada.", "examples": [
+        { "en": "Please send the list.", "pt": "envie a lista" },
+        { "en": "Please check the numbers.", "pt": "verifique os números" },
+        { "en": "Please reply by end of day.", "pt": "responda até fim do dia" },
+        { "en": "Please let me know.", "pt": "me avise" }
+      ]},
+      { "id": "m06l05-learn-02", "type": "phrase_examples", "titleEn": "Don't forget...", "titlePt": "Não esqueça...", "introPt": "Lembrete importante — comum antes de deadline.", "examples": [
+        { "en": "Don't forget to cc me.", "pt": "copiar no email" },
+        { "en": "Don't forget the attachment.", "pt": "anexo" },
+        { "en": "Don't forget to confirm with the team.", "pt": "confirmar com equipe" },
+        { "en": "Don't forget — meeting at 9.", "pt": "lembrete de horário" }
+      ]},
+      { "id": "m06l05-learn-03", "type": "phrase_examples", "titleEn": "Make sure...", "titlePt": "Certifique-se...", "introPt": "Verificar que algo está correto antes de enviar.", "examples": [
+        { "en": "Make sure the file is attached.", "pt": "anexo no email" },
+        { "en": "Make sure the dates are correct.", "pt": "datas corretas" },
+        { "en": "Make sure everyone got the email.", "pt": "todos receberam" },
+        { "en": "Double-check before you send.", "pt": "confira antes" }
+      ]},
+      { "id": "m06l05-learn-04", "type": "phrase_examples", "titleEn": "Got it / Will do", "titlePt": "Entendi / Pode deixar", "introPt": "Confirmação curta — mostra que você entendeu.", "examples": [
+        { "en": "Got it.", "pt": "entendi" },
+        { "en": "Will do.", "pt": "pode deixar" },
+        { "en": "Understood.", "pt": "compreendido" },
+        { "en": "Got it — thanks.", "pt": "entendi + grato" }
+      ]},
+      { "id": "m06l05-learn-05", "type": "phrase_examples", "titleEn": "Simple instructions", "titlePt": "Instruções simples", "introPt": "Imperativos comuns no trabalho.", "examples": [
+        { "en": "Send the email.", "pt": "envie" },
+        { "en": "Check the file.", "pt": "verifique" },
+        { "en": "Update the spreadsheet.", "pt": "atualize" },
+        { "en": "Call me when you're done.", "pt": "me ligue" }
+      ]},
+      { "id": "m06l05-learn-06", "type": "comparison", "titleEn": "Please vs Make sure vs Don't forget", "titlePt": "Três tipos de instrução", "left": { "labelEn": "PLEASE · DO", "exampleEn": "Please send the list.", "notePt": "Ação direta — faça isto." }, "right": { "labelEn": "DON'T FORGET / MAKE SURE · CHECK", "exampleEn": "Don't forget to cc me. Make sure the file is attached.", "notePt": "Lembrete ou verificação — não esqueça / confirme." }, "modelEn": "Please send it by 3. Don't forget to cc me. Make sure the file is attached.", "modelPt": "Managers combinam os três na mesma mensagem." },
+      { "id": "m06l05-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I understood. I will do. OK.", "rightEn": "Got it — will do.", "explanationPt": "Got it ou Will do soam naturais em Slack. Três frases separadas soam robóticas — una numa confirmação curta." },
+      { "id": "m06l05-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Please send the list.", "pt": "instrução" },
+        { "en": "Don't forget to cc me.", "pt": "lembrete" },
+        { "en": "Make sure the file is attached.", "pt": "verificar" },
+        { "en": "Got it.", "pt": "confirmação" },
+        { "en": "Will do.", "pt": "pode deixar" },
+        { "en": "by 3 PM / end of day", "pt": "prazo" },
+        { "en": "cc / attachment", "pt": "email vocab" }
+      ]}
+    ],
+    "imitate": [{ "id": "m06l05-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Pratique instruções e confirmações.", "phrases": [
+      { "en": "Please send the list by 3 PM." }, { "en": "Don't forget to cc me." }, { "en": "Make sure the file is attached." }, { "en": "Got it." }, { "en": "Will do." }, { "en": "Understood — I'll send it today." }, { "en": "Please check the dates." }, { "en": "Don't forget the attachment." }
+    ], "dialogueEn": "Please send the list by 3 PM. Don't forget to cc me. Make sure the file is attached. — Got it — will do!" }],
+    "mission": [{ "id": "m06l05-miss-01", "type": "mission_intro", "headlineEn": "Confirm the instructions.", "headlinePt": "Confirme as instruções.", "bodyPt": "Responda com Got it ou Will do + resumo.", "prompts": [{ "speaker": "Manager", "questionEn": "Please send the list by 3 PM. Don't forget to cc me. Make sure the file is attached." }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m06l05-prac-01", "type": "choice", "promptPt": "Instrução educada:", "options": [
+      { "labelEn": "Please send the list.", "correct": true, "feedbackPt": "Please + imperativo." },
+      { "labelEn": "Send please the.", "correct": false, "feedbackPt": "Ordem: Please send..." },
+      { "labelEn": "Please sending list.", "correct": false, "feedbackPt": "Use imperativo: send." }
+    ]},
+    { "id": "m06l05-prac-02", "type": "fill_blank", "promptPt": "Não esqueça:", "templateEn": "Don't ___ to cc me.", "blankLabel": "verbo", "options": [
+      { "labelEn": "forget", "correct": true, "feedbackPt": "Don't forget to..." },
+      { "labelEn": "forgot", "correct": false, "feedbackPt": "Don't + base form: forget." },
+      { "labelEn": "forgetting", "correct": false, "feedbackPt": "Don't forget — não forgetting." }
+    ]},
+    { "id": "m06l05-prac-03", "type": "choice", "promptPt": "Certifique-se de que:", "options": [
+      { "labelEn": "Make sure the file is attached.", "correct": true, "feedbackPt": "Make sure + frase." },
+      { "labelEn": "Make the sure file.", "correct": false, "feedbackPt": "Make sure é expressão fixa." },
+      { "labelEn": "Sure make file.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "m06l05-prac-04", "type": "reorder", "promptPt": "Monte confirmação:", "tokens": ["it.", "Got"], "correctOrder": ["Got", "it."], "feedbackCorrectPt": "Got it.", "feedbackWrongPt": "Got it — expressão fixa." },
+    { "id": "m06l05-prac-05", "type": "dialogue_complete", "promptPt": "Manager pede envio — confirme:", "speaker": "You", "contextEn": "Manager: Please send the list by 3 PM.", "options": [
+      { "labelEn": "Got it — I'll send it by 3 PM.", "correct": true, "feedbackPt": "Confirma + prazo." },
+      { "labelEn": "Please is send.", "correct": false, "feedbackPt": "Não repita instrução — confirme." },
+      { "labelEn": "3 PM list forget.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "m06l05-prac-06", "type": "fill_blank", "promptPt": "Pode deixar:", "templateEn": "___ do.", "blankLabel": "palavra", "options": [
+      { "labelEn": "Will", "correct": true, "feedbackPt": "Will do = pode deixar." },
+      { "labelEn": "Would", "correct": false, "feedbackPt": "Will do é a expressão." },
+      { "labelEn": "Do", "correct": false, "feedbackPt": "Will do — duas palavras." }
+    ]},
+    { "id": "m06l05-prac-07", "type": "choice", "promptPt": "Got it significa:", "options": [
+      { "labelEn": "I understand.", "correct": true, "feedbackPt": "Entendi." },
+      { "labelEn": "I forgot.", "correct": false, "feedbackPt": "Got it = entendi, não esqueci." },
+      { "labelEn": "Goodbye.", "correct": false, "feedbackPt": "Confirmação, não despedida." }
+    ]},
+    { "id": "m06l05-prac-08", "type": "dialogue_complete", "promptPt": "Lembrete sobre anexo:", "speaker": "You", "contextEn": "Manager: Don't forget the attachment.", "options": [
+      { "labelEn": "Will do — I'll attach the file.", "correct": true, "feedbackPt": "Confirma ação." },
+      { "labelEn": "Forget don't attachment.", "correct": false, "feedbackPt": "Ordem incorreta." },
+      { "labelEn": "Attachment is forget.", "correct": false, "feedbackPt": "Sem sentido." }
+    ]},
+    { "id": "m06l05-prac-09", "type": "fill_blank", "promptPt": "Verificar datas:", "templateEn": "Make ___ the dates are correct.", "blankLabel": "palavra", "options": [
+      { "labelEn": "sure", "correct": true, "feedbackPt": "Make sure = certifique-se." },
+      { "labelEn": "certain", "correct": false, "feedbackPt": "Make sure é a expressão fixa." },
+      { "labelEn": "check", "correct": false, "feedbackPt": "Make sure, não make check." }
+    ]},
+    { "id": "m06l05-prac-10", "type": "choice", "promptPt": "Cc em email significa:", "options": [
+      { "labelEn": "Send a copy to someone.", "correct": true, "feedbackPt": "Cc = copiar no email." },
+      { "labelEn": "Close the email.", "correct": false, "feedbackPt": "Cc = carbon copy." },
+      { "labelEn": "Delete the message.", "correct": false, "feedbackPt": "Cc envia cópia." }
+    ]}
+  ]
+}

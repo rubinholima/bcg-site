@@ -1,0 +1,149 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 6,
+  "goalPt": "Pedir ajuda de forma educada — I need help, Can you help me? e Could you...? — no dia a dia do trabalho.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você trava numa tarefa e precisa pedir ajuda a um colega em inglês.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "Ask for help politely.",
+    "headlinePt": "Peça ajuda com educação.",
+    "bodyPt": "",
+    "canDo": ["I need help.", "Can you help me?", "I need help with this report.", "Could you show me?", "Sure, no problem.", "What do you need?", "Ask for help politely"],
+    "production": {
+      "introPt": "Você precisa de ajuda com um relatório. Peça ajuda de forma educada em duas frases.",
+      "prompts": [{ "speaker": "You", "questionEn": "(You need help with the travel report.)" }],
+      "fields": [
+        { "id": "ask", "labelPt": "Pedir ajuda", "prefixEn": "", "placeholderEn": "Hi Alex — can you help me?" },
+        { "id": "detail", "labelPt": "Especificar", "prefixEn": "I need help with", "placeholderEn": "the travel report." }
+      ],
+      "exampleEn": "Hi Alex — can you help me? I need help with the travel report."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "m06l03-ctx-01", "type": "intro", "titleEn": "I need help", "titlePt": "Preciso de ajuda", "bodyPt": "Pedir ajuda em inglês no trabalho é normal e esperado. Can you help me? e I need help with... soam educados e diretos." },
+      { "id": "m06l03-ctx-02", "type": "scenario", "settingEn": "Office · Stuck on a task", "scenarioPt": "Você está no relatório de viagem e não entende um campo no sistema." },
+      { "id": "m06l03-ctx-03", "type": "dialogue_choice", "speaker": "You", "promptEn": "(You walk over to Alex's desk.)", "promptPt": "Como abrir o pedido:", "options": [
+        { "labelEn": "Hi Alex — can you help me?", "correct": true, "feedbackPt": "Educado e direto." },
+        { "labelEn": "Help me now!", "correct": false, "feedbackPt": "Muito abrupto — falta educação." },
+        { "labelEn": "You help I.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]},
+      { "id": "m06l03-ctx-04", "type": "dialogue_choice", "speaker": "Alex", "promptEn": "Sure! What do you need?", "promptPt": "Especificar o problema:", "options": [
+        { "labelEn": "I need help with the travel report.", "correct": true, "feedbackPt": "Help with + tarefa específica." },
+        { "labelEn": "I need help with help.", "correct": false, "feedbackPt": "Circular — seja específico." },
+        { "labelEn": "Help report travel need.", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]},
+      { "id": "m06l03-ctx-05", "type": "dialogue_choice", "speaker": "You", "promptEn": "(You want Alex to show you on the screen.)", "promptPt": "Pedido mais formal/educado:", "options": [
+        { "labelEn": "Could you show me how to fill this in?", "correct": true, "feedbackPt": "Could you = mais educado que can." },
+        { "labelEn": "Show me you could.", "correct": false, "feedbackPt": "Ordem incorreta." },
+        { "labelEn": "You show now.", "correct": false, "feedbackPt": "Imperativo seco — falta educação." }
+      ]}
+    ],
+    "learn": [
+      { "id": "m06l03-learn-01", "type": "phrase_examples", "titleEn": "I need help", "titlePt": "Preciso de ajuda", "introPt": "Frase direta e educada — comum quando você está travado.", "examples": [
+        { "en": "I need help.", "pt": "preciso de ajuda" },
+        { "en": "I need a little help.", "pt": "um pouco de ajuda" },
+        { "en": "I need some help with this.", "pt": "com isto" },
+        { "en": "Do you have a minute? I need help.", "pt": "abrir conversa" }
+      ]},
+      { "id": "m06l03-learn-02", "type": "phrase_examples", "titleEn": "Can you help me?", "titlePt": "Pode me ajudar?", "introPt": "Pergunta padrão — Can you + verbo.", "examples": [
+        { "en": "Can you help me?", "pt": "pedido geral" },
+        { "en": "Can you help me with this?", "pt": "com isto" },
+        { "en": "Can you help me for a minute?", "pt": "rapidinho" },
+        { "en": "Hey — can you help me?", "pt": "informal ok" }
+      ]},
+      { "id": "m06l03-learn-03", "type": "phrase_examples", "titleEn": "I need help with...", "titlePt": "Preciso de ajuda com...", "introPt": "Especifique a tarefa ou área — with + substantivo/-ing.", "examples": [
+        { "en": "I need help with the report.", "pt": "relatório" },
+        { "en": "I need help with the schedule.", "pt": "agenda" },
+        { "en": "I need help with this file.", "pt": "arquivo" },
+        { "en": "I need help with sending the email.", "pt": "enviar email" }
+      ]},
+      { "id": "m06l03-learn-04", "type": "phrase_examples", "titleEn": "Could you...?", "titlePt": "Seria possível...?", "introPt": "Could you = mais educado que Can you — ideal com manager ou cliente interno.", "examples": [
+        { "en": "Could you help me?", "pt": "ajuda geral" },
+        { "en": "Could you show me?", "pt": "mostrar" },
+        { "en": "Could you check this?", "pt": "verificar" },
+        { "en": "Could you explain that?", "pt": "explicar" }
+      ]},
+      { "id": "m06l03-learn-05", "type": "phrase_examples", "titleEn": "Responses", "titlePt": "Respostas", "introPt": "Como colega responde — e como você agradece.", "examples": [
+        { "en": "Sure, no problem.", "pt": "claro" },
+        { "en": "Of course. What do you need?", "pt": "o que precisa?" },
+        { "en": "I'm busy right now — can we do it in ten minutes?", "pt": "adiar" },
+        { "en": "Thanks, I really appreciate it.", "pt": "agradecer" }
+      ]},
+      { "id": "m06l03-learn-06", "type": "comparison", "titleEn": "Can you vs Could you", "titlePt": "Can vs Could", "left": { "labelEn": "CAN YOU · DIRECT", "exampleEn": "Can you help me with this file?", "notePt": "Normal entre colegas — direto e ok." }, "right": { "labelEn": "COULD YOU · POLITE", "exampleEn": "Could you help me with this file?", "notePt": "Mais suave — manager, cliente, situação formal." }, "modelEn": "Can you help me? → Could you show me how? (escala educação)", "modelPt": "Ambos funcionam — Could soa mais educado." },
+      { "id": "m06l03-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I need help for the report.", "rightEn": "I need help with the report.", "explanationPt": "Help with + tarefa. For indica benefício ('help for you'), não o objeto da ajuda." },
+      { "id": "m06l03-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "I need help.", "pt": "pedido direto" },
+        { "en": "Can you help me?", "pt": "pergunta" },
+        { "en": "I need help with the report.", "pt": "especificar" },
+        { "en": "Could you show me?", "pt": "mais educado" },
+        { "en": "Sure, no problem.", "pt": "resposta" },
+        { "en": "What do you need?", "pt": "pergunta do colega" },
+        { "en": "Thanks, I appreciate it.", "pt": "agradecer" }
+      ]}
+    ],
+    "imitate": [{ "id": "m06l03-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Pratique pedir e responder ajuda.", "phrases": [
+      { "en": "Can you help me?" }, { "en": "I need help with the report." }, { "en": "Could you show me how?" }, { "en": "Sure, no problem." }, { "en": "What do you need?" }, { "en": "I need help with this file." }, { "en": "Thanks, I really appreciate it." }, { "en": "Could you check this for me?" }
+    ], "dialogueEn": "Can you help me? — Sure! What do you need? — I need help with the travel report. — Could you show me how to fill this in? — Of course." }],
+    "mission": [{ "id": "m06l03-miss-01", "type": "mission_intro", "headlineEn": "Ask Alex for help.", "headlinePt": "Peça ajuda ao Alex.", "bodyPt": "Use Can/Could e especifique a tarefa.", "prompts": [{ "speaker": "You", "questionEn": "(You need help with the travel report.)" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "m06l03-prac-01", "type": "choice", "promptPt": "Pedido educado de ajuda:", "options": [
+      { "labelEn": "Can you help me?", "correct": true, "feedbackPt": "Padrão educado." },
+      { "labelEn": "Help me!", "correct": false, "feedbackPt": "Muito direto — falta Can/Could." },
+      { "labelEn": "You help.", "correct": false, "feedbackPt": "Imperativo seco." }
+    ]},
+    { "id": "m06l03-prac-02", "type": "fill_blank", "promptPt": "Ajuda com relatório:", "templateEn": "I need help ___ the report.", "blankLabel": "preposição", "options": [
+      { "labelEn": "with", "correct": true, "feedbackPt": "Help with + tarefa." },
+      { "labelEn": "for", "correct": false, "feedbackPt": "Help for ≠ objeto da ajuda." },
+      { "labelEn": "in", "correct": false, "feedbackPt": "In não combina aqui." }
+    ]},
+    { "id": "m06l03-prac-03", "type": "choice", "promptPt": "Mais educado que Can you:", "options": [
+      { "labelEn": "Could you help me?", "correct": true, "feedbackPt": "Could = mais suave." },
+      { "labelEn": "Will you help me?", "correct": false, "feedbackPt": "Will é possível, mas Could é o padrão educado." },
+      { "labelEn": "Do you help me?", "correct": false, "feedbackPt": "Do you = hábito, não pedido." }
+    ]},
+    { "id": "m06l03-prac-04", "type": "reorder", "promptPt": "Monte o pedido:", "tokens": ["me?", "help", "you", "Can"], "correctOrder": ["Can", "you", "help", "me?"], "feedbackCorrectPt": "Can you help me?", "feedbackWrongPt": "Ordem: Can + you + help + me?" },
+    { "id": "m06l03-prac-05", "type": "dialogue_complete", "promptPt": "Alex pergunta o que precisa:", "speaker": "You", "contextEn": "Alex: What do you need?", "options": [
+      { "labelEn": "I need help with the travel report.", "correct": true, "feedbackPt": "Específico e claro." },
+      { "labelEn": "I need help with help.", "correct": false, "feedbackPt": "Seja específico." },
+      { "labelEn": "Need I help.", "correct": false, "feedbackPt": "Ordem incorreta." }
+    ]},
+    { "id": "m06l03-prac-06", "type": "fill_blank", "promptPt": "Mostrar como fazer:", "templateEn": "Could you ___ me how to do this?", "blankLabel": "verbo", "options": [
+      { "labelEn": "show", "correct": true, "feedbackPt": "Show me how = mostrar como." },
+      { "labelEn": "see", "correct": false, "feedbackPt": "See ≠ show." },
+      { "labelEn": "look", "correct": false, "feedbackPt": "Look me how não existe." }
+    ]},
+    { "id": "m06l03-prac-07", "type": "choice", "promptPt": "Resposta positiva do colega:", "options": [
+      { "labelEn": "Sure, no problem.", "correct": true, "feedbackPt": "Resposta comum e amigável." },
+      { "labelEn": "No, never.", "correct": false, "feedbackPt": "Recusa — contexto era ajuda." },
+      { "labelEn": "What is help?", "correct": false, "feedbackPt": "Não responde ao pedido." }
+    ]},
+    { "id": "m06l03-prac-08", "type": "dialogue_complete", "promptPt": "Pedir ajuda com arquivo:", "speaker": "You", "contextEn": "You're stuck on a file upload.", "options": [
+      { "labelEn": "Could you help me with this file?", "correct": true, "feedbackPt": "Could + help with + file." },
+      { "labelEn": "File help me could.", "correct": false, "feedbackPt": "Ordem incorreta." },
+      { "labelEn": "I need file.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "m06l03-prac-09", "type": "fill_blank", "promptPt": "Agradecer:", "templateEn": "Thanks, I really ___ it.", "blankLabel": "verbo", "options": [
+      { "labelEn": "appreciate", "correct": true, "feedbackPt": "I appreciate it = agradeço." },
+      { "labelEn": "approach", "correct": false, "feedbackPt": "Approach = abordar." },
+      { "labelEn": "apply", "correct": false, "feedbackPt": "Apply = aplicar." }
+    ]},
+    { "id": "m06l03-prac-10", "type": "choice", "promptPt": "Help with vs help for:", "options": [
+      { "labelEn": "Help with = the task; help for = who benefits.", "correct": true, "feedbackPt": "With + tarefa é o padrão." },
+      { "labelEn": "They are always interchangeable.", "correct": false, "feedbackPt": "With é o padrão para tarefas." },
+      { "labelEn": "Help for the report is correct.", "correct": false, "feedbackPt": "Use help with the report." }
+    ]}
+  ]
+}
