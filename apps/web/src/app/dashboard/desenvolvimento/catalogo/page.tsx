@@ -32,7 +32,7 @@ export default function DesenvolvimentoCatalogoPage() {
   }, [canAccessModule, loading, router]);
 
   return (
-    <Cup360PageShell title="Catálogo">
+    <Cup360PageShell>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((c) => (
           <article key={c.id} className="rounded-lg border border-border/60 bg-card p-4 flex flex-col gap-3">

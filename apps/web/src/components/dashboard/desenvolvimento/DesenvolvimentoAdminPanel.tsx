@@ -71,7 +71,7 @@ export function DesenvolvimentoAdminPanel() {
   };
 
   return (
-    <Cup360PageShell title="Administração — Desenvolvimento">
+    <Cup360PageShell>
       <div className="space-y-4">
         <div className="flex flex-col gap-3 rounded-lg border border-border/60 bg-muted/10 p-4 sm:flex-row sm:flex-wrap sm:items-end">
           <div className="min-w-0 flex-1 space-y-1">

@@ -121,7 +121,7 @@ export function DesenvolvimentoAdminCourseEditor({ courseId }: { courseId: strin
   };
 
   return (
-    <Cup360PageShell title={course.title}>
+    <Cup360PageShell>
       <div className="mb-4">
         <Button asChild variant="ghost" size="sm">
           <Link href="/dashboard/desenvolvimento/admin">

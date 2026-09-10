@@ -25,7 +25,7 @@ export default function DesenvolvimentoMeusCursosPage() {
   }, [canAccessModule, loading, router]);
 
   return (
-    <Cup360PageShell title="Meus cursos">
+    <Cup360PageShell>
       <div className="space-y-3">
         {items.map((item) => (
           <article

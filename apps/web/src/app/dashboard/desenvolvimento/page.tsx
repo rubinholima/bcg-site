@@ -29,7 +29,7 @@ export default function DesenvolvimentoHubPage() {
   const cont = hub?.continueLearning;
 
   return (
-    <Cup360PageShell title="Desenvolvimento" description="Cursos · Treinamentos · Tutoriais">
+    <Cup360PageShell>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label="Matriculados" value={hub?.totals.enrolled ?? "—"} icon={GraduationCap} />
         <KpiCard label="Em andamento" value={hub?.totals.inProgress ?? "—"} icon={BookOpen} tone="info" />
