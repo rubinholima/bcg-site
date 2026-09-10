@@ -1,0 +1,559 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 8,
+  "goalPt": "Desafio cumulativo M8 — aeroporto, hotel, transporte, reservas, cancelamentos e esclarecimento.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Voo atrasado, bagagem extraviada, hotel sem Wi-Fi, reserva de jantar para mudar — resolva tudo em inglês.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Solve the travel problem scenario.",
+    "headlinePt": "Resolva o cenário de problema de viagem.",
+    "bodyPt": "Integre M8: aeroporto → hotel → reserva → transporte, usando esclarecimento quando necessário.",
+    "canDo": [
+      "Airport + clarification",
+      "Hotel + reservation",
+      "Change booking",
+      "Transport"
+    ],
+    "production": {
+      "introPt": "Simule o dia difícil: 4 momentos em frases curtas.",
+      "prompts": [
+        {
+          "speaker": "Agent",
+          "questionEn": "Gate changed to D4, terminal 2."
+        },
+        {
+          "speaker": "Reception",
+          "questionEn": "How can I help?"
+        },
+        {
+          "speaker": "Host",
+          "questionEn": "Your 7 PM reservation?"
+        },
+        {
+          "speaker": "Local",
+          "questionEn": "Need a ride?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "airport_hotel",
+          "labelPt": "Aeroporto + hotel",
+          "prefixEn": "",
+          "placeholderEn": "Didn't catch that — D4? Reservation under Silva. Wi-Fi isn't working."
+        },
+        {
+          "id": "booking_transport",
+          "labelPt": "Reserva + transporte",
+          "prefixEn": "",
+          "placeholderEn": "Change reservation to 9 PM. How much to conference center? Call a taxi, please."
+        }
+      ],
+      "exampleEn": "Gate D4? Terminal 2? — Reservation Silva, Wi-Fi broken please. — Change dinner to 9 PM. — Taxi to conference center — how much?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em08-l07-ctx-01",
+        "type": "intro",
+        "titleEn": "Travel Problem Challenge",
+        "titlePt": "Desafio Problema de Viagem",
+        "bodyPt": "Um dia difícil de viagem: conexão apertada, problema no hotel, reserva alterada e comunicação com staff."
+      },
+      {
+        "id": "em08-l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Travel day gone wrong · Airport → hotel → phone calls",
+        "scenarioPt": "Voo atrasado, bagagem extraviada, hotel sem Wi-Fi, reserva de jantar para mudar — resolva tudo em inglês."
+      },
+      {
+        "id": "em08-l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Agent",
+        "promptEn": "Your connection is tight — gate changed to D4.",
+        "promptPt": "Passo 1 — aeroporto.",
+        "options": [
+          {
+            "labelEn": "Sorry, I didn't catch that. Gate D4? Which terminal?",
+            "correct": true,
+            "feedbackPt": "L06 clarificação + L01 aeroporto."
+          },
+          {
+            "labelEn": "I am allergic to nuts.",
+            "correct": false,
+            "feedbackPt": "M7."
+          },
+          {
+            "labelEn": "You should rest.",
+            "correct": false,
+            "feedbackPt": "M7."
+          }
+        ]
+      },
+      {
+        "id": "em08-l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Reception",
+        "promptEn": "Welcome! How can I help?",
+        "promptPt": "Passo 2 — hotel.",
+        "options": [
+          {
+            "labelEn": "I have a reservation under Silva. The Wi-Fi isn't working — could someone take a look?",
+            "correct": true,
+            "feedbackPt": "L04 reserva + L02 serviços."
+          },
+          {
+            "labelEn": "Where is baggage claim?",
+            "correct": false,
+            "feedbackPt": "Já passou — ou ainda no aeroporto."
+          },
+          {
+            "labelEn": "One-way ticket, please.",
+            "correct": false,
+            "feedbackPt": "Transporte."
+          }
+        ]
+      },
+      {
+        "id": "em08-l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Host",
+        "promptEn": "Restaurant — your 7 PM booking",
+        "promptPt": "Passo 3 — alterar reserva.",
+        "options": [
+          {
+            "labelEn": "I need to change my reservation to 9 PM. Something came up.",
+            "correct": true,
+            "feedbackPt": "L05 changes."
+          },
+          {
+            "labelEn": "I'd like to rent a car.",
+            "correct": false,
+            "feedbackPt": "L03 — contexto errado agora."
+          },
+          {
+            "labelEn": "Nothing to declare.",
+            "correct": false,
+            "feedbackPt": "Customs."
+          }
+        ]
+      },
+      {
+        "id": "em08-l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Staff",
+        "promptEn": "Taxi to the conference center?",
+        "promptPt": "Passo 4 — transporte.",
+        "options": [
+          {
+            "labelEn": "Yes — how much to the conference center? Could you call a taxi?",
+            "correct": true,
+            "feedbackPt": "L03 transporte."
+          },
+          {
+            "labelEn": "Late check-out until 2 PM.",
+            "correct": false,
+            "feedbackPt": "Hotel — passo anterior."
+          },
+          {
+            "labelEn": "Cancel my flight refund.",
+            "correct": false,
+            "feedbackPt": "Frase confusa."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em08-l07-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Module 8 review",
+        "titlePt": "Revisão Módulo 8",
+        "introPt": "Tudo do módulo de viagem e serviços.",
+        "examples": [
+          {
+            "en": "connecting flight / baggage claim",
+            "pt": "L01 aeroporto"
+          },
+          {
+            "en": "wake-up call / isn't working",
+            "pt": "L02 hotel"
+          },
+          {
+            "en": "rent a car / one-way ticket",
+            "pt": "L03 transporte"
+          },
+          {
+            "en": "book a table / under the name",
+            "pt": "L04 reservas"
+          },
+          {
+            "en": "change / cancel / reschedule",
+            "pt": "L05 alterações"
+          },
+          {
+            "en": "didn't catch / speak slowly",
+            "pt": "L06 esclarecimento"
+          }
+        ]
+      },
+      {
+        "id": "em08-l07-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "Airport expanded",
+            "pt": "L01"
+          },
+          {
+            "en": "Hotel services",
+            "pt": "L02"
+          },
+          {
+            "en": "Transport & renting",
+            "pt": "L03"
+          },
+          {
+            "en": "Reservations & changes",
+            "pt": "L04–L05"
+          },
+          {
+            "en": "Clarification",
+            "pt": "L06"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em08-l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Sorry, I didn't catch that — gate D4?"
+          },
+          {
+            "en": "I have a reservation. The Wi-Fi isn't working."
+          },
+          {
+            "en": "I need to change my reservation to 9 PM."
+          },
+          {
+            "en": "How much to the conference center?"
+          }
+        ],
+        "dialogueEn": "Gate changed to D4! — Sorry, didn't catch that — D4? — Yes, terminal 2. — Hotel: reservation under Silva. Wi-Fi isn't working! — Restaurant: change to 9 PM, something came up. — Taxi to conference center? — How much? Call one, please."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em08-l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Solve the travel problem scenario.",
+        "headlinePt": "Resolva o cenário de problema de viagem.",
+        "bodyPt": "Integre M8: aeroporto → hotel → reserva → transporte, usando esclarecimento quando necessário.",
+        "prompts": [
+          {
+            "speaker": "Agent",
+            "questionEn": "Gate changed to D4, terminal 2."
+          },
+          {
+            "speaker": "Reception",
+            "questionEn": "How can I help?"
+          },
+          {
+            "speaker": "Host",
+            "questionEn": "Your 7 PM reservation?"
+          },
+          {
+            "speaker": "Local",
+            "questionEn": "Need a ride?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em08-l07-prac-01",
+      "type": "choice",
+      "promptPt": "Desafio M8 — clarificação no aeroporto:",
+      "options": [
+        {
+          "labelEn": "Sorry, I didn't catch that. Gate D4?",
+          "correct": true,
+          "feedbackPt": "L06 + L01."
+        },
+        {
+          "labelEn": "Without cheese, please.",
+          "correct": false,
+          "feedbackPt": "M7."
+        },
+        {
+          "labelEn": "I exercise daily.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    },
+    {
+      "id": "em08-l07-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Hotel problem:",
+      "speaker": "You",
+      "contextEn": "Check-in + Wi-Fi broken.",
+      "options": [
+        {
+          "labelEn": "I have a reservation under Silva. The Wi-Fi isn't working — could someone take a look?",
+          "correct": true,
+          "feedbackPt": "L04 + L02."
+        },
+        {
+          "labelEn": "My bag didn't arrive at baggage claim.",
+          "correct": false,
+          "feedbackPt": "Aeroporto — pode ser antes, mas cenário atual é hotel."
+        },
+        {
+          "labelEn": "You shouldn't skip meals.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    },
+    {
+      "id": "em08-l07-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Alterar reserva:",
+      "templateEn": "I need to ___ my reservation to 9 PM.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "change",
+          "correct": true,
+          "feedbackPt": "L05."
+        },
+        {
+          "labelEn": "changed",
+          "correct": false,
+          "feedbackPt": "Need to + base."
+        },
+        {
+          "labelEn": "changing",
+          "correct": false,
+          "feedbackPt": "Need to + base."
+        }
+      ]
+    },
+    {
+      "id": "em08-l07-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Transport:",
+      "speaker": "You",
+      "contextEn": "Need taxi to conference.",
+      "options": [
+        {
+          "labelEn": "How much to the conference center? Could you call a taxi, please?",
+          "correct": true,
+          "feedbackPt": "L03."
+        },
+        {
+          "labelEn": "I'd like to cancel my reservation.",
+          "correct": false,
+          "feedbackPt": "L05 — contexto diferente."
+        },
+        {
+          "labelEn": "Room service, please.",
+          "correct": false,
+          "feedbackPt": "L02 — já no hotel."
+        }
+      ]
+    },
+    {
+      "id": "em08-l07-prac-05",
+      "type": "reorder",
+      "promptPt": "Bagagem extraviada:",
+      "tokens": [
+        "arrive.",
+        "didn't",
+        "bag",
+        "My"
+      ],
+      "correctOrder": [
+        "My",
+        "bag",
+        "didn't",
+        "arrive."
+      ],
+      "feedbackCorrectPt": "My bag didn't arrive.",
+      "feedbackWrongPt": "L01."
+    },
+    {
+      "id": "em08-l07-prac-06",
+      "type": "choice",
+      "promptPt": "Cancel + reason:",
+      "options": [
+        {
+          "labelEn": "Something came up — I can't make it.",
+          "correct": true,
+          "feedbackPt": "L05."
+        },
+        {
+          "labelEn": "Something came down.",
+          "correct": false,
+          "feedbackPt": "Came up — fixed phrase."
+        },
+        {
+          "labelEn": "I can make it something.",
+          "correct": false,
+          "feedbackPt": "Ordem errada."
+        }
+      ]
+    },
+    {
+      "id": "em08-l07-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Confirm reservation details:",
+      "speaker": "You",
+      "contextEn": "Host confirms Friday 8 PM, four people.",
+      "options": [
+        {
+          "labelEn": "So that's Friday at 8 PM for four people?",
+          "correct": true,
+          "feedbackPt": "L04 confirm."
+        },
+        {
+          "labelEn": "Gate C8, terminal 2?",
+          "correct": false,
+          "feedbackPt": "Aeroporto."
+        },
+        {
+          "labelEn": "Automatic, please.",
+          "correct": false,
+          "feedbackPt": "Car rental."
+        }
+      ]
+    },
+    {
+      "id": "em08-l07-prac-08",
+      "type": "fill_blank",
+      "promptPt": "Late check-out:",
+      "templateEn": "Could I have a ___ check-out?",
+      "blankLabel": "tipo",
+      "options": [
+        {
+          "labelEn": "late",
+          "correct": true,
+          "feedbackPt": "L02."
+        },
+        {
+          "labelEn": "later",
+          "correct": false,
+          "feedbackPt": "Late check-out — nome do serviço."
+        },
+        {
+          "labelEn": "delay",
+          "correct": false,
+          "feedbackPt": "Delay check-out — não usado."
+        }
+      ]
+    },
+    {
+      "id": "em08-l07-prac-09",
+      "type": "choice",
+      "promptPt": "Este desafio cobre:",
+      "options": [
+        {
+          "labelEn": "Full Module 8 — travel & services.",
+          "correct": true,
+          "feedbackPt": "Desafio cumulativo M8."
+        },
+        {
+          "labelEn": "Only airport vocabulary.",
+          "correct": false,
+          "feedbackPt": "M8 inteiro."
+        },
+        {
+          "labelEn": "START level content.",
+          "correct": false,
+          "feedbackPt": "ELEMENTARY."
+        }
+      ]
+    },
+    {
+      "id": "em08-l07-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Full scenario — first response:",
+      "speaker": "You",
+      "contextEn": "Agent: Gate changed to D4, boarding in 20 minutes, terminal 2.",
+      "options": [
+        {
+          "labelEn": "Sorry, I didn't catch that. D4, terminal 2? Boarding in 20 minutes?",
+          "correct": true,
+          "feedbackPt": "Clarificação + confirmação — início perfeito do desafio."
+        },
+        {
+          "labelEn": "I love Italian food. Without cheese.",
+          "correct": false,
+          "feedbackPt": "M7."
+        },
+        {
+          "labelEn": "I worked late yesterday.",
+          "correct": false,
+          "feedbackPt": "M4."
+        }
+      ]
+    }
+  ]
+}

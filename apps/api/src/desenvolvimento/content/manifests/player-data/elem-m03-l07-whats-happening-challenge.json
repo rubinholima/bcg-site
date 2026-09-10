@@ -1,0 +1,373 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 3,
+  "goalPt": "Desafio cumulativo do Módulo 3 — integrar Present Continuous (agora, temporário, contraste com simple). Sem vocabulário novo.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Desafio do módulo — descrever cena completa: trabalho, casa, contraste com rotina.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia o diálogo completo em voz alta.", "phrases": [] },
+  "practice": { "introPt": "Revisão cumulativa — feedback imediato.", "items": [] },
+  "mission": {
+    "headlineEn": "You can describe what's happening.",
+    "headlinePt": "Você consegue descrever o que está acontecendo.",
+    "bodyPt": "",
+    "canDo": [
+      "I am working. / I work every day.",
+      "They are having a meeting.",
+      "I'm staying at a hotel this week.",
+      "What are you doing? / What do you usually do?"
+    ],
+    "production": {
+      "introPt": "Monte uma conversa completa — rotina (simple), o que acontece agora (continuous), situação temporária e contraste. Use apenas lições 1 a 6.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What's happening? Tell me everything." }
+      ],
+      "fields": [
+        { "id": "routine", "labelPt": "Rotina (simple)", "prefixEn": "", "placeholderEn": "I work every day. I usually train on weekdays." },
+        { "id": "now", "labelPt": "Agora (continuous)", "prefixEn": "", "placeholderEn": "Right now I am working. They are having a meeting." },
+        { "id": "temporary", "labelPt": "Temporário", "prefixEn": "", "placeholderEn": "I'm staying at a hotel this week." },
+        { "id": "home", "labelPt": "Em casa agora", "prefixEn": "", "placeholderEn": "At home, the kids are doing homework." },
+        { "id": "question", "labelPt": "Uma pergunta sua", "prefixEn": "", "placeholderEn": "What are you doing right now?" }
+      ],
+      "exampleEn": "I work every day, but right now I am working from home. The team is having a meeting. I'm staying at a hotel this week. At home, the kids are doing homework. What are you doing?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e03l07-ctx-01",
+        "type": "intro",
+        "titleEn": "Module challenge",
+        "titlePt": "Desafio do módulo",
+        "bodyPt": "Hora de juntar tudo: ações agora, situações temporárias, contraste com rotina (START m04), trabalho e casa — numa conversa real."
+      },
+      {
+        "id": "e03l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Video call · End of day",
+        "scenarioPt": "Jamie liga no fim do dia e quer panorama completo."
+      },
+      {
+        "id": "e03l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are you doing right now?",
+        "promptPt": "Passo 1 — ação agora.",
+        "options": [
+          { "labelEn": "I am finishing a report.", "correct": true, "feedbackPt": "Continuous — agora." },
+          { "labelEn": "I finish reports every week.", "correct": false, "feedbackPt": "Hábito." },
+          { "labelEn": "I am finish a report.", "correct": false, "feedbackPt": "Am + finishing." }
+        ]
+      },
+      {
+        "id": "e03l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you work every day?",
+        "promptPt": "Passo 2 — rotina (simple).",
+        "options": [
+          { "labelEn": "Yes, I work every day.", "correct": true, "feedbackPt": "Simple present — hábito." },
+          { "labelEn": "Yes, I am working every day.", "correct": false, "feedbackPt": "Every day = simple." },
+          { "labelEn": "Yes, I worked every day.", "correct": false, "feedbackPt": "Passado." }
+        ]
+      },
+      {
+        "id": "e03l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Where are you staying this week?",
+        "promptPt": "Passo 3 — temporário.",
+        "options": [
+          { "labelEn": "I'm staying at a hotel near the stadium.", "correct": true, "feedbackPt": "This week = temporary." },
+          { "labelEn": "I stay at a hotel every week.", "correct": false, "feedbackPt": "Permanente." },
+          { "labelEn": "I am stay at a hotel.", "correct": false, "feedbackPt": "Am + staying." }
+        ]
+      },
+      {
+        "id": "e03l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What's going on at the office?",
+        "promptPt": "Passo 4 — workplace now.",
+        "options": [
+          { "labelEn": "The team is having a meeting.", "correct": true, "feedbackPt": "Workplace continuous." },
+          { "labelEn": "The team has meetings on Mondays.", "correct": false, "feedbackPt": "Rotina." },
+          { "labelEn": "The team is have a meeting.", "correct": false, "feedbackPt": "Is + having." }
+        ]
+      },
+      {
+        "id": "e03l07-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "And at home?",
+        "promptPt": "Passo 5 — everyday now.",
+        "options": [
+          { "labelEn": "The kids are doing homework.", "correct": true, "feedbackPt": "Home continuous." },
+          { "labelEn": "The kids do homework every day.", "correct": false, "feedbackPt": "Hábito, não agora." },
+          { "labelEn": "The kids is doing homework.", "correct": false, "feedbackPt": "Kids = are." }
+        ]
+      },
+      {
+        "id": "e03l07-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Look! What's Marco doing?",
+        "promptPt": "Passo 6 — ação visível.",
+        "options": [
+          { "labelEn": "He is running on the field.", "correct": true, "feedbackPt": "Look! + is running." },
+          { "labelEn": "He runs every day.", "correct": false, "feedbackPt": "Look = agora." },
+          { "labelEn": "He is run on the field.", "correct": false, "feedbackPt": "Is + running." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e03l07-learn-01",
+        "type": "review",
+        "titleEn": "Step 1 — Form",
+        "titlePt": "Passo 1 — Forma",
+        "items": [
+          { "en": "I am working. / He is eating.", "pt": "am/is/are + -ing" },
+          { "en": "They aren't available.", "pt": "negativa" },
+          { "en": "What are you doing?", "pt": "pergunta" },
+          { "en": "Yes, I am. / No, I'm not.", "pt": "resposta curta" }
+        ]
+      },
+      {
+        "id": "e03l07-learn-02",
+        "type": "review",
+        "titleEn": "Step 2 — Now & temporary",
+        "titlePt": "Passo 2 — Agora e temporário",
+        "items": [
+          { "en": "right now / at the moment / Look!", "pt": "agora" },
+          { "en": "this week / for now", "pt": "temporário" },
+          { "en": "I'm staying at a hotel this week.", "pt": "exemplo" }
+        ]
+      },
+      {
+        "id": "e03l07-learn-03",
+        "type": "comparison",
+        "titleEn": "Simple vs Continuous",
+        "titlePt": "Simples vs Contínuo",
+        "left": {
+          "labelEn": "SIMPLE · rotina",
+          "exampleEn": "I work every day. I usually train. I wake up at 6.",
+          "notePt": "Every day, usually, always — START m04."
+        },
+        "right": {
+          "labelEn": "CONTINUOUS · agora",
+          "exampleEn": "I am working now. They are training. I'm cooking dinner.",
+          "notePt": "Now, right now, this week, Look!"
+        },
+        "modelEn": "I work every day, but right now I am working from home.",
+        "modelPt": "Contraste na mesma conversa."
+      },
+      {
+        "id": "e03l07-learn-04",
+        "type": "review",
+        "titleEn": "Step 3 — Contexts",
+        "titlePt": "Passo 3 — Contextos",
+        "items": [
+          { "en": "They are having a meeting.", "pt": "workplace" },
+          { "en": "I'm cooking dinner.", "pt": "home" },
+          { "en": "He is driving home.", "pt": "transport" },
+          { "en": "Look! He is running.", "pt": "field" }
+        ]
+      },
+      {
+        "id": "e03l07-learn-05",
+        "type": "language_focus",
+        "titleEn": "Decision guide",
+        "titlePt": "Guia de decisão",
+        "items": [
+          { "formalEn": "Habit or fact?", "naturalEn": "→ Simple present", "notePt": "Every day, usually, I work in marketing." },
+          { "formalEn": "Happening now or temporary?", "naturalEn": "→ Present continuous", "notePt": "Now, this week, I am working." }
+        ],
+        "tipPt": "Olhe o marcador de tempo primeiro — ele decide o tempo verbal."
+      },
+      {
+        "id": "e03l07-learn-06",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "What are you doing?", "pt": "pergunta agora" },
+          { "en": "What do you usually do?", "pt": "pergunta hábito" },
+          { "en": "I am working. / I work every day.", "pt": "contraste" },
+          { "en": "I'm staying at a hotel this week.", "pt": "temporário" },
+          { "en": "What's going on?", "pt": "expressão" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e03l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Full module conversation",
+        "titlePt": "Conversa completa do módulo",
+        "introPt": "Leia o diálogo inteiro em voz alta.",
+        "phrases": [
+          { "en": "What are you doing right now?" },
+          { "en": "I am finishing a report." },
+          { "en": "Do you work every day?" },
+          { "en": "Yes, I work every day." },
+          { "en": "Where are you staying this week?" },
+          { "en": "I'm staying at a hotel." },
+          { "en": "The team is having a meeting." },
+          { "en": "The kids are doing homework." },
+          { "en": "Look! He is running." },
+          { "en": "What's going on?" }
+        ],
+        "dialogueEn": "What are you doing? — I am finishing a report. Do you work every day? — Yes. Where are you staying? — At a hotel this week. What's going on at the office? — The team is having a meeting. At home? — The kids are doing homework."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e03l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "What's happening challenge.",
+        "headlinePt": "Desafio O que está acontecendo.",
+        "bodyPt": "Descreva rotina, agora, temporário, trabalho e casa — tudo junto.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What's happening? Tell me everything." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e03l07-prac-01",
+      "type": "choice",
+      "promptPt": "Ação agora — melhor frase:",
+      "options": [
+        { "labelEn": "I am working on a report.", "correct": true, "feedbackPt": "Continuous — agora." },
+        { "labelEn": "I work on reports.", "correct": false, "feedbackPt": "Hábito." },
+        { "labelEn": "I am work on a report.", "correct": false, "feedbackPt": "Am + working." }
+      ]
+    },
+    {
+      "id": "e03l07-prac-02",
+      "type": "classify",
+      "promptPt": "Simple ou Continuous?",
+      "sentenceEn": "I usually train on weekdays.",
+      "category": "simple",
+      "feedbackCorrectPt": "Usually = simple present.",
+      "feedbackWrongPt": "Usually indica hábito."
+    },
+    {
+      "id": "e03l07-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Temporário — hotel esta semana:",
+      "templateEn": "I'm ___ at a hotel this week.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "staying", "correct": true, "feedbackPt": "Staying = temporary." },
+        { "labelEn": "stay", "correct": false, "feedbackPt": "Stay = hábito." },
+        { "labelEn": "stayed", "correct": false, "feedbackPt": "Passado." }
+      ]
+    },
+    {
+      "id": "e03l07-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What's going on at the office?",
+      "speaker": "You",
+      "contextEn": "Jamie: What's going on at the office?",
+      "options": [
+        { "labelEn": "The team is having a meeting.", "correct": true, "feedbackPt": "Workplace now." },
+        { "labelEn": "The team has meetings on Mondays.", "correct": false, "feedbackPt": "Rotina." },
+        { "labelEn": "The team is have a meeting.", "correct": false, "feedbackPt": "Is + having." }
+      ]
+    },
+    {
+      "id": "e03l07-prac-05",
+      "type": "reorder",
+      "promptPt": "Monte contraste completo:",
+      "tokens": ["home.", "from", "working", "am", "I", "day.", "every", "work", "I", "but", "now,", "right"],
+      "correctOrder": ["I", "work", "every", "day,", "but", "right", "now", "I", "am", "working", "from", "home."],
+      "feedbackCorrectPt": "I work every day, but right now I am working from home.",
+      "feedbackWrongPt": "Simple + continuous contrast."
+    },
+    {
+      "id": "e03l07-prac-06",
+      "type": "choice",
+      "promptPt": "Em casa — crianças agora:",
+      "options": [
+        { "labelEn": "The kids are doing homework.", "correct": true, "feedbackPt": "Continuous — agora." },
+        { "labelEn": "The kids do homework every day.", "correct": false, "feedbackPt": "Hábito." },
+        { "labelEn": "The kids is doing homework.", "correct": false, "feedbackPt": "Kids = are." }
+      ]
+    },
+    {
+      "id": "e03l07-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Look! Ele correndo:",
+      "templateEn": "Look! He ___ running.",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "is", "correct": true, "feedbackPt": "He + is." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "He → is." },
+        { "labelEn": "does", "correct": false, "feedbackPt": "Does = simple." }
+      ]
+    },
+    {
+      "id": "e03l07-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Do you work every day?",
+      "speaker": "You",
+      "contextEn": "Jamie: Do you work every day?",
+      "options": [
+        { "labelEn": "Yes, I work every day.", "correct": true, "feedbackPt": "Simple — rotina." },
+        { "labelEn": "Yes, I am working every day.", "correct": false, "feedbackPt": "Every day = simple." },
+        { "labelEn": "Yes, I working every day.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]
+    },
+    {
+      "id": "e03l07-prac-09",
+      "type": "classify",
+      "promptPt": "Marcador: right now",
+      "sentenceEn": "right now",
+      "category": "continuous",
+      "feedbackCorrectPt": "Right now → continuous.",
+      "feedbackWrongPt": "Right now = agora."
+    },
+    {
+      "id": "e03l07-prac-10",
+      "type": "choice",
+      "promptPt": "Melhor integração — módulo completo:",
+      "options": [
+        { "labelEn": "I work every day, but now I am working from home. The team is in a meeting. I'm staying at a hotel this week.", "correct": true, "feedbackPt": "Integra simple, continuous, workplace, temporary." },
+        { "labelEn": "I am work every day and team have meeting.", "correct": false, "feedbackPt": "Múltiplos erros." },
+        { "labelEn": "What time is it?", "correct": false, "feedbackPt": "Não integra o módulo." }
+      ]
+    },
+    {
+      "id": "e03l07-prac-11",
+      "type": "reorder",
+      "promptPt": "Monte: o que você está fazendo?",
+      "tokens": ["doing?", "you", "are", "What"],
+      "correctOrder": ["What", "are", "you", "doing?"],
+      "feedbackCorrectPt": "What are you doing?",
+      "feedbackWrongPt": "What + are + you + doing?"
+    },
+    {
+      "id": "e03l07-prac-12",
+      "type": "fill_blank",
+      "promptPt": "Negativa: não estão disponíveis:",
+      "templateEn": "They ___ available right now.",
+      "blankLabel": "negativa",
+      "options": [
+        { "labelEn": "aren't", "correct": true, "feedbackPt": "They aren't = negativa." },
+        { "labelEn": "don't", "correct": false, "feedbackPt": "Available = adjetivo, use aren't." },
+        { "labelEn": "isn't", "correct": false, "feedbackPt": "They → aren't." }
+      ]
+    }
+  ]
+}

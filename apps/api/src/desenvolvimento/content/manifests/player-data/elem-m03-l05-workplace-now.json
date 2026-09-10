@@ -1,0 +1,317 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 3,
+  "goalPt": "Descrever o que está acontecendo no ambiente de trabalho agora — reuniões, chamadas, tarefas em progresso.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Visitante chega ao departamento e pergunta o que cada pessoa está fazendo agora.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can describe the workplace now.",
+    "headlinePt": "Você consegue descrever o ambiente de trabalho agora.",
+    "bodyPt": "",
+    "canDo": ["The team is having a meeting.", "She is preparing a presentation.", "I'm finishing a report.", "They aren't available right now."],
+    "production": {
+      "introPt": "Descreva o que está acontecendo no seu departamento agora — 3 pessoas/situações.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What's going on in your department right now?" }
+      ],
+      "fields": [
+        { "id": "meeting", "labelPt": "Reunião", "prefixEn": "The team is", "placeholderEn": "having a meeting." },
+        { "id": "colleague", "labelPt": "Colega", "prefixEn": "She is", "placeholderEn": "preparing a presentation." },
+        { "id": "you", "labelPt": "Você", "prefixEn": "I'm", "placeholderEn": "finishing a report." }
+      ],
+      "exampleEn": "The team is having a meeting. Marco is on a call. I'm finishing a report. They aren't available right now."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e03l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Workplace now",
+        "titlePt": "Trabalho agora",
+        "bodyPt": "No escritório ou no clube, muitas coisas acontecem ao mesmo tempo. Present Continuous descreve reuniões, chamadas e tarefas em progresso."
+      },
+      {
+        "id": "e03l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Department office · Busy afternoon",
+        "scenarioPt": "Jamie visita o departamento e quer saber quem está fazendo o quê."
+      },
+      {
+        "id": "e03l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Is the team available?",
+        "promptPt": "Jamie pergunta se a equipe está livre.",
+        "options": [
+          { "labelEn": "No, they are having a meeting.", "correct": true, "feedbackPt": "Are having = reunião agora." },
+          { "labelEn": "No, they have meetings every day.", "correct": false, "feedbackPt": "Have = hábito." },
+          { "labelEn": "No, they is having a meeting.", "correct": false, "feedbackPt": "They + are." }
+        ]
+      },
+      {
+        "id": "e03l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What is Sarah doing?",
+        "promptPt": "Jamie pergunta sobre Sarah.",
+        "options": [
+          { "labelEn": "She is preparing a presentation.", "correct": true, "feedbackPt": "Is preparing = tarefa agora." },
+          { "labelEn": "She prepares presentations.", "correct": false, "feedbackPt": "Prepares = rotina." },
+          { "labelEn": "She is prepare a presentation.", "correct": false, "feedbackPt": "Is + preparing." }
+        ]
+      },
+      {
+        "id": "e03l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "And you? What are you doing?",
+        "promptPt": "Jamie pergunta sobre você.",
+        "options": [
+          { "labelEn": "I'm finishing a report.", "correct": true, "feedbackPt": "Finishing = quase pronto." },
+          { "labelEn": "I finish reports every week.", "correct": false, "feedbackPt": "Finish = hábito." },
+          { "labelEn": "I am finish a report.", "correct": false, "feedbackPt": "Am + finishing." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e03l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Meetings & calls",
+        "titlePt": "Reuniões e chamadas",
+        "introPt": "Atividades comuns no ambiente de trabalho — agora.",
+        "examples": [
+          { "en": "They are having a meeting.", "pt": "estão em reunião" },
+          { "en": "He is on a call.", "pt": "está em ligação" },
+          { "en": "We are discussing the budget.", "pt": "discutindo orçamento" },
+          { "en": "She is talking to a client.", "pt": "falando com cliente" }
+        ]
+      },
+      {
+        "id": "e03l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Tasks in progress",
+        "titlePt": "Tarefas em progresso",
+        "introPt": "Verbos comuns para trabalho em andamento.",
+        "examples": [
+          { "en": "I'm writing an email.", "pt": "escrevendo email" },
+          { "en": "She is preparing a presentation.", "pt": "preparando apresentação" },
+          { "en": "He is checking the schedule.", "pt": "conferindo agenda" },
+          { "en": "I'm finishing a report.", "pt": "finalizando relatório" }
+        ]
+      },
+      {
+        "id": "e03l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Availability",
+        "titlePt": "Disponibilidade",
+        "introPt": "Dizer que alguém não está disponível agora.",
+        "examples": [
+          { "en": "They aren't available right now.", "pt": "indisponíveis" },
+          { "en": "He isn't in the office.", "pt": "não está no escritório" },
+          { "en": "She is busy at the moment.", "pt": "ocupada agora" },
+          { "en": "Can I call you back? I'm in a meeting.", "pt": "ligo depois?" }
+        ]
+      },
+      {
+        "id": "e03l05-learn-04",
+        "type": "language_focus",
+        "titleEn": "Workplace vs routine",
+        "titlePt": "Trabalho agora vs rotina",
+        "items": [
+          { "formalEn": "Routine", "naturalEn": "I work in marketing. I have meetings on Mondays.", "notePt": "Simple present — cargo e hábito." },
+          { "formalEn": "Now", "naturalEn": "I'm in a meeting. She is preparing the report.", "notePt": "Continuous — o que acontece neste momento." }
+        ],
+        "tipPt": "Referência START m04: I work every day (rotina) vs I am working now (agora)."
+      },
+      {
+        "id": "e03l05-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Asking about colleagues",
+        "titlePt": "Perguntando sobre colegas",
+        "introPt": "Perguntas úteis no ambiente de trabalho.",
+        "examples": [
+          { "en": "What's going on?", "pt": "O que está acontecendo?" },
+          { "en": "Is Marco available?", "pt": "Marco está livre?" },
+          { "en": "What is she working on?", "pt": "No que ela trabalha?" },
+          { "en": "Are they still in the meeting?", "pt": "Ainda na reunião?" }
+        ]
+      },
+      {
+        "id": "e03l05-learn-06",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "They have a meeting now. / She is prepare the report.",
+        "rightEn": "They are having a meeting now. / She is preparing the report.",
+        "explanationPt": "Reunião agora = are having (não have). Is + verbo-ing sempre."
+      },
+      {
+        "id": "e03l05-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "They are having a meeting.", "pt": "reunião agora" },
+          { "en": "She is preparing a presentation.", "pt": "tarefa" },
+          { "en": "I'm finishing a report.", "pt": "finalizando" },
+          { "en": "They aren't available right now.", "pt": "indisponível" },
+          { "en": "What's going on?", "pt": "pergunta" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e03l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte ao seu departamento.",
+        "phrases": [
+          { "en": "They are having a meeting." },
+          { "en": "He is on a call." },
+          { "en": "She is preparing a presentation." },
+          { "en": "I'm finishing a report." },
+          { "en": "We are discussing the budget." },
+          { "en": "They aren't available right now." },
+          { "en": "What's going on in your department?" },
+          { "en": "Can I call you back? I'm in a meeting." }
+        ],
+        "dialogueEn": "Is the team available? — No, they are having a meeting. What is Sarah doing? — She is preparing a presentation. And you? — I'm finishing a report."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e03l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your department right now.",
+        "headlinePt": "Seu departamento agora.",
+        "bodyPt": "Descreva o que está acontecendo no trabalho neste momento.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What's going on in your department right now?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e03l05-prac-01",
+      "type": "choice",
+      "promptPt": "Equipe em reunião agora:",
+      "options": [
+        { "labelEn": "They are having a meeting.", "correct": true, "feedbackPt": "Are having = agora." },
+        { "labelEn": "They have a meeting every day.", "correct": false, "feedbackPt": "Have = hábito." },
+        { "labelEn": "They having a meeting.", "correct": false, "feedbackPt": "Falta are." }
+      ]
+    },
+    {
+      "id": "e03l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Ela prepara apresentação agora:",
+      "templateEn": "She ___ preparing a presentation.",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "is", "correct": true, "feedbackPt": "She + is." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "She → is." },
+        { "labelEn": "does", "correct": false, "feedbackPt": "Does = hábito." }
+      ]
+    },
+    {
+      "id": "e03l05-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Is Marco available?",
+      "speaker": "You",
+      "contextEn": "Jamie: Is Marco available?",
+      "options": [
+        { "labelEn": "No, he is on a call.", "correct": true, "feedbackPt": "Is on a call = agora." },
+        { "labelEn": "No, he calls every day.", "correct": false, "feedbackPt": "Calls = hábito." },
+        { "labelEn": "No, he is call.", "correct": false, "feedbackPt": "Is on a call ou is calling." }
+      ]
+    },
+    {
+      "id": "e03l05-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: estou finalizando relatório",
+      "tokens": ["report.", "a", "finishing", "I'm"],
+      "correctOrder": ["I'm", "finishing", "a", "report."],
+      "feedbackCorrectPt": "I'm finishing a report.",
+      "feedbackWrongPt": "I'm + finishing + a report."
+    },
+    {
+      "id": "e03l05-prac-05",
+      "type": "choice",
+      "promptPt": "Indisponíveis agora:",
+      "options": [
+        { "labelEn": "They aren't available right now.", "correct": true, "feedbackPt": "Aren't = negativa continuous." },
+        { "labelEn": "They don't available.", "correct": false, "feedbackPt": "Available é adjetivo — use aren't." },
+        { "labelEn": "They not available.", "correct": false, "feedbackPt": "Precisa aren't." }
+      ]
+    },
+    {
+      "id": "e03l05-prac-06",
+      "type": "fill_blank",
+      "promptPt": "O que está acontecendo?",
+      "templateEn": "What's ___ on?",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "going", "correct": true, "feedbackPt": "What's going on? = expressão fixa." },
+        { "labelEn": "go", "correct": false, "feedbackPt": "Going, não go." },
+        { "labelEn": "went", "correct": false, "feedbackPt": "Went = passado." }
+      ]
+    },
+    {
+      "id": "e03l05-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What is she working on?",
+      "speaker": "You",
+      "contextEn": "Jamie: What is she working on?",
+      "options": [
+        { "labelEn": "She is preparing the monthly report.", "correct": true, "feedbackPt": "Tarefa em progresso." },
+        { "labelEn": "She prepares reports every month.", "correct": false, "feedbackPt": "Hábito mensal." },
+        { "labelEn": "She prepared the report.", "correct": false, "feedbackPt": "Passado." }
+      ]
+    },
+    {
+      "id": "e03l05-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: discutindo o orçamento",
+      "tokens": ["budget.", "the", "discussing", "are", "We"],
+      "correctOrder": ["We", "are", "discussing", "the", "budget."],
+      "feedbackCorrectPt": "We are discussing the budget.",
+      "feedbackWrongPt": "We + are + discussing."
+    },
+    {
+      "id": "e03l05-prac-09",
+      "type": "choice",
+      "promptPt": "Rotina vs agora — cargo fixo:",
+      "options": [
+        { "labelEn": "I work in marketing.", "correct": true, "feedbackPt": "Simple = cargo permanente." },
+        { "labelEn": "I am working in marketing right now.", "correct": false, "feedbackPt": "Soa temporário." },
+        { "labelEn": "I am work in marketing.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]
+    },
+    {
+      "id": "e03l05-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Ainda na reunião?",
+      "templateEn": "Are they still ___ the meeting?",
+      "blankLabel": "preposição + -ing",
+      "options": [
+        { "labelEn": "in", "correct": true, "feedbackPt": "In a meeting / in the meeting." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "In the meeting é mais comum." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "On não combina." }
+      ]
+    }
+  ]
+}

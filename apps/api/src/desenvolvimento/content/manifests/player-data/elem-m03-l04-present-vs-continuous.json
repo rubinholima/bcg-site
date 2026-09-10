@@ -1,0 +1,360 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 3,
+  "goalPt": "Diferenciar Present Simple (rotina/hábito) e Present Continuous (agora/temporário) — tela de comparação essencial.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie mistura perguntas sobre rotina e sobre o que acontece agora — você precisa escolher o tempo certo.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can choose simple or continuous.",
+    "headlinePt": "Você consegue escolher simples ou contínuo.",
+    "bodyPt": "",
+    "canDo": ["I work every day. / I am working now.", "She usually trains. / She is training right now.", "What do you usually do? / What are you doing?"],
+    "production": {
+      "introPt": "Descreva sua rotina (simple) E o que você faz agora (continuous) — contraste os dois.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Tell me about your routine — and what's happening right now." }
+      ],
+      "fields": [
+        { "id": "routine", "labelPt": "Rotina (simple)", "prefixEn": "I usually", "placeholderEn": "train on weekdays." },
+        { "id": "now", "labelPt": "Agora (continuous)", "prefixEn": "Right now I am", "placeholderEn": "working on a report." },
+        { "id": "contrast", "labelPt": "Contraste", "prefixEn": "", "placeholderEn": "I work every day, but today I am working from home." }
+      ],
+      "exampleEn": "I usually train on weekdays. Right now I am working on a report. I work every day, but today I am working from home."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e03l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Simple vs Continuous",
+        "titlePt": "Simples vs Contínuo",
+        "bodyPt": "Dois tempos, dois usos: Present Simple = rotina e hábito. Present Continuous = agora e temporário. Esta lição é sobre escolher o certo."
+      },
+      {
+        "id": "e03l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Routine vs now",
+        "scenarioPt": "Jamie alterna perguntas sobre hábitos e sobre o momento atual."
+      },
+      {
+        "id": "e03l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you work every day?",
+        "promptPt": "Pergunta sobre hábito — qual tempo?",
+        "options": [
+          { "labelEn": "Yes, I work every day.", "correct": true, "feedbackPt": "Every day = simple present." },
+          { "labelEn": "Yes, I am working every day.", "correct": false, "feedbackPt": "Every day = hábito, não continuous." },
+          { "labelEn": "Yes, I worked every day.", "correct": false, "feedbackPt": "Worked = passado." }
+        ]
+      },
+      {
+        "id": "e03l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are you doing right now?",
+        "promptPt": "Pergunta sobre agora — qual tempo?",
+        "options": [
+          { "labelEn": "I am working on a report.", "correct": true, "feedbackPt": "Right now = continuous." },
+          { "labelEn": "I work on reports.", "correct": false, "feedbackPt": "Work = hábito geral." },
+          { "labelEn": "I worked on a report.", "correct": false, "feedbackPt": "Worked = passado." }
+        ]
+      },
+      {
+        "id": "e03l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Does she usually train on weekdays?",
+        "promptPt": "Usually = hábito.",
+        "options": [
+          { "labelEn": "Yes, she usually trains on weekdays.", "correct": true, "feedbackPt": "Usually + simple present." },
+          { "labelEn": "Yes, she is usually training.", "correct": false, "feedbackPt": "Usually combina com simple." },
+          { "labelEn": "Yes, she is training usually.", "correct": false, "feedbackPt": "Ordem e tempo errados." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e03l04-learn-01",
+        "type": "comparison",
+        "titleEn": "Present Simple vs Continuous",
+        "titlePt": "Presente Simples vs Contínuo",
+        "left": {
+          "labelEn": "PRESENT SIMPLE · rotina / hábito / fato",
+          "exampleEn": "I work every day. She trains on weekdays.",
+          "notePt": "Every day, usually, always, on Mondays. Verbo base (I work) ou -s (he works)."
+        },
+        "right": {
+          "labelEn": "PRESENT CONTINUOUS · agora / temporário",
+          "exampleEn": "I am working now. She is training right now.",
+          "notePt": "Now, right now, at the moment, this week. Am/is/are + -ing."
+        },
+        "modelEn": "I work every day, but right now I am working from home.",
+        "modelPt": "Os dois tempos na mesma frase — rotina vs exceção atual."
+      },
+      {
+        "id": "e03l04-learn-02",
+        "type": "comparison",
+        "titleEn": "Time markers map",
+        "titlePt": "Mapa de marcadores",
+        "left": {
+          "labelEn": "SIMPLE markers",
+          "exampleEn": "every day · usually · always · on weekdays · often",
+          "notePt": "Frequência e rotina → simple present."
+        },
+        "right": {
+          "labelEn": "CONTINUOUS markers",
+          "exampleEn": "now · right now · at the moment · this week · Look!",
+          "notePt": "Momento ou período temporário → continuous."
+        },
+        "modelEn": "I usually train on weekdays, but this week I am recovering.",
+        "modelPt": "Usually vs this week — tempos diferentes."
+      },
+      {
+        "id": "e03l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Same verb, different meaning",
+        "titlePt": "Mesmo verbo, significado diferente",
+        "introPt": "O verbo muda de tempo — o significado muda.",
+        "examples": [
+          { "en": "I work in marketing. (job — permanent)", "pt": "trabalho em marketing" },
+          { "en": "I am working on a project. (action now)", "pt": "estou trabalhando num projeto" },
+          { "en": "She lives in São Paulo. (permanent)", "pt": "mora em SP" },
+          { "en": "She is staying at a hotel. (temporary)", "pt": "está hospedada" }
+        ]
+      },
+      {
+        "id": "e03l04-learn-04",
+        "type": "language_focus",
+        "titleEn": "Questions — do vs are",
+        "titlePt": "Perguntas — do vs are",
+        "items": [
+          { "formalEn": "What do you usually do?", "naturalEn": "Habit question → Do/Does.", "notePt": "Simple present: Do you work? Does she train?" },
+          { "formalEn": "What are you doing?", "naturalEn": "Now question → Am/Is/Are.", "notePt": "Continuous: Are you working? Is she training?" }
+        ],
+        "tipPt": "Do/Does = hábito. Am/Is/Are = agora."
+      },
+      {
+        "id": "e03l04-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Contrast pairs",
+        "titlePt": "Pares de contraste",
+        "introPt": "Pratique pares simple vs continuous lado a lado.",
+        "examples": [
+          { "en": "I train every day. / I am training now.", "pt": "hábito / agora" },
+          { "en": "He works in the office. / He is working from home today.", "pt": "rotina / exceção" },
+          { "en": "They play on Saturdays. / They are playing right now.", "pt": "frequência / agora" },
+          { "en": "She usually eats at home. / She is eating out today.", "pt": "usually / today" }
+        ]
+      },
+      {
+        "id": "e03l04-learn-06",
+        "type": "comparison",
+        "titleEn": "Brazilian mistake fix",
+        "titlePt": "Correção — erro brasileiro",
+        "left": {
+          "labelEn": "WRONG · mistura",
+          "exampleEn": "I am work every day. / Right now I work.",
+          "notePt": "Brasileiros confundem os tempos ou esquecem -ing."
+        },
+        "right": {
+          "labelEn": "RIGHT · tempo certo",
+          "exampleEn": "I work every day. / Right now I am working.",
+          "notePt": "Marcador de tempo decide o tempo verbal."
+        },
+        "modelEn": "Every day I work. Now I am working.",
+        "modelPt": "Olhe o marcador — every day ou now?"
+      },
+      {
+        "id": "e03l04-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "I am working every day. / What do you doing?",
+        "rightEn": "I work every day. / What are you doing?",
+        "explanationPt": "Every day = simple. Pergunta continuous: What are you doing? (não do you doing)."
+      },
+      {
+        "id": "e03l04-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I work every day. (simple)", "pt": "rotina" },
+          { "en": "I am working now. (continuous)", "pt": "agora" },
+          { "en": "What do you usually do?", "pt": "pergunta hábito" },
+          { "en": "What are you doing?", "pt": "pergunta agora" },
+          { "en": "I usually train, but today I am resting.", "pt": "contraste" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e03l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — pratique o contraste.",
+        "phrases": [
+          { "en": "I work every day." },
+          { "en": "I am working now." },
+          { "en": "She usually trains on weekdays." },
+          { "en": "She is training right now." },
+          { "en": "What do you usually do?" },
+          { "en": "What are you doing?" },
+          { "en": "I work every day, but today I am working from home." },
+          { "en": "They play on Saturdays. They are playing now." }
+        ],
+        "dialogueEn": "Do you work every day? — Yes, I work every day. What are you doing right now? — I am working on a report. Does she usually train? — Yes, but today she is resting."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e03l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Routine and now — together.",
+        "headlinePt": "Rotina e agora — juntos.",
+        "bodyPt": "Contraste sua rotina (simple) com o que acontece agora (continuous).",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Tell me about your routine — and what's happening right now." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e03l04-prac-01",
+      "type": "classify",
+      "promptPt": "Simple ou Continuous?",
+      "sentenceEn": "I work every day.",
+      "category": "simple",
+      "feedbackCorrectPt": "Every day = hábito → simple present.",
+      "feedbackWrongPt": "Every day indica rotina."
+    },
+    {
+      "id": "e03l04-prac-02",
+      "type": "classify",
+      "promptPt": "Simple ou Continuous?",
+      "sentenceEn": "I am working right now.",
+      "category": "continuous",
+      "feedbackCorrectPt": "Right now = agora → continuous.",
+      "feedbackWrongPt": "Right now indica ação em progresso."
+    },
+    {
+      "id": "e03l04-prac-03",
+      "type": "choice",
+      "promptPt": "Trabalho todo dia — melhor frase:",
+      "options": [
+        { "labelEn": "I work every day.", "correct": true, "feedbackPt": "Every day = simple." },
+        { "labelEn": "I am working every day.", "correct": false, "feedbackPt": "Every day ≠ continuous." },
+        { "labelEn": "I am work every day.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]
+    },
+    {
+      "id": "e03l04-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What are you doing right now?",
+      "speaker": "You",
+      "contextEn": "Jamie: What are you doing right now?",
+      "options": [
+        { "labelEn": "I am working on a report.", "correct": true, "feedbackPt": "Right now = continuous." },
+        { "labelEn": "I work on reports.", "correct": false, "feedbackPt": "Hábito geral." },
+        { "labelEn": "I usually work.", "correct": false, "feedbackPt": "Não responde 'agora'." }
+      ]
+    },
+    {
+      "id": "e03l04-prac-05",
+      "type": "fill_blank",
+      "promptPt": "Ela costuma treinar (usually):",
+      "templateEn": "She usually ___ on weekdays.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "trains", "correct": true, "feedbackPt": "Usually + simple (she trains)." },
+        { "labelEn": "is training", "correct": false, "feedbackPt": "Usually = simple." },
+        { "labelEn": "training", "correct": false, "feedbackPt": "Falta auxiliar." }
+      ]
+    },
+    {
+      "id": "e03l04-prac-06",
+      "type": "reorder",
+      "promptPt": "Monte contraste: trabalho todo dia, mas hoje home office",
+      "tokens": ["home.", "from", "working", "am", "today", "I", "day.", "every", "work", "I", "but"],
+      "correctOrder": ["I", "work", "every", "day,", "but", "today", "I", "am", "working", "from", "home."],
+      "feedbackCorrectPt": "I work every day, but today I am working from home.",
+      "feedbackWrongPt": "Simple (every day) + continuous (today)."
+    },
+    {
+      "id": "e03l04-prac-07",
+      "type": "choice",
+      "promptPt": "Pergunta sobre hábito:",
+      "options": [
+        { "labelEn": "What do you usually do after work?", "correct": true, "feedbackPt": "Usually → Do you." },
+        { "labelEn": "What are you usually doing?", "correct": false, "feedbackPt": "Usually combina com simple." },
+        { "labelEn": "What you usually do?", "correct": false, "feedbackPt": "Falta do." }
+      ]
+    },
+    {
+      "id": "e03l04-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Do you work every day?",
+      "speaker": "You",
+      "contextEn": "Jamie: Do you work every day?",
+      "options": [
+        { "labelEn": "Yes, I work every day.", "correct": true, "feedbackPt": "Simple present." },
+        { "labelEn": "Yes, I am working every day.", "correct": false, "feedbackPt": "Every day = simple." },
+        { "labelEn": "Yes, I working every day.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]
+    },
+    {
+      "id": "e03l04-prac-09",
+      "type": "classify",
+      "promptPt": "Marcador: every day — qual tempo?",
+      "sentenceEn": "every day",
+      "category": "simple",
+      "feedbackCorrectPt": "Every day → Present Simple.",
+      "feedbackWrongPt": "Frequência fixa = simple."
+    },
+    {
+      "id": "e03l04-prac-10",
+      "type": "choice",
+      "promptPt": "Melhor contraste completo:",
+      "options": [
+        { "labelEn": "I usually train on weekdays, but today I am resting.", "correct": true, "feedbackPt": "Usually (simple) + today (continuous)." },
+        { "labelEn": "I am usually training on weekdays.", "correct": false, "feedbackPt": "Usually + continuous = erro." },
+        { "labelEn": "I usually am resting today.", "correct": false, "feedbackPt": "Ordem e tempo errados." }
+      ]
+    },
+    {
+      "id": "e03l04-prac-11",
+      "type": "fill_blank",
+      "promptPt": "O que você está fazendo? (pergunta)",
+      "templateEn": "What ___ you doing?",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "are", "correct": true, "feedbackPt": "Continuous: What are you doing?" },
+        { "labelEn": "do", "correct": false, "feedbackPt": "Do = simple present." },
+        { "labelEn": "is", "correct": false, "feedbackPt": "You → are." }
+      ]
+    },
+    {
+      "id": "e03l04-prac-12",
+      "type": "reorder",
+      "promptPt": "Monte: ela está treinando agora",
+      "tokens": ["now.", "right", "training", "is", "She"],
+      "correctOrder": ["She", "is", "training", "right", "now."],
+      "feedbackCorrectPt": "She is training right now.",
+      "feedbackWrongPt": "She + is + training + right now."
+    }
+  ]
+}

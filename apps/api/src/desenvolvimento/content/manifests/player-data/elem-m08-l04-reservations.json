@@ -1,0 +1,544 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 8,
+  "goalPt": "Fazer reservas — restaurante, hotel, mesa para dois, horário, confirmar detalhes.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Você liga para reservar mesa no restaurante e confirma reserva de hotel.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can make and confirm reservations.",
+    "headlinePt": "Você consegue fazer e confirmar reservas.",
+    "bodyPt": "",
+    "canDo": [
+      "Book a table",
+      "Table for two at 7 PM",
+      "Under the name...",
+      "Confirmation number"
+    ],
+    "production": {
+      "introPt": "Simule reserva de restaurante (mesa, horário, nome) e confirmação de hotel.",
+      "prompts": [
+        {
+          "speaker": "Host",
+          "questionEn": "Good evening. How can I help?"
+        },
+        {
+          "speaker": "Reception",
+          "questionEn": "Do you have a reservation?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "restaurant",
+          "labelPt": "Reserva restaurante",
+          "prefixEn": "",
+          "placeholderEn": "Table for two at 7 PM. Under the name Silva."
+        },
+        {
+          "id": "hotel",
+          "labelPt": "Reserva hotel",
+          "prefixEn": "",
+          "placeholderEn": "I have a reservation for two nights. Checking in under Silva."
+        }
+      ],
+      "exampleEn": "I'd like a table for two at 7 PM, under Silva. — I have a reservation for two nights. Can I have the confirmation number?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em08-l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Reservations",
+        "titlePt": "Reservas",
+        "bodyPt": "Book, reservation, table for two — fazer e confirmar reservas por telefone ou app."
+      },
+      {
+        "id": "em08-l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Phone call · Restaurant & hotel booking",
+        "scenarioPt": "Você liga para reservar mesa no restaurante e confirma reserva de hotel."
+      },
+      {
+        "id": "em08-l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Host",
+        "promptEn": "Good evening. How can I help?",
+        "promptPt": "Restaurante — reserva.",
+        "options": [
+          {
+            "labelEn": "I'd like to book a table for two at 7 PM, please.",
+            "correct": true,
+            "feedbackPt": "Book a table + detalhes."
+          },
+          {
+            "labelEn": "I'd like to book a fly for two.",
+            "correct": false,
+            "feedbackPt": "Table, não fly."
+          },
+          {
+            "labelEn": "I book table is two.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          }
+        ]
+      },
+      {
+        "id": "em08-l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Reception",
+        "promptEn": "Confirming hotel reservation",
+        "promptPt": "Confirmar reserva de hotel.",
+        "options": [
+          {
+            "labelEn": "I have a reservation under Lima. Checking in tonight.",
+            "correct": true,
+            "feedbackPt": "Under + sobrenome — comum."
+          },
+          {
+            "labelEn": "I have reservation under is me.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          },
+          {
+            "labelEn": "I reservation hotel am.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em08-l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Making a reservation",
+        "titlePt": "Fazer reserva",
+        "introPt": "Book / make a reservation.",
+        "examples": [
+          {
+            "en": "I'd like to make a reservation.",
+            "pt": "Quero fazer uma reserva."
+          },
+          {
+            "en": "A table for two, please.",
+            "pt": "Mesa para dois."
+          },
+          {
+            "en": "For tonight at 7 PM.",
+            "pt": "Hoje às 19h."
+          },
+          {
+            "en": "Under the name Silva.",
+            "pt": "No nome Silva."
+          }
+        ]
+      },
+      {
+        "id": "em08-l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Confirming details",
+        "titlePt": "Confirmar detalhes",
+        "introPt": "Repita e confirme para evitar erro.",
+        "examples": [
+          {
+            "en": "So that's Friday at 8 PM for four people?",
+            "pt": "Confirmando sexta 20h, 4 pessoas?"
+          },
+          {
+            "en": "Can I have the confirmation number?",
+            "pt": "Número de confirmação?"
+          },
+          {
+            "en": "Is outdoor seating available?",
+            "pt": "Tem mesa ao ar livre?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Hotel check-in with reservation",
+        "titlePt": "Check-in com reserva",
+        "introPt": "Na recepção do hotel.",
+        "examples": [
+          {
+            "en": "I have a reservation for two nights.",
+            "pt": "Reserva duas noites."
+          },
+          {
+            "en": "Checking in under Garcia.",
+            "pt": "Check-in nome Garcia."
+          },
+          {
+            "en": "I booked online.",
+            "pt": "Reservei online."
+          }
+        ]
+      },
+      {
+        "id": "em08-l04-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I want a reservation for 7 PM hours.",
+        "rightEn": "I'd like a table for two at 7 PM, please.",
+        "explanationPt": "At 7 PM — sem hours. Table for two = mesa para dois."
+      },
+      {
+        "id": "em08-l04-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "book / make a reservation",
+            "pt": "reservar"
+          },
+          {
+            "en": "table for two at 7 PM",
+            "pt": "mesa + horário"
+          },
+          {
+            "en": "under the name...",
+            "pt": "no nome"
+          },
+          {
+            "en": "confirmation number",
+            "pt": "confirmação"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em08-l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I'd like to book a table for two."
+          },
+          {
+            "en": "For tonight at 7 PM, please."
+          },
+          {
+            "en": "Under the name Silva."
+          },
+          {
+            "en": "I have a reservation for two nights."
+          },
+          {
+            "en": "Can I have the confirmation number?"
+          },
+          {
+            "en": "So that's Friday at 8 PM for four?"
+          }
+        ],
+        "dialogueEn": "Good evening. — I'd like to book a table for two at 7 PM. — Under what name? — Silva. — Confirmed! — At the hotel: I have a reservation under Silva, two nights. — Here's your confirmation number."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em08-l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can make and confirm reservations.",
+        "headlinePt": "Você consegue fazer e confirmar reservas.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Host",
+            "questionEn": "Good evening. How can I help?"
+          },
+          {
+            "speaker": "Reception",
+            "questionEn": "Do you have a reservation?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em08-l04-prac-01",
+      "type": "choice",
+      "promptPt": "Reservar mesa:",
+      "options": [
+        {
+          "labelEn": "I'd like to book a table for two.",
+          "correct": true,
+          "feedbackPt": "Book a table — padrão."
+        },
+        {
+          "labelEn": "I'd like to reserve a fly.",
+          "correct": false,
+          "feedbackPt": "Table, não fly."
+        },
+        {
+          "labelEn": "I book table two am.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em08-l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: No nome Silva.",
+      "templateEn": "Under the ___ Silva.",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "name",
+          "correct": true,
+          "feedbackPt": "Under the name..."
+        },
+        {
+          "labelEn": "names",
+          "correct": false,
+          "feedbackPt": "Singular — one name."
+        },
+        {
+          "labelEn": "called",
+          "correct": false,
+          "feedbackPt": "Under the called — errado."
+        }
+      ]
+    },
+    {
+      "id": "em08-l04-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Mesa para dois às 19h.",
+      "tokens": [
+        "PM.",
+        "7",
+        "at",
+        "two,",
+        "for",
+        "table",
+        "a"
+      ],
+      "correctOrder": [
+        "a",
+        "table",
+        "for",
+        "two,",
+        "at",
+        "7",
+        "PM."
+      ],
+      "feedbackCorrectPt": "A table for two at 7 PM.",
+      "feedbackWrongPt": "Table for X at time."
+    },
+    {
+      "id": "em08-l04-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Host: How can I help?",
+      "speaker": "You",
+      "contextEn": "Restaurant phone call.",
+      "options": [
+        {
+          "labelEn": "I'd like to make a reservation for four at 8 PM.",
+          "correct": true,
+          "feedbackPt": "Reserva completa."
+        },
+        {
+          "labelEn": "Where is baggage claim?",
+          "correct": false,
+          "feedbackPt": "Aeroporto."
+        },
+        {
+          "labelEn": "Rent a car, please.",
+          "correct": false,
+          "feedbackPt": "Locadora."
+        }
+      ]
+    },
+    {
+      "id": "em08-l04-prac-05",
+      "type": "choice",
+      "promptPt": "Book e make a reservation:",
+      "options": [
+        {
+          "labelEn": "Both mean to reserve something.",
+          "correct": true,
+          "feedbackPt": "Sinônimos comuns."
+        },
+        {
+          "labelEn": "Book means cancel.",
+          "correct": false,
+          "feedbackPt": "Oposto."
+        },
+        {
+          "labelEn": "Only for flights.",
+          "correct": false,
+          "feedbackPt": "Restaurante, hotel também."
+        }
+      ]
+    },
+    {
+      "id": "em08-l04-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Número de confirmação?",
+      "templateEn": "Can I have the ___ number?",
+      "blankLabel": "tipo",
+      "options": [
+        {
+          "labelEn": "confirmation",
+          "correct": true,
+          "feedbackPt": "Confirmation number."
+        },
+        {
+          "labelEn": "confirm",
+          "correct": false,
+          "feedbackPt": "Confirm number — errado."
+        },
+        {
+          "labelEn": "confirmed",
+          "correct": false,
+          "feedbackPt": "Confirmed number — errado."
+        }
+      ]
+    },
+    {
+      "id": "em08-l04-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Reception: Do you have a reservation?",
+      "speaker": "You",
+      "contextEn": "Hotel check-in.",
+      "options": [
+        {
+          "labelEn": "Yes — two nights under Silva. I booked online.",
+          "correct": true,
+          "feedbackPt": "Confirmação clara."
+        },
+        {
+          "labelEn": "One-way ticket, please.",
+          "correct": false,
+          "feedbackPt": "Transporte."
+        },
+        {
+          "labelEn": "Without cheese, please.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    },
+    {
+      "id": "em08-l04-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: Quero fazer uma reserva.",
+      "tokens": [
+        "reservation.",
+        "a",
+        "make",
+        "to",
+        "like",
+        "I'd"
+      ],
+      "correctOrder": [
+        "I'd",
+        "like",
+        "to",
+        "make",
+        "a",
+        "reservation."
+      ],
+      "feedbackCorrectPt": "I'd like to make a reservation.",
+      "feedbackWrongPt": "I'd like to make..."
+    },
+    {
+      "id": "em08-l04-prac-09",
+      "type": "choice",
+      "promptPt": "Confirmar: Sexta 20h, 4 pessoas?",
+      "options": [
+        {
+          "labelEn": "So that's Friday at 8 PM for four people?",
+          "correct": true,
+          "feedbackPt": "Confirmação natural."
+        },
+        {
+          "labelEn": "So Friday is four PM people?",
+          "correct": false,
+          "feedbackPt": "Ordem confusa."
+        },
+        {
+          "labelEn": "Four Friday 8 reservation?",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em08-l04-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Host: Under what name?",
+      "speaker": "You",
+      "contextEn": "Host: Under what name?",
+      "options": [
+        {
+          "labelEn": "Silva, please.",
+          "correct": true,
+          "feedbackPt": "Resposta direta."
+        },
+        {
+          "labelEn": "Gate C8.",
+          "correct": false,
+          "feedbackPt": "Aeroporto."
+        },
+        {
+          "labelEn": "Automatic, please.",
+          "correct": false,
+          "feedbackPt": "Car rental."
+        }
+      ]
+    }
+  ]
+}

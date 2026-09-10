@@ -1,0 +1,346 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 4,
+  "goalPt": "Verbos irregulares essenciais — went, had, saw, did (e come, get, make) — formas diferentes do presente.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie pergunta sobre fim de semana passado — você precisa dos irregulares mais comuns.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can use common irregular past verbs.",
+    "headlinePt": "Você consegue usar irregulares comuns no passado.",
+    "bodyPt": "",
+    "canDo": ["I went to the beach.", "We had a great time.", "I saw the game.", "What did you do?"],
+    "production": {
+      "introPt": "Conte seu fim de semana passado usando went, had, saw e did — pelo menos uma frase com cada.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What did you do last weekend?" }
+      ],
+      "fields": [
+        { "id": "went", "labelPt": "Go → went", "prefixEn": "I went", "placeholderEn": "to the beach." },
+        { "id": "had", "labelPt": "Have → had", "prefixEn": "We had", "placeholderEn": "a great time." },
+        { "id": "saw", "labelPt": "See → saw", "prefixEn": "I saw", "placeholderEn": "the game." },
+        { "id": "did", "labelPt": "Do → did", "prefixEn": "I did", "placeholderEn": "a lot of things." }
+      ],
+      "exampleEn": "Last weekend I went to the beach. We had a great time. I saw the game on TV. I did a lot of things — it was fun!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e04l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Irregular verbs",
+        "titlePt": "Verbos irregulares",
+        "bodyPt": "Alguns verbos NÃO usam -ed no passado. Os mais comuns: go→went, have→had, see→saw, do→did. Memorize — não há regra fixa."
+      },
+      {
+        "id": "e04l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Monday morning",
+        "scenarioPt": "Jamie quer ouvir sobre seu fim de semana passado."
+      },
+      {
+        "id": "e04l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Where did you go last weekend?",
+        "promptPt": "Jamie pergunta onde você foi.",
+        "options": [
+          { "labelEn": "I went to the beach.", "correct": true, "feedbackPt": "Go → went (irregular)." },
+          { "labelEn": "I go to the beach.", "correct": false, "feedbackPt": "Go = presente." },
+          { "labelEn": "I goed to the beach.", "correct": false, "feedbackPt": "Goed não existe — went." }
+        ]
+      },
+      {
+        "id": "e04l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you have a good time?",
+        "promptPt": "Jamie pergunta se foi bom.",
+        "options": [
+          { "labelEn": "Yes, we had a great time!", "correct": true, "feedbackPt": "Have → had." },
+          { "labelEn": "Yes, we have a great time.", "correct": false, "feedbackPt": "Have = presente." },
+          { "labelEn": "Yes, we haved a great time.", "correct": false, "feedbackPt": "Haved não existe — had." }
+        ]
+      },
+      {
+        "id": "e04l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you see the game?",
+        "promptPt": "Jamie pergunta se você viu o jogo.",
+        "options": [
+          { "labelEn": "Yes, I saw it on TV.", "correct": true, "feedbackPt": "See → saw." },
+          { "labelEn": "Yes, I see it on TV.", "correct": false, "feedbackPt": "See = presente." },
+          { "labelEn": "Yes, I seed it on TV.", "correct": false, "feedbackPt": "Seed não existe — saw." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e04l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Core set — go / have / see / do",
+        "titlePt": "Conjunto principal",
+        "introPt": "Quatro irregulares essenciais — memorize os pares.",
+        "examples": [
+          { "en": "go → went", "pt": "ir → fui" },
+          { "en": "have → had", "pt": "ter → tive" },
+          { "en": "see → saw", "pt": "ver → vi" },
+          { "en": "do → did", "pt": "fazer → fiz" }
+        ]
+      },
+      {
+        "id": "e04l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Sentences — went / had",
+        "titlePt": "Frases — went / had",
+        "introPt": "Exemplos no contexto de fim de semana.",
+        "examples": [
+          { "en": "I went to the beach.", "pt": "fui à praia" },
+          { "en": "We went out on Saturday.", "pt": "saímos sábado" },
+          { "en": "We had a great time.", "pt": "nos divertimos" },
+          { "en": "I had lunch with friends.", "pt": "almacei com amigos" }
+        ]
+      },
+      {
+        "id": "e04l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Sentences — saw / did",
+        "titlePt": "Frases — saw / did",
+        "introPt": "Mais exemplos comuns.",
+        "examples": [
+          { "en": "I saw the game on TV.", "pt": "vi o jogo" },
+          { "en": "She saw Marco at the stadium.", "pt": "viu Marco" },
+          { "en": "What did you do?", "pt": "O que fez?" },
+          { "en": "I did a lot of things.", "pt": "fiz muitas coisas" }
+        ]
+      },
+      {
+        "id": "e04l03-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Bonus irregulars",
+        "titlePt": "Irregulares extras",
+        "introPt": "Outros muito frequentes no dia a dia.",
+        "examples": [
+          { "en": "come → came", "pt": "vir → vim" },
+          { "en": "get → got", "pt": "pegar/conseguir → peguei" },
+          { "en": "make → made", "pt": "fazer → fiz (make)" },
+          { "en": "take → took", "pt": "levar → levei" }
+        ]
+      },
+      {
+        "id": "e04l03-learn-05",
+        "type": "comparison",
+        "titleEn": "Regular vs irregular",
+        "titlePt": "Regular vs irregular",
+        "left": {
+          "labelEn": "REGULAR · -ed",
+          "exampleEn": "watch → watched · play → played · visit → visited",
+          "notePt": "Regra previsível — lição 2."
+        },
+        "right": {
+          "labelEn": "IRREGULAR · memorize",
+          "exampleEn": "go → went · have → had · see → saw · do → did",
+          "notePt": "Forma diferente — não invente goed/haved."
+        },
+        "modelEn": "I watched the game (regular) and went home (irregular).",
+        "modelPt": "Na mesma frase, misture regular e irregular."
+      },
+      {
+        "id": "e04l03-learn-06",
+        "type": "language_focus",
+        "titleEn": "Have — two meanings",
+        "titlePt": "Have — dois significados",
+        "items": [
+          { "formalEn": "Have = possess", "naturalEn": "I have a car. (present)", "notePt": "Posse usa have no presente." },
+          { "formalEn": "Have = experience / meal", "naturalEn": "I had a great time. I had lunch.", "notePt": "Experiência ou refeição no passado → had." }
+        ],
+        "tipPt": "Had a good time / had lunch / had fun — expressões fixas no passado."
+      },
+      {
+        "id": "e04l03-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "I goed to the beach. / We haved fun. / I seed the game.",
+        "rightEn": "I went to the beach. / We had fun. / I saw the game.",
+        "explanationPt": "Irregulares não seguem -ed. Goed, haved, seed não existem — memorize went, had, saw."
+      },
+      {
+        "id": "e04l03-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "go → went · I went to the beach.", "pt": "ir" },
+          { "en": "have → had · We had a great time.", "pt": "ter/experiência" },
+          { "en": "see → saw · I saw the game.", "pt": "ver" },
+          { "en": "do → did · What did you do?", "pt": "fazer" },
+          { "en": "No goed / haved / seed!", "pt": "não invente" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e04l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — pratique os pares presente/passado.",
+        "phrases": [
+          { "en": "I went to the beach." },
+          { "en": "We had a great time." },
+          { "en": "I saw the game on TV." },
+          { "en": "What did you do last weekend?" },
+          { "en": "I did a lot of things." },
+          { "en": "She came home late." },
+          { "en": "We got tickets for the match." },
+          { "en": "He made dinner for us." }
+        ],
+        "dialogueEn": "Where did you go? — I went to the beach. Did you have a good time? — Yes, we had a great time! Did you see the game? — Yes, I saw it on TV."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e04l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Last weekend — irregular verbs.",
+        "headlinePt": "Fim de semana passado — irregulares.",
+        "bodyPt": "Use went, had, saw e did na sua história.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What did you do last weekend?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e04l03-prac-01",
+      "type": "choice",
+      "promptPt": "Go → passado:",
+      "options": [
+        { "labelEn": "went", "correct": true, "feedbackPt": "Go → went." },
+        { "labelEn": "goed", "correct": false, "feedbackPt": "Goed não existe." },
+        { "labelEn": "go", "correct": false, "feedbackPt": "Presente." }
+      ]
+    },
+    {
+      "id": "e04l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Have → passado (great time):",
+      "templateEn": "We ___ a great time!",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "had", "correct": true, "feedbackPt": "Have → had." },
+        { "labelEn": "have", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "haved", "correct": false, "feedbackPt": "Haved não existe." }
+      ]
+    },
+    {
+      "id": "e04l03-prac-03",
+      "type": "choice",
+      "promptPt": "See → passado:",
+      "options": [
+        { "labelEn": "saw", "correct": true, "feedbackPt": "See → saw." },
+        { "labelEn": "seed", "correct": false, "feedbackPt": "Seed não existe." },
+        { "labelEn": "seen", "correct": false, "feedbackPt": "Seen é particípio, não passado simples aqui." }
+      ]
+    },
+    {
+      "id": "e04l03-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: fui à praia",
+      "tokens": ["beach.", "the", "to", "went", "I"],
+      "correctOrder": ["I", "went", "to", "the", "beach."],
+      "feedbackCorrectPt": "I went to the beach.",
+      "feedbackWrongPt": "I + went + to the beach."
+    },
+    {
+      "id": "e04l03-prac-05",
+      "type": "fill_blank",
+      "promptPt": "Do → passado (pergunta):",
+      "templateEn": "What ___ you do last weekend?",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "did", "correct": true, "feedbackPt": "Do → did." },
+        { "labelEn": "do", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "does", "correct": false, "feedbackPt": "Does = presente 3ª pessoa." }
+      ]
+    },
+    {
+      "id": "e04l03-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Did you see the game?",
+      "speaker": "You",
+      "contextEn": "Jamie: Did you see the game?",
+      "options": [
+        { "labelEn": "Yes, I saw it on TV.", "correct": true, "feedbackPt": "See → saw." },
+        { "labelEn": "Yes, I see it on TV.", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "Yes, I sawed it on TV.", "correct": false, "feedbackPt": "Sawed não — saw." }
+      ]
+    },
+    {
+      "id": "e04l03-prac-07",
+      "type": "choice",
+      "promptPt": "Come → passado:",
+      "options": [
+        { "labelEn": "came", "correct": true, "feedbackPt": "Come → came." },
+        { "labelEn": "comed", "correct": false, "feedbackPt": "Comed não existe." },
+        { "labelEn": "come", "correct": false, "feedbackPt": "Presente." }
+      ]
+    },
+    {
+      "id": "e04l03-prac-08",
+      "type": "fill_blank",
+      "promptPt": "Get → passado:",
+      "templateEn": "We ___ tickets for the match.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "got", "correct": true, "feedbackPt": "Get → got." },
+        { "labelEn": "get", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "getted", "correct": false, "feedbackPt": "Getted não existe." }
+      ]
+    },
+    {
+      "id": "e04l03-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Where did you go?",
+      "speaker": "You",
+      "contextEn": "Jamie: Where did you go last weekend?",
+      "options": [
+        { "labelEn": "I went to the beach with friends.", "correct": true, "feedbackPt": "Went = passado de go." },
+        { "labelEn": "I go to the beach with friends.", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "I goed to the beach.", "correct": false, "feedbackPt": "Goed não existe." }
+      ]
+    },
+    {
+      "id": "e04l03-prac-10",
+      "type": "choice",
+      "promptPt": "Regular ou irregular — played vs went:",
+      "options": [
+        { "labelEn": "played = regular · went = irregular", "correct": true, "feedbackPt": "Played (-ed), went (memorize)." },
+        { "labelEn": "both regular", "correct": false, "feedbackPt": "Went é irregular." },
+        { "labelEn": "both irregular", "correct": false, "feedbackPt": "Played é regular." }
+      ]
+    },
+    {
+      "id": "e04l03-prac-11",
+      "type": "reorder",
+      "promptPt": "Monte: nos divertimos muito",
+      "tokens": ["time!", "great", "a", "had", "We"],
+      "correctOrder": ["We", "had", "a", "great", "time!"],
+      "feedbackCorrectPt": "We had a great time!",
+      "feedbackWrongPt": "We + had + a great time."
+    }
+  ]
+}

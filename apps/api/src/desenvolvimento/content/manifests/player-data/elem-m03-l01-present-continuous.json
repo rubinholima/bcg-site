@@ -1,0 +1,316 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 3,
+  "goalPt": "Introduzir o Present Continuous — am/is/are + verbo-ing para ações acontecendo agora.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie liga no meio da tarde e pergunta o que você está fazendo agora.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can say what you're doing right now.",
+    "headlinePt": "Você consegue dizer o que está fazendo agora.",
+    "bodyPt": "",
+    "canDo": ["I am working.", "She is eating lunch.", "They are waiting.", "What are you doing?"],
+    "production": {
+      "introPt": "Descreva o que você e outras pessoas estão fazendo neste momento.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Hey! What are you doing right now?" }
+      ],
+      "fields": [
+        { "id": "you", "labelPt": "Você agora", "prefixEn": "I am", "placeholderEn": "working on a report." },
+        { "id": "colleague", "labelPt": "Um colega (he/she)", "prefixEn": "He/She is", "placeholderEn": "talking on the phone." },
+        { "id": "team", "labelPt": "Equipe (they)", "prefixEn": "They are", "placeholderEn": "having a meeting." }
+      ],
+      "exampleEn": "I am working on a report. Marco is talking on the phone. They are having a meeting."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e03l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Present Continuous",
+        "titlePt": "Presente Contínuo",
+        "bodyPt": "Rotina usa Presente Simples (I work every day). Mas quando algo acontece AGORA, neste momento, usamos Present Continuous: I am working."
+      },
+      {
+        "id": "e03l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Mid-afternoon call",
+        "scenarioPt": "Jamie liga e quer saber o que está acontecendo no escritório agora."
+      },
+      {
+        "id": "e03l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are you doing right now?",
+        "promptPt": "Jamie pergunta o que você faz neste momento.",
+        "options": [
+          { "labelEn": "I am working on a report.", "correct": true, "feedbackPt": "Am + verbo-ing = ação agora." },
+          { "labelEn": "I work on a report.", "correct": false, "feedbackPt": "Work = hábito; am working = agora." },
+          { "labelEn": "I am work on a report.", "correct": false, "feedbackPt": "Precisa de working, não work." }
+        ]
+      },
+      {
+        "id": "e03l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Is Marco in the office?",
+        "promptPt": "Jamie pergunta sobre Marco agora.",
+        "options": [
+          { "labelEn": "Yes, he is talking on the phone.", "correct": true, "feedbackPt": "He is + -ing." },
+          { "labelEn": "Yes, he talks on the phone.", "correct": false, "feedbackPt": "Talks = hábito; is talking = agora." },
+          { "labelEn": "Yes, he is talk on the phone.", "correct": false, "feedbackPt": "Is + talking, não talk." }
+        ]
+      },
+      {
+        "id": "e03l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are they doing in the meeting room?",
+        "promptPt": "Jamie pergunta sobre a equipe.",
+        "options": [
+          { "labelEn": "They are having a meeting.", "correct": true, "feedbackPt": "They are + having." },
+          { "labelEn": "They have a meeting.", "correct": false, "feedbackPt": "Have = rotina; are having = agora." },
+          { "labelEn": "They is having a meeting.", "correct": false, "feedbackPt": "They usa are, não is." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e03l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Form: am / is / are + -ing",
+        "titlePt": "Forma: am / is / are + -ing",
+        "introPt": "Present Continuous = am/is/are + verbo com -ing. Descreve ação em progresso agora.",
+        "examples": [
+          { "en": "I am working.", "pt": "estou trabalhando" },
+          { "en": "He is eating.", "pt": "ele está comendo" },
+          { "en": "She is waiting.", "pt": "ela está esperando" },
+          { "en": "They are talking.", "pt": "eles estão conversando" }
+        ]
+      },
+      {
+        "id": "e03l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Adding -ing",
+        "titlePt": "Formando o -ing",
+        "introPt": "Regras básicas para formar o gerúndio em inglês.",
+        "examples": [
+          { "en": "work → working", "pt": "verbo regular" },
+          { "en": "eat → eating", "pt": "termina em e: remove e" },
+          { "en": "run → running", "pt": "CVC: dobra a consoante" },
+          { "en": "wait → waiting", "pt": "verbo regular" }
+        ]
+      },
+      {
+        "id": "e03l01-learn-03",
+        "type": "language_focus",
+        "titleEn": "When to use it",
+        "titlePt": "Quando usar",
+        "items": [
+          { "formalEn": "Action happening now", "naturalEn": "I am working right now.", "notePt": "Algo acontece neste exato momento." },
+          { "formalEn": "Not for habits", "naturalEn": "I work every day. (simple present)", "notePt": "Hábitos e rotinas continuam no Presente Simples." }
+        ],
+        "tipPt": "Right now, at the moment, now → sinal de Present Continuous."
+      },
+      {
+        "id": "e03l01-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Questions",
+        "titlePt": "Perguntas",
+        "introPt": "Inverta am/is/are para perguntar.",
+        "examples": [
+          { "en": "What are you doing?", "pt": "O que você está fazendo?" },
+          { "en": "Are you working?", "pt": "Você está trabalhando?" },
+          { "en": "Is she eating?", "pt": "Ela está comendo?" },
+          { "en": "What are they doing?", "pt": "O que eles estão fazendo?" }
+        ]
+      },
+      {
+        "id": "e03l01-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Short answers",
+        "titlePt": "Respostas curtas",
+        "introPt": "Respostas curtas com am/is/are — sem verbo completo.",
+        "examples": [
+          { "en": "Are you working? — Yes, I am.", "pt": "sim, estou" },
+          { "en": "Is he eating? — No, he isn't.", "pt": "não, não está" },
+          { "en": "Are they waiting? — Yes, they are.", "pt": "sim, estão" }
+        ]
+      },
+      {
+        "id": "e03l01-learn-06",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I am work now. / She is eat lunch.",
+        "rightEn": "I am working now. / She is eating lunch.",
+        "explanationPt": "Depois de am/is/are, o verbo SEMPRE leva -ing. Nunca use a forma base (work, eat) diretamente."
+      },
+      {
+        "id": "e03l01-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I am working.", "pt": "I + am + -ing" },
+          { "en": "He is eating lunch.", "pt": "he + is + -ing" },
+          { "en": "They are waiting.", "pt": "they + are + -ing" },
+          { "en": "What are you doing?", "pt": "pergunta" },
+          { "en": "Right now / at the moment", "pt": "marcadores de tempo" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e03l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte à sua situação real agora.",
+        "phrases": [
+          { "en": "I am working." },
+          { "en": "He is eating lunch." },
+          { "en": "She is waiting." },
+          { "en": "They are talking." },
+          { "en": "We are having a meeting." },
+          { "en": "What are you doing?" },
+          { "en": "Are you working right now?" },
+          { "en": "Yes, I am. / No, I'm not." }
+        ],
+        "dialogueEn": "What are you doing? — I am working on a report. Is Marco in? — Yes, he is talking on the phone. What are they doing? — They are having a meeting."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e03l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "What's happening right now?",
+        "headlinePt": "O que está acontecendo agora?",
+        "bodyPt": "Descreva o que você e outras pessoas estão fazendo neste momento.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Hey! What are you doing right now?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e03l01-prac-01",
+      "type": "choice",
+      "promptPt": "Trabalhando agora — melhor frase:",
+      "options": [
+        { "labelEn": "I am working.", "correct": true, "feedbackPt": "Am + working = agora." },
+        { "labelEn": "I work now.", "correct": false, "feedbackPt": "Work = hábito." },
+        { "labelEn": "I am work.", "correct": false, "feedbackPt": "Precisa de -ing." }
+      ]
+    },
+    {
+      "id": "e03l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Ela está comendo:",
+      "templateEn": "She ___ eating lunch.",
+      "blankLabel": "verbo auxiliar",
+      "options": [
+        { "labelEn": "is", "correct": true, "feedbackPt": "She + is." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "Are é para they/we/you." },
+        { "labelEn": "am", "correct": false, "feedbackPt": "Am é só para I." }
+      ]
+    },
+    {
+      "id": "e03l01-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: o que você está fazendo?",
+      "tokens": ["doing?", "you", "are", "What"],
+      "correctOrder": ["What", "are", "you", "doing?"],
+      "feedbackCorrectPt": "What are you doing?",
+      "feedbackWrongPt": "What + are + you + doing?"
+    },
+    {
+      "id": "e03l01-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Are you working? — sim",
+      "speaker": "You",
+      "contextEn": "Jamie: Are you working right now?",
+      "options": [
+        { "labelEn": "Yes, I am.", "correct": true, "feedbackPt": "Resposta curta correta." },
+        { "labelEn": "Yes, I do.", "correct": false, "feedbackPt": "Are → am, não do." },
+        { "labelEn": "Yes, I working.", "correct": false, "feedbackPt": "Precisa de am." }
+      ]
+    },
+    {
+      "id": "e03l01-prac-05",
+      "type": "choice",
+      "promptPt": "Work → forma -ing:",
+      "options": [
+        { "labelEn": "working", "correct": true, "feedbackPt": "Work + ing." },
+        { "labelEn": "workking", "correct": false, "feedbackPt": "Sem dobrar k." },
+        { "labelEn": "worked", "correct": false, "feedbackPt": "Worked é passado." }
+      ]
+    },
+    {
+      "id": "e03l01-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Eles estão esperando:",
+      "templateEn": "They ___ waiting.",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "are", "correct": true, "feedbackPt": "They + are." },
+        { "labelEn": "is", "correct": false, "feedbackPt": "Is é para he/she/it." },
+        { "labelEn": "am", "correct": false, "feedbackPt": "Am é para I." }
+      ]
+    },
+    {
+      "id": "e03l01-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte: ele está falando ao telefone",
+      "tokens": ["phone.", "the", "on", "talking", "is", "He"],
+      "correctOrder": ["He", "is", "talking", "on", "the", "phone."],
+      "feedbackCorrectPt": "He is talking on the phone.",
+      "feedbackWrongPt": "He + is + talking + on the phone."
+    },
+    {
+      "id": "e03l01-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What are they doing?",
+      "speaker": "You",
+      "contextEn": "Jamie: What are they doing in the meeting room?",
+      "options": [
+        { "labelEn": "They are having a meeting.", "correct": true, "feedbackPt": "Are + having = agora." },
+        { "labelEn": "They have a meeting.", "correct": false, "feedbackPt": "Have = rotina." },
+        { "labelEn": "They is having a meeting.", "correct": false, "feedbackPt": "They usa are." }
+      ]
+    },
+    {
+      "id": "e03l01-prac-09",
+      "type": "choice",
+      "promptPt": "Eat → forma -ing:",
+      "options": [
+        { "labelEn": "eating", "correct": true, "feedbackPt": "Remove e final + ing." },
+        { "labelEn": "eatting", "correct": false, "feedbackPt": "Não dobra t." },
+        { "labelEn": "eated", "correct": false, "feedbackPt": "Não existe." }
+      ]
+    },
+    {
+      "id": "e03l01-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Estou trabalhando agora:",
+      "templateEn": "I ___ working right now.",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "am", "correct": true, "feedbackPt": "I + am." },
+        { "labelEn": "is", "correct": false, "feedbackPt": "Is é para he/she." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "Are é para you/they." }
+      ]
+    }
+  ]
+}

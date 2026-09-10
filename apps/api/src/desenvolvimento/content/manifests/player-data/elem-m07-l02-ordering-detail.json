@@ -1,0 +1,573 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 7,
+  "goalPt": "Fazer pedidos com modificações — without, extra, on the side, well-done, rare, allergies no pedido.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Jantar de negócios. Você faz um pedido detalhado respeitando preferências e alergias.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can order with specific details.",
+    "headlinePt": "Você consegue pedir com detalhes específicos.",
+    "bodyPt": "",
+    "canDo": [
+      "Without..., please.",
+      "Medium / well-done.",
+      "On the side.",
+      "Does this contain...?"
+    ],
+    "production": {
+      "introPt": "Faça um pedido completo com pelo menos duas modificações.",
+      "prompts": [
+        {
+          "speaker": "Waiter",
+          "questionEn": "What can I get for you?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "order",
+          "labelPt": "Pedido principal",
+          "prefixEn": "I'd like",
+          "placeholderEn": "the grilled chicken, medium, please"
+        },
+        {
+          "id": "mods",
+          "labelPt": "Modificações",
+          "prefixEn": "",
+          "placeholderEn": "Without cheese. Extra vegetables on the side. No nuts, please."
+        }
+      ],
+      "exampleEn": "I'd like the grilled chicken, please. Without cheese. Extra vegetables on the side. No nuts, please."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em07-l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Ordering with detail",
+        "titlePt": "Pedidos com detalhe",
+        "bodyPt": "Além de I'd like..., você especifica como quer a comida — sem cebola, extra molho, ponto da carne, porção separada."
+      },
+      {
+        "id": "em07-l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Business dinner · Steakhouse",
+        "scenarioPt": "Jantar de negócios. Você faz um pedido detalhado respeitando preferências e alergias."
+      },
+      {
+        "id": "em07-l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "How would you like your steak cooked?",
+        "promptPt": "Garçom pergunta ponto da carne.",
+        "options": [
+          {
+            "labelEn": "Medium, please.",
+            "correct": true,
+            "feedbackPt": "Medium = ao ponto."
+          },
+          {
+            "labelEn": "Medium flight, please.",
+            "correct": false,
+            "feedbackPt": "Flight = voo."
+          },
+          {
+            "labelEn": "I am medium.",
+            "correct": false,
+            "feedbackPt": "Pessoa não é medium."
+          }
+        ]
+      },
+      {
+        "id": "em07-l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Ordering with modifications",
+        "promptPt": "Pedido com modificações.",
+        "options": [
+          {
+            "labelEn": "I'd like the burger without onions, please.",
+            "correct": true,
+            "feedbackPt": "Without = sem."
+          },
+          {
+            "labelEn": "I'd like the burger no onionsing.",
+            "correct": false,
+            "feedbackPt": "No onionsing não existe."
+          },
+          {
+            "labelEn": "Onions without burger.",
+            "correct": false,
+            "feedbackPt": "Ordem invertida."
+          }
+        ]
+      },
+      {
+        "id": "em07-l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "Any allergies I should know about?",
+        "promptPt": "Garçom pergunta alergias.",
+        "options": [
+          {
+            "labelEn": "Yes, no nuts in my dish, please — I'm allergic.",
+            "correct": true,
+            "feedbackPt": "Alergia + pedido claro."
+          },
+          {
+            "labelEn": "Yes, I am nuts.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          },
+          {
+            "labelEn": "Allergic please menu.",
+            "correct": false,
+            "feedbackPt": "Frase incompleta."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em07-l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Modifications — without / extra / on the side",
+        "titlePt": "Modificações no pedido",
+        "introPt": "Peça exatamente como quer.",
+        "examples": [
+          {
+            "en": "Without cheese, please.",
+            "pt": "Sem queijo."
+          },
+          {
+            "en": "Extra sauce on the side.",
+            "pt": "Molho extra à parte."
+          },
+          {
+            "en": "No ice, please.",
+            "pt": "Sem gelo."
+          },
+          {
+            "en": "Can I swap fries for salad?",
+            "pt": "Trocar batata por salada?"
+          }
+        ]
+      },
+      {
+        "id": "em07-l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "How would you like it cooked?",
+        "titlePt": "Ponto da carne",
+        "introPt": "Comum em churrascarias e steakhouses.",
+        "examples": [
+          {
+            "en": "Rare / medium-rare / medium / well-done",
+            "pt": "mal passada → bem passada"
+          },
+          {
+            "en": "Medium, please.",
+            "pt": "Ao ponto, por favor."
+          },
+          {
+            "en": "Well-done, no pink inside.",
+            "pt": "Bem passada."
+          }
+        ]
+      },
+      {
+        "id": "em07-l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Special requests",
+        "titlePt": "Pedidos especiais",
+        "introPt": "Frases educadas para personalizar.",
+        "examples": [
+          {
+            "en": "Could I have the dressing on the side?",
+            "pt": "Molho à parte?"
+          },
+          {
+            "en": "Is this dish spicy?",
+            "pt": "Este prato é picante?"
+          },
+          {
+            "en": "Does this contain nuts?",
+            "pt": "Contém amendoim/nozes?"
+          },
+          {
+            "en": "Could you recommend something light?",
+            "pt": "Algo leve?"
+          }
+        ]
+      },
+      {
+        "id": "em07-l02-learn-lf",
+        "type": "language_focus",
+        "titleEn": "On the side",
+        "titlePt": "On the side — à parte",
+        "items": [
+          {
+            "formalEn": "Please serve the sauce separately.",
+            "naturalEn": "Sauce on the side, please.",
+            "notePt": "On the side = servido à parte."
+          },
+          {
+            "formalEn": "I would like extra vegetables.",
+            "naturalEn": "Extra veggies, please.",
+            "notePt": "Extra = adicional."
+          }
+        ],
+        "tipPt": "On the side é muito comum — molho, salada, batatas servidos separados do prato principal."
+      },
+      {
+        "id": "em07-l02-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I want the steak medium rare well.",
+        "rightEn": "Medium-rare, please.",
+        "explanationPt": "Escolha um ponto: rare, medium-rare, medium ou well-done. Não combine todos."
+      },
+      {
+        "id": "em07-l02-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "without / extra / on the side",
+            "pt": "modificações"
+          },
+          {
+            "en": "medium / well-done",
+            "pt": "ponto da carne"
+          },
+          {
+            "en": "Does this contain...?",
+            "pt": "perguntar ingredientes"
+          },
+          {
+            "en": "No nuts, please.",
+            "pt": "alergia no pedido"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em07-l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I'd like the steak, medium, please."
+          },
+          {
+            "en": "Without onions, please."
+          },
+          {
+            "en": "Extra vegetables on the side."
+          },
+          {
+            "en": "Does this contain dairy?"
+          },
+          {
+            "en": "Could I have the sauce on the side?"
+          },
+          {
+            "en": "No nuts in my dish, please."
+          }
+        ],
+        "dialogueEn": "Are you ready to order? — I'd like the steak, medium, please. Without onions. — Sauce on the side? — Yes, please. — Any allergies? — No nuts, please. — Perfect!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em07-l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can order with specific details.",
+        "headlinePt": "Você consegue pedir com detalhes específicos.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Waiter",
+            "questionEn": "What can I get for you?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em07-l02-prac-01",
+      "type": "choice",
+      "promptPt": "Sem cebola no pedido:",
+      "options": [
+        {
+          "labelEn": "Without onions, please.",
+          "correct": true,
+          "feedbackPt": "Without + ingrediente."
+        },
+        {
+          "labelEn": "No onioning please.",
+          "correct": false,
+          "feedbackPt": "Forma incorreta."
+        },
+        {
+          "labelEn": "Onions without me.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Ao ponto, por favor.",
+      "templateEn": "___, please.",
+      "blankLabel": "ponto",
+      "options": [
+        {
+          "labelEn": "Medium",
+          "correct": true,
+          "feedbackPt": "Medium = ao ponto."
+        },
+        {
+          "labelEn": "Middle",
+          "correct": false,
+          "feedbackPt": "Middle não é ponto de carne."
+        },
+        {
+          "labelEn": "Center",
+          "correct": false,
+          "feedbackPt": "Center = centro."
+        }
+      ]
+    },
+    {
+      "id": "em07-l02-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Molho à parte, por favor.",
+      "tokens": [
+        "please.",
+        "side,",
+        "the",
+        "on",
+        "Sauce"
+      ],
+      "correctOrder": [
+        "Sauce",
+        "on",
+        "the",
+        "side,",
+        "please."
+      ],
+      "feedbackCorrectPt": "Sauce on the side, please.",
+      "feedbackWrongPt": "On the side = à parte."
+    },
+    {
+      "id": "em07-l02-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Waiter: How would you like your steak?",
+      "speaker": "You",
+      "contextEn": "Waiter: How would you like your steak cooked?",
+      "options": [
+        {
+          "labelEn": "Medium-rare, please.",
+          "correct": true,
+          "feedbackPt": "Ponto válido."
+        },
+        {
+          "labelEn": "Airport B12, please.",
+          "correct": false,
+          "feedbackPt": "Aeroporto — contexto errado."
+        },
+        {
+          "labelEn": "I am reservation.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l02-prac-05",
+      "type": "choice",
+      "promptPt": "Perguntar se contém amendoim:",
+      "options": [
+        {
+          "labelEn": "Does this contain nuts?",
+          "correct": true,
+          "feedbackPt": "Does this contain...?"
+        },
+        {
+          "labelEn": "Is this nuts have?",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        },
+        {
+          "labelEn": "Nuts is here?",
+          "correct": false,
+          "feedbackPt": "Forma não natural."
+        }
+      ]
+    },
+    {
+      "id": "em07-l02-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Batatas extra, por favor.",
+      "templateEn": "___ fries, please.",
+      "blankLabel": "extra",
+      "options": [
+        {
+          "labelEn": "Extra",
+          "correct": true,
+          "feedbackPt": "Extra = adicional."
+        },
+        {
+          "labelEn": "Morely",
+          "correct": false,
+          "feedbackPt": "Morely não existe."
+        },
+        {
+          "labelEn": "Addition",
+          "correct": false,
+          "feedbackPt": "Addition soa formal demais aqui."
+        }
+      ]
+    },
+    {
+      "id": "em07-l02-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Waiter: Any allergies?",
+      "speaker": "You",
+      "contextEn": "Waiter: Any allergies I should know about?",
+      "options": [
+        {
+          "labelEn": "Yes — no nuts in my dish, please. I'm allergic.",
+          "correct": true,
+          "feedbackPt": "Alergia + pedido."
+        },
+        {
+          "labelEn": "Yes, I am well-done.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        },
+        {
+          "labelEn": "Medium on the side.",
+          "correct": false,
+          "feedbackPt": "Mistura conceitos."
+        }
+      ]
+    },
+    {
+      "id": "em07-l02-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: Sem queijo, por favor.",
+      "tokens": [
+        "please.",
+        "cheese,",
+        "Without"
+      ],
+      "correctOrder": [
+        "Without",
+        "cheese,",
+        "please."
+      ],
+      "feedbackCorrectPt": "Without cheese, please.",
+      "feedbackWrongPt": "Without + ingredient."
+    },
+    {
+      "id": "em07-l02-prac-09",
+      "type": "choice",
+      "promptPt": "On the side significa:",
+      "options": [
+        {
+          "labelEn": "Served separately.",
+          "correct": true,
+          "feedbackPt": "À parte do prato principal."
+        },
+        {
+          "labelEn": "On the left side of the table.",
+          "correct": false,
+          "feedbackPt": "Não é posição na mesa."
+        },
+        {
+          "labelEn": "Outside the restaurant.",
+          "correct": false,
+          "feedbackPt": "Não é localização."
+        }
+      ]
+    },
+    {
+      "id": "em07-l02-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Waiter: What can I get for you?",
+      "speaker": "You",
+      "contextEn": "Waiter: What can I get for you?",
+      "options": [
+        {
+          "labelEn": "I'd like the salmon with extra vegetables. Sauce on the side, please.",
+          "correct": true,
+          "feedbackPt": "Pedido detalhado completo."
+        },
+        {
+          "labelEn": "Where is my gate?",
+          "correct": false,
+          "feedbackPt": "Aeroporto — contexto errado."
+        },
+        {
+          "labelEn": "I hate traveling.",
+          "correct": false,
+          "feedbackPt": "Fora de contexto."
+        }
+      ]
+    }
+  ]
+}

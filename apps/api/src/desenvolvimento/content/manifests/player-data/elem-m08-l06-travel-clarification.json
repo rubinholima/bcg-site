@@ -1,0 +1,561 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 8,
+  "goalPt": "Pedir esclarecimento e resolver problemas de comunicação — repeat, slower, I didn't understand, could you explain?",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Anúncio rápido no aeroporto. Você não entendeu — precisa pedir esclarecimento.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can ask for clarification when traveling.",
+    "headlinePt": "Você consegue pedir esclarecimento em viagem.",
+    "bodyPt": "",
+    "canDo": [
+      "Didn't catch that",
+      "Repeat / more slowly",
+      "Could you explain?",
+      "Just to confirm..."
+    ],
+    "production": {
+      "introPt": "Simule: não entendeu informação de portão — peça repetição, devagar e confirme.",
+      "prompts": [
+        {
+          "speaker": "Staff",
+          "questionEn": "Your connection departs from gate C8, terminal 2, boarding at 4:15."
+        }
+      ],
+      "fields": [
+        {
+          "id": "clarify",
+          "labelPt": "Pedir esclarecimento",
+          "prefixEn": "",
+          "placeholderEn": "Sorry, I didn't catch that. Could you repeat more slowly?"
+        },
+        {
+          "id": "confirm",
+          "labelPt": "Confirmar",
+          "prefixEn": "",
+          "placeholderEn": "Just to confirm — gate C8, terminal 2, boarding at 4:15?"
+        }
+      ],
+      "exampleEn": "Sorry, I didn't catch that. Could you speak more slowly? — Just to confirm: gate C8, terminal 2?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em08-l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Clarification & problems",
+        "titlePt": "Esclarecimento e problemas",
+        "bodyPt": "Quando não entende — peça repetição, fale mais devagar, confirme informação. Essencial em viagem."
+      },
+      {
+        "id": "em08-l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Airport announcement · Fast speech",
+        "scenarioPt": "Anúncio rápido no aeroporto. Você não entendeu — precisa pedir esclarecimento."
+      },
+      {
+        "id": "em08-l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Didn't understand the announcement",
+        "promptPt": "Não entendeu anúncio.",
+        "options": [
+          {
+            "labelEn": "Sorry, I didn't catch that. Could you repeat it, please?",
+            "correct": true,
+            "feedbackPt": "Didn't catch = não ouvi/entendi."
+          },
+          {
+            "labelEn": "Sorry, I didn't catched that.",
+            "correct": false,
+            "feedbackPt": "Catch — irregular: caught, mas aqui didn't catch (base)."
+          },
+          {
+            "labelEn": "I am not understand.",
+            "correct": false,
+            "feedbackPt": "I don't understand — presente."
+          }
+        ]
+      },
+      {
+        "id": "em08-l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Staff",
+        "promptEn": "Speaking too fast",
+        "promptPt": "Falando rápido demais.",
+        "options": [
+          {
+            "labelEn": "Could you speak more slowly, please?",
+            "correct": true,
+            "feedbackPt": "More slowly — pedido comum."
+          },
+          {
+            "labelEn": "Could you speak more slow?",
+            "correct": false,
+            "feedbackPt": "Slowly — advérbio."
+          },
+          {
+            "labelEn": "Speak slowlier please.",
+            "correct": false,
+            "feedbackPt": "Slowlier não existe."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em08-l06-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Asking to repeat",
+        "titlePt": "Pedir repetição",
+        "introPt": "Quando não ouviu ou não entendeu.",
+        "examples": [
+          {
+            "en": "Could you repeat that, please?",
+            "pt": "Pode repetir?"
+          },
+          {
+            "en": "Sorry, I didn't catch that.",
+            "pt": "Não entendi/captou."
+          },
+          {
+            "en": "Pardon? / Sorry?",
+            "pt": "Como? / Desculpa?"
+          },
+          {
+            "en": "What was that again?",
+            "pt": "Como era mesmo?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l06-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Slow down & clarify",
+        "titlePt": "Mais devagar e esclarecer",
+        "introPt": "Peça ritmo e explicação.",
+        "examples": [
+          {
+            "en": "Could you speak more slowly?",
+            "pt": "Mais devagar?"
+          },
+          {
+            "en": "I don't understand.",
+            "pt": "Não entendo."
+          },
+          {
+            "en": "Could you explain that?",
+            "pt": "Pode explicar?"
+          },
+          {
+            "en": "Do you mean gate B or D?",
+            "pt": "Portão B ou D?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l06-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Confirming information",
+        "titlePt": "Confirmar informação",
+        "introPt": "Repita para confirmar — evita erro.",
+        "examples": [
+          {
+            "en": "So the gate is C8?",
+            "pt": "Então portão C8?"
+          },
+          {
+            "en": "Just to confirm — 7 PM on Friday?",
+            "pt": "Só confirmando — sexta 19h?"
+          },
+          {
+            "en": "Did you say terminal 2?",
+            "pt": "Disse terminal 2?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l06-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Catch vs Understand",
+        "titlePt": "Catch vs Understand",
+        "items": [
+          {
+            "formalEn": "I did not understand what you said.",
+            "naturalEn": "Sorry, I didn't catch that.",
+            "notePt": "Didn't catch = informal, muito comum."
+          },
+          {
+            "formalEn": "Please reduce your speaking speed.",
+            "naturalEn": "Could you speak more slowly?",
+            "notePt": "More slowly — advérbio."
+          }
+        ],
+        "tipPt": "I didn't catch that = não ouvi/entendi (tom casual). I don't understand = não compreendo (geral)."
+      },
+      {
+        "id": "em08-l06-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "Could you repeat me that slowly?",
+        "rightEn": "Could you repeat that more slowly, please?",
+        "explanationPt": "Repeat that (não repeat me that). More slowly — advérbio."
+      },
+      {
+        "id": "em08-l06-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I didn't catch that.",
+            "pt": "não entendi"
+          },
+          {
+            "en": "Could you speak more slowly?",
+            "pt": "mais devagar"
+          },
+          {
+            "en": "Could you explain?",
+            "pt": "explicar"
+          },
+          {
+            "en": "Just to confirm...",
+            "pt": "confirmar"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em08-l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Sorry, I didn't catch that."
+          },
+          {
+            "en": "Could you repeat that, please?"
+          },
+          {
+            "en": "Could you speak more slowly?"
+          },
+          {
+            "en": "I don't understand. Could you explain?"
+          },
+          {
+            "en": "Do you mean gate B or D?"
+          },
+          {
+            "en": "Just to confirm — terminal 2?"
+          }
+        ],
+        "dialogueEn": "Your flight departs from— — Sorry, I didn't catch that. Could you repeat? — Gate C8, terminal 2. — Could you speak more slowly? — Gate C8. Terminal two. — Just to confirm — C8, terminal 2? — Correct!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em08-l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can ask for clarification when traveling.",
+        "headlinePt": "Você consegue pedir esclarecimento em viagem.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Staff",
+            "questionEn": "Your connection departs from gate C8, terminal 2, boarding at 4:15."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em08-l06-prac-01",
+      "type": "choice",
+      "promptPt": "Não entendi (informal):",
+      "options": [
+        {
+          "labelEn": "Sorry, I didn't catch that.",
+          "correct": true,
+          "feedbackPt": "Didn't catch — comum."
+        },
+        {
+          "labelEn": "Sorry, I didn't catched that.",
+          "correct": false,
+          "feedbackPt": "Didn't + base."
+        },
+        {
+          "labelEn": "I am not catch.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em08-l06-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Fale mais devagar.",
+      "templateEn": "Could you speak more ___?",
+      "blankLabel": "advérbio",
+      "options": [
+        {
+          "labelEn": "slowly",
+          "correct": true,
+          "feedbackPt": "Slowly — advérbio."
+        },
+        {
+          "labelEn": "slow",
+          "correct": false,
+          "feedbackPt": "Slow é adjetivo."
+        },
+        {
+          "labelEn": "slowlier",
+          "correct": false,
+          "feedbackPt": "Não existe."
+        }
+      ]
+    },
+    {
+      "id": "em08-l06-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Pode repetir, por favor?",
+      "tokens": [
+        "please?",
+        "that,",
+        "repeat",
+        "you",
+        "Could"
+      ],
+      "correctOrder": [
+        "Could",
+        "you",
+        "repeat",
+        "that,",
+        "please?"
+      ],
+      "feedbackCorrectPt": "Could you repeat that, please?",
+      "feedbackWrongPt": "Could you repeat..."
+    },
+    {
+      "id": "em08-l06-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Staff speaks fast. You ask:",
+      "speaker": "You",
+      "contextEn": "Staff gives directions quickly.",
+      "options": [
+        {
+          "labelEn": "Could you speak more slowly, please?",
+          "correct": true,
+          "feedbackPt": "Pedido educado."
+        },
+        {
+          "labelEn": "You should rest more.",
+          "correct": false,
+          "feedbackPt": "M7."
+        },
+        {
+          "labelEn": "I cancel my reservation.",
+          "correct": false,
+          "feedbackPt": "M8 L05."
+        }
+      ]
+    },
+    {
+      "id": "em08-l06-prac-05",
+      "type": "choice",
+      "promptPt": "Just to confirm — usa-se para:",
+      "options": [
+        {
+          "labelEn": "Double-check information.",
+          "correct": true,
+          "feedbackPt": "Confirmar antes de agir."
+        },
+        {
+          "labelEn": "Cancel a booking.",
+          "correct": false,
+          "feedbackPt": "Cancel — diferente."
+        },
+        {
+          "labelEn": "Order food.",
+          "correct": false,
+          "feedbackPt": "Restaurante."
+        }
+      ]
+    },
+    {
+      "id": "em08-l06-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Pode explicar?",
+      "templateEn": "Could you ___ that?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "explain",
+          "correct": true,
+          "feedbackPt": "Explain that."
+        },
+        {
+          "labelEn": "explanation",
+          "correct": false,
+          "feedbackPt": "Substantivo."
+        },
+        {
+          "labelEn": "explaining",
+          "correct": false,
+          "feedbackPt": "Could you + base."
+        }
+      ]
+    },
+    {
+      "id": "em08-l06-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Confirm gate:",
+      "speaker": "You",
+      "contextEn": "Staff said gate B or D — unclear.",
+      "options": [
+        {
+          "labelEn": "Do you mean gate B or D?",
+          "correct": true,
+          "feedbackPt": "Esclarecer opções."
+        },
+        {
+          "labelEn": "I prefer tea to coffee.",
+          "correct": false,
+          "feedbackPt": "M7."
+        },
+        {
+          "labelEn": "Rent a car, please.",
+          "correct": false,
+          "feedbackPt": "Transporte."
+        }
+      ]
+    },
+    {
+      "id": "em08-l06-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: Só confirmando — portão C8?",
+      "tokens": [
+        "C8?",
+        "gate",
+        "is",
+        "the",
+        "confirm",
+        "to",
+        "Just",
+        "—",
+        "So"
+      ],
+      "correctOrder": [
+        "Just",
+        "to",
+        "confirm",
+        "—",
+        "So",
+        "the",
+        "gate",
+        "is",
+        "C8?"
+      ],
+      "feedbackCorrectPt": "Just to confirm — So the gate is C8?",
+      "feedbackWrongPt": "Just to confirm..."
+    },
+    {
+      "id": "em08-l06-prac-09",
+      "type": "choice",
+      "promptPt": "Pardon? em viagem significa:",
+      "options": [
+        {
+          "labelEn": "Sorry? / What did you say?",
+          "correct": true,
+          "feedbackPt": "Pedir repetição — UK comum."
+        },
+        {
+          "labelEn": "I am guilty.",
+          "correct": false,
+          "feedbackPt": "Pardon tem outro sentido legal."
+        },
+        {
+          "labelEn": "Goodbye.",
+          "correct": false,
+          "feedbackPt": "Despedida."
+        }
+      ]
+    },
+    {
+      "id": "em08-l06-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Full clarification flow:",
+      "speaker": "You",
+      "contextEn": "Fast announcement at airport.",
+      "options": [
+        {
+          "labelEn": "Sorry, I didn't catch that. Could you repeat more slowly? Just to confirm — gate C8?",
+          "correct": true,
+          "feedbackPt": "Fluxo completo L06."
+        },
+        {
+          "labelEn": "Nothing to declare. Medium-rare.",
+          "correct": false,
+          "feedbackPt": "Mistura contextos."
+        },
+        {
+          "labelEn": "I exercise three times a week.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    }
+  ]
+}

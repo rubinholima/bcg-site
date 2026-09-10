@@ -1,0 +1,336 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 4,
+  "goalPt": "Usar was/were no passado de to be — descrever como era, onde estava, clima e sentimentos passados.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie pergunta como foi ontem — clima, local, como você se sentiu.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can use was and were.",
+    "headlinePt": "Você consegue usar was e were.",
+    "bodyPt": "",
+    "canDo": ["Yesterday was Monday.", "I was at home.", "They were at the stadium.", "It was great!"],
+    "production": {
+      "introPt": "Descreva ontem — dia, clima, onde você estava, como se sentiu. Use was/were.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "How was yesterday?" }
+      ],
+      "fields": [
+        { "id": "day", "labelPt": "Dia", "prefixEn": "Yesterday was", "placeholderEn": "Monday." },
+        { "id": "location", "labelPt": "Onde você estava", "prefixEn": "I was", "placeholderEn": "at home." },
+        { "id": "weather", "labelPt": "Clima", "prefixEn": "It was", "placeholderEn": "sunny and warm." },
+        { "id": "feeling", "labelPt": "Como foi", "prefixEn": "", "placeholderEn": "It was great!" }
+      ],
+      "exampleEn": "Yesterday was Monday. I was at home. It was sunny and warm. We were tired but happy. It was great!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e04l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Was / Were",
+        "titlePt": "Was / Were",
+        "bodyPt": "To be no passado: I/he/she/it → was. You/we/they → were. Descreve estado, local e identidade no passado."
+      },
+      {
+        "id": "e04l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Tuesday morning",
+        "scenarioPt": "Jamie pergunta como foi ontem."
+      },
+      {
+        "id": "e04l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What day was yesterday?",
+        "promptPt": "Jamie pergunta que dia era ontem.",
+        "options": [
+          { "labelEn": "Yesterday was Monday.", "correct": true, "feedbackPt": "Yesterday was — passado." },
+          { "labelEn": "Yesterday is Monday.", "correct": false, "feedbackPt": "Is = presente." },
+          { "labelEn": "Yesterday were Monday.", "correct": false, "feedbackPt": "Yesterday = singular → was." }
+        ]
+      },
+      {
+        "id": "e04l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Where were you yesterday?",
+        "promptPt": "Jamie pergunta onde você estava.",
+        "options": [
+          { "labelEn": "I was at home.", "correct": true, "feedbackPt": "I → was." },
+          { "labelEn": "I were at home.", "correct": false, "feedbackPt": "I usa was, não were." },
+          { "labelEn": "I am at home yesterday.", "correct": false, "feedbackPt": "Am = presente." }
+        ]
+      },
+      {
+        "id": "e04l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Were the players at the stadium?",
+        "promptPt": "Jamie pergunta sobre os jogadores.",
+        "options": [
+          { "labelEn": "Yes, they were at the stadium.", "correct": true, "feedbackPt": "They → were." },
+          { "labelEn": "Yes, they was at the stadium.", "correct": false, "feedbackPt": "They usa were." },
+          { "labelEn": "Yes, they are at the stadium.", "correct": false, "feedbackPt": "Are = presente." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e04l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Was — I / he / she / it",
+        "titlePt": "Was — I / he / she / it",
+        "introPt": "Was para singular no passado.",
+        "examples": [
+          { "en": "I was tired.", "pt": "estava cansado" },
+          { "en": "He was at work.", "pt": "ele estava no trabalho" },
+          { "en": "She was happy.", "pt": "ela estava feliz" },
+          { "en": "It was cold.", "pt": "estava frio" }
+        ]
+      },
+      {
+        "id": "e04l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Were — you / we / they",
+        "titlePt": "Were — you / we / they",
+        "introPt": "Were para plural e you no passado.",
+        "examples": [
+          { "en": "You were late.", "pt": "você chegou atrasado" },
+          { "en": "We were at the stadium.", "pt": "estávamos no estádio" },
+          { "en": "They were tired.", "pt": "estavam cansados" },
+          { "en": "You were great!", "pt": "você foi ótimo" }
+        ]
+      },
+      {
+        "id": "e04l04-learn-03",
+        "type": "comparison",
+        "titleEn": "Am/Is/Are vs Was/Were",
+        "titlePt": "Am/Is/Are vs Was/Were",
+        "left": {
+          "labelEn": "PRESENT · am/is/are",
+          "exampleEn": "Today is Monday. I am at home. They are tired.",
+          "notePt": "Agora e estado atual."
+        },
+        "right": {
+          "labelEn": "PAST · was/were",
+          "exampleEn": "Yesterday was Monday. I was at home. They were tired.",
+          "notePt": "Ontem e estado passado."
+        },
+        "modelEn": "Today I am tired. Yesterday I was tired too.",
+        "modelPt": "Mesma estrutura, tempo diferente."
+      },
+      {
+        "id": "e04l04-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Days & weather",
+        "titlePt": "Dias e clima",
+        "introPt": "Was/were para dias e clima passado.",
+        "examples": [
+          { "en": "Yesterday was Sunday.", "pt": "ontem era domingo" },
+          { "en": "It was sunny.", "pt": "estava ensolarado" },
+          { "en": "The weather was great.", "pt": "clima ótimo" },
+          { "en": "It was fun!", "pt": "foi divertido" }
+        ]
+      },
+      {
+        "id": "e04l04-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Questions & negatives",
+        "titlePt": "Perguntas e negativas",
+        "introPt": "Was/Were invertido para perguntas. Wasn't/Weren't para negativa.",
+        "examples": [
+          { "en": "Were you at home?", "pt": "Você estava em casa?" },
+          { "en": "Was she happy?", "pt": "Ela estava feliz?" },
+          { "en": "I wasn't tired.", "pt": "não estava cansado" },
+          { "en": "They weren't at the game.", "pt": "não estavam no jogo" }
+        ]
+      },
+      {
+        "id": "e04l04-learn-06",
+        "type": "language_focus",
+        "titleEn": "It was great!",
+        "titlePt": "It was great!",
+        "items": [
+          { "formalEn": "Reaction to past event", "naturalEn": "It was great! / It was fun! / It was amazing!", "notePt": "Reação curta após contar algo — muito comum." },
+          { "formalEn": "How was...?", "naturalEn": "How was your weekend? — It was great!", "notePt": "How was + was na resposta." }
+        ],
+        "tipPt": "Depois de contar fim de semana: It was great! / It was fun!"
+      },
+      {
+        "id": "e04l04-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "I were at home. / They was at the stadium. / Yesterday is Monday.",
+        "rightEn": "I was at home. / They were at the stadium. / Yesterday was Monday.",
+        "explanationPt": "I/he/she/it → was. You/we/they → were. Yesterday = passado → was."
+      },
+      {
+        "id": "e04l04-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I was / He was / She was", "pt": "singular" },
+          { "en": "You were / We were / They were", "pt": "plural + you" },
+          { "en": "Yesterday was Monday.", "pt": "dia passado" },
+          { "en": "It was great!", "pt": "reação" },
+          { "en": "Were you at home?", "pt": "pergunta" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e04l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte a ontem.",
+        "phrases": [
+          { "en": "Yesterday was Monday." },
+          { "en": "I was at home." },
+          { "en": "They were at the stadium." },
+          { "en": "It was sunny and warm." },
+          { "en": "We were tired but happy." },
+          { "en": "It was great!" },
+          { "en": "Were you at the game?" },
+          { "en": "How was your weekend?" }
+        ],
+        "dialogueEn": "What day was yesterday? — Yesterday was Monday. Where were you? — I was at home. Were the players at the stadium? — Yes, they were. How was it? — It was great!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "e04l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "How was yesterday?",
+        "headlinePt": "Como foi ontem?",
+        "bodyPt": "Descreva dia, local, clima e sentimento com was/were.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "How was yesterday?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e04l04-prac-01",
+      "type": "choice",
+      "promptPt": "I → passado de to be:",
+      "options": [
+        { "labelEn": "was", "correct": true, "feedbackPt": "I → was." },
+        { "labelEn": "were", "correct": false, "feedbackPt": "Were = you/we/they." },
+        { "labelEn": "am", "correct": false, "feedbackPt": "Am = presente." }
+      ]
+    },
+    {
+      "id": "e04l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "They → passado:",
+      "templateEn": "They ___ at the stadium yesterday.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "were", "correct": true, "feedbackPt": "They → were." },
+        { "labelEn": "was", "correct": false, "feedbackPt": "Was = I/he/she." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "Presente." }
+      ]
+    },
+    {
+      "id": "e04l04-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What day was yesterday?",
+      "speaker": "You",
+      "contextEn": "Jamie: What day was yesterday?",
+      "options": [
+        { "labelEn": "Yesterday was Monday.", "correct": true, "feedbackPt": "Yesterday was." },
+        { "labelEn": "Yesterday is Monday.", "correct": false, "feedbackPt": "Is = presente." },
+        { "labelEn": "Yesterday were Monday.", "correct": false, "feedbackPt": "Yesterday → was." }
+      ]
+    },
+    {
+      "id": "e04l04-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: estava em casa",
+      "tokens": ["home.", "at", "was", "I"],
+      "correctOrder": ["I", "was", "at", "home."],
+      "feedbackCorrectPt": "I was at home.",
+      "feedbackWrongPt": "I + was + at home."
+    },
+    {
+      "id": "e04l04-prac-05",
+      "type": "choice",
+      "promptPt": "Reação — foi ótimo:",
+      "options": [
+        { "labelEn": "It was great!", "correct": true, "feedbackPt": "Passado — was." },
+        { "labelEn": "It is great!", "correct": false, "feedbackPt": "Evento já passou." },
+        { "labelEn": "It were great!", "correct": false, "feedbackPt": "It → was." }
+      ]
+    },
+    {
+      "id": "e04l04-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Negativa: não estava cansado:",
+      "templateEn": "I ___ tired.",
+      "blankLabel": "negativa",
+      "options": [
+        { "labelEn": "wasn't", "correct": true, "feedbackPt": "Was not = wasn't." },
+        { "labelEn": "weren't", "correct": false, "feedbackPt": "I → wasn't." },
+        { "labelEn": "didn't", "correct": false, "feedbackPt": "To be usa wasn't." }
+      ]
+    },
+    {
+      "id": "e04l04-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Were you at the game?",
+      "speaker": "You",
+      "contextEn": "Jamie: Were you at the game yesterday?",
+      "options": [
+        { "labelEn": "Yes, I was. It was amazing!", "correct": true, "feedbackPt": "I was + reação." },
+        { "labelEn": "Yes, I were.", "correct": false, "feedbackPt": "I → was." },
+        { "labelEn": "Yes, I am.", "correct": false, "feedbackPt": "Passado → was." }
+      ]
+    },
+    {
+      "id": "e04l04-prac-08",
+      "type": "choice",
+      "promptPt": "Clima ontem — ensolarado:",
+      "options": [
+        { "labelEn": "It was sunny.", "correct": true, "feedbackPt": "It → was." },
+        { "labelEn": "It were sunny.", "correct": false, "feedbackPt": "It → was." },
+        { "labelEn": "It is sunny yesterday.", "correct": false, "feedbackPt": "Yesterday = was." }
+      ]
+    },
+    {
+      "id": "e04l04-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte pergunta: como foi seu fim de semana?",
+      "tokens": ["weekend?", "your", "was", "How"],
+      "correctOrder": ["How", "was", "your", "weekend?"],
+      "feedbackCorrectPt": "How was your weekend?",
+      "feedbackWrongPt": "How + was + your weekend?"
+    },
+    {
+      "id": "e04l04-prac-10",
+      "type": "fill_blank",
+      "promptPt": "We → passado (cansados):",
+      "templateEn": "We ___ tired after the game.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "were", "correct": true, "feedbackPt": "We → were." },
+        { "labelEn": "was", "correct": false, "feedbackPt": "We → were." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "Presente." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,589 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 7,
+  "goalPt": "Dizer como se sente e pedir ajuda básica na farmácia — I don't feel well, headache, sore throat. SEM conselho médico.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Você não está se sentindo bem durante uma viagem e vai à farmácia pedir algo básico.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can describe how you feel and ask at a pharmacy.",
+    "headlinePt": "Você consegue dizer como se sente e pedir na farmácia.",
+    "bodyPt": "",
+    "canDo": [
+      "I don't feel well.",
+      "I have a headache.",
+      "Something for..., please.",
+      "How do I take this?"
+    ],
+    "production": {
+      "introPt": "Simule: diga que não está bem e peça algo básico na farmácia. Sem pedir diagnóstico médico.",
+      "prompts": [
+        {
+          "speaker": "Colleague",
+          "questionEn": "Are you OK? You look tired."
+        },
+        {
+          "speaker": "Pharmacist",
+          "questionEn": "How can I help you?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "feel",
+          "labelPt": "Como se sente",
+          "prefixEn": "",
+          "placeholderEn": "I don't feel well. I have a headache and I feel tired."
+        },
+        {
+          "id": "pharmacy",
+          "labelPt": "Pedido na farmácia",
+          "prefixEn": "",
+          "placeholderEn": "Something for a headache, please. How do I take this?"
+        }
+      ],
+      "exampleEn": "I don't feel well — I have a headache. Something for a headache, please. How do I take this?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em07-l04-ctx-01",
+        "type": "intro",
+        "titleEn": "How you feel & pharmacy basics",
+        "titlePt": "Como você se sente e farmácia",
+        "bodyPt": "Você aprende a dizer que não está bem e pedir produtos comuns na farmácia. Isso NÃO substitui médico — é só comunicação do dia a dia."
+      },
+      {
+        "id": "em07-l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Pharmacy · Feeling unwell",
+        "scenarioPt": "Você não está se sentindo bem durante uma viagem e vai à farmácia pedir algo básico."
+      },
+      {
+        "id": "em07-l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Pharmacist",
+        "promptEn": "How can I help you?",
+        "promptPt": "Farmacêutico pergunta como ajudar.",
+        "options": [
+          {
+            "labelEn": "I don't feel well. I have a headache.",
+            "correct": true,
+            "feedbackPt": "Sintoma claro — não pede diagnóstico."
+          },
+          {
+            "labelEn": "I am doctor now please.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          },
+          {
+            "labelEn": "Prescribe me surgery.",
+            "correct": false,
+            "feedbackPt": "Fora do escopo — farmácia básica."
+          }
+        ]
+      },
+      {
+        "id": "em07-l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "You look tired. Are you OK?",
+        "promptPt": "Colega percebe que você não está bem.",
+        "options": [
+          {
+            "labelEn": "Not really — I have a sore throat and I feel tired.",
+            "correct": true,
+            "feedbackPt": "Descreve sintomas simples."
+          },
+          {
+            "labelEn": "I am OK because I am hospital.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          },
+          {
+            "labelEn": "Yes, I am gate B12.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      },
+      {
+        "id": "em07-l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Pharmacist",
+        "promptEn": "Do you need anything for pain?",
+        "promptPt": "Farmacêutico pergunta sobre dor.",
+        "options": [
+          {
+            "labelEn": "Something for a headache, please.",
+            "correct": true,
+            "feedbackPt": "Pedido básico na farmácia."
+          },
+          {
+            "labelEn": "I need a new passport.",
+            "correct": false,
+            "feedbackPt": "Passaporte — contexto errado."
+          },
+          {
+            "labelEn": "Pain is my hotel.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em07-l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "I don't feel well",
+        "titlePt": "Não me sinto bem",
+        "introPt": "Frases para dizer que algo não está ok — sem dramatizar.",
+        "examples": [
+          {
+            "en": "I don't feel well.",
+            "pt": "Não me sinto bem."
+          },
+          {
+            "en": "I feel sick.",
+            "pt": "Me sinto mal/enjoado."
+          },
+          {
+            "en": "I feel tired / dizzy.",
+            "pt": "Cansado / tonto."
+          },
+          {
+            "en": "I think I have a cold.",
+            "pt": "Acho que estou resfriado."
+          }
+        ]
+      },
+      {
+        "id": "em07-l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Common symptoms — vocabulary only",
+        "titlePt": "Sintomas comuns — só vocabulário",
+        "introPt": "Palavras para descrever — não é diagnóstico.",
+        "examples": [
+          {
+            "en": "headache",
+            "pt": "dor de cabeça"
+          },
+          {
+            "en": "sore throat",
+            "pt": "garganta inflamada"
+          },
+          {
+            "en": "runny nose / cough",
+            "pt": "nariz escorrendo / tosse"
+          },
+          {
+            "en": "stomachache",
+            "pt": "dor de estômago"
+          }
+        ]
+      },
+      {
+        "id": "em07-l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "At the pharmacy",
+        "titlePt": "Na farmácia",
+        "introPt": "Pedidos básicos — produtos comuns de balcão.",
+        "examples": [
+          {
+            "en": "Something for a headache, please.",
+            "pt": "Algo para dor de cabeça."
+          },
+          {
+            "en": "Do you have cough drops?",
+            "pt": "Tem pastilha para tosse?"
+          },
+          {
+            "en": "I need bandages.",
+            "pt": "Preciso de curativos."
+          },
+          {
+            "en": "How do I take this?",
+            "pt": "Como tomar/usar?"
+          }
+        ]
+      },
+      {
+        "id": "em07-l04-learn-lf",
+        "type": "language_focus",
+        "titleEn": "Have vs Feel",
+        "titlePt": "Have vs Feel com sintomas",
+        "items": [
+          {
+            "formalEn": "I am experiencing a headache.",
+            "naturalEn": "I have a headache.",
+            "notePt": "Have a headache — muito comum."
+          },
+          {
+            "formalEn": "I feel unwell in general.",
+            "naturalEn": "I don't feel well.",
+            "notePt": "Feel well/unwell = estado geral."
+          }
+        ],
+        "tipPt": "Have a + sintoma (have a headache). Feel + adjetivo (feel tired, feel sick)."
+      },
+      {
+        "id": "em07-l04-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I am with headache.",
+        "rightEn": "I have a headache.",
+        "explanationPt": "Em inglês: I have a headache / a sore throat. Não I am with headache."
+      },
+      {
+        "id": "em07-l04-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I don't feel well.",
+            "pt": "não estou bem"
+          },
+          {
+            "en": "I have a headache.",
+            "pt": "dor de cabeça"
+          },
+          {
+            "en": "sore throat / cough",
+            "pt": "garganta / tosse"
+          },
+          {
+            "en": "Something for..., please.",
+            "pt": "pedido na farmácia"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em07-l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I don't feel well today."
+          },
+          {
+            "en": "I have a headache."
+          },
+          {
+            "en": "My throat is sore."
+          },
+          {
+            "en": "I think I have a cold."
+          },
+          {
+            "en": "Something for a headache, please."
+          },
+          {
+            "en": "How do I take this?"
+          }
+        ],
+        "dialogueEn": "How can I help? — I don't feel well. I have a headache. — Something for pain? — Yes, please. — Here you go. Take with water. — Thank you!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em07-l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can describe how you feel and ask at a pharmacy.",
+        "headlinePt": "Você consegue dizer como se sente e pedir na farmácia.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Colleague",
+            "questionEn": "Are you OK? You look tired."
+          },
+          {
+            "speaker": "Pharmacist",
+            "questionEn": "How can I help you?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em07-l04-prac-01",
+      "type": "choice",
+      "promptPt": "Dor de cabeça em inglês:",
+      "options": [
+        {
+          "labelEn": "I have a headache.",
+          "correct": true,
+          "feedbackPt": "Have a headache — padrão."
+        },
+        {
+          "labelEn": "I am with headache.",
+          "correct": false,
+          "feedbackPt": "With headache — erro comum BR."
+        },
+        {
+          "labelEn": "My head is head.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Não me sinto bem.",
+      "templateEn": "I don't ___ well.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "feel",
+          "correct": true,
+          "feedbackPt": "Feel well = sentir-se bem."
+        },
+        {
+          "labelEn": "am",
+          "correct": false,
+          "feedbackPt": "I don't am — incorreto."
+        },
+        {
+          "labelEn": "have",
+          "correct": false,
+          "feedbackPt": "Have well não funciona aqui."
+        }
+      ]
+    },
+    {
+      "id": "em07-l04-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Algo para dor de cabeça, por favor.",
+      "tokens": [
+        "please.",
+        "headache,",
+        "a",
+        "for",
+        "Something"
+      ],
+      "correctOrder": [
+        "Something",
+        "for",
+        "a",
+        "headache,",
+        "please."
+      ],
+      "feedbackCorrectPt": "Something for a headache, please.",
+      "feedbackWrongPt": "Something for a + symptom."
+    },
+    {
+      "id": "em07-l04-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Pharmacist: How can I help?",
+      "speaker": "You",
+      "contextEn": "Pharmacist: How can I help you?",
+      "options": [
+        {
+          "labelEn": "I don't feel well. I have a sore throat.",
+          "correct": true,
+          "feedbackPt": "Sintoma + pedido implícito."
+        },
+        {
+          "labelEn": "I need surgery now.",
+          "correct": false,
+          "feedbackPt": "Fora do escopo farmácia básica."
+        },
+        {
+          "labelEn": "My gate is B12.",
+          "correct": false,
+          "feedbackPt": "Aeroporto — contexto errado."
+        }
+      ]
+    },
+    {
+      "id": "em07-l04-prac-05",
+      "type": "choice",
+      "promptPt": "Sore throat significa:",
+      "options": [
+        {
+          "labelEn": "Painful / irritated throat.",
+          "correct": true,
+          "feedbackPt": "Garganta inflamada/dolorida."
+        },
+        {
+          "labelEn": "A throat that is angry.",
+          "correct": false,
+          "feedbackPt": "Interpretação errada."
+        },
+        {
+          "labelEn": "A soft throat.",
+          "correct": false,
+          "feedbackPt": "Sore = dolorido, não macio."
+        }
+      ]
+    },
+    {
+      "id": "em07-l04-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Acho que estou resfriado.",
+      "templateEn": "I think I ___ a cold.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "have",
+          "correct": true,
+          "feedbackPt": "Have a cold — padrão."
+        },
+        {
+          "labelEn": "am",
+          "correct": false,
+          "feedbackPt": "I am a cold — errado."
+        },
+        {
+          "labelEn": "make",
+          "correct": false,
+          "feedbackPt": "Make a cold — errado."
+        }
+      ]
+    },
+    {
+      "id": "em07-l04-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Colleague: Are you OK?",
+      "speaker": "You",
+      "contextEn": "Colleague: You look tired. Are you OK?",
+      "options": [
+        {
+          "labelEn": "Not really — I don't feel well. I think I have a cold.",
+          "correct": true,
+          "feedbackPt": "Resposta honesta e clara."
+        },
+        {
+          "labelEn": "Yes, I am pharmacy.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        },
+        {
+          "labelEn": "I prefer tea to coffee.",
+          "correct": false,
+          "feedbackPt": "Preferências — contexto errado."
+        }
+      ]
+    },
+    {
+      "id": "em07-l04-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: Como tomar isso?",
+      "tokens": [
+        "this?",
+        "take",
+        "I",
+        "do",
+        "How"
+      ],
+      "correctOrder": [
+        "How",
+        "do",
+        "I",
+        "take",
+        "this?"
+      ],
+      "feedbackCorrectPt": "How do I take this?",
+      "feedbackWrongPt": "How do I take this?"
+    },
+    {
+      "id": "em07-l04-prac-09",
+      "type": "choice",
+      "promptPt": "Esta lição NÃO ensina:",
+      "options": [
+        {
+          "labelEn": "Medical diagnosis or treatment advice.",
+          "correct": true,
+          "feedbackPt": "Correto — só comunicação básica."
+        },
+        {
+          "labelEn": "How to say I have a headache.",
+          "correct": false,
+          "feedbackPt": "Isso ensinamos sim."
+        },
+        {
+          "labelEn": "Pharmacy requests.",
+          "correct": false,
+          "feedbackPt": "Isso ensinamos sim."
+        }
+      ]
+    },
+    {
+      "id": "em07-l04-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Pharmacist: Do you need anything for pain?",
+      "speaker": "You",
+      "contextEn": "Pharmacist: Do you need anything for pain?",
+      "options": [
+        {
+          "labelEn": "Something for a headache, please.",
+          "correct": true,
+          "feedbackPt": "Pedido básico."
+        },
+        {
+          "labelEn": "I want a hotel room.",
+          "correct": false,
+          "feedbackPt": "Hotel — contexto errado."
+        },
+        {
+          "labelEn": "Cancel my flight.",
+          "correct": false,
+          "feedbackPt": "Viagem — contexto errado."
+        }
+      ]
+    }
+  ]
+}

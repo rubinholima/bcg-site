@@ -1,0 +1,548 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 7,
+  "goalPt": "Dar e receber conselhos do dia a dia com should / shouldn't — rotina, descanso, hábitos. Não é conselho médico.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Um amigo parece exausto. Vocês trocam conselhos simples sobre descanso e hábitos.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can give and receive everyday advice.",
+    "headlinePt": "Você consegue dar e receber conselhos do dia a dia.",
+    "bodyPt": "",
+    "canDo": [
+      "You should...",
+      "You shouldn't...",
+      "What should I do?",
+      "That's a good idea."
+    ],
+    "production": {
+      "introPt": "Dê dois conselhos amigáveis a alguém cansado — um should e um shouldn't.",
+      "prompts": [
+        {
+          "speaker": "Friend",
+          "questionEn": "I'm exhausted. What should I do?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "should",
+          "labelPt": "Conselho positivo (should)",
+          "prefixEn": "You should",
+          "placeholderEn": "get more rest and drink more water"
+        },
+        {
+          "id": "shouldnt",
+          "labelPt": "Conselho negativo (shouldn't)",
+          "prefixEn": "You shouldn't",
+          "placeholderEn": "stay up so late every night"
+        }
+      ],
+      "exampleEn": "You should get more rest and drink water. You shouldn't work late every night."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em07-l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Should / shouldn't — everyday advice",
+        "titlePt": "Should / shouldn't — conselhos do dia a dia",
+        "bodyPt": "Should e shouldn't para sugestões simples — descansar, beber água, não exagerar. Conselhos cotidianos entre amigos e colegas."
+      },
+      {
+        "id": "em07-l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Friend chat · After a long week",
+        "scenarioPt": "Um amigo parece exausto. Vocês trocam conselhos simples sobre descanso e hábitos."
+      },
+      {
+        "id": "em07-l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Friend",
+        "promptEn": "I'm so tired. I worked late every night this week.",
+        "promptPt": "Amigo reclama de cansaço.",
+        "options": [
+          {
+            "labelEn": "You should get more rest this weekend.",
+            "correct": true,
+            "feedbackPt": "Should + verbo base — conselho."
+          },
+          {
+            "labelEn": "You should to rest more.",
+            "correct": false,
+            "feedbackPt": "Should + base, sem to."
+          },
+          {
+            "labelEn": "You should resting now.",
+            "correct": false,
+            "feedbackPt": "Should + base, não -ing."
+          }
+        ]
+      },
+      {
+        "id": "em07-l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Giving friendly advice",
+        "promptPt": "Dando conselho amigável.",
+        "options": [
+          {
+            "labelEn": "You shouldn't skip meals — you should eat regularly.",
+            "correct": true,
+            "feedbackPt": "Shouldn't + should — contraste."
+          },
+          {
+            "labelEn": "You shouldn't to skip meals.",
+            "correct": false,
+            "feedbackPt": "Shouldn't + base, sem to."
+          },
+          {
+            "labelEn": "You should not eating.",
+            "correct": false,
+            "feedbackPt": "Not + -ing — errado após should."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em07-l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Should — soft advice",
+        "titlePt": "Should — conselho suave",
+        "introPt": "Mais suave que must — sugestão, não ordem.",
+        "examples": [
+          {
+            "en": "You should rest more.",
+            "pt": "Você deveria descansar mais."
+          },
+          {
+            "en": "You should drink more water.",
+            "pt": "Deveria beber mais água."
+          },
+          {
+            "en": "I think you should take a break.",
+            "pt": "Acho que deveria pausar."
+          }
+        ]
+      },
+      {
+        "id": "em07-l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Shouldn't — what to avoid",
+        "titlePt": "Shouldn't — o que evitar",
+        "introPt": "Conselho negativo — hábitos ruins.",
+        "examples": [
+          {
+            "en": "You shouldn't work every weekend.",
+            "pt": "Não deveria trabalhar todo fim de semana."
+          },
+          {
+            "en": "You shouldn't skip breakfast.",
+            "pt": "Não pule o café da manhã."
+          },
+          {
+            "en": "You shouldn't stay up so late.",
+            "pt": "Não deveria dormir tão tarde."
+          }
+        ]
+      },
+      {
+        "id": "em07-l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Asking for & responding to advice",
+        "titlePt": "Pedir e responder conselhos",
+        "introPt": "Frases úteis em conversa.",
+        "examples": [
+          {
+            "en": "What should I do?",
+            "pt": "O que devo fazer?"
+          },
+          {
+            "en": "Do you think I should...?",
+            "pt": "Acha que eu deveria...?"
+          },
+          {
+            "en": "That's a good idea.",
+            "pt": "Boa ideia."
+          },
+          {
+            "en": "Maybe you're right.",
+            "pt": "Talvez você tenha razão."
+          }
+        ]
+      },
+      {
+        "id": "em07-l05-learn-cmp",
+        "type": "comparison",
+        "titleEn": "Should vs Must",
+        "titlePt": "Should vs Must",
+        "left": {
+          "labelEn": "SHOULD · conselho",
+          "exampleEn": "You should rest.",
+          "notePt": "Sugestão — pode ignorar."
+        },
+        "right": {
+          "labelEn": "MUST · obrigação forte",
+          "exampleEn": "You must wear a seatbelt.",
+          "notePt": "Regra/obrigação — mais forte."
+        },
+        "modelEn": "should (advice) · must (rule/requirement)",
+        "modelPt": "Should = conselho amigável. Must = regra ou exigência."
+      },
+      {
+        "id": "em07-l05-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "You should to drink water.",
+        "rightEn": "You should drink water.",
+        "explanationPt": "Should + verbo base (drink, rest, eat). Nunca should to."
+      },
+      {
+        "id": "em07-l05-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "You should rest.",
+            "pt": "conselho positivo"
+          },
+          {
+            "en": "You shouldn't skip meals.",
+            "pt": "conselho negativo"
+          },
+          {
+            "en": "What should I do?",
+            "pt": "pedir conselho"
+          },
+          {
+            "en": "That's a good idea.",
+            "pt": "aceitar conselho"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em07-l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "You should get more rest."
+          },
+          {
+            "en": "You shouldn't work so late."
+          },
+          {
+            "en": "You should drink more water."
+          },
+          {
+            "en": "You shouldn't skip breakfast."
+          },
+          {
+            "en": "What should I do?"
+          },
+          {
+            "en": "That's a good idea — maybe you're right."
+          }
+        ],
+        "dialogueEn": "I'm exhausted. — You should rest this weekend. You shouldn't work every night. — What should I do? — Take a break. Drink more water. — That's a good idea. Thanks!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em07-l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can give and receive everyday advice.",
+        "headlinePt": "Você consegue dar e receber conselhos do dia a dia.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Friend",
+            "questionEn": "I'm exhausted. What should I do?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em07-l05-prac-01",
+      "type": "choice",
+      "promptPt": "Forma correta após should:",
+      "options": [
+        {
+          "labelEn": "You should drink water.",
+          "correct": true,
+          "feedbackPt": "Should + base."
+        },
+        {
+          "labelEn": "You should to drink water.",
+          "correct": false,
+          "feedbackPt": "Sem to após should."
+        },
+        {
+          "labelEn": "You should drinking water.",
+          "correct": false,
+          "feedbackPt": "Sem -ing após should."
+        }
+      ]
+    },
+    {
+      "id": "em07-l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Você deveria descansar mais.",
+      "templateEn": "You should ___ more.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "rest",
+          "correct": true,
+          "feedbackPt": "Rest = descansar."
+        },
+        {
+          "labelEn": "to rest",
+          "correct": false,
+          "feedbackPt": "Sem to."
+        },
+        {
+          "labelEn": "resting",
+          "correct": false,
+          "feedbackPt": "Sem -ing."
+        }
+      ]
+    },
+    {
+      "id": "em07-l05-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Não deveria dormir tão tarde.",
+      "tokens": [
+        "late.",
+        "so",
+        "up",
+        "stay",
+        "shouldn't",
+        "You"
+      ],
+      "correctOrder": [
+        "You",
+        "shouldn't",
+        "stay",
+        "up",
+        "so",
+        "late."
+      ],
+      "feedbackCorrectPt": "You shouldn't stay up so late.",
+      "feedbackWrongPt": "Shouldn't + base verb."
+    },
+    {
+      "id": "em07-l05-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Friend: What should I do?",
+      "speaker": "You",
+      "contextEn": "Friend: I'm tired. What should I do?",
+      "options": [
+        {
+          "labelEn": "You should take a break and get some rest.",
+          "correct": true,
+          "feedbackPt": "Conselho prático."
+        },
+        {
+          "labelEn": "You must is rest.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        },
+        {
+          "labelEn": "You should to the airport.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l05-prac-05",
+      "type": "choice",
+      "promptPt": "Should vs Must — conselho amigável:",
+      "options": [
+        {
+          "labelEn": "You should try to sleep earlier.",
+          "correct": true,
+          "feedbackPt": "Should = sugestão."
+        },
+        {
+          "labelEn": "You must try to sleep earlier.",
+          "correct": false,
+          "feedbackPt": "Must soa como ordem — menos amigável."
+        },
+        {
+          "labelEn": "You should must sleep.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em07-l05-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Não pule o café da manhã.",
+      "templateEn": "You shouldn't ___ breakfast.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "skip",
+          "correct": true,
+          "feedbackPt": "Skip = pular."
+        },
+        {
+          "labelEn": "skipping",
+          "correct": false,
+          "feedbackPt": "Base form after shouldn't."
+        },
+        {
+          "labelEn": "to skip",
+          "correct": false,
+          "feedbackPt": "Sem to."
+        }
+      ]
+    },
+    {
+      "id": "em07-l05-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Friend gives advice. You agree:",
+      "speaker": "You",
+      "contextEn": "Friend: You should drink more water.",
+      "options": [
+        {
+          "labelEn": "That's a good idea. Maybe you're right.",
+          "correct": true,
+          "feedbackPt": "Aceitar conselho naturalmente."
+        },
+        {
+          "labelEn": "You should my gate.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        },
+        {
+          "labelEn": "I am water.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l05-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: O que devo fazer?",
+      "tokens": [
+        "do?",
+        "I",
+        "should",
+        "What"
+      ],
+      "correctOrder": [
+        "What",
+        "should",
+        "I",
+        "do?"
+      ],
+      "feedbackCorrectPt": "What should I do?",
+      "feedbackWrongPt": "What should I do?"
+    },
+    {
+      "id": "em07-l05-prac-09",
+      "type": "choice",
+      "promptPt": "Shouldn't significa:",
+      "options": [
+        {
+          "labelEn": "It is not a good idea to...",
+          "correct": true,
+          "feedbackPt": "Conselho negativo."
+        },
+        {
+          "labelEn": "You must do it.",
+          "correct": false,
+          "feedbackPt": "Oposto."
+        },
+        {
+          "labelEn": "You already did it.",
+          "correct": false,
+          "feedbackPt": "Não é passado."
+        }
+      ]
+    },
+    {
+      "id": "em07-l05-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Friend: I work late every night.",
+      "speaker": "You",
+      "contextEn": "Friend: I work late every night.",
+      "options": [
+        {
+          "labelEn": "You shouldn't do that every night. You should rest more.",
+          "correct": true,
+          "feedbackPt": "Shouldn't + should — conselho completo."
+        },
+        {
+          "labelEn": "You should to gate B12.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        },
+        {
+          "labelEn": "I have a reservation.",
+          "correct": false,
+          "feedbackPt": "Hotel — contexto errado."
+        }
+      ]
+    }
+  ]
+}

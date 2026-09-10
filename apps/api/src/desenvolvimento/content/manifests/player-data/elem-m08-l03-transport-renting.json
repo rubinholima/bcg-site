@@ -1,0 +1,548 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 8,
+  "goalPt": "Transporte e aluguel — subway, bus, taxi, rent a car, one-way/return ticket, how much to...?",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Você chegou à cidade e precisa ir ao hotel — transporte público ou aluguel de carro.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can get around and rent transport.",
+    "headlinePt": "Você consegue se locomover e alugar transporte.",
+    "bodyPt": "",
+    "canDo": [
+      "Subway / bus / taxi",
+      "Rent a car",
+      "One-way / return",
+      "How much is...?"
+    ],
+    "production": {
+      "introPt": "Simule: perguntar transporte público E alugar carro (duas situações).",
+      "prompts": [
+        {
+          "speaker": "Local",
+          "questionEn": "Can I help you find something?"
+        },
+        {
+          "speaker": "Rental clerk",
+          "questionEn": "How can I help you?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "transport",
+          "labelPt": "Transporte público",
+          "prefixEn": "",
+          "placeholderEn": "Where is the subway? How much is a ticket? One-way, please."
+        },
+        {
+          "id": "rental",
+          "labelPt": "Aluguel de carro",
+          "prefixEn": "",
+          "placeholderEn": "I'd like to rent a car for three days. Automatic, please."
+        }
+      ],
+      "exampleEn": "Where is the subway station? One-way ticket, please. — I'd like to rent a car for three days. Automatic. Is insurance included?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em08-l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Transport & renting",
+        "titlePt": "Transporte e aluguel",
+        "bodyPt": "Pegar metrô, ônibus, táxi ou alugar carro — perguntas de preço, destino e tipo de passagem."
+      },
+      {
+        "id": "em08-l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "City arrival · Getting around",
+        "scenarioPt": "Você chegou à cidade e precisa ir ao hotel — transporte público ou aluguel de carro."
+      },
+      {
+        "id": "em08-l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Local",
+        "promptEn": "How do I get to downtown?",
+        "promptPt": "Perguntar como chegar.",
+        "options": [
+          {
+            "labelEn": "Take the subway — two stops. Or you can grab a taxi.",
+            "correct": true,
+            "feedbackPt": "Opções de transporte."
+          },
+          {
+            "labelEn": "Take the subways fly gate.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          },
+          {
+            "labelEn": "You should eat vegetables.",
+            "correct": false,
+            "feedbackPt": "M7."
+          }
+        ]
+      },
+      {
+        "id": "em08-l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Clerk",
+        "promptEn": "At the rental counter",
+        "promptPt": "Balcão de aluguel de carro.",
+        "options": [
+          {
+            "labelEn": "I'd like to rent a car for three days, please.",
+            "correct": true,
+            "feedbackPt": "Rent a car — padrão."
+          },
+          {
+            "labelEn": "I'd like to rent a fly.",
+            "correct": false,
+            "feedbackPt": "Rent a car, não fly."
+          },
+          {
+            "labelEn": "Rent me subway.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em08-l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Public transport",
+        "titlePt": "Transporte público",
+        "introPt": "Metrô, ônibus, táxi.",
+        "examples": [
+          {
+            "en": "Where is the subway station?",
+            "pt": "Onde fica o metrô?"
+          },
+          {
+            "en": "Which bus goes to the airport?",
+            "pt": "Qual ônibus vai ao aeroporto?"
+          },
+          {
+            "en": "How much is a ticket?",
+            "pt": "Quanto custa a passagem?"
+          },
+          {
+            "en": "Could you call a taxi, please?",
+            "pt": "Chamar um táxi?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Renting a car",
+        "titlePt": "Alugar carro",
+        "introPt": "Locadora — frases essenciais.",
+        "examples": [
+          {
+            "en": "I'd like to rent a car.",
+            "pt": "Quero alugar um carro."
+          },
+          {
+            "en": "For three days.",
+            "pt": "Por três dias."
+          },
+          {
+            "en": "Automatic, please.",
+            "pt": "Automático, por favor."
+          },
+          {
+            "en": "Is insurance included?",
+            "pt": "Seguro incluído?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Tickets — one-way / return",
+        "titlePt": "Passagens — ida / ida e volta",
+        "introPt": "Comprar passagem de trem ou ônibus.",
+        "examples": [
+          {
+            "en": "One-way or return?",
+            "pt": "Só ida ou ida e volta?"
+          },
+          {
+            "en": "A return ticket, please.",
+            "pt": "Passagem ida e volta."
+          },
+          {
+            "en": "How much to the city center?",
+            "pt": "Quanto até o centro?"
+          },
+          {
+            "en": "Which platform?",
+            "pt": "Qual plataforma?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l03-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "How much costs the ticket?",
+        "rightEn": "How much is the ticket? / How much does the ticket cost?",
+        "explanationPt": "How much is...? ou How much does... cost? — não how much costs."
+      },
+      {
+        "id": "em08-l03-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "subway / bus / taxi",
+            "pt": "transporte"
+          },
+          {
+            "en": "rent a car",
+            "pt": "aluguel"
+          },
+          {
+            "en": "one-way / return",
+            "pt": "tipo passagem"
+          },
+          {
+            "en": "How much is...?",
+            "pt": "preço"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em08-l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Where is the subway station?"
+          },
+          {
+            "en": "How much is a ticket?"
+          },
+          {
+            "en": "One-way, please."
+          },
+          {
+            "en": "I'd like to rent a car for two days."
+          },
+          {
+            "en": "Automatic, please. Is insurance included?"
+          },
+          {
+            "en": "Could you call a taxi to the hotel?"
+          }
+        ],
+        "dialogueEn": "How do I get downtown? — Take the subway — two stops. — How much is a ticket? — Three dollars. One-way or return? — One-way, please. — Or rent a car? — I'd like to rent for two days. Automatic, please."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em08-l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can get around and rent transport.",
+        "headlinePt": "Você consegue se locomover e alugar transporte.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Local",
+            "questionEn": "Can I help you find something?"
+          },
+          {
+            "speaker": "Rental clerk",
+            "questionEn": "How can I help you?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em08-l03-prac-01",
+      "type": "choice",
+      "promptPt": "Alugar carro:",
+      "options": [
+        {
+          "labelEn": "I'd like to rent a car.",
+          "correct": true,
+          "feedbackPt": "Rent a car — padrão."
+        },
+        {
+          "labelEn": "I'd like to lend a car.",
+          "correct": false,
+          "feedbackPt": "Lend = emprestar."
+        },
+        {
+          "labelEn": "I'd like to rent a subway.",
+          "correct": false,
+          "feedbackPt": "Subway não se aluga assim."
+        }
+      ]
+    },
+    {
+      "id": "em08-l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Passagem ida e volta.",
+      "templateEn": "A ___ ticket, please.",
+      "blankLabel": "tipo",
+      "options": [
+        {
+          "labelEn": "return",
+          "correct": true,
+          "feedbackPt": "Return = ida e volta."
+        },
+        {
+          "labelEn": "returning",
+          "correct": false,
+          "feedbackPt": "Return ticket, não returning."
+        },
+        {
+          "labelEn": "backly",
+          "correct": false,
+          "feedbackPt": "Backly não existe."
+        }
+      ]
+    },
+    {
+      "id": "em08-l03-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Onde fica a estação de metrô?",
+      "tokens": [
+        "station?",
+        "subway",
+        "the",
+        "is",
+        "Where"
+      ],
+      "correctOrder": [
+        "Where",
+        "is",
+        "the",
+        "subway",
+        "station?"
+      ],
+      "feedbackCorrectPt": "Where is the subway station?",
+      "feedbackWrongPt": "Where is the...?"
+    },
+    {
+      "id": "em08-l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Clerk: One-way or return?",
+      "speaker": "You",
+      "contextEn": "Ticket counter: One-way or return?",
+      "options": [
+        {
+          "labelEn": "One-way, please.",
+          "correct": true,
+          "feedbackPt": "Só ida."
+        },
+        {
+          "labelEn": "Medium, please.",
+          "correct": false,
+          "feedbackPt": "Restaurante."
+        },
+        {
+          "labelEn": "Late check-out.",
+          "correct": false,
+          "feedbackPt": "Hotel."
+        }
+      ]
+    },
+    {
+      "id": "em08-l03-prac-05",
+      "type": "choice",
+      "promptPt": "How much is the ticket? — pergunta de:",
+      "options": [
+        {
+          "labelEn": "Price.",
+          "correct": true,
+          "feedbackPt": "Quanto custa."
+        },
+        {
+          "labelEn": "Time.",
+          "correct": false,
+          "feedbackPt": "What time...?"
+        },
+        {
+          "labelEn": "Location.",
+          "correct": false,
+          "feedbackPt": "Where...?"
+        }
+      ]
+    },
+    {
+      "id": "em08-l03-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Quanto até o aeroporto?",
+      "templateEn": "How much ___ to the airport?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "is",
+          "correct": true,
+          "feedbackPt": "How much is it to...?"
+        },
+        {
+          "labelEn": "costs",
+          "correct": false,
+          "feedbackPt": "How much costs — erro comum."
+        },
+        {
+          "labelEn": "does",
+          "correct": false,
+          "feedbackPt": "Precisaria does it cost."
+        }
+      ]
+    },
+    {
+      "id": "em08-l03-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Rental: How can I help?",
+      "speaker": "You",
+      "contextEn": "Car rental counter.",
+      "options": [
+        {
+          "labelEn": "I'd like to rent a car for three days. Automatic, please.",
+          "correct": true,
+          "feedbackPt": "Pedido completo."
+        },
+        {
+          "labelEn": "My bag didn't arrive.",
+          "correct": false,
+          "feedbackPt": "Aeroporto."
+        },
+        {
+          "labelEn": "I don't feel well.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    },
+    {
+      "id": "em08-l03-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: Chame um táxi, por favor.",
+      "tokens": [
+        "please?",
+        "taxi,",
+        "a",
+        "call",
+        "you",
+        "Could"
+      ],
+      "correctOrder": [
+        "Could",
+        "you",
+        "call",
+        "a",
+        "taxi,",
+        "please?"
+      ],
+      "feedbackCorrectPt": "Could you call a taxi, please?",
+      "feedbackWrongPt": "Could you call...?"
+    },
+    {
+      "id": "em08-l03-prac-09",
+      "type": "choice",
+      "promptPt": "One-way significa:",
+      "options": [
+        {
+          "labelEn": "Ticket to one destination only (no return).",
+          "correct": true,
+          "feedbackPt": "Só ida."
+        },
+        {
+          "labelEn": "One ticket for two people.",
+          "correct": false,
+          "feedbackPt": "Não."
+        },
+        {
+          "labelEn": "Walking on one street.",
+          "correct": false,
+          "feedbackPt": "Não."
+        }
+      ]
+    },
+    {
+      "id": "em08-l03-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Local: Can I help?",
+      "speaker": "You",
+      "contextEn": "You need to get to the hotel.",
+      "options": [
+        {
+          "labelEn": "How do I get to the Marriott? Is there a bus or subway?",
+          "correct": true,
+          "feedbackPt": "Pergunta prática."
+        },
+        {
+          "labelEn": "Nothing to declare.",
+          "correct": false,
+          "feedbackPt": "Customs."
+        },
+        {
+          "labelEn": "You shouldn't skip breakfast.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    }
+  ]
+}

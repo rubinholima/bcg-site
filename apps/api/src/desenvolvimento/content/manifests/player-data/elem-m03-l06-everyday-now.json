@@ -1,0 +1,327 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 3,
+  "goalPt": "Aplicar Present Continuous no dia a dia — casa, transporte, lazer — contrastando com rotina do START m04.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie manda mensagem no fim da tarde — quer saber o que você e a família estão fazendo agora.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can talk about everyday life now.",
+    "headlinePt": "Você consegue falar do dia a dia agora.",
+    "bodyPt": "",
+    "canDo": ["I'm cooking dinner.", "The kids are doing homework.", "He is driving home.", "We usually eat at 7, but today we are eating out."],
+    "production": {
+      "introPt": "Descreva sua tarde/noite agora — o que cada pessoa está fazendo + contraste com rotina.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What is everyone doing at home right now?" }
+      ],
+      "fields": [
+        { "id": "you", "labelPt": "Você agora", "prefixEn": "I'm", "placeholderEn": "cooking dinner." },
+        { "id": "family", "labelPt": "Família", "prefixEn": "The kids are", "placeholderEn": "doing homework." },
+        { "id": "contrast", "labelPt": "Contraste rotina", "prefixEn": "", "placeholderEn": "We usually eat at 7, but today we are eating out." }
+      ],
+      "exampleEn": "I'm cooking dinner. The kids are doing homework. My husband is driving home. We usually eat at 7, but today we are eating out."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e03l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Everyday now",
+        "titlePt": "Dia a dia agora",
+        "bodyPt": "Fora do trabalho: cozinhar, dirigir, fazer lição, assistir TV. Rotina = I wake up at 6 (START m04). Agora = I'm cooking dinner."
+      },
+      {
+        "id": "e03l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Home · Evening message",
+        "scenarioPt": "Jamie manda mensagem perguntando sobre sua noite."
+      },
+      {
+        "id": "e03l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are you doing?",
+        "promptPt": "Jamie pergunta o que você faz agora em casa.",
+        "options": [
+          { "labelEn": "I'm cooking dinner.", "correct": true, "feedbackPt": "Cooking = ação agora." },
+          { "labelEn": "I cook dinner every day.", "correct": false, "feedbackPt": "Cook = rotina." },
+          { "labelEn": "I am cook dinner.", "correct": false, "feedbackPt": "Am + cooking." }
+        ]
+      },
+      {
+        "id": "e03l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are the kids doing?",
+        "promptPt": "Jamie pergunta sobre as crianças.",
+        "options": [
+          { "labelEn": "They are doing homework.", "correct": true, "feedbackPt": "Are doing = agora." },
+          { "labelEn": "They do homework every day.", "correct": false, "feedbackPt": "Do = hábito." },
+          { "labelEn": "They is doing homework.", "correct": false, "feedbackPt": "They + are." }
+        ]
+      },
+      {
+        "id": "e03l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Is your husband home?",
+        "promptPt": "Jamie pergunta sobre seu marido/esposa.",
+        "options": [
+          { "labelEn": "No, he is driving home.", "correct": true, "feedbackPt": "Is driving = agora." },
+          { "labelEn": "No, he drives home every day.", "correct": false, "feedbackPt": "Drives = rotina." },
+          { "labelEn": "No, he is drive home.", "correct": false, "feedbackPt": "Is + driving." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e03l06-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "At home — now",
+        "titlePt": "Em casa — agora",
+        "introPt": "Atividades domésticas em progresso.",
+        "examples": [
+          { "en": "I'm cooking dinner.", "pt": "cozinhando" },
+          { "en": "She is watching TV.", "pt": "assistindo TV" },
+          { "en": "They are playing video games.", "pt": "jogando videogame" },
+          { "en": "He is reading a book.", "pt": "lendo livro" }
+        ]
+      },
+      {
+        "id": "e03l06-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Transport & movement",
+        "titlePt": "Transporte e deslocamento",
+        "introPt": "Indo de um lugar a outro — agora.",
+        "examples": [
+          { "en": "He is driving home.", "pt": "dirigindo para casa" },
+          { "en": "I'm waiting for the bus.", "pt": "esperando ônibus" },
+          { "en": "She is walking to the gym.", "pt": "caminhando pro gym" },
+          { "en": "We are coming back now.", "pt": "voltando agora" }
+        ]
+      },
+      {
+        "id": "e03l06-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Kids & family",
+        "titlePt": "Crianças e família",
+        "introPt": "O que a família faz neste momento.",
+        "examples": [
+          { "en": "The kids are doing homework.", "pt": "fazendo lição" },
+          { "en": "My son is sleeping.", "pt": "dormindo" },
+          { "en": "We are eating dinner.", "pt": "jantando" },
+          { "en": "Grandma is visiting us.", "pt": "visita temporária" }
+        ]
+      },
+      {
+        "id": "e03l06-learn-04",
+        "type": "comparison",
+        "titleEn": "Routine vs now (START m04 link)",
+        "titlePt": "Rotina vs agora (link START m04)",
+        "left": {
+          "labelEn": "ROUTINE · START m04",
+          "exampleEn": "I wake up at 6. I have breakfast at 7. I usually go home after work.",
+          "notePt": "Present Simple — every day, usually, on weekdays."
+        },
+        "right": {
+          "labelEn": "NOW · this lesson",
+          "exampleEn": "I'm cooking dinner. He is driving home. They are doing homework.",
+          "notePt": "Present Continuous — right now, at the moment."
+        },
+        "modelEn": "I usually eat at 7, but today we are eating out.",
+        "modelPt": "Rotina + exceção de hoje."
+      },
+      {
+        "id": "e03l06-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Eating & drinking now",
+        "titlePt": "Comendo e bebendo agora",
+        "introPt": "Have breakfast = rotina. Are having dinner = agora.",
+        "examples": [
+          { "en": "I have breakfast at 7. (routine)", "pt": "rotina matinal" },
+          { "en": "We are having dinner now.", "pt": "jantando agora" },
+          { "en": "She is drinking coffee.", "pt": "tomando café" },
+          { "en": "They are eating out tonight.", "pt": "comendo fora hoje" }
+        ]
+      },
+      {
+        "id": "e03l06-learn-06",
+        "type": "language_focus",
+        "titleEn": "State verbs — careful",
+        "titlePt": "Verbos de estado — cuidado",
+        "items": [
+          { "formalEn": "I know the answer.", "naturalEn": "Not: I am knowing.", "notePt": "Know, like, want, need — geralmente NÃO usam continuous." },
+          { "formalEn": "I want coffee.", "naturalEn": "Not: I am wanting.", "notePt": "Want = estado, não ação em progresso." }
+        ],
+        "tipPt": "Cooking, driving, watching = ação → continuous. Know, want, like = estado → simple."
+      },
+      {
+        "id": "e03l06-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I'm cooking dinner.", "pt": "agora" },
+          { "en": "They are doing homework.", "pt": "crianças" },
+          { "en": "He is driving home.", "pt": "transporte" },
+          { "en": "I usually eat at 7. (routine)", "pt": "START m04" },
+          { "en": "We are eating out tonight.", "pt": "exceção hoje" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e03l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte à sua noite.",
+        "phrases": [
+          { "en": "I'm cooking dinner." },
+          { "en": "The kids are doing homework." },
+          { "en": "He is driving home." },
+          { "en": "She is watching TV." },
+          { "en": "We are eating out tonight." },
+          { "en": "I usually eat at 7." },
+          { "en": "What is everyone doing?" },
+          { "en": "I'm waiting for the bus." }
+        ],
+        "dialogueEn": "What are you doing? — I'm cooking dinner. What are the kids doing? — They are doing homework. Is your husband home? — No, he is driving home."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e03l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your evening now.",
+        "headlinePt": "Sua noite agora.",
+        "bodyPt": "Descreva o que cada um está fazendo em casa — com contraste de rotina.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What is everyone doing at home right now?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e03l06-prac-01",
+      "type": "choice",
+      "promptPt": "Cozinhando jantar agora:",
+      "options": [
+        { "labelEn": "I'm cooking dinner.", "correct": true, "feedbackPt": "Cooking = agora." },
+        { "labelEn": "I cook dinner every day.", "correct": false, "feedbackPt": "Cook = rotina." },
+        { "labelEn": "I am cook dinner.", "correct": false, "feedbackPt": "Am + cooking." }
+      ]
+    },
+    {
+      "id": "e03l06-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Crianças fazendo lição:",
+      "templateEn": "The kids ___ doing homework.",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "are", "correct": true, "feedbackPt": "Kids = they → are." },
+        { "labelEn": "is", "correct": false, "feedbackPt": "Plural → are." },
+        { "labelEn": "do", "correct": false, "feedbackPt": "Do = hábito." }
+      ]
+    },
+    {
+      "id": "e03l06-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Is he home?",
+      "speaker": "You",
+      "contextEn": "Jamie: Is your husband home?",
+      "options": [
+        { "labelEn": "No, he is driving home.", "correct": true, "feedbackPt": "Driving = agora." },
+        { "labelEn": "No, he drives home every day.", "correct": false, "feedbackPt": "Rotina." },
+        { "labelEn": "No, he is drive home.", "correct": false, "feedbackPt": "Is + driving." }
+      ]
+    },
+    {
+      "id": "e03l06-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: estamos jantando agora",
+      "tokens": ["now.", "dinner", "having", "are", "We"],
+      "correctOrder": ["We", "are", "having", "dinner", "now."],
+      "feedbackCorrectPt": "We are having dinner now.",
+      "feedbackWrongPt": "We are having dinner now."
+    },
+    {
+      "id": "e03l06-prac-05",
+      "type": "choice",
+      "promptPt": "Rotina matinal (START m04):",
+      "options": [
+        { "labelEn": "I wake up at 6 and have breakfast at 7.", "correct": true, "feedbackPt": "Simple present = rotina." },
+        { "labelEn": "I am waking up at 6 every day.", "correct": false, "feedbackPt": "Every day = simple." },
+        { "labelEn": "I am wake up at 6.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]
+    },
+    {
+      "id": "e03l06-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Esperando o ônibus:",
+      "templateEn": "I'm ___ for the bus.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "waiting", "correct": true, "feedbackPt": "Waiting = agora." },
+        { "labelEn": "wait", "correct": false, "feedbackPt": "Wait = hábito ou imperativo." },
+        { "labelEn": "waited", "correct": false, "feedbackPt": "Passado." }
+      ]
+    },
+    {
+      "id": "e03l06-prac-07",
+      "type": "choice",
+      "promptPt": "Verbo de estado — qual é correto?",
+      "options": [
+        { "labelEn": "I want coffee.", "correct": true, "feedbackPt": "Want = estado → simple." },
+        { "labelEn": "I am wanting coffee.", "correct": false, "feedbackPt": "Want raramente usa continuous." },
+        { "labelEn": "I am want coffee.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]
+    },
+    {
+      "id": "e03l06-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Contraste: usually vs today",
+      "speaker": "You",
+      "contextEn": "Jamie: Do you usually eat at home?",
+      "options": [
+        { "labelEn": "Yes, but today we are eating out.", "correct": true, "feedbackPt": "Usually (simple) + today (continuous)." },
+        { "labelEn": "Yes, but today we eat out.", "correct": false, "feedbackPt": "Today específico → continuous soa mais natural." },
+        { "labelEn": "Yes, we are usually eating out.", "correct": false, "feedbackPt": "Usually + continuous = erro." }
+      ]
+    },
+    {
+      "id": "e03l06-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte: ela assistindo TV",
+      "tokens": ["TV.", "watching", "is", "She"],
+      "correctOrder": ["She", "is", "watching", "TV."],
+      "feedbackCorrectPt": "She is watching TV.",
+      "feedbackWrongPt": "She + is + watching."
+    },
+    {
+      "id": "e03l06-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Drive → -ing:",
+      "templateEn": "He is ___ home.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "driving", "correct": true, "feedbackPt": "Drive → driving." },
+        { "labelEn": "drive", "correct": false, "feedbackPt": "Precisa -ing." },
+        { "labelEn": "drived", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    }
+  ]
+}

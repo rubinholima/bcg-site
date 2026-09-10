@@ -1,0 +1,373 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 4,
+  "goalPt": "Desafio cumulativo do Módulo 4 — integrar passado simples: regulares, irregulares, was/were, did/didn't, histórias curtas.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Desafio do módulo — contar ontem e fim de semana passado com todo o passado simples.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia o diálogo completo em voz alta.", "phrases": [] },
+  "practice": { "introPt": "Revisão cumulativa — feedback imediato.", "items": [] },
+  "mission": {
+    "headlineEn": "You can tell your past story.",
+    "headlinePt": "Você consegue contar sua história no passado.",
+    "bodyPt": "",
+    "canDo": [
+      "Yesterday I worked late.",
+      "I went to the beach. We had a great time.",
+      "Yesterday was Monday. I was at home.",
+      "Did you work? — Yes, I did. / No, I didn't.",
+      "It was fun!"
+    ],
+    "production": {
+      "introPt": "Monte conversa completa sobre passado — ontem e fim de semana. Use regulares, irregulares, was/were, did/didn't e reação. Apenas lições 1 a 6.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Tell me about yesterday and last weekend." }
+      ],
+      "fields": [
+        { "id": "yesterday", "labelPt": "Ontem", "prefixEn": "", "placeholderEn": "Yesterday was Monday. I worked late and went home." },
+        { "id": "weekend", "labelPt": "Fim de semana", "prefixEn": "", "placeholderEn": "Last weekend I went to the beach. We had a great time." },
+        { "id": "negative", "labelPt": "Negativa", "prefixEn": "", "placeholderEn": "I didn't work on Saturday." },
+        { "id": "question", "labelPt": "Pergunta sua", "prefixEn": "", "placeholderEn": "Did you go out last weekend?" },
+        { "id": "reaction", "labelPt": "Reação", "prefixEn": "", "placeholderEn": "It was fun!" }
+      ],
+      "exampleEn": "Yesterday was Monday. I worked late and went home. Last weekend I went to the beach. We had a great time. I didn't work on Saturday. Did you go out? It was fun!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e04l07-ctx-01",
+        "type": "intro",
+        "titleEn": "Module challenge",
+        "titlePt": "Desafio do módulo",
+        "bodyPt": "Hora de juntar todo o Passado Simples: regulares (-ed), irregulares (went/had/saw/did), was/were, perguntas Did e negativa didn't — numa conversa real."
+      },
+      {
+        "id": "e04l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Tuesday morning",
+        "scenarioPt": "Jamie quer ouvir sobre ontem e fim de semana passado — conversa completa."
+      },
+      {
+        "id": "e04l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What day was yesterday?",
+        "promptPt": "Passo 1 — was/were.",
+        "options": [
+          { "labelEn": "Yesterday was Monday.", "correct": true, "feedbackPt": "Was — passado to be." },
+          { "labelEn": "Yesterday is Monday.", "correct": false, "feedbackPt": "Is = presente." },
+          { "labelEn": "Yesterday were Monday.", "correct": false, "feedbackPt": "Yesterday → was." }
+        ]
+      },
+      {
+        "id": "e04l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What did you do yesterday?",
+        "promptPt": "Passo 2 — ação passada.",
+        "options": [
+          { "labelEn": "I worked late and went home.", "correct": true, "feedbackPt": "Worked (regular) + went (irregular)." },
+          { "labelEn": "I work late and go home.", "correct": false, "feedbackPt": "Presente." },
+          { "labelEn": "I am working late.", "correct": false, "feedbackPt": "Continuous = agora." }
+        ]
+      },
+      {
+        "id": "e04l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "How was last weekend?",
+        "promptPt": "Passo 3 — história + reação.",
+        "options": [
+          { "labelEn": "I went to the beach. We had a great time. It was fun!", "correct": true, "feedbackPt": "Irregulares + was + reação." },
+          { "labelEn": "I go to the beach. We have fun. It is fun!", "correct": false, "feedbackPt": "Tempos errados." },
+          { "labelEn": "I goed to the beach.", "correct": false, "feedbackPt": "Goed não existe." }
+        ]
+      },
+      {
+        "id": "e04l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you work on Saturday?",
+        "promptPt": "Passo 4 — pergunta Did.",
+        "options": [
+          { "labelEn": "No, I didn't. I rested.", "correct": true, "feedbackPt": "Did → didn't + resposta." },
+          { "labelEn": "No, I don't. I rest.", "correct": false, "feedbackPt": "Don't = presente." },
+          { "labelEn": "No, I didn't worked.", "correct": false, "feedbackPt": "Didn't + base." }
+        ]
+      },
+      {
+        "id": "e04l07-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you watch the game?",
+        "promptPt": "Passo 5 — regular past.",
+        "options": [
+          { "labelEn": "Yes, I watched it on TV.", "correct": true, "feedbackPt": "Watched = regular -ed." },
+          { "labelEn": "Yes, I watch it on TV.", "correct": false, "feedbackPt": "Presente." },
+          { "labelEn": "Yes, I did watched.", "correct": false, "feedbackPt": "Did you watch? → Yes, I did. Ou I watched." }
+        ]
+      },
+      {
+        "id": "e04l07-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Where were you on Sunday?",
+        "promptPt": "Passo 6 — were + local.",
+        "options": [
+          { "labelEn": "I was at home with my family.", "correct": true, "feedbackPt": "I was — local passado." },
+          { "labelEn": "I were at home.", "correct": false, "feedbackPt": "I → was." },
+          { "labelEn": "I am at home on Sunday.", "correct": false, "feedbackPt": "Passado → was." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e04l07-learn-01",
+        "type": "review",
+        "titleEn": "Step 1 — Past verbs",
+        "titlePt": "Passo 1 — Verbos passado",
+        "items": [
+          { "en": "work → worked · watch → watched", "pt": "regulares -ed" },
+          { "en": "go → went · have → had · see → saw · do → did", "pt": "irregulares" },
+          { "en": "Yesterday I worked. I went home.", "pt": "frases" }
+        ]
+      },
+      {
+        "id": "e04l07-learn-02",
+        "type": "review",
+        "titleEn": "Step 2 — Was / Were",
+        "titlePt": "Passo 2 — Was / Were",
+        "items": [
+          { "en": "Yesterday was Monday.", "pt": "dia" },
+          { "en": "I was at home. They were at the stadium.", "pt": "local" },
+          { "en": "It was great! / It was fun!", "pt": "reação" }
+        ]
+      },
+      {
+        "id": "e04l07-learn-03",
+        "type": "comparison",
+        "titleEn": "Present vs Past map",
+        "titlePt": "Mapa presente vs passado",
+        "left": {
+          "labelEn": "PRESENT · START m04 + ELEM m03",
+          "exampleEn": "I work every day. I am working now.",
+          "notePt": "Rotina e agora."
+        },
+        "right": {
+          "labelEn": "PAST · ELEM m04",
+          "exampleEn": "I worked yesterday. I went to the beach.",
+          "notePt": "Yesterday, last week — ação completa."
+        },
+        "modelEn": "I work every day, but yesterday I worked from home.",
+        "modelPt": "Contraste rotina vs ontem."
+      },
+      {
+        "id": "e04l07-learn-04",
+        "type": "review",
+        "titleEn": "Step 3 — Did / Didn't",
+        "titlePt": "Passo 3 — Did / Didn't",
+        "items": [
+          { "en": "Did you work? — Yes, I did. / No, I didn't.", "pt": "perguntas" },
+          { "en": "What did you do? Where did you go?", "pt": "Wh-" },
+          { "en": "I didn't work on Saturday.", "pt": "negativa" },
+          { "en": "Did + base verb (not worked/went)", "pt": "regra" }
+        ]
+      },
+      {
+        "id": "e04l07-learn-05",
+        "type": "review",
+        "titleEn": "Step 4 — Short stories",
+        "titlePt": "Passo 4 — Histórias curtas",
+        "items": [
+          { "en": "Last weekend I went to the beach.", "pt": "abertura" },
+          { "en": "I didn't work on Saturday.", "pt": "negativa" },
+          { "en": "We had dinner and watched a movie.", "pt": "sequência" },
+          { "en": "It was fun!", "pt": "fechamento" }
+        ]
+      },
+      {
+        "id": "e04l07-learn-06",
+        "type": "language_focus",
+        "titleEn": "Conversation flow",
+        "titlePt": "Fluxo da conversa",
+        "items": [
+          { "formalEn": "Day + actions + reaction", "naturalEn": "Yesterday was Monday. I worked and went home. It was fine.", "notePt": "Ordem natural: dia → ações → reação." },
+          { "formalEn": "Weekend story", "naturalEn": "Last weekend → didn't → sequence → It was great!", "notePt": "História curta de 4 frases." }
+        ],
+        "tipPt": "Reação curta no final: It was great! / It was fun! / It was boring."
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e04l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Full past conversation",
+        "titlePt": "Conversa completa no passado",
+        "introPt": "Leia o diálogo inteiro em voz alta.",
+        "phrases": [
+          { "en": "What day was yesterday?" },
+          { "en": "Yesterday was Monday." },
+          { "en": "What did you do yesterday?" },
+          { "en": "I worked late and went home." },
+          { "en": "How was last weekend?" },
+          { "en": "I went to the beach. We had a great time. It was fun!" },
+          { "en": "Did you work on Saturday?" },
+          { "en": "No, I didn't. I rested." },
+          { "en": "Did you watch the game?" },
+          { "en": "Yes, I watched it on TV." }
+        ],
+        "dialogueEn": "What day was yesterday? — Monday. What did you do? — I worked late. How was last weekend? — I went to the beach. It was fun! Did you work Saturday? — No, I didn't."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e04l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Yesterday & before challenge.",
+        "headlinePt": "Desafio Ontem e antes.",
+        "bodyPt": "Conte ontem e fim de semana — passado completo.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Tell me about yesterday and last weekend." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e04l07-prac-01",
+      "type": "choice",
+      "promptPt": "Ontem era segunda:",
+      "options": [
+        { "labelEn": "Yesterday was Monday.", "correct": true, "feedbackPt": "Was — passado." },
+        { "labelEn": "Yesterday is Monday.", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "Yesterday were Monday.", "correct": false, "feedbackPt": "Yesterday → was." }
+      ]
+    },
+    {
+      "id": "e04l07-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Go → passado:",
+      "templateEn": "Last weekend I ___ to the beach.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "went", "correct": true, "feedbackPt": "Go → went." },
+        { "labelEn": "goed", "correct": false, "feedbackPt": "Goed não existe." },
+        { "labelEn": "go", "correct": false, "feedbackPt": "Presente." }
+      ]
+    },
+    {
+      "id": "e04l07-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Did you work on Saturday?",
+      "speaker": "You",
+      "contextEn": "Jamie: Did you work on Saturday?",
+      "options": [
+        { "labelEn": "No, I didn't. I rested.", "correct": true, "feedbackPt": "Did → didn't." },
+        { "labelEn": "No, I don't.", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "No, I didn't worked.", "correct": false, "feedbackPt": "Resposta curta." }
+      ]
+    },
+    {
+      "id": "e04l07-prac-04",
+      "type": "classify",
+      "promptPt": "Regular ou irregular?",
+      "sentenceEn": "watched",
+      "category": "regular",
+      "feedbackCorrectPt": "Watched = watch + ed (regular).",
+      "feedbackWrongPt": "Watched termina em -ed."
+    },
+    {
+      "id": "e04l07-prac-05",
+      "type": "reorder",
+      "promptPt": "Monte: nos divertimos — foi ótimo",
+      "tokens": ["great!", "was", "It", "time.", "great", "a", "had", "We"],
+      "correctOrder": ["We", "had", "a", "great", "time.", "It", "was", "great!"],
+      "feedbackCorrectPt": "We had a great time. It was great!",
+      "feedbackWrongPt": "Had + was reaction."
+    },
+    {
+      "id": "e04l07-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Pergunta: o que fez?",
+      "templateEn": "What ___ you do yesterday?",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "did", "correct": true, "feedbackPt": "What did you do?" },
+        { "labelEn": "do", "correct": false, "feedbackPt": "Do = presente." },
+        { "labelEn": "were", "correct": false, "feedbackPt": "Were = to be." }
+      ]
+    },
+    {
+      "id": "e04l07-prac-07",
+      "type": "choice",
+      "promptPt": "They → passado to be:",
+      "options": [
+        { "labelEn": "They were at the stadium.", "correct": true, "feedbackPt": "They → were." },
+        { "labelEn": "They was at the stadium.", "correct": false, "feedbackPt": "They → were." },
+        { "labelEn": "They are at the stadium yesterday.", "correct": false, "feedbackPt": "Passado → were." }
+      ]
+    },
+    {
+      "id": "e04l07-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: How was last weekend?",
+      "speaker": "You",
+      "contextEn": "Jamie: How was last weekend?",
+      "options": [
+        { "labelEn": "It was fun! I went out and had a great time.", "correct": true, "feedbackPt": "Reação + história." },
+        { "labelEn": "It is fun! I go out.", "correct": false, "feedbackPt": "Passado." },
+        { "labelEn": "It will be fun.", "correct": false, "feedbackPt": "Futuro." }
+      ]
+    },
+    {
+      "id": "e04l07-prac-09",
+      "type": "fill_blank",
+      "promptPt": "Negativa: ela não viu o jogo:",
+      "templateEn": "She didn't ___ the game.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "see", "correct": true, "feedbackPt": "Didn't + see (base)." },
+        { "labelEn": "saw", "correct": false, "feedbackPt": "Saw sem didn't." },
+        { "labelEn": "seed", "correct": false, "feedbackPt": "Seed não existe." }
+      ]
+    },
+    {
+      "id": "e04l07-prac-10",
+      "type": "choice",
+      "promptPt": "Did you work? — resposta curta sim:",
+      "options": [
+        { "labelEn": "Yes, I did.", "correct": true, "feedbackPt": "Did → I did." },
+        { "labelEn": "Yes, I do.", "correct": false, "feedbackPt": "Do = presente." },
+        { "labelEn": "Yes, I did worked.", "correct": false, "feedbackPt": "Resposta curta." }
+      ]
+    },
+    {
+      "id": "e04l07-prac-11",
+      "type": "reorder",
+      "promptPt": "Monte: trabalhei tarde e fui para casa",
+      "tokens": ["home.", "went", "and", "late", "worked", "I"],
+      "correctOrder": ["I", "worked", "late", "and", "went", "home."],
+      "feedbackCorrectPt": "I worked late and went home.",
+      "feedbackWrongPt": "Regular + irregular sequence."
+    },
+    {
+      "id": "e04l07-prac-12",
+      "type": "choice",
+      "promptPt": "Melhor integração — módulo completo:",
+      "options": [
+        { "labelEn": "Yesterday was Monday. I worked late. Last weekend I went to the beach. I didn't work Saturday. It was fun!", "correct": true, "feedbackPt": "Integra was, past verbs, didn't, reação." },
+        { "labelEn": "Yesterday is Monday. I work late. I goed beach.", "correct": false, "feedbackPt": "Múltiplos erros." },
+        { "labelEn": "What are you doing?", "correct": false, "feedbackPt": "Presente continuous." }
+      ]
+    }
+  ]
+}

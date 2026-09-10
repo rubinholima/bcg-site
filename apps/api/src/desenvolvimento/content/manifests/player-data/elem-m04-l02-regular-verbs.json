@@ -1,0 +1,330 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 4,
+  "goalPt": "Formar passado de verbos regulares — regra -ed, pronúncia básica, ortografia (e, y, CVC).",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie pede detalhes do fim de semana — você usa verbos regulares no passado.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can use regular past verbs.",
+    "headlinePt": "Você consegue usar verbos regulares no passado.",
+    "bodyPt": "",
+    "canDo": ["I watched the game.", "We played football.", "She studied English.", "They visited the stadium."],
+    "production": {
+      "introPt": "Conte o que você fez no fim de semana — use pelo menos 4 verbos regulares no passado.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What did you do last weekend?" }
+      ],
+      "fields": [
+        { "id": "action1", "labelPt": "Ação 1", "prefixEn": "I", "placeholderEn": "watched the game." },
+        { "id": "action2", "labelPt": "Ação 2", "prefixEn": "We", "placeholderEn": "played football." },
+        { "id": "action3", "labelPt": "Ação 3", "prefixEn": "I", "placeholderEn": "visited the stadium." },
+        { "id": "action4", "labelPt": "Ação 4", "prefixEn": "She", "placeholderEn": "studied English." }
+      ],
+      "exampleEn": "Last weekend I watched the game. We played football on Saturday. I visited the stadium. She studied English on Sunday."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e04l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Regular verbs",
+        "titlePt": "Verbos regulares",
+        "bodyPt": "Verbos regulares formam passado adicionando -ed: watch → watched, play → played, visit → visited."
+      },
+      {
+        "id": "e04l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office café · Monday chat",
+        "scenarioPt": "Conversa sobre o fim de semana passado."
+      },
+      {
+        "id": "e04l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you watch the game?",
+        "promptPt": "Jamie pergunta se você assistiu ao jogo.",
+        "options": [
+          { "labelEn": "Yes, I watched the game on Saturday.", "correct": true, "feedbackPt": "Watched = watch + ed." },
+          { "labelEn": "Yes, I watch the game on Saturday.", "correct": false, "feedbackPt": "Watch = presente." },
+          { "labelEn": "Yes, I watched the game every day.", "correct": false, "feedbackPt": "Every day = hábito presente." }
+        ]
+      },
+      {
+        "id": "e04l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you play football?",
+        "promptPt": "Jamie pergunta sobre futebol.",
+        "options": [
+          { "labelEn": "Yes, we played on Sunday.", "correct": true, "feedbackPt": "Played = play + ed." },
+          { "labelEn": "Yes, we play on Sunday.", "correct": false, "feedbackPt": "Play = presente." },
+          { "labelEn": "Yes, we played football every day.", "correct": false, "feedbackPt": "Resposta ok mas every day muda sentido." }
+        ]
+      },
+      {
+        "id": "e04l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did she study this weekend?",
+        "promptPt": "Jamie pergunta sobre estudo.",
+        "options": [
+          { "labelEn": "Yes, she studied English on Sunday.", "correct": true, "feedbackPt": "Studied = study → studied (y→i)." },
+          { "labelEn": "Yes, she study English.", "correct": false, "feedbackPt": "Study = presente." },
+          { "labelEn": "Yes, she studyed English.", "correct": false, "feedbackPt": "Study → studied, não studyed." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e04l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Basic rule — add -ed",
+        "titlePt": "Regra básica — add -ed",
+        "introPt": "Verbo regular: forma base + -ed.",
+        "examples": [
+          { "en": "work → worked", "pt": "trabalhei" },
+          { "en": "watch → watched", "pt": "assisti" },
+          { "en": "play → played", "pt": "joguei" },
+          { "en": "visit → visited", "pt": "visitei" }
+        ]
+      },
+      {
+        "id": "e04l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Spelling — verb ends in -e",
+        "titlePt": "Ortografia — termina em -e",
+        "introPt": "Verbo termina em e: só adiciona -d.",
+        "examples": [
+          { "en": "live → lived", "pt": "morei" },
+          { "en": "dance → danced", "pt": "dancei" },
+          { "en": "arrive → arrived", "pt": "cheguei" },
+          { "en": "phone → phoned", "pt": "liguei" }
+        ]
+      },
+      {
+        "id": "e04l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Spelling — consonant + y",
+        "titlePt": "Ortografia — consoante + y",
+        "introPt": "Termina em consoante + y: y muda para i + ed.",
+        "examples": [
+          { "en": "study → studied", "pt": "estudei" },
+          { "en": "try → tried", "pt": "tentei" },
+          { "en": "carry → carried", "pt": "carreguei" },
+          { "en": "worry → worried", "pt": "me preocupei" }
+        ]
+      },
+      {
+        "id": "e04l02-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Spelling — CVC (stop, plan)",
+        "titlePt": "Ortografia — CVC",
+        "introPt": "Monossílabo CVC: dobra consoante + ed.",
+        "examples": [
+          { "en": "stop → stopped", "pt": "parei" },
+          { "en": "plan → planned", "pt": "planejei" },
+          { "en": "drop → dropped", "pt": "deixei cair" },
+          { "en": "travel → traveled (US) / travelled (UK)", "pt": "viajei" }
+        ]
+      },
+      {
+        "id": "e04l02-learn-05",
+        "type": "language_focus",
+        "titleEn": "Pronunciation — -ed",
+        "titlePt": "Pronúncia — -ed",
+        "items": [
+          { "formalEn": "/t/ after voiceless", "naturalEn": "worked, watched, stopped", "notePt": "Som de t após k, p, s, ch, sh, f." },
+          { "formalEn": "/d/ after voiced", "naturalEn": "played, lived, arrived", "notePt": "Som de d na maioria dos verbos." },
+          { "formalEn": "/ɪd/ after t or d", "naturalEn": "wanted, needed, started", "notePt": "Sílaba extra id." }
+        ],
+        "tipPt": "Escrita igual (-ed), pronúncia varia — pratique ouvindo."
+      },
+      {
+        "id": "e04l02-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "Weekend examples",
+        "titlePt": "Exemplos de fim de semana",
+        "introPt": "Frases completas com verbos regulares.",
+        "examples": [
+          { "en": "I watched the game on Saturday.", "pt": "assisti sábado" },
+          { "en": "We played football.", "pt": "jogamos" },
+          { "en": "I visited the stadium.", "pt": "visitei estádio" },
+          { "en": "She studied English on Sunday.", "pt": "estudou domingo" }
+        ]
+      },
+      {
+        "id": "e04l02-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "I studyed English. / She stoped the car.",
+        "rightEn": "I studied English. / She stopped the car.",
+        "explanationPt": "Study → studied (y→i). Stop → stopped (dobra p). Não invente a ortografia — siga as regras."
+      },
+      {
+        "id": "e04l02-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "watch → watched", "pt": "regular" },
+          { "en": "live → lived", "pt": "termina em e" },
+          { "en": "study → studied", "pt": "consoante + y" },
+          { "en": "stop → stopped", "pt": "CVC" },
+          { "en": "Last weekend I watched the game.", "pt": "frase completa" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e04l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte ao seu fim de semana.",
+        "phrases": [
+          { "en": "I watched the game." },
+          { "en": "We played football." },
+          { "en": "I visited the stadium." },
+          { "en": "She studied English." },
+          { "en": "I lived in Rio last year." },
+          { "en": "We stopped at a café." },
+          { "en": "He arrived late." },
+          { "en": "They danced all night." }
+        ],
+        "dialogueEn": "Did you watch the game? — Yes, I watched it on Saturday. Did you play football? — Yes, we played on Sunday. Did she study? — Yes, she studied English."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e04l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your weekend — regular past.",
+        "headlinePt": "Seu fim de semana — passado regular.",
+        "bodyPt": "Conte 4 ações com verbos regulares -ed.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What did you do last weekend?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e04l02-prac-01",
+      "type": "choice",
+      "promptPt": "Watch → passado:",
+      "options": [
+        { "labelEn": "watched", "correct": true, "feedbackPt": "Watch + ed." },
+        { "labelEn": "watch", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "watchted", "correct": false, "feedbackPt": "Não dobra t." }
+      ]
+    },
+    {
+      "id": "e04l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Study → passado:",
+      "templateEn": "She ___ English on Sunday.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "studied", "correct": true, "feedbackPt": "Study → studied." },
+        { "labelEn": "studyed", "correct": false, "feedbackPt": "Y → i + ed." },
+        { "labelEn": "study", "correct": false, "feedbackPt": "Presente." }
+      ]
+    },
+    {
+      "id": "e04l02-prac-03",
+      "type": "choice",
+      "promptPt": "Live → passado:",
+      "options": [
+        { "labelEn": "lived", "correct": true, "feedbackPt": "Live + d (já tem e)." },
+        { "labelEn": "liveed", "correct": false, "feedbackPt": "Só +d, não +ed." },
+        { "labelEn": "livd", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "e04l02-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: assistimos ao jogo sábado",
+      "tokens": ["Saturday.", "on", "game", "the", "watched", "We"],
+      "correctOrder": ["We", "watched", "the", "game", "on", "Saturday."],
+      "feedbackCorrectPt": "We watched the game on Saturday.",
+      "feedbackWrongPt": "We + watched + the game + on Saturday."
+    },
+    {
+      "id": "e04l02-prac-05",
+      "type": "fill_blank",
+      "promptPt": "Stop → passado:",
+      "templateEn": "We ___ at a café.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "stopped", "correct": true, "feedbackPt": "Stop → stopped (dobra p)." },
+        { "labelEn": "stoped", "correct": false, "feedbackPt": "Precisa dobrar p." },
+        { "labelEn": "stop", "correct": false, "feedbackPt": "Presente." }
+      ]
+    },
+    {
+      "id": "e04l02-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Did you play football?",
+      "speaker": "You",
+      "contextEn": "Jamie: Did you play football last weekend?",
+      "options": [
+        { "labelEn": "Yes, we played on Sunday.", "correct": true, "feedbackPt": "Played = passado." },
+        { "labelEn": "Yes, we play on Sunday.", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "Yes, we plaied on Sunday.", "correct": false, "feedbackPt": "Play → played, não plaied." }
+      ]
+    },
+    {
+      "id": "e04l02-prac-07",
+      "type": "choice",
+      "promptPt": "Play → passado:",
+      "options": [
+        { "labelEn": "played", "correct": true, "feedbackPt": "Play + ed." },
+        { "labelEn": "plaied", "correct": false, "feedbackPt": "Não muda y (vogal+y)." },
+        { "labelEn": "playd", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "e04l02-prac-08",
+      "type": "fill_blank",
+      "promptPt": "Visit → passado:",
+      "templateEn": "I ___ the stadium last week.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "visited", "correct": true, "feedbackPt": "Visit + ed." },
+        { "labelEn": "visit", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "visitted", "correct": false, "feedbackPt": "Não dobra t." }
+      ]
+    },
+    {
+      "id": "e04l02-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte: ela estudou inglês",
+      "tokens": ["English.", "studied", "She"],
+      "correctOrder": ["She", "studied", "English."],
+      "feedbackCorrectPt": "She studied English.",
+      "feedbackWrongPt": "She + studied + English."
+    },
+    {
+      "id": "e04l02-prac-10",
+      "type": "choice",
+      "promptPt": "Try → passado:",
+      "options": [
+        { "labelEn": "tried", "correct": true, "feedbackPt": "Try → tried (y→i)." },
+        { "labelEn": "tryed", "correct": false, "feedbackPt": "Consoante + y → i." },
+        { "labelEn": "trieded", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    }
+  ]
+}

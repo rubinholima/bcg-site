@@ -1,0 +1,319 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 4,
+  "goalPt": "Introduzir o Passado Simples — ações completas no passado com yesterday, last week, ago.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Segunda de manhã — Jamie pergunta sobre ontem e o fim de semana passado.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can talk about the past.",
+    "headlinePt": "Você consegue falar do passado.",
+    "bodyPt": "",
+    "canDo": ["Yesterday I worked late.", "Last week I traveled.", "I finished the report yesterday.", "What did you do yesterday?"],
+    "production": {
+      "introPt": "Conte o que você fez ontem e na semana passada — 3 ações no passado.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What did you do yesterday?" }
+      ],
+      "fields": [
+        { "id": "yesterday", "labelPt": "Ontem", "prefixEn": "Yesterday I", "placeholderEn": "worked late." },
+        { "id": "lastweek", "labelPt": "Semana passada", "prefixEn": "Last week I", "placeholderEn": "traveled for work." },
+        { "id": "action", "labelPt": "Outra ação", "prefixEn": "I", "placeholderEn": "finished the report." }
+      ],
+      "exampleEn": "Yesterday I worked late. Last week I traveled for work. I finished the report yesterday."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e04l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Simple Past intro",
+        "titlePt": "Introdução ao Passado Simples",
+        "bodyPt": "Presente = agora e rotina. Passado = ação completa que já terminou: yesterday, last week, two days ago."
+      },
+      {
+        "id": "e04l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Monday morning",
+        "scenarioPt": "Jamie quer saber o que você fez ontem e no fim de semana."
+      },
+      {
+        "id": "e04l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What did you do yesterday?",
+        "promptPt": "Jamie pergunta sobre ontem.",
+        "options": [
+          { "labelEn": "Yesterday I worked late.", "correct": true, "feedbackPt": "Worked = passado de work." },
+          { "labelEn": "Yesterday I work late.", "correct": false, "feedbackPt": "Work = presente." },
+          { "labelEn": "Yesterday I am working late.", "correct": false, "feedbackPt": "Am working = agora." }
+        ]
+      },
+      {
+        "id": "e04l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you travel last week?",
+        "promptPt": "Jamie pergunta sobre semana passada.",
+        "options": [
+          { "labelEn": "Yes, I traveled for work last week.", "correct": true, "feedbackPt": "Traveled = passado." },
+          { "labelEn": "Yes, I travel last week.", "correct": false, "feedbackPt": "Travel = presente." },
+          { "labelEn": "Yes, I am traveling last week.", "correct": false, "feedbackPt": "Continuous ≠ passado completo." }
+        ]
+      },
+      {
+        "id": "e04l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "When did you finish the report?",
+        "promptPt": "Jamie pergunta quando terminou.",
+        "options": [
+          { "labelEn": "I finished it yesterday.", "correct": true, "feedbackPt": "Finished = passado." },
+          { "labelEn": "I finish it yesterday.", "correct": false, "feedbackPt": "Finish = presente." },
+          { "labelEn": "I am finishing it yesterday.", "correct": false, "feedbackPt": "Tempo e forma não combinam." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e04l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Time markers — past",
+        "titlePt": "Marcadores — passado",
+        "introPt": "Essas palavras indicam Passado Simples.",
+        "examples": [
+          { "en": "yesterday", "pt": "ontem" },
+          { "en": "last week / last month / last year", "pt": "semana/mês/ano passado" },
+          { "en": "two days ago", "pt": "dois dias atrás" },
+          { "en": "in 2024 / on Monday (past)", "pt": "data passada" }
+        ]
+      },
+      {
+        "id": "e04l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Regular past — preview",
+        "titlePt": "Passado regular — preview",
+        "introPt": "Muitos verbos formam passado com -ed (lição 2).",
+        "examples": [
+          { "en": "work → worked", "pt": "trabalhei" },
+          { "en": "finish → finished", "pt": "terminei" },
+          { "en": "travel → traveled", "pt": "viajei" },
+          { "en": "watch → watched", "pt": "assisti" }
+        ]
+      },
+      {
+        "id": "e04l01-learn-03",
+        "type": "language_focus",
+        "titleEn": "Simple Past concept",
+        "titlePt": "Conceito do Passado Simples",
+        "items": [
+          { "formalEn": "Completed action in the past", "naturalEn": "Yesterday I worked. Last week I traveled.", "notePt": "Ação começou e terminou — tempo definido." },
+          { "formalEn": "Not now, not habit", "naturalEn": "I work every day (present) vs I worked yesterday (past)", "notePt": "Contraste com START m04 rotina." }
+        ],
+        "tipPt": "Pergunta-chave: When? If the answer is yesterday/last week → past tense."
+      },
+      {
+        "id": "e04l01-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Past sentences",
+        "titlePt": "Frases no passado",
+        "introPt": "Afirmativas simples no passado.",
+        "examples": [
+          { "en": "Yesterday I worked late.", "pt": "trabalhei até tarde" },
+          { "en": "Last week I traveled.", "pt": "viajei" },
+          { "en": "I finished the report.", "pt": "terminei o relatório" },
+          { "en": "She called me yesterday.", "pt": "ela me ligou" }
+        ]
+      },
+      {
+        "id": "e04l01-learn-05",
+        "type": "comparison",
+        "titleEn": "Present vs Past",
+        "titlePt": "Presente vs Passado",
+        "left": {
+          "labelEn": "PRESENT · now / habit",
+          "exampleEn": "I work every day. I am working now.",
+          "notePt": "START m04 + ELEMENTARY m03."
+        },
+        "right": {
+          "labelEn": "PAST · completed",
+          "exampleEn": "I worked yesterday. I finished the report.",
+          "notePt": "Yesterday, last week → past tense."
+        },
+        "modelEn": "I work every day, but yesterday I worked from home.",
+        "modelPt": "Rotina vs exceção ontem."
+      },
+      {
+        "id": "e04l01-learn-06",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "Yesterday I work late. / Last week I am traveling.",
+        "rightEn": "Yesterday I worked late. / Last week I traveled.",
+        "explanationPt": "Marcador passado (yesterday, last week) exige verbo no passado — worked, traveled, não work/travel."
+      },
+      {
+        "id": "e04l01-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Yesterday I worked late.", "pt": "ontem" },
+          { "en": "Last week I traveled.", "pt": "semana passada" },
+          { "en": "I finished the report.", "pt": "ação completa" },
+          { "en": "yesterday / last week / ago", "pt": "marcadores" },
+          { "en": "work → worked", "pt": "regular -ed" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e04l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte à sua semana passada.",
+        "phrases": [
+          { "en": "Yesterday I worked late." },
+          { "en": "Last week I traveled for work." },
+          { "en": "I finished the report yesterday." },
+          { "en": "She called me yesterday." },
+          { "en": "We watched the game last night." },
+          { "en": "What did you do yesterday?" },
+          { "en": "I worked from home two days ago." },
+          { "en": "Last month I started a new project." }
+        ],
+        "dialogueEn": "What did you do yesterday? — Yesterday I worked late. Did you travel last week? — Yes, I traveled for work. When did you finish the report? — I finished it yesterday."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e04l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Tell me about yesterday.",
+        "headlinePt": "Conte sobre ontem.",
+        "bodyPt": "Descreva 3 ações completas no passado.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What did you do yesterday?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e04l01-prac-01",
+      "type": "choice",
+      "promptPt": "Trabalhei ontem até tarde:",
+      "options": [
+        { "labelEn": "Yesterday I worked late.", "correct": true, "feedbackPt": "Worked = passado." },
+        { "labelEn": "Yesterday I work late.", "correct": false, "feedbackPt": "Work = presente." },
+        { "labelEn": "Yesterday I am working late.", "correct": false, "feedbackPt": "Continuous = agora." }
+      ]
+    },
+    {
+      "id": "e04l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Viajei semana passada:",
+      "templateEn": "Last week I ___ for work.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "traveled", "correct": true, "feedbackPt": "Travel → traveled." },
+        { "labelEn": "travel", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "traveling", "correct": false, "feedbackPt": "Precisa auxiliar." }
+      ]
+    },
+    {
+      "id": "e04l01-prac-03",
+      "type": "classify",
+      "promptPt": "Presente ou passado?",
+      "sentenceEn": "Last week I worked a lot.",
+      "category": "past",
+      "feedbackCorrectPt": "Last week = passado.",
+      "feedbackWrongPt": "Last indica passado."
+    },
+    {
+      "id": "e04l01-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: terminei o relatório ontem",
+      "tokens": ["yesterday.", "report", "the", "finished", "I"],
+      "correctOrder": ["I", "finished", "the", "report", "yesterday."],
+      "feedbackCorrectPt": "I finished the report yesterday.",
+      "feedbackWrongPt": "I + finished + the report + yesterday."
+    },
+    {
+      "id": "e04l01-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What did you do yesterday?",
+      "speaker": "You",
+      "contextEn": "Jamie: What did you do yesterday?",
+      "options": [
+        { "labelEn": "I worked from home and finished a report.", "correct": true, "feedbackPt": "Duas ações passadas." },
+        { "labelEn": "I work from home every day.", "correct": false, "feedbackPt": "Hábito, não ontem." },
+        { "labelEn": "I am working from home.", "correct": false, "feedbackPt": "Agora, não ontem." }
+      ]
+    },
+    {
+      "id": "e04l01-prac-06",
+      "type": "choice",
+      "promptPt": "Marcador de passado:",
+      "options": [
+        { "labelEn": "yesterday", "correct": true, "feedbackPt": "Indica passado." },
+        { "labelEn": "every day", "correct": false, "feedbackPt": "Hábito = presente." },
+        { "labelEn": "right now", "correct": false, "feedbackPt": "Agora = continuous." }
+      ]
+    },
+    {
+      "id": "e04l01-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Work → passado:",
+      "templateEn": "Yesterday I ___ until 9 p.m.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "worked", "correct": true, "feedbackPt": "Work → worked." },
+        { "labelEn": "work", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "working", "correct": false, "feedbackPt": "Forma incompleta." }
+      ]
+    },
+    {
+      "id": "e04l01-prac-08",
+      "type": "choice",
+      "promptPt": "Contraste rotina vs ontem:",
+      "options": [
+        { "labelEn": "I work every day, but yesterday I worked from home.", "correct": true, "feedbackPt": "Present habit + past exception." },
+        { "labelEn": "I work every day, but yesterday I work from home.", "correct": false, "feedbackPt": "Yesterday precisa past." },
+        { "labelEn": "I worked every day, but yesterday I work from home.", "correct": false, "feedbackPt": "Tempos invertidos." }
+      ]
+    },
+    {
+      "id": "e04l01-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte: semana passada viajei",
+      "tokens": ["week.", "last", "work.", "for", "traveled", "I"],
+      "correctOrder": ["I", "traveled", "for", "work", "last", "week."],
+      "feedbackCorrectPt": "I traveled for work last week.",
+      "feedbackWrongPt": "I traveled for work last week."
+    },
+    {
+      "id": "e04l01-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Finish → passado:",
+      "templateEn": "I ___ the report yesterday.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "finished", "correct": true, "feedbackPt": "Finish → finished." },
+        { "labelEn": "finish", "correct": false, "feedbackPt": "Presente." },
+        { "labelEn": "finishing", "correct": false, "feedbackPt": "Continuous." }
+      ]
+    }
+  ]
+}

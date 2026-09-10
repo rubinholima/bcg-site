@@ -1,0 +1,317 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 3,
+  "goalPt": "Descrever ações em progresso agora — verbos comuns com right now, at the moment, look!",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você descreve o que vê acontecendo no vestiário e no campo agora.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can describe actions happening now.",
+    "headlinePt": "Você consegue descrever ações acontecendo agora.",
+    "bodyPt": "",
+    "canDo": ["Look! He is running.", "They are training.", "She is stretching.", "I'm not doing anything."],
+    "production": {
+      "introPt": "Descreva três ações que você vê acontecendo agora — use Look! ou Right now.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What's happening on the field right now?" }
+      ],
+      "fields": [
+        { "id": "action1", "labelPt": "Ação 1", "prefixEn": "Look! He is", "placeholderEn": "running." },
+        { "id": "action2", "labelPt": "Ação 2", "prefixEn": "They are", "placeholderEn": "training." },
+        { "id": "action3", "labelPt": "Ação 3", "prefixEn": "She is", "placeholderEn": "stretching." }
+      ],
+      "exampleEn": "Look! He is running. They are training on the field. She is stretching near the goal."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e03l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Actions now",
+        "titlePt": "Ações agora",
+        "bodyPt": "Look! Right now. At the moment. Essas expressões sinalizam Present Continuous — ações em progresso neste instante."
+      },
+      {
+        "id": "e03l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Training ground · Live observation",
+        "scenarioPt": "Jamie está ao vivo e pede para você descrever o que vê."
+      },
+      {
+        "id": "e03l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Look at Marco! What is he doing?",
+        "promptPt": "Jamie aponta para Marco agora.",
+        "options": [
+          { "labelEn": "He is running.", "correct": true, "feedbackPt": "Ação em progresso agora." },
+          { "labelEn": "He runs every day.", "correct": false, "feedbackPt": "Runs = hábito, não agora." },
+          { "labelEn": "He is run.", "correct": false, "feedbackPt": "Is + running." }
+        ]
+      },
+      {
+        "id": "e03l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What are the players doing?",
+        "promptPt": "Jamie pergunta sobre os jogadores neste momento.",
+        "options": [
+          { "labelEn": "They are training.", "correct": true, "feedbackPt": "Are training = agora." },
+          { "labelEn": "They train on Mondays.", "correct": false, "feedbackPt": "Train = rotina." },
+          { "labelEn": "They is training.", "correct": false, "feedbackPt": "They + are." }
+        ]
+      },
+      {
+        "id": "e03l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Is Sarah doing anything?",
+        "promptPt": "Jamie pergunta sobre Sarah.",
+        "options": [
+          { "labelEn": "Yes, she is stretching.", "correct": true, "feedbackPt": "Is stretching = agora." },
+          { "labelEn": "Yes, she stretches every morning.", "correct": false, "feedbackPt": "Stretches = hábito." },
+          { "labelEn": "Yes, she is stretch.", "correct": false, "feedbackPt": "Is + stretching." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e03l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Time markers — now",
+        "titlePt": "Marcadores — agora",
+        "introPt": "Essas palavras indicam Present Continuous.",
+        "examples": [
+          { "en": "right now", "pt": "agora mesmo" },
+          { "en": "at the moment", "pt": "neste momento" },
+          { "en": "now", "pt": "agora" },
+          { "en": "Look!", "pt": "Olha! (ação visível)" }
+        ]
+      },
+      {
+        "id": "e03l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Common action verbs",
+        "titlePt": "Verbos de ação comuns",
+        "introPt": "Verbos frequentes no campo e no trabalho.",
+        "examples": [
+          { "en": "running / walking / jumping", "pt": "correr / andar / pular" },
+          { "en": "training / practicing / playing", "pt": "treinar / praticar / jogar" },
+          { "en": "stretching / warming up", "pt": "alongar / aquecer" },
+          { "en": "talking / listening / watching", "pt": "falar / ouvir / assistir" }
+        ]
+      },
+      {
+        "id": "e03l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Describing what you see",
+        "titlePt": "Descrevendo o que você vê",
+        "introPt": "Frases para observar ações ao vivo.",
+        "examples": [
+          { "en": "Look! He is running.", "pt": "Olha! Ele está correndo." },
+          { "en": "They are training right now.", "pt": "Estão treinando agora." },
+          { "en": "She is stretching at the moment.", "pt": "Ela está alongando." },
+          { "en": "We are watching the game.", "pt": "Estamos assistindo." }
+        ]
+      },
+      {
+        "id": "e03l02-learn-04",
+        "type": "language_focus",
+        "titleEn": "Negative — not + -ing",
+        "titlePt": "Negativa — not + -ing",
+        "items": [
+          { "formalEn": "I am not working.", "naturalEn": "I'm not working.", "notePt": "Am/is/are + not + -ing." },
+          { "formalEn": "He is not running.", "naturalEn": "He isn't running.", "notePt": "Isn't = is not." }
+        ],
+        "tipPt": "Contrações naturais: I'm not, he isn't, they aren't."
+      },
+      {
+        "id": "e03l02-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Spelling -ing rules",
+        "titlePt": "Regras de ortografia -ing",
+        "introPt": "Alguns verbos mudam ao formar -ing.",
+        "examples": [
+          { "en": "run → running (double n)", "pt": "dobra consoante" },
+          { "en": "sit → sitting", "pt": "dobra t" },
+          { "en": "write → writing (drop e)", "pt": "remove e" },
+          { "en": "play → playing", "pt": "regular" }
+        ]
+      },
+      {
+        "id": "e03l02-learn-06",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "Look! He runs. / Right now I work.",
+        "rightEn": "Look! He is running. / Right now I am working.",
+        "explanationPt": "Com right now / look / at the moment, use Present Continuous, não Simple Present."
+      },
+      {
+        "id": "e03l02-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Look! He is running.", "pt": "ação visível agora" },
+          { "en": "They are training right now.", "pt": "marcador now" },
+          { "en": "She isn't doing anything.", "pt": "negativa" },
+          { "en": "What is he doing?", "pt": "pergunta" },
+          { "en": "run → running", "pt": "ortografia" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e03l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — imagine a cena ao vivo.",
+        "phrases": [
+          { "en": "Look! He is running." },
+          { "en": "They are training right now." },
+          { "en": "She is stretching." },
+          { "en": "We are watching the game." },
+          { "en": "I'm not doing anything." },
+          { "en": "What is he doing?" },
+          { "en": "At the moment, they are practicing." },
+          { "en": "He isn't running. He is walking." }
+        ],
+        "dialogueEn": "Look at Marco! What is he doing? — He is running. What are the players doing? — They are training right now. Is Sarah doing anything? — Yes, she is stretching."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e03l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Describe the scene now.",
+        "headlinePt": "Descreva a cena agora.",
+        "bodyPt": "Conte três ações que estão acontecendo neste momento.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What's happening on the field right now?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e03l02-prac-01",
+      "type": "choice",
+      "promptPt": "Olha! Ele está correndo:",
+      "options": [
+        { "labelEn": "Look! He is running.", "correct": true, "feedbackPt": "Look + is running." },
+        { "labelEn": "Look! He runs.", "correct": false, "feedbackPt": "Runs = hábito." },
+        { "labelEn": "Look! He running.", "correct": false, "feedbackPt": "Falta is." }
+      ]
+    },
+    {
+      "id": "e03l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Eles estão treinando agora:",
+      "templateEn": "They ___ training right now.",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "are", "correct": true, "feedbackPt": "They + are." },
+        { "labelEn": "is", "correct": false, "feedbackPt": "Is = he/she." },
+        { "labelEn": "do", "correct": false, "feedbackPt": "Do não forma continuous." }
+      ]
+    },
+    {
+      "id": "e03l02-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: ela está alongando",
+      "tokens": ["stretching.", "is", "She"],
+      "correctOrder": ["She", "is", "stretching."],
+      "feedbackCorrectPt": "She is stretching.",
+      "feedbackWrongPt": "She + is + stretching."
+    },
+    {
+      "id": "e03l02-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: What is he doing?",
+      "speaker": "You",
+      "contextEn": "Jamie: Look at Marco! What is he doing?",
+      "options": [
+        { "labelEn": "He is running.", "correct": true, "feedbackPt": "Ação agora." },
+        { "labelEn": "He runs every day.", "correct": false, "feedbackPt": "Hábito, não agora." },
+        { "labelEn": "He is run.", "correct": false, "feedbackPt": "Is + running." }
+      ]
+    },
+    {
+      "id": "e03l02-prac-05",
+      "type": "choice",
+      "promptPt": "Run → -ing:",
+      "options": [
+        { "labelEn": "running", "correct": true, "feedbackPt": "Dobra n: running." },
+        { "labelEn": "runing", "correct": false, "feedbackPt": "Precisa dobrar n." },
+        { "labelEn": "runned", "correct": false, "feedbackPt": "Passado, não -ing." }
+      ]
+    },
+    {
+      "id": "e03l02-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Negativa: não estou fazendo nada:",
+      "templateEn": "I'm ___ doing anything.",
+      "blankLabel": "not",
+      "options": [
+        { "labelEn": "not", "correct": true, "feedbackPt": "Am + not + -ing." },
+        { "labelEn": "don't", "correct": false, "feedbackPt": "Continuous usa not, não don't." },
+        { "labelEn": "no", "correct": false, "feedbackPt": "Use not." }
+      ]
+    },
+    {
+      "id": "e03l02-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte: neste momento estamos assistindo",
+      "tokens": ["game.", "the", "watching", "are", "moment", "the", "At", "we"],
+      "correctOrder": ["At", "the", "moment,", "we", "are", "watching", "the", "game."],
+      "feedbackCorrectPt": "At the moment, we are watching the game.",
+      "feedbackWrongPt": "At the moment + we are watching."
+    },
+    {
+      "id": "e03l02-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Is he running? — não, está andando",
+      "speaker": "You",
+      "contextEn": "Jamie: Is Marco running?",
+      "options": [
+        { "labelEn": "No, he isn't. He is walking.", "correct": true, "feedbackPt": "Negativa + ação alternativa." },
+        { "labelEn": "No, he doesn't run.", "correct": false, "feedbackPt": "Doesn't = hábito." },
+        { "labelEn": "No, he not walking.", "correct": false, "feedbackPt": "Precisa isn't + is walking." }
+      ]
+    },
+    {
+      "id": "e03l02-prac-09",
+      "type": "choice",
+      "promptPt": "Marcador de tempo para continuous:",
+      "options": [
+        { "labelEn": "right now", "correct": true, "feedbackPt": "Indica ação agora." },
+        { "labelEn": "every day", "correct": false, "feedbackPt": "Every day = hábito." },
+        { "labelEn": "usually", "correct": false, "feedbackPt": "Usually = rotina." }
+      ]
+    },
+    {
+      "id": "e03l02-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Sit → -ing:",
+      "templateEn": "He is ___ on the bench.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "sitting", "correct": true, "feedbackPt": "Sit → sitting (dobra t)." },
+        { "labelEn": "siting", "correct": false, "feedbackPt": "Precisa dobrar t." },
+        { "labelEn": "sitted", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    }
+  ]
+}

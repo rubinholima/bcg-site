@@ -1,0 +1,324 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 3,
+  "goalPt": "Usar Present Continuous para situações temporárias — this week, for now, at the moment (não só agora).",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Colegas comentam mudanças temporárias — quem está de licença, quem mora em outro lugar esta semana.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can talk about temporary situations.",
+    "headlinePt": "Você consegue falar de situações temporárias.",
+    "bodyPt": "",
+    "canDo": ["I'm staying at a hotel this week.", "She is working from home.", "They are traveling for work.", "He isn't playing this month."],
+    "production": {
+      "introPt": "Descreva uma situação temporária sua e de um colega — use this week / for now.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Any temporary changes at work this week?" }
+      ],
+      "fields": [
+        { "id": "you", "labelPt": "Sua situação temporária", "prefixEn": "I'm", "placeholderEn": "staying at a hotel this week." },
+        { "id": "colleague", "labelPt": "Colega (he/she)", "prefixEn": "She is", "placeholderEn": "working from home for now." },
+        { "id": "team", "labelPt": "Equipe", "prefixEn": "They are", "placeholderEn": "traveling for work this month." }
+      ],
+      "exampleEn": "I'm staying at a hotel this week. Marco is working from home for now. They are traveling for work this month."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e03l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Temporary situations",
+        "titlePt": "Situações temporárias",
+        "bodyPt": "Present Continuous também descreve situações temporárias — não para sempre, mas por um período: this week, for now, this month."
+      },
+      {
+        "id": "e03l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Weekly update",
+        "scenarioPt": "Reunião rápida sobre quem está onde e fazendo o quê esta semana."
+      },
+      {
+        "id": "e03l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Where are you staying this week?",
+        "promptPt": "Jamie pergunta onde você está hospedado temporariamente.",
+        "options": [
+          { "labelEn": "I'm staying at a hotel this week.", "correct": true, "feedbackPt": "Temporary — this week." },
+          { "labelEn": "I stay at a hotel every week.", "correct": false, "feedbackPt": "Every week = hábito permanente." },
+          { "labelEn": "I am stay at a hotel.", "correct": false, "feedbackPt": "Am + staying." }
+        ]
+      },
+      {
+        "id": "e03l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Is Sarah in the office?",
+        "promptPt": "Jamie pergunta sobre Sarah — situação temporária.",
+        "options": [
+          { "labelEn": "No, she is working from home for now.", "correct": true, "feedbackPt": "For now = temporário." },
+          { "labelEn": "No, she works from home every day.", "correct": false, "feedbackPt": "Every day = permanente." },
+          { "labelEn": "No, she is work from home.", "correct": false, "feedbackPt": "Is + working." }
+        ]
+      },
+      {
+        "id": "e03l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Where is the team?",
+        "promptPt": "Jamie pergunta sobre a equipe em viagem.",
+        "options": [
+          { "labelEn": "They are traveling for work this month.", "correct": true, "feedbackPt": "This month = período temporário." },
+          { "labelEn": "They travel every month.", "correct": false, "feedbackPt": "Every month = rotina." },
+          { "labelEn": "They is traveling.", "correct": false, "feedbackPt": "They + are." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e03l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Time markers — temporary",
+        "titlePt": "Marcadores — temporário",
+        "introPt": "Expressões que indicam situação temporária, não permanente.",
+        "examples": [
+          { "en": "this week / this month", "pt": "esta semana / mês" },
+          { "en": "for now / at the moment", "pt": "por enquanto" },
+          { "en": "these days / currently", "pt": "ultimamente" },
+          { "en": "temporarily", "pt": "temporariamente" }
+        ]
+      },
+      {
+        "id": "e03l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Temporary living & work",
+        "titlePt": "Moradia e trabalho temporários",
+        "introPt": "Situações comuns no clube e no trabalho.",
+        "examples": [
+          { "en": "I'm staying at a hotel.", "pt": "estou hospedado" },
+          { "en": "She is living with her sister.", "pt": "morando temporariamente" },
+          { "en": "He is working from home.", "pt": "home office temporário" },
+          { "en": "They are traveling for work.", "pt": "em viagem a trabalho" }
+        ]
+      },
+      {
+        "id": "e03l03-learn-03",
+        "type": "language_focus",
+        "titleEn": "Temporary vs permanent",
+        "titlePt": "Temporário vs permanente",
+        "items": [
+          { "formalEn": "Temporary (continuous)", "naturalEn": "I'm staying at a hotel this week.", "notePt": "Período limitado — continuous." },
+          { "formalEn": "Permanent (simple present)", "naturalEn": "I live in São Paulo.", "notePt": "Situação fixa — simple present." }
+        ],
+        "tipPt": "Pergunte: is this forever or for a period? Forever → simple present. For a period → continuous."
+      },
+      {
+        "id": "e03l03-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Sports — temporary changes",
+        "titlePt": "Esporte — mudanças temporárias",
+        "introPt": "Lesões, empréstimos, viagens — situações temporárias no futebol.",
+        "examples": [
+          { "en": "He is recovering from an injury.", "pt": "recuperando-se" },
+          { "en": "She isn't playing this month.", "pt": "não joga este mês" },
+          { "en": "They are training in another city.", "pt": "treinando em outra cidade" },
+          { "en": "Marco is on loan this season.", "pt": "emprestado esta temporada" }
+        ]
+      },
+      {
+        "id": "e03l03-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Questions about temporary",
+        "titlePt": "Perguntas sobre temporário",
+        "introPt": "Como perguntar sobre situações temporárias.",
+        "examples": [
+          { "en": "Where are you staying this week?", "pt": "onde está hospedado" },
+          { "en": "Are you working from home?", "pt": "home office?" },
+          { "en": "How long are you staying?", "pt": "por quanto tempo" },
+          { "en": "Is he playing this month?", "pt": "joga este mês?" }
+        ]
+      },
+      {
+        "id": "e03l03-learn-06",
+        "type": "comparison",
+        "titleEn": "Now vs this week",
+        "titlePt": "Agora vs esta semana",
+        "left": {
+          "labelEn": "RIGHT NOW · ação instantânea",
+          "exampleEn": "I am eating lunch right now.",
+          "notePt": "Neste exato segundo."
+        },
+        "right": {
+          "labelEn": "THIS WEEK · situação temporária",
+          "exampleEn": "I am staying at a hotel this week.",
+          "notePt": "Por um período, não necessariamente agora."
+        },
+        "modelEn": "I'm not eating now, but I'm staying at a hotel this week.",
+        "modelPt": "Continuous cobre ação agora E situação temporária."
+      },
+      {
+        "id": "e03l03-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "I'm staying at a hotel this week.", "pt": "temporário" },
+          { "en": "She is working from home for now.", "pt": "for now" },
+          { "en": "They are traveling this month.", "pt": "período" },
+          { "en": "I live in São Paulo. (permanent)", "pt": "simple present" },
+          { "en": "Where are you staying?", "pt": "pergunta" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e03l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — adapte à sua situação.",
+        "phrases": [
+          { "en": "I'm staying at a hotel this week." },
+          { "en": "She is working from home for now." },
+          { "en": "They are traveling for work this month." },
+          { "en": "He isn't playing this month." },
+          { "en": "Where are you staying this week?" },
+          { "en": "Are you working from home?" },
+          { "en": "I live in São Paulo. (permanent)" },
+          { "en": "He is recovering from an injury." }
+        ],
+        "dialogueEn": "Where are you staying this week? — I'm staying at a hotel. Is Sarah in? — No, she is working from home for now. Where is the team? — They are traveling for work this month."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e03l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Temporary changes.",
+        "headlinePt": "Mudanças temporárias.",
+        "bodyPt": "Conte situações temporárias — sua e de colegas.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Any temporary changes at work this week?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e03l03-prac-01",
+      "type": "choice",
+      "promptPt": "Hospedado no hotel esta semana:",
+      "options": [
+        { "labelEn": "I'm staying at a hotel this week.", "correct": true, "feedbackPt": "Temporary + this week." },
+        { "labelEn": "I stay at a hotel every week.", "correct": false, "feedbackPt": "Every week = permanente." },
+        { "labelEn": "I stayed at a hotel.", "correct": false, "feedbackPt": "Stayed = passado." }
+      ]
+    },
+    {
+      "id": "e03l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Ela está em home office por enquanto:",
+      "templateEn": "She ___ working from home for now.",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "is", "correct": true, "feedbackPt": "She + is." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "Are = they/we." },
+        { "labelEn": "does", "correct": false, "feedbackPt": "Does = simple present." }
+      ]
+    },
+    {
+      "id": "e03l03-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: equipe em viagem este mês",
+      "tokens": ["month.", "this", "work.", "for", "traveling", "are", "They"],
+      "correctOrder": ["They", "are", "traveling", "for", "work", "this", "month."],
+      "feedbackCorrectPt": "They are traveling for work this month.",
+      "feedbackWrongPt": "They are traveling for work this month."
+    },
+    {
+      "id": "e03l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Where are you staying this week?",
+      "speaker": "You",
+      "contextEn": "Jamie: Where are you staying this week?",
+      "options": [
+        { "labelEn": "I'm staying at a hotel near the stadium.", "correct": true, "feedbackPt": "Temporary situation." },
+        { "labelEn": "I live near the stadium.", "correct": false, "feedbackPt": "Live = permanente." },
+        { "labelEn": "I stayed at a hotel.", "correct": false, "feedbackPt": "Passado." }
+      ]
+    },
+    {
+      "id": "e03l03-prac-05",
+      "type": "choice",
+      "promptPt": "Situação permanente — morar em SP:",
+      "options": [
+        { "labelEn": "I live in São Paulo.", "correct": true, "feedbackPt": "Simple present = permanente." },
+        { "labelEn": "I am living in São Paulo this week.", "correct": false, "feedbackPt": "Soa temporário." },
+        { "labelEn": "I am live in São Paulo.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]
+    },
+    {
+      "id": "e03l03-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Ele não joga este mês:",
+      "templateEn": "He ___ playing this month.",
+      "blankLabel": "negativa",
+      "options": [
+        { "labelEn": "isn't", "correct": true, "feedbackPt": "Isn't = is not." },
+        { "labelEn": "doesn't", "correct": false, "feedbackPt": "Doesn't = hábito." },
+        { "labelEn": "aren't", "correct": false, "feedbackPt": "He usa isn't." }
+      ]
+    },
+    {
+      "id": "e03l03-prac-07",
+      "type": "classify",
+      "promptPt": "Temporário ou permanente?",
+      "sentenceEn": "She is working from home for now.",
+      "category": "temporary",
+      "feedbackCorrectPt": "For now = temporário → continuous.",
+      "feedbackWrongPt": "For now indica período limitado."
+    },
+    {
+      "id": "e03l03-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Is Marco playing this month?",
+      "speaker": "You",
+      "contextEn": "Jamie: Is Marco playing this month?",
+      "options": [
+        { "labelEn": "No, he is recovering from an injury.", "correct": true, "feedbackPt": "Temporary — recovering." },
+        { "labelEn": "No, he doesn't play football.", "correct": false, "feedbackPt": "Soa permanente." },
+        { "labelEn": "No, he didn't play.", "correct": false, "feedbackPt": "Passado, não temporário atual." }
+      ]
+    },
+    {
+      "id": "e03l03-prac-09",
+      "type": "choice",
+      "promptPt": "Marcador de situação temporária:",
+      "options": [
+        { "labelEn": "this week", "correct": true, "feedbackPt": "Período limitado." },
+        { "labelEn": "always", "correct": false, "feedbackPt": "Always = permanente." },
+        { "labelEn": "every day", "correct": false, "feedbackPt": "Every day = hábito." }
+      ]
+    },
+    {
+      "id": "e03l03-prac-10",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta — onde está hospedado?",
+      "tokens": ["week?", "this", "staying", "you", "are", "Where"],
+      "correctOrder": ["Where", "are", "you", "staying", "this", "week?"],
+      "feedbackCorrectPt": "Where are you staying this week?",
+      "feedbackWrongPt": "Where + are + you + staying + this week?"
+    }
+  ]
+}

@@ -1,0 +1,549 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 8,
+  "goalPt": "Alterar e cancelar reservas — change booking, cancel reservation, refund, reschedule.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Sua reunião mudou de horário. Você precisa alterar reserva de restaurante e cancelar parte da estadia no hotel.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can change or cancel bookings.",
+    "headlinePt": "Você consegue alterar ou cancelar reservas.",
+    "bodyPt": "",
+    "canDo": [
+      "Change reservation",
+      "Cancel",
+      "Refund",
+      "Reschedule"
+    ],
+    "production": {
+      "introPt": "Simule: alterar horário de restaurante e cancelar/reagendar hotel.",
+      "prompts": [
+        {
+          "speaker": "Host",
+          "questionEn": "How can I help?"
+        },
+        {
+          "speaker": "Reception",
+          "questionEn": "Cancellation desk."
+        }
+      ],
+      "fields": [
+        {
+          "id": "change",
+          "labelPt": "Alteração",
+          "prefixEn": "",
+          "placeholderEn": "I need to change my reservation from 7 to 8 PM."
+        },
+        {
+          "id": "cancel",
+          "labelPt": "Cancelamento / reagendar",
+          "prefixEn": "",
+          "placeholderEn": "I'd like to cancel tomorrow. Can I reschedule for next week? Will I get a refund?"
+        }
+      ],
+      "exampleEn": "Change reservation to 8 PM, please. — I'd like to cancel tomorrow — something came up. Can I reschedule? Refund?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em08-l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Changes & cancellations",
+        "titlePt": "Alterações e cancelamentos",
+        "bodyPt": "Planos mudam — aprenda a alterar horário, cancelar reserva e perguntar sobre reembolso."
+      },
+      {
+        "id": "em08-l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Phone & front desk · Plan changed",
+        "scenarioPt": "Sua reunião mudou de horário. Você precisa alterar reserva de restaurante e cancelar parte da estadia no hotel."
+      },
+      {
+        "id": "em08-l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Changing a restaurant reservation",
+        "promptPt": "Alterar reserva de restaurante.",
+        "options": [
+          {
+            "labelEn": "I need to change my reservation from 7 to 8 PM, please.",
+            "correct": true,
+            "feedbackPt": "Change from X to Y."
+          },
+          {
+            "labelEn": "I need change my reservation from 7.",
+            "correct": false,
+            "feedbackPt": "Need to change — infinitivo."
+          },
+          {
+            "labelEn": "I cancel change 7 PM.",
+            "correct": false,
+            "feedbackPt": "Frase incompleta."
+          }
+        ]
+      },
+      {
+        "id": "em08-l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Reception",
+        "promptEn": "Cancellation policy",
+        "promptPt": "Política de cancelamento.",
+        "options": [
+          {
+            "labelEn": "You can cancel free until 6 PM. After that, one night is charged.",
+            "correct": true,
+            "feedbackPt": "Informação de política."
+          },
+          {
+            "labelEn": "You can cancel free forever always.",
+            "correct": false,
+            "feedbackPt": "Raramente verdade — mas a opção correta é a primeira por ser realista."
+          },
+          {
+            "labelEn": "Cancel is my gate.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em08-l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Changing a booking",
+        "titlePt": "Alterar reserva",
+        "introPt": "Mudar horário, data ou número de pessoas.",
+        "examples": [
+          {
+            "en": "I need to change my reservation.",
+            "pt": "Preciso alterar minha reserva."
+          },
+          {
+            "en": "Can we move it to Saturday?",
+            "pt": "Podemos mudar para sábado?"
+          },
+          {
+            "en": "From 7 to 8 PM, please.",
+            "pt": "Das 19h às 20h."
+          },
+          {
+            "en": "Actually, make it three people.",
+            "pt": "Na verdade, três pessoas."
+          }
+        ]
+      },
+      {
+        "id": "em08-l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Cancelling",
+        "titlePt": "Cancelar",
+        "introPt": "Cancelar reserva educadamente.",
+        "examples": [
+          {
+            "en": "I'd like to cancel my reservation.",
+            "pt": "Quero cancelar."
+          },
+          {
+            "en": "Something came up — I can't make it.",
+            "pt": "Surgiu um imprevisto."
+          },
+          {
+            "en": "Can I cancel without a fee?",
+            "pt": "Cancelar sem taxa?"
+          },
+          {
+            "en": "Please cancel under Silva.",
+            "pt": "Cancelar no nome Silva."
+          }
+        ]
+      },
+      {
+        "id": "em08-l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Refunds & rescheduling",
+        "titlePt": "Reembolso e reagendar",
+        "introPt": "Perguntas após cancelamento.",
+        "examples": [
+          {
+            "en": "Will I get a refund?",
+            "pt": "Terei reembolso?"
+          },
+          {
+            "en": "Can I reschedule for next week?",
+            "pt": "Reagendar semana que vem?"
+          },
+          {
+            "en": "What's your cancellation policy?",
+            "pt": "Política de cancelamento?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l05-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I want cancel my reservation.",
+        "rightEn": "I'd like to cancel my reservation.",
+        "explanationPt": "Want to cancel ou would like to cancel — não want cancel sem to."
+      },
+      {
+        "id": "em08-l05-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "change my reservation",
+            "pt": "alterar"
+          },
+          {
+            "en": "cancel / I can't make it",
+            "pt": "cancelar"
+          },
+          {
+            "en": "refund / cancellation policy",
+            "pt": "reembolso"
+          },
+          {
+            "en": "reschedule",
+            "pt": "reagendar"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em08-l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I need to change my reservation to 8 PM."
+          },
+          {
+            "en": "Can we move it to Saturday?"
+          },
+          {
+            "en": "I'd like to cancel, please."
+          },
+          {
+            "en": "Something came up — I can't make it."
+          },
+          {
+            "en": "Will I get a refund?"
+          },
+          {
+            "en": "Can I reschedule for next week?"
+          }
+        ],
+        "dialogueEn": "I need to change my reservation — from 7 to 8 PM. — Done. — Actually, I have to cancel the hotel for tomorrow. Something came up. — Cancel free until 6 PM. Will you get a refund? — Can I reschedule for next week instead?"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em08-l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can change or cancel bookings.",
+        "headlinePt": "Você consegue alterar ou cancelar reservas.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Host",
+            "questionEn": "How can I help?"
+          },
+          {
+            "speaker": "Reception",
+            "questionEn": "Cancellation desk."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em08-l05-prac-01",
+      "type": "choice",
+      "promptPt": "Alterar reserva:",
+      "options": [
+        {
+          "labelEn": "I need to change my reservation.",
+          "correct": true,
+          "feedbackPt": "Need to change — padrão."
+        },
+        {
+          "labelEn": "I need change my reservation.",
+          "correct": false,
+          "feedbackPt": "Falta to."
+        },
+        {
+          "labelEn": "I am change reservation.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em08-l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Quero cancelar.",
+      "templateEn": "I'd like to ___ my reservation.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "cancel",
+          "correct": true,
+          "feedbackPt": "Cancel reservation."
+        },
+        {
+          "labelEn": "cancelling",
+          "correct": false,
+          "feedbackPt": "To + base."
+        },
+        {
+          "labelEn": "cancelled",
+          "correct": false,
+          "feedbackPt": "Past — errado aqui."
+        }
+      ]
+    },
+    {
+      "id": "em08-l05-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Surgiu um imprevisto — não posso ir.",
+      "tokens": [
+        "it.",
+        "can't",
+        "I",
+        "up",
+        "came",
+        "Something",
+        "—"
+      ],
+      "correctOrder": [
+        "Something",
+        "came",
+        "up",
+        "—",
+        "I",
+        "can't",
+        "make",
+        "it."
+      ],
+      "feedbackCorrectPt": "Something came up — I can't make it.",
+      "feedbackWrongPt": "Something came up — fixed phrase."
+    },
+    {
+      "id": "em08-l05-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Host: How can I help?",
+      "speaker": "You",
+      "contextEn": "You need a later time.",
+      "options": [
+        {
+          "labelEn": "I need to change my reservation from 7 to 8 PM, please.",
+          "correct": true,
+          "feedbackPt": "From X to Y."
+        },
+        {
+          "labelEn": "I have a connecting flight.",
+          "correct": false,
+          "feedbackPt": "Aeroporto."
+        },
+        {
+          "labelEn": "Extra towels, please.",
+          "correct": false,
+          "feedbackPt": "Hotel service."
+        }
+      ]
+    },
+    {
+      "id": "em08-l05-prac-05",
+      "type": "choice",
+      "promptPt": "Will I get a refund? — pergunta sobre:",
+      "options": [
+        {
+          "labelEn": "Getting money back.",
+          "correct": true,
+          "feedbackPt": "Refund = reembolso."
+        },
+        {
+          "labelEn": "Changing the time.",
+          "correct": false,
+          "feedbackPt": "Isso seria change/reschedule."
+        },
+        {
+          "labelEn": "Confirming the booking.",
+          "correct": false,
+          "feedbackPt": "Confirmation — diferente."
+        }
+      ]
+    },
+    {
+      "id": "em08-l05-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Reagendar semana que vem.",
+      "templateEn": "Can I ___ for next week?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "reschedule",
+          "correct": true,
+          "feedbackPt": "Reschedule = reagendar."
+        },
+        {
+          "labelEn": "reservation",
+          "correct": false,
+          "feedbackPt": "Reservation é substantivo."
+        },
+        {
+          "labelEn": "reserve",
+          "correct": false,
+          "feedbackPt": "Reserve = reservar, não reagendar."
+        }
+      ]
+    },
+    {
+      "id": "em08-l05-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Reception: Cancellation policy?",
+      "speaker": "You",
+      "contextEn": "You want to cancel without fee.",
+      "options": [
+        {
+          "labelEn": "Can I cancel without a fee? What's the policy?",
+          "correct": true,
+          "feedbackPt": "Pergunta direta."
+        },
+        {
+          "labelEn": "Where is the subway?",
+          "correct": false,
+          "feedbackPt": "Transporte."
+        },
+        {
+          "labelEn": "Medium-rare, please.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    },
+    {
+      "id": "em08-l05-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: Das 19h às 20h.",
+      "tokens": [
+        "PM.",
+        "8",
+        "to",
+        "7",
+        "from",
+        "PM,"
+      ],
+      "correctOrder": [
+        "from",
+        "7",
+        "PM,",
+        "to",
+        "8",
+        "PM."
+      ],
+      "feedbackCorrectPt": "From 7 PM to 8 PM.",
+      "feedbackWrongPt": "From X to Y."
+    },
+    {
+      "id": "em08-l05-prac-09",
+      "type": "choice",
+      "promptPt": "I can't make it significa:",
+      "options": [
+        {
+          "labelEn": "I can't go / attend.",
+          "correct": true,
+          "feedbackPt": "Não posso comparecer."
+        },
+        {
+          "labelEn": "I can't cook.",
+          "correct": false,
+          "feedbackPt": "Make it = comparecer aqui."
+        },
+        {
+          "labelEn": "I can't speak English.",
+          "correct": false,
+          "feedbackPt": "Contexto diferente."
+        }
+      ]
+    },
+    {
+      "id": "em08-l05-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Cancel and reschedule:",
+      "speaker": "You",
+      "contextEn": "Your meeting was cancelled.",
+      "options": [
+        {
+          "labelEn": "I'd like to cancel tomorrow. Can I reschedule for next week?",
+          "correct": true,
+          "feedbackPt": "Cancel + reschedule."
+        },
+        {
+          "labelEn": "Nothing to declare.",
+          "correct": false,
+          "feedbackPt": "Customs."
+        },
+        {
+          "labelEn": "You should drink water.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    }
+  ]
+}

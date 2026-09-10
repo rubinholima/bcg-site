@@ -1,0 +1,346 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 4,
+  "goalPt": "Contar histórias curtas no passado — negativa didn't + verbo base, sequência de ações, reação It was...",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie pede uma mini-história sobre seu fim de semana — afirmativas, negativas e reação final.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can tell a short past story.",
+    "headlinePt": "Você consegue contar uma história curta no passado.",
+    "bodyPt": "",
+    "canDo": ["Last weekend I went out.", "I didn't work on Saturday.", "We had dinner and watched a movie.", "It was fun!"],
+    "production": {
+      "introPt": "Conte uma mini-história do fim de semana passado — 4-5 frases com afirmativa, negativa (didn't) e reação.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Tell me a short story about last weekend." }
+      ],
+      "fields": [
+        { "id": "start", "labelPt": "Começo", "prefixEn": "Last weekend I", "placeholderEn": "went to the beach." },
+        { "id": "negative", "labelPt": "Negativa", "prefixEn": "I didn't", "placeholderEn": "work on Saturday." },
+        { "id": "sequence", "labelPt": "Sequência", "prefixEn": "", "placeholderEn": "We had dinner and watched a movie." },
+        { "id": "reaction", "labelPt": "Reação", "prefixEn": "", "placeholderEn": "It was fun!" }
+      ],
+      "exampleEn": "Last weekend I went to the beach. I didn't work on Saturday. We had dinner and watched a movie. It was fun!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e04l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Past stories",
+        "titlePt": "Histórias no passado",
+        "bodyPt": "Hora de contar uma história curta: o que fez, o que NÃO fez (didn't), sequência de ações e reação It was fun/great!"
+      },
+      {
+        "id": "e04l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office · Story time",
+        "scenarioPt": "Jamie quer ouvir sua mini-história do fim de semana."
+      },
+      {
+        "id": "e04l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What did you do last weekend?",
+        "promptPt": "Jamie pede a história — comece:",
+        "options": [
+          { "labelEn": "Last weekend I went to the beach.", "correct": true, "feedbackPt": "Abertura natural com tempo passado." },
+          { "labelEn": "Last weekend I go to the beach.", "correct": false, "feedbackPt": "Go = presente." },
+          { "labelEn": "Next weekend I went to the beach.", "correct": false, "feedbackPt": "Next = futuro." }
+        ]
+      },
+      {
+        "id": "e04l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you work on Saturday?",
+        "promptPt": "Jamie pergunta — resposta negativa.",
+        "options": [
+          { "labelEn": "No, I didn't work on Saturday.", "correct": true, "feedbackPt": "Didn't + verbo base." },
+          { "labelEn": "No, I didn't worked on Saturday.", "correct": false, "feedbackPt": "Após didn't, work (base)." },
+          { "labelEn": "No, I not work on Saturday.", "correct": false, "feedbackPt": "Precisa didn't." }
+        ]
+      },
+      {
+        "id": "e04l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "How was it?",
+        "promptPt": "Jamie pede reação.",
+        "options": [
+          { "labelEn": "It was fun!", "correct": true, "feedbackPt": "Reação passado — was." },
+          { "labelEn": "It is fun!", "correct": false, "feedbackPt": "Fim de semana já passou." },
+          { "labelEn": "It was funny work.", "correct": false, "feedbackPt": "Fun = divertido, não engraçado-trabalho." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e04l06-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Negative — didn't + base",
+        "titlePt": "Negativa — didn't + base",
+        "introPt": "Referência START m04: don't → didn't no passado. Verbo fica na forma BASE.",
+        "examples": [
+          { "en": "I didn't work on Saturday.", "pt": "não trabalhei" },
+          { "en": "She didn't go to the game.", "pt": "ela não foi" },
+          { "en": "We didn't watch TV.", "pt": "não assistimos" },
+          { "en": "They didn't stay home.", "pt": "não ficaram" }
+        ]
+      },
+      {
+        "id": "e04l06-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Story sequence",
+        "titlePt": "Sequência na história",
+        "introPt": "Conecte ações passadas com and, then, after that.",
+        "examples": [
+          { "en": "I went out and had dinner.", "pt": "saí e jantei" },
+          { "en": "We watched a movie and went home.", "pt": "assistimos e fomos" },
+          { "en": "Then I rested.", "pt": "depois descansei" },
+          { "en": "After that, we came back.", "pt": "depois voltamos" }
+        ]
+      },
+      {
+        "id": "e04l06-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Story openings",
+        "titlePt": "Aberturas de história",
+        "introPt": "Como começar uma mini-história.",
+        "examples": [
+          { "en": "Last weekend I...", "pt": "fim de semana passado" },
+          { "en": "Yesterday I...", "pt": "ontem" },
+          { "en": "On Saturday we...", "pt": "no sábado" },
+          { "en": "Two days ago I...", "pt": "dois dias atrás" }
+        ]
+      },
+      {
+        "id": "e04l06-learn-04",
+        "type": "language_focus",
+        "titleEn": "Reactions — It was...",
+        "titlePt": "Reações — It was...",
+        "items": [
+          { "formalEn": "It was fun!", "naturalEn": "It was great! / It was amazing! / It was boring.", "notePt": "Feche a história com reação passada." },
+          { "formalEn": "How was it?", "naturalEn": "How was your weekend? — It was fun!", "notePt": "How was + It was na resposta." }
+        ],
+        "tipPt": "História curta = 3-5 frases + reação. Não precisa ser longa."
+      },
+      {
+        "id": "e04l06-learn-05",
+        "type": "comparison",
+        "titleEn": "Don't vs Didn't",
+        "titlePt": "Don't vs Didn't",
+        "left": {
+          "labelEn": "PRESENT · don't/doesn't",
+          "exampleEn": "I don't work on weekends. She doesn't watch TV.",
+          "notePt": "START m04 — hábito negativo."
+        },
+        "right": {
+          "labelEn": "PAST · didn't",
+          "exampleEn": "I didn't work on Saturday. She didn't go to the game.",
+          "notePt": "Ação passada negativa — didn't + base."
+        },
+        "modelEn": "I don't work on weekends, but last Saturday I didn't rest — I worked!",
+        "modelPt": "Hábito (don't) vs evento passado (didn't)."
+      },
+      {
+        "id": "e04l06-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "Sample short story",
+        "titlePt": "História curta modelo",
+        "introPt": "Modelo completo de 4 frases.",
+        "examples": [
+          { "en": "Last weekend I went to the beach.", "pt": "abertura" },
+          { "en": "I didn't work on Saturday.", "pt": "negativa" },
+          { "en": "We had dinner and watched a movie.", "pt": "sequência" },
+          { "en": "It was fun!", "pt": "reação" }
+        ]
+      },
+      {
+        "id": "e04l06-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "I didn't worked. / I didn't went. / It is fun! (about last weekend)",
+        "rightEn": "I didn't work. / I didn't go. / It was fun!",
+        "explanationPt": "Didn't + verbo BASE. Reação a evento passado = It was, não It is."
+      },
+      {
+        "id": "e04l06-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Last weekend I went out.", "pt": "abertura" },
+          { "en": "I didn't work on Saturday.", "pt": "didn't + base" },
+          { "en": "We had dinner and watched a movie.", "pt": "sequência" },
+          { "en": "It was fun!", "pt": "reação" },
+          { "en": "How was it? — It was great!", "pt": "pergunta/resposta" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e04l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia a história modelo em voz alta.",
+        "phrases": [
+          { "en": "Last weekend I went to the beach." },
+          { "en": "I didn't work on Saturday." },
+          { "en": "We had dinner and watched a movie." },
+          { "en": "It was fun!" },
+          { "en": "Yesterday I stayed home." },
+          { "en": "I didn't go out." },
+          { "en": "But I had a relaxing day." },
+          { "en": "It was great!" }
+        ],
+        "dialogueEn": "What did you do last weekend? — Last weekend I went to the beach. Did you work? — No, I didn't. We had dinner and watched a movie. How was it? — It was fun!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "e04l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your short story.",
+        "headlinePt": "Sua história curta.",
+        "bodyPt": "Conte 4-5 frases — afirmativa, didn't, sequência, It was...",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Tell me a short story about last weekend." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e04l06-prac-01",
+      "type": "choice",
+      "promptPt": "Negativa passada — não trabalhei sábado:",
+      "options": [
+        { "labelEn": "I didn't work on Saturday.", "correct": true, "feedbackPt": "Didn't + work (base)." },
+        { "labelEn": "I didn't worked on Saturday.", "correct": false, "feedbackPt": "Após didn't, base." },
+        { "labelEn": "I don't work on Saturday.", "correct": false, "feedbackPt": "Don't = presente/hábito." }
+      ]
+    },
+    {
+      "id": "e04l06-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Ela não foi ao jogo:",
+      "templateEn": "She didn't ___ to the game.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "go", "correct": true, "feedbackPt": "Didn't + go (base)." },
+        { "labelEn": "went", "correct": false, "feedbackPt": "Went só sem didn't." },
+        { "labelEn": "goes", "correct": false, "feedbackPt": "Goes = presente." }
+      ]
+    },
+    {
+      "id": "e04l06-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: How was your weekend?",
+      "speaker": "You",
+      "contextEn": "Jamie: How was your weekend?",
+      "options": [
+        { "labelEn": "It was fun!", "correct": true, "feedbackPt": "Reação passada." },
+        { "labelEn": "It is fun!", "correct": false, "feedbackPt": "Passado → was." },
+        { "labelEn": "It will be fun!", "correct": false, "feedbackPt": "Futuro." }
+      ]
+    },
+    {
+      "id": "e04l06-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte sequência: jantamos e assistimos filme",
+      "tokens": ["movie.", "a", "watched", "and", "dinner", "had", "We"],
+      "correctOrder": ["We", "had", "dinner", "and", "watched", "a", "movie."],
+      "feedbackCorrectPt": "We had dinner and watched a movie.",
+      "feedbackWrongPt": "We had dinner and watched a movie."
+    },
+    {
+      "id": "e04l06-prac-05",
+      "type": "choice",
+      "promptPt": "Abertura de história:",
+      "options": [
+        { "labelEn": "Last weekend I went to the beach.", "correct": true, "feedbackPt": "Last weekend + passado." },
+        { "labelEn": "Next weekend I went to the beach.", "correct": false, "feedbackPt": "Next = futuro." },
+        { "labelEn": "Last weekend I go to the beach.", "correct": false, "feedbackPt": "Go = presente." }
+      ]
+    },
+    {
+      "id": "e04l06-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Não assistimos TV:",
+      "templateEn": "We didn't ___ TV.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "watch", "correct": true, "feedbackPt": "Didn't + watch." },
+        { "labelEn": "watched", "correct": false, "feedbackPt": "Base após didn't." },
+        { "labelEn": "watching", "correct": false, "feedbackPt": "Forma incorreta." }
+      ]
+    },
+    {
+      "id": "e04l06-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Did you work on Saturday?",
+      "speaker": "You",
+      "contextEn": "Jamie: Did you work on Saturday?",
+      "options": [
+        { "labelEn": "No, I didn't. I rested.", "correct": true, "feedbackPt": "Resposta curta + info." },
+        { "labelEn": "No, I don't.", "correct": false, "feedbackPt": "Did → didn't." },
+        { "labelEn": "No, I didn't worked.", "correct": false, "feedbackPt": "Resposta curta sem worked." }
+      ]
+    },
+    {
+      "id": "e04l06-prac-08",
+      "type": "choice",
+      "promptPt": "Don't vs Didn't — fim de semana passado:",
+      "options": [
+        { "labelEn": "I didn't work last Saturday.", "correct": true, "feedbackPt": "Evento passado → didn't." },
+        { "labelEn": "I don't work last Saturday.", "correct": false, "feedbackPt": "Don't = hábito presente." },
+        { "labelEn": "I didn't worked last Saturday.", "correct": false, "feedbackPt": "Didn't + base." }
+      ]
+    },
+    {
+      "id": "e04l06-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte história: fui à praia + foi divertido",
+      "tokens": ["fun!", "was", "It", "beach.", "the", "to", "went", "I"],
+      "correctOrder": ["I", "went", "to", "the", "beach.", "It", "was", "fun!"],
+      "feedbackCorrectPt": "I went to the beach. It was fun!",
+      "feedbackWrongPt": "Ação + reação."
+    },
+    {
+      "id": "e04l06-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Como foi? (pergunta)",
+      "templateEn": "How ___ it?",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "was", "correct": true, "feedbackPt": "How was it?" },
+        { "labelEn": "is", "correct": false, "feedbackPt": "Passado → was." },
+        { "labelEn": "did", "correct": false, "feedbackPt": "How did it = diferente." }
+      ]
+    },
+    {
+      "id": "e04l06-prac-11",
+      "type": "choice",
+      "promptPt": "Melhor mini-história completa:",
+      "options": [
+        { "labelEn": "Last weekend I went out. I didn't work. We had fun. It was great!", "correct": true, "feedbackPt": "Abertura + negativa + sequência + reação." },
+        { "labelEn": "Last weekend I go out. I don't work. It is great!", "correct": false, "feedbackPt": "Tempos errados." },
+        { "labelEn": "What time is it?", "correct": false, "feedbackPt": "Não é história." }
+      ]
+    }
+  ]
+}

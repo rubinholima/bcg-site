@@ -1,0 +1,576 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 8,
+  "goalPt": "Aeroporto expandido — layover, connecting flight, customs, baggage claim, lost luggage, oversized bag.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Você chega de um voo e precisa pegar conexão — customs, baggage claim, novo gate.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can handle an expanded airport scenario.",
+    "headlinePt": "Você consegue lidar com aeroporto expandido.",
+    "bodyPt": "",
+    "canDo": [
+      "Connecting flight",
+      "Customs basics",
+      "Baggage claim",
+      "Lost luggage"
+    ],
+    "production": {
+      "introPt": "Simule: conexão + customs + problema de bagagem.",
+      "prompts": [
+        {
+          "speaker": "Agent",
+          "questionEn": "Do you have a connecting flight?"
+        },
+        {
+          "speaker": "Officer",
+          "questionEn": "Purpose of visit?"
+        },
+        {
+          "speaker": "Staff",
+          "questionEn": "Can I help you?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "connection",
+          "labelPt": "Conexão",
+          "prefixEn": "",
+          "placeholderEn": "Yes — connecting flight to Miami, gate C8. Two-hour layover."
+        },
+        {
+          "id": "baggage",
+          "labelPt": "Bagagem",
+          "prefixEn": "",
+          "placeholderEn": "Nothing to declare. My bag didn't arrive — where is baggage claim?"
+        }
+      ],
+      "exampleEn": "Connecting flight to Miami, gate C8. Business trip — nothing to declare. My bag didn't arrive. Where is baggage claim?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em08-l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Airport — expanded",
+        "titlePt": "Aeroporto — expandido",
+        "bodyPt": "Além de gate e boarding pass: conexões, imigração, retirada de bagagem e problemas comuns."
+      },
+      {
+        "id": "em08-l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "International airport · Connecting flight",
+        "scenarioPt": "Você chega de um voo e precisa pegar conexão — customs, baggage claim, novo gate."
+      },
+      {
+        "id": "em08-l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Agent",
+        "promptEn": "Do you have a connecting flight?",
+        "promptPt": "Agente pergunta sobre conexão.",
+        "options": [
+          {
+            "labelEn": "Yes, I have a connecting flight to Miami at gate C8.",
+            "correct": true,
+            "feedbackPt": "Connecting flight = conexão."
+          },
+          {
+            "labelEn": "Yes, I have a connectioning fly.",
+            "correct": false,
+            "feedbackPt": "Connecting flight — forma fixa."
+          },
+          {
+            "labelEn": "I am layover hotel.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      },
+      {
+        "id": "em08-l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Staff",
+        "promptEn": "Where are you flying to?",
+        "promptPt": "Imigração / balcão.",
+        "options": [
+          {
+            "labelEn": "I'm traveling to the US for a business meeting.",
+            "correct": true,
+            "feedbackPt": "Customs — destino claro."
+          },
+          {
+            "labelEn": "I am flying to the menu.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          },
+          {
+            "labelEn": "I prefer medium-rare.",
+            "correct": false,
+            "feedbackPt": "Restaurante — M7."
+          }
+        ]
+      },
+      {
+        "id": "em08-l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Baggage claim problem",
+        "promptPt": "Problema na bagagem.",
+        "options": [
+          {
+            "labelEn": "Excuse me, my bag didn't arrive. Where is baggage claim?",
+            "correct": true,
+            "feedbackPt": "Lost bag + baggage claim."
+          },
+          {
+            "labelEn": "My bag is delicious.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          },
+          {
+            "labelEn": "Baggage is my headache.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em08-l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Connecting flights & layovers",
+        "titlePt": "Conexões e escalas",
+        "introPt": "Vocabulário para voos com parada.",
+        "examples": [
+          {
+            "en": "I have a connecting flight.",
+            "pt": "Tenho conexão."
+          },
+          {
+            "en": "My layover is two hours.",
+            "pt": "Escala de 2 horas."
+          },
+          {
+            "en": "Which gate for the connection?",
+            "pt": "Qual portão da conexão?"
+          },
+          {
+            "en": "I need to change terminals.",
+            "pt": "Preciso trocar de terminal."
+          }
+        ]
+      },
+      {
+        "id": "em08-l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Customs & immigration",
+        "titlePt": "Imigração e alfândega",
+        "introPt": "Frases básicas na fronteira.",
+        "examples": [
+          {
+            "en": "Passport control / customs",
+            "pt": "controle de passaporte / alfândega"
+          },
+          {
+            "en": "Purpose of visit: business / tourism",
+            "pt": "motivo da viagem"
+          },
+          {
+            "en": "Nothing to declare.",
+            "pt": "Nada a declarar."
+          },
+          {
+            "en": "How long will you stay?",
+            "pt": "Quanto tempo ficará?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Baggage claim & problems",
+        "titlePt": "Bagagem — retirada e problemas",
+        "introPt": "Esteira e bagagem extraviada.",
+        "examples": [
+          {
+            "en": "baggage claim / carousel",
+            "pt": "retirada de bagagem / esteira"
+          },
+          {
+            "en": "My bag didn't arrive.",
+            "pt": "Minha mala não chegou."
+          },
+          {
+            "en": "I need to report lost luggage.",
+            "pt": "Registrar bagagem extraviada."
+          },
+          {
+            "en": "Is this bag oversized?",
+            "pt": "Esta mala é oversized?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l01-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "Where is the disembarkation of bags?",
+        "rightEn": "Where is baggage claim?",
+        "explanationPt": "Baggage claim = retirada de bagagem. Disembarkation of bags não se usa."
+      },
+      {
+        "id": "em08-l01-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "connecting flight / layover",
+            "pt": "conexão / escala"
+          },
+          {
+            "en": "customs / nothing to declare",
+            "pt": "alfândega"
+          },
+          {
+            "en": "baggage claim",
+            "pt": "retirada bagagem"
+          },
+          {
+            "en": "My bag didn't arrive.",
+            "pt": "bagagem extraviada"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em08-l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I have a connecting flight to Miami."
+          },
+          {
+            "en": "My layover is ninety minutes."
+          },
+          {
+            "en": "Nothing to declare."
+          },
+          {
+            "en": "Where is baggage claim?"
+          },
+          {
+            "en": "My bag didn't arrive — I need to report it."
+          },
+          {
+            "en": "Which gate for the connection?"
+          }
+        ],
+        "dialogueEn": "Connecting flight? — Yes, to Miami, gate C8. Layover is 90 minutes. — Customs: purpose of visit? — Business meeting. Nothing to declare. — Where's baggage claim? — Carousel 4. — My bag didn't arrive! — Go to the lost luggage desk."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em08-l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can handle an expanded airport scenario.",
+        "headlinePt": "Você consegue lidar com aeroporto expandido.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Agent",
+            "questionEn": "Do you have a connecting flight?"
+          },
+          {
+            "speaker": "Officer",
+            "questionEn": "Purpose of visit?"
+          },
+          {
+            "speaker": "Staff",
+            "questionEn": "Can I help you?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em08-l01-prac-01",
+      "type": "choice",
+      "promptPt": "Conexão em inglês:",
+      "options": [
+        {
+          "labelEn": "I have a connecting flight.",
+          "correct": true,
+          "feedbackPt": "Connecting flight — padrão."
+        },
+        {
+          "labelEn": "I have a connection fly.",
+          "correct": false,
+          "feedbackPt": "Forma incorreta."
+        },
+        {
+          "labelEn": "I am layover flight.",
+          "correct": false,
+          "feedbackPt": "Layover = escala, não voo."
+        }
+      ]
+    },
+    {
+      "id": "em08-l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Nada a declarar.",
+      "templateEn": "___ to declare.",
+      "blankLabel": "início",
+      "options": [
+        {
+          "labelEn": "Nothing",
+          "correct": true,
+          "feedbackPt": "Nothing to declare — frase fixa."
+        },
+        {
+          "labelEn": "Anything",
+          "correct": false,
+          "feedbackPt": "Anything to declare? — pergunta do oficial."
+        },
+        {
+          "labelEn": "Something",
+          "correct": false,
+          "feedbackPt": "Oposto."
+        }
+      ]
+    },
+    {
+      "id": "em08-l01-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Onde fica a retirada de bagagem?",
+      "tokens": [
+        "claim?",
+        "baggage",
+        "is",
+        "Where"
+      ],
+      "correctOrder": [
+        "Where",
+        "is",
+        "baggage",
+        "claim?"
+      ],
+      "feedbackCorrectPt": "Where is baggage claim?",
+      "feedbackWrongPt": "Baggage claim = esteira."
+    },
+    {
+      "id": "em08-l01-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Officer: Purpose of visit?",
+      "speaker": "You",
+      "contextEn": "Customs: Purpose of visit?",
+      "options": [
+        {
+          "labelEn": "Business — I have a meeting.",
+          "correct": true,
+          "feedbackPt": "Resposta clara."
+        },
+        {
+          "labelEn": "I am vegetarian.",
+          "correct": false,
+          "feedbackPt": "M7 — contexto errado."
+        },
+        {
+          "labelEn": "Medium, please.",
+          "correct": false,
+          "feedbackPt": "Restaurante."
+        }
+      ]
+    },
+    {
+      "id": "em08-l01-prac-05",
+      "type": "choice",
+      "promptPt": "Layover significa:",
+      "options": [
+        {
+          "labelEn": "Stop between flights.",
+          "correct": true,
+          "feedbackPt": "Escala / parada."
+        },
+        {
+          "labelEn": "Lost luggage.",
+          "correct": false,
+          "feedbackPt": "Lost luggage = bagagem extraviada."
+        },
+        {
+          "labelEn": "Boarding pass.",
+          "correct": false,
+          "feedbackPt": "Documento diferente."
+        }
+      ]
+    },
+    {
+      "id": "em08-l01-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Minha mala não chegou.",
+      "templateEn": "My bag didn't ___.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "arrive",
+          "correct": true,
+          "feedbackPt": "Didn't arrive = não chegou."
+        },
+        {
+          "labelEn": "arrived",
+          "correct": false,
+          "feedbackPt": "Didn't + base."
+        },
+        {
+          "labelEn": "arriving",
+          "correct": false,
+          "feedbackPt": "Forma incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em08-l01-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Staff: Can I help?",
+      "speaker": "You",
+      "contextEn": "Your bag is missing at baggage claim.",
+      "options": [
+        {
+          "labelEn": "My bag didn't arrive. I need to report lost luggage.",
+          "correct": true,
+          "feedbackPt": "Problema + ação."
+        },
+        {
+          "labelEn": "I'd like the check, please.",
+          "correct": false,
+          "feedbackPt": "Restaurante."
+        },
+        {
+          "labelEn": "You should rest more.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    },
+    {
+      "id": "em08-l01-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: Qual portão da conexão?",
+      "tokens": [
+        "connection?",
+        "the",
+        "for",
+        "gate",
+        "Which"
+      ],
+      "correctOrder": [
+        "Which",
+        "gate",
+        "for",
+        "the",
+        "connection?"
+      ],
+      "feedbackCorrectPt": "Which gate for the connection?",
+      "feedbackWrongPt": "Gate for the connection."
+    },
+    {
+      "id": "em08-l01-prac-09",
+      "type": "choice",
+      "promptPt": "Carousel neste contexto é:",
+      "options": [
+        {
+          "labelEn": "The moving belt for luggage.",
+          "correct": true,
+          "feedbackPt": "Esteira de bagagem."
+        },
+        {
+          "labelEn": "A ride at the airport.",
+          "correct": false,
+          "feedbackPt": "Não é brinquedo."
+        },
+        {
+          "labelEn": "The boarding gate.",
+          "correct": false,
+          "feedbackPt": "Gate ≠ carousel."
+        }
+      ]
+    },
+    {
+      "id": "em08-l01-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Agent: Do you have a connecting flight?",
+      "speaker": "You",
+      "contextEn": "Agent: Do you have a connecting flight?",
+      "options": [
+        {
+          "labelEn": "Yes — to Miami, gate C8. I have a two-hour layover.",
+          "correct": true,
+          "feedbackPt": "Resposta completa."
+        },
+        {
+          "labelEn": "I am allergic to nuts.",
+          "correct": false,
+          "feedbackPt": "M7."
+        },
+        {
+          "labelEn": "I cancel my reservation.",
+          "correct": false,
+          "feedbackPt": "L05 M8."
+        }
+      ]
+    }
+  ]
+}

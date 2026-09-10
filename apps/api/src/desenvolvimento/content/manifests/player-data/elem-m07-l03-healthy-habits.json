@@ -1,0 +1,536 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 7,
+  "goalPt": "Falar sobre hábitos saudáveis — exercise, sleep, drink water, eat vegetables, avoid junk food.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Colegas conversam sobre rotina saudável depois do fim de semana.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can talk about healthy habits.",
+    "headlinePt": "Você consegue falar sobre hábitos saudáveis.",
+    "bodyPt": "",
+    "canDo": [
+      "I exercise...",
+      "I sleep...",
+      "I drink...",
+      "I try to avoid..."
+    ],
+    "production": {
+      "introPt": "Descreva dois hábitos saudados que você tem ou quer ter.",
+      "prompts": [
+        {
+          "speaker": "Colleague",
+          "questionEn": "What healthy habits do you have?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "activity",
+          "labelPt": "Atividade / exercício",
+          "prefixEn": "I",
+          "placeholderEn": "exercise three times a week and go for walks"
+        },
+        {
+          "id": "food",
+          "labelPt": "Alimentação / sono",
+          "prefixEn": "I",
+          "placeholderEn": "drink a lot of water and try to avoid junk food"
+        }
+      ],
+      "exampleEn": "I exercise three times a week. I drink a lot of water and eat more vegetables. I try to avoid junk food."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em07-l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Healthy habits",
+        "titlePt": "Hábitos saudáveis",
+        "bodyPt": "Conversas do dia a dia sobre rotina saudável — não é conselho médico, é vocabulário para falar sobre bem-estar."
+      },
+      {
+        "id": "em07-l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office wellness chat · Monday morning",
+        "scenarioPt": "Colegas conversam sobre rotina saudável depois do fim de semana."
+      },
+      {
+        "id": "em07-l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "How do you stay healthy during the week?",
+        "promptPt": "Colega pergunta sobre saúde na semana.",
+        "options": [
+          {
+            "labelEn": "I try to exercise three times a week and sleep eight hours.",
+            "correct": true,
+            "feedbackPt": "Hábitos concretos."
+          },
+          {
+            "labelEn": "I healthy every day am.",
+            "correct": false,
+            "feedbackPt": "Ordem e verbo errados."
+          },
+          {
+            "labelEn": "Health is my reservation.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      },
+      {
+        "id": "em07-l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Talking about diet",
+        "promptPt": "Falando sobre alimentação.",
+        "options": [
+          {
+            "labelEn": "I eat more vegetables and try to avoid junk food.",
+            "correct": true,
+            "feedbackPt": "Eat + avoid — padrão natural."
+          },
+          {
+            "labelEn": "I eat junk food every day more.",
+            "correct": false,
+            "feedbackPt": "Ordem estranha — mas o erro principal é não usar avoid."
+          },
+          {
+            "labelEn": "Vegetables is my flight.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em07-l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Exercise & activity",
+        "titlePt": "Exercício e atividade",
+        "introPt": "Verbos comuns para rotina física.",
+        "examples": [
+          {
+            "en": "I exercise three times a week.",
+            "pt": "Me exercito 3x por semana."
+          },
+          {
+            "en": "I go for a walk after lunch.",
+            "pt": "Caminho depois do almoço."
+          },
+          {
+            "en": "I try to stay active.",
+            "pt": "Tento me manter ativo."
+          }
+        ]
+      },
+      {
+        "id": "em07-l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Sleep & rest",
+        "titlePt": "Sono e descanso",
+        "introPt": "Falar sobre descanso.",
+        "examples": [
+          {
+            "en": "I sleep about eight hours.",
+            "pt": "Durmo cerca de 8 horas."
+          },
+          {
+            "en": "I need more rest.",
+            "pt": "Preciso descansar mais."
+          },
+          {
+            "en": "I feel better when I sleep well.",
+            "pt": "Me sinto melhor quando durmo bem."
+          }
+        ]
+      },
+      {
+        "id": "em07-l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Food & drink habits",
+        "titlePt": "Hábitos alimentares",
+        "introPt": "Escolhas do dia a dia.",
+        "examples": [
+          {
+            "en": "I drink a lot of water.",
+            "pt": "Bebo muita água."
+          },
+          {
+            "en": "I eat more fruit and vegetables.",
+            "pt": "Como mais frutas e vegetais."
+          },
+          {
+            "en": "I try to avoid junk food.",
+            "pt": "Evito fast food."
+          },
+          {
+            "en": "I cut down on sugar.",
+            "pt": "Reduzi açúcar."
+          }
+        ]
+      },
+      {
+        "id": "em07-l03-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I make gym every day.",
+        "rightEn": "I go to the gym every day. / I work out every day.",
+        "explanationPt": "Make gym não existe. Go to the gym ou work out."
+      },
+      {
+        "id": "em07-l03-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I exercise / go for a walk",
+            "pt": "atividade física"
+          },
+          {
+            "en": "I sleep eight hours.",
+            "pt": "sono"
+          },
+          {
+            "en": "I drink a lot of water.",
+            "pt": "hidratação"
+          },
+          {
+            "en": "I try to avoid junk food.",
+            "pt": "evitar fast food"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em07-l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I exercise three times a week."
+          },
+          {
+            "en": "I try to sleep eight hours."
+          },
+          {
+            "en": "I drink a lot of water every day."
+          },
+          {
+            "en": "I eat more vegetables."
+          },
+          {
+            "en": "I try to avoid junk food."
+          },
+          {
+            "en": "I feel better when I have healthy habits."
+          }
+        ],
+        "dialogueEn": "How do you stay healthy? — I exercise regularly and drink lots of water. — What about food? — I eat more vegetables and try to avoid junk food. — Good habits!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em07-l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can talk about healthy habits.",
+        "headlinePt": "Você consegue falar sobre hábitos saudáveis.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Colleague",
+            "questionEn": "What healthy habits do you have?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em07-l03-prac-01",
+      "type": "choice",
+      "promptPt": "Forma natural para academia:",
+      "options": [
+        {
+          "labelEn": "I go to the gym twice a week.",
+          "correct": true,
+          "feedbackPt": "Go to the gym — padrão."
+        },
+        {
+          "labelEn": "I make gym twice a week.",
+          "correct": false,
+          "feedbackPt": "Make gym não existe."
+        },
+        {
+          "labelEn": "I do gyming.",
+          "correct": false,
+          "feedbackPt": "Forma incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em07-l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Evito fast food.",
+      "templateEn": "I try to ___ junk food.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "avoid",
+          "correct": true,
+          "feedbackPt": "Avoid = evitar."
+        },
+        {
+          "labelEn": "escape",
+          "correct": false,
+          "feedbackPt": "Escape é fugir — menos natural aqui."
+        },
+        {
+          "labelEn": "leave",
+          "correct": false,
+          "feedbackPt": "Leave junk food — estranho."
+        }
+      ]
+    },
+    {
+      "id": "em07-l03-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Bebo muita água.",
+      "tokens": [
+        "water.",
+        "of",
+        "lot",
+        "a",
+        "drink",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "drink",
+        "a",
+        "lot",
+        "of",
+        "water."
+      ],
+      "feedbackCorrectPt": "I drink a lot of water.",
+      "feedbackWrongPt": "A lot of + líquido."
+    },
+    {
+      "id": "em07-l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Colleague: How much do you sleep?",
+      "speaker": "You",
+      "contextEn": "Colleague: How much do you sleep?",
+      "options": [
+        {
+          "labelEn": "About eight hours, usually.",
+          "correct": true,
+          "feedbackPt": "Resposta natural."
+        },
+        {
+          "labelEn": "I sleep the airport.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        },
+        {
+          "labelEn": "Sleep is my check.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l03-prac-05",
+      "type": "choice",
+      "promptPt": "I cut down on sugar significa:",
+      "options": [
+        {
+          "labelEn": "I reduced sugar.",
+          "correct": true,
+          "feedbackPt": "Cut down on = reduzir."
+        },
+        {
+          "labelEn": "I cut sugar with scissors.",
+          "correct": false,
+          "feedbackPt": "Interpretação literal errada."
+        },
+        {
+          "labelEn": "I eat more sugar.",
+          "correct": false,
+          "feedbackPt": "Oposto."
+        }
+      ]
+    },
+    {
+      "id": "em07-l03-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Como mais vegetais.",
+      "templateEn": "I eat ___ vegetables.",
+      "blankLabel": "quantificador",
+      "options": [
+        {
+          "labelEn": "more",
+          "correct": true,
+          "feedbackPt": "More = mais."
+        },
+        {
+          "labelEn": "many",
+          "correct": false,
+          "feedbackPt": "Many vegetables ok, mas more é comparativo natural."
+        },
+        {
+          "labelEn": "much",
+          "correct": false,
+          "feedbackPt": "Much com vegetables — menos comum."
+        }
+      ]
+    },
+    {
+      "id": "em07-l03-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte: Caminho depois do almoço.",
+      "tokens": [
+        "lunch.",
+        "after",
+        "walk",
+        "a",
+        "for",
+        "go",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "go",
+        "for",
+        "a",
+        "walk",
+        "after",
+        "lunch."
+      ],
+      "feedbackCorrectPt": "I go for a walk after lunch.",
+      "feedbackWrongPt": "Go for a walk = caminhar."
+    },
+    {
+      "id": "em07-l03-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Colleague: Do you exercise?",
+      "speaker": "You",
+      "contextEn": "Colleague: Do you exercise regularly?",
+      "options": [
+        {
+          "labelEn": "Yes, I try to stay active — I walk and go to the gym.",
+          "correct": true,
+          "feedbackPt": "Resposta completa."
+        },
+        {
+          "labelEn": "I am exercise.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        },
+        {
+          "labelEn": "Exercise is delayed.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l03-prac-09",
+      "type": "choice",
+      "promptPt": "Stay active significa:",
+      "options": [
+        {
+          "labelEn": "Keep moving / be physically active.",
+          "correct": true,
+          "feedbackPt": "Manter-se ativo."
+        },
+        {
+          "labelEn": "Stay at the activity room forever.",
+          "correct": false,
+          "feedbackPt": "Interpretação errada."
+        },
+        {
+          "labelEn": "Activate your phone.",
+          "correct": false,
+          "feedbackPt": "Contexto errado."
+        }
+      ]
+    },
+    {
+      "id": "em07-l03-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Colleague: Any tips for eating better?",
+      "speaker": "You",
+      "contextEn": "Colleague: Any tips for eating better?",
+      "options": [
+        {
+          "labelEn": "I eat more fruit and try to avoid junk food.",
+          "correct": true,
+          "feedbackPt": "Dica prática e natural."
+        },
+        {
+          "labelEn": "I cancel my reservation.",
+          "correct": false,
+          "feedbackPt": "Viagem — contexto errado."
+        },
+        {
+          "labelEn": "Gate B12, please.",
+          "correct": false,
+          "feedbackPt": "Aeroporto — contexto errado."
+        }
+      ]
+    }
+  ]
+}

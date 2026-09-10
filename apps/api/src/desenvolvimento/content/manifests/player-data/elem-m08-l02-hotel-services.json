@@ -1,0 +1,542 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 8,
+  "goalPt": "Serviços de hotel — room service, wake-up call, extra towels, late check-out, problemas no quarto.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Estadia de negócios. Você usa serviços do hotel e resolve um problema no quarto.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can use hotel services and report problems.",
+    "headlinePt": "Você consegue usar serviços do hotel e reportar problemas.",
+    "bodyPt": "",
+    "canDo": [
+      "Wake-up call",
+      "Extra towels",
+      "Room problem",
+      "Late check-out"
+    ],
+    "production": {
+      "introPt": "Simule: peça dois serviços e reporte um problema no quarto.",
+      "prompts": [
+        {
+          "speaker": "Reception",
+          "questionEn": "Good evening. How can I help you?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "services",
+          "labelPt": "Serviços",
+          "prefixEn": "",
+          "placeholderEn": "Wake-up call at 6 AM. Extra towels, please."
+        },
+        {
+          "id": "problem",
+          "labelPt": "Problema + check-out",
+          "prefixEn": "",
+          "placeholderEn": "The Wi-Fi isn't working. Could someone take a look? Late check-out tomorrow?"
+        }
+      ],
+      "exampleEn": "Wake-up call at 6 AM, please. Extra towels. The AC isn't working — could someone take a look? Late check-out tomorrow?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em08-l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Hotel services",
+        "titlePt": "Serviços de hotel",
+        "bodyPt": "Além do check-in básico: pedir serviços, resolver problemas no quarto e solicitar late check-out."
+      },
+      {
+        "id": "em08-l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "Business hotel · 3-night stay",
+        "scenarioPt": "Estadia de negócios. Você usa serviços do hotel e resolve um problema no quarto."
+      },
+      {
+        "id": "em08-l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Reception",
+        "promptEn": "How can I help you?",
+        "promptPt": "Recepção — pedido de serviço.",
+        "options": [
+          {
+            "labelEn": "Could I get a wake-up call at 6 AM, please?",
+            "correct": true,
+            "feedbackPt": "Wake-up call = chamada de despertar."
+          },
+          {
+            "labelEn": "Could I get a wake-up fly?",
+            "correct": false,
+            "feedbackPt": "Wake-up call, não fly."
+          },
+          {
+            "labelEn": "I am check-in gate.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      },
+      {
+        "id": "em08-l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Room problem",
+        "promptPt": "Problema no quarto.",
+        "options": [
+          {
+            "labelEn": "The air conditioning isn't working. Could someone take a look?",
+            "correct": true,
+            "feedbackPt": "Descreve problema + pedido educado."
+          },
+          {
+            "labelEn": "The room is my flight.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          },
+          {
+            "labelEn": "AC is delicious.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em08-l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Room service & requests",
+        "titlePt": "Room service e pedidos",
+        "introPt": "Pedidos comuns na recepção ou pelo telefone do quarto.",
+        "examples": [
+          {
+            "en": "Room service, please.",
+            "pt": "Serviço de quarto."
+          },
+          {
+            "en": "Could I get extra towels?",
+            "pt": "Toalhas extras?"
+          },
+          {
+            "en": "Could I have more pillows?",
+            "pt": "Mais travesseiros?"
+          },
+          {
+            "en": "A wake-up call at 7 AM, please.",
+            "pt": "Chamada às 7h."
+          }
+        ]
+      },
+      {
+        "id": "em08-l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Check-out & late check-out",
+        "titlePt": "Check-out e late check-out",
+        "introPt": "Saindo do hotel.",
+        "examples": [
+          {
+            "en": "What time is check-out?",
+            "pt": "Horário do check-out?"
+          },
+          {
+            "en": "Could I have a late check-out?",
+            "pt": "Check-out tardio?"
+          },
+          {
+            "en": "I'd like to check out, please.",
+            "pt": "Quero fazer check-out."
+          },
+          {
+            "en": "Can you store my luggage?",
+            "pt": "Guardar bagagem?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Reporting room problems",
+        "titlePt": "Reportar problemas no quarto",
+        "introPt": "Algo não funciona — peça ajuda.",
+        "examples": [
+          {
+            "en": "The Wi-Fi isn't working.",
+            "pt": "Wi-Fi não funciona."
+          },
+          {
+            "en": "There's no hot water.",
+            "pt": "Sem água quente."
+          },
+          {
+            "en": "Could someone take a look?",
+            "pt": "Alguém pode verificar?"
+          },
+          {
+            "en": "Could I change rooms?",
+            "pt": "Trocar de quarto?"
+          }
+        ]
+      },
+      {
+        "id": "em08-l02-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I want a wake-up in six hours.",
+        "rightEn": "Could I get a wake-up call at 6 AM, please?",
+        "explanationPt": "Wake-up call = serviço do hotel. Use at + horário."
+      },
+      {
+        "id": "em08-l02-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "wake-up call / room service",
+            "pt": "serviços"
+          },
+          {
+            "en": "late check-out",
+            "pt": "saída tardia"
+          },
+          {
+            "en": "isn't working",
+            "pt": "problema"
+          },
+          {
+            "en": "Could someone take a look?",
+            "pt": "pedir ajuda"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em08-l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "Could I get a wake-up call at 6 AM?"
+          },
+          {
+            "en": "Room service, please."
+          },
+          {
+            "en": "Could I have extra towels?"
+          },
+          {
+            "en": "The Wi-Fi isn't working."
+          },
+          {
+            "en": "Could I have a late check-out?"
+          },
+          {
+            "en": "Can you store my luggage?"
+          }
+        ],
+        "dialogueEn": "Front desk, how can I help? — Wake-up call at 6 AM, please. Also extra towels. — Of course. — Later: The AC isn't working. — I'll send someone. — Could I have late check-out tomorrow? — Until 2 PM, no problem."
+      }
+    ],
+    "mission": [
+      {
+        "id": "em08-l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can use hotel services and report problems.",
+        "headlinePt": "Você consegue usar serviços do hotel e reportar problemas.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Reception",
+            "questionEn": "Good evening. How can I help you?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em08-l02-prac-01",
+      "type": "choice",
+      "promptPt": "Chamada de despertar:",
+      "options": [
+        {
+          "labelEn": "Could I get a wake-up call at 7 AM?",
+          "correct": true,
+          "feedbackPt": "Wake-up call — padrão."
+        },
+        {
+          "labelEn": "Could I get a wake-up flight?",
+          "correct": false,
+          "feedbackPt": "Call, não flight."
+        },
+        {
+          "labelEn": "I wake-up call am.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em08-l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Wi-Fi não funciona.",
+      "templateEn": "The Wi-Fi ___ working.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "isn't",
+          "correct": true,
+          "feedbackPt": "Isn't working = não funciona."
+        },
+        {
+          "labelEn": "doesn't",
+          "correct": false,
+          "feedbackPt": "Doesn't working — incorreto."
+        },
+        {
+          "labelEn": "not",
+          "correct": false,
+          "feedbackPt": "Falta verbo."
+        }
+      ]
+    },
+    {
+      "id": "em08-l02-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Toalhas extras, por favor.",
+      "tokens": [
+        "please.",
+        "towels?",
+        "extra",
+        "I",
+        "get",
+        "Could"
+      ],
+      "correctOrder": [
+        "Could",
+        "I",
+        "get",
+        "extra",
+        "towels?",
+        "please."
+      ],
+      "feedbackCorrectPt": "Could I get extra towels, please?",
+      "feedbackWrongPt": "Could I get..."
+    },
+    {
+      "id": "em08-l02-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Reception: How can I help?",
+      "speaker": "You",
+      "contextEn": "You need room service.",
+      "options": [
+        {
+          "labelEn": "Room service, please. I'd like a sandwich and water.",
+          "correct": true,
+          "feedbackPt": "Room service + pedido."
+        },
+        {
+          "labelEn": "Where is baggage claim?",
+          "correct": false,
+          "feedbackPt": "Aeroporto."
+        },
+        {
+          "labelEn": "I have a connecting flight.",
+          "correct": false,
+          "feedbackPt": "Aeroporto."
+        }
+      ]
+    },
+    {
+      "id": "em08-l02-prac-05",
+      "type": "choice",
+      "promptPt": "Late check-out significa:",
+      "options": [
+        {
+          "labelEn": "Leaving the hotel later than standard time.",
+          "correct": true,
+          "feedbackPt": "Saída tardia."
+        },
+        {
+          "labelEn": "Checking in late at night.",
+          "correct": false,
+          "feedbackPt": "Isso seria late check-in."
+        },
+        {
+          "labelEn": "Canceling the hotel.",
+          "correct": false,
+          "feedbackPt": "Cancelamento — diferente."
+        }
+      ]
+    },
+    {
+      "id": "em08-l02-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Alguém pode verificar?",
+      "templateEn": "Could someone ___ a look?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "take",
+          "correct": true,
+          "feedbackPt": "Take a look = dar uma olhada."
+        },
+        {
+          "labelEn": "make",
+          "correct": false,
+          "feedbackPt": "Make a look — errado."
+        },
+        {
+          "labelEn": "do",
+          "correct": false,
+          "feedbackPt": "Do a look — errado."
+        }
+      ]
+    },
+    {
+      "id": "em08-l02-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Problema no quarto:",
+      "speaker": "You",
+      "contextEn": "The shower has no hot water.",
+      "options": [
+        {
+          "labelEn": "There's no hot water. Could someone take a look?",
+          "correct": true,
+          "feedbackPt": "Problema + pedido."
+        },
+        {
+          "labelEn": "Nothing to declare.",
+          "correct": false,
+          "feedbackPt": "Customs."
+        },
+        {
+          "labelEn": "You should rest.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    },
+    {
+      "id": "em08-l02-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: Quero fazer check-out.",
+      "tokens": [
+        "out,",
+        "check",
+        "to",
+        "like",
+        "I'd",
+        "please."
+      ],
+      "correctOrder": [
+        "I'd",
+        "like",
+        "to",
+        "check",
+        "out,",
+        "please."
+      ],
+      "feedbackCorrectPt": "I'd like to check out, please.",
+      "feedbackWrongPt": "Check out = sair do hotel."
+    },
+    {
+      "id": "em08-l02-prac-09",
+      "type": "choice",
+      "promptPt": "Guardar bagagem no hotel:",
+      "options": [
+        {
+          "labelEn": "Can you store my luggage?",
+          "correct": true,
+          "feedbackPt": "Store luggage — comum."
+        },
+        {
+          "labelEn": "Can you fly my luggage?",
+          "correct": false,
+          "feedbackPt": "Fly — errado."
+        },
+        {
+          "labelEn": "Can you cook my luggage?",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em08-l02-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Late check-out:",
+      "speaker": "You",
+      "contextEn": "Reception: Check-out is at 11 AM.",
+      "options": [
+        {
+          "labelEn": "Could I have a late check-out, please? Until 2 PM?",
+          "correct": true,
+          "feedbackPt": "Pedido educado."
+        },
+        {
+          "labelEn": "I need a wake-up call at gate B12.",
+          "correct": false,
+          "feedbackPt": "Mistura conceitos."
+        },
+        {
+          "labelEn": "I am allergic to nuts.",
+          "correct": false,
+          "feedbackPt": "M7."
+        }
+      ]
+    }
+  ]
+}

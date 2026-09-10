@@ -1,0 +1,345 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 4,
+  "goalPt": "Formar perguntas e respostas curtas no passado — auxiliar DID + verbo base, Did you...? Yes, I did. / No, I didn't.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jamie faz entrevista rápida sobre ontem — perguntas com Did e respostas curtas.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can ask and answer in the past.",
+    "headlinePt": "Você consegue perguntar e responder no passado.",
+    "bodyPt": "",
+    "canDo": ["Did you work yesterday?", "Yes, I did. / No, I didn't.", "What did you do?", "Did she go to the game?"],
+    "production": {
+      "introPt": "Faça 3 perguntas com Did para Jamie e responda 2 perguntas dele com respostas curtas.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Let's ask each other about yesterday." }
+      ],
+      "fields": [
+        { "id": "q1", "labelPt": "Pergunta 1", "prefixEn": "Did you", "placeholderEn": "work late yesterday?" },
+        { "id": "q2", "labelPt": "Pergunta 2", "prefixEn": "Did she", "placeholderEn": "go to the game?" },
+        { "id": "a1", "labelPt": "Resposta curta (sim)", "prefixEn": "", "placeholderEn": "Yes, I did." },
+        { "id": "a2", "labelPt": "Resposta curta (não)", "prefixEn": "", "placeholderEn": "No, I didn't." }
+      ],
+      "exampleEn": "Did you work late? — Yes, I did. Did she go to the game? — No, she didn't. What did you do? — I went home and rested."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "e04l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Did questions",
+        "titlePt": "Perguntas com Did",
+        "bodyPt": "Perguntas no passado (exceto to be) usam DID + sujeito + verbo BASE. Referência START m04: Do you work? → Did you work?"
+      },
+      {
+        "id": "e04l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office café · Quick interview",
+        "scenarioPt": "Jamie entrevista você sobre ontem — perguntas e respostas curtas."
+      },
+      {
+        "id": "e04l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you work late yesterday?",
+        "promptPt": "Jamie pergunta se você trabalhou tarde — responda sim.",
+        "options": [
+          { "labelEn": "Yes, I did.", "correct": true, "feedbackPt": "Resposta curta: Did → I did." },
+          { "labelEn": "Yes, I do.", "correct": false, "feedbackPt": "Do = presente." },
+          { "labelEn": "Yes, I worked.", "correct": false, "feedbackPt": "Funciona, mas resposta curta é I did." }
+        ]
+      },
+      {
+        "id": "e04l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Did you watch the game?",
+        "promptPt": "Jamie pergunta — responda não.",
+        "options": [
+          { "labelEn": "No, I didn't.", "correct": true, "feedbackPt": "Did → didn't na negativa." },
+          { "labelEn": "No, I don't.", "correct": false, "feedbackPt": "Don't = presente." },
+          { "labelEn": "No, I didn't watched.", "correct": false, "feedbackPt": "Após didn't, verbo base — watch." }
+        ]
+      },
+      {
+        "id": "e04l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What did you do after work?",
+        "promptPt": "Jamie pergunta Wh- no passado.",
+        "options": [
+          { "labelEn": "I went home and rested.", "correct": true, "feedbackPt": "What did + resposta passado." },
+          { "labelEn": "I go home and rest.", "correct": false, "feedbackPt": "Presente." },
+          { "labelEn": "What do you do after work?", "correct": false, "feedbackPt": "Isso é pergunta, não resposta." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "e04l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Yes/No questions — Did",
+        "titlePt": "Perguntas sim/não — Did",
+        "introPt": "Did + sujeito + verbo BASE (sem -ed!).",
+        "examples": [
+          { "en": "Did you work yesterday?", "pt": "Trabalhou ontem?" },
+          { "en": "Did she go to the game?", "pt": "Ela foi ao jogo?" },
+          { "en": "Did they watch TV?", "pt": "Assistiram TV?" },
+          { "en": "Did he finish the report?", "pt": "Ele terminou?" }
+        ]
+      },
+      {
+        "id": "e04l05-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Short answers",
+        "titlePt": "Respostas curtas",
+        "introPt": "Did → Yes, I did. / No, I didn't. (não repita verbo completo na resposta curta)",
+        "examples": [
+          { "en": "Did you work? — Yes, I did.", "pt": "sim" },
+          { "en": "Did you work? — No, I didn't.", "pt": "não" },
+          { "en": "Did she go? — Yes, she did.", "pt": "sim" },
+          { "en": "Did they watch? — No, they didn't.", "pt": "não" }
+        ]
+      },
+      {
+        "id": "e04l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Wh- questions — What/Where/When",
+        "titlePt": "Perguntas Wh-",
+        "introPt": "Wh- + did + sujeito + verbo base.",
+        "examples": [
+          { "en": "What did you do?", "pt": "O que fez?" },
+          { "en": "Where did you go?", "pt": "Onde foi?" },
+          { "en": "When did you arrive?", "pt": "Quando chegou?" },
+          { "en": "How did you get there?", "pt": "Como foi?" }
+        ]
+      },
+      {
+        "id": "e04l05-learn-04",
+        "type": "comparison",
+        "titleEn": "Do/Does (present) vs Did (past)",
+        "titlePt": "Do/Does vs Did",
+        "left": {
+          "labelEn": "PRESENT · START m04",
+          "exampleEn": "Do you work? Does she train? — Yes, I do. / No, she doesn't.",
+          "notePt": "Do/Does + verbo base."
+        },
+        "right": {
+          "labelEn": "PAST · this lesson",
+          "exampleEn": "Did you work? Did she go? — Yes, I did. / No, she didn't.",
+          "notePt": "Did + verbo base (mesmo para todas as pessoas)."
+        },
+        "modelEn": "Do you work every day? Did you work yesterday?",
+        "modelPt": "Did substitui Do/Does no passado — verbo sempre na base."
+      },
+      {
+        "id": "e04l05-learn-05",
+        "type": "language_focus",
+        "titleEn": "Verb stays base after Did",
+        "titlePt": "Verbo fica na base após Did",
+        "items": [
+          { "formalEn": "Did you worked?", "naturalEn": "Did you work?", "notePt": "ERRADO — Did já marca passado." },
+          { "formalEn": "Did she went?", "naturalEn": "Did she go?", "notePt": "ERRADO — Went só sem Did." }
+        ],
+        "tipPt": "Did + work (não worked). Did + go (não went). Auxiliar carrega o passado."
+      },
+      {
+        "id": "e04l05-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "Was/Were questions — different",
+        "titlePt": "Was/Were — diferente",
+        "introPt": "To be no passado NÃO usa Did — inverte was/were.",
+        "examples": [
+          { "en": "Were you at home? (not: Did you were?)", "pt": "to be" },
+          { "en": "Was she happy?", "pt": "to be" },
+          { "en": "Did you work? (action verb)", "pt": "verbo de ação" }
+        ]
+      },
+      {
+        "id": "e04l05-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum",
+        "wrongEn": "Did you worked? / Did she went? / Yes, I do.",
+        "rightEn": "Did you work? / Did she go? / Yes, I did.",
+        "explanationPt": "Após Did, verbo BASE. Resposta curta: Did → did/didn't, não do/don't."
+      },
+      {
+        "id": "e04l05-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Did you work yesterday?", "pt": "pergunta" },
+          { "en": "Yes, I did. / No, I didn't.", "pt": "resposta curta" },
+          { "en": "What did you do?", "pt": "Wh-" },
+          { "en": "Did + base verb (work, go, watch)", "pt": "regra" },
+          { "en": "Were you at home? (to be — no Did)", "pt": "exceção" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "e04l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — pratique perguntas e respostas.",
+        "phrases": [
+          { "en": "Did you work yesterday?" },
+          { "en": "Yes, I did." },
+          { "en": "No, I didn't." },
+          { "en": "Did she go to the game?" },
+          { "en": "Yes, she did." },
+          { "en": "What did you do?" },
+          { "en": "Where did you go?" },
+          { "en": "Did they watch the game?" }
+        ],
+        "dialogueEn": "Did you work late? — Yes, I did. Did you watch the game? — No, I didn't. What did you do? — I went home and rested."
+      }
+    ],
+    "mission": [
+      {
+        "id": "e04l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Ask and answer — past.",
+        "headlinePt": "Pergunte e responda — passado.",
+        "bodyPt": "Faça perguntas com Did e use respostas curtas.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Let's ask each other about yesterday." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "e04l05-prac-01",
+      "type": "choice",
+      "promptPt": "Pergunta correta — trabalhou ontem?",
+      "options": [
+        { "labelEn": "Did you work yesterday?", "correct": true, "feedbackPt": "Did + base verb." },
+        { "labelEn": "Did you worked yesterday?", "correct": false, "feedbackPt": "Após Did, work (base)." },
+        { "labelEn": "Do you work yesterday?", "correct": false, "feedbackPt": "Do = presente." }
+      ]
+    },
+    {
+      "id": "e04l05-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Did you work late? — sim",
+      "speaker": "You",
+      "contextEn": "Jamie: Did you work late yesterday?",
+      "options": [
+        { "labelEn": "Yes, I did.", "correct": true, "feedbackPt": "Resposta curta." },
+        { "labelEn": "Yes, I do.", "correct": false, "feedbackPt": "Did → I did." },
+        { "labelEn": "Yes, I did worked.", "correct": false, "feedbackPt": "Resposta curta sem verbo extra." }
+      ]
+    },
+    {
+      "id": "e04l05-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Ela foi ao jogo? (pergunta)",
+      "templateEn": "___ she go to the game?",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "Did", "correct": true, "feedbackPt": "Did + she + go." },
+        { "labelEn": "Does", "correct": false, "feedbackPt": "Does = presente." },
+        { "labelEn": "Do", "correct": false, "feedbackPt": "She → Does (presente)." }
+      ]
+    },
+    {
+      "id": "e04l05-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: o que você fez?",
+      "tokens": ["do?", "you", "did", "What"],
+      "correctOrder": ["What", "did", "you", "do?"],
+      "feedbackCorrectPt": "What did you do?",
+      "feedbackWrongPt": "What + did + you + do?"
+    },
+    {
+      "id": "e04l05-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Did you watch the game? — não",
+      "speaker": "You",
+      "contextEn": "Jamie: Did you watch the game?",
+      "options": [
+        { "labelEn": "No, I didn't.", "correct": true, "feedbackPt": "Did → didn't." },
+        { "labelEn": "No, I don't.", "correct": false, "feedbackPt": "Don't = presente." },
+        { "labelEn": "No, I didn't watched.", "correct": false, "feedbackPt": "Resposta curta — sem verbo." }
+      ]
+    },
+    {
+      "id": "e04l05-prac-06",
+      "type": "choice",
+      "promptPt": "Após Did, verbo correto:",
+      "options": [
+        { "labelEn": "Did she go?", "correct": true, "feedbackPt": "Go = base." },
+        { "labelEn": "Did she went?", "correct": false, "feedbackPt": "Went só sem Did." },
+        { "labelEn": "Did she goes?", "correct": false, "feedbackPt": "Goes = 3ª pessoa presente." }
+      ]
+    },
+    {
+      "id": "e04l05-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Onde você foi?",
+      "templateEn": "Where ___ you go?",
+      "blankLabel": "auxiliar",
+      "options": [
+        { "labelEn": "did", "correct": true, "feedbackPt": "Where did you go?" },
+        { "labelEn": "do", "correct": false, "feedbackPt": "Do = presente." },
+        { "labelEn": "were", "correct": false, "feedbackPt": "Were = to be." }
+      ]
+    },
+    {
+      "id": "e04l05-prac-08",
+      "type": "choice",
+      "promptPt": "To be no passado — pergunta correta:",
+      "options": [
+        { "labelEn": "Were you at home?", "correct": true, "feedbackPt": "To be → Were/Was." },
+        { "labelEn": "Did you were at home?", "correct": false, "feedbackPt": "To be não usa Did." },
+        { "labelEn": "Did you be at home?", "correct": false, "feedbackPt": "Did you be = incorreto." }
+      ]
+    },
+    {
+      "id": "e04l05-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie: Did they finish? — sim",
+      "speaker": "You",
+      "contextEn": "Jamie: Did they finish the project?",
+      "options": [
+        { "labelEn": "Yes, they did.", "correct": true, "feedbackPt": "They did." },
+        { "labelEn": "Yes, they do.", "correct": false, "feedbackPt": "Did → they did." },
+        { "labelEn": "Yes, they finished did.", "correct": false, "feedbackPt": "Gramática incorreta." }
+      ]
+    },
+    {
+      "id": "e04l05-prac-10",
+      "type": "reorder",
+      "promptPt": "Monte pergunta: ele terminou o relatório?",
+      "tokens": ["report?", "the", "finish", "he", "Did"],
+      "correctOrder": ["Did", "he", "finish", "the", "report?"],
+      "feedbackCorrectPt": "Did he finish the report?",
+      "feedbackWrongPt": "Did + he + finish (base)."
+    },
+    {
+      "id": "e04l05-prac-11",
+      "type": "choice",
+      "promptPt": "Presente vs passado — par correto:",
+      "options": [
+        { "labelEn": "Do you work? → Did you work?", "correct": true, "feedbackPt": "Do → Did no passado." },
+        { "labelEn": "Do you work? → Did you worked?", "correct": false, "feedbackPt": "Após Did, base." },
+        { "labelEn": "Does she go? → Did she went?", "correct": false, "feedbackPt": "Did + go, não went." }
+      ]
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import type { LearningContentManifest } from './learning-content.types';
 
 export const LEARNING_CONTENT_MANIFEST_IDS = [
   'cup360-english-start-v1',
+  'cup360-english-elementary-v1',
 ] as const;
 
 export type LearningContentManifestId =

@@ -1,0 +1,551 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 7,
+  "goalPt": "Desafio cumulativo — preferências, pedidos detalhados, hábitos, sintomas básicos e conselhos should/shouldn't.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Dia completo: almoço de equipe, parada na farmácia, conselho a colega exausto.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Complete the well-being scenario.",
+    "headlinePt": "Complete o cenário de bem-estar.",
+    "bodyPt": "Use vocabulário do Módulo 7 em sequência: restaurante → hábitos → farmácia → conselho.",
+    "canDo": [
+      "Allergies & detailed orders",
+      "Healthy habits",
+      "Pharmacy basics",
+      "Should advice"
+    ],
+    "production": {
+      "introPt": "Simule os 4 momentos do desafio em inglês — frases curtas para cada etapa.",
+      "prompts": [
+        {
+          "speaker": "Waiter",
+          "questionEn": "Any dietary restrictions?"
+        },
+        {
+          "speaker": "Colleague",
+          "questionEn": "How do you stay healthy?"
+        },
+        {
+          "speaker": "Pharmacist",
+          "questionEn": "How can I help?"
+        },
+        {
+          "speaker": "Friend",
+          "questionEn": "I'm exhausted. What should I do?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "restaurant",
+          "labelPt": "Restaurante",
+          "prefixEn": "",
+          "placeholderEn": "I'm allergic to nuts. Salad without cheese, please."
+        },
+        {
+          "id": "wellbeing",
+          "labelPt": "Hábitos + farmácia + conselho",
+          "prefixEn": "",
+          "placeholderEn": "I exercise regularly. I don't feel well — something for a headache. You should rest more!"
+        }
+      ],
+      "exampleEn": "I'm allergic to nuts. Without cheese, please. I exercise and drink water. I don't feel well — headache, please. You should rest — you shouldn't work so late!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em07-l06-ctx-01",
+        "type": "intro",
+        "titleEn": "Everyday Well-Being Challenge",
+        "titlePt": "Desafio Bem-Estar do Dia a Dia",
+        "bodyPt": "Junte tudo do Módulo 7: almoço com restrições, conversa sobre hábitos, farmácia e conselho a um amigo cansado."
+      },
+      {
+        "id": "em07-l06-ctx-02",
+        "type": "scenario",
+        "settingEn": "Full day · Restaurant → pharmacy → friend chat",
+        "scenarioPt": "Dia completo: almoço de equipe, parada na farmácia, conselho a colega exausto."
+      },
+      {
+        "id": "em07-l06-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "Any dietary restrictions?",
+        "promptPt": "Passo 1 — restaurante.",
+        "options": [
+          {
+            "labelEn": "I'm allergic to nuts. I'd like the salad without cheese, please.",
+            "correct": true,
+            "feedbackPt": "Alergia + pedido detalhado."
+          },
+          {
+            "labelEn": "I am gate B12.",
+            "correct": false,
+            "feedbackPt": "Aeroporto — contexto errado."
+          },
+          {
+            "labelEn": "Cancel my reservation.",
+            "correct": false,
+            "feedbackPt": "Hotel — contexto errado."
+          }
+        ]
+      },
+      {
+        "id": "em07-l06-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "How do you stay healthy?",
+        "promptPt": "Passo 2 — hábitos.",
+        "options": [
+          {
+            "labelEn": "I exercise regularly and try to avoid junk food.",
+            "correct": true,
+            "feedbackPt": "Hábitos saudáveis."
+          },
+          {
+            "labelEn": "I prefer gate to hotel.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          },
+          {
+            "labelEn": "I rent a car daily.",
+            "correct": false,
+            "feedbackPt": "Transporte — M8."
+          }
+        ]
+      },
+      {
+        "id": "em07-l06-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Pharmacist",
+        "promptEn": "How can I help?",
+        "promptPt": "Passo 3 — farmácia.",
+        "options": [
+          {
+            "labelEn": "I don't feel well. Something for a headache, please.",
+            "correct": true,
+            "feedbackPt": "Sintoma + pedido básico."
+          },
+          {
+            "labelEn": "I need surgery.",
+            "correct": false,
+            "feedbackPt": "Fora do escopo."
+          },
+          {
+            "labelEn": "Window or aisle?",
+            "correct": false,
+            "feedbackPt": "Avião — contexto errado."
+          }
+        ]
+      },
+      {
+        "id": "em07-l06-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Friend",
+        "promptEn": "I'm exhausted. What should I do?",
+        "promptPt": "Passo 4 — conselho.",
+        "options": [
+          {
+            "labelEn": "You should rest more. You shouldn't work so late.",
+            "correct": true,
+            "feedbackPt": "Should + shouldn't."
+          },
+          {
+            "labelEn": "You should to fly tomorrow.",
+            "correct": false,
+            "feedbackPt": "Should + to — errado."
+          },
+          {
+            "labelEn": "I hate cilantro.",
+            "correct": false,
+            "feedbackPt": "Preferência — passo anterior."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em07-l06-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Module 7 review",
+        "titlePt": "Revisão Módulo 7",
+        "introPt": "Tudo que você praticou neste módulo.",
+        "examples": [
+          {
+            "en": "I prefer... / I'm allergic to...",
+            "pt": "preferências"
+          },
+          {
+            "en": "Without..., on the side",
+            "pt": "pedidos detalhados"
+          },
+          {
+            "en": "I exercise / I try to avoid...",
+            "pt": "hábitos"
+          },
+          {
+            "en": "I don't feel well / I have a headache",
+            "pt": "sintomas"
+          },
+          {
+            "en": "You should... / You shouldn't...",
+            "pt": "conselhos"
+          }
+        ]
+      },
+      {
+        "id": "em07-l06-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "Food preferences & ordering",
+            "pt": "L01–L02"
+          },
+          {
+            "en": "Healthy habits",
+            "pt": "L03"
+          },
+          {
+            "en": "Feel & pharmacy",
+            "pt": "L04"
+          },
+          {
+            "en": "Should advice",
+            "pt": "L05"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em07-l06-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I'm allergic to nuts — no cheese, please."
+          },
+          {
+            "en": "I exercise and drink lots of water."
+          },
+          {
+            "en": "I don't feel well. Something for a headache, please."
+          },
+          {
+            "en": "You should rest. You shouldn't work so late."
+          }
+        ],
+        "dialogueEn": "Any restrictions? — I'm allergic to nuts. Salad without cheese, please. — How do you stay healthy? — I exercise and avoid junk food. — Not feeling well? — I have a headache. Something for pain, please. — Friend: I'm exhausted! — You should rest more!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em07-l06-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Complete the well-being scenario.",
+        "headlinePt": "Complete o cenário de bem-estar.",
+        "bodyPt": "Use vocabulário do Módulo 7 em sequência: restaurante → hábitos → farmácia → conselho.",
+        "prompts": [
+          {
+            "speaker": "Waiter",
+            "questionEn": "Any dietary restrictions?"
+          },
+          {
+            "speaker": "Colleague",
+            "questionEn": "How do you stay healthy?"
+          },
+          {
+            "speaker": "Pharmacist",
+            "questionEn": "How can I help?"
+          },
+          {
+            "speaker": "Friend",
+            "questionEn": "I'm exhausted. What should I do?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em07-l06-prac-01",
+      "type": "choice",
+      "promptPt": "Desafio M7 — restaurante com alergia:",
+      "options": [
+        {
+          "labelEn": "I'm allergic to nuts. No nuts, please.",
+          "correct": true,
+          "feedbackPt": "Alergia no pedido."
+        },
+        {
+          "labelEn": "I am nuts allergic.",
+          "correct": false,
+          "feedbackPt": "Ordem errada."
+        },
+        {
+          "labelEn": "Gate B12, please.",
+          "correct": false,
+          "feedbackPt": "Contexto errado."
+        }
+      ]
+    },
+    {
+      "id": "em07-l06-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Pedido com modificação:",
+      "speaker": "You",
+      "contextEn": "Waiter: What can I get for you?",
+      "options": [
+        {
+          "labelEn": "I'd like the chicken, medium, without onions. Sauce on the side.",
+          "correct": true,
+          "feedbackPt": "L02 — pedido detalhado."
+        },
+        {
+          "labelEn": "Where is my gate?",
+          "correct": false,
+          "feedbackPt": "M8."
+        },
+        {
+          "labelEn": "I worked yesterday.",
+          "correct": false,
+          "feedbackPt": "M4."
+        }
+      ]
+    },
+    {
+      "id": "em07-l06-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Hábito saudável:",
+      "templateEn": "I try to ___ junk food.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "avoid",
+          "correct": true,
+          "feedbackPt": "L03."
+        },
+        {
+          "labelEn": "eat",
+          "correct": false,
+          "feedbackPt": "Oposto do hábito saudável aqui."
+        },
+        {
+          "labelEn": "fly",
+          "correct": false,
+          "feedbackPt": "M8."
+        }
+      ]
+    },
+    {
+      "id": "em07-l06-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Farmácia:",
+      "speaker": "You",
+      "contextEn": "Pharmacist: How can I help?",
+      "options": [
+        {
+          "labelEn": "I don't feel well. Something for a sore throat, please.",
+          "correct": true,
+          "feedbackPt": "L04."
+        },
+        {
+          "labelEn": "I need a rental car.",
+          "correct": false,
+          "feedbackPt": "M8."
+        },
+        {
+          "labelEn": "You should to rest.",
+          "correct": false,
+          "feedbackPt": "Should + to — errado."
+        }
+      ]
+    },
+    {
+      "id": "em07-l06-prac-05",
+      "type": "reorder",
+      "promptPt": "Conselho:",
+      "tokens": [
+        "rest.",
+        "more",
+        "should",
+        "You"
+      ],
+      "correctOrder": [
+        "You",
+        "should",
+        "rest",
+        "more."
+      ],
+      "feedbackCorrectPt": "You should rest more.",
+      "feedbackWrongPt": "L05 — should + base."
+    },
+    {
+      "id": "em07-l06-prac-06",
+      "type": "choice",
+      "promptPt": "Preferência vs pedido:",
+      "options": [
+        {
+          "labelEn": "I prefer tea. / I'd like tea, please.",
+          "correct": true,
+          "feedbackPt": "L01 — like vs would like."
+        },
+        {
+          "labelEn": "I prefer tea please order.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        },
+        {
+          "labelEn": "Tea is my flight.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l06-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Conselho a amigo:",
+      "speaker": "You",
+      "contextEn": "Friend: I work late every night.",
+      "options": [
+        {
+          "labelEn": "You shouldn't do that. You should get more rest.",
+          "correct": true,
+          "feedbackPt": "L05 completo."
+        },
+        {
+          "labelEn": "Medium-rare, please.",
+          "correct": false,
+          "feedbackPt": "Restaurante — já passou."
+        },
+        {
+          "labelEn": "I cancel my booking.",
+          "correct": false,
+          "feedbackPt": "M8."
+        }
+      ]
+    },
+    {
+      "id": "em07-l06-prac-08",
+      "type": "fill_blank",
+      "promptPt": "Sintoma:",
+      "templateEn": "I have a ___.",
+      "blankLabel": "sintoma",
+      "options": [
+        {
+          "labelEn": "headache",
+          "correct": true,
+          "feedbackPt": "L04."
+        },
+        {
+          "labelEn": "reservation",
+          "correct": false,
+          "feedbackPt": "Hotel."
+        },
+        {
+          "labelEn": "boarding",
+          "correct": false,
+          "feedbackPt": "Avião."
+        }
+      ]
+    },
+    {
+      "id": "em07-l06-prac-09",
+      "type": "choice",
+      "promptPt": "Esta lição é um:",
+      "options": [
+        {
+          "labelEn": "Module challenge — cumulative review.",
+          "correct": true,
+          "feedbackPt": "Desafio M7."
+        },
+        {
+          "labelEn": "Medical certification course.",
+          "correct": false,
+          "feedbackPt": "Não — comunicação básica."
+        },
+        {
+          "labelEn": "START level lesson.",
+          "correct": false,
+          "feedbackPt": "ELEMENTARY."
+        }
+      ]
+    },
+    {
+      "id": "em07-l06-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Cenário completo — primeiro passo:",
+      "speaker": "You",
+      "contextEn": "Team lunch. Waiter asks about restrictions.",
+      "options": [
+        {
+          "labelEn": "I'm vegetarian and allergic to shellfish. I'd like the pasta without cheese.",
+          "correct": true,
+          "feedbackPt": "Integra L01 + L02 perfeitamente."
+        },
+        {
+          "labelEn": "I rent a car at the airport.",
+          "correct": false,
+          "feedbackPt": "M8."
+        },
+        {
+          "labelEn": "I did yoga yesterday.",
+          "correct": false,
+          "feedbackPt": "Passado — M4."
+        }
+      ]
+    }
+  ]
+}

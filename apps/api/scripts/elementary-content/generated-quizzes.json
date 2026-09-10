@@ -1,0 +1,6730 @@
+{
+  "elem-m01-l01-beyond-start": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m01-l01-beyond-start-q01",
+        "sortOrder": 0,
+        "question": "pergunta direta?",
+        "options": [
+          "Are you married or single?",
+          "I'm married.",
+          "I'm single."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l01-beyond-start-q02",
+        "sortOrder": 1,
+        "question": "solteiro(a)?",
+        "options": [
+          "Are you married or single?",
+          "I'm married.",
+          "I'm single."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l01-beyond-start-q03",
+        "sortOrder": 2,
+        "question": "casado(a)?",
+        "options": [
+          "Are you married or single?",
+          "I'm married.",
+          "I'm single."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l01-beyond-start-q04",
+        "sortOrder": 3,
+        "question": "divorciado(a)?",
+        "options": [
+          "Are you married or single?",
+          "I'm divorced.",
+          "I'm single."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l01-beyond-start-q05",
+        "sortOrder": 4,
+        "question": "moradia atual?",
+        "options": [
+          "Are you married or single?",
+          "I'm single.",
+          "Where do you live now?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l01-beyond-start-q06",
+        "sortOrder": 5,
+        "question": "moro em Miami?",
+        "options": [
+          "Are you married or single?",
+          "I live in Miami now.",
+          "I'm single."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l01-beyond-start-q07",
+        "sortOrder": 6,
+        "question": "emprego atual?",
+        "options": [
+          "Are you married or single?",
+          "I'm single.",
+          "Where do you work now?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l01-beyond-start-q08",
+        "sortOrder": 7,
+        "question": "trabalho no centro?",
+        "options": [
+          "Are you married or single?",
+          "I work at the training center.",
+          "I'm single."
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m01-l02-follow-up-questions": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m01-l02-follow-up-questions-q01",
+        "sortOrder": 0,
+        "question": "Sério? / É mesmo?",
+        "options": [
+          "Oh, really? That's cool.",
+          "Really?",
+          "Really? I didn't know that."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l02-follow-up-questions-q02",
+        "sortOrder": 1,
+        "question": "com entusiasmo?",
+        "options": [
+          "Oh, really? That's cool.",
+          "Really?",
+          "Really? I didn't know that."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l02-follow-up-questions-q03",
+        "sortOrder": 2,
+        "question": "surpresa?",
+        "options": [
+          "Oh, really? That's cool.",
+          "Really?",
+          "Really? I didn't know that."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l02-follow-up-questions-q04",
+        "sortOrder": 3,
+        "question": "aprofundar motivo?",
+        "options": [
+          "Oh, really? That's cool.",
+          "Really?",
+          "Really? How come?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l02-follow-up-questions-q05",
+        "sortOrder": 4,
+        "question": "há quanto tempo está aqui?",
+        "options": [
+          "How long have you been here?",
+          "Oh, really? That's cool.",
+          "Really?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l02-follow-up-questions-q06",
+        "sortOrder": 5,
+        "question": "há quanto trabalha aqui?",
+        "options": [
+          "How long have you worked here?",
+          "Oh, really? That's cool.",
+          "Really?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l02-follow-up-questions-q07",
+        "sortOrder": 6,
+        "question": "resposta com for?",
+        "options": [
+          "I've been here for two years.",
+          "Oh, really? That's cool.",
+          "Really?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l02-follow-up-questions-q08",
+        "sortOrder": 7,
+        "question": "resposta curta?",
+        "options": [
+          "About three years.",
+          "Oh, really? That's cool.",
+          "Really?"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m01-l03-interests-hobbies": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m01-l03-interests-hobbies-q01",
+        "sortOrder": 0,
+        "question": "curto futebol?",
+        "options": [
+          "I'm into soccer.",
+          "I'm into true crime podcasts.",
+          "What are you into these days?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l03-interests-hobbies-q02",
+        "sortOrder": 1,
+        "question": "interesse atual?",
+        "options": [
+          "I'm into soccer.",
+          "I'm into true crime podcasts.",
+          "What are you into these days?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l03-interests-hobbies-q03",
+        "sortOrder": 2,
+        "question": "pergunta informal?",
+        "options": [
+          "I'm into soccer.",
+          "I'm into true crime podcasts.",
+          "What are you into these days?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l03-interests-hobbies-q04",
+        "sortOrder": 3,
+        "question": "não curto?",
+        "options": [
+          "I'm into soccer.",
+          "I'm into true crime podcasts.",
+          "I'm not really into that."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l03-interests-hobbies-q05",
+        "sortOrder": 4,
+        "question": "gosto de cozinhar?",
+        "options": [
+          "I enjoy cooking.",
+          "I'm into soccer.",
+          "I'm into true crime podcasts."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l03-interests-hobbies-q06",
+        "sortOrder": 5,
+        "question": "com detalhe?",
+        "options": [
+          "I enjoy reading before bed.",
+          "I'm into soccer.",
+          "I'm into true crime podcasts."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l03-interests-hobbies-q07",
+        "sortOrder": 6,
+        "question": "hobby musical?",
+        "options": [
+          "I enjoy playing guitar.",
+          "I'm into soccer.",
+          "I'm into true crime podcasts."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l03-interests-hobbies-q08",
+        "sortOrder": 7,
+        "question": "pergunta?",
+        "options": [
+          "Do you enjoy traveling?",
+          "I'm into soccer.",
+          "I'm into true crime podcasts."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m01-l04-likes-dislikes": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m01-l04-likes-dislikes-q01",
+        "sortOrder": 0,
+        "question": "adoro?",
+        "options": [
+          "I hate cold coffee.",
+          "I like pizza.",
+          "I love pizza."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l04-likes-dislikes-q02",
+        "sortOrder": 1,
+        "question": "gosto?",
+        "options": [
+          "I hate cold coffee.",
+          "I like pizza.",
+          "I love pizza."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l04-likes-dislikes-q03",
+        "sortOrder": 2,
+        "question": "odeio?",
+        "options": [
+          "I hate cold coffee.",
+          "I like pizza.",
+          "I love pizza."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l04-likes-dislikes-q04",
+        "sortOrder": 3,
+        "question": "não gosto?",
+        "options": [
+          "I don't like spicy food.",
+          "I like pizza.",
+          "I love pizza."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l04-likes-dislikes-q05",
+        "sortOrder": 4,
+        "question": "tolerável?",
+        "options": [
+          "I don't mind the commute.",
+          "I like pizza.",
+          "I love pizza."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l04-likes-dislikes-q06",
+        "sortOrder": 5,
+        "question": "aceito?",
+        "options": [
+          "I don't mind working late sometimes.",
+          "I like pizza.",
+          "I love pizza."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l04-likes-dislikes-q07",
+        "sortOrder": 6,
+        "question": "pergunta educada?",
+        "options": [
+          "Do you mind if I sit here?",
+          "I like pizza.",
+          "I love pizza."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l04-likes-dislikes-q08",
+        "sortOrder": 7,
+        "question": "resposta?",
+        "options": [
+          "I like pizza.",
+          "I love pizza.",
+          "Not at all."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m01-l05-personality": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m01-l05-personality-q01",
+        "sortOrder": 0,
+        "question": "simpática?",
+        "options": [
+          "He's outgoing and fun.",
+          "I'm a bit shy at first.",
+          "She's very friendly."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l05-personality-q02",
+        "sortOrder": 1,
+        "question": "extrovertido?",
+        "options": [
+          "He's outgoing and fun.",
+          "I'm a bit shy at first.",
+          "She's very friendly."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l05-personality-q03",
+        "sortOrder": 2,
+        "question": "tímido no início?",
+        "options": [
+          "He's outgoing and fun.",
+          "I'm a bit shy at first.",
+          "She's very friendly."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l05-personality-q04",
+        "sortOrder": 3,
+        "question": "pergunta?",
+        "options": [
+          "Are you outgoing?",
+          "He's outgoing and fun.",
+          "She's very friendly."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l05-personality-q05",
+        "sortOrder": 4,
+        "question": "parece legal?",
+        "options": [
+          "He seems nice.",
+          "He's outgoing and fun.",
+          "She's very friendly."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l05-personality-q06",
+        "sortOrder": 5,
+        "question": "parece inteligente?",
+        "options": [
+          "He's outgoing and fun.",
+          "She seems really smart.",
+          "She's very friendly."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l05-personality-q07",
+        "sortOrder": 6,
+        "question": "parecem simpáticos?",
+        "options": [
+          "He's outgoing and fun.",
+          "She's very friendly.",
+          "They seem friendly."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l05-personality-q08",
+        "sortOrder": 7,
+        "question": "pergunta?",
+        "options": [
+          "Does he seem shy?",
+          "He's outgoing and fun.",
+          "She's very friendly."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m01-l06-describing-people": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m01-l06-describing-people-q01",
+        "sortOrder": 0,
+        "question": "alto?",
+        "options": [
+          "He's in his thirties.",
+          "He's tall.",
+          "She has long dark hair."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l06-describing-people-q02",
+        "sortOrder": 1,
+        "question": "cabelo escuro longo?",
+        "options": [
+          "He's in his thirties.",
+          "He's tall.",
+          "She has long dark hair."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l06-describing-people-q03",
+        "sortOrder": 2,
+        "question": "idade aproximada?",
+        "options": [
+          "He's in his thirties.",
+          "He's tall.",
+          "She has long dark hair."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l06-describing-people-q04",
+        "sortOrder": 3,
+        "question": "pergunta aparência?",
+        "options": [
+          "He's tall.",
+          "She has long dark hair.",
+          "What does he look like?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l06-describing-people-q05",
+        "sortOrder": 4,
+        "question": "dois adjetivos?",
+        "options": [
+          "He's tall and athletic.",
+          "He's tall.",
+          "She has long dark hair."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l06-describing-people-q06",
+        "sortOrder": 5,
+        "question": "personalidade?",
+        "options": [
+          "He's tall.",
+          "She has long dark hair.",
+          "She's friendly and funny."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l06-describing-people-q07",
+        "sortOrder": 6,
+        "question": "dois traços?",
+        "options": [
+          "He has dark hair and brown eyes.",
+          "He's tall.",
+          "She has long dark hair."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l06-describing-people-q08",
+        "sortOrder": 7,
+        "question": "trabalho?",
+        "options": [
+          "He's tall.",
+          "She has long dark hair.",
+          "She's smart and organized."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m01-l07-getting-to-know-you-challenge": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q01",
+        "sortOrder": 0,
+        "question": "Ordem típica num jantar ou happy hour.?",
+        "options": [
+          "I'm single. / I like playing soccer.",
+          "React → Follow-up → Share → Return",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q02",
+        "sortOrder": 1,
+        "question": "BE para estado civil; like/enjoy + -ing.?",
+        "options": [
+          "I'm single. / I like playing soccer.",
+          "React → Follow-up → Share → Return",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q03",
+        "sortOrder": 2,
+        "question": "Mantenha a conversa viva.?",
+        "options": [
+          "I'm single. / I like playing soccer.",
+          "React → Follow-up → Share → Return",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q04",
+        "sortOrder": 3,
+        "question": "estado civil?",
+        "options": [
+          "I'm single.",
+          "I'm single. / I like playing soccer.",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q05",
+        "sortOrder": 4,
+        "question": "moradia?",
+        "options": [
+          "I'm single. / I like playing soccer.",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone",
+          "Where do you live now?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q06",
+        "sortOrder": 5,
+        "question": "trabalho?",
+        "options": [
+          "I'm single. / I like playing soccer.",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone",
+          "Where do you work now?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q07",
+        "sortOrder": 6,
+        "question": "reação?",
+        "options": [
+          "I'm single. / I like playing soccer.",
+          "Really?",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q08",
+        "sortOrder": 7,
+        "question": "duração?",
+        "options": [
+          "How long have you been here?",
+          "I'm single. / I like playing soccer.",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q09",
+        "sortOrder": 8,
+        "question": "aprofundar?",
+        "options": [
+          "I'm single. / I like playing soccer.",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone",
+          "Tell me more."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m01-l07-getting-to-know-you-challenge-q10",
+        "sortOrder": 9,
+        "question": "devolver?",
+        "options": [
+          "I'm single. / I like playing soccer.",
+          "Status → Follow-up → Hobbies → Likes → Personality → Describe someone",
+          "What about you?"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m02-l01-present-expanded": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m02-l01-present-expanded-q01",
+        "sortOrder": 0,
+        "question": "acordar?",
+        "options": [
+          "I usually take the train.",
+          "I usually wake up at 6.",
+          "What do you usually do on Sundays?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l01-present-expanded-q02",
+        "sortOrder": 1,
+        "question": "transporte?",
+        "options": [
+          "I usually take the train.",
+          "I usually wake up at 6.",
+          "What do you usually do on Sundays?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l01-present-expanded-q03",
+        "sortOrder": 2,
+        "question": "pergunta?",
+        "options": [
+          "I usually take the train.",
+          "I usually wake up at 6.",
+          "What do you usually do on Sundays?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l01-present-expanded-q04",
+        "sortOrder": 3,
+        "question": "terceira pessoa?",
+        "options": [
+          "I usually take the train.",
+          "I usually wake up at 6.",
+          "She usually works from home."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l01-present-expanded-q05",
+        "sortOrder": 4,
+        "question": "café?",
+        "options": [
+          "I always have coffee first.",
+          "I usually take the train.",
+          "I usually wake up at 6."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l01-present-expanded-q06",
+        "sortOrder": 5,
+        "question": "trabalho?",
+        "options": [
+          "I always check my email.",
+          "I usually take the train.",
+          "I usually wake up at 6."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l01-present-expanded-q07",
+        "sortOrder": 6,
+        "question": "pergunta?",
+        "options": [
+          "Do you always eat breakfast?",
+          "I usually take the train.",
+          "I usually wake up at 6."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l01-present-expanded-q08",
+        "sortOrder": 7,
+        "question": "terceira pessoa?",
+        "options": [
+          "He always arrives early.",
+          "I usually take the train.",
+          "I usually wake up at 6."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m02-l02-third-person": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m02-l02-third-person-q01",
+        "sortOrder": 0,
+        "question": "ele trabalha?",
+        "options": [
+          "He trains every morning.",
+          "He works in marketing.",
+          "She lives in Boston."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l02-third-person-q02",
+        "sortOrder": 1,
+        "question": "ela mora?",
+        "options": [
+          "He trains every morning.",
+          "He works in marketing.",
+          "She lives in Boston."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l02-third-person-q03",
+        "sortOrder": 2,
+        "question": "ele treina?",
+        "options": [
+          "He trains every morning.",
+          "He works in marketing.",
+          "She lives in Boston."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l02-third-person-q04",
+        "sortOrder": 3,
+        "question": "ela joga?",
+        "options": [
+          "He works in marketing.",
+          "She lives in Boston.",
+          "She plays soccer on weekends."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l02-third-person-q05",
+        "sortOrder": 4,
+        "question": "pergunta?",
+        "options": [
+          "Does he work here?",
+          "He works in marketing.",
+          "She lives in Boston."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l02-third-person-q06",
+        "sortOrder": 5,
+        "question": "pergunta?",
+        "options": [
+          "Does she train every day?",
+          "He works in marketing.",
+          "She lives in Boston."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l02-third-person-q07",
+        "sortOrder": 6,
+        "question": "resposta curta?",
+        "options": [
+          "He works in marketing.",
+          "She lives in Boston.",
+          "Yes, he does. / No, he doesn't."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l02-third-person-q08",
+        "sortOrder": 7,
+        "question": "WH + does?",
+        "options": [
+          "He works in marketing.",
+          "She lives in Boston.",
+          "What time does she start?"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m02-l03-weekly-routine": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m02-l03-weekly-routine-q01",
+        "sortOrder": 0,
+        "question": "segundas?",
+        "options": [
+          "On Fridays I leave early.",
+          "On Mondays I have meetings.",
+          "On Wednesdays I train."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l03-weekly-routine-q02",
+        "sortOrder": 1,
+        "question": "quartas?",
+        "options": [
+          "On Fridays I leave early.",
+          "On Mondays I have meetings.",
+          "On Wednesdays I train."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l03-weekly-routine-q03",
+        "sortOrder": 2,
+        "question": "sextas?",
+        "options": [
+          "On Fridays I leave early.",
+          "On Mondays I have meetings.",
+          "On Wednesdays I train."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l03-weekly-routine-q04",
+        "sortOrder": 3,
+        "question": "pergunta?",
+        "options": [
+          "On Mondays I have meetings.",
+          "On Wednesdays I train.",
+          "What do you do on Thursdays?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l03-weekly-routine-q05",
+        "sortOrder": 4,
+        "question": "descanso?",
+        "options": [
+          "I relax on weekends.",
+          "On Mondays I have meetings.",
+          "On Wednesdays I train."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l03-weekly-routine-q06",
+        "sortOrder": 5,
+        "question": "dias úteis?",
+        "options": [
+          "I work on weekdays.",
+          "On Mondays I have meetings.",
+          "On Wednesdays I train."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l03-weekly-routine-q07",
+        "sortOrder": 6,
+        "question": "pergunta?",
+        "options": [
+          "Do you train on weekends?",
+          "On Mondays I have meetings.",
+          "On Wednesdays I train."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l03-weekly-routine-q08",
+        "sortOrder": 7,
+        "question": "domingo?",
+        "options": [
+          "I usually sleep in on Sundays.",
+          "On Mondays I have meetings.",
+          "On Wednesdays I train."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m02-l04-frequency": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m02-l04-frequency-q01",
+        "sortOrder": 0,
+        "question": "100%?",
+        "options": [
+          "I always check my calendar.",
+          "I sometimes work from home.",
+          "I usually train in the morning."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l04-frequency-q02",
+        "sortOrder": 1,
+        "question": "~80%?",
+        "options": [
+          "I always check my calendar.",
+          "I sometimes work from home.",
+          "I usually train in the morning."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l04-frequency-q03",
+        "sortOrder": 2,
+        "question": "~40%?",
+        "options": [
+          "I always check my calendar.",
+          "I sometimes work from home.",
+          "I usually train in the morning."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l04-frequency-q04",
+        "sortOrder": 3,
+        "question": "0%?",
+        "options": [
+          "I always check my calendar.",
+          "I never skip breakfast.",
+          "I usually train in the morning."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l04-frequency-q05",
+        "sortOrder": 4,
+        "question": "correto?",
+        "options": [
+          "I always check my calendar.",
+          "I always eat breakfast.",
+          "I usually train in the morning."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l04-frequency-q06",
+        "sortOrder": 5,
+        "question": "3ª pessoa?",
+        "options": [
+          "I always check my calendar.",
+          "I usually train in the morning.",
+          "She usually works late."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l04-frequency-q07",
+        "sortOrder": 6,
+        "question": "plural?",
+        "options": [
+          "I always check my calendar.",
+          "I usually train in the morning.",
+          "We sometimes travel for work."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l04-frequency-q08",
+        "sortOrder": 7,
+        "question": "never?",
+        "options": [
+          "He never complains.",
+          "I always check my calendar.",
+          "I usually train in the morning."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m02-l05-free-time": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m02-l05-free-time-q01",
+        "sortOrder": 0,
+        "question": "abertura?",
+        "options": [
+          "In my free time, I play guitar.",
+          "In my free time, I usually read and cook.",
+          "What do you do in your free time?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l05-free-time-q02",
+        "sortOrder": 1,
+        "question": "duas atividades?",
+        "options": [
+          "In my free time, I play guitar.",
+          "In my free time, I usually read and cook.",
+          "What do you do in your free time?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l05-free-time-q03",
+        "sortOrder": 2,
+        "question": "pergunta?",
+        "options": [
+          "In my free time, I play guitar.",
+          "In my free time, I usually read and cook.",
+          "What do you do in your free time?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l05-free-time-q04",
+        "sortOrder": 3,
+        "question": "pouco tempo?",
+        "options": [
+          "In my free time, I play guitar.",
+          "In my free time, I usually read and cook.",
+          "Not much free time during the week."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l05-free-time-q05",
+        "sortOrder": 4,
+        "question": "pós-expediente?",
+        "options": [
+          "After work, I usually go to the gym.",
+          "In my free time, I play guitar.",
+          "In my free time, I usually read and cook."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l05-free-time-q06",
+        "sortOrder": 5,
+        "question": "fim de semana?",
+        "options": [
+          "In my free time, I play guitar.",
+          "In my free time, I usually read and cook.",
+          "On weekends, I relax and see friends."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l05-free-time-q07",
+        "sortOrder": 6,
+        "question": "pergunta?",
+        "options": [
+          "In my free time, I play guitar.",
+          "In my free time, I usually read and cook.",
+          "What do you do after work?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l05-free-time-q08",
+        "sortOrder": 7,
+        "question": "social?",
+        "options": [
+          "I sometimes cook dinner with friends.",
+          "In my free time, I play guitar.",
+          "In my free time, I usually read and cook."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m02-l06-others-routines": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m02-l06-others-routines-q01",
+        "sortOrder": 0,
+        "question": "horário início?",
+        "options": [
+          "She starts at 9. / He finishes at 6.",
+          "What time does he finish?",
+          "What time does she start work?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l06-others-routines-q02",
+        "sortOrder": 1,
+        "question": "horário fim?",
+        "options": [
+          "She starts at 9. / He finishes at 6.",
+          "What time does he finish?",
+          "What time does she start work?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l06-others-routines-q03",
+        "sortOrder": 2,
+        "question": "respostas?",
+        "options": [
+          "She starts at 9. / He finishes at 6.",
+          "What time does he finish?",
+          "What time does she start work?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l06-others-routines-q04",
+        "sortOrder": 3,
+        "question": "contraste you = do?",
+        "options": [
+          "What time do you start?",
+          "What time does he finish?",
+          "What time does she start work?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l06-others-routines-q05",
+        "sortOrder": 4,
+        "question": "pergunta?",
+        "options": [
+          "Does he train on weekends?",
+          "What time does he finish?",
+          "What time does she start work?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l06-others-routines-q06",
+        "sortOrder": 5,
+        "question": "pergunta?",
+        "options": [
+          "Does she work from home?",
+          "What time does he finish?",
+          "What time does she start work?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l06-others-routines-q07",
+        "sortOrder": 6,
+        "question": "respostas curtas?",
+        "options": [
+          "What time does he finish?",
+          "What time does she start work?",
+          "Yes, he does. / No, she doesn't."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l06-others-routines-q08",
+        "sortOrder": 7,
+        "question": "com always?",
+        "options": [
+          "Does he always eat breakfast?",
+          "What time does he finish?",
+          "What time does she start work?"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m02-l07-my-life-challenge": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q01",
+        "sortOrder": 0,
+        "question": "Conversa natural cobre você e o time.?",
+        "options": [
+          "He works. / I always eat breakfast.",
+          "My morning → My week → My free time → Team schedules",
+          "On Mondays / Does he work?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q02",
+        "sortOrder": 1,
+        "question": "3ª pessoa -s + posição advérbio.?",
+        "options": [
+          "He works. / I always eat breakfast.",
+          "My morning → My week → My free time → Team schedules",
+          "On Mondays / Does he work?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q03",
+        "sortOrder": 2,
+        "question": "On + dia. Does + base.?",
+        "options": [
+          "He works. / I always eat breakfast.",
+          "My morning → My week → My free time → Team schedules",
+          "On Mondays / Does he work?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q04",
+        "sortOrder": 3,
+        "question": "usually?",
+        "options": [
+          "He works. / I always eat breakfast.",
+          "I usually wake up at 6.",
+          "My morning → My week → My free time → Team schedules"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q05",
+        "sortOrder": 4,
+        "question": "always?",
+        "options": [
+          "He works. / I always eat breakfast.",
+          "I always have coffee first.",
+          "My morning → My week → My free time → Team schedules"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q06",
+        "sortOrder": 5,
+        "question": "to be + always?",
+        "options": [
+          "He works. / I always eat breakfast.",
+          "I am always tired on Mondays.",
+          "My morning → My week → My free time → Team schedules"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q07",
+        "sortOrder": 6,
+        "question": "he + -s?",
+        "options": [
+          "He works in marketing.",
+          "He works. / I always eat breakfast.",
+          "My morning → My week → My free time → Team schedules"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q08",
+        "sortOrder": 7,
+        "question": "she + -s?",
+        "options": [
+          "He works. / I always eat breakfast.",
+          "My morning → My week → My free time → Team schedules",
+          "She trains every morning."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q09",
+        "sortOrder": 8,
+        "question": "does + base?",
+        "options": [
+          "Does he work here?",
+          "He works. / I always eat breakfast.",
+          "My morning → My week → My free time → Team schedules"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m02-l07-my-life-challenge-q10",
+        "sortOrder": 9,
+        "question": "on + dia?",
+        "options": [
+          "He works. / I always eat breakfast.",
+          "My morning → My week → My free time → Team schedules",
+          "On Mondays I have meetings."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m03-l01-present-continuous": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m03-l01-present-continuous-q01",
+        "sortOrder": 0,
+        "question": "estou trabalhando?",
+        "options": [
+          "He is eating.",
+          "I am working.",
+          "She is waiting."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l01-present-continuous-q02",
+        "sortOrder": 1,
+        "question": "ele está comendo?",
+        "options": [
+          "He is eating.",
+          "I am working.",
+          "She is waiting."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l01-present-continuous-q03",
+        "sortOrder": 2,
+        "question": "ela está esperando?",
+        "options": [
+          "He is eating.",
+          "I am working.",
+          "She is waiting."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l01-present-continuous-q04",
+        "sortOrder": 3,
+        "question": "eles estão conversando?",
+        "options": [
+          "He is eating.",
+          "I am working.",
+          "They are talking."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l01-present-continuous-q05",
+        "sortOrder": 4,
+        "question": "verbo regular?",
+        "options": [
+          "He is eating.",
+          "I am working.",
+          "work → working"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l01-present-continuous-q06",
+        "sortOrder": 5,
+        "question": "termina em e: remove e?",
+        "options": [
+          "eat → eating",
+          "He is eating.",
+          "I am working."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l01-present-continuous-q07",
+        "sortOrder": 6,
+        "question": "CVC: dobra a consoante?",
+        "options": [
+          "He is eating.",
+          "I am working.",
+          "run → running"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l01-present-continuous-q08",
+        "sortOrder": 7,
+        "question": "verbo regular?",
+        "options": [
+          "He is eating.",
+          "I am working.",
+          "wait → waiting"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m03-l02-actions-now": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m03-l02-actions-now-q01",
+        "sortOrder": 0,
+        "question": "agora mesmo?",
+        "options": [
+          "at the moment",
+          "now",
+          "right now"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l02-actions-now-q02",
+        "sortOrder": 1,
+        "question": "neste momento?",
+        "options": [
+          "at the moment",
+          "now",
+          "right now"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l02-actions-now-q03",
+        "sortOrder": 2,
+        "question": "agora?",
+        "options": [
+          "at the moment",
+          "now",
+          "right now"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l02-actions-now-q04",
+        "sortOrder": 3,
+        "question": "Olha! (ação visível)?",
+        "options": [
+          "at the moment",
+          "Look!",
+          "right now"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l02-actions-now-q05",
+        "sortOrder": 4,
+        "question": "correr / andar / pular?",
+        "options": [
+          "at the moment",
+          "right now",
+          "running / walking / jumping"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l02-actions-now-q06",
+        "sortOrder": 5,
+        "question": "treinar / praticar / jogar?",
+        "options": [
+          "at the moment",
+          "right now",
+          "training / practicing / playing"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l02-actions-now-q07",
+        "sortOrder": 6,
+        "question": "alongar / aquecer?",
+        "options": [
+          "at the moment",
+          "right now",
+          "stretching / warming up"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l02-actions-now-q08",
+        "sortOrder": 7,
+        "question": "falar / ouvir / assistir?",
+        "options": [
+          "at the moment",
+          "right now",
+          "talking / listening / watching"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m03-l03-temporary": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m03-l03-temporary-q01",
+        "sortOrder": 0,
+        "question": "esta semana / mês?",
+        "options": [
+          "for now / at the moment",
+          "these days / currently",
+          "this week / this month"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l03-temporary-q02",
+        "sortOrder": 1,
+        "question": "por enquanto?",
+        "options": [
+          "for now / at the moment",
+          "these days / currently",
+          "this week / this month"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l03-temporary-q03",
+        "sortOrder": 2,
+        "question": "ultimamente?",
+        "options": [
+          "for now / at the moment",
+          "these days / currently",
+          "this week / this month"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l03-temporary-q04",
+        "sortOrder": 3,
+        "question": "temporariamente?",
+        "options": [
+          "for now / at the moment",
+          "temporarily",
+          "this week / this month"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l03-temporary-q05",
+        "sortOrder": 4,
+        "question": "estou hospedado?",
+        "options": [
+          "for now / at the moment",
+          "I'm staying at a hotel.",
+          "this week / this month"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l03-temporary-q06",
+        "sortOrder": 5,
+        "question": "morando temporariamente?",
+        "options": [
+          "for now / at the moment",
+          "She is living with her sister.",
+          "this week / this month"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l03-temporary-q07",
+        "sortOrder": 6,
+        "question": "home office temporário?",
+        "options": [
+          "for now / at the moment",
+          "He is working from home.",
+          "this week / this month"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l03-temporary-q08",
+        "sortOrder": 7,
+        "question": "em viagem a trabalho?",
+        "options": [
+          "for now / at the moment",
+          "They are traveling for work.",
+          "this week / this month"
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m03-l04-present-vs-continuous": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m03-l04-present-vs-continuous-q01",
+        "sortOrder": 0,
+        "question": "Os dois tempos na mesma frase — rotina vs exceção atual.?",
+        "options": [
+          "I usually train on weekdays, but this week I am recovering.",
+          "I work every day, but right now I am working from home.",
+          "I work in marketing. (job — permanent)"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l04-present-vs-continuous-q02",
+        "sortOrder": 1,
+        "question": "Usually vs this week — tempos diferentes.?",
+        "options": [
+          "I usually train on weekdays, but this week I am recovering.",
+          "I work every day, but right now I am working from home.",
+          "I work in marketing. (job — permanent)"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l04-present-vs-continuous-q03",
+        "sortOrder": 2,
+        "question": "trabalho em marketing?",
+        "options": [
+          "I usually train on weekdays, but this week I am recovering.",
+          "I work every day, but right now I am working from home.",
+          "I work in marketing. (job — permanent)"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l04-present-vs-continuous-q04",
+        "sortOrder": 3,
+        "question": "estou trabalhando num projeto?",
+        "options": [
+          "I am working on a project. (action now)",
+          "I usually train on weekdays, but this week I am recovering.",
+          "I work every day, but right now I am working from home."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l04-present-vs-continuous-q05",
+        "sortOrder": 4,
+        "question": "mora em SP?",
+        "options": [
+          "I usually train on weekdays, but this week I am recovering.",
+          "I work every day, but right now I am working from home.",
+          "She lives in São Paulo. (permanent)"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l04-present-vs-continuous-q06",
+        "sortOrder": 5,
+        "question": "está hospedada?",
+        "options": [
+          "I usually train on weekdays, but this week I am recovering.",
+          "I work every day, but right now I am working from home.",
+          "She is staying at a hotel. (temporary)"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l04-present-vs-continuous-q07",
+        "sortOrder": 6,
+        "question": "Simple present: Do you work? Does she train?",
+        "options": [
+          "Habit question → Do/Does.",
+          "I usually train on weekdays, but this week I am recovering.",
+          "I work every day, but right now I am working from home."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l04-present-vs-continuous-q08",
+        "sortOrder": 7,
+        "question": "Continuous: Are you working? Is she training?",
+        "options": [
+          "I usually train on weekdays, but this week I am recovering.",
+          "I work every day, but right now I am working from home.",
+          "Now question → Am/Is/Are."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m03-l05-workplace-now": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m03-l05-workplace-now-q01",
+        "sortOrder": 0,
+        "question": "estão em reunião?",
+        "options": [
+          "He is on a call.",
+          "They are having a meeting.",
+          "We are discussing the budget."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l05-workplace-now-q02",
+        "sortOrder": 1,
+        "question": "está em ligação?",
+        "options": [
+          "He is on a call.",
+          "They are having a meeting.",
+          "We are discussing the budget."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l05-workplace-now-q03",
+        "sortOrder": 2,
+        "question": "discutindo orçamento?",
+        "options": [
+          "He is on a call.",
+          "They are having a meeting.",
+          "We are discussing the budget."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l05-workplace-now-q04",
+        "sortOrder": 3,
+        "question": "falando com cliente?",
+        "options": [
+          "He is on a call.",
+          "She is talking to a client.",
+          "They are having a meeting."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l05-workplace-now-q05",
+        "sortOrder": 4,
+        "question": "escrevendo email?",
+        "options": [
+          "He is on a call.",
+          "I'm writing an email.",
+          "They are having a meeting."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l05-workplace-now-q06",
+        "sortOrder": 5,
+        "question": "preparando apresentação?",
+        "options": [
+          "He is on a call.",
+          "She is preparing a presentation.",
+          "They are having a meeting."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l05-workplace-now-q07",
+        "sortOrder": 6,
+        "question": "conferindo agenda?",
+        "options": [
+          "He is checking the schedule.",
+          "He is on a call.",
+          "They are having a meeting."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l05-workplace-now-q08",
+        "sortOrder": 7,
+        "question": "finalizando relatório?",
+        "options": [
+          "He is on a call.",
+          "I'm finishing a report.",
+          "They are having a meeting."
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m03-l06-everyday-now": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m03-l06-everyday-now-q01",
+        "sortOrder": 0,
+        "question": "cozinhando?",
+        "options": [
+          "I'm cooking dinner.",
+          "She is watching TV.",
+          "They are playing video games."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l06-everyday-now-q02",
+        "sortOrder": 1,
+        "question": "assistindo TV?",
+        "options": [
+          "I'm cooking dinner.",
+          "She is watching TV.",
+          "They are playing video games."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l06-everyday-now-q03",
+        "sortOrder": 2,
+        "question": "jogando videogame?",
+        "options": [
+          "I'm cooking dinner.",
+          "She is watching TV.",
+          "They are playing video games."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l06-everyday-now-q04",
+        "sortOrder": 3,
+        "question": "lendo livro?",
+        "options": [
+          "He is reading a book.",
+          "I'm cooking dinner.",
+          "She is watching TV."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l06-everyday-now-q05",
+        "sortOrder": 4,
+        "question": "dirigindo para casa?",
+        "options": [
+          "He is driving home.",
+          "I'm cooking dinner.",
+          "She is watching TV."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l06-everyday-now-q06",
+        "sortOrder": 5,
+        "question": "esperando ônibus?",
+        "options": [
+          "I'm cooking dinner.",
+          "I'm waiting for the bus.",
+          "She is watching TV."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l06-everyday-now-q07",
+        "sortOrder": 6,
+        "question": "caminhando pro gym?",
+        "options": [
+          "I'm cooking dinner.",
+          "She is walking to the gym.",
+          "She is watching TV."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l06-everyday-now-q08",
+        "sortOrder": 7,
+        "question": "voltando agora?",
+        "options": [
+          "I'm cooking dinner.",
+          "She is watching TV.",
+          "We are coming back now."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m03-l07-whats-happening-challenge": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q01",
+        "sortOrder": 0,
+        "question": "am/is/are + -ing?",
+        "options": [
+          "I am working. / He is eating.",
+          "They aren't available.",
+          "What are you doing?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q02",
+        "sortOrder": 1,
+        "question": "negativa?",
+        "options": [
+          "I am working. / He is eating.",
+          "They aren't available.",
+          "What are you doing?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q03",
+        "sortOrder": 2,
+        "question": "pergunta?",
+        "options": [
+          "I am working. / He is eating.",
+          "They aren't available.",
+          "What are you doing?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q04",
+        "sortOrder": 3,
+        "question": "resposta curta?",
+        "options": [
+          "I am working. / He is eating.",
+          "They aren't available.",
+          "Yes, I am. / No, I'm not."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q05",
+        "sortOrder": 4,
+        "question": "agora?",
+        "options": [
+          "I am working. / He is eating.",
+          "right now / at the moment / Look!",
+          "They aren't available."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q06",
+        "sortOrder": 5,
+        "question": "temporário?",
+        "options": [
+          "I am working. / He is eating.",
+          "They aren't available.",
+          "this week / for now"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q07",
+        "sortOrder": 6,
+        "question": "exemplo?",
+        "options": [
+          "I am working. / He is eating.",
+          "I'm staying at a hotel this week.",
+          "They aren't available."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q08",
+        "sortOrder": 7,
+        "question": "Contraste na mesma conversa.?",
+        "options": [
+          "I am working. / He is eating.",
+          "I work every day, but right now I am working from home.",
+          "They aren't available."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q09",
+        "sortOrder": 8,
+        "question": "workplace?",
+        "options": [
+          "I am working. / He is eating.",
+          "They are having a meeting.",
+          "They aren't available."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m03-l07-whats-happening-challenge-q10",
+        "sortOrder": 9,
+        "question": "home?",
+        "options": [
+          "I am working. / He is eating.",
+          "I'm cooking dinner.",
+          "They aren't available."
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m04-l01-simple-past-intro": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m04-l01-simple-past-intro-q01",
+        "sortOrder": 0,
+        "question": "ontem?",
+        "options": [
+          "last week / last month / last year",
+          "two days ago",
+          "yesterday"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l01-simple-past-intro-q02",
+        "sortOrder": 1,
+        "question": "semana/mês/ano passado?",
+        "options": [
+          "last week / last month / last year",
+          "two days ago",
+          "yesterday"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l01-simple-past-intro-q03",
+        "sortOrder": 2,
+        "question": "dois dias atrás?",
+        "options": [
+          "last week / last month / last year",
+          "two days ago",
+          "yesterday"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l01-simple-past-intro-q04",
+        "sortOrder": 3,
+        "question": "data passada?",
+        "options": [
+          "in 2024 / on Monday (past)",
+          "last week / last month / last year",
+          "yesterday"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l01-simple-past-intro-q05",
+        "sortOrder": 4,
+        "question": "trabalhei?",
+        "options": [
+          "last week / last month / last year",
+          "work → worked",
+          "yesterday"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l01-simple-past-intro-q06",
+        "sortOrder": 5,
+        "question": "terminei?",
+        "options": [
+          "finish → finished",
+          "last week / last month / last year",
+          "yesterday"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l01-simple-past-intro-q07",
+        "sortOrder": 6,
+        "question": "viajei?",
+        "options": [
+          "last week / last month / last year",
+          "travel → traveled",
+          "yesterday"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l01-simple-past-intro-q08",
+        "sortOrder": 7,
+        "question": "assisti?",
+        "options": [
+          "last week / last month / last year",
+          "watch → watched",
+          "yesterday"
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m04-l02-regular-verbs": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m04-l02-regular-verbs-q01",
+        "sortOrder": 0,
+        "question": "trabalhei?",
+        "options": [
+          "play → played",
+          "watch → watched",
+          "work → worked"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l02-regular-verbs-q02",
+        "sortOrder": 1,
+        "question": "assisti?",
+        "options": [
+          "play → played",
+          "watch → watched",
+          "work → worked"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l02-regular-verbs-q03",
+        "sortOrder": 2,
+        "question": "joguei?",
+        "options": [
+          "play → played",
+          "watch → watched",
+          "work → worked"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l02-regular-verbs-q04",
+        "sortOrder": 3,
+        "question": "visitei?",
+        "options": [
+          "visit → visited",
+          "watch → watched",
+          "work → worked"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l02-regular-verbs-q05",
+        "sortOrder": 4,
+        "question": "morei?",
+        "options": [
+          "live → lived",
+          "watch → watched",
+          "work → worked"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l02-regular-verbs-q06",
+        "sortOrder": 5,
+        "question": "dancei?",
+        "options": [
+          "dance → danced",
+          "watch → watched",
+          "work → worked"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l02-regular-verbs-q07",
+        "sortOrder": 6,
+        "question": "cheguei?",
+        "options": [
+          "arrive → arrived",
+          "watch → watched",
+          "work → worked"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l02-regular-verbs-q08",
+        "sortOrder": 7,
+        "question": "liguei?",
+        "options": [
+          "phone → phoned",
+          "watch → watched",
+          "work → worked"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m04-l03-irregular-verbs": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m04-l03-irregular-verbs-q01",
+        "sortOrder": 0,
+        "question": "ir → fui?",
+        "options": [
+          "go → went",
+          "have → had",
+          "see → saw"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l03-irregular-verbs-q02",
+        "sortOrder": 1,
+        "question": "ter → tive?",
+        "options": [
+          "go → went",
+          "have → had",
+          "see → saw"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l03-irregular-verbs-q03",
+        "sortOrder": 2,
+        "question": "ver → vi?",
+        "options": [
+          "go → went",
+          "have → had",
+          "see → saw"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l03-irregular-verbs-q04",
+        "sortOrder": 3,
+        "question": "fazer → fiz?",
+        "options": [
+          "do → did",
+          "go → went",
+          "have → had"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l03-irregular-verbs-q05",
+        "sortOrder": 4,
+        "question": "fui à praia?",
+        "options": [
+          "go → went",
+          "have → had",
+          "I went to the beach."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l03-irregular-verbs-q06",
+        "sortOrder": 5,
+        "question": "saímos sábado?",
+        "options": [
+          "go → went",
+          "have → had",
+          "We went out on Saturday."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l03-irregular-verbs-q07",
+        "sortOrder": 6,
+        "question": "nos divertimos?",
+        "options": [
+          "go → went",
+          "have → had",
+          "We had a great time."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l03-irregular-verbs-q08",
+        "sortOrder": 7,
+        "question": "almacei com amigos?",
+        "options": [
+          "go → went",
+          "have → had",
+          "I had lunch with friends."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m04-l04-was-were": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m04-l04-was-were-q01",
+        "sortOrder": 0,
+        "question": "estava cansado?",
+        "options": [
+          "He was at work.",
+          "I was tired.",
+          "She was happy."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l04-was-were-q02",
+        "sortOrder": 1,
+        "question": "ele estava no trabalho?",
+        "options": [
+          "He was at work.",
+          "I was tired.",
+          "She was happy."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l04-was-were-q03",
+        "sortOrder": 2,
+        "question": "ela estava feliz?",
+        "options": [
+          "He was at work.",
+          "I was tired.",
+          "She was happy."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l04-was-were-q04",
+        "sortOrder": 3,
+        "question": "estava frio?",
+        "options": [
+          "He was at work.",
+          "I was tired.",
+          "It was cold."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l04-was-were-q05",
+        "sortOrder": 4,
+        "question": "você chegou atrasado?",
+        "options": [
+          "He was at work.",
+          "I was tired.",
+          "You were late."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l04-was-were-q06",
+        "sortOrder": 5,
+        "question": "estávamos no estádio?",
+        "options": [
+          "He was at work.",
+          "I was tired.",
+          "We were at the stadium."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l04-was-were-q07",
+        "sortOrder": 6,
+        "question": "estavam cansados?",
+        "options": [
+          "He was at work.",
+          "I was tired.",
+          "They were tired."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l04-was-were-q08",
+        "sortOrder": 7,
+        "question": "você foi ótimo?",
+        "options": [
+          "He was at work.",
+          "I was tired.",
+          "You were great!"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m04-l05-did-questions": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m04-l05-did-questions-q01",
+        "sortOrder": 0,
+        "question": "Trabalhou ontem?",
+        "options": [
+          "Did she go to the game?",
+          "Did they watch TV?",
+          "Did you work yesterday?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l05-did-questions-q02",
+        "sortOrder": 1,
+        "question": "Ela foi ao jogo?",
+        "options": [
+          "Did she go to the game?",
+          "Did they watch TV?",
+          "Did you work yesterday?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l05-did-questions-q03",
+        "sortOrder": 2,
+        "question": "Assistiram TV?",
+        "options": [
+          "Did she go to the game?",
+          "Did they watch TV?",
+          "Did you work yesterday?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l05-did-questions-q04",
+        "sortOrder": 3,
+        "question": "Ele terminou?",
+        "options": [
+          "Did he finish the report?",
+          "Did she go to the game?",
+          "Did you work yesterday?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l05-did-questions-q05",
+        "sortOrder": 4,
+        "question": "sim?",
+        "options": [
+          "Did she go to the game?",
+          "Did you work yesterday?",
+          "Did you work? — Yes, I did."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l05-did-questions-q06",
+        "sortOrder": 5,
+        "question": "não?",
+        "options": [
+          "Did she go to the game?",
+          "Did you work yesterday?",
+          "Did you work? — No, I didn't."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l05-did-questions-q07",
+        "sortOrder": 6,
+        "question": "sim?",
+        "options": [
+          "Did she go to the game?",
+          "Did she go? — Yes, she did.",
+          "Did you work yesterday?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l05-did-questions-q08",
+        "sortOrder": 7,
+        "question": "não?",
+        "options": [
+          "Did she go to the game?",
+          "Did they watch? — No, they didn't.",
+          "Did you work yesterday?"
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m04-l06-past-stories": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m04-l06-past-stories-q01",
+        "sortOrder": 0,
+        "question": "não trabalhei?",
+        "options": [
+          "I didn't work on Saturday.",
+          "She didn't go to the game.",
+          "We didn't watch TV."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l06-past-stories-q02",
+        "sortOrder": 1,
+        "question": "ela não foi?",
+        "options": [
+          "I didn't work on Saturday.",
+          "She didn't go to the game.",
+          "We didn't watch TV."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l06-past-stories-q03",
+        "sortOrder": 2,
+        "question": "não assistimos?",
+        "options": [
+          "I didn't work on Saturday.",
+          "She didn't go to the game.",
+          "We didn't watch TV."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l06-past-stories-q04",
+        "sortOrder": 3,
+        "question": "não ficaram?",
+        "options": [
+          "I didn't work on Saturday.",
+          "She didn't go to the game.",
+          "They didn't stay home."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l06-past-stories-q05",
+        "sortOrder": 4,
+        "question": "saí e jantei?",
+        "options": [
+          "I didn't work on Saturday.",
+          "I went out and had dinner.",
+          "She didn't go to the game."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l06-past-stories-q06",
+        "sortOrder": 5,
+        "question": "assistimos e fomos?",
+        "options": [
+          "I didn't work on Saturday.",
+          "She didn't go to the game.",
+          "We watched a movie and went home."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l06-past-stories-q07",
+        "sortOrder": 6,
+        "question": "depois descansei?",
+        "options": [
+          "I didn't work on Saturday.",
+          "She didn't go to the game.",
+          "Then I rested."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l06-past-stories-q08",
+        "sortOrder": 7,
+        "question": "depois voltamos?",
+        "options": [
+          "After that, we came back.",
+          "I didn't work on Saturday.",
+          "She didn't go to the game."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m04-l07-yesterday-before-challenge": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q01",
+        "sortOrder": 0,
+        "question": "regulares -ed?",
+        "options": [
+          "go → went · have → had · see → saw · do → did",
+          "work → worked · watch → watched",
+          "Yesterday I worked. I went home."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q02",
+        "sortOrder": 1,
+        "question": "irregulares?",
+        "options": [
+          "go → went · have → had · see → saw · do → did",
+          "work → worked · watch → watched",
+          "Yesterday I worked. I went home."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q03",
+        "sortOrder": 2,
+        "question": "frases?",
+        "options": [
+          "go → went · have → had · see → saw · do → did",
+          "work → worked · watch → watched",
+          "Yesterday I worked. I went home."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q04",
+        "sortOrder": 3,
+        "question": "dia?",
+        "options": [
+          "go → went · have → had · see → saw · do → did",
+          "work → worked · watch → watched",
+          "Yesterday was Monday."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q05",
+        "sortOrder": 4,
+        "question": "local?",
+        "options": [
+          "go → went · have → had · see → saw · do → did",
+          "I was at home. They were at the stadium.",
+          "work → worked · watch → watched"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q06",
+        "sortOrder": 5,
+        "question": "reação?",
+        "options": [
+          "go → went · have → had · see → saw · do → did",
+          "It was great! / It was fun!",
+          "work → worked · watch → watched"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q07",
+        "sortOrder": 6,
+        "question": "Contraste rotina vs ontem.?",
+        "options": [
+          "go → went · have → had · see → saw · do → did",
+          "I work every day, but yesterday I worked from home.",
+          "work → worked · watch → watched"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q08",
+        "sortOrder": 7,
+        "question": "perguntas?",
+        "options": [
+          "Did you work? — Yes, I did. / No, I didn't.",
+          "go → went · have → had · see → saw · do → did",
+          "work → worked · watch → watched"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q09",
+        "sortOrder": 8,
+        "question": "Wh-?",
+        "options": [
+          "go → went · have → had · see → saw · do → did",
+          "What did you do? Where did you go?",
+          "work → worked · watch → watched"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m04-l07-yesterday-before-challenge-q10",
+        "sortOrder": 9,
+        "question": "negativa?",
+        "options": [
+          "go → went · have → had · see → saw · do → did",
+          "I didn't work on Saturday.",
+          "work → worked · watch → watched"
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m05-l01-going-to": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m05-l01-going-to-q01",
+        "sortOrder": 0,
+        "question": "vou terminar o relatório?",
+        "options": [
+          "I'm going to finish the report.",
+          "She's going to call you tomorrow.",
+          "We're going to have a meeting on Friday."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l01-going-to-q02",
+        "sortOrder": 1,
+        "question": "ela vai te ligar amanhã?",
+        "options": [
+          "I'm going to finish the report.",
+          "She's going to call you tomorrow.",
+          "We're going to have a meeting on Friday."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l01-going-to-q03",
+        "sortOrder": 2,
+        "question": "vamos ter reunião sexta?",
+        "options": [
+          "I'm going to finish the report.",
+          "She's going to call you tomorrow.",
+          "We're going to have a meeting on Friday."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l01-going-to-q04",
+        "sortOrder": 3,
+        "question": "vão lançar o projeto mês que vem?",
+        "options": [
+          "I'm going to finish the report.",
+          "She's going to call you tomorrow.",
+          "They're going to launch the project next month."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l01-going-to-q05",
+        "sortOrder": 4,
+        "question": "vai viajar?",
+        "options": [
+          "Are you going to travel?",
+          "I'm going to finish the report.",
+          "She's going to call you tomorrow."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l01-going-to-q06",
+        "sortOrder": 5,
+        "question": "o que vai fazer esta semana?",
+        "options": [
+          "I'm going to finish the report.",
+          "She's going to call you tomorrow.",
+          "What are you going to do this week?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l01-going-to-q07",
+        "sortOrder": 6,
+        "question": "quando vai terminar?",
+        "options": [
+          "I'm going to finish the report.",
+          "She's going to call you tomorrow.",
+          "When are you going to finish?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l01-going-to-q08",
+        "sortOrder": 7,
+        "question": "ela vai entrar na call?",
+        "options": [
+          "I'm going to finish the report.",
+          "Is she going to join the call?",
+          "She's going to call you tomorrow."
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m05-l02-will-basics": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m05-l02-will-basics-q01",
+        "sortOrder": 0,
+        "question": "vou te ajudar (decidi agora)?",
+        "options": [
+          "I'll call them right now.",
+          "I'll get the coffee.",
+          "I'll help you."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l02-will-basics-q02",
+        "sortOrder": 1,
+        "question": "eu pego o café?",
+        "options": [
+          "I'll call them right now.",
+          "I'll get the coffee.",
+          "I'll help you."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l02-will-basics-q03",
+        "sortOrder": 2,
+        "question": "vou ligar agora?",
+        "options": [
+          "I'll call them right now.",
+          "I'll get the coffee.",
+          "I'll help you."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l02-will-basics-q04",
+        "sortOrder": 3,
+        "question": "ok, eu faço?",
+        "options": [
+          "I'll get the coffee.",
+          "I'll help you.",
+          "OK, I'll do it."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l02-will-basics-q05",
+        "sortOrder": 4,
+        "question": "vou enviar hoje?",
+        "options": [
+          "I'll get the coffee.",
+          "I'll help you.",
+          "I'll send it today."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l02-will-basics-q06",
+        "sortOrder": 5,
+        "question": "não vou esquecer?",
+        "options": [
+          "I won't forget.",
+          "I'll get the coffee.",
+          "I'll help you."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l02-will-basics-q07",
+        "sortOrder": 6,
+        "question": "eu cuido disso?",
+        "options": [
+          "Don't worry — I'll take care of it.",
+          "I'll get the coffee.",
+          "I'll help you."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l02-will-basics-q08",
+        "sortOrder": 7,
+        "question": "prometo chegar no horário?",
+        "options": [
+          "I promise I'll be on time.",
+          "I'll get the coffee.",
+          "I'll help you."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m05-l03-future-time": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m05-l03-future-time-q01",
+        "sortOrder": 0,
+        "question": "amanhã?",
+        "options": [
+          "tomorrow",
+          "tomorrow morning / afternoon / evening",
+          "tonight"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l03-future-time-q02",
+        "sortOrder": 1,
+        "question": "amanhã de manhã/tarde/noite?",
+        "options": [
+          "tomorrow",
+          "tomorrow morning / afternoon / evening",
+          "tonight"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l03-future-time-q03",
+        "sortOrder": 2,
+        "question": "hoje à noite?",
+        "options": [
+          "tomorrow",
+          "tomorrow morning / afternoon / evening",
+          "tonight"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l03-future-time-q04",
+        "sortOrder": 3,
+        "question": "ligo amanhã?",
+        "options": [
+          "I'll call you tomorrow.",
+          "tomorrow",
+          "tomorrow morning / afternoon / evening"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l03-future-time-q05",
+        "sortOrder": 4,
+        "question": "semana que vem?",
+        "options": [
+          "next week",
+          "tomorrow",
+          "tomorrow morning / afternoon / evening"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l03-future-time-q06",
+        "sortOrder": 5,
+        "question": "mês que vem?",
+        "options": [
+          "next month",
+          "tomorrow",
+          "tomorrow morning / afternoon / evening"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l03-future-time-q07",
+        "sortOrder": 6,
+        "question": "próxima terça?",
+        "options": [
+          "next Tuesday",
+          "tomorrow",
+          "tomorrow morning / afternoon / evening"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l03-future-time-q08",
+        "sortOrder": 7,
+        "question": "ano que vem?",
+        "options": [
+          "next year",
+          "tomorrow",
+          "tomorrow morning / afternoon / evening"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m05-l04-invitations": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m05-l04-invitations-q01",
+        "sortOrder": 0,
+        "question": "quer se juntar a nós?",
+        "options": [
+          "Would you like to come to dinner?",
+          "Would you like to grab coffee?",
+          "Would you like to join us?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l04-invitations-q02",
+        "sortOrder": 1,
+        "question": "quer jantar conosco?",
+        "options": [
+          "Would you like to come to dinner?",
+          "Would you like to grab coffee?",
+          "Would you like to join us?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l04-invitations-q03",
+        "sortOrder": 2,
+        "question": "quer tomar um café?",
+        "options": [
+          "Would you like to come to dinner?",
+          "Would you like to grab coffee?",
+          "Would you like to join us?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l04-invitations-q04",
+        "sortOrder": 3,
+        "question": "quer ver o jogo?",
+        "options": [
+          "Would you like to come to dinner?",
+          "Would you like to join us?",
+          "Would you like to see the game?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l04-invitations-q05",
+        "sortOrder": 4,
+        "question": "quer vir?",
+        "options": [
+          "Do you want to come?",
+          "Would you like to come to dinner?",
+          "Would you like to join us?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l04-invitations-q06",
+        "sortOrder": 5,
+        "question": "almoço conosco?",
+        "options": [
+          "Do you want to join us for lunch?",
+          "Would you like to come to dinner?",
+          "Would you like to join us?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l04-invitations-q07",
+        "sortOrder": 6,
+        "question": "sair no fim de semana?",
+        "options": [
+          "Do you want to hang out this weekend?",
+          "Would you like to come to dinner?",
+          "Would you like to join us?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l04-invitations-q08",
+        "sortOrder": 7,
+        "question": "variante britânica?",
+        "options": [
+          "Do you fancy going out? (UK)",
+          "Would you like to come to dinner?",
+          "Would you like to join us?"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m05-l05-arrangements": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m05-l05-arrangements-q01",
+        "sortOrder": 0,
+        "question": "tenho reunião quinta?",
+        "options": [
+          "I'm meeting the client on Thursday.",
+          "She's flying to São Paulo on the 15th.",
+          "We're having a team lunch on Wednesday."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l05-arrangements-q02",
+        "sortOrder": 1,
+        "question": "almoço de equipe quarta?",
+        "options": [
+          "I'm meeting the client on Thursday.",
+          "She's flying to São Paulo on the 15th.",
+          "We're having a team lunch on Wednesday."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l05-arrangements-q03",
+        "sortOrder": 2,
+        "question": "voo marcado?",
+        "options": [
+          "I'm meeting the client on Thursday.",
+          "She's flying to São Paulo on the 15th.",
+          "We're having a team lunch on Wednesday."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l05-arrangements-q04",
+        "sortOrder": 3,
+        "question": "apresentação agendada?",
+        "options": [
+          "I'm meeting the client on Thursday.",
+          "They're presenting at the conference next week.",
+          "We're having a team lunch on Wednesday."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l05-arrangements-q05",
+        "sortOrder": 4,
+        "question": "que tal quinta às 14h?",
+        "options": [
+          "How about Thursday at 2?",
+          "I'm meeting the client on Thursday.",
+          "We're having a team lunch on Wednesday."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l05-arrangements-q06",
+        "sortOrder": 5,
+        "question": "sexta de manhã serve?",
+        "options": [
+          "Does Friday morning work for you?",
+          "I'm meeting the client on Thursday.",
+          "We're having a team lunch on Wednesday."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l05-arrangements-q07",
+        "sortOrder": 6,
+        "question": "quinta às 14h me serve?",
+        "options": [
+          "I'm meeting the client on Thursday.",
+          "Thursday at 2 works for me.",
+          "We're having a team lunch on Wednesday."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l05-arrangements-q08",
+        "sortOrder": 7,
+        "question": "qual horário prefere?",
+        "options": [
+          "I'm meeting the client on Thursday.",
+          "We're having a team lunch on Wednesday.",
+          "What time suits you best?"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m05-l06-future-talk": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m05-l06-future-talk-q01",
+        "sortOrder": 0,
+        "question": "Present continuous = terceira forma para compromissos fixos.?",
+        "options": [
+          "I'm going to travel next month.",
+          "I'm meeting the trainer on Monday. (arrangement)",
+          "Oh — the phone's ringing. I'll get it."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l06-future-talk-q02",
+        "sortOrder": 1,
+        "question": "plano?",
+        "options": [
+          "I'm going to travel next month.",
+          "I'm meeting the trainer on Monday. (arrangement)",
+          "Oh — the phone's ringing. I'll get it."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l06-future-talk-q03",
+        "sortOrder": 2,
+        "question": "decisão na hora?",
+        "options": [
+          "I'm going to travel next month.",
+          "I'm meeting the trainer on Monday. (arrangement)",
+          "Oh — the phone's ringing. I'll get it."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l06-future-talk-q04",
+        "sortOrder": 3,
+        "question": "arranjo?",
+        "options": [
+          "I'm flying to Rio on the 20th.",
+          "I'm going to travel next month.",
+          "I'm meeting the trainer on Monday. (arrangement)"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l06-future-talk-q05",
+        "sortOrder": 4,
+        "question": "previsão?",
+        "options": [
+          "I think it'll rain tomorrow.",
+          "I'm going to travel next month.",
+          "I'm meeting the trainer on Monday. (arrangement)"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l06-future-talk-q06",
+        "sortOrder": 5,
+        "question": "Plano geral.?",
+        "options": [
+          "going to",
+          "I'm going to travel next month.",
+          "I'm meeting the trainer on Monday. (arrangement)"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l06-future-talk-q07",
+        "sortOrder": 6,
+        "question": "Espontâneo.?",
+        "options": [
+          "I'm going to travel next month.",
+          "I'm meeting the trainer on Monday. (arrangement)",
+          "will"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l06-future-talk-q08",
+        "sortOrder": 7,
+        "question": "Compromisso na agenda.?",
+        "options": [
+          "I'm going to travel next month.",
+          "I'm meeting the trainer on Monday. (arrangement)",
+          "present continuous"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m05-l07-my-plans-challenge": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q01",
+        "sortOrder": 0,
+        "question": "planos?",
+        "options": [
+          "I'm going to finish the report.",
+          "I'm not going to travel.",
+          "What are you going to do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q02",
+        "sortOrder": 1,
+        "question": "pergunta?",
+        "options": [
+          "I'm going to finish the report.",
+          "I'm not going to travel.",
+          "What are you going to do?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q03",
+        "sortOrder": 2,
+        "question": "negativa?",
+        "options": [
+          "I'm going to finish the report.",
+          "I'm not going to travel.",
+          "What are you going to do?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q04",
+        "sortOrder": 3,
+        "question": "oferta?",
+        "options": [
+          "I'll help you.",
+          "I'm going to finish the report.",
+          "What are you going to do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q05",
+        "sortOrder": 4,
+        "question": "promessa?",
+        "options": [
+          "I'll send it today.",
+          "I'm going to finish the report.",
+          "What are you going to do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q06",
+        "sortOrder": 5,
+        "question": "previsão?",
+        "options": [
+          "I think it will work.",
+          "I'm going to finish the report.",
+          "What are you going to do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q07",
+        "sortOrder": 6,
+        "question": "prazos?",
+        "options": [
+          "by Friday / in two days",
+          "I'm going to finish the report.",
+          "What are you going to do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q08",
+        "sortOrder": 7,
+        "question": "datas?",
+        "options": [
+          "I'm going to finish the report.",
+          "next week / tomorrow morning",
+          "What are you going to do?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q09",
+        "sortOrder": 8,
+        "question": "convite?",
+        "options": [
+          "I'm going to finish the report.",
+          "What are you going to do?",
+          "Would you like to join us?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m05-l07-my-plans-challenge-q10",
+        "sortOrder": 9,
+        "question": "aceitar?",
+        "options": [
+          "I'm going to finish the report.",
+          "Sure! I'd love to.",
+          "What are you going to do?"
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m06-l01-home-neighborhood": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m06-l01-home-neighborhood-q01",
+        "sortOrder": 0,
+        "question": "apartamento?",
+        "options": [
+          "apartment / flat",
+          "condo / condominium",
+          "house"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l01-home-neighborhood-q02",
+        "sortOrder": 1,
+        "question": "casa?",
+        "options": [
+          "apartment / flat",
+          "condo / condominium",
+          "house"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l01-home-neighborhood-q03",
+        "sortOrder": 2,
+        "question": "condomínio?",
+        "options": [
+          "apartment / flat",
+          "condo / condominium",
+          "house"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l01-home-neighborhood-q04",
+        "sortOrder": 3,
+        "question": "moro em casa no subúrbio?",
+        "options": [
+          "apartment / flat",
+          "house",
+          "I live in a house in the suburbs."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l01-home-neighborhood-q05",
+        "sortOrder": 4,
+        "question": "cômodos?",
+        "options": [
+          "apartment / flat",
+          "bedroom / bathroom / kitchen / living room",
+          "house"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l01-home-neighborhood-q06",
+        "sortOrder": 5,
+        "question": "áreas extras?",
+        "options": [
+          "apartment / flat",
+          "balcony / garage / backyard",
+          "house"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l01-home-neighborhood-q07",
+        "sortOrder": 6,
+        "question": "dois quartos?",
+        "options": [
+          "apartment / flat",
+          "house",
+          "There are two bedrooms."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l01-home-neighborhood-q08",
+        "sortOrder": 7,
+        "question": "varanda pequena?",
+        "options": [
+          "apartment / flat",
+          "house",
+          "There's a small balcony."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m06-l02-city-services": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m06-l02-city-services-q01",
+        "sortOrder": 0,
+        "question": "banco / caixa eletrônico?",
+        "options": [
+          "bank / ATM",
+          "hospital / clinic",
+          "pharmacy / drugstore"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l02-city-services-q02",
+        "sortOrder": 1,
+        "question": "farmácia?",
+        "options": [
+          "bank / ATM",
+          "hospital / clinic",
+          "pharmacy / drugstore"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l02-city-services-q03",
+        "sortOrder": 2,
+        "question": "hospital / clínica?",
+        "options": [
+          "bank / ATM",
+          "hospital / clinic",
+          "pharmacy / drugstore"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l02-city-services-q04",
+        "sortOrder": 3,
+        "question": "correios?",
+        "options": [
+          "bank / ATM",
+          "pharmacy / drugstore",
+          "post office"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l02-city-services-q05",
+        "sortOrder": 4,
+        "question": "transporte?",
+        "options": [
+          "bank / ATM",
+          "pharmacy / drugstore",
+          "subway / metro / bus / taxi"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l02-city-services-q06",
+        "sortOrder": 5,
+        "question": "pode pegar o metrô?",
+        "options": [
+          "bank / ATM",
+          "pharmacy / drugstore",
+          "You can take the subway."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l02-city-services-q07",
+        "sortOrder": 6,
+        "question": "estação a 5 min?",
+        "options": [
+          "bank / ATM",
+          "pharmacy / drugstore",
+          "The station is five minutes away."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l02-city-services-q08",
+        "sortOrder": 7,
+        "question": "como chego ao centro?",
+        "options": [
+          "bank / ATM",
+          "How do I get to the city center?",
+          "pharmacy / drugstore"
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m06-l03-comparatives": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m06-l03-comparatives-q01",
+        "sortOrder": 0,
+        "question": "maior que?",
+        "options": [
+          "big → bigger than",
+          "cheap → cheaper than",
+          "small → smaller than"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l03-comparatives-q02",
+        "sortOrder": 1,
+        "question": "menor que?",
+        "options": [
+          "big → bigger than",
+          "cheap → cheaper than",
+          "small → smaller than"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l03-comparatives-q03",
+        "sortOrder": 2,
+        "question": "mais barato que?",
+        "options": [
+          "big → bigger than",
+          "cheap → cheaper than",
+          "small → smaller than"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l03-comparatives-q04",
+        "sortOrder": 3,
+        "question": "mais tranquilo que?",
+        "options": [
+          "big → bigger than",
+          "quiet → quieter than",
+          "small → smaller than"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l03-comparatives-q05",
+        "sortOrder": 4,
+        "question": "mais caro que?",
+        "options": [
+          "big → bigger than",
+          "expensive → more expensive than",
+          "small → smaller than"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l03-comparatives-q06",
+        "sortOrder": 5,
+        "question": "mais conveniente?",
+        "options": [
+          "big → bigger than",
+          "convenient → more convenient than",
+          "small → smaller than"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l03-comparatives-q07",
+        "sortOrder": 6,
+        "question": "mais confortável?",
+        "options": [
+          "big → bigger than",
+          "comfortable → more comfortable than",
+          "small → smaller than"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l03-comparatives-q08",
+        "sortOrder": 7,
+        "question": "mais lotado?",
+        "options": [
+          "big → bigger than",
+          "crowded → more crowded than",
+          "small → smaller than"
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m06-l04-describing-places": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m06-l04-describing-places-q01",
+        "sortOrder": 0,
+        "question": "atmosfera?",
+        "options": [
+          "beautiful / ugly / modern / historic",
+          "convenient / remote / walkable",
+          "lively / quiet / peaceful / crowded"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l04-describing-places-q02",
+        "sortOrder": 1,
+        "question": "aparência?",
+        "options": [
+          "beautiful / ugly / modern / historic",
+          "convenient / remote / walkable",
+          "lively / quiet / peaceful / crowded"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l04-describing-places-q03",
+        "sortOrder": 2,
+        "question": "praticidade?",
+        "options": [
+          "beautiful / ugly / modern / historic",
+          "convenient / remote / walkable",
+          "lively / quiet / peaceful / crowded"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l04-describing-places-q04",
+        "sortOrder": 3,
+        "question": "segurança/social?",
+        "options": [
+          "beautiful / ugly / modern / historic",
+          "lively / quiet / peaceful / crowded",
+          "safe / dangerous / friendly"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l04-describing-places-q05",
+        "sortOrder": 4,
+        "question": "tem um ótimo restaurante?",
+        "options": [
+          "beautiful / ugly / modern / historic",
+          "lively / quiet / peaceful / crowded",
+          "There's a great restaurant."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l04-describing-places-q06",
+        "sortOrder": 5,
+        "question": "muitos cafés?",
+        "options": [
+          "beautiful / ugly / modern / historic",
+          "lively / quiet / peaceful / crowded",
+          "There are lots of cafes."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l04-describing-places-q07",
+        "sortOrder": 6,
+        "question": "poucos turistas?",
+        "options": [
+          "beautiful / ugly / modern / historic",
+          "lively / quiet / peaceful / crowded",
+          "There aren't many tourists."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l04-describing-places-q08",
+        "sortOrder": 7,
+        "question": "tem parque perto?",
+        "options": [
+          "beautiful / ugly / modern / historic",
+          "Is there a park nearby?",
+          "lively / quiet / peaceful / crowded"
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m06-l05-everyday-problems": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m06-l05-everyday-problems-q01",
+        "sortOrder": 0,
+        "question": "algo errado com aquecimento?",
+        "options": [
+          "Something is wrong with my computer.",
+          "Something is wrong with the elevator.",
+          "Something is wrong with the heating."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l05-everyday-problems-q02",
+        "sortOrder": 1,
+        "question": "computador com problema?",
+        "options": [
+          "Something is wrong with my computer.",
+          "Something is wrong with the elevator.",
+          "Something is wrong with the heating."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l05-everyday-problems-q03",
+        "sortOrder": 2,
+        "question": "elevador?",
+        "options": [
+          "Something is wrong with my computer.",
+          "Something is wrong with the elevator.",
+          "Something is wrong with the heating."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l05-everyday-problems-q04",
+        "sortOrder": 3,
+        "question": "pergunta?",
+        "options": [
+          "Is something wrong with the Wi-Fi?",
+          "Something is wrong with my computer.",
+          "Something is wrong with the heating."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l05-everyday-problems-q05",
+        "sortOrder": 4,
+        "question": "ar condicionado não funciona?",
+        "options": [
+          "Something is wrong with my computer.",
+          "Something is wrong with the heating.",
+          "The AC doesn't work."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l05-everyday-problems-q06",
+        "sortOrder": 5,
+        "question": "impressora não está funcionando?",
+        "options": [
+          "Something is wrong with my computer.",
+          "Something is wrong with the heating.",
+          "The printer isn't working."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l05-everyday-problems-q07",
+        "sortOrder": 6,
+        "question": "celular não liga?",
+        "options": [
+          "My phone won't turn on.",
+          "Something is wrong with my computer.",
+          "Something is wrong with the heating."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l05-everyday-problems-q08",
+        "sortOrder": 7,
+        "question": "água quente?",
+        "options": [
+          "Something is wrong with my computer.",
+          "Something is wrong with the heating.",
+          "The hot water isn't working."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m06-l06-asking-help": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m06-l06-asking-help-q01",
+        "sortOrder": 0,
+        "question": "enviar alguém?",
+        "options": [
+          "Could you call me back?",
+          "Could you send someone to fix it?",
+          "Could you take a look?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l06-asking-help-q02",
+        "sortOrder": 1,
+        "question": "dar uma olhada?",
+        "options": [
+          "Could you call me back?",
+          "Could you send someone to fix it?",
+          "Could you take a look?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l06-asking-help-q03",
+        "sortOrder": 2,
+        "question": "retornar ligação?",
+        "options": [
+          "Could you call me back?",
+          "Could you send someone to fix it?",
+          "Could you take a look?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l06-asking-help-q04",
+        "sortOrder": 3,
+        "question": "me ajudar?",
+        "options": [
+          "Could you give me a hand?",
+          "Could you send someone to fix it?",
+          "Could you take a look?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l06-asking-help-q05",
+        "sortOrder": 4,
+        "question": "alguém pode ajudar?",
+        "options": [
+          "Can someone help me with this?",
+          "Could you send someone to fix it?",
+          "Could you take a look?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l06-asking-help-q06",
+        "sortOrder": 5,
+        "question": "preciso de alguém?",
+        "options": [
+          "Could you send someone to fix it?",
+          "Could you take a look?",
+          "I need someone to look at the plumbing."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l06-asking-help-q07",
+        "sortOrder": 6,
+        "question": "tem alguém disponível?",
+        "options": [
+          "Could you send someone to fix it?",
+          "Could you take a look?",
+          "Is there anyone available?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l06-asking-help-q08",
+        "sortOrder": 7,
+        "question": "quem contatar?",
+        "options": [
+          "Could you send someone to fix it?",
+          "Could you take a look?",
+          "Do you know who I should contact?"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m06-l07-solve-problem-challenge": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q01",
+        "sortOrder": 0,
+        "question": "moradia?",
+        "options": [
+          "I live in an apartment.",
+          "The neighborhood is quiet.",
+          "There are two bedrooms."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q02",
+        "sortOrder": 1,
+        "question": "cômodos?",
+        "options": [
+          "I live in an apartment.",
+          "The neighborhood is quiet.",
+          "There are two bedrooms."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q03",
+        "sortOrder": 2,
+        "question": "bairro?",
+        "options": [
+          "I live in an apartment.",
+          "The neighborhood is quiet.",
+          "There are two bedrooms."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q04",
+        "sortOrder": 3,
+        "question": "pergunta?",
+        "options": [
+          "I live in an apartment.",
+          "There are two bedrooms.",
+          "Where's the nearest bank?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q05",
+        "sortOrder": 4,
+        "question": "transporte?",
+        "options": [
+          "I live in an apartment.",
+          "There are two bedrooms.",
+          "You can take the subway."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q06",
+        "sortOrder": 5,
+        "question": "horário?",
+        "options": [
+          "I live in an apartment.",
+          "It opens at 9.",
+          "There are two bedrooms."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q07",
+        "sortOrder": 6,
+        "question": "longos?",
+        "options": [
+          "I live in an apartment.",
+          "more expensive than",
+          "There are two bedrooms."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q08",
+        "sortOrder": 7,
+        "question": "curtos?",
+        "options": [
+          "I live in an apartment.",
+          "quieter than / bigger than",
+          "There are two bedrooms."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q09",
+        "sortOrder": 8,
+        "question": "irregular?",
+        "options": [
+          "better than",
+          "I live in an apartment.",
+          "There are two bedrooms."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m06-l07-solve-problem-challenge-q10",
+        "sortOrder": 9,
+        "question": "recomendar?",
+        "options": [
+          "I live in an apartment.",
+          "There are two bedrooms.",
+          "There's a great restaurant."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m07-l01-food-preferences": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m07-l01-food-preferences-q01",
+        "sortOrder": 0,
+        "question": "Adoro massa.?",
+        "options": [
+          "I don't like olives.",
+          "I like fresh fruit.",
+          "I love pasta."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l01-food-preferences-q02",
+        "sortOrder": 1,
+        "question": "Gosto de fruta fresca.?",
+        "options": [
+          "I don't like olives.",
+          "I like fresh fruit.",
+          "I love pasta."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l01-food-preferences-q03",
+        "sortOrder": 2,
+        "question": "Não gosto de azeitonas.?",
+        "options": [
+          "I don't like olives.",
+          "I like fresh fruit.",
+          "I love pasta."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l01-food-preferences-q04",
+        "sortOrder": 3,
+        "question": "Odeio coentro.?",
+        "options": [
+          "I hate cilantro.",
+          "I like fresh fruit.",
+          "I love pasta."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l01-food-preferences-q05",
+        "sortOrder": 4,
+        "question": "Prefiro chá a café.?",
+        "options": [
+          "I like fresh fruit.",
+          "I love pasta.",
+          "I prefer tea to coffee."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l01-food-preferences-q06",
+        "sortOrder": 5,
+        "question": "Prefiro sopa.?",
+        "options": [
+          "I like fresh fruit.",
+          "I love pasta.",
+          "I'd rather have soup."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l01-food-preferences-q07",
+        "sortOrder": 6,
+        "question": "Ela prefere peixe a carne.?",
+        "options": [
+          "I like fresh fruit.",
+          "I love pasta.",
+          "She prefers fish over meat."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l01-food-preferences-q08",
+        "sortOrder": 7,
+        "question": "Sou alérgico a amendoim.?",
+        "options": [
+          "I like fresh fruit.",
+          "I love pasta.",
+          "I'm allergic to peanuts."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m07-l02-ordering-detail": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m07-l02-ordering-detail-q01",
+        "sortOrder": 0,
+        "question": "Sem queijo.?",
+        "options": [
+          "Extra sauce on the side.",
+          "No ice, please.",
+          "Without cheese, please."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l02-ordering-detail-q02",
+        "sortOrder": 1,
+        "question": "Molho extra à parte.?",
+        "options": [
+          "Extra sauce on the side.",
+          "No ice, please.",
+          "Without cheese, please."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l02-ordering-detail-q03",
+        "sortOrder": 2,
+        "question": "Sem gelo.?",
+        "options": [
+          "Extra sauce on the side.",
+          "No ice, please.",
+          "Without cheese, please."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l02-ordering-detail-q04",
+        "sortOrder": 3,
+        "question": "Trocar batata por salada?",
+        "options": [
+          "Can I swap fries for salad?",
+          "Extra sauce on the side.",
+          "Without cheese, please."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l02-ordering-detail-q05",
+        "sortOrder": 4,
+        "question": "mal passada → bem passada?",
+        "options": [
+          "Extra sauce on the side.",
+          "Rare / medium-rare / medium / well-done",
+          "Without cheese, please."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l02-ordering-detail-q06",
+        "sortOrder": 5,
+        "question": "Ao ponto, por favor.?",
+        "options": [
+          "Extra sauce on the side.",
+          "Medium, please.",
+          "Without cheese, please."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l02-ordering-detail-q07",
+        "sortOrder": 6,
+        "question": "Bem passada.?",
+        "options": [
+          "Extra sauce on the side.",
+          "Well-done, no pink inside.",
+          "Without cheese, please."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l02-ordering-detail-q08",
+        "sortOrder": 7,
+        "question": "Molho à parte?",
+        "options": [
+          "Could I have the dressing on the side?",
+          "Extra sauce on the side.",
+          "Without cheese, please."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m07-l03-healthy-habits": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m07-l03-healthy-habits-q01",
+        "sortOrder": 0,
+        "question": "Me exercito 3x por semana.?",
+        "options": [
+          "I exercise three times a week.",
+          "I go for a walk after lunch.",
+          "I try to stay active."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l03-healthy-habits-q02",
+        "sortOrder": 1,
+        "question": "Caminho depois do almoço.?",
+        "options": [
+          "I exercise three times a week.",
+          "I go for a walk after lunch.",
+          "I try to stay active."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l03-healthy-habits-q03",
+        "sortOrder": 2,
+        "question": "Tento me manter ativo.?",
+        "options": [
+          "I exercise three times a week.",
+          "I go for a walk after lunch.",
+          "I try to stay active."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l03-healthy-habits-q04",
+        "sortOrder": 3,
+        "question": "Durmo cerca de 8 horas.?",
+        "options": [
+          "I exercise three times a week.",
+          "I go for a walk after lunch.",
+          "I sleep about eight hours."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l03-healthy-habits-q05",
+        "sortOrder": 4,
+        "question": "Preciso descansar mais.?",
+        "options": [
+          "I exercise three times a week.",
+          "I go for a walk after lunch.",
+          "I need more rest."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l03-healthy-habits-q06",
+        "sortOrder": 5,
+        "question": "Me sinto melhor quando durmo bem.?",
+        "options": [
+          "I exercise three times a week.",
+          "I feel better when I sleep well.",
+          "I go for a walk after lunch."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l03-healthy-habits-q07",
+        "sortOrder": 6,
+        "question": "Bebo muita água.?",
+        "options": [
+          "I drink a lot of water.",
+          "I exercise three times a week.",
+          "I go for a walk after lunch."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l03-healthy-habits-q08",
+        "sortOrder": 7,
+        "question": "Como mais frutas e vegetais.?",
+        "options": [
+          "I eat more fruit and vegetables.",
+          "I exercise three times a week.",
+          "I go for a walk after lunch."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m07-l04-feel-symptoms": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m07-l04-feel-symptoms-q01",
+        "sortOrder": 0,
+        "question": "Não me sinto bem.?",
+        "options": [
+          "I don't feel well.",
+          "I feel sick.",
+          "I feel tired / dizzy."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l04-feel-symptoms-q02",
+        "sortOrder": 1,
+        "question": "Me sinto mal/enjoado.?",
+        "options": [
+          "I don't feel well.",
+          "I feel sick.",
+          "I feel tired / dizzy."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l04-feel-symptoms-q03",
+        "sortOrder": 2,
+        "question": "Cansado / tonto.?",
+        "options": [
+          "I don't feel well.",
+          "I feel sick.",
+          "I feel tired / dizzy."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l04-feel-symptoms-q04",
+        "sortOrder": 3,
+        "question": "Acho que estou resfriado.?",
+        "options": [
+          "I don't feel well.",
+          "I feel sick.",
+          "I think I have a cold."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l04-feel-symptoms-q05",
+        "sortOrder": 4,
+        "question": "dor de cabeça?",
+        "options": [
+          "headache",
+          "I don't feel well.",
+          "I feel sick."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l04-feel-symptoms-q06",
+        "sortOrder": 5,
+        "question": "garganta inflamada?",
+        "options": [
+          "I don't feel well.",
+          "I feel sick.",
+          "sore throat"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l04-feel-symptoms-q07",
+        "sortOrder": 6,
+        "question": "nariz escorrendo / tosse?",
+        "options": [
+          "I don't feel well.",
+          "I feel sick.",
+          "runny nose / cough"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l04-feel-symptoms-q08",
+        "sortOrder": 7,
+        "question": "dor de estômago?",
+        "options": [
+          "I don't feel well.",
+          "I feel sick.",
+          "stomachache"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m07-l05-should-advice": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m07-l05-should-advice-q01",
+        "sortOrder": 0,
+        "question": "Você deveria descansar mais.?",
+        "options": [
+          "I think you should take a break.",
+          "You should drink more water.",
+          "You should rest more."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l05-should-advice-q02",
+        "sortOrder": 1,
+        "question": "Deveria beber mais água.?",
+        "options": [
+          "I think you should take a break.",
+          "You should drink more water.",
+          "You should rest more."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l05-should-advice-q03",
+        "sortOrder": 2,
+        "question": "Acho que deveria pausar.?",
+        "options": [
+          "I think you should take a break.",
+          "You should drink more water.",
+          "You should rest more."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l05-should-advice-q04",
+        "sortOrder": 3,
+        "question": "Não deveria trabalhar todo fim de semana.?",
+        "options": [
+          "You should drink more water.",
+          "You should rest more.",
+          "You shouldn't work every weekend."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l05-should-advice-q05",
+        "sortOrder": 4,
+        "question": "Não pule o café da manhã.?",
+        "options": [
+          "You should drink more water.",
+          "You should rest more.",
+          "You shouldn't skip breakfast."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l05-should-advice-q06",
+        "sortOrder": 5,
+        "question": "Não deveria dormir tão tarde.?",
+        "options": [
+          "You should drink more water.",
+          "You should rest more.",
+          "You shouldn't stay up so late."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l05-should-advice-q07",
+        "sortOrder": 6,
+        "question": "O que devo fazer?",
+        "options": [
+          "What should I do?",
+          "You should drink more water.",
+          "You should rest more."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l05-should-advice-q08",
+        "sortOrder": 7,
+        "question": "Acha que eu deveria...?",
+        "options": [
+          "Do you think I should...?",
+          "You should drink more water.",
+          "You should rest more."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m07-l06-wellbeing-challenge": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q01",
+        "sortOrder": 0,
+        "question": "preferências?",
+        "options": [
+          "I exercise / I try to avoid...",
+          "I prefer... / I'm allergic to...",
+          "Without..., on the side"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q02",
+        "sortOrder": 1,
+        "question": "pedidos detalhados?",
+        "options": [
+          "I exercise / I try to avoid...",
+          "I prefer... / I'm allergic to...",
+          "Without..., on the side"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q03",
+        "sortOrder": 2,
+        "question": "hábitos?",
+        "options": [
+          "I exercise / I try to avoid...",
+          "I prefer... / I'm allergic to...",
+          "Without..., on the side"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q04",
+        "sortOrder": 3,
+        "question": "sintomas?",
+        "options": [
+          "I don't feel well / I have a headache",
+          "I prefer... / I'm allergic to...",
+          "Without..., on the side"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q05",
+        "sortOrder": 4,
+        "question": "conselhos?",
+        "options": [
+          "I prefer... / I'm allergic to...",
+          "Without..., on the side",
+          "You should... / You shouldn't..."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q06",
+        "sortOrder": 5,
+        "question": "L01–L02?",
+        "options": [
+          "Food preferences & ordering",
+          "I prefer... / I'm allergic to...",
+          "Without..., on the side"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q07",
+        "sortOrder": 6,
+        "question": "L03?",
+        "options": [
+          "Healthy habits",
+          "I prefer... / I'm allergic to...",
+          "Without..., on the side"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q08",
+        "sortOrder": 7,
+        "question": "L04?",
+        "options": [
+          "Feel & pharmacy",
+          "I prefer... / I'm allergic to...",
+          "Without..., on the side"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q09",
+        "sortOrder": 8,
+        "question": "L05?",
+        "options": [
+          "I prefer... / I'm allergic to...",
+          "Should advice",
+          "Without..., on the side"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m07-l06-wellbeing-challenge-q10",
+        "sortOrder": 9,
+        "question": "Desafio cumulativo — preferências, pedidos detalhados, hábitos, sintomas básicos e conselhos should/shouldn't.?",
+        "options": [
+          "Allergies & detailed orders",
+          "I prefer... / I'm allergic to...",
+          "Without..., on the side"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m08-l01-airport-expanded": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m08-l01-airport-expanded-q01",
+        "sortOrder": 0,
+        "question": "Tenho conexão.?",
+        "options": [
+          "I have a connecting flight.",
+          "My layover is two hours.",
+          "Which gate for the connection?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l01-airport-expanded-q02",
+        "sortOrder": 1,
+        "question": "Escala de 2 horas.?",
+        "options": [
+          "I have a connecting flight.",
+          "My layover is two hours.",
+          "Which gate for the connection?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l01-airport-expanded-q03",
+        "sortOrder": 2,
+        "question": "Qual portão da conexão?",
+        "options": [
+          "I have a connecting flight.",
+          "My layover is two hours.",
+          "Which gate for the connection?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l01-airport-expanded-q04",
+        "sortOrder": 3,
+        "question": "Preciso trocar de terminal.?",
+        "options": [
+          "I have a connecting flight.",
+          "I need to change terminals.",
+          "My layover is two hours."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l01-airport-expanded-q05",
+        "sortOrder": 4,
+        "question": "controle de passaporte / alfândega?",
+        "options": [
+          "I have a connecting flight.",
+          "My layover is two hours.",
+          "Passport control / customs"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l01-airport-expanded-q06",
+        "sortOrder": 5,
+        "question": "motivo da viagem?",
+        "options": [
+          "I have a connecting flight.",
+          "My layover is two hours.",
+          "Purpose of visit: business / tourism"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l01-airport-expanded-q07",
+        "sortOrder": 6,
+        "question": "Nada a declarar.?",
+        "options": [
+          "I have a connecting flight.",
+          "My layover is two hours.",
+          "Nothing to declare."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l01-airport-expanded-q08",
+        "sortOrder": 7,
+        "question": "Quanto tempo ficará?",
+        "options": [
+          "How long will you stay?",
+          "I have a connecting flight.",
+          "My layover is two hours."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m08-l02-hotel-services": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m08-l02-hotel-services-q01",
+        "sortOrder": 0,
+        "question": "Serviço de quarto.?",
+        "options": [
+          "Could I get extra towels?",
+          "Could I have more pillows?",
+          "Room service, please."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l02-hotel-services-q02",
+        "sortOrder": 1,
+        "question": "Toalhas extras?",
+        "options": [
+          "Could I get extra towels?",
+          "Could I have more pillows?",
+          "Room service, please."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l02-hotel-services-q03",
+        "sortOrder": 2,
+        "question": "Mais travesseiros?",
+        "options": [
+          "Could I get extra towels?",
+          "Could I have more pillows?",
+          "Room service, please."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l02-hotel-services-q04",
+        "sortOrder": 3,
+        "question": "Chamada às 7h.?",
+        "options": [
+          "A wake-up call at 7 AM, please.",
+          "Could I get extra towels?",
+          "Room service, please."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l02-hotel-services-q05",
+        "sortOrder": 4,
+        "question": "Horário do check-out?",
+        "options": [
+          "Could I get extra towels?",
+          "Room service, please.",
+          "What time is check-out?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l02-hotel-services-q06",
+        "sortOrder": 5,
+        "question": "Check-out tardio?",
+        "options": [
+          "Could I get extra towels?",
+          "Could I have a late check-out?",
+          "Room service, please."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l02-hotel-services-q07",
+        "sortOrder": 6,
+        "question": "Quero fazer check-out.?",
+        "options": [
+          "Could I get extra towels?",
+          "I'd like to check out, please.",
+          "Room service, please."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l02-hotel-services-q08",
+        "sortOrder": 7,
+        "question": "Guardar bagagem?",
+        "options": [
+          "Can you store my luggage?",
+          "Could I get extra towels?",
+          "Room service, please."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m08-l03-transport-renting": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m08-l03-transport-renting-q01",
+        "sortOrder": 0,
+        "question": "Onde fica o metrô?",
+        "options": [
+          "How much is a ticket?",
+          "Where is the subway station?",
+          "Which bus goes to the airport?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l03-transport-renting-q02",
+        "sortOrder": 1,
+        "question": "Qual ônibus vai ao aeroporto?",
+        "options": [
+          "How much is a ticket?",
+          "Where is the subway station?",
+          "Which bus goes to the airport?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l03-transport-renting-q03",
+        "sortOrder": 2,
+        "question": "Quanto custa a passagem?",
+        "options": [
+          "How much is a ticket?",
+          "Where is the subway station?",
+          "Which bus goes to the airport?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l03-transport-renting-q04",
+        "sortOrder": 3,
+        "question": "Chamar um táxi?",
+        "options": [
+          "Could you call a taxi, please?",
+          "Where is the subway station?",
+          "Which bus goes to the airport?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l03-transport-renting-q05",
+        "sortOrder": 4,
+        "question": "Quero alugar um carro.?",
+        "options": [
+          "I'd like to rent a car.",
+          "Where is the subway station?",
+          "Which bus goes to the airport?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l03-transport-renting-q06",
+        "sortOrder": 5,
+        "question": "Por três dias.?",
+        "options": [
+          "For three days.",
+          "Where is the subway station?",
+          "Which bus goes to the airport?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l03-transport-renting-q07",
+        "sortOrder": 6,
+        "question": "Automático, por favor.?",
+        "options": [
+          "Automatic, please.",
+          "Where is the subway station?",
+          "Which bus goes to the airport?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l03-transport-renting-q08",
+        "sortOrder": 7,
+        "question": "Seguro incluído?",
+        "options": [
+          "Is insurance included?",
+          "Where is the subway station?",
+          "Which bus goes to the airport?"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m08-l04-reservations": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m08-l04-reservations-q01",
+        "sortOrder": 0,
+        "question": "Quero fazer uma reserva.?",
+        "options": [
+          "A table for two, please.",
+          "For tonight at 7 PM.",
+          "I'd like to make a reservation."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l04-reservations-q02",
+        "sortOrder": 1,
+        "question": "Mesa para dois.?",
+        "options": [
+          "A table for two, please.",
+          "For tonight at 7 PM.",
+          "I'd like to make a reservation."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l04-reservations-q03",
+        "sortOrder": 2,
+        "question": "Hoje às 19h.?",
+        "options": [
+          "A table for two, please.",
+          "For tonight at 7 PM.",
+          "I'd like to make a reservation."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l04-reservations-q04",
+        "sortOrder": 3,
+        "question": "No nome Silva.?",
+        "options": [
+          "A table for two, please.",
+          "I'd like to make a reservation.",
+          "Under the name Silva."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l04-reservations-q05",
+        "sortOrder": 4,
+        "question": "Confirmando sexta 20h, 4 pessoas?",
+        "options": [
+          "A table for two, please.",
+          "I'd like to make a reservation.",
+          "So that's Friday at 8 PM for four people?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l04-reservations-q06",
+        "sortOrder": 5,
+        "question": "Número de confirmação?",
+        "options": [
+          "A table for two, please.",
+          "Can I have the confirmation number?",
+          "I'd like to make a reservation."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l04-reservations-q07",
+        "sortOrder": 6,
+        "question": "Tem mesa ao ar livre?",
+        "options": [
+          "A table for two, please.",
+          "I'd like to make a reservation.",
+          "Is outdoor seating available?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l04-reservations-q08",
+        "sortOrder": 7,
+        "question": "Reserva duas noites.?",
+        "options": [
+          "A table for two, please.",
+          "I have a reservation for two nights.",
+          "I'd like to make a reservation."
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m08-l05-changes-cancellations": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m08-l05-changes-cancellations-q01",
+        "sortOrder": 0,
+        "question": "Preciso alterar minha reserva.?",
+        "options": [
+          "Can we move it to Saturday?",
+          "From 7 to 8 PM, please.",
+          "I need to change my reservation."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l05-changes-cancellations-q02",
+        "sortOrder": 1,
+        "question": "Podemos mudar para sábado?",
+        "options": [
+          "Can we move it to Saturday?",
+          "From 7 to 8 PM, please.",
+          "I need to change my reservation."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l05-changes-cancellations-q03",
+        "sortOrder": 2,
+        "question": "Das 19h às 20h.?",
+        "options": [
+          "Can we move it to Saturday?",
+          "From 7 to 8 PM, please.",
+          "I need to change my reservation."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l05-changes-cancellations-q04",
+        "sortOrder": 3,
+        "question": "Na verdade, três pessoas.?",
+        "options": [
+          "Actually, make it three people.",
+          "Can we move it to Saturday?",
+          "I need to change my reservation."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l05-changes-cancellations-q05",
+        "sortOrder": 4,
+        "question": "Quero cancelar.?",
+        "options": [
+          "Can we move it to Saturday?",
+          "I need to change my reservation.",
+          "I'd like to cancel my reservation."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l05-changes-cancellations-q06",
+        "sortOrder": 5,
+        "question": "Surgiu um imprevisto.?",
+        "options": [
+          "Can we move it to Saturday?",
+          "I need to change my reservation.",
+          "Something came up — I can't make it."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l05-changes-cancellations-q07",
+        "sortOrder": 6,
+        "question": "Cancelar sem taxa?",
+        "options": [
+          "Can I cancel without a fee?",
+          "Can we move it to Saturday?",
+          "I need to change my reservation."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l05-changes-cancellations-q08",
+        "sortOrder": 7,
+        "question": "Cancelar no nome Silva.?",
+        "options": [
+          "Can we move it to Saturday?",
+          "I need to change my reservation.",
+          "Please cancel under Silva."
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m08-l06-travel-clarification": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m08-l06-travel-clarification-q01",
+        "sortOrder": 0,
+        "question": "Pode repetir?",
+        "options": [
+          "Could you repeat that, please?",
+          "Pardon? / Sorry?",
+          "Sorry, I didn't catch that."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l06-travel-clarification-q02",
+        "sortOrder": 1,
+        "question": "Não entendi/captou.?",
+        "options": [
+          "Could you repeat that, please?",
+          "Pardon? / Sorry?",
+          "Sorry, I didn't catch that."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l06-travel-clarification-q03",
+        "sortOrder": 2,
+        "question": "Como? / Desculpa?",
+        "options": [
+          "Could you repeat that, please?",
+          "Pardon? / Sorry?",
+          "Sorry, I didn't catch that."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l06-travel-clarification-q04",
+        "sortOrder": 3,
+        "question": "Como era mesmo?",
+        "options": [
+          "Could you repeat that, please?",
+          "Sorry, I didn't catch that.",
+          "What was that again?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l06-travel-clarification-q05",
+        "sortOrder": 4,
+        "question": "Mais devagar?",
+        "options": [
+          "Could you repeat that, please?",
+          "Could you speak more slowly?",
+          "Sorry, I didn't catch that."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l06-travel-clarification-q06",
+        "sortOrder": 5,
+        "question": "Não entendo.?",
+        "options": [
+          "Could you repeat that, please?",
+          "I don't understand.",
+          "Sorry, I didn't catch that."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l06-travel-clarification-q07",
+        "sortOrder": 6,
+        "question": "Pode explicar?",
+        "options": [
+          "Could you explain that?",
+          "Could you repeat that, please?",
+          "Sorry, I didn't catch that."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l06-travel-clarification-q08",
+        "sortOrder": 7,
+        "question": "Portão B ou D?",
+        "options": [
+          "Could you repeat that, please?",
+          "Do you mean gate B or D?",
+          "Sorry, I didn't catch that."
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m08-l07-travel-problem-challenge": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q01",
+        "sortOrder": 0,
+        "question": "L01 aeroporto?",
+        "options": [
+          "connecting flight / baggage claim",
+          "rent a car / one-way ticket",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q02",
+        "sortOrder": 1,
+        "question": "L02 hotel?",
+        "options": [
+          "connecting flight / baggage claim",
+          "rent a car / one-way ticket",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q03",
+        "sortOrder": 2,
+        "question": "L03 transporte?",
+        "options": [
+          "connecting flight / baggage claim",
+          "rent a car / one-way ticket",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q04",
+        "sortOrder": 3,
+        "question": "L04 reservas?",
+        "options": [
+          "book a table / under the name",
+          "connecting flight / baggage claim",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q05",
+        "sortOrder": 4,
+        "question": "L05 alterações?",
+        "options": [
+          "change / cancel / reschedule",
+          "connecting flight / baggage claim",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q06",
+        "sortOrder": 5,
+        "question": "L06 esclarecimento?",
+        "options": [
+          "connecting flight / baggage claim",
+          "didn't catch / speak slowly",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q07",
+        "sortOrder": 6,
+        "question": "L01?",
+        "options": [
+          "Airport expanded",
+          "connecting flight / baggage claim",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q08",
+        "sortOrder": 7,
+        "question": "L02?",
+        "options": [
+          "connecting flight / baggage claim",
+          "Hotel services",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q09",
+        "sortOrder": 8,
+        "question": "L03?",
+        "options": [
+          "connecting flight / baggage claim",
+          "Transport & renting",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m08-l07-travel-problem-challenge-q10",
+        "sortOrder": 9,
+        "question": "L04–L05?",
+        "options": [
+          "connecting flight / baggage claim",
+          "Reservations & changes",
+          "wake-up call / isn't working"
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m09-l01-responsibilities": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m09-l01-responsibilities-q01",
+        "sortOrder": 0,
+        "question": "logística de viagens?",
+        "options": [
+          "I handle vendor contracts and renewals.",
+          "I'm responsible for player welfare programs.",
+          "My main responsibility is managing travel logistics."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l01-responsibilities-q02",
+        "sortOrder": 1,
+        "question": "bem-estar dos atletas?",
+        "options": [
+          "I handle vendor contracts and renewals.",
+          "I'm responsible for player welfare programs.",
+          "My main responsibility is managing travel logistics."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l01-responsibilities-q03",
+        "sortOrder": 2,
+        "question": "contratos com fornecedores?",
+        "options": [
+          "I handle vendor contracts and renewals.",
+          "I'm responsible for player welfare programs.",
+          "My main responsibility is managing travel logistics."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l01-responsibilities-q04",
+        "sortOrder": 3,
+        "question": "supervisiono operações?",
+        "options": [
+          "I oversee the operations department.",
+          "I'm responsible for player welfare programs.",
+          "My main responsibility is managing travel logistics."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l01-responsibilities-q05",
+        "sortOrder": 4,
+        "question": "lidero implantação de equipamentos?",
+        "options": [
+          "I'm leading the preseason equipment rollout.",
+          "I'm responsible for player welfare programs.",
+          "My main responsibility is managing travel logistics."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l01-responsibilities-q06",
+        "sortOrder": 5,
+        "question": "app para torcedores?",
+        "options": [
+          "I'm responsible for player welfare programs.",
+          "My main responsibility is managing travel logistics.",
+          "We're working on a new fan engagement app."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l01-responsibilities-q07",
+        "sortOrder": 6,
+        "question": "fase final?",
+        "options": [
+          "I'm responsible for player welfare programs.",
+          "My main responsibility is managing travel logistics.",
+          "The project is in the final phase."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l01-responsibilities-q08",
+        "sortOrder": 7,
+        "question": "colaboração entre áreas?",
+        "options": [
+          "I'm collaborating with the medical team on this.",
+          "I'm responsible for player welfare programs.",
+          "My main responsibility is managing travel logistics."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m09-l02-requests-permission": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m09-l02-requests-permission-q01",
+        "sortOrder": 0,
+        "question": "sair mais cedo?",
+        "options": [
+          "Could I leave at 3 PM today?",
+          "Could I take a quick break?",
+          "Could I work from home on Friday?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l02-requests-permission-q02",
+        "sortOrder": 1,
+        "question": "home office?",
+        "options": [
+          "Could I leave at 3 PM today?",
+          "Could I take a quick break?",
+          "Could I work from home on Friday?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l02-requests-permission-q03",
+        "sortOrder": 2,
+        "question": "pausa rápida?",
+        "options": [
+          "Could I leave at 3 PM today?",
+          "Could I take a quick break?",
+          "Could I work from home on Friday?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l02-requests-permission-q04",
+        "sortOrder": 3,
+        "question": "pergunta?",
+        "options": [
+          "Could I ask you a question?",
+          "Could I leave at 3 PM today?",
+          "Could I work from home on Friday?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l02-requests-permission-q05",
+        "sortOrder": 4,
+        "question": "sair cedo?",
+        "options": [
+          "Could I leave at 3 PM today?",
+          "Could I work from home on Friday?",
+          "Would it be OK if I left early today?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l02-requests-permission-q06",
+        "sortOrder": 5,
+        "question": "remarcar reunião?",
+        "options": [
+          "Could I leave at 3 PM today?",
+          "Could I work from home on Friday?",
+          "Would it be OK if we moved the meeting to Thursday?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l02-requests-permission-q07",
+        "sortOrder": 6,
+        "question": "usar equipamento?",
+        "options": [
+          "Could I leave at 3 PM today?",
+          "Could I work from home on Friday?",
+          "Would it be OK if I used your laptop?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l02-requests-permission-q08",
+        "sortOrder": 7,
+        "question": "convidado?",
+        "options": [
+          "Could I leave at 3 PM today?",
+          "Could I work from home on Friday?",
+          "Would it be OK if I brought a guest?"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m09-l03-can-could": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m09-l03-can-could-q01",
+        "sortOrder": 0,
+        "question": "enviar arquivo?",
+        "options": [
+          "Can you check this for me?",
+          "Can you join the call at 4?",
+          "Can you send me the file?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l03-can-could-q02",
+        "sortOrder": 1,
+        "question": "verificar?",
+        "options": [
+          "Can you check this for me?",
+          "Can you join the call at 4?",
+          "Can you send me the file?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l03-can-could-q03",
+        "sortOrder": 2,
+        "question": "entrar na call?",
+        "options": [
+          "Can you check this for me?",
+          "Can you join the call at 4?",
+          "Can you send me the file?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l03-can-could-q04",
+        "sortOrder": 3,
+        "question": "ajuda?",
+        "options": [
+          "Can you check this for me?",
+          "Can you help me with this?",
+          "Can you send me the file?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l03-can-could-q05",
+        "sortOrder": 4,
+        "question": "relatório?",
+        "options": [
+          "Can you check this for me?",
+          "Can you send me the file?",
+          "Could you send me the report, please?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l03-can-could-q06",
+        "sortOrder": 5,
+        "question": "revisar rascunho?",
+        "options": [
+          "Can you check this for me?",
+          "Can you send me the file?",
+          "Could you review this draft?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l03-can-could-q07",
+        "sortOrder": 6,
+        "question": "copiar no email?",
+        "options": [
+          "Can you check this for me?",
+          "Can you send me the file?",
+          "Could you cc me on that email?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l03-can-could-q08",
+        "sortOrder": 7,
+        "question": "responder até fim do dia?",
+        "options": [
+          "Can you check this for me?",
+          "Can you send me the file?",
+          "Could you let me know by EOD?"
+        ],
+        "correctIndex": 2
+      }
+    ]
+  },
+  "elem-m09-l04-messages": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m09-l04-messages-q01",
+        "sortOrder": 0,
+        "question": "viagem clube?",
+        "options": [
+          "Meeting notes from today",
+          "Q1 report — please review",
+          "Updated travel itinerary — March 15"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l04-messages-q02",
+        "sortOrder": 1,
+        "question": "relatório trimestral?",
+        "options": [
+          "Meeting notes from today",
+          "Q1 report — please review",
+          "Updated travel itinerary — March 15"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l04-messages-q03",
+        "sortOrder": 2,
+        "question": "ata de reunião?",
+        "options": [
+          "Meeting notes from today",
+          "Q1 report — please review",
+          "Updated travel itinerary — March 15"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l04-messages-q04",
+        "sortOrder": 3,
+        "question": "ação necessária?",
+        "options": [
+          "Action required: budget approval",
+          "Q1 report — please review",
+          "Updated travel itinerary — March 15"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l04-messages-q05",
+        "sortOrder": 4,
+        "question": "equipe interna?",
+        "options": [
+          "Hi team,",
+          "Q1 report — please review",
+          "Updated travel itinerary — March 15"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l04-messages-q06",
+        "sortOrder": 5,
+        "question": "todos?",
+        "options": [
+          "Hi everyone,",
+          "Q1 report — please review",
+          "Updated travel itinerary — March 15"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l04-messages-q07",
+        "sortOrder": 6,
+        "question": "alternativa?",
+        "options": [
+          "Hello all,",
+          "Q1 report — please review",
+          "Updated travel itinerary — March 15"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l04-messages-q08",
+        "sortOrder": 7,
+        "question": "externo formal?",
+        "options": [
+          "Dear Mr. Johnson,",
+          "Q1 report — please review",
+          "Updated travel itinerary — March 15"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m09-l05-calls-meetings": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m09-l05-calls-meetings-q01",
+        "sortOrder": 0,
+        "question": "teste de áudio?",
+        "options": [
+          "Can you hear me OK?",
+          "Sorry I'm late — I'm here now.",
+          "You're on mute."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l05-calls-meetings-q02",
+        "sortOrder": 1,
+        "question": "atraso?",
+        "options": [
+          "Can you hear me OK?",
+          "Sorry I'm late — I'm here now.",
+          "You're on mute."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l05-calls-meetings-q03",
+        "sortOrder": 2,
+        "question": "está mutado?",
+        "options": [
+          "Can you hear me OK?",
+          "Sorry I'm late — I'm here now.",
+          "You're on mute."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l05-calls-meetings-q04",
+        "sortOrder": 3,
+        "question": "repetir?",
+        "options": [
+          "Can you hear me OK?",
+          "Could you repeat that?",
+          "Sorry I'm late — I'm here now."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l05-calls-meetings-q05",
+        "sortOrder": 4,
+        "question": "iniciar?",
+        "options": [
+          "Can you hear me OK?",
+          "Let's start.",
+          "Sorry I'm late — I'm here now."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l05-calls-meetings-q06",
+        "sortOrder": 5,
+        "question": "pauta?",
+        "options": [
+          "Can you hear me OK?",
+          "Here's the agenda for today.",
+          "Sorry I'm late — I'm here now."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l05-calls-meetings-q07",
+        "sortOrder": 6,
+        "question": "primeiro item?",
+        "options": [
+          "Can you hear me OK?",
+          "First item — budget review.",
+          "Sorry I'm late — I'm here now."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l05-calls-meetings-q08",
+        "sortOrder": 7,
+        "question": "avançar?",
+        "options": [
+          "Can we move on to the next point?",
+          "Can you hear me OK?",
+          "Sorry I'm late — I'm here now."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m09-l06-agree-deadlines": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m09-l06-agree-deadlines-q01",
+        "sortOrder": 0,
+        "question": "concordo?",
+        "options": [
+          "I agree — that makes sense.",
+          "I agree.",
+          "That works for me."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l06-agree-deadlines-q02",
+        "sortOrder": 1,
+        "question": "concordo + razão?",
+        "options": [
+          "I agree — that makes sense.",
+          "I agree.",
+          "That works for me."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l06-agree-deadlines-q03",
+        "sortOrder": 2,
+        "question": "funciona pra mim?",
+        "options": [
+          "I agree — that makes sense.",
+          "I agree.",
+          "That works for me."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l06-agree-deadlines-q04",
+        "sortOrder": 3,
+        "question": "parece bom?",
+        "options": [
+          "I agree — that makes sense.",
+          "I agree.",
+          "Sounds good to me."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l06-agree-deadlines-q05",
+        "sortOrder": 4,
+        "question": "reconhece + discorda?",
+        "options": [
+          "I agree — that makes sense.",
+          "I agree.",
+          "I see your point, but I don't think we should rush."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l06-agree-deadlines-q06",
+        "sortOrder": 5,
+        "question": "não acho realista?",
+        "options": [
+          "I agree — that makes sense.",
+          "I agree.",
+          "I don't think that's realistic."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l06-agree-deadlines-q07",
+        "sortOrder": 6,
+        "question": "dúvida educada?",
+        "options": [
+          "I agree — that makes sense.",
+          "I agree.",
+          "I'm not sure about skipping the review."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l06-agree-deadlines-q08",
+        "sortOrder": 7,
+        "question": "propor alternativa?",
+        "options": [
+          "Could we consider an alternative?",
+          "I agree — that makes sense.",
+          "I agree."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m09-l07-work-communication-challenge": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q01",
+        "sortOrder": 0,
+        "question": "papel?",
+        "options": [
+          "I'm in charge of...",
+          "I'm leading... / top priority",
+          "My main responsibility is..."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q02",
+        "sortOrder": 1,
+        "question": "projeto?",
+        "options": [
+          "I'm in charge of...",
+          "I'm leading... / top priority",
+          "My main responsibility is..."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q03",
+        "sortOrder": 2,
+        "question": "liderança?",
+        "options": [
+          "I'm in charge of...",
+          "I'm leading... / top priority",
+          "My main responsibility is..."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q04",
+        "sortOrder": 3,
+        "question": "Could I?",
+        "options": [
+          "Could I leave at 3 PM?",
+          "I'm leading... / top priority",
+          "My main responsibility is..."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q05",
+        "sortOrder": 4,
+        "question": "Would it be OK if?",
+        "options": [
+          "I'm leading... / top priority",
+          "My main responsibility is...",
+          "Would it be OK if I left early?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q06",
+        "sortOrder": 5,
+        "question": "May I?",
+        "options": [
+          "I'm leading... / top priority",
+          "May I access this file?",
+          "My main responsibility is..."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q07",
+        "sortOrder": 6,
+        "question": "Can?",
+        "options": [
+          "Can you check this?",
+          "I'm leading... / top priority",
+          "My main responsibility is..."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q08",
+        "sortOrder": 7,
+        "question": "Could?",
+        "options": [
+          "Could you send me...?",
+          "I'm leading... / top priority",
+          "My main responsibility is..."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q09",
+        "sortOrder": 8,
+        "question": "suavizar?",
+        "options": [
+          "I'm leading... / top priority",
+          "My main responsibility is...",
+          "When you get a chance"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m09-l07-work-communication-challenge-q10",
+        "sortOrder": 9,
+        "question": "abertura?",
+        "options": [
+          "Hi team,",
+          "I'm leading... / top priority",
+          "My main responsibility is..."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m10-l01-meeting-people": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m10-l01-meeting-people-q01",
+        "sortOrder": 0,
+        "question": "apresentação?",
+        "options": [
+          "Hi! I'm Carlos — nice to meet you!",
+          "I don't think we've met.",
+          "What do you do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l01-meeting-people-q02",
+        "sortOrder": 1,
+        "question": "primeiro contato?",
+        "options": [
+          "Hi! I'm Carlos — nice to meet you!",
+          "I don't think we've met.",
+          "What do you do?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l01-meeting-people-q03",
+        "sortOrder": 2,
+        "question": "follow-up?",
+        "options": [
+          "Hi! I'm Carlos — nice to meet you!",
+          "I don't think we've met.",
+          "What do you do?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l01-meeting-people-q04",
+        "sortOrder": 3,
+        "question": "trabalho?",
+        "options": [
+          "Hi! I'm Carlos — nice to meet you!",
+          "I don't think we've met.",
+          "Where do you work?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l01-meeting-people-q05",
+        "sortOrder": 4,
+        "question": "interesses?",
+        "options": [
+          "Hi! I'm Carlos — nice to meet you!",
+          "I don't think we've met.",
+          "I'm into soccer and cooking."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l01-meeting-people-q06",
+        "sortOrder": 5,
+        "question": "enjoy + -ing?",
+        "options": [
+          "Hi! I'm Carlos — nice to meet you!",
+          "I don't think we've met.",
+          "I enjoy hiking on weekends."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l01-meeting-people-q07",
+        "sortOrder": 6,
+        "question": "pergunta?",
+        "options": [
+          "Do you like sports?",
+          "Hi! I'm Carlos — nice to meet you!",
+          "I don't think we've met."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l01-meeting-people-q08",
+        "sortOrder": 7,
+        "question": "dislike?",
+        "options": [
+          "Hi! I'm Carlos — nice to meet you!",
+          "I don't really like cold weather.",
+          "I don't think we've met."
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m10-l02-routine-life": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m10-l02-routine-life-q01",
+        "sortOrder": 0,
+        "question": "acordar?",
+        "options": [
+          "I go to the training center by 7.",
+          "I usually wake up at 6.",
+          "I work from the office on Wednesdays."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l02-routine-life-q02",
+        "sortOrder": 1,
+        "question": "clube?",
+        "options": [
+          "I go to the training center by 7.",
+          "I usually wake up at 6.",
+          "I work from the office on Wednesdays."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l02-routine-life-q03",
+        "sortOrder": 2,
+        "question": "escritório?",
+        "options": [
+          "I go to the training center by 7.",
+          "I usually wake up at 6.",
+          "I work from the office on Wednesdays."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l02-routine-life-q04",
+        "sortOrder": 3,
+        "question": "horário?",
+        "options": [
+          "I finish around 5 PM.",
+          "I go to the training center by 7.",
+          "I usually wake up at 6."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l02-routine-life-q05",
+        "sortOrder": 4,
+        "question": "usually?",
+        "options": [
+          "I go to the training center by 7.",
+          "I usually have lunch at 12.",
+          "I usually wake up at 6."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l02-routine-life-q06",
+        "sortOrder": 5,
+        "question": "rarely?",
+        "options": [
+          "I go to the training center by 7.",
+          "I rarely work on weekends.",
+          "I usually wake up at 6."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l02-routine-life-q07",
+        "sortOrder": 6,
+        "question": "frequência numérica?",
+        "options": [
+          "I go to the training center by 7.",
+          "I usually wake up at 6.",
+          "Twice a month / once a week"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l02-routine-life-q08",
+        "sortOrder": 7,
+        "question": "pergunta?",
+        "options": [
+          "How often do you travel?",
+          "I go to the training center by 7.",
+          "I usually wake up at 6."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m10-l03-time-mix": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m10-l03-time-mix-q01",
+        "sortOrder": 0,
+        "question": "agora?",
+        "options": [
+          "I'm finishing the report.",
+          "She is on a call right now.",
+          "They're practicing on the field."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l03-time-mix-q02",
+        "sortOrder": 1,
+        "question": "clube?",
+        "options": [
+          "I'm finishing the report.",
+          "She is on a call right now.",
+          "They're practicing on the field."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l03-time-mix-q03",
+        "sortOrder": 2,
+        "question": "escritório?",
+        "options": [
+          "I'm finishing the report.",
+          "She is on a call right now.",
+          "They're practicing on the field."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l03-time-mix-q04",
+        "sortOrder": 3,
+        "question": "pergunta?",
+        "options": [
+          "I'm finishing the report.",
+          "They're practicing on the field.",
+          "What are you doing?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l03-time-mix-q05",
+        "sortOrder": 4,
+        "question": "ontem?",
+        "options": [
+          "I'm finishing the report.",
+          "They're practicing on the field.",
+          "Yesterday I met with the medical team."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l03-time-mix-q06",
+        "sortOrder": 5,
+        "question": "regular -ed?",
+        "options": [
+          "I'm finishing the report.",
+          "They're practicing on the field.",
+          "We reviewed the injury list."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l03-time-mix-q07",
+        "sortOrder": 6,
+        "question": "pergunta did?",
+        "options": [
+          "Did you finish the report?",
+          "I'm finishing the report.",
+          "They're practicing on the field."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l03-time-mix-q08",
+        "sortOrder": 7,
+        "question": "was/were?",
+        "options": [
+          "I'm finishing the report.",
+          "The flight was delayed.",
+          "They're practicing on the field."
+        ],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "elem-m10-l04-city-problems": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m10-l04-city-problems-q01",
+        "sortOrder": 0,
+        "question": "tranquilo?",
+        "options": [
+          "Good public transport",
+          "It's pretty quiet.",
+          "There's a park nearby."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l04-city-problems-q02",
+        "sortOrder": 1,
+        "question": "perto?",
+        "options": [
+          "Good public transport",
+          "It's pretty quiet.",
+          "There's a park nearby."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l04-city-problems-q03",
+        "sortOrder": 2,
+        "question": "transporte?",
+        "options": [
+          "Good public transport",
+          "It's pretty quiet.",
+          "There's a park nearby."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l04-city-problems-q04",
+        "sortOrder": 3,
+        "question": "localização?",
+        "options": [
+          "I live near downtown.",
+          "It's pretty quiet.",
+          "There's a park nearby."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l04-city-problems-q05",
+        "sortOrder": 4,
+        "question": "menor?",
+        "options": [
+          "It's pretty quiet.",
+          "It's smaller than Boston.",
+          "There's a park nearby."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l04-city-problems-q06",
+        "sortOrder": 5,
+        "question": "mais moderno?",
+        "options": [
+          "It's pretty quiet.",
+          "The downtown area is more modern.",
+          "There's a park nearby."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l04-city-problems-q07",
+        "sortOrder": 6,
+        "question": "melhor?",
+        "options": [
+          "It's pretty quiet.",
+          "Public transport is better here.",
+          "There's a park nearby."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l04-city-problems-q08",
+        "sortOrder": 7,
+        "question": "pergunta?",
+        "options": [
+          "Is it bigger than...?",
+          "It's pretty quiet.",
+          "There's a park nearby."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m10-l05-food-travel": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m10-l05-food-travel-q01",
+        "sortOrder": 0,
+        "question": "alergia?",
+        "options": [
+          "I'd like the grilled salmon.",
+          "I'm allergic to shellfish.",
+          "Medium, please — sauce on the side."
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l05-food-travel-q02",
+        "sortOrder": 1,
+        "question": "pedido detalhe?",
+        "options": [
+          "I'd like the grilled salmon.",
+          "I'm allergic to shellfish.",
+          "Medium, please — sauce on the side."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l05-food-travel-q03",
+        "sortOrder": 2,
+        "question": "pedido?",
+        "options": [
+          "I'd like the grilled salmon.",
+          "I'm allergic to shellfish.",
+          "Medium, please — sauce on the side."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l05-food-travel-q04",
+        "sortOrder": 3,
+        "question": "sem restrição?",
+        "options": [
+          "I'm allergic to shellfish.",
+          "Medium, please — sauce on the side.",
+          "No restrictions, thanks."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l05-food-travel-q05",
+        "sortOrder": 4,
+        "question": "sintomas?",
+        "options": [
+          "I have a headache and a sore throat.",
+          "I'm allergic to shellfish.",
+          "Medium, please — sauce on the side."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l05-food-travel-q06",
+        "sortOrder": 5,
+        "question": "should advice?",
+        "options": [
+          "I'm allergic to shellfish.",
+          "Medium, please — sauce on the side.",
+          "You should rest and drink water."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l05-food-travel-q07",
+        "sortOrder": 6,
+        "question": "mal-estar?",
+        "options": [
+          "I don't feel well.",
+          "I'm allergic to shellfish.",
+          "Medium, please — sauce on the side."
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l05-food-travel-q08",
+        "sortOrder": 7,
+        "question": "farmácia?",
+        "options": [
+          "Do you have anything for a headache?",
+          "I'm allergic to shellfish.",
+          "Medium, please — sauce on the side."
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m10-l06-elementary-review": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m10-l06-elementary-review-q01",
+        "sortOrder": 0,
+        "question": "intro?",
+        "options": [
+          "I'm into...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l06-elementary-review-q02",
+        "sortOrder": 1,
+        "question": "interests?",
+        "options": [
+          "I'm into...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l06-elementary-review-q03",
+        "sortOrder": 2,
+        "question": "follow-up?",
+        "options": [
+          "I'm into...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l06-elementary-review-q04",
+        "sortOrder": 3,
+        "question": "habit?",
+        "options": [
+          "I usually...",
+          "I'm into...",
+          "Nice to meet you!"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l06-elementary-review-q05",
+        "sortOrder": 4,
+        "question": "frequency?",
+        "options": [
+          "How often...?",
+          "I'm into...",
+          "Nice to meet you!"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l06-elementary-review-q06",
+        "sortOrder": 5,
+        "question": "3rd person?",
+        "options": [
+          "I'm into...",
+          "Nice to meet you!",
+          "She works..."
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l06-elementary-review-q07",
+        "sortOrder": 6,
+        "question": "question?",
+        "options": [
+          "I'm into...",
+          "Nice to meet you!",
+          "What are you doing?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l06-elementary-review-q08",
+        "sortOrder": 7,
+        "question": "continuous?",
+        "options": [
+          "I'm ...ing",
+          "I'm into...",
+          "Nice to meet you!"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  },
+  "elem-m10-l07-final-elementary-mission": {
+    "passingScore": 70,
+    "maxAttempts": 5,
+    "questions": [
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q01",
+        "sortOrder": 0,
+        "question": "intro?",
+        "options": [
+          "I'm into...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q02",
+        "sortOrder": 1,
+        "question": "follow-up?",
+        "options": [
+          "I'm into...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 2
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q03",
+        "sortOrder": 2,
+        "question": "interests?",
+        "options": [
+          "I'm into...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q04",
+        "sortOrder": 3,
+        "question": "habit?",
+        "options": [
+          "I usually...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q05",
+        "sortOrder": 4,
+        "question": "frequency?",
+        "options": [
+          "How often...?",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q06",
+        "sortOrder": 5,
+        "question": "3rd person?",
+        "options": [
+          "Nice to meet you!",
+          "She/He works...",
+          "What do you do?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q07",
+        "sortOrder": 6,
+        "question": "M3?",
+        "options": [
+          "Nice to meet you!",
+          "What are you doing?",
+          "What do you do?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q08",
+        "sortOrder": 7,
+        "question": "now?",
+        "options": [
+          "I'm ...ing",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q09",
+        "sortOrder": 8,
+        "question": "M4?",
+        "options": [
+          "Nice to meet you!",
+          "What did you do yesterday?",
+          "What do you do?"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q10",
+        "sortOrder": 9,
+        "question": "plan?",
+        "options": [
+          "I'm going to...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q11",
+        "sortOrder": 10,
+        "question": "will?",
+        "options": [
+          "I'll...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "contentKey": "elem-m10-l07-final-elementary-mission-q12",
+        "sortOrder": 11,
+        "question": "negative?",
+        "options": [
+          "I'm not going to...",
+          "Nice to meet you!",
+          "What do you do?"
+        ],
+        "correctIndex": 0
+      }
+    ]
+  }
+}

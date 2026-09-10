@@ -1,0 +1,572 @@
+{
+  "version": 2,
+  "levelLabel": "ELEMENTARY",
+  "moduleNumber": 7,
+  "goalPt": "Expressar preferências alimentares com mais detalhe — love, like, prefer, dislike, allergic to, vegetarian.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Almoço com colegas internacionais. Cada um fala o que gosta, prefere e o que não come.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Guided practice — immediate feedback.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can talk about food preferences.",
+    "headlinePt": "Você consegue falar sobre preferências alimentares.",
+    "bodyPt": "",
+    "canDo": [
+      "I love...",
+      "I prefer... to...",
+      "I'm allergic to...",
+      "I'm vegetarian."
+    ],
+    "production": {
+      "introPt": "Descreva suas preferências alimentares: o que ama, prefere e alguma restrição.",
+      "prompts": [
+        {
+          "speaker": "Colleague",
+          "questionEn": "Tell me about your food preferences."
+        }
+      ],
+      "fields": [
+        {
+          "id": "like",
+          "labelPt": "O que você ama/gosta",
+          "prefixEn": "I love",
+          "placeholderEn": "fresh fruit and grilled fish"
+        },
+        {
+          "id": "restrict",
+          "labelPt": "Restrição ou preferência",
+          "prefixEn": "",
+          "placeholderEn": "I'm allergic to peanuts. I prefer tea to coffee."
+        }
+      ],
+      "exampleEn": "I love fresh fruit. I prefer fish to red meat. I'm allergic to peanuts."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "em07-l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Food preferences — detail",
+        "titlePt": "Preferências alimentares — detalhe",
+        "bodyPt": "No START você aprendeu I like coffee. Agora você descreve o que ama, prefere, evita ou não pode comer — com mais precisão."
+      },
+      {
+        "id": "em07-l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team lunch · New restaurant",
+        "scenarioPt": "Almoço com colegas internacionais. Cada um fala o que gosta, prefere e o que não come."
+      },
+      {
+        "id": "em07-l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "What do you usually eat for lunch?",
+        "promptPt": "Colega pergunta sobre almoço.",
+        "options": [
+          {
+            "labelEn": "I usually have a salad or grilled chicken.",
+            "correct": true,
+            "feedbackPt": "Resposta natural com preferência."
+          },
+          {
+            "labelEn": "I am lunch every day.",
+            "correct": false,
+            "feedbackPt": "Verbo errado — use have ou eat."
+          },
+          {
+            "labelEn": "Lunch is my name.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      },
+      {
+        "id": "em07-l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "Do you have any dietary restrictions?",
+        "promptPt": "Garçom pergunta restrições alimentares.",
+        "options": [
+          {
+            "labelEn": "I'm vegetarian, so no meat, please.",
+            "correct": true,
+            "feedbackPt": "Vegetarian + pedido claro."
+          },
+          {
+            "labelEn": "I restriction food.",
+            "correct": false,
+            "feedbackPt": "Gramática incorreta."
+          },
+          {
+            "labelEn": "Yes, I am airport.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          }
+        ]
+      },
+      {
+        "id": "em07-l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Colleague",
+        "promptEn": "Do you like spicy food?",
+        "promptPt": "Pergunta sobre comida picante.",
+        "options": [
+          {
+            "labelEn": "I love it! But my colleague can't eat spicy food.",
+            "correct": true,
+            "feedbackPt": "Love + terceira pessoa."
+          },
+          {
+            "labelEn": "Spicy is my flight.",
+            "correct": false,
+            "feedbackPt": "Sem sentido."
+          },
+          {
+            "labelEn": "I like to spicy.",
+            "correct": false,
+            "feedbackPt": "Like + substantivo, não infinitivo."
+          }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "em07-l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Love / Like / Dislike / Hate",
+        "titlePt": "Love / Like / Dislike / Hate",
+        "introPt": "Escala de preferência — do mais forte ao mais fraco.",
+        "examples": [
+          {
+            "en": "I love pasta.",
+            "pt": "Adoro massa."
+          },
+          {
+            "en": "I like fresh fruit.",
+            "pt": "Gosto de fruta fresca."
+          },
+          {
+            "en": "I don't like olives.",
+            "pt": "Não gosto de azeitonas."
+          },
+          {
+            "en": "I hate cilantro.",
+            "pt": "Odeio coentro."
+          }
+        ]
+      },
+      {
+        "id": "em07-l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Prefer & Would rather",
+        "titlePt": "Preferir",
+        "introPt": "Quando há escolha entre duas opções.",
+        "examples": [
+          {
+            "en": "I prefer tea to coffee.",
+            "pt": "Prefiro chá a café."
+          },
+          {
+            "en": "I'd rather have soup.",
+            "pt": "Prefiro sopa."
+          },
+          {
+            "en": "She prefers fish over meat.",
+            "pt": "Ela prefere peixe a carne."
+          }
+        ]
+      },
+      {
+        "id": "em07-l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Allergies & restrictions",
+        "titlePt": "Alergias e restrições",
+        "introPt": "Informações importantes em restaurantes e viagens.",
+        "examples": [
+          {
+            "en": "I'm allergic to peanuts.",
+            "pt": "Sou alérgico a amendoim."
+          },
+          {
+            "en": "I can't eat dairy.",
+            "pt": "Não posso comer laticínios."
+          },
+          {
+            "en": "I'm vegetarian / vegan.",
+            "pt": "Vegetariano / vegano."
+          },
+          {
+            "en": "No gluten, please.",
+            "pt": "Sem glúten, por favor."
+          }
+        ]
+      },
+      {
+        "id": "em07-l01-learn-cmp",
+        "type": "comparison",
+        "titleEn": "Like vs Would like",
+        "titlePt": "Like vs Would like",
+        "left": {
+          "labelEn": "LIKE · preferência geral",
+          "exampleEn": "I like coffee.",
+          "notePt": "Gosto em geral — hábito."
+        },
+        "right": {
+          "labelEn": "I'D LIKE · pedido agora",
+          "exampleEn": "I'd like a coffee, please.",
+          "notePt": "Pedido no momento — restaurante."
+        },
+        "modelEn": "I like... (general) · I'd like... (order now)",
+        "modelPt": "Like = gosto; Would like = quero agora."
+      },
+      {
+        "id": "em07-l01-learn-mst",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I have allergy with shrimp.",
+        "rightEn": "I'm allergic to shrimp.",
+        "explanationPt": "Alergia usa allergic to, não allergy with. I'm allergic to + alimento."
+      },
+      {
+        "id": "em07-l01-learn-rev",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          {
+            "en": "I love / like / dislike",
+            "pt": "escala de preferência"
+          },
+          {
+            "en": "I prefer... to...",
+            "pt": "preferir entre opções"
+          },
+          {
+            "en": "I'm allergic to...",
+            "pt": "alergia"
+          },
+          {
+            "en": "I'm vegetarian.",
+            "pt": "restrição alimentar"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "em07-l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Read aloud — no audio yet. Pause between lines, then read the full dialogue.",
+        "phrases": [
+          {
+            "en": "I love Italian food."
+          },
+          {
+            "en": "I don't like very spicy dishes."
+          },
+          {
+            "en": "I prefer salad to fries."
+          },
+          {
+            "en": "I'm allergic to shellfish."
+          },
+          {
+            "en": "I'm vegetarian, so no meat, please."
+          },
+          {
+            "en": "Do you have any vegetarian options?"
+          }
+        ],
+        "dialogueEn": "What do you usually eat? — I love fresh salads. I prefer chicken to beef. — Any restrictions? — I'm allergic to nuts. — Do you have vegetarian options? — Yes, we do!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "em07-l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "You can talk about food preferences.",
+        "headlinePt": "Você consegue falar sobre preferências alimentares.",
+        "bodyPt": "",
+        "prompts": [
+          {
+            "speaker": "Colleague",
+            "questionEn": "Tell me about your food preferences."
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "em07-l01-prac-01",
+      "type": "choice",
+      "promptPt": "Forma correta para alergia:",
+      "options": [
+        {
+          "labelEn": "I'm allergic to peanuts.",
+          "correct": true,
+          "feedbackPt": "Allergic to — padrão fixo."
+        },
+        {
+          "labelEn": "I have allergy with peanuts.",
+          "correct": false,
+          "feedbackPt": "Preposição errada."
+        },
+        {
+          "labelEn": "I allergic peanuts.",
+          "correct": false,
+          "feedbackPt": "Falta verbo to be."
+        }
+      ]
+    },
+    {
+      "id": "em07-l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete: Prefiro chá a café.",
+      "templateEn": "I ___ tea to coffee.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "prefer",
+          "correct": true,
+          "feedbackPt": "Prefer X to Y."
+        },
+        {
+          "labelEn": "like",
+          "correct": false,
+          "feedbackPt": "Like não usa to para comparar."
+        },
+        {
+          "labelEn": "want",
+          "correct": false,
+          "feedbackPt": "Want não compara preferências."
+        }
+      ]
+    },
+    {
+      "id": "em07-l01-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte: Não gosto de azeitonas.",
+      "tokens": [
+        "olives.",
+        "like",
+        "don't",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "don't",
+        "like",
+        "olives."
+      ],
+      "feedbackCorrectPt": "I don't like olives.",
+      "feedbackWrongPt": "I don't + like + food."
+    },
+    {
+      "id": "em07-l01-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Waiter: Any dietary restrictions?",
+      "speaker": "You",
+      "contextEn": "Waiter: Any dietary restrictions?",
+      "options": [
+        {
+          "labelEn": "I'm vegetarian, so no meat, please.",
+          "correct": true,
+          "feedbackPt": "Restrição clara."
+        },
+        {
+          "labelEn": "I am very hungry.",
+          "correct": false,
+          "feedbackPt": "Não responde restrições."
+        },
+        {
+          "labelEn": "The check, please.",
+          "correct": false,
+          "feedbackPt": "Conta — contexto errado."
+        }
+      ]
+    },
+    {
+      "id": "em07-l01-prac-05",
+      "type": "choice",
+      "promptPt": "I love pasta significa:",
+      "options": [
+        {
+          "labelEn": "I really enjoy pasta.",
+          "correct": true,
+          "feedbackPt": "Love = adoro."
+        },
+        {
+          "labelEn": "I want pasta now.",
+          "correct": false,
+          "feedbackPt": "Isso seria I'd like pasta."
+        },
+        {
+          "labelEn": "I am pasta.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l01-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete: Adoro comida italiana.",
+      "templateEn": "I ___ Italian food.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "love",
+          "correct": true,
+          "feedbackPt": "Love = adoro."
+        },
+        {
+          "labelEn": "am",
+          "correct": false,
+          "feedbackPt": "I am Italian food — errado."
+        },
+        {
+          "labelEn": "have",
+          "correct": false,
+          "feedbackPt": "Have não expressa preferência forte."
+        }
+      ]
+    },
+    {
+      "id": "em07-l01-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Colleague: Do you like spicy food?",
+      "speaker": "You",
+      "contextEn": "Colleague: Do you like spicy food?",
+      "options": [
+        {
+          "labelEn": "Yes, I love it! But I can't eat too much.",
+          "correct": true,
+          "feedbackPt": "Resposta natural."
+        },
+        {
+          "labelEn": "I prefer gate B12.",
+          "correct": false,
+          "feedbackPt": "Aeroporto — contexto errado."
+        },
+        {
+          "labelEn": "Spicy is my reservation.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "em07-l01-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte: Sou alérgico a amendoim.",
+      "tokens": [
+        "peanuts.",
+        "to",
+        "allergic",
+        "I'm"
+      ],
+      "correctOrder": [
+        "I'm",
+        "allergic",
+        "to",
+        "peanuts."
+      ],
+      "feedbackCorrectPt": "I'm allergic to peanuts.",
+      "feedbackWrongPt": "I'm allergic to + food."
+    },
+    {
+      "id": "em07-l01-prac-09",
+      "type": "choice",
+      "promptPt": "Like vs Would like — pedido no restaurante:",
+      "options": [
+        {
+          "labelEn": "I'd like the salmon, please.",
+          "correct": true,
+          "feedbackPt": "Would like = pedido agora."
+        },
+        {
+          "labelEn": "I like the salmon, please.",
+          "correct": false,
+          "feedbackPt": "Like = preferência geral, não pedido."
+        },
+        {
+          "labelEn": "I am like salmon.",
+          "correct": false,
+          "feedbackPt": "Gramática incorreta."
+        }
+      ]
+    },
+    {
+      "id": "em07-l01-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Waiter: Do you have vegetarian options?",
+      "speaker": "You",
+      "contextEn": "Waiter: Do you have vegetarian options?",
+      "options": [
+        {
+          "labelEn": "Yes, please — what do you recommend?",
+          "correct": true,
+          "feedbackPt": "Resposta educada e útil."
+        },
+        {
+          "labelEn": "I hate everything.",
+          "correct": false,
+          "feedbackPt": "Rude e não ajuda."
+        },
+        {
+          "labelEn": "My flight is delayed.",
+          "correct": false,
+          "feedbackPt": "Viagem — contexto errado."
+        }
+      ]
+    }
+  ]
+}
