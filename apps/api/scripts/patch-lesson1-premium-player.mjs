@@ -16,7 +16,7 @@ const playerDataDir = path.join(
 );
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-manifest.manifestVersion = '1.1.4';
+manifest.manifestVersion = '2.0.0';
 
 const module1 = manifest.modules[0];
 if (!module1) throw new Error('Módulo 1 não encontrado.');
@@ -31,4 +31,4 @@ for (const lesson of module1.lessons) {
 }
 
 fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
-console.log(`Manifest v1.1.3 — liveMeta.player injetado em ${injected} lição(ões).`);
+console.log(`Manifest ${manifest.manifestVersion} — liveMeta.player injetado em ${injected} lição(ões).`);

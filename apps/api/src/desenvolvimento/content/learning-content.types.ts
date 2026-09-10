@@ -3,6 +3,16 @@ import type {
   LearningLessonType,
 } from '../desenvolvimento.constants';
 
+/** Shell curricular START v2 — metadados antes do Player v2 completo */
+export type LearningCurriculumShell = {
+  objectivePt: string;
+  outcomePt: string;
+  coreConcepts: string[];
+  prerequisites: string[];
+  lessonKind: 'lesson' | 'challenge';
+  playerVersionTarget: 2;
+};
+
 /** Metodologia LIVE — campos pedagógicos por lição oficial */
 export type LearningLiveMeta = {
   methodology?: 'LIVE';
@@ -12,6 +22,8 @@ export type LearningLiveMeta = {
   buildPractice?: string;
   verify?: string;
   executeMission?: string;
+  /** Shell curricular (lições ainda sem Player v2 populado) */
+  curriculum?: LearningCurriculumShell;
   /** Experiência premium do player (versionado, backward-compatible) */
   player?: Record<string, unknown>;
 };
