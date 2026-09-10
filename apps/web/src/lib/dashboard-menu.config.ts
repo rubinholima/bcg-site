@@ -86,6 +86,7 @@ import {
   HeartPulse,
   UserPen,
   ScanSearch,
+  BookOpen,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
@@ -1328,6 +1329,42 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: LayoutDashboard,
         moduleSlug: "paginas",
         accessSlug: "assessoria_imprensa",
+      },
+    ],
+  },
+  {
+    slug: "desenvolvimento",
+    label: "Desenvolvimento",
+    icon: BookOpen,
+    moduleSlug: "desenvolvimento",
+    children: [
+      {
+        slug: "desenvolvimento_hub",
+        label: DEPT_HUB_MENU_LABEL,
+        href: "/dashboard/desenvolvimento",
+        icon: LayoutDashboard,
+        moduleSlug: "desenvolvimento",
+      },
+      {
+        slug: "desenvolvimento_meus_cursos",
+        label: "Meus cursos",
+        href: "/dashboard/desenvolvimento/meus-cursos",
+        icon: BookOpen,
+        moduleSlug: "desenvolvimento",
+      },
+      {
+        slug: "desenvolvimento_catalogo",
+        label: "Catálogo",
+        href: "/dashboard/desenvolvimento/catalogo",
+        icon: FolderOpen,
+        moduleSlug: "desenvolvimento",
+      },
+      {
+        slug: "desenvolvimento_admin",
+        label: "Administração",
+        href: "/dashboard/desenvolvimento/admin",
+        icon: Settings,
+        moduleSlug: "desenvolvimento__desenvolvimento_admin",
       },
     ],
   },

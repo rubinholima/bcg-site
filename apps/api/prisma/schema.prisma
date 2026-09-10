@@ -33,6 +33,11 @@ model User {
   announcementsCreated   PlatformAnnouncement[] @relation("AnnouncementCreatedBy")
   announcementsTargeted  PlatformAnnouncement[] @relation("AnnouncementTargetUser")
   announcementReceipts   PlatformAnnouncementReceipt[]
+  learningCoursesCreated     LearningCourse[] @relation("LearningCourseCreatedBy")
+  learningAssignmentsTarget  LearningAssignment[] @relation("LearningAssignmentTargetUser")
+  learningAssignmentsCreated LearningAssignment[] @relation("LearningAssignmentCreatedBy")
+  learningEnrollments        LearningEnrollment[]
+  learningQuizAttempts       LearningQuizAttempt[]
 }
 
 model UserTenant {
@@ -187,6 +192,8 @@ model Tenant {
   nursingSessions              NursingSession[]
   medicalDepartures            PlayerMedicalDeparture[]
   presenceSessions             UserPresenceSession[]
+  learningCourses              LearningCourse[]
+  learningAssignments          LearningAssignment[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -4137,5 +4144,158 @@ model PlatformAnnouncementReceipt {
   readAt         DateTime?
   dismissedAt    DateTime?
   @@unique([announcementId, userId])
+  @@index([userId])
+}
+
+// ─── Desenvolvimento (LMS interno V1) ───────────────────────────────────────
+
+model LearningCourse {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  title           String
+  subtitle        String?
+  description     String?  @db.Text
+  coverImageKey   String?
+  coverImageUrl   String?
+  category        String?
+  /// draft | published | archived
+  status          String   @default("draft")
+  publishedAt     DateTime?
+  createdByUserId String?
+  createdBy       User?    @relation("LearningCourseCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  modules         LearningCourseModule[]
+  assignments     LearningAssignment[]
+  enrollments     LearningEnrollment[]
+  @@index([tenantId, status])
+  @@index([status])
+}
+
+model LearningCourseModule {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  sortOrder Int      @default(0)
+  lessons   LearningLesson[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([courseId, sortOrder])
+}
+
+model LearningLesson {
+  id               String   @id @default(cuid())
+  moduleId         String
+  module           LearningCourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title            String
+  sortOrder        Int      @default(0)
+  /// VIDEO | TEXT | DOCUMENT | LINK | QUIZ
+  lessonType       String
+  contentHtml      String?  @db.Text
+  fileKey          String?
+  fileUrl          String?
+  externalUrl      String?
+  mimeType         String?
+  estimatedMinutes Int?
+  quiz             LearningQuiz?
+  progress         LearningLessonProgress[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  @@index([moduleId, sortOrder])
+}
+
+model LearningAssignment {
+  id              String   @id @default(cuid())
+  courseId        String
+  course          LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// Escopo da atribuição (obrigatório para all_tenant e role)
+  tenantId        String?
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  /// all_tenant | role | user | tenant
+  targetMode      String
+  targetRoleSlug  String?
+  targetUserId    String?
+  targetUser      User?    @relation("LearningAssignmentTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  mandatory       Boolean  @default(false)
+  dueAt           DateTime?
+  active          Boolean  @default(true)
+  createdByUserId String?
+  createdBy       User?    @relation("LearningAssignmentCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  enrollments     LearningEnrollment[]
+  @@index([courseId, active])
+  @@index([tenantId])
+}
+
+model LearningEnrollment {
+  id             String   @id @default(cuid())
+  courseId       String
+  course         LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignmentId   String?
+  assignment     LearningAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  /// assigned | in_progress | completed | overdue
+  status         String   @default("assigned")
+  enrolledAt     DateTime @default(now())
+  completedAt    DateTime?
+  progressPct    Int      @default(0)
+  lessonProgress LearningLessonProgress[]
+  quizAttempts   LearningQuizAttempt[]
+  @@unique([courseId, userId])
+  @@index([userId, status])
+}
+
+model LearningLessonProgress {
+  id           String   @id @default(cuid())
+  enrollmentId String
+  enrollment   LearningEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lessonId     String
+  lesson       LearningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  /// not_started | in_progress | completed
+  status       String   @default("not_started")
+  progressPct  Int      @default(0)
+  lastSeenAt   DateTime?
+  completedAt  DateTime?
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId])
+}
+
+model LearningQuiz {
+  id           String   @id @default(cuid())
+  lessonId     String   @unique
+  lesson       LearningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  passingScore Int      @default(70)
+  maxAttempts  Int      @default(3)
+  questions    LearningQuizQuestion[]
+  attempts     LearningQuizAttempt[]
+}
+
+model LearningQuizQuestion {
+  id         String @id @default(cuid())
+  quizId     String
+  quiz       LearningQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  sortOrder  Int    @default(0)
+  question   String @db.Text
+  payload    Json
+  @@index([quizId, sortOrder])
+}
+
+model LearningQuizAttempt {
+  id           String   @id @default(cuid())
+  quizId       String
+  quiz         LearningQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  enrollmentId String
+  enrollment   LearningEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score        Int
+  passed       Boolean
+  answers      Json
+  submittedAt  DateTime @default(now())
+  @@index([enrollmentId, quizId])
   @@index([userId])
 }
