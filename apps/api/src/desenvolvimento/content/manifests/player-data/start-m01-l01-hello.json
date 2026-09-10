@@ -1,95 +1,358 @@
 {
-  "version": 1,
+  "version": 2,
   "levelLabel": "START",
   "moduleNumber": 1,
-  "goalPt": "Ao final desta lição, você consegue cumprimentar alguém de forma adequada e responder a How are you? em uma interação curta e natural.",
+  "goalPt": "Cumprimentar alguém de forma adequada, responder a How are you? e encerrar a conversa de forma natural — com o cumprimento certo para o horário.",
   "steps": [
     { "id": "context", "label": "Context", "labelPt": "Contexto" },
     { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
-    { "id": "imitate", "label": "Listen / Imitate", "labelPt": "Ouça / Imite" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
     { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
     { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
     { "id": "mission", "label": "Mission", "labelPt": "Missão" }
   ],
   "context": {
-    "scenarioPt": "Você chega ao trabalho de manhã e encontra um colega que fala inglês.",
-    "dialogue": [
-      { "speaker": "Alex", "textEn": "Good morning!", "audioKey": "start-m01-l01-a03" },
-      { "speaker": "Carlos", "textEn": "Good morning!", "audioKey": "start-m01-l01-a03" },
-      { "speaker": "Alex", "textEn": "How are you?", "audioKey": "start-m01-l01-a04" },
-      { "speaker": "Carlos", "textEn": "I'm good, thank you. And you?", "audioKey": "start-m01-l01-a05" },
-      { "speaker": "Alex", "textEn": "I'm great, thanks!", "audioKey": "start-m01-l01-a06" }
-    ]
+    "scenarioPt": "Você chega ao trabalho de manhã e encontra Alex, colega que fala inglês.",
+    "dialogue": []
   },
   "learn": {
-    "introPt": "Use unidades de comunicação completas — em inglês você reproduz a frase inteira, não palavras soltas.",
-    "phrases": [
-      { "en": "Hi! / Hello!", "pt": "oi / olá" },
-      { "en": "Good morning!", "pt": "bom dia (até ~meio-dia)" },
-      { "en": "Good afternoon!", "pt": "boa tarde" },
-      { "en": "Good evening!", "pt": "boa noite (chegada)" },
-      { "en": "How are you?", "pt": "como você está?" },
-      { "en": "I'm good, thank you.", "pt": "estou bem, obrigado." },
-      { "en": "I'm great, thanks!", "pt": "estou ótimo! (informal)" },
-      { "en": "And you?", "pt": "e você?" },
-      { "en": "Goodbye! / See you later!", "pt": "tchau / até mais" }
-    ],
-    "languageTip": "Good morning depende do horário — pela manhã use Good morning, não Good evening."
+    "introPt": "",
+    "phrases": []
   },
   "imitate": {
-    "introPt": "Repita em voz alta. Pausa curta entre cada expressão, depois o diálogo completo.",
-    "phrases": [
-      { "en": "Hi!", "audioKey": "start-m01-l01-a01" },
-      { "en": "Hello!", "audioKey": "start-m01-l01-a02" },
-      { "en": "Good morning!", "audioKey": "start-m01-l01-a03" },
-      { "en": "How are you?", "audioKey": "start-m01-l01-a04" },
-      { "en": "I'm good, thank you.", "audioKey": "start-m01-l01-a05" },
-      { "en": "And you?", "audioKey": "start-m01-l01-a06" }
-    ],
-    "dialogueEn": "Good morning! — Good morning! — How are you? — I'm good, thank you. And you? — I'm great, thanks!",
-    "dialogueAudioKey": "start-m01-l01-a07"
+    "introPt": "Leia em voz alta e repita cada frase.",
+    "phrases": []
   },
   "practice": {
-    "introPt": "Escolha a resposta mais natural. Feedback imediato — sem nota.",
-    "items": [
-      {
-        "id": "start-m01-l01-p01",
-        "promptPt": "São 08:30 no escritório. Qual cumprimento?",
-        "options": [
-          { "labelEn": "Good morning!", "correct": true, "feedbackPt": "Correto — manhã pede Good morning." },
-          { "labelEn": "Good evening!", "correct": false, "feedbackPt": "Good evening é fim de tarde ou noite." },
-          { "labelEn": "Goodbye!", "correct": false, "feedbackPt": "Goodbye encerra a conversa, não cumprimenta." }
-        ]
-      },
-      {
-        "id": "start-m01-l01-p02",
-        "promptPt": "Como responder de forma educada a \"How are you?\"",
-        "options": [
-          { "labelEn": "I'm good, thank you.", "correct": true, "feedbackPt": "Resposta natural e educada." },
-          { "labelEn": "My name is Carlos.", "correct": false, "feedbackPt": "Isso responde ao nome, não ao how are you." },
-          { "labelEn": "I live in Boston.", "correct": false, "feedbackPt": "Isso responde onde mora, não como está." }
-        ]
-      },
-      {
-        "id": "start-m01-l01-p03",
-        "promptPt": "17h no corredor — cumprimento adequado:",
-        "options": [
-          { "labelEn": "Good afternoon!", "correct": true, "feedbackPt": "Tarde combina com Good afternoon." },
-          { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Manhã já passou às 17h." },
-          { "labelEn": "See you later!", "correct": false, "feedbackPt": "Isso é despedida, não abertura." }
-        ]
-      }
-    ]
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
   },
   "mission": {
     "headlineEn": "You can greet someone in English.",
     "headlinePt": "Você consegue cumprimentar alguém em inglês.",
-    "bodyPt": "Missão: cumprimente um colega, pergunte How are you?, responda à mesma pergunta e encerre de forma natural com Goodbye ou See you later.",
+    "bodyPt": "",
     "canDo": [
       "Good morning!",
       "How are you?",
       "I'm good, thank you. And you?",
       "See you later!"
+    ],
+    "production": {
+      "introPt": "Responda como se Alex estivesse falando com você. Monte um cumprimento completo em inglês.",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "Good morning!" },
+        { "speaker": "Alex", "questionEn": "How are you?" },
+        { "speaker": "Alex", "questionEn": "See you later!" }
+      ],
+      "fields": [
+        { "id": "greeting", "labelPt": "Cumprimento (horário)", "prefixEn": "", "placeholderEn": "Good morning!" },
+        { "id": "howAreYou", "labelPt": "Resposta a How are you?", "prefixEn": "", "placeholderEn": "I'm good, thank you. And you?" },
+        { "id": "closing", "labelPt": "Despedida", "prefixEn": "", "placeholderEn": "See you later!" }
+      ],
+      "exampleEn": "Good morning! — Good morning! — How are you? — I'm good, thank you. And you? — See you later!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "l01-ctx-01",
+        "type": "intro",
+        "titleEn": "Your first greeting",
+        "titlePt": "Seu primeiro cumprimento",
+        "bodyPt": "Você chega ao escritório de manhã. Alex, colega internacional, está no corredor. Nesta lição, você aprende a cumprimentar, perguntar como a pessoa está e se despedir — tudo em inglês."
+      },
+      {
+        "id": "l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office hallway · Morning · Real life",
+        "scenarioPt": "São 08:30. Alex vê você chegando e abre a conversa com um sorriso."
+      },
+      {
+        "id": "l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Good morning!",
+        "promptPt": "Alex cumprimenta de manhã. Como você responde?",
+        "options": [
+          { "labelEn": "Good morning!", "correct": true, "feedbackPt": "Resposta natural — repita o cumprimento do horário." },
+          { "labelEn": "Good evening!", "correct": false, "feedbackPt": "Evening é fim de tarde/noite — agora é manhã." },
+          { "labelEn": "Good night!", "correct": false, "feedbackPt": "Good night é despedida à noite, não cumprimento de manhã." }
+        ]
+      },
+      {
+        "id": "l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "How are you?",
+        "promptPt": "Alex pergunta como você está. Melhor resposta:",
+        "options": [
+          { "labelEn": "I'm good, thank you. And you?", "correct": true, "feedbackPt": "Resposta educada e natural — responde e devolve a pergunta." },
+          { "labelEn": "My name is Carlos.", "correct": false, "feedbackPt": "Isso responde ao nome, não a how are you." },
+          { "labelEn": "I live in Boston.", "correct": false, "feedbackPt": "Isso fala de moradia, não de como você está." }
+        ]
+      },
+      {
+        "id": "l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I'm great, thanks! See you later!",
+        "promptPt": "Alex se despede. Como você encerra de forma natural?",
+        "options": [
+          { "labelEn": "See you later!", "correct": true, "feedbackPt": "Despedida informal e comum no trabalho." },
+          { "labelEn": "How are you?", "correct": false, "feedbackPt": "How are you abre conversa — Alex já está se despedindo." },
+          { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Good morning cumprimenta — não encerra a conversa." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Hi / Hello",
+        "titlePt": "Oi / Olá",
+        "introPt": "Formas universais de cumprimentar — funcionam a qualquer hora. Hi é mais informal; Hello um pouco mais neutro.",
+        "examples": [
+          { "en": "Hi!", "pt": "informal, comum" },
+          { "en": "Hello!", "pt": "neutro, educado" },
+          { "en": "Hi, Alex!", "pt": "com nome" },
+          { "en": "Hello, everyone!", "pt": "grupo" }
+        ]
+      },
+      {
+        "id": "l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Time of day",
+        "titlePt": "Cumprimento por horário",
+        "introPt": "Em inglês, o cumprimento muda conforme o horário — escolha a frase certa para o momento.",
+        "examples": [
+          { "en": "Good morning!", "pt": "até ~meio-dia" },
+          { "en": "Good afternoon!", "pt": "meio-dia até ~17h–18h" },
+          { "en": "Good evening!", "pt": "fim de tarde / chegada à noite" },
+          { "en": "Hi! / Hello!", "pt": "qualquer hora — sempre ok" }
+        ]
+      },
+      {
+        "id": "l01-learn-03",
+        "type": "comparison",
+        "titleEn": "Morning vs Evening",
+        "titlePt": "Manhã vs fim de tarde",
+        "left": {
+          "labelEn": "MORNING · até ~12h",
+          "exampleEn": "Good morning!",
+          "notePt": "Use de manhã ao chegar ou encontrar alguém cedo."
+        },
+        "right": {
+          "labelEn": "EVENING · fim de tarde / noite",
+          "exampleEn": "Good evening!",
+          "notePt": "Use ao chegar à noite — NÃO confunda com Good night (despedida)."
+        },
+        "modelEn": "Good morning at 8 AM · Good evening at 7 PM",
+        "modelPt": "O horário define o cumprimento — não traduza 'boa noite' como greeting."
+      },
+      {
+        "id": "l01-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "How are you?",
+        "titlePt": "Como você está?",
+        "introPt": "Pergunta social muito comum após o cumprimento. Responda curto e educado — e devolva com And you?",
+        "examples": [
+          { "en": "How are you?", "pt": "pergunta" },
+          { "en": "I'm good, thank you.", "pt": "estou bem" },
+          { "en": "I'm great, thanks!", "pt": "estou ótimo (informal)" },
+          { "en": "I'm fine, thank you.", "pt": "estou bem (formal)" },
+          { "en": "And you?", "pt": "e você?" }
+        ]
+      },
+      {
+        "id": "l01-learn-05",
+        "type": "language_focus",
+        "titleEn": "Thank you / Thanks",
+        "titlePt": "Obrigado — formal e informal",
+        "items": [
+          { "formalEn": "I'm good, thank you.", "naturalEn": "I'm good, thanks!", "notePt": "Thank you = mais formal; thanks = mais comum no dia a dia." },
+          { "formalEn": "Thank you very much.", "naturalEn": "Thanks a lot!", "notePt": "Ambos funcionam — thanks é mais rápido na fala." }
+        ],
+        "tipPt": "Depois de responder How are you?, adicione thank you ou thanks — soa educado e natural."
+      },
+      {
+        "id": "l01-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "Nice to see you / Goodbye",
+        "titlePt": "Prazer em ver / Despedida",
+        "introPt": "Nice to see you = reencontro (já conhece a pessoa). Goodbye e See you later encerram a conversa.",
+        "examples": [
+          { "en": "Nice to see you!", "pt": "reencontro" },
+          { "en": "Good to see you!", "pt": "variação comum" },
+          { "en": "Goodbye!", "pt": "despedida neutra" },
+          { "en": "See you later!", "pt": "até mais (informal)" },
+          { "en": "Have a good day!", "pt": "desejo ao partir" }
+        ]
+      },
+      {
+        "id": "l01-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "Good night! (as a morning greeting at 8 AM)",
+        "rightEn": "Good morning!",
+        "explanationPt": "Good night em inglês é despedida antes de dormir — NÃO é cumprimento. De manhã use Good morning. Good evening cumprimenta à noite (chegada); Good night encerra o dia."
+      },
+      {
+        "id": "l01-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Hi! / Hello!", "pt": "cumprimento universal" },
+          { "en": "Good morning!", "pt": "manhã" },
+          { "en": "Good afternoon!", "pt": "tarde" },
+          { "en": "How are you?", "pt": "pergunta social" },
+          { "en": "I'm good, thank you.", "pt": "resposta educada" },
+          { "en": "And you?", "pt": "devolve a pergunta" },
+          { "en": "See you later!", "pt": "despedida" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia em voz alta, pausa curta entre frases. Depois leia o diálogo completo.",
+        "phrases": [
+          { "en": "Hi!" },
+          { "en": "Good morning!" },
+          { "en": "How are you?" },
+          { "en": "I'm good, thank you." },
+          { "en": "And you?" },
+          { "en": "I'm great, thanks!" },
+          { "en": "Nice to see you!" },
+          { "en": "See you later!" }
+        ],
+        "dialogueEn": "Good morning! — Good morning! — How are you? — I'm good, thank you. And you? — I'm great, thanks! — See you later!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — greet Alex.",
+        "headlinePt": "Sua vez — cumprimente Alex.",
+        "bodyPt": "Alex cumprimentou, perguntou como você está e se despediu. Agora monte sua resposta completa em inglês.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "Good morning!" },
+          { "speaker": "Alex", "questionEn": "How are you?" },
+          { "speaker": "Alex", "questionEn": "See you later!" }
+        ]
+      }
     ]
-  }
+  },
+  "practiceInteractions": [
+    {
+      "id": "l01-prac-01",
+      "type": "choice",
+      "promptPt": "São 08:30 no escritório. Qual cumprimento?",
+      "options": [
+        { "labelEn": "Good morning!", "correct": true, "feedbackPt": "Manhã pede Good morning." },
+        { "labelEn": "Good evening!", "correct": false, "feedbackPt": "Evening é fim de tarde ou noite." },
+        { "labelEn": "Good night!", "correct": false, "feedbackPt": "Good night é despedida, não cumprimento de manhã." }
+      ]
+    },
+    {
+      "id": "l01-prac-02",
+      "type": "choice",
+      "promptPt": "Como responder de forma educada a \"How are you?\"",
+      "options": [
+        { "labelEn": "I'm good, thank you.", "correct": true, "feedbackPt": "Resposta natural e educada." },
+        { "labelEn": "My name is Carlos.", "correct": false, "feedbackPt": "Isso responde ao nome, não ao how are you." },
+        { "labelEn": "I live in Boston.", "correct": false, "feedbackPt": "Isso responde onde mora, não como está." }
+      ]
+    },
+    {
+      "id": "l01-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete a pergunta social mais comum:",
+      "templateEn": "How ___ you?",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "are", "correct": true, "feedbackPt": "How are you? — padrão fixo." },
+        { "labelEn": "is", "correct": false, "feedbackPt": "Com you, use are — não is." },
+        { "labelEn": "do", "correct": false, "feedbackPt": "Do não combina nesta pergunta." }
+      ]
+    },
+    {
+      "id": "l01-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte a resposta educada:",
+      "tokens": ["good,", "I'm", "thank", "you."],
+      "correctOrder": ["I'm", "good,", "thank", "you."],
+      "feedbackCorrectPt": "I'm good, thank you. — ordem natural.",
+      "feedbackWrongPt": "A ordem correta é I'm + good + thank you."
+    },
+    {
+      "id": "l01-prac-05",
+      "type": "dialogue_complete",
+      "promptPt": "Alex diz Good morning! — você responde:",
+      "speaker": "You",
+      "contextEn": "Alex: Good morning!",
+      "options": [
+        { "labelEn": "Good morning!", "correct": true, "feedbackPt": "Repita o cumprimento do horário." },
+        { "labelEn": "Good night!", "correct": false, "feedbackPt": "Good night é despedida, não cumprimento de manhã." },
+        { "labelEn": "How are you?", "correct": false, "feedbackPt": "Funciona depois — primeiro responda ao cumprimento." }
+      ]
+    },
+    {
+      "id": "l01-prac-06",
+      "type": "choice",
+      "promptPt": "17h no corredor — cumprimento adequado:",
+      "options": [
+        { "labelEn": "Good afternoon!", "correct": true, "feedbackPt": "Tarde combina com Good afternoon." },
+        { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Manhã já passou às 17h." },
+        { "labelEn": "See you later!", "correct": false, "feedbackPt": "Isso é despedida, não abertura." }
+      ]
+    },
+    {
+      "id": "l01-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Devolva a pergunta depois de responder:",
+      "templateEn": "I'm great, thanks! ___ you?",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "And", "correct": true, "feedbackPt": "And you? — devolve a pergunta de forma natural." },
+        { "labelEn": "What", "correct": false, "feedbackPt": "What you? não existe — use And you?" },
+        { "labelEn": "How", "correct": false, "feedbackPt": "How you? está incompleto — falta are." }
+      ]
+    },
+    {
+      "id": "l01-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte a despedida informal:",
+      "tokens": ["later!", "See", "you"],
+      "correctOrder": ["See", "you", "later!"],
+      "feedbackCorrectPt": "See you later! — ordem fixa.",
+      "feedbackWrongPt": "A ordem em inglês é See + you + later!"
+    },
+    {
+      "id": "l01-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Alex pergunta How are you? — melhor resposta completa:",
+      "speaker": "You",
+      "contextEn": "Alex: How are you?",
+      "options": [
+        { "labelEn": "I'm good, thank you. And you?", "correct": true, "feedbackPt": "Responde e devolve — padrão real." },
+        { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Cumprimento, não resposta a how are you." },
+        { "labelEn": "Nice to meet you.", "correct": false, "feedbackPt": "Prazer em conhecer — contexto diferente." }
+      ]
+    },
+    {
+      "id": "l01-prac-10",
+      "type": "choice",
+      "promptPt": "Reencontro com colega que você já conhece:",
+      "options": [
+        { "labelEn": "Nice to see you!", "correct": true, "feedbackPt": "Reencontro — já se conhecem." },
+        { "labelEn": "Nice to meet you!", "correct": false, "feedbackPt": "Meet = primeiro encontro; see = reencontro." },
+        { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Pergunta nome — não faz sentido se já conhece." }
+      ]
+    }
+  ]
 }

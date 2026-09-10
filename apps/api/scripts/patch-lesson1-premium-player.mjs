@@ -16,7 +16,7 @@ const playerDataDir = path.join(
 );
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-manifest.manifestVersion = '2.0.0';
+manifest.manifestVersion = '2.1.0';
 
 const module1 = manifest.modules[0];
 if (!module1) throw new Error('Módulo 1 não encontrado.');

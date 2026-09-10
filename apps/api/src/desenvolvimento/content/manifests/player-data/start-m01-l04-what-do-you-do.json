@@ -1,91 +1,372 @@
 {
-  "version": 1,
+  "version": 2,
   "levelLabel": "START",
   "moduleNumber": 1,
-  "goalPt": "Explicar de forma simples o que você faz no trabalho e devolver a pergunta.",
+  "goalPt": "Perguntar e responder sobre trabalho, cargo e área — e devolver a pergunta com What about you?",
   "steps": [
     { "id": "context", "label": "Context", "labelPt": "Contexto" },
     { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
-    { "id": "imitate", "label": "Listen / Imitate", "labelPt": "Ouça / Imite" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
     { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
     { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
     { "id": "mission", "label": "Mission", "labelPt": "Missão" }
   ],
   "context": {
-    "scenarioPt": "Na mesma conversa, Jamie pergunta sobre seu trabalho — vale para escritório, clube ou qualquer empresa.",
-    "dialogue": [
-      { "speaker": "Jamie", "textEn": "What do you do?" },
-      { "speaker": "Carlos", "textEn": "I work for a football club. I'm responsible for logistics." },
-      { "speaker": "Jamie", "textEn": "Interesting! I work in marketing. What about you, Alex?" }
-    ]
+    "scenarioPt": "A conversa com Jamie continua — agora sobre trabalho.",
+    "dialogue": []
   },
   "learn": {
-    "introPt": "Monte sua resposta com padrões simples — organização, área e responsabilidade.",
-    "phrases": [
-      { "en": "What do you do?", "pt": "o que você faz? (profissão/função)" },
-      { "en": "I work for...", "pt": "trabalho para… (empresa/organização)" },
-      { "en": "I work at...", "pt": "trabalho em… (local)" },
-      { "en": "I work in...", "pt": "trabalho na área de…" },
-      { "en": "I'm a...", "pt": "sou um(a)… (cargo/profissão)" },
-      { "en": "I'm responsible for...", "pt": "sou responsável por…" },
-      { "en": "I work with...", "pt": "trabalho com… (equipe/área)" },
-      { "en": "What about you?", "pt": "e você? (devolve o tema)" }
-    ],
-    "languageTip": "I work for = organização; I work in = área/setor; I'm responsible for = sua função específica."
+    "introPt": "",
+    "phrases": []
   },
   "imitate": {
-    "introPt": "Repita em voz alta. Adapte à sua área real de trabalho.",
-    "phrases": [
-      { "en": "What do you do?", "audioKey": "start-m01-l04-a01" },
-      { "en": "I work for a football club.", "audioKey": "start-m01-l04-a02" },
-      { "en": "I'm a coordinator.", "audioKey": "start-m01-l04-a03" },
-      { "en": "I'm responsible for logistics.", "audioKey": "start-m01-l04-a04" },
-      { "en": "I work with the operations team.", "audioKey": "start-m01-l04-a05" },
-      { "en": "What about you?", "audioKey": "start-m01-l04-a06" }
-    ],
-    "dialogueEn": "What do you do? — I work for a football club. I'm responsible for logistics. — I work in marketing. What about you?"
+    "introPt": "Leia em voz alta e repita cada frase.",
+    "phrases": []
   },
   "practice": {
-    "introPt": "Escolha a resposta mais natural. Feedback imediato — sem nota.",
-    "items": [
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Talk about your job.",
+    "headlinePt": "Fale sobre seu trabalho.",
+    "bodyPt": "",
+    "canDo": [
+      "What do you do?",
+      "I'm a developer.",
+      "I work in technology.",
+      "I work for a company.",
+      "I work with the team.",
+      "Where do you work?",
+      "What about you?"
+    ],
+    "production": {
+      "introPt": "Jamie pergunta sobre seu trabalho. Descreva seu cargo em duas frases em inglês e devolva a pergunta.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "What do you do?" }
+      ],
+      "fields": [
+        { "id": "sentence1", "labelPt": "Primeira frase — cargo ou profissão", "prefixEn": "I'm a", "placeholderEn": "developer" },
+        { "id": "sentence2", "labelPt": "Segunda frase — área, empresa ou equipe", "prefixEn": "I work in", "placeholderEn": "technology" },
+        { "id": "return", "labelPt": "Devolver a pergunta", "prefixEn": "", "placeholderEn": "What about you?" }
+      ],
+      "exampleEn": "I'm a developer. I work in technology. What about you?"
+    }
+  },
+  "stepScreens": {
+    "context": [
       {
-        "id": "start-m01-l04-p01",
-        "promptPt": "Perguntar a profissão ou função de alguém:",
+        "id": "l04-ctx-01",
+        "type": "intro",
+        "titleEn": "Work comes up",
+        "titlePt": "O assunto vira trabalho",
+        "bodyPt": "Depois de origem e moradia, Jamie quer saber o que você faz no dia a dia. Vale para escritório, clube, hospital ou qualquer empresa."
+      },
+      {
+        "id": "l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office café · Same conversation",
+        "scenarioPt": "Jamie inclina a cabeça com curiosidade e muda o tema para trabalho."
+      },
+      {
+        "id": "l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What do you do?",
+        "promptPt": "Jamie pergunta sua profissão ou função.",
         "options": [
-          { "labelEn": "What do you do?", "correct": true, "feedbackPt": "Pergunta padrão sobre trabalho." },
-          { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Pergunta moradia, não trabalho." },
-          { "labelEn": "Who is this?", "correct": false, "feedbackPt": "Pergunta identidade, não profissão." }
+          { "labelEn": "I'm a developer.", "correct": true, "feedbackPt": "Resposta natural — cargo com I'm a." },
+          { "labelEn": "I live in Boston.", "correct": false, "feedbackPt": "Live fala moradia, não trabalho." },
+          { "labelEn": "I'm from Brazil.", "correct": false, "feedbackPt": "From fala origem, não profissão." }
         ]
       },
       {
-        "id": "start-m01-l04-p02",
-        "promptPt": "Trabalhar para uma organização:",
+        "id": "l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Where do you work?",
+        "promptPt": "Jamie quer saber onde você trabalha.",
         "options": [
-          { "labelEn": "I work for a company.", "correct": true, "feedbackPt": "Work for = empregador/organização." },
-          { "labelEn": "I live for a company.", "correct": false, "feedbackPt": "Live não combina com company neste sentido." },
-          { "labelEn": "I am from a company.", "correct": false, "feedbackPt": "From indica origem, não emprego." }
+          { "labelEn": "I work at a tech company.", "correct": true, "feedbackPt": "Local ou organização — I work at." },
+          { "labelEn": "I'm a tech company.", "correct": false, "feedbackPt": "I'm a + profissão, não empresa." },
+          { "labelEn": "I work Brazilian.", "correct": false, "feedbackPt": "Forma gramatical incorreta." }
         ]
       },
       {
-        "id": "start-m01-l04-p03",
-        "promptPt": "Devolver a pergunta sobre trabalho:",
+        "id": "l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Interesting! I work in marketing. What about you?",
+        "promptPt": "Jamie conta a área dela e devolve a pergunta. Como responder?",
         "options": [
-          { "labelEn": "What about you?", "correct": true, "feedbackPt": "Devolve o tema de forma natural." },
-          { "labelEn": "Where are you from?", "correct": false, "feedbackPt": "Muda o assunto para origem." },
-          { "labelEn": "Nice to meet you.", "correct": false, "feedbackPt": "Não devolve a pergunta." }
+          { "labelEn": "I work with the operations team.", "correct": true, "feedbackPt": "Descreve com quem trabalha — resposta natural." },
+          { "labelEn": "Where are you from?", "correct": false, "feedbackPt": "Muda o assunto — Jamie já falou dela." },
+          { "labelEn": "Goodbye!", "correct": false, "feedbackPt": "Encerra cedo demais a conversa." }
+        ]
+      },
+      {
+        "id": "l04-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "So you're an administrator?",
+        "promptPt": "Jamie confirma o que entendeu do seu cargo.",
+        "options": [
+          { "labelEn": "Yes, I'm an administrator.", "correct": true, "feedbackPt": "Confirmação clara com I'm a/an." },
+          { "labelEn": "Yes, I work administrator.", "correct": false, "feedbackPt": "Work precisa de in/for/at/with — não combina direto com cargo." },
+          { "labelEn": "Yes, I administrator.", "correct": false, "feedbackPt": "Falta verbo — use I'm a administrator." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "What do you do?",
+        "titlePt": "O que você faz?",
+        "introPt": "Pergunta padrão sobre profissão ou função no trabalho.",
+        "examples": [
+          { "en": "What do you do?", "pt": "pergunta" },
+          { "en": "What do you do for work?", "pt": "variação mais explícita" },
+          { "en": "I'm a coach.", "pt": "resposta — cargo" },
+          { "en": "I work in administration.", "pt": "resposta — área" }
+        ]
+      },
+      {
+        "id": "l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "I'm a…",
+        "titlePt": "Sou um(a)…",
+        "introPt": "Use para dizer cargo ou profissão diretamente.",
+        "examples": [
+          { "en": "I'm a coach.", "pt": "treinador(a)" },
+          { "en": "I'm a developer.", "pt": "desenvolvedor(a)" },
+          { "en": "I'm a physiotherapist.", "pt": "fisioterapeuta" },
+          { "en": "I'm an administrator.", "pt": "administrador(a)" }
+        ]
+      },
+      {
+        "id": "l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "I work in / for / at",
+        "titlePt": "Trabalho em / para / no",
+        "introPt": "Três padrões comuns — cada um com nuance diferente.",
+        "examples": [
+          { "en": "I work in marketing.", "pt": "área ou setor" },
+          { "en": "I work for a company.", "pt": "empresa empregadora" },
+          { "en": "I work at a hospital.", "pt": "local físico" },
+          { "en": "I work in operations.", "pt": "departamento" }
+        ]
+      },
+      {
+        "id": "l04-learn-04",
+        "type": "comparison",
+        "titleEn": "I'm a vs I work in/for/at",
+        "titlePt": "Cargo vs organização/área",
+        "left": {
+          "labelEn": "JOB TITLE · I'M A",
+          "exampleEn": "I'm a developer.",
+          "notePt": "Nome do cargo ou profissão — quem você é no trabalho."
+        },
+        "right": {
+          "labelEn": "PLACE / AREA · I WORK IN/FOR/AT",
+          "exampleEn": "I work for a tech company.",
+          "notePt": "Onde ou para quem — organização, área ou local."
+        },
+        "modelEn": "I'm a physiotherapist. I work at a sports clinic.",
+        "modelPt": "Modelo integrado — cargo + local na mesma conversa."
+      },
+      {
+        "id": "l04-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "I work with…",
+        "titlePt": "Trabalho com…",
+        "introPt": "Descreve equipe, área ou pessoas com quem você trabalha.",
+        "examples": [
+          { "en": "I work with athletes.", "pt": "atletas" },
+          { "en": "I work with the operations team.", "pt": "equipe de operações" },
+          { "en": "I work with developers.", "pt": "desenvolvedores" },
+          { "en": "I work with patients.", "pt": "pacientes" }
+        ]
+      },
+      {
+        "id": "l04-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "Where do you work?",
+        "titlePt": "Onde você trabalha?",
+        "introPt": "Pergunta sobre local ou organização — responda com I work at/for/in.",
+        "examples": [
+          { "en": "Where do you work?", "pt": "pergunta" },
+          { "en": "I work at a hospital.", "pt": "local" },
+          { "en": "I work for a football club.", "pt": "organização" },
+          { "en": "I work in downtown Boston.", "pt": "região" }
+        ]
+      },
+      {
+        "id": "l04-learn-07",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I work developer.",
+        "rightEn": "I'm a developer. / I work as a developer.",
+        "explanationPt": "Work não liga direto ao cargo — use I'm a + profissão ou I work as a + profissão."
+      },
+      {
+        "id": "l04-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "What do you do?", "pt": "pergunta profissão" },
+          { "en": "I'm a coach.", "pt": "cargo" },
+          { "en": "I work in marketing.", "pt": "área" },
+          { "en": "I work for a company.", "pt": "empregador" },
+          { "en": "I work with the team.", "pt": "equipe" },
+          { "en": "Where do you work?", "pt": "pergunta local" },
+          { "en": "What about you?", "pt": "devolver pergunta" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia em voz alta, pausa curta entre frases. Adapte cargo e área à sua realidade.",
+        "phrases": [
+          { "en": "What do you do?" },
+          { "en": "I'm a developer." },
+          { "en": "I work in technology." },
+          { "en": "I work for a company." },
+          { "en": "I work at the office." },
+          { "en": "I work with the team." },
+          { "en": "Where do you work?" },
+          { "en": "What about you?" }
+        ],
+        "dialogueEn": "What do you do? — I'm a developer. I work in technology. — Where do you work? — I work at a tech company. — I work in marketing. What about you?"
+      }
+    ],
+    "mission": [
+      {
+        "id": "l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — talk about your job.",
+        "headlinePt": "Sua vez — fale do seu trabalho.",
+        "bodyPt": "Jamie perguntou What do you do? Monte sua resposta em duas frases e devolva com What about you?",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "What do you do?" }
         ]
       }
     ]
   },
-  "mission": {
-    "headlineEn": "You can talk about your job.",
-    "headlinePt": "Você consegue falar do seu trabalho.",
-    "bodyPt": "Missão: responda What do you do? em no máximo duas frases e devolva com What about you?",
-    "canDo": [
-      "What do you do?",
-      "I work for a football club.",
-      "I'm responsible for logistics.",
-      "What about you?"
-    ]
-  }
+  "practiceInteractions": [
+    {
+      "id": "l04-prac-01",
+      "type": "choice",
+      "promptPt": "Perguntar a profissão ou função de alguém:",
+      "options": [
+        { "labelEn": "What do you do?", "correct": true, "feedbackPt": "Pergunta padrão sobre trabalho." },
+        { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Pergunta moradia, não trabalho." },
+        { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Pergunta nome, não profissão." }
+      ]
+    },
+    {
+      "id": "l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete a pergunta sobre trabalho:",
+      "templateEn": "What do you ___?",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "do", "correct": true, "feedbackPt": "What do you do? — padrão fixo." },
+        { "labelEn": "work", "correct": false, "feedbackPt": "A pergunta usa do, não work direto." },
+        { "labelEn": "live", "correct": false, "feedbackPt": "Live muda o significado para moradia." }
+      ]
+    },
+    {
+      "id": "l04-prac-03",
+      "type": "choice",
+      "promptPt": "Dizer que é desenvolvedor(a):",
+      "options": [
+        { "labelEn": "I'm a developer.", "correct": true, "feedbackPt": "Cargo com I'm a — natural e correto." },
+        { "labelEn": "I work developer.", "correct": false, "feedbackPt": "Work não liga direto ao cargo." },
+        { "labelEn": "I'm developer.", "correct": false, "feedbackPt": "Profissão contável precisa de a/an: I'm a developer." }
+      ]
+    },
+    {
+      "id": "l04-prac-04",
+      "type": "fill_blank",
+      "promptPt": "Trabalhar para uma empresa:",
+      "templateEn": "I work ___ a company.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "for", "correct": true, "feedbackPt": "Work for = empregador/organização." },
+        { "labelEn": "in", "correct": false, "feedbackPt": "In combina com área — for é mais natural para empregador." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At funciona com local — for enfatiza a organização." }
+      ]
+    },
+    {
+      "id": "l04-prac-05",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta sobre local de trabalho:",
+      "tokens": ["work?", "you", "do", "Where"],
+      "correctOrder": ["Where", "do", "you", "work?"],
+      "feedbackCorrectPt": "Where do you work? — ordem fixa em inglês.",
+      "feedbackWrongPt": "A ordem em inglês é Where + do + you + work?"
+    },
+    {
+      "id": "l04-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta sua profissão — você responde:",
+      "speaker": "You",
+      "contextEn": "Jamie: What do you do?",
+      "options": [
+        { "labelEn": "I'm a physiotherapist.", "correct": true, "feedbackPt": "Resposta natural com cargo." },
+        { "labelEn": "I live in Boston.", "correct": false, "feedbackPt": "Live responde moradia, não trabalho." },
+        { "labelEn": "Nice to meet you.", "correct": false, "feedbackPt": "Não responde about work." }
+      ]
+    },
+    {
+      "id": "l04-prac-07",
+      "type": "choice",
+      "promptPt": "Trabalhar na área de marketing:",
+      "options": [
+        { "labelEn": "I work in marketing.", "correct": true, "feedbackPt": "Work in + área/setor." },
+        { "labelEn": "I work marketing.", "correct": false, "feedbackPt": "Falta preposição — use work in." },
+        { "labelEn": "I'm marketing.", "correct": false, "feedbackPt": "Marketing é área — prefira I work in marketing." }
+      ]
+    },
+    {
+      "id": "l04-prac-08",
+      "type": "fill_blank",
+      "promptPt": "Descrever com quem trabalha:",
+      "templateEn": "I work ___ the operations team.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "with", "correct": true, "feedbackPt": "Work with = equipe ou pessoas." },
+        { "labelEn": "for", "correct": false, "feedbackPt": "For indica empregador, não colegas." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At indica local, não equipe." }
+      ]
+    },
+    {
+      "id": "l04-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie conta a área dela — devolva a pergunta:",
+      "speaker": "You",
+      "contextEn": "Jamie: I work in marketing.",
+      "options": [
+        { "labelEn": "What about you?", "correct": true, "feedbackPt": "Devolve o tema de forma natural." },
+        { "labelEn": "Where are you from?", "correct": false, "feedbackPt": "Muda o assunto para origem." },
+        { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Cumprimento não devolve pergunta sobre trabalho." }
+      ]
+    },
+    {
+      "id": "l04-prac-10",
+      "type": "choice",
+      "promptPt": "Melhor resposta para Where do you work?",
+      "options": [
+        { "labelEn": "I work at a hospital.", "correct": true, "feedbackPt": "Local ou organização — resposta direta." },
+        { "labelEn": "I'm a hospital.", "correct": false, "feedbackPt": "Hospital não é seu cargo." },
+        { "labelEn": "I'm from a hospital.", "correct": false, "feedbackPt": "From indica origem, não local de trabalho." }
+      ]
+    }
+  ]
 }

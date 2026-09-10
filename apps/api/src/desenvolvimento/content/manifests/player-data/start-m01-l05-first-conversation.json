@@ -1,97 +1,390 @@
 {
-  "version": 1,
+  "version": 2,
   "levelLabel": "START",
   "moduleNumber": 1,
-  "goalPt": "Demonstrar tudo do Módulo 1 em interações curtas e realistas — sem vocabulário novo.",
+  "goalPt": "Integrar tudo do Módulo 1 numa conversa completa e natural — cumprimento, nome, origem, moradia, trabalho e despedida.",
   "steps": [
     { "id": "context", "label": "Context", "labelPt": "Contexto" },
     { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
-    { "id": "imitate", "label": "Listen / Imitate", "labelPt": "Ouça / Imite" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
     { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
     { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
     { "id": "mission", "label": "Mission", "labelPt": "Missão" }
   ],
   "context": {
-    "scenarioPt": "Desafio de revisão do módulo: complete uma conversa real usando apenas o que aprendeu nas lições 1–4 — cumprimento, nomes, origem, moradia, trabalho e despedida.",
-    "dialogue": [
-      { "speaker": "A", "textEn": "Good afternoon! How are you?" },
-      { "speaker": "B", "textEn": "I'm good, thank you. And you?" },
-      { "speaker": "A", "textEn": "I'm great, thanks! I'm Alex. What's your name?" },
-      { "speaker": "B", "textEn": "My name is Carlos. Nice to meet you!" },
-      { "speaker": "A", "textEn": "Nice to meet you too. Where are you from?" },
-      { "speaker": "B", "textEn": "I'm from Brazil. I live in Boston." },
-      { "speaker": "A", "textEn": "What do you do?" },
-      { "speaker": "B", "textEn": "I work in operations. What about you?" },
-      { "speaker": "A", "textEn": "I work in marketing. See you later!" },
-      { "speaker": "B", "textEn": "See you later!" }
-    ]
+    "scenarioPt": "Desafio do módulo — uma conversa completa do início ao fim.",
+    "dialogue": []
   },
   "learn": {
-    "introPt": "Sem vocabulário novo — integre cumprimentos, nomes, origem, moradia e trabalho das lições anteriores.",
-    "phrases": [
-      { "en": "Good afternoon! How are you?", "pt": "abertura + como está" },
-      { "en": "My name is Carlos. Nice to meet you!", "pt": "apresentação + prazer" },
-      { "en": "I'm from Brazil. I live in Boston.", "pt": "origem + moradia" },
-      { "en": "I work in operations. What about you?", "pt": "trabalho + devolver pergunta" },
-      { "en": "See you later!", "pt": "encerramento natural" }
-    ],
-    "languageTip": "Conversas reais seguem um fluxo: cumprimento → nome → origem/moradia → trabalho → despedida."
+    "introPt": "",
+    "phrases": []
   },
   "imitate": {
-    "introPt": "Leia o diálogo completo em voz alta. Não decore — entenda o fluxo natural da conversa.",
-    "phrases": [
-      { "en": "Good afternoon! How are you?", "audioKey": "start-m01-l05-a01" },
-      { "en": "I'm good, thank you. And you?", "audioKey": "start-m01-l05-a01" },
-      { "en": "My name is Carlos. Nice to meet you!", "audioKey": "start-m01-l05-a01" },
-      { "en": "I'm from Brazil. I live in Boston.", "audioKey": "start-m01-l05-a01" },
-      { "en": "I work in operations. What about you?", "audioKey": "start-m01-l05-a01" },
-      { "en": "See you later!", "audioKey": "start-m01-l05-a01" }
-    ],
-    "dialogueEn": "Good afternoon! How are you? — I'm good, thank you. And you? — I'm great, thanks! I'm Alex. What's your name? — My name is Carlos. Nice to meet you! — Nice to meet you too. Where are you from? — I'm from Brazil. I live in Boston. — What do you do? — I work in operations. What about you? — I work in marketing. See you later! — See you later!",
-    "dialogueAudioKey": "start-m01-l05-a01"
+    "introPt": "Leia o diálogo completo em voz alta.",
+    "phrases": []
   },
   "practice": {
-    "introPt": "Antes do assessment — escolha a resposta que mantém a conversa fluindo. Sem nota.",
-    "items": [
-      {
-        "id": "start-m01-l05-p01",
-        "promptPt": "Reunião à tarde — abertura mais natural:",
-        "options": [
-          { "labelEn": "Good afternoon! How are you?", "correct": true, "feedbackPt": "Cumprimento + pergunta social — fluxo natural." },
-          { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Manhã não combina com reunião à tarde." },
-          { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Pular direto para trabalho soa abrupto." }
-        ]
-      },
-      {
-        "id": "start-m01-l05-p02",
-        "promptPt": "Após \"Nice to meet you!\" — próximo passo natural na conversa:",
-        "options": [
-          { "labelEn": "Where are you from?", "correct": true, "feedbackPt": "Pergunta comum após apresentação." },
-          { "labelEn": "Goodbye!", "correct": false, "feedbackPt": "Encerra cedo demais." },
-          { "labelEn": "I'm fine.", "correct": false, "feedbackPt": "Não avança a conversa após apresentação." }
-        ]
-      },
-      {
-        "id": "start-m01-l05-p03",
-        "promptPt": "Encerrar a conversa de forma educada:",
-        "options": [
-          { "labelEn": "See you later!", "correct": true, "feedbackPt": "Despedida natural e comum." },
-          { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Isso reabre apresentação, não encerra." },
-          { "labelEn": "Do you live here?", "correct": false, "feedbackPt": "Nova pergunta, não encerramento." }
-        ]
-      }
-    ]
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
   },
   "mission": {
-    "headlineEn": "Have your first complete conversation in English.",
-    "headlinePt": "Faça sua primeira conversa completa em inglês.",
-    "bodyPt": "Missão: faça uma conversa real (colega, amigo ou gravação) com cumprimento, nomes, origem, moradia, trabalho e despedida. Aprove no Verify (70%) antes de considerar o módulo concluído.",
+    "headlineEn": "Have your first complete conversation.",
+    "headlinePt": "Faça sua primeira conversa completa.",
+    "bodyPt": "",
     "canDo": [
       "Good afternoon! How are you?",
       "My name is Carlos. Nice to meet you!",
       "I'm from Brazil. I live in Boston.",
       "I work in operations. What about you?",
       "See you later!"
+    ],
+    "production": {
+      "introPt": "Monte sua primeira conversa completa em inglês — do cumprimento à despedida. Use apenas o que aprendeu nas lições 1 a 4.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Let's practice a full conversation." }
+      ],
+      "fields": [
+        { "id": "greeting", "labelPt": "Cumprimento e como está", "prefixEn": "", "placeholderEn": "Good afternoon! How are you?" },
+        { "id": "name", "labelPt": "Seu nome e prazer", "prefixEn": "My name is", "placeholderEn": "Carlos. Nice to meet you!" },
+        { "id": "from", "labelPt": "País de origem", "prefixEn": "I'm from", "placeholderEn": "Brazil" },
+        { "id": "live", "labelPt": "Cidade onde mora", "prefixEn": "I live in", "placeholderEn": "Boston" },
+        { "id": "work", "labelPt": "Trabalho e devolver pergunta", "prefixEn": "", "placeholderEn": "I work in operations. What about you?" },
+        { "id": "closing", "labelPt": "Despedida", "prefixEn": "", "placeholderEn": "See you later!" }
+      ],
+      "exampleEn": "Good afternoon! How are you? — My name is Carlos. Nice to meet you! — I'm from Brazil. I live in Boston. — I work in operations. What about you? — See you later!"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Module challenge",
+        "titlePt": "Desafio do módulo",
+        "bodyPt": "Hora de juntar tudo: cumprimento, nome, origem, moradia, trabalho e despedida — numa conversa real com Jamie. Sem vocabulário novo."
+      },
+      {
+        "id": "l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office lobby · Afternoon",
+        "scenarioPt": "Você encontra Jamie no saguão. A conversa começa do zero — passo a passo."
+      },
+      {
+        "id": "l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Good afternoon! How are you?",
+        "promptPt": "Passo 1 — Jamie cumprimenta. Como responder?",
+        "options": [
+          { "labelEn": "I'm good, thank you. And you?", "correct": true, "feedbackPt": "Resposta educada + devolve How are you?" },
+          { "labelEn": "My name is Carlos.", "correct": false, "feedbackPt": "Nome vem depois — primeiro responda how are you." },
+          { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Pular direto para trabalho soa abrupto." }
+        ]
+      },
+      {
+        "id": "l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "I'm great, thanks! I'm Jamie. What's your name?",
+        "promptPt": "Passo 2 — Jamie se apresenta e pergunta seu nome.",
+        "options": [
+          { "labelEn": "My name is Carlos. Nice to meet you!", "correct": true, "feedbackPt": "Nome + prazer em conhecer — fluxo natural." },
+          { "labelEn": "I'm from Brazil.", "correct": false, "feedbackPt": "Origem vem depois da apresentação." },
+          { "labelEn": "See you later!", "correct": false, "feedbackPt": "Encerra antes de se apresentar." }
+        ]
+      },
+      {
+        "id": "l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Nice to meet you too, Carlos! Where are you from?",
+        "promptPt": "Passo 3 — Jamie pergunta origem.",
+        "options": [
+          { "labelEn": "I'm from Brazil.", "correct": true, "feedbackPt": "Origem com I'm from + país." },
+          { "labelEn": "I live in Brazil.", "correct": false, "feedbackPt": "Live fala moradia — a pergunta foi from." },
+          { "labelEn": "I work in Brazil.", "correct": false, "feedbackPt": "Work fala emprego, não origem." }
+        ]
+      },
+      {
+        "id": "l05-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Cool! Where do you live?",
+        "promptPt": "Passo 4 — Jamie pergunta onde você mora.",
+        "options": [
+          { "labelEn": "I live in Boston.", "correct": true, "feedbackPt": "Moradia atual — I live in + cidade." },
+          { "labelEn": "I'm from Boston.", "correct": false, "feedbackPt": "From indica origem, não moradia." },
+          { "labelEn": "I work in Boston.", "correct": false, "feedbackPt": "Work fala emprego — a pergunta foi live." }
+        ]
+      },
+      {
+        "id": "l05-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "What do you do?",
+        "promptPt": "Passo 5 — Jamie pergunta sobre trabalho.",
+        "options": [
+          { "labelEn": "I work in operations. What about you?", "correct": true, "feedbackPt": "Área de trabalho + devolve a pergunta." },
+          { "labelEn": "Good afternoon!", "correct": false, "feedbackPt": "Repetir cumprimento não responde a pergunta." },
+          { "labelEn": "Nice to meet you.", "correct": false, "feedbackPt": "Apresentação já passou — responda sobre trabalho." }
+        ]
+      },
+      {
+        "id": "l05-ctx-08",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "I work in marketing. Great talking to you!",
+        "promptPt": "Passo 6 — Jamie encerra o papo. Como se despedir?",
+        "options": [
+          { "labelEn": "See you later!", "correct": true, "feedbackPt": "Despedida natural e comum." },
+          { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Reabre apresentação — conversa já avançou." },
+          { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Nova pergunta, não encerramento." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "l05-learn-01",
+        "type": "review",
+        "titleEn": "Step 1 — Greet",
+        "titlePt": "Passo 1 — Cumprimentar",
+        "items": [
+          { "en": "Good afternoon!", "pt": "boa tarde" },
+          { "en": "How are you?", "pt": "como está?" },
+          { "en": "I'm good, thank you.", "pt": "estou bem" },
+          { "en": "And you?", "pt": "e você?" }
+        ]
+      },
+      {
+        "id": "l05-learn-02",
+        "type": "review",
+        "titleEn": "Step 2 — Name",
+        "titlePt": "Passo 2 — Nome",
+        "items": [
+          { "en": "What's your name?", "pt": "pergunta nome" },
+          { "en": "My name is Carlos.", "pt": "meu nome é" },
+          { "en": "I'm Carlos.", "pt": "alternativa natural" },
+          { "en": "Nice to meet you!", "pt": "prazer" },
+          { "en": "Nice to meet you too.", "pt": "resposta" }
+        ]
+      },
+      {
+        "id": "l05-learn-03",
+        "type": "comparison",
+        "titleEn": "Step 3 & 4 — From vs Live",
+        "titlePt": "Passos 3 e 4 — Origem vs moradia",
+        "left": {
+          "labelEn": "ORIGIN · FROM",
+          "exampleEn": "I'm from Brazil.",
+          "notePt": "De onde você é — raízes, passaporte."
+        },
+        "right": {
+          "labelEn": "HOME · LIVE IN",
+          "exampleEn": "I live in Boston.",
+          "notePt": "Onde mora agora — endereço atual."
+        },
+        "modelEn": "I'm from Brazil, but I live in Boston.",
+        "modelPt": "Na conversa, origem e moradia aparecem em momentos diferentes."
+      },
+      {
+        "id": "l05-learn-04",
+        "type": "review",
+        "titleEn": "Step 5 — Work",
+        "titlePt": "Passo 5 — Trabalho",
+        "items": [
+          { "en": "What do you do?", "pt": "pergunta profissão" },
+          { "en": "I'm a developer.", "pt": "cargo" },
+          { "en": "I work in operations.", "pt": "área" },
+          { "en": "What about you?", "pt": "devolver pergunta" }
+        ]
+      },
+      {
+        "id": "l05-learn-05",
+        "type": "language_focus",
+        "titleEn": "Conversation flow",
+        "titlePt": "Fluxo da conversa",
+        "items": [
+          { "formalEn": "Name → Origin → Work → Goodbye", "naturalEn": "Greet → Name → From → Live → Work → Close", "notePt": "Conversas reais seguem uma ordem social — não pule etapas." },
+          { "formalEn": "What do you do? (first)", "naturalEn": "How are you? (first)", "notePt": "Cumprimento vem antes de perguntas pessoais." }
+        ],
+        "tipPt": "Cada passo prepara o próximo — cumprimento abre, despedida fecha."
+      },
+      {
+        "id": "l05-learn-06",
+        "type": "review",
+        "titleEn": "Step 6 — Close",
+        "titlePt": "Passo 6 — Despedida",
+        "items": [
+          { "en": "Great talking to you!", "pt": "foi bom conversar" },
+          { "en": "See you later!", "pt": "até mais" },
+          { "en": "Goodbye!", "pt": "tchau" },
+          { "en": "Have a good day!", "pt": "tenha um bom dia" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Full conversation",
+        "titlePt": "Conversa completa",
+        "introPt": "Leia o diálogo inteiro em voz alta — pausa entre cada turno. Adapte nome, cidade e trabalho à sua realidade.",
+        "phrases": [
+          { "en": "Good afternoon! How are you?" },
+          { "en": "I'm good, thank you. And you?" },
+          { "en": "I'm great, thanks! I'm Jamie. What's your name?" },
+          { "en": "My name is Carlos. Nice to meet you!" },
+          { "en": "Nice to meet you too! Where are you from?" },
+          { "en": "I'm from Brazil." },
+          { "en": "Where do you live?" },
+          { "en": "I live in Boston." },
+          { "en": "What do you do?" },
+          { "en": "I work in operations. What about you?" },
+          { "en": "I work in marketing. Great talking to you!" },
+          { "en": "See you later!" }
+        ],
+        "dialogueEn": "Good afternoon! How are you? — I'm good, thank you. And you? — I'm great, thanks! I'm Jamie. What's your name? — My name is Carlos. Nice to meet you! — Nice to meet you too! Where are you from? — I'm from Brazil. — Where do you live? — I live in Boston. — What do you do? — I work in operations. What about you? — I work in marketing. Great talking to you! — See you later!"
+      }
+    ],
+    "mission": [
+      {
+        "id": "l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your first full conversation.",
+        "headlinePt": "Sua primeira conversa completa.",
+        "bodyPt": "Monte a conversa do início ao fim — cumprimento, nome, origem, moradia, trabalho e despedida. Use suas informações reais.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Ready? Let's do a full conversation." }
+        ]
+      }
     ]
-  }
+  },
+  "practiceInteractions": [
+    {
+      "id": "l05-prac-01",
+      "type": "choice",
+      "promptPt": "Reunião à tarde — melhor abertura:",
+      "options": [
+        { "labelEn": "Good afternoon! How are you?", "correct": true, "feedbackPt": "Cumprimento + pergunta social — fluxo natural." },
+        { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Manhã não combina com tarde." },
+        { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Pular direto para trabalho soa abrupto." }
+      ]
+    },
+    {
+      "id": "l05-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta How are you? — você responde:",
+      "speaker": "You",
+      "contextEn": "Jamie: How are you?",
+      "options": [
+        { "labelEn": "I'm good, thank you. And you?", "correct": true, "feedbackPt": "Resposta educada e devolve a pergunta." },
+        { "labelEn": "My name is Carlos.", "correct": false, "feedbackPt": "Responde nome, não how are you." },
+        { "labelEn": "I live in Boston.", "correct": false, "feedbackPt": "Responde moradia, não como está." }
+      ]
+    },
+    {
+      "id": "l05-prac-03",
+      "type": "choice",
+      "promptPt": "Jamie diz Nice to meet you! — você responde:",
+      "options": [
+        { "labelEn": "Nice to meet you too.", "correct": true, "feedbackPt": "Resposta padrão ao prazer em conhecer." },
+        { "labelEn": "Good afternoon!", "correct": false, "feedbackPt": "Cumprimento, não resposta ao nice to meet you." },
+        { "labelEn": "Where are you from?", "correct": false, "feedbackPt": "Pergunta válida depois — mas não responde ao elogio." }
+      ]
+    },
+    {
+      "id": "l05-prac-04",
+      "type": "fill_blank",
+      "promptPt": "Apresentação — complete:",
+      "templateEn": "My name ___ Carlos.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "is", "correct": true, "feedbackPt": "My name is — padrão fixo." },
+        { "labelEn": "are", "correct": false, "feedbackPt": "Name é singular — use is." },
+        { "labelEn": "am", "correct": false, "feedbackPt": "Am combina com I, não com name." }
+      ]
+    },
+    {
+      "id": "l05-prac-05",
+      "type": "classify",
+      "promptPt": "Esta frase fala de origem ou moradia?",
+      "sentenceEn": "I'm from Brazil.",
+      "category": "from",
+      "feedbackCorrectPt": "I'm from = origem (FROM).",
+      "feedbackWrongPt": "Live in seria moradia — esta frase usa from."
+    },
+    {
+      "id": "l05-prac-06",
+      "type": "classify",
+      "promptPt": "Esta frase fala de origem ou moradia?",
+      "sentenceEn": "I live in Boston.",
+      "category": "live",
+      "feedbackCorrectPt": "I live in = moradia atual (LIVE IN).",
+      "feedbackWrongPt": "I'm from seria origem — esta frase usa live in."
+    },
+    {
+      "id": "l05-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta sobre origem:",
+      "tokens": ["from?", "you", "are", "Where"],
+      "correctOrder": ["Where", "are", "you", "from?"],
+      "feedbackCorrectPt": "Where are you from? — ordem fixa.",
+      "feedbackWrongPt": "A ordem em inglês é Where + are + you + from?"
+    },
+    {
+      "id": "l05-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta What do you do? — você responde:",
+      "speaker": "You",
+      "contextEn": "Jamie: What do you do?",
+      "options": [
+        { "labelEn": "I work in operations. What about you?", "correct": true, "feedbackPt": "Trabalho + devolve a pergunta." },
+        { "labelEn": "I'm from Brazil.", "correct": false, "feedbackPt": "Origem — a pergunta foi sobre trabalho." },
+        { "labelEn": "See you later!", "correct": false, "feedbackPt": "Despedida — a conversa ainda não encerrou." }
+      ]
+    },
+    {
+      "id": "l05-prac-09",
+      "type": "choice",
+      "promptPt": "Melhor ordem após cumprimento e nomes:",
+      "options": [
+        { "labelEn": "Where are you from?", "correct": true, "feedbackPt": "Origem é pergunta comum após apresentação." },
+        { "labelEn": "Goodbye!", "correct": false, "feedbackPt": "Encerra cedo demais." },
+        { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Repetir cumprimento não avança a conversa." }
+      ]
+    },
+    {
+      "id": "l05-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Trabalho — complete:",
+      "templateEn": "I work ___ operations.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "in", "correct": true, "feedbackPt": "Work in + área/setor." },
+        { "labelEn": "for", "correct": false, "feedbackPt": "For combina com empregador, não área." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "At combina com local físico." }
+      ]
+    },
+    {
+      "id": "l05-prac-11",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie diz Great talking to you! — encerre a conversa:",
+      "speaker": "You",
+      "contextEn": "Jamie: Great talking to you!",
+      "options": [
+        { "labelEn": "See you later!", "correct": true, "feedbackPt": "Despedida natural." },
+        { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Reabre apresentação." },
+        { "labelEn": "Do you live here?", "correct": false, "feedbackPt": "Nova pergunta, não encerramento." }
+      ]
+    },
+    {
+      "id": "l05-prac-12",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta sobre trabalho:",
+      "tokens": ["do", "you", "What", "do?"],
+      "correctOrder": ["What", "do", "you", "do?"],
+      "feedbackCorrectPt": "What do you do? — ordem fixa.",
+      "feedbackWrongPt": "A ordem em inglês é What + do + you + do?"
+    }
+  ]
 }

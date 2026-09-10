@@ -1,6 +1,6 @@
 {
   "manifestId": "cup360-english-start-v1",
-  "manifestVersion": "2.0.0",
+  "manifestVersion": "2.1.0",
   "course": {
     "contentKey": "cup360-english-start-v1",
     "title": "CUP360 English",
@@ -22,7 +22,7 @@
           "title": "Hello!",
           "sortOrder": 0,
           "lessonType": "TEXT",
-          "estimatedMinutes": 10,
+          "estimatedMinutes": 12,
           "contentHtml": "<p class=\"mb-4 rounded-md border border-violet-500/30 bg-violet-500/5 px-3 py-2 text-sm\"><strong>Objetivo (≈10 min):</strong> Ao final desta lição, você consegue cumprimentar alguém de forma adequada e responder a <em>How are you?</em> em uma interação curta e natural.</p><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Real Life — Vida real</h3><p>Você chega ao trabalho de manhã e encontra um colega que fala inglês.</p><blockquote class=\"border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm\"><p><strong>Alex:</strong> Good morning!</p><p><strong>Carlos:</strong> Good morning!</p><p><strong>Alex:</strong> How are you?</p><p><strong>Carlos:</strong> I'm good, thank you. And you?</p><p><strong>Alex:</strong> I'm great, thanks!</p></blockquote></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Learn — Aprenda</h3><p>Use estas unidades de comunicação — não palavras soltas. Em inglês, a frase inteira é o que você reproduz.</p><ul class=\"list-disc pl-5 space-y-2 my-3\"><li><strong>Hi!</strong> / <strong>Hello!</strong> — oi / olá (informal a neutro)</li><li><strong>Good morning!</strong> — bom dia (até ~meio-dia)</li><li><strong>Good afternoon!</strong> — boa tarde</li><li><strong>Good evening!</strong> — boa noite (chegada) / boa tarde final</li><li><strong>How are you?</strong> — como você está?</li><li><strong>I'm good, thank you.</strong> — estou bem, obrigado.</li><li><strong>I'm great, thanks!</strong> — estou ótimo, valeu! (informal)</li><li><strong>And you?</strong> — e você? (devolve a pergunta)</li><li><strong>Goodbye!</strong> / <strong>See you later!</strong> — tchau / até mais</li></ul><aside class=\"my-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm\"><strong class=\"text-amber-400\">Language Tip:</strong> <em>Good morning</em> depende do horário, não da sua energia. Pela manhã → <em>Good morning</em>.</aside></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Imitate — Imite</h3><p>Repita em voz alta, pausa curta entre cada expressão:</p><ol class=\"list-decimal pl-5 space-y-2 my-3\"><li><span class=\"font-medium\">Hi!</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l01-a01]</em></li><li><span class=\"font-medium\">Hello!</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l01-a02]</em></li><li><span class=\"font-medium\">Good morning!</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l01-a03]</em></li><li><span class=\"font-medium\">How are you?</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l01-a04]</em></li><li><span class=\"font-medium\">I'm good, thank you.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l01-a05]</em></li><li><span class=\"font-medium\">And you?</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l01-a06]</em></li></ol><p class=\"mt-3\">Agora o diálogo completo:</p><p class=\"text-sm\"><span class=\"font-medium\">Good morning! — Good morning! — How are you? — I'm good, thank you. And you? — I'm great, thanks!</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l01-a07]</em></p></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Build / Practice — Pratique</h3><p><strong>1.</strong> Escolha o cumprimento certo:</p><ul class=\"list-disc pl-5 text-sm space-y-1\"><li>08:30 no escritório → <strong>Good morning!</strong></li><li>15:00 no corredor → <strong>Good afternoon!</strong></li><li>19:00 ao sair → <strong>Good evening!</strong> ou <strong>See you later!</strong></li></ul><p class=\"mt-3\"><strong>2.</strong> Responda <em>How are you?</em> de duas formas (formal e informal).</p></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Execute — Missão</h3><p><strong>Missão:</strong> cumprimente um colega, pergunte <em>How are you?</em>, responda à mesma pergunta e encerre a interação de forma natural (<em>Goodbye</em> ou <em>See you later</em>).</p><p class=\"text-sm text-muted-foreground mt-2\">Depois do Verify abaixo, você está pronto para executar.</p></section>",
           "live": {
             "realLifeContext": "Chegada ao trabalho de manhã com colega anglófono.",
@@ -32,10 +32,10 @@
             "verify": "Quiz de 5 questões (conteúdo já ensinado).",
             "executeMission": "Cumprimente um colega, pergunte how they are, responda e encerre naturalmente.",
             "player": {
-              "version": 1,
+              "version": 2,
               "levelLabel": "START",
               "moduleNumber": 1,
-              "goalPt": "Ao final desta lição, você consegue cumprimentar alguém de forma adequada e responder a How are you? em uma interação curta e natural.",
+              "goalPt": "Cumprimentar alguém de forma adequada, responder a How are you? e encerrar a conversa de forma natural — com o cumprimento certo para o horário.",
               "steps": [
                 {
                   "id": "context",
@@ -49,8 +49,8 @@
                 },
                 {
                   "id": "imitate",
-                  "label": "Listen / Imitate",
-                  "labelPt": "Ouça / Imite"
+                  "label": "Read & Repeat",
+                  "labelPt": "Leia e repita"
                 },
                 {
                   "id": "practice",
@@ -69,187 +69,631 @@
                 }
               ],
               "context": {
-                "scenarioPt": "Você chega ao trabalho de manhã e encontra um colega que fala inglês.",
-                "dialogue": [
-                  {
-                    "speaker": "Alex",
-                    "textEn": "Good morning!",
-                    "audioKey": "start-m01-l01-a03"
-                  },
-                  {
-                    "speaker": "Carlos",
-                    "textEn": "Good morning!",
-                    "audioKey": "start-m01-l01-a03"
-                  },
-                  {
-                    "speaker": "Alex",
-                    "textEn": "How are you?",
-                    "audioKey": "start-m01-l01-a04"
-                  },
-                  {
-                    "speaker": "Carlos",
-                    "textEn": "I'm good, thank you. And you?",
-                    "audioKey": "start-m01-l01-a05"
-                  },
-                  {
-                    "speaker": "Alex",
-                    "textEn": "I'm great, thanks!",
-                    "audioKey": "start-m01-l01-a06"
-                  }
-                ]
+                "scenarioPt": "Você chega ao trabalho de manhã e encontra Alex, colega que fala inglês.",
+                "dialogue": []
               },
               "learn": {
-                "introPt": "Use unidades de comunicação completas — em inglês você reproduz a frase inteira, não palavras soltas.",
-                "phrases": [
-                  {
-                    "en": "Hi! / Hello!",
-                    "pt": "oi / olá"
-                  },
-                  {
-                    "en": "Good morning!",
-                    "pt": "bom dia (até ~meio-dia)"
-                  },
-                  {
-                    "en": "Good afternoon!",
-                    "pt": "boa tarde"
-                  },
-                  {
-                    "en": "Good evening!",
-                    "pt": "boa noite (chegada)"
-                  },
-                  {
-                    "en": "How are you?",
-                    "pt": "como você está?"
-                  },
-                  {
-                    "en": "I'm good, thank you.",
-                    "pt": "estou bem, obrigado."
-                  },
-                  {
-                    "en": "I'm great, thanks!",
-                    "pt": "estou ótimo! (informal)"
-                  },
-                  {
-                    "en": "And you?",
-                    "pt": "e você?"
-                  },
-                  {
-                    "en": "Goodbye! / See you later!",
-                    "pt": "tchau / até mais"
-                  }
-                ],
-                "languageTip": "Good morning depende do horário — pela manhã use Good morning, não Good evening."
+                "introPt": "",
+                "phrases": []
               },
               "imitate": {
-                "introPt": "Repita em voz alta. Pausa curta entre cada expressão, depois o diálogo completo.",
-                "phrases": [
-                  {
-                    "en": "Hi!",
-                    "audioKey": "start-m01-l01-a01"
-                  },
-                  {
-                    "en": "Hello!",
-                    "audioKey": "start-m01-l01-a02"
-                  },
-                  {
-                    "en": "Good morning!",
-                    "audioKey": "start-m01-l01-a03"
-                  },
-                  {
-                    "en": "How are you?",
-                    "audioKey": "start-m01-l01-a04"
-                  },
-                  {
-                    "en": "I'm good, thank you.",
-                    "audioKey": "start-m01-l01-a05"
-                  },
-                  {
-                    "en": "And you?",
-                    "audioKey": "start-m01-l01-a06"
-                  }
-                ],
-                "dialogueEn": "Good morning! — Good morning! — How are you? — I'm good, thank you. And you? — I'm great, thanks!",
-                "dialogueAudioKey": "start-m01-l01-a07"
+                "introPt": "Leia em voz alta e repita cada frase.",
+                "phrases": []
               },
               "practice": {
-                "introPt": "Escolha a resposta mais natural. Feedback imediato — sem nota.",
-                "items": [
-                  {
-                    "id": "start-m01-l01-p01",
-                    "promptPt": "São 08:30 no escritório. Qual cumprimento?",
-                    "options": [
-                      {
-                        "labelEn": "Good morning!",
-                        "correct": true,
-                        "feedbackPt": "Correto — manhã pede Good morning."
-                      },
-                      {
-                        "labelEn": "Good evening!",
-                        "correct": false,
-                        "feedbackPt": "Good evening é fim de tarde ou noite."
-                      },
-                      {
-                        "labelEn": "Goodbye!",
-                        "correct": false,
-                        "feedbackPt": "Goodbye encerra a conversa, não cumprimenta."
-                      }
-                    ]
-                  },
-                  {
-                    "id": "start-m01-l01-p02",
-                    "promptPt": "Como responder de forma educada a \"How are you?\"",
-                    "options": [
-                      {
-                        "labelEn": "I'm good, thank you.",
-                        "correct": true,
-                        "feedbackPt": "Resposta natural e educada."
-                      },
-                      {
-                        "labelEn": "My name is Carlos.",
-                        "correct": false,
-                        "feedbackPt": "Isso responde ao nome, não ao how are you."
-                      },
-                      {
-                        "labelEn": "I live in Boston.",
-                        "correct": false,
-                        "feedbackPt": "Isso responde onde mora, não como está."
-                      }
-                    ]
-                  },
-                  {
-                    "id": "start-m01-l01-p03",
-                    "promptPt": "17h no corredor — cumprimento adequado:",
-                    "options": [
-                      {
-                        "labelEn": "Good afternoon!",
-                        "correct": true,
-                        "feedbackPt": "Tarde combina com Good afternoon."
-                      },
-                      {
-                        "labelEn": "Good morning!",
-                        "correct": false,
-                        "feedbackPt": "Manhã já passou às 17h."
-                      },
-                      {
-                        "labelEn": "See you later!",
-                        "correct": false,
-                        "feedbackPt": "Isso é despedida, não abertura."
-                      }
-                    ]
-                  }
-                ]
+                "introPt": "Interações guiadas — feedback imediato, sem nota.",
+                "items": []
               },
               "mission": {
                 "headlineEn": "You can greet someone in English.",
                 "headlinePt": "Você consegue cumprimentar alguém em inglês.",
-                "bodyPt": "Missão: cumprimente um colega, pergunte How are you?, responda à mesma pergunta e encerre de forma natural com Goodbye ou See you later.",
+                "bodyPt": "",
                 "canDo": [
                   "Good morning!",
                   "How are you?",
                   "I'm good, thank you. And you?",
                   "See you later!"
+                ],
+                "production": {
+                  "introPt": "Responda como se Alex estivesse falando com você. Monte um cumprimento completo em inglês.",
+                  "prompts": [
+                    {
+                      "speaker": "Alex",
+                      "questionEn": "Good morning!"
+                    },
+                    {
+                      "speaker": "Alex",
+                      "questionEn": "How are you?"
+                    },
+                    {
+                      "speaker": "Alex",
+                      "questionEn": "See you later!"
+                    }
+                  ],
+                  "fields": [
+                    {
+                      "id": "greeting",
+                      "labelPt": "Cumprimento (horário)",
+                      "prefixEn": "",
+                      "placeholderEn": "Good morning!"
+                    },
+                    {
+                      "id": "howAreYou",
+                      "labelPt": "Resposta a How are you?",
+                      "prefixEn": "",
+                      "placeholderEn": "I'm good, thank you. And you?"
+                    },
+                    {
+                      "id": "closing",
+                      "labelPt": "Despedida",
+                      "prefixEn": "",
+                      "placeholderEn": "See you later!"
+                    }
+                  ],
+                  "exampleEn": "Good morning! — Good morning! — How are you? — I'm good, thank you. And you? — See you later!"
+                }
+              },
+              "stepScreens": {
+                "context": [
+                  {
+                    "id": "l01-ctx-01",
+                    "type": "intro",
+                    "titleEn": "Your first greeting",
+                    "titlePt": "Seu primeiro cumprimento",
+                    "bodyPt": "Você chega ao escritório de manhã. Alex, colega internacional, está no corredor. Nesta lição, você aprende a cumprimentar, perguntar como a pessoa está e se despedir — tudo em inglês."
+                  },
+                  {
+                    "id": "l01-ctx-02",
+                    "type": "scenario",
+                    "settingEn": "Office hallway · Morning · Real life",
+                    "scenarioPt": "São 08:30. Alex vê você chegando e abre a conversa com um sorriso."
+                  },
+                  {
+                    "id": "l01-ctx-03",
+                    "type": "dialogue_choice",
+                    "speaker": "Alex",
+                    "promptEn": "Good morning!",
+                    "promptPt": "Alex cumprimenta de manhã. Como você responde?",
+                    "options": [
+                      {
+                        "labelEn": "Good morning!",
+                        "correct": true,
+                        "feedbackPt": "Resposta natural — repita o cumprimento do horário."
+                      },
+                      {
+                        "labelEn": "Good evening!",
+                        "correct": false,
+                        "feedbackPt": "Evening é fim de tarde/noite — agora é manhã."
+                      },
+                      {
+                        "labelEn": "Good night!",
+                        "correct": false,
+                        "feedbackPt": "Good night é despedida à noite, não cumprimento de manhã."
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l01-ctx-04",
+                    "type": "dialogue_choice",
+                    "speaker": "Alex",
+                    "promptEn": "How are you?",
+                    "promptPt": "Alex pergunta como você está. Melhor resposta:",
+                    "options": [
+                      {
+                        "labelEn": "I'm good, thank you. And you?",
+                        "correct": true,
+                        "feedbackPt": "Resposta educada e natural — responde e devolve a pergunta."
+                      },
+                      {
+                        "labelEn": "My name is Carlos.",
+                        "correct": false,
+                        "feedbackPt": "Isso responde ao nome, não a how are you."
+                      },
+                      {
+                        "labelEn": "I live in Boston.",
+                        "correct": false,
+                        "feedbackPt": "Isso fala de moradia, não de como você está."
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l01-ctx-05",
+                    "type": "dialogue_choice",
+                    "speaker": "Alex",
+                    "promptEn": "I'm great, thanks! See you later!",
+                    "promptPt": "Alex se despede. Como você encerra de forma natural?",
+                    "options": [
+                      {
+                        "labelEn": "See you later!",
+                        "correct": true,
+                        "feedbackPt": "Despedida informal e comum no trabalho."
+                      },
+                      {
+                        "labelEn": "How are you?",
+                        "correct": false,
+                        "feedbackPt": "How are you abre conversa — Alex já está se despedindo."
+                      },
+                      {
+                        "labelEn": "Good morning!",
+                        "correct": false,
+                        "feedbackPt": "Good morning cumprimenta — não encerra a conversa."
+                      }
+                    ]
+                  }
+                ],
+                "learn": [
+                  {
+                    "id": "l01-learn-01",
+                    "type": "phrase_examples",
+                    "titleEn": "Hi / Hello",
+                    "titlePt": "Oi / Olá",
+                    "introPt": "Formas universais de cumprimentar — funcionam a qualquer hora. Hi é mais informal; Hello um pouco mais neutro.",
+                    "examples": [
+                      {
+                        "en": "Hi!",
+                        "pt": "informal, comum"
+                      },
+                      {
+                        "en": "Hello!",
+                        "pt": "neutro, educado"
+                      },
+                      {
+                        "en": "Hi, Alex!",
+                        "pt": "com nome"
+                      },
+                      {
+                        "en": "Hello, everyone!",
+                        "pt": "grupo"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l01-learn-02",
+                    "type": "phrase_examples",
+                    "titleEn": "Time of day",
+                    "titlePt": "Cumprimento por horário",
+                    "introPt": "Em inglês, o cumprimento muda conforme o horário — escolha a frase certa para o momento.",
+                    "examples": [
+                      {
+                        "en": "Good morning!",
+                        "pt": "até ~meio-dia"
+                      },
+                      {
+                        "en": "Good afternoon!",
+                        "pt": "meio-dia até ~17h–18h"
+                      },
+                      {
+                        "en": "Good evening!",
+                        "pt": "fim de tarde / chegada à noite"
+                      },
+                      {
+                        "en": "Hi! / Hello!",
+                        "pt": "qualquer hora — sempre ok"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l01-learn-03",
+                    "type": "comparison",
+                    "titleEn": "Morning vs Evening",
+                    "titlePt": "Manhã vs fim de tarde",
+                    "left": {
+                      "labelEn": "MORNING · até ~12h",
+                      "exampleEn": "Good morning!",
+                      "notePt": "Use de manhã ao chegar ou encontrar alguém cedo."
+                    },
+                    "right": {
+                      "labelEn": "EVENING · fim de tarde / noite",
+                      "exampleEn": "Good evening!",
+                      "notePt": "Use ao chegar à noite — NÃO confunda com Good night (despedida)."
+                    },
+                    "modelEn": "Good morning at 8 AM · Good evening at 7 PM",
+                    "modelPt": "O horário define o cumprimento — não traduza 'boa noite' como greeting."
+                  },
+                  {
+                    "id": "l01-learn-04",
+                    "type": "phrase_examples",
+                    "titleEn": "How are you?",
+                    "titlePt": "Como você está?",
+                    "introPt": "Pergunta social muito comum após o cumprimento. Responda curto e educado — e devolva com And you?",
+                    "examples": [
+                      {
+                        "en": "How are you?",
+                        "pt": "pergunta"
+                      },
+                      {
+                        "en": "I'm good, thank you.",
+                        "pt": "estou bem"
+                      },
+                      {
+                        "en": "I'm great, thanks!",
+                        "pt": "estou ótimo (informal)"
+                      },
+                      {
+                        "en": "I'm fine, thank you.",
+                        "pt": "estou bem (formal)"
+                      },
+                      {
+                        "en": "And you?",
+                        "pt": "e você?"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l01-learn-05",
+                    "type": "language_focus",
+                    "titleEn": "Thank you / Thanks",
+                    "titlePt": "Obrigado — formal e informal",
+                    "items": [
+                      {
+                        "formalEn": "I'm good, thank you.",
+                        "naturalEn": "I'm good, thanks!",
+                        "notePt": "Thank you = mais formal; thanks = mais comum no dia a dia."
+                      },
+                      {
+                        "formalEn": "Thank you very much.",
+                        "naturalEn": "Thanks a lot!",
+                        "notePt": "Ambos funcionam — thanks é mais rápido na fala."
+                      }
+                    ],
+                    "tipPt": "Depois de responder How are you?, adicione thank you ou thanks — soa educado e natural."
+                  },
+                  {
+                    "id": "l01-learn-06",
+                    "type": "phrase_examples",
+                    "titleEn": "Nice to see you / Goodbye",
+                    "titlePt": "Prazer em ver / Despedida",
+                    "introPt": "Nice to see you = reencontro (já conhece a pessoa). Goodbye e See you later encerram a conversa.",
+                    "examples": [
+                      {
+                        "en": "Nice to see you!",
+                        "pt": "reencontro"
+                      },
+                      {
+                        "en": "Good to see you!",
+                        "pt": "variação comum"
+                      },
+                      {
+                        "en": "Goodbye!",
+                        "pt": "despedida neutra"
+                      },
+                      {
+                        "en": "See you later!",
+                        "pt": "até mais (informal)"
+                      },
+                      {
+                        "en": "Have a good day!",
+                        "pt": "desejo ao partir"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l01-learn-07",
+                    "type": "mistake",
+                    "titlePt": "Erro comum de brasileiros",
+                    "wrongEn": "Good night! (as a morning greeting at 8 AM)",
+                    "rightEn": "Good morning!",
+                    "explanationPt": "Good night em inglês é despedida antes de dormir — NÃO é cumprimento. De manhã use Good morning. Good evening cumprimenta à noite (chegada); Good night encerra o dia."
+                  },
+                  {
+                    "id": "l01-learn-08",
+                    "type": "review",
+                    "titleEn": "Quick review",
+                    "titlePt": "Revisão rápida",
+                    "items": [
+                      {
+                        "en": "Hi! / Hello!",
+                        "pt": "cumprimento universal"
+                      },
+                      {
+                        "en": "Good morning!",
+                        "pt": "manhã"
+                      },
+                      {
+                        "en": "Good afternoon!",
+                        "pt": "tarde"
+                      },
+                      {
+                        "en": "How are you?",
+                        "pt": "pergunta social"
+                      },
+                      {
+                        "en": "I'm good, thank you.",
+                        "pt": "resposta educada"
+                      },
+                      {
+                        "en": "And you?",
+                        "pt": "devolve a pergunta"
+                      },
+                      {
+                        "en": "See you later!",
+                        "pt": "despedida"
+                      }
+                    ]
+                  }
+                ],
+                "imitate": [
+                  {
+                    "id": "l01-imit-01",
+                    "type": "read_repeat",
+                    "titleEn": "Read & Repeat",
+                    "titlePt": "Leia e repita",
+                    "introPt": "Sem áudio ainda — leia em voz alta, pausa curta entre frases. Depois leia o diálogo completo.",
+                    "phrases": [
+                      {
+                        "en": "Hi!"
+                      },
+                      {
+                        "en": "Good morning!"
+                      },
+                      {
+                        "en": "How are you?"
+                      },
+                      {
+                        "en": "I'm good, thank you."
+                      },
+                      {
+                        "en": "And you?"
+                      },
+                      {
+                        "en": "I'm great, thanks!"
+                      },
+                      {
+                        "en": "Nice to see you!"
+                      },
+                      {
+                        "en": "See you later!"
+                      }
+                    ],
+                    "dialogueEn": "Good morning! — Good morning! — How are you? — I'm good, thank you. And you? — I'm great, thanks! — See you later!"
+                  }
+                ],
+                "mission": [
+                  {
+                    "id": "l01-miss-01",
+                    "type": "mission_intro",
+                    "headlineEn": "Your turn — greet Alex.",
+                    "headlinePt": "Sua vez — cumprimente Alex.",
+                    "bodyPt": "Alex cumprimentou, perguntou como você está e se despediu. Agora monte sua resposta completa em inglês.",
+                    "prompts": [
+                      {
+                        "speaker": "Alex",
+                        "questionEn": "Good morning!"
+                      },
+                      {
+                        "speaker": "Alex",
+                        "questionEn": "How are you?"
+                      },
+                      {
+                        "speaker": "Alex",
+                        "questionEn": "See you later!"
+                      }
+                    ]
+                  }
                 ]
-              }
+              },
+              "practiceInteractions": [
+                {
+                  "id": "l01-prac-01",
+                  "type": "choice",
+                  "promptPt": "São 08:30 no escritório. Qual cumprimento?",
+                  "options": [
+                    {
+                      "labelEn": "Good morning!",
+                      "correct": true,
+                      "feedbackPt": "Manhã pede Good morning."
+                    },
+                    {
+                      "labelEn": "Good evening!",
+                      "correct": false,
+                      "feedbackPt": "Evening é fim de tarde ou noite."
+                    },
+                    {
+                      "labelEn": "Good night!",
+                      "correct": false,
+                      "feedbackPt": "Good night é despedida, não cumprimento de manhã."
+                    }
+                  ]
+                },
+                {
+                  "id": "l01-prac-02",
+                  "type": "choice",
+                  "promptPt": "Como responder de forma educada a \"How are you?\"",
+                  "options": [
+                    {
+                      "labelEn": "I'm good, thank you.",
+                      "correct": true,
+                      "feedbackPt": "Resposta natural e educada."
+                    },
+                    {
+                      "labelEn": "My name is Carlos.",
+                      "correct": false,
+                      "feedbackPt": "Isso responde ao nome, não ao how are you."
+                    },
+                    {
+                      "labelEn": "I live in Boston.",
+                      "correct": false,
+                      "feedbackPt": "Isso responde onde mora, não como está."
+                    }
+                  ]
+                },
+                {
+                  "id": "l01-prac-03",
+                  "type": "fill_blank",
+                  "promptPt": "Complete a pergunta social mais comum:",
+                  "templateEn": "How ___ you?",
+                  "blankLabel": "verbo",
+                  "options": [
+                    {
+                      "labelEn": "are",
+                      "correct": true,
+                      "feedbackPt": "How are you? — padrão fixo."
+                    },
+                    {
+                      "labelEn": "is",
+                      "correct": false,
+                      "feedbackPt": "Com you, use are — não is."
+                    },
+                    {
+                      "labelEn": "do",
+                      "correct": false,
+                      "feedbackPt": "Do não combina nesta pergunta."
+                    }
+                  ]
+                },
+                {
+                  "id": "l01-prac-04",
+                  "type": "reorder",
+                  "promptPt": "Monte a resposta educada:",
+                  "tokens": [
+                    "good,",
+                    "I'm",
+                    "thank",
+                    "you."
+                  ],
+                  "correctOrder": [
+                    "I'm",
+                    "good,",
+                    "thank",
+                    "you."
+                  ],
+                  "feedbackCorrectPt": "I'm good, thank you. — ordem natural.",
+                  "feedbackWrongPt": "A ordem correta é I'm + good + thank you."
+                },
+                {
+                  "id": "l01-prac-05",
+                  "type": "dialogue_complete",
+                  "promptPt": "Alex diz Good morning! — você responde:",
+                  "speaker": "You",
+                  "contextEn": "Alex: Good morning!",
+                  "options": [
+                    {
+                      "labelEn": "Good morning!",
+                      "correct": true,
+                      "feedbackPt": "Repita o cumprimento do horário."
+                    },
+                    {
+                      "labelEn": "Good night!",
+                      "correct": false,
+                      "feedbackPt": "Good night é despedida, não cumprimento de manhã."
+                    },
+                    {
+                      "labelEn": "How are you?",
+                      "correct": false,
+                      "feedbackPt": "Funciona depois — primeiro responda ao cumprimento."
+                    }
+                  ]
+                },
+                {
+                  "id": "l01-prac-06",
+                  "type": "choice",
+                  "promptPt": "17h no corredor — cumprimento adequado:",
+                  "options": [
+                    {
+                      "labelEn": "Good afternoon!",
+                      "correct": true,
+                      "feedbackPt": "Tarde combina com Good afternoon."
+                    },
+                    {
+                      "labelEn": "Good morning!",
+                      "correct": false,
+                      "feedbackPt": "Manhã já passou às 17h."
+                    },
+                    {
+                      "labelEn": "See you later!",
+                      "correct": false,
+                      "feedbackPt": "Isso é despedida, não abertura."
+                    }
+                  ]
+                },
+                {
+                  "id": "l01-prac-07",
+                  "type": "fill_blank",
+                  "promptPt": "Devolva a pergunta depois de responder:",
+                  "templateEn": "I'm great, thanks! ___ you?",
+                  "blankLabel": "palavra",
+                  "options": [
+                    {
+                      "labelEn": "And",
+                      "correct": true,
+                      "feedbackPt": "And you? — devolve a pergunta de forma natural."
+                    },
+                    {
+                      "labelEn": "What",
+                      "correct": false,
+                      "feedbackPt": "What you? não existe — use And you?"
+                    },
+                    {
+                      "labelEn": "How",
+                      "correct": false,
+                      "feedbackPt": "How you? está incompleto — falta are."
+                    }
+                  ]
+                },
+                {
+                  "id": "l01-prac-08",
+                  "type": "reorder",
+                  "promptPt": "Monte a despedida informal:",
+                  "tokens": [
+                    "later!",
+                    "See",
+                    "you"
+                  ],
+                  "correctOrder": [
+                    "See",
+                    "you",
+                    "later!"
+                  ],
+                  "feedbackCorrectPt": "See you later! — ordem fixa.",
+                  "feedbackWrongPt": "A ordem em inglês é See + you + later!"
+                },
+                {
+                  "id": "l01-prac-09",
+                  "type": "dialogue_complete",
+                  "promptPt": "Alex pergunta How are you? — melhor resposta completa:",
+                  "speaker": "You",
+                  "contextEn": "Alex: How are you?",
+                  "options": [
+                    {
+                      "labelEn": "I'm good, thank you. And you?",
+                      "correct": true,
+                      "feedbackPt": "Responde e devolve — padrão real."
+                    },
+                    {
+                      "labelEn": "Good morning!",
+                      "correct": false,
+                      "feedbackPt": "Cumprimento, não resposta a how are you."
+                    },
+                    {
+                      "labelEn": "Nice to meet you.",
+                      "correct": false,
+                      "feedbackPt": "Prazer em conhecer — contexto diferente."
+                    }
+                  ]
+                },
+                {
+                  "id": "l01-prac-10",
+                  "type": "choice",
+                  "promptPt": "Reencontro com colega que você já conhece:",
+                  "options": [
+                    {
+                      "labelEn": "Nice to see you!",
+                      "correct": true,
+                      "feedbackPt": "Reencontro — já se conhecem."
+                    },
+                    {
+                      "labelEn": "Nice to meet you!",
+                      "correct": false,
+                      "feedbackPt": "Meet = primeiro encontro; see = reencontro."
+                    },
+                    {
+                      "labelEn": "What's your name?",
+                      "correct": false,
+                      "feedbackPt": "Pergunta nome — não faz sentido se já conhece."
+                    }
+                  ]
+                }
+              ]
             },
             "curriculum": {
               "objectivePt": "Cumprimente um colega, pergunte how they are, responda e encerre naturalmente.",
@@ -271,18 +715,18 @@
               {
                 "contentKey": "start-m01-l01-q01",
                 "sortOrder": 0,
-                "question": "São 9h da manhã. Qual cumprimento é o mais natural?",
+                "question": "08:30 no escritório — cumprimento adequado:",
                 "options": [
                   "Good morning!",
                   "Good evening!",
-                  "Goodbye!"
+                  "Good night!"
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l01-q02",
                 "sortOrder": 1,
-                "question": "Como responder de forma educada a \"How are you?\"",
+                "question": "Resposta natural a \"How are you?\"",
                 "options": [
                   "I'm good, thank you.",
                   "My name is Carlos.",
@@ -293,33 +737,66 @@
               {
                 "contentKey": "start-m01-l01-q03",
                 "sortOrder": 2,
-                "question": "Qual expressão devolve a pergunta \"How are you?\"",
+                "question": "Devolver a pergunta How are you?",
                 "options": [
                   "And you?",
-                  "What's your name?",
-                  "I'm from Brazil."
+                  "Goodbye!",
+                  "Good morning!"
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l01-q04",
                 "sortOrder": 3,
-                "question": "Final de tarde (17h). Cumprimento adequado:",
+                "question": "15:00 — cumprimento adequado:",
                 "options": [
                   "Good afternoon!",
                   "Good morning!",
-                  "Hi! How are you?"
+                  "See you later!"
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l01-q05",
                 "sortOrder": 4,
-                "question": "Encerrar a conversa de forma casual:",
+                "question": "Encerrar conversa no corredor:",
                 "options": [
                   "See you later!",
-                  "Good morning!",
-                  "How are you?"
+                  "How are you?",
+                  "Nice to meet you!"
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l01-q06",
+                "sortOrder": 5,
+                "question": "Reencontro com colega conhecido:",
+                "options": [
+                  "Nice to see you!",
+                  "Nice to meet you!",
+                  "What is your name?"
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l01-q07",
+                "sortOrder": 6,
+                "question": "Evitar como cumprimento de manhã:",
+                "options": [
+                  "Good night!",
+                  "Hello!",
+                  "Hi!"
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l01-q08",
+                "sortOrder": 7,
+                "question": "Resposta informal positiva:",
+                "options": [
+                  "I'm great, thanks!",
+                  "I am very well, thank you very much.",
+                  "My name is Carlos."
                 ],
                 "correctIndex": 0
               }
@@ -331,7 +808,7 @@
           "title": "My name is...",
           "sortOrder": 1,
           "lessonType": "TEXT",
-          "estimatedMinutes": 10,
+          "estimatedMinutes": 12,
           "contentHtml": "<p class=\"mb-4 rounded-md border border-violet-500/30 bg-violet-500/5 px-3 py-2 text-sm\"><strong>Objetivo (≈10 min):</strong> Apresentar-se, perguntar o nome de alguém e responder a um elogio de encontro (<em>Nice to meet you</em>).</p><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Real Life — Vida real</h3><p>Após cumprimentar Alex, você precisa se apresentar antes da reunião.</p><blockquote class=\"border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm\"><p><strong>Carlos:</strong> Hi! My name is Carlos. What's your name?</p><p><strong>Alex:</strong> I'm Alex. Nice to meet you!</p><p><strong>Carlos:</strong> Nice to meet you too.</p><p><strong>Alex:</strong> Carlos, this is Jamie.</p><p><strong>Carlos:</strong> Hi, Jamie. Nice to meet you.</p></blockquote></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Learn — Aprenda</h3><ul class=\"list-disc pl-5 space-y-2\"><li><strong>My name is...</strong> — meu nome é… (formal/claro)</li><li><strong>I'm...</strong> — eu sou… / me chamo… (informal, muito comum)</li><li><strong>What's your name?</strong> — qual é o seu nome?</li><li><strong>Nice to meet you.</strong> — prazer em conhecer você.</li><li><strong>Nice to meet you too.</strong> — prazer em conhecer você também.</li><li><strong>This is...</strong> — este(a) é… (apresentar alguém)</li><li><strong>Who is this?</strong> — quem é esta pessoa?</li></ul><aside class=\"my-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm\"><strong class=\"text-amber-400\">Language Tip:</strong> <em>I'm Alex</em> e <em>My name is Alex</em> significam a mesma coisa na prática. Em conversa rápida, <em>I'm</em> é mais comum.</aside></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Imitate — Imite</h3><ol class=\"list-decimal pl-5 space-y-2\"><li><span class=\"font-medium\">My name is Carlos.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l02-a01]</em></li><li><span class=\"font-medium\">I'm Carlos.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l02-a02]</em></li><li><span class=\"font-medium\">What's your name?</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l02-a03]</em></li><li><span class=\"font-medium\">Nice to meet you.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l02-a04]</em></li><li><span class=\"font-medium\">Nice to meet you too.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l02-a05]</em></li><li><span class=\"font-medium\">This is Jamie.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l02-a06]</em></li></ol></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Build / Practice — Pratique</h3><p><strong>1.</strong> Apresente-se com <em>I'm...</em> e com <em>My name is...</em></p><p><strong>2.</strong> Role-play: você encontra alguém → cumprimento → nome → <em>Nice to meet you</em>.</p><p><strong>3.</strong> Pratique apresentar um terceiro: <em>This is...</em></p></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Execute — Missão</h3><p><strong>Missão:</strong> cumprimente alguém, diga seu nome, pergunte o nome da pessoa, responda <em>Nice to meet you too</em> e, se possível, apresente um colega com <em>This is...</em></p></section>",
           "live": {
             "realLifeContext": "Apresentação rápida antes de uma reunião.",
@@ -341,10 +818,10 @@
             "verify": "Quiz de 5 questões.",
             "executeMission": "Apresentação completa com nome e nice to meet you.",
             "player": {
-              "version": 1,
+              "version": 2,
               "levelLabel": "START",
               "moduleNumber": 1,
-              "goalPt": "Apresentar-se, perguntar o nome de alguém e responder a um elogio de encontro (Nice to meet you).",
+              "goalPt": "Apresentar-se, perguntar o nome de alguém, responder a Nice to meet you e apresentar uma terceira pessoa.",
               "steps": [
                 {
                   "id": "context",
@@ -358,8 +835,8 @@
                 },
                 {
                   "id": "imitate",
-                  "label": "Listen / Imitate",
-                  "labelPt": "Ouça / Imite"
+                  "label": "Read & Repeat",
+                  "labelPt": "Leia e repita"
                 },
                 {
                   "id": "practice",
@@ -378,105 +855,92 @@
                 }
               ],
               "context": {
-                "scenarioPt": "Após cumprimentar Alex, você precisa se apresentar antes da reunião.",
-                "dialogue": [
-                  {
-                    "speaker": "Carlos",
-                    "textEn": "Hi! My name is Carlos. What's your name?"
-                  },
-                  {
-                    "speaker": "Alex",
-                    "textEn": "I'm Alex. Nice to meet you!"
-                  },
-                  {
-                    "speaker": "Carlos",
-                    "textEn": "Nice to meet you too."
-                  },
-                  {
-                    "speaker": "Alex",
-                    "textEn": "Carlos, this is Jamie."
-                  },
-                  {
-                    "speaker": "Carlos",
-                    "textEn": "Hi, Jamie. Nice to meet you."
-                  }
-                ]
+                "scenarioPt": "Após cumprimentar Alex, Jamie se aproxima e você precisa se apresentar antes da reunião.",
+                "dialogue": []
               },
               "learn": {
-                "introPt": "Use frases completas — I'm e My name is são as formas mais comuns de se apresentar.",
-                "phrases": [
-                  {
-                    "en": "My name is...",
-                    "pt": "meu nome é… (formal/claro)"
-                  },
-                  {
-                    "en": "I'm...",
-                    "pt": "eu sou… / me chamo… (informal, muito comum)"
-                  },
-                  {
-                    "en": "What's your name?",
-                    "pt": "qual é o seu nome?"
-                  },
-                  {
-                    "en": "Nice to meet you.",
-                    "pt": "prazer em conhecer você."
-                  },
-                  {
-                    "en": "Nice to meet you too.",
-                    "pt": "prazer em conhecer você também."
-                  },
-                  {
-                    "en": "This is...",
-                    "pt": "este(a) é… (apresentar alguém)"
-                  },
-                  {
-                    "en": "Who is this?",
-                    "pt": "quem é esta pessoa?"
-                  }
-                ],
-                "languageTip": "I'm… é mais natural no dia a dia; My name is… soa um pouco mais formal ou claro."
+                "introPt": "",
+                "phrases": []
               },
               "imitate": {
-                "introPt": "Repita em voz alta cada expressão, depois o mini-diálogo de apresentação.",
-                "phrases": [
-                  {
-                    "en": "My name is Carlos.",
-                    "audioKey": "start-m01-l02-a01"
-                  },
-                  {
-                    "en": "I'm Carlos.",
-                    "audioKey": "start-m01-l02-a02"
-                  },
-                  {
-                    "en": "What's your name?",
-                    "audioKey": "start-m01-l02-a03"
-                  },
-                  {
-                    "en": "Nice to meet you.",
-                    "audioKey": "start-m01-l02-a04"
-                  },
-                  {
-                    "en": "Nice to meet you too.",
-                    "audioKey": "start-m01-l02-a05"
-                  },
-                  {
-                    "en": "This is Jamie.",
-                    "audioKey": "start-m01-l02-a06"
-                  }
-                ],
-                "dialogueEn": "Hi! My name is Carlos. What's your name? — I'm Alex. Nice to meet you! — Nice to meet you too."
+                "introPt": "Leia em voz alta e repita cada frase.",
+                "phrases": []
               },
               "practice": {
-                "introPt": "Escolha a resposta mais natural. Feedback imediato — sem nota.",
-                "items": [
+                "introPt": "Interações guiadas — feedback imediato, sem nota.",
+                "items": []
+              },
+              "mission": {
+                "headlineEn": "You can introduce yourself in English.",
+                "headlinePt": "Você consegue se apresentar em inglês.",
+                "bodyPt": "",
+                "canDo": [
+                  "My name is Carlos.",
+                  "What's your name?",
+                  "Nice to meet you too.",
+                  "This is Jamie."
+                ],
+                "production": {
+                  "introPt": "Responda como se Jamie estivesse falando com você. Monte a troca de nomes e o prazer em conhecer.",
+                  "prompts": [
+                    {
+                      "speaker": "Jamie",
+                      "questionEn": "Hi! What's your name?"
+                    },
+                    {
+                      "speaker": "Jamie",
+                      "questionEn": "Nice to meet you!"
+                    }
+                  ],
+                  "fields": [
+                    {
+                      "id": "myName",
+                      "labelPt": "Seu nome",
+                      "prefixEn": "My name is",
+                      "placeholderEn": "Carlos"
+                    },
+                    {
+                      "id": "askName",
+                      "labelPt": "Perguntar o nome",
+                      "prefixEn": "",
+                      "placeholderEn": "What's your name?"
+                    },
+                    {
+                      "id": "niceToMeet",
+                      "labelPt": "Prazer em conhecer",
+                      "prefixEn": "",
+                      "placeholderEn": "Nice to meet you too."
+                    }
+                  ],
+                  "exampleEn": "Hi! My name is Carlos. What's your name? — I'm Jamie. Nice to meet you! — Nice to meet you too."
+                }
+              },
+              "stepScreens": {
+                "context": [
                   {
-                    "id": "start-m01-l02-p01",
-                    "promptPt": "Primeiro encontro — forma comum de dizer seu nome:",
+                    "id": "l02-ctx-01",
+                    "type": "intro",
+                    "titleEn": "Time to introduce yourself",
+                    "titlePt": "Hora de se apresentar",
+                    "bodyPt": "Você já cumprimentou Alex. Agora Jamie, outro colega internacional, se aproxima antes da reunião. Nesta lição, você diz seu nome, pergunta o nome da pessoa e apresenta alguém."
+                  },
+                  {
+                    "id": "l02-ctx-02",
+                    "type": "scenario",
+                    "settingEn": "Meeting room area · Real life",
+                    "scenarioPt": "Jamie sorri e estende a mão — é a primeira vez que vocês se falam de verdade."
+                  },
+                  {
+                    "id": "l02-ctx-03",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "Hi! What's your name?",
+                    "promptPt": "Jamie pergunta seu nome. Como você responde?",
                     "options": [
                       {
-                        "labelEn": "I'm Carlos.",
+                        "labelEn": "My name is Carlos.",
                         "correct": true,
-                        "feedbackPt": "Natural e muito usado no dia a dia."
+                        "feedbackPt": "Claro e correto — My name is + nome."
                       },
                       {
                         "labelEn": "I live Carlos.",
@@ -486,65 +950,568 @@
                       {
                         "labelEn": "I work Carlos.",
                         "correct": false,
-                        "feedbackPt": "Work indica trabalho, não nome."
+                        "feedbackPt": "Work indica emprego, não nome."
                       }
                     ]
                   },
                   {
-                    "id": "start-m01-l02-p02",
-                    "promptPt": "Alex diz \"Nice to meet you!\" — você responde:",
+                    "id": "l02-ctx-04",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "I'm Jamie. Nice to meet you!",
+                    "promptPt": "Jamie se apresenta e diz prazer em conhecer. Você responde:",
                     "options": [
                       {
                         "labelEn": "Nice to meet you too.",
                         "correct": true,
-                        "feedbackPt": "Resposta padrão ao prazer em conhecer."
+                        "feedbackPt": "Resposta padrão — repete o elogio com too."
                       },
                       {
                         "labelEn": "Good morning!",
                         "correct": false,
-                        "feedbackPt": "Isso cumprimenta, não responde ao nice to meet you."
+                        "feedbackPt": "Cumprimento — não responde ao nice to meet you."
                       },
                       {
-                        "labelEn": "I am fine.",
+                        "labelEn": "How are you?",
                         "correct": false,
-                        "feedbackPt": "Responde a how are you, não a nice to meet you."
+                        "feedbackPt": "Pergunta diferente — Jamie acabou de se apresentar."
                       }
                     ]
                   },
                   {
-                    "id": "start-m01-l02-p03",
-                    "promptPt": "Apresentar Jamie a alguém:",
+                    "id": "l02-ctx-05",
+                    "type": "dialogue_choice",
+                    "speaker": "Alex",
+                    "promptEn": "Carlos, this is Jamie.",
+                    "promptPt": "Alex apresenta Jamie a você. Melhor resposta:",
                     "options": [
                       {
-                        "labelEn": "This is Jamie.",
+                        "labelEn": "Hi, Jamie. Nice to meet you.",
                         "correct": true,
-                        "feedbackPt": "Forma correta de apresentar um terceiro."
+                        "feedbackPt": "Cumprimenta e diz prazer — natural."
                       },
                       {
                         "labelEn": "What's your name?",
                         "correct": false,
-                        "feedbackPt": "Isso pergunta o nome, não apresenta alguém."
+                        "feedbackPt": "Alex já disse o nome — Jamie."
                       },
                       {
                         "labelEn": "I'm from Brazil.",
                         "correct": false,
-                        "feedbackPt": "Isso fala origem, não apresenta alguém."
+                        "feedbackPt": "Origem — contexto diferente."
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l02-ctx-06",
+                    "type": "dialogue_choice",
+                    "speaker": "You",
+                    "promptEn": "Who is this?",
+                    "promptPt": "Você vê alguém novo na sala e quer saber quem é. Como perguntar?",
+                    "options": [
+                      {
+                        "labelEn": "Who is this?",
+                        "correct": true,
+                        "feedbackPt": "Pergunta direta sobre identidade."
+                      },
+                      {
+                        "labelEn": "This is Jamie.",
+                        "correct": false,
+                        "feedbackPt": "This is apresenta — não pergunta."
+                      },
+                      {
+                        "labelEn": "Where are you from?",
+                        "correct": false,
+                        "feedbackPt": "Pergunta origem, não identidade."
+                      }
+                    ]
+                  }
+                ],
+                "learn": [
+                  {
+                    "id": "l02-learn-01",
+                    "type": "phrase_examples",
+                    "titleEn": "My name is / I'm",
+                    "titlePt": "Meu nome é / Eu sou",
+                    "introPt": "Duas formas comuns de se apresentar. I'm é mais natural no dia a dia; My name is soa um pouco mais claro ou formal.",
+                    "examples": [
+                      {
+                        "en": "My name is Carlos.",
+                        "pt": "claro / um pouco formal"
+                      },
+                      {
+                        "en": "I'm Carlos.",
+                        "pt": "informal, muito comum"
+                      },
+                      {
+                        "en": "My name is Ana.",
+                        "pt": "feminino — mesma estrutura"
+                      },
+                      {
+                        "en": "I'm Alex.",
+                        "pt": "curto e natural"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l02-learn-02",
+                    "type": "phrase_examples",
+                    "titleEn": "What's your name?",
+                    "titlePt": "Qual é o seu nome?",
+                    "introPt": "Pergunta padrão para saber o nome de alguém. Responda com My name is… ou I'm…",
+                    "examples": [
+                      {
+                        "en": "What's your name?",
+                        "pt": "pergunta"
+                      },
+                      {
+                        "en": "My name is Carlos.",
+                        "pt": "resposta"
+                      },
+                      {
+                        "en": "I'm Jamie.",
+                        "pt": "resposta curta"
+                      },
+                      {
+                        "en": "And you?",
+                        "pt": "devolve após responder"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l02-learn-03",
+                    "type": "phrase_examples",
+                    "titleEn": "Nice to meet you",
+                    "titlePt": "Prazer em conhecer",
+                    "introPt": "Use no primeiro encontro. A resposta padrão é Nice to meet you too.",
+                    "examples": [
+                      {
+                        "en": "Nice to meet you!",
+                        "pt": "primeiro encontro"
+                      },
+                      {
+                        "en": "Nice to meet you too.",
+                        "pt": "resposta padrão"
+                      },
+                      {
+                        "en": "Pleased to meet you.",
+                        "pt": "mais formal"
+                      },
+                      {
+                        "en": "Nice to meet you, Carlos.",
+                        "pt": "com nome"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l02-learn-04",
+                    "type": "phrase_examples",
+                    "titleEn": "This is / Who is this?",
+                    "titlePt": "Este é / Quem é?",
+                    "introPt": "This is apresenta alguém. Who is this? pergunta quem é a pessoa.",
+                    "examples": [
+                      {
+                        "en": "This is Jamie.",
+                        "pt": "apresentar alguém"
+                      },
+                      {
+                        "en": "Carlos, this is Jamie.",
+                        "pt": "apresentação a um amigo"
+                      },
+                      {
+                        "en": "Who is this?",
+                        "pt": "perguntar identidade"
+                      },
+                      {
+                        "en": "This is Alex, our manager.",
+                        "pt": "com cargo/função"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l02-learn-05",
+                    "type": "language_focus",
+                    "titleEn": "I am → I'm · What is → What's",
+                    "titlePt": "Contrações naturais",
+                    "items": [
+                      {
+                        "formalEn": "I am Carlos.",
+                        "naturalEn": "I'm Carlos.",
+                        "notePt": "Na fala real, I'm é padrão."
+                      },
+                      {
+                        "formalEn": "What is your name?",
+                        "naturalEn": "What's your name?",
+                        "notePt": "What's soa mais natural que What is."
+                      },
+                      {
+                        "formalEn": "It is nice to meet you.",
+                        "naturalEn": "It's nice to meet you.",
+                        "notePt": "Mesma regra — contrações são normais."
+                      }
+                    ],
+                    "tipPt": "Em apresentações informais, use I'm e What's — soam nativos, não preguiçosos."
+                  },
+                  {
+                    "id": "l02-learn-06",
+                    "type": "vocabulary",
+                    "titleEn": "My / Your",
+                    "titlePt": "Possessivos — meu / seu",
+                    "words": [
+                      {
+                        "en": "my",
+                        "pt": "meu / minha",
+                        "exampleEn": "My name is Carlos."
+                      },
+                      {
+                        "en": "your",
+                        "pt": "seu / sua",
+                        "exampleEn": "What's your name?"
+                      },
+                      {
+                        "en": "his",
+                        "pt": "dele",
+                        "exampleEn": "His name is Alex."
+                      },
+                      {
+                        "en": "her",
+                        "pt": "dela",
+                        "exampleEn": "Her name is Ana."
+                      },
+                      {
+                        "en": "name",
+                        "pt": "nome",
+                        "exampleEn": "What's your name?"
+                      },
+                      {
+                        "en": "meet",
+                        "pt": "conhecer (pela 1ª vez)",
+                        "exampleEn": "Nice to meet you."
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l02-learn-07",
+                    "type": "mistake",
+                    "titlePt": "Erro comum de brasileiros",
+                    "wrongEn": "Nice to see you! (at a first introduction)",
+                    "rightEn": "Nice to meet you!",
+                    "explanationPt": "Meet = primeiro encontro (prazer em conhecer). See = reencontro (prazer em ver). Na primeira apresentação com Jamie, use Nice to meet you — não Nice to see you."
+                  },
+                  {
+                    "id": "l02-learn-08",
+                    "type": "review",
+                    "titleEn": "Quick review",
+                    "titlePt": "Revisão rápida",
+                    "items": [
+                      {
+                        "en": "My name is Carlos.",
+                        "pt": "apresentação clara"
+                      },
+                      {
+                        "en": "I'm Carlos.",
+                        "pt": "apresentação informal"
+                      },
+                      {
+                        "en": "What's your name?",
+                        "pt": "perguntar nome"
+                      },
+                      {
+                        "en": "Nice to meet you!",
+                        "pt": "primeiro encontro"
+                      },
+                      {
+                        "en": "Nice to meet you too.",
+                        "pt": "resposta padrão"
+                      },
+                      {
+                        "en": "This is Jamie.",
+                        "pt": "apresentar alguém"
+                      },
+                      {
+                        "en": "Who is this?",
+                        "pt": "perguntar identidade"
+                      }
+                    ]
+                  }
+                ],
+                "imitate": [
+                  {
+                    "id": "l02-imit-01",
+                    "type": "read_repeat",
+                    "titleEn": "Read & Repeat",
+                    "titlePt": "Leia e repita",
+                    "introPt": "Sem áudio ainda — leia em voz alta, pausa curta entre frases. Adapte o nome à sua realidade.",
+                    "phrases": [
+                      {
+                        "en": "My name is Carlos."
+                      },
+                      {
+                        "en": "I'm Carlos."
+                      },
+                      {
+                        "en": "What's your name?"
+                      },
+                      {
+                        "en": "Nice to meet you."
+                      },
+                      {
+                        "en": "Nice to meet you too."
+                      },
+                      {
+                        "en": "This is Jamie."
+                      },
+                      {
+                        "en": "Who is this?"
+                      }
+                    ],
+                    "dialogueEn": "Hi! My name is Carlos. What's your name? — I'm Jamie. Nice to meet you! — Nice to meet you too. — Carlos, this is Alex."
+                  }
+                ],
+                "mission": [
+                  {
+                    "id": "l02-miss-01",
+                    "type": "mission_intro",
+                    "headlineEn": "Your turn — introduce yourself.",
+                    "headlinePt": "Sua vez — apresente-se.",
+                    "bodyPt": "Jamie perguntou seu nome e disse prazer em conhecer. Monte sua troca completa em inglês.",
+                    "prompts": [
+                      {
+                        "speaker": "Jamie",
+                        "questionEn": "Hi! What's your name?"
+                      },
+                      {
+                        "speaker": "Jamie",
+                        "questionEn": "Nice to meet you!"
                       }
                     ]
                   }
                 ]
               },
-              "mission": {
-                "headlineEn": "You can introduce yourself in English.",
-                "headlinePt": "Você consegue se apresentar em inglês.",
-                "bodyPt": "Missão: cumprimente alguém, diga seu nome, pergunte o nome da pessoa, responda Nice to meet you too e, se possível, apresente um colega com This is…",
-                "canDo": [
-                  "My name is Carlos.",
-                  "What's your name?",
-                  "Nice to meet you too.",
-                  "This is Jamie."
-                ]
-              }
+              "practiceInteractions": [
+                {
+                  "id": "l02-prac-01",
+                  "type": "choice",
+                  "promptPt": "Primeiro encontro — forma comum de dizer seu nome:",
+                  "options": [
+                    {
+                      "labelEn": "I'm Carlos.",
+                      "correct": true,
+                      "feedbackPt": "Natural e muito usado no dia a dia."
+                    },
+                    {
+                      "labelEn": "I live Carlos.",
+                      "correct": false,
+                      "feedbackPt": "Live indica moradia, não nome."
+                    },
+                    {
+                      "labelEn": "I work Carlos.",
+                      "correct": false,
+                      "feedbackPt": "Work indica trabalho, não nome."
+                    }
+                  ]
+                },
+                {
+                  "id": "l02-prac-02",
+                  "type": "fill_blank",
+                  "promptPt": "Complete a pergunta sobre nome:",
+                  "templateEn": "What's ___ name?",
+                  "blankLabel": "possessivo",
+                  "options": [
+                    {
+                      "labelEn": "your",
+                      "correct": true,
+                      "feedbackPt": "What's your name? — padrão fixo."
+                    },
+                    {
+                      "labelEn": "my",
+                      "correct": false,
+                      "feedbackPt": "My name = seu nome — a pergunta pede o nome da outra pessoa."
+                    },
+                    {
+                      "labelEn": "you",
+                      "correct": false,
+                      "feedbackPt": "Precisa do possessivo your, não you."
+                    }
+                  ]
+                },
+                {
+                  "id": "l02-prac-03",
+                  "type": "reorder",
+                  "promptPt": "Monte a apresentação clara:",
+                  "tokens": [
+                    "Carlos.",
+                    "name",
+                    "My",
+                    "is"
+                  ],
+                  "correctOrder": [
+                    "My",
+                    "name",
+                    "is",
+                    "Carlos."
+                  ],
+                  "feedbackCorrectPt": "My name is Carlos. — ordem fixa.",
+                  "feedbackWrongPt": "A ordem correta é My + name + is + nome."
+                },
+                {
+                  "id": "l02-prac-04",
+                  "type": "dialogue_complete",
+                  "promptPt": "Jamie diz \"Nice to meet you!\" — você responde:",
+                  "speaker": "You",
+                  "contextEn": "Jamie: Nice to meet you!",
+                  "options": [
+                    {
+                      "labelEn": "Nice to meet you too.",
+                      "correct": true,
+                      "feedbackPt": "Resposta padrão ao prazer em conhecer."
+                    },
+                    {
+                      "labelEn": "Good morning!",
+                      "correct": false,
+                      "feedbackPt": "Cumprimento — não responde ao nice to meet you."
+                    },
+                    {
+                      "labelEn": "I am fine.",
+                      "correct": false,
+                      "feedbackPt": "Responde a how are you, não a nice to meet you."
+                    }
+                  ]
+                },
+                {
+                  "id": "l02-prac-05",
+                  "type": "choice",
+                  "promptPt": "Apresentar Jamie a alguém:",
+                  "options": [
+                    {
+                      "labelEn": "This is Jamie.",
+                      "correct": true,
+                      "feedbackPt": "Forma correta de apresentar um terceiro."
+                    },
+                    {
+                      "labelEn": "What's your name?",
+                      "correct": false,
+                      "feedbackPt": "Pergunta o nome — não apresenta alguém."
+                    },
+                    {
+                      "labelEn": "I'm from Brazil.",
+                      "correct": false,
+                      "feedbackPt": "Fala origem — não apresenta alguém."
+                    }
+                  ]
+                },
+                {
+                  "id": "l02-prac-06",
+                  "type": "fill_blank",
+                  "promptPt": "Complete a contração natural:",
+                  "templateEn": "___ Carlos.",
+                  "blankLabel": "contração",
+                  "options": [
+                    {
+                      "labelEn": "I'm",
+                      "correct": true,
+                      "feedbackPt": "I'm = I am — forma natural na fala."
+                    },
+                    {
+                      "labelEn": "I",
+                      "correct": false,
+                      "feedbackPt": "Falta o verbo am — I'm ou I am."
+                    },
+                    {
+                      "labelEn": "My",
+                      "correct": false,
+                      "feedbackPt": "My sozinho não forma frase — use I'm ou My name is."
+                    }
+                  ]
+                },
+                {
+                  "id": "l02-prac-07",
+                  "type": "reorder",
+                  "promptPt": "Monte a pergunta sobre identidade:",
+                  "tokens": [
+                    "this?",
+                    "Who",
+                    "is"
+                  ],
+                  "correctOrder": [
+                    "Who",
+                    "is",
+                    "this?"
+                  ],
+                  "feedbackCorrectPt": "Who is this? — ordem fixa em inglês.",
+                  "feedbackWrongPt": "A ordem correta é Who + is + this?"
+                },
+                {
+                  "id": "l02-prac-08",
+                  "type": "dialogue_complete",
+                  "promptPt": "Jamie pergunta seu nome — você responde e pergunta de volta:",
+                  "speaker": "You",
+                  "contextEn": "Jamie: Hi! What's your name?",
+                  "options": [
+                    {
+                      "labelEn": "My name is Carlos. What's your name?",
+                      "correct": true,
+                      "feedbackPt": "Responde e devolve — fluxo natural."
+                    },
+                    {
+                      "labelEn": "Nice to see you!",
+                      "correct": false,
+                      "feedbackPt": "See = reencontro — aqui é primeiro encontro (meet)."
+                    },
+                    {
+                      "labelEn": "I live in Boston.",
+                      "correct": false,
+                      "feedbackPt": "Moradia — não responde à pergunta sobre nome."
+                    }
+                  ]
+                },
+                {
+                  "id": "l02-prac-09",
+                  "type": "choice",
+                  "promptPt": "Primeiro encontro com Jamie — elogio correto:",
+                  "options": [
+                    {
+                      "labelEn": "Nice to meet you!",
+                      "correct": true,
+                      "feedbackPt": "Meet = primeiro encontro."
+                    },
+                    {
+                      "labelEn": "Nice to see you!",
+                      "correct": false,
+                      "feedbackPt": "See = reencontro — vocês acabaram de se conhecer."
+                    },
+                    {
+                      "labelEn": "See you later!",
+                      "correct": false,
+                      "feedbackPt": "Despedida — contexto diferente."
+                    }
+                  ]
+                },
+                {
+                  "id": "l02-prac-10",
+                  "type": "fill_blank",
+                  "promptPt": "Complete a resposta padrão:",
+                  "templateEn": "Nice to meet you ___.",
+                  "blankLabel": "palavra",
+                  "options": [
+                    {
+                      "labelEn": "too",
+                      "correct": true,
+                      "feedbackPt": "Nice to meet you too — resposta fixa."
+                    },
+                    {
+                      "labelEn": "also",
+                      "correct": false,
+                      "feedbackPt": "Also não é usado aqui — o padrão é too."
+                    },
+                    {
+                      "labelEn": "very",
+                      "correct": false,
+                      "feedbackPt": "Very não completa esta frase."
+                    }
+                  ]
+                }
+              ]
             },
             "curriculum": {
               "objectivePt": "Apresentação completa com nome e nice to meet you.",
@@ -566,7 +1533,7 @@
               {
                 "contentKey": "start-m01-l02-q01",
                 "sortOrder": 0,
-                "question": "Forma comum e natural de dizer seu nome:",
+                "question": "Forma comum de dizer seu nome:",
                 "options": [
                   "I'm Carlos.",
                   "I live Carlos.",
@@ -588,7 +1555,7 @@
               {
                 "contentKey": "start-m01-l02-q03",
                 "sortOrder": 2,
-                "question": "Resposta a \"Nice to meet you!\":",
+                "question": "Resposta a \"Nice to meet you!\"",
                 "options": [
                   "Nice to meet you too.",
                   "Good morning!",
@@ -599,7 +1566,7 @@
               {
                 "contentKey": "start-m01-l02-q04",
                 "sortOrder": 3,
-                "question": "Apresentar uma terceira pessoa:",
+                "question": "Apresentar terceira pessoa:",
                 "options": [
                   "This is Jamie.",
                   "What's your name?",
@@ -610,11 +1577,44 @@
               {
                 "contentKey": "start-m01-l02-q05",
                 "sortOrder": 4,
-                "question": "Perguntar quem é alguém que você não conhece:",
+                "question": "Perguntar quem é alguém desconhecido:",
                 "options": [
                   "Who is this?",
                   "What do you do?",
                   "And you?"
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l02-q06",
+                "sortOrder": 5,
+                "question": "Contração natural:",
+                "options": [
+                  "I'm Ana.",
+                  "I am Ana always.",
+                  "I Ana."
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l02-q07",
+                "sortOrder": 6,
+                "question": "Primeiro encontro — NÃO use:",
+                "options": [
+                  "Nice to see you!",
+                  "Nice to meet you!",
+                  "My name is..."
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l02-q08",
+                "sortOrder": 7,
+                "question": "Forma clara e completa do nome:",
+                "options": [
+                  "My name is Carlos.",
+                  "My name Carlos.",
+                  "Name is Carlos my."
                 ],
                 "correctIndex": 0
               }
@@ -1298,14 +2298,14 @@
                 "options": [
                   "Yes, I do.",
                   "Nice to meet you.",
-                  "I'm from here."
+                  "I'm Alex."
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l03-q05",
                 "sortOrder": 4,
-                "question": "Diferença correta entre from e live in:",
+                "question": "Diferença correta between from e live in:",
                 "options": [
                   "I'm from Brazil = origem; I live in Boston = moradia atual",
                   "I'm from Brazil = trabalho; I live in Boston = nome",
@@ -1327,7 +2327,7 @@
               {
                 "contentKey": "start-m01-l03-q07",
                 "sortOrder": 6,
-                "question": "Modelo integrado — origem e moradia:",
+                "question": "Modelo integrado origem + moradia:",
                 "options": [
                   "I'm from Brazil, but I live in Boston.",
                   "I live from Brazil in Boston.",
@@ -1338,10 +2338,10 @@
               {
                 "contentKey": "start-m01-l03-q08",
                 "sortOrder": 7,
-                "question": "Forma natural (contração):",
+                "question": "Forma natural com contração:",
                 "options": [
                   "I'm from Brazil.",
-                  "I am from Brazil always only.",
+                  "I am from Brazil only formal.",
                   "I from Brazil."
                 ],
                 "correctIndex": 0
@@ -1354,7 +2354,7 @@
           "title": "What do you do?",
           "sortOrder": 3,
           "lessonType": "TEXT",
-          "estimatedMinutes": 10,
+          "estimatedMinutes": 12,
           "contentHtml": "<p class=\"mb-4 rounded-md border border-violet-500/30 bg-violet-500/5 px-3 py-2 text-sm\"><strong>Objetivo (≈10 min):</strong> Explicar de forma simples o que você faz no trabalho e devolver a pergunta.</p><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Real Life — Vida real</h3><p>Na mesma conversa, Jamie pergunta sobre seu trabalho — vale para escritório, clube ou qualquer empresa.</p><blockquote class=\"border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm\"><p><strong>Jamie:</strong> What do you do?</p><p><strong>Carlos:</strong> I work for a football club. I'm responsible for logistics.</p><p><strong>Jamie:</strong> Interesting! I work in marketing. What about you, Alex?</p></blockquote></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Learn — Aprenda</h3><ul class=\"list-disc pl-5 space-y-2\"><li><strong>What do you do?</strong> — o que você faz? (profissão/função)</li><li><strong>I work for...</strong> — trabalho para… (empresa/organização)</li><li><strong>I work at...</strong> — trabalho em… (local)</li><li><strong>I work in...</strong> — trabalho na área de…</li><li><strong>I'm a...</strong> — sou um(a)… (cargo/profissão)</li><li><strong>I'm responsible for...</strong> — sou responsável por…</li><li><strong>I work with...</strong> — trabalho com… (equipe/área)</li><li><strong>What about you?</strong> — e você? (devolve o tema)</li></ul><aside class=\"my-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm\"><strong class=\"text-amber-400\">Language Tip:</strong> <em>I work for</em> + organização. <em>I work in</em> + setor (marketing, finance, operations).</aside></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Imitate — Imite</h3><ol class=\"list-decimal pl-5 space-y-2\"><li><span class=\"font-medium\">What do you do?</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l04-a01]</em></li><li><span class=\"font-medium\">I work for a football club.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l04-a02]</em></li><li><span class=\"font-medium\">I'm a coordinator.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l04-a03]</em></li><li><span class=\"font-medium\">I'm responsible for logistics.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l04-a04]</em></li><li><span class=\"font-medium\">I work with the operations team.</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l04-a05]</em></li><li><span class=\"font-medium\">What about you?</span> <em class=\"text-xs text-muted-foreground not-italic\">[áudio: start-m01-l04-a06]</em></li></ol></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Build / Practice — Pratique</h3><p>Monte <strong>uma</strong> frase sobre você usando dois padrões (ex.: <em>I work for...</em> + <em>I'm responsible for...</em>).</p><p class=\"text-sm mt-2\">Funciona com qualquer área: administração, saúde, TI, futebol, RH.</p></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Execute — Missão</h3><p><strong>Missão:</strong> responda <em>What do you do?</em> em no máximo duas frases e devolva com <em>What about you?</em></p></section>",
           "live": {
             "realLifeContext": "Pergunta sobre trabalho em conversa casual.",
@@ -1364,10 +2364,10 @@
             "verify": "Quiz de 5 questões.",
             "executeMission": "Explicar função + devolver pergunta.",
             "player": {
-              "version": 1,
+              "version": 2,
               "levelLabel": "START",
               "moduleNumber": 1,
-              "goalPt": "Explicar de forma simples o que você faz no trabalho e devolver a pergunta.",
+              "goalPt": "Perguntar e responder sobre trabalho, cargo e área — e devolver a pergunta com What about you?",
               "steps": [
                 {
                   "id": "context",
@@ -1381,8 +2381,8 @@
                 },
                 {
                   "id": "imitate",
-                  "label": "Listen / Imitate",
-                  "labelPt": "Ouça / Imite"
+                  "label": "Read & Repeat",
+                  "labelPt": "Leia e repita"
                 },
                 {
                   "id": "practice",
@@ -1401,169 +2401,647 @@
                 }
               ],
               "context": {
-                "scenarioPt": "Na mesma conversa, Jamie pergunta sobre seu trabalho — vale para escritório, clube ou qualquer empresa.",
-                "dialogue": [
-                  {
-                    "speaker": "Jamie",
-                    "textEn": "What do you do?"
-                  },
-                  {
-                    "speaker": "Carlos",
-                    "textEn": "I work for a football club. I'm responsible for logistics."
-                  },
-                  {
-                    "speaker": "Jamie",
-                    "textEn": "Interesting! I work in marketing. What about you, Alex?"
-                  }
-                ]
+                "scenarioPt": "A conversa com Jamie continua — agora sobre trabalho.",
+                "dialogue": []
               },
               "learn": {
-                "introPt": "Monte sua resposta com padrões simples — organização, área e responsabilidade.",
-                "phrases": [
-                  {
-                    "en": "What do you do?",
-                    "pt": "o que você faz? (profissão/função)"
-                  },
-                  {
-                    "en": "I work for...",
-                    "pt": "trabalho para… (empresa/organização)"
-                  },
-                  {
-                    "en": "I work at...",
-                    "pt": "trabalho em… (local)"
-                  },
-                  {
-                    "en": "I work in...",
-                    "pt": "trabalho na área de…"
-                  },
-                  {
-                    "en": "I'm a...",
-                    "pt": "sou um(a)… (cargo/profissão)"
-                  },
-                  {
-                    "en": "I'm responsible for...",
-                    "pt": "sou responsável por…"
-                  },
-                  {
-                    "en": "I work with...",
-                    "pt": "trabalho com… (equipe/área)"
-                  },
-                  {
-                    "en": "What about you?",
-                    "pt": "e você? (devolve o tema)"
-                  }
-                ],
-                "languageTip": "I work for = organização; I work in = área/setor; I'm responsible for = sua função específica."
+                "introPt": "",
+                "phrases": []
               },
               "imitate": {
-                "introPt": "Repita em voz alta. Adapte à sua área real de trabalho.",
-                "phrases": [
-                  {
-                    "en": "What do you do?",
-                    "audioKey": "start-m01-l04-a01"
-                  },
-                  {
-                    "en": "I work for a football club.",
-                    "audioKey": "start-m01-l04-a02"
-                  },
-                  {
-                    "en": "I'm a coordinator.",
-                    "audioKey": "start-m01-l04-a03"
-                  },
-                  {
-                    "en": "I'm responsible for logistics.",
-                    "audioKey": "start-m01-l04-a04"
-                  },
-                  {
-                    "en": "I work with the operations team.",
-                    "audioKey": "start-m01-l04-a05"
-                  },
-                  {
-                    "en": "What about you?",
-                    "audioKey": "start-m01-l04-a06"
-                  }
-                ],
-                "dialogueEn": "What do you do? — I work for a football club. I'm responsible for logistics. — I work in marketing. What about you?"
+                "introPt": "Leia em voz alta e repita cada frase.",
+                "phrases": []
               },
               "practice": {
-                "introPt": "Escolha a resposta mais natural. Feedback imediato — sem nota.",
-                "items": [
+                "introPt": "Interações guiadas — feedback imediato, sem nota.",
+                "items": []
+              },
+              "mission": {
+                "headlineEn": "Talk about your job.",
+                "headlinePt": "Fale sobre seu trabalho.",
+                "bodyPt": "",
+                "canDo": [
+                  "What do you do?",
+                  "I'm a developer.",
+                  "I work in technology.",
+                  "I work for a company.",
+                  "I work with the team.",
+                  "Where do you work?",
+                  "What about you?"
+                ],
+                "production": {
+                  "introPt": "Jamie pergunta sobre seu trabalho. Descreva seu cargo em duas frases em inglês e devolva a pergunta.",
+                  "prompts": [
+                    {
+                      "speaker": "Jamie",
+                      "questionEn": "What do you do?"
+                    }
+                  ],
+                  "fields": [
+                    {
+                      "id": "sentence1",
+                      "labelPt": "Primeira frase — cargo ou profissão",
+                      "prefixEn": "I'm a",
+                      "placeholderEn": "developer"
+                    },
+                    {
+                      "id": "sentence2",
+                      "labelPt": "Segunda frase — área, empresa ou equipe",
+                      "prefixEn": "I work in",
+                      "placeholderEn": "technology"
+                    },
+                    {
+                      "id": "return",
+                      "labelPt": "Devolver a pergunta",
+                      "prefixEn": "",
+                      "placeholderEn": "What about you?"
+                    }
+                  ],
+                  "exampleEn": "I'm a developer. I work in technology. What about you?"
+                }
+              },
+              "stepScreens": {
+                "context": [
                   {
-                    "id": "start-m01-l04-p01",
-                    "promptPt": "Perguntar a profissão ou função de alguém:",
+                    "id": "l04-ctx-01",
+                    "type": "intro",
+                    "titleEn": "Work comes up",
+                    "titlePt": "O assunto vira trabalho",
+                    "bodyPt": "Depois de origem e moradia, Jamie quer saber o que você faz no dia a dia. Vale para escritório, clube, hospital ou qualquer empresa."
+                  },
+                  {
+                    "id": "l04-ctx-02",
+                    "type": "scenario",
+                    "settingEn": "Office café · Same conversation",
+                    "scenarioPt": "Jamie inclina a cabeça com curiosidade e muda o tema para trabalho."
+                  },
+                  {
+                    "id": "l04-ctx-03",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "What do you do?",
+                    "promptPt": "Jamie pergunta sua profissão ou função.",
                     "options": [
                       {
-                        "labelEn": "What do you do?",
+                        "labelEn": "I'm a developer.",
                         "correct": true,
-                        "feedbackPt": "Pergunta padrão sobre trabalho."
+                        "feedbackPt": "Resposta natural — cargo com I'm a."
                       },
                       {
-                        "labelEn": "Where do you live?",
+                        "labelEn": "I live in Boston.",
                         "correct": false,
-                        "feedbackPt": "Pergunta moradia, não trabalho."
+                        "feedbackPt": "Live fala moradia, não trabalho."
                       },
                       {
-                        "labelEn": "Who is this?",
+                        "labelEn": "I'm from Brazil.",
                         "correct": false,
-                        "feedbackPt": "Pergunta identidade, não profissão."
+                        "feedbackPt": "From fala origem, não profissão."
                       }
                     ]
                   },
                   {
-                    "id": "start-m01-l04-p02",
-                    "promptPt": "Trabalhar para uma organização:",
+                    "id": "l04-ctx-04",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "Where do you work?",
+                    "promptPt": "Jamie quer saber onde você trabalha.",
                     "options": [
                       {
-                        "labelEn": "I work for a company.",
+                        "labelEn": "I work at a tech company.",
                         "correct": true,
-                        "feedbackPt": "Work for = empregador/organização."
+                        "feedbackPt": "Local ou organização — I work at."
                       },
                       {
-                        "labelEn": "I live for a company.",
+                        "labelEn": "I'm a tech company.",
                         "correct": false,
-                        "feedbackPt": "Live não combina com company neste sentido."
+                        "feedbackPt": "I'm a + profissão, não empresa."
                       },
                       {
-                        "labelEn": "I am from a company.",
+                        "labelEn": "I work Brazilian.",
                         "correct": false,
-                        "feedbackPt": "From indica origem, não emprego."
+                        "feedbackPt": "Forma gramatical incorreta."
                       }
                     ]
                   },
                   {
-                    "id": "start-m01-l04-p03",
-                    "promptPt": "Devolver a pergunta sobre trabalho:",
+                    "id": "l04-ctx-05",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "Interesting! I work in marketing. What about you?",
+                    "promptPt": "Jamie conta a área dela e devolve a pergunta. Como responder?",
                     "options": [
                       {
-                        "labelEn": "What about you?",
+                        "labelEn": "I work with the operations team.",
                         "correct": true,
-                        "feedbackPt": "Devolve o tema de forma natural."
+                        "feedbackPt": "Descreve com quem trabalha — resposta natural."
                       },
                       {
                         "labelEn": "Where are you from?",
                         "correct": false,
-                        "feedbackPt": "Muda o assunto para origem."
+                        "feedbackPt": "Muda o assunto — Jamie já falou dela."
                       },
                       {
-                        "labelEn": "Nice to meet you.",
+                        "labelEn": "Goodbye!",
                         "correct": false,
-                        "feedbackPt": "Não devolve a pergunta."
+                        "feedbackPt": "Encerra cedo demais a conversa."
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l04-ctx-06",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "So you're an administrator?",
+                    "promptPt": "Jamie confirma o que entendeu do seu cargo.",
+                    "options": [
+                      {
+                        "labelEn": "Yes, I'm an administrator.",
+                        "correct": true,
+                        "feedbackPt": "Confirmação clara com I'm a/an."
+                      },
+                      {
+                        "labelEn": "Yes, I work administrator.",
+                        "correct": false,
+                        "feedbackPt": "Work precisa de in/for/at/with — não combina direto com cargo."
+                      },
+                      {
+                        "labelEn": "Yes, I administrator.",
+                        "correct": false,
+                        "feedbackPt": "Falta verbo — use I'm a administrator."
+                      }
+                    ]
+                  }
+                ],
+                "learn": [
+                  {
+                    "id": "l04-learn-01",
+                    "type": "phrase_examples",
+                    "titleEn": "What do you do?",
+                    "titlePt": "O que você faz?",
+                    "introPt": "Pergunta padrão sobre profissão ou função no trabalho.",
+                    "examples": [
+                      {
+                        "en": "What do you do?",
+                        "pt": "pergunta"
+                      },
+                      {
+                        "en": "What do you do for work?",
+                        "pt": "variação mais explícita"
+                      },
+                      {
+                        "en": "I'm a coach.",
+                        "pt": "resposta — cargo"
+                      },
+                      {
+                        "en": "I work in administration.",
+                        "pt": "resposta — área"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l04-learn-02",
+                    "type": "phrase_examples",
+                    "titleEn": "I'm a…",
+                    "titlePt": "Sou um(a)…",
+                    "introPt": "Use para dizer cargo ou profissão diretamente.",
+                    "examples": [
+                      {
+                        "en": "I'm a coach.",
+                        "pt": "treinador(a)"
+                      },
+                      {
+                        "en": "I'm a developer.",
+                        "pt": "desenvolvedor(a)"
+                      },
+                      {
+                        "en": "I'm a physiotherapist.",
+                        "pt": "fisioterapeuta"
+                      },
+                      {
+                        "en": "I'm an administrator.",
+                        "pt": "administrador(a)"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l04-learn-03",
+                    "type": "phrase_examples",
+                    "titleEn": "I work in / for / at",
+                    "titlePt": "Trabalho em / para / no",
+                    "introPt": "Três padrões comuns — cada um com nuance diferente.",
+                    "examples": [
+                      {
+                        "en": "I work in marketing.",
+                        "pt": "área ou setor"
+                      },
+                      {
+                        "en": "I work for a company.",
+                        "pt": "empresa empregadora"
+                      },
+                      {
+                        "en": "I work at a hospital.",
+                        "pt": "local físico"
+                      },
+                      {
+                        "en": "I work in operations.",
+                        "pt": "departamento"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l04-learn-04",
+                    "type": "comparison",
+                    "titleEn": "I'm a vs I work in/for/at",
+                    "titlePt": "Cargo vs organização/área",
+                    "left": {
+                      "labelEn": "JOB TITLE · I'M A",
+                      "exampleEn": "I'm a developer.",
+                      "notePt": "Nome do cargo ou profissão — quem você é no trabalho."
+                    },
+                    "right": {
+                      "labelEn": "PLACE / AREA · I WORK IN/FOR/AT",
+                      "exampleEn": "I work for a tech company.",
+                      "notePt": "Onde ou para quem — organização, área ou local."
+                    },
+                    "modelEn": "I'm a physiotherapist. I work at a sports clinic.",
+                    "modelPt": "Modelo integrado — cargo + local na mesma conversa."
+                  },
+                  {
+                    "id": "l04-learn-05",
+                    "type": "phrase_examples",
+                    "titleEn": "I work with…",
+                    "titlePt": "Trabalho com…",
+                    "introPt": "Descreve equipe, área ou pessoas com quem você trabalha.",
+                    "examples": [
+                      {
+                        "en": "I work with athletes.",
+                        "pt": "atletas"
+                      },
+                      {
+                        "en": "I work with the operations team.",
+                        "pt": "equipe de operações"
+                      },
+                      {
+                        "en": "I work with developers.",
+                        "pt": "desenvolvedores"
+                      },
+                      {
+                        "en": "I work with patients.",
+                        "pt": "pacientes"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l04-learn-06",
+                    "type": "phrase_examples",
+                    "titleEn": "Where do you work?",
+                    "titlePt": "Onde você trabalha?",
+                    "introPt": "Pergunta sobre local ou organização — responda com I work at/for/in.",
+                    "examples": [
+                      {
+                        "en": "Where do you work?",
+                        "pt": "pergunta"
+                      },
+                      {
+                        "en": "I work at a hospital.",
+                        "pt": "local"
+                      },
+                      {
+                        "en": "I work for a football club.",
+                        "pt": "organização"
+                      },
+                      {
+                        "en": "I work in downtown Boston.",
+                        "pt": "região"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l04-learn-07",
+                    "type": "mistake",
+                    "titlePt": "Erro comum de brasileiros",
+                    "wrongEn": "I work developer.",
+                    "rightEn": "I'm a developer. / I work as a developer.",
+                    "explanationPt": "Work não liga direto ao cargo — use I'm a + profissão ou I work as a + profissão."
+                  },
+                  {
+                    "id": "l04-learn-08",
+                    "type": "review",
+                    "titleEn": "Quick review",
+                    "titlePt": "Revisão rápida",
+                    "items": [
+                      {
+                        "en": "What do you do?",
+                        "pt": "pergunta profissão"
+                      },
+                      {
+                        "en": "I'm a coach.",
+                        "pt": "cargo"
+                      },
+                      {
+                        "en": "I work in marketing.",
+                        "pt": "área"
+                      },
+                      {
+                        "en": "I work for a company.",
+                        "pt": "empregador"
+                      },
+                      {
+                        "en": "I work with the team.",
+                        "pt": "equipe"
+                      },
+                      {
+                        "en": "Where do you work?",
+                        "pt": "pergunta local"
+                      },
+                      {
+                        "en": "What about you?",
+                        "pt": "devolver pergunta"
+                      }
+                    ]
+                  }
+                ],
+                "imitate": [
+                  {
+                    "id": "l04-imit-01",
+                    "type": "read_repeat",
+                    "titleEn": "Read & Repeat",
+                    "titlePt": "Leia e repita",
+                    "introPt": "Sem áudio ainda — leia em voz alta, pausa curta entre frases. Adapte cargo e área à sua realidade.",
+                    "phrases": [
+                      {
+                        "en": "What do you do?"
+                      },
+                      {
+                        "en": "I'm a developer."
+                      },
+                      {
+                        "en": "I work in technology."
+                      },
+                      {
+                        "en": "I work for a company."
+                      },
+                      {
+                        "en": "I work at the office."
+                      },
+                      {
+                        "en": "I work with the team."
+                      },
+                      {
+                        "en": "Where do you work?"
+                      },
+                      {
+                        "en": "What about you?"
+                      }
+                    ],
+                    "dialogueEn": "What do you do? — I'm a developer. I work in technology. — Where do you work? — I work at a tech company. — I work in marketing. What about you?"
+                  }
+                ],
+                "mission": [
+                  {
+                    "id": "l04-miss-01",
+                    "type": "mission_intro",
+                    "headlineEn": "Your turn — talk about your job.",
+                    "headlinePt": "Sua vez — fale do seu trabalho.",
+                    "bodyPt": "Jamie perguntou What do you do? Monte sua resposta em duas frases e devolva com What about you?",
+                    "prompts": [
+                      {
+                        "speaker": "Jamie",
+                        "questionEn": "What do you do?"
                       }
                     ]
                   }
                 ]
               },
-              "mission": {
-                "headlineEn": "You can talk about your job.",
-                "headlinePt": "Você consegue falar do seu trabalho.",
-                "bodyPt": "Missão: responda What do you do? em no máximo duas frases e devolva com What about you?",
-                "canDo": [
-                  "What do you do?",
-                  "I work for a football club.",
-                  "I'm responsible for logistics.",
-                  "What about you?"
-                ]
-              }
+              "practiceInteractions": [
+                {
+                  "id": "l04-prac-01",
+                  "type": "choice",
+                  "promptPt": "Perguntar a profissão ou função de alguém:",
+                  "options": [
+                    {
+                      "labelEn": "What do you do?",
+                      "correct": true,
+                      "feedbackPt": "Pergunta padrão sobre trabalho."
+                    },
+                    {
+                      "labelEn": "Where do you live?",
+                      "correct": false,
+                      "feedbackPt": "Pergunta moradia, não trabalho."
+                    },
+                    {
+                      "labelEn": "What's your name?",
+                      "correct": false,
+                      "feedbackPt": "Pergunta nome, não profissão."
+                    }
+                  ]
+                },
+                {
+                  "id": "l04-prac-02",
+                  "type": "fill_blank",
+                  "promptPt": "Complete a pergunta sobre trabalho:",
+                  "templateEn": "What do you ___?",
+                  "blankLabel": "verbo",
+                  "options": [
+                    {
+                      "labelEn": "do",
+                      "correct": true,
+                      "feedbackPt": "What do you do? — padrão fixo."
+                    },
+                    {
+                      "labelEn": "work",
+                      "correct": false,
+                      "feedbackPt": "A pergunta usa do, não work direto."
+                    },
+                    {
+                      "labelEn": "live",
+                      "correct": false,
+                      "feedbackPt": "Live muda o significado para moradia."
+                    }
+                  ]
+                },
+                {
+                  "id": "l04-prac-03",
+                  "type": "choice",
+                  "promptPt": "Dizer que é desenvolvedor(a):",
+                  "options": [
+                    {
+                      "labelEn": "I'm a developer.",
+                      "correct": true,
+                      "feedbackPt": "Cargo com I'm a — natural e correto."
+                    },
+                    {
+                      "labelEn": "I work developer.",
+                      "correct": false,
+                      "feedbackPt": "Work não liga direto ao cargo."
+                    },
+                    {
+                      "labelEn": "I'm developer.",
+                      "correct": false,
+                      "feedbackPt": "Profissão contável precisa de a/an: I'm a developer."
+                    }
+                  ]
+                },
+                {
+                  "id": "l04-prac-04",
+                  "type": "fill_blank",
+                  "promptPt": "Trabalhar para uma empresa:",
+                  "templateEn": "I work ___ a company.",
+                  "blankLabel": "preposição",
+                  "options": [
+                    {
+                      "labelEn": "for",
+                      "correct": true,
+                      "feedbackPt": "Work for = empregador/organização."
+                    },
+                    {
+                      "labelEn": "in",
+                      "correct": false,
+                      "feedbackPt": "In combina com área — for é mais natural para empregador."
+                    },
+                    {
+                      "labelEn": "at",
+                      "correct": false,
+                      "feedbackPt": "At funciona com local — for enfatiza a organização."
+                    }
+                  ]
+                },
+                {
+                  "id": "l04-prac-05",
+                  "type": "reorder",
+                  "promptPt": "Monte a pergunta sobre local de trabalho:",
+                  "tokens": [
+                    "work?",
+                    "you",
+                    "do",
+                    "Where"
+                  ],
+                  "correctOrder": [
+                    "Where",
+                    "do",
+                    "you",
+                    "work?"
+                  ],
+                  "feedbackCorrectPt": "Where do you work? — ordem fixa em inglês.",
+                  "feedbackWrongPt": "A ordem em inglês é Where + do + you + work?"
+                },
+                {
+                  "id": "l04-prac-06",
+                  "type": "dialogue_complete",
+                  "promptPt": "Jamie pergunta sua profissão — você responde:",
+                  "speaker": "You",
+                  "contextEn": "Jamie: What do you do?",
+                  "options": [
+                    {
+                      "labelEn": "I'm a physiotherapist.",
+                      "correct": true,
+                      "feedbackPt": "Resposta natural com cargo."
+                    },
+                    {
+                      "labelEn": "I live in Boston.",
+                      "correct": false,
+                      "feedbackPt": "Live responde moradia, não trabalho."
+                    },
+                    {
+                      "labelEn": "Nice to meet you.",
+                      "correct": false,
+                      "feedbackPt": "Não responde about work."
+                    }
+                  ]
+                },
+                {
+                  "id": "l04-prac-07",
+                  "type": "choice",
+                  "promptPt": "Trabalhar na área de marketing:",
+                  "options": [
+                    {
+                      "labelEn": "I work in marketing.",
+                      "correct": true,
+                      "feedbackPt": "Work in + área/setor."
+                    },
+                    {
+                      "labelEn": "I work marketing.",
+                      "correct": false,
+                      "feedbackPt": "Falta preposição — use work in."
+                    },
+                    {
+                      "labelEn": "I'm marketing.",
+                      "correct": false,
+                      "feedbackPt": "Marketing é área — prefira I work in marketing."
+                    }
+                  ]
+                },
+                {
+                  "id": "l04-prac-08",
+                  "type": "fill_blank",
+                  "promptPt": "Descrever com quem trabalha:",
+                  "templateEn": "I work ___ the operations team.",
+                  "blankLabel": "preposição",
+                  "options": [
+                    {
+                      "labelEn": "with",
+                      "correct": true,
+                      "feedbackPt": "Work with = equipe ou pessoas."
+                    },
+                    {
+                      "labelEn": "for",
+                      "correct": false,
+                      "feedbackPt": "For indica empregador, não colegas."
+                    },
+                    {
+                      "labelEn": "at",
+                      "correct": false,
+                      "feedbackPt": "At indica local, não equipe."
+                    }
+                  ]
+                },
+                {
+                  "id": "l04-prac-09",
+                  "type": "dialogue_complete",
+                  "promptPt": "Jamie conta a área dela — devolva a pergunta:",
+                  "speaker": "You",
+                  "contextEn": "Jamie: I work in marketing.",
+                  "options": [
+                    {
+                      "labelEn": "What about you?",
+                      "correct": true,
+                      "feedbackPt": "Devolve o tema de forma natural."
+                    },
+                    {
+                      "labelEn": "Where are you from?",
+                      "correct": false,
+                      "feedbackPt": "Muda o assunto para origem."
+                    },
+                    {
+                      "labelEn": "Good morning!",
+                      "correct": false,
+                      "feedbackPt": "Cumprimento não devolve pergunta sobre trabalho."
+                    }
+                  ]
+                },
+                {
+                  "id": "l04-prac-10",
+                  "type": "choice",
+                  "promptPt": "Melhor resposta para Where do you work?",
+                  "options": [
+                    {
+                      "labelEn": "I work at a hospital.",
+                      "correct": true,
+                      "feedbackPt": "Local ou organização — resposta direta."
+                    },
+                    {
+                      "labelEn": "I'm a hospital.",
+                      "correct": false,
+                      "feedbackPt": "Hospital não é seu cargo."
+                    },
+                    {
+                      "labelEn": "I'm from a hospital.",
+                      "correct": false,
+                      "feedbackPt": "From indica origem, não local de trabalho."
+                    }
+                  ]
+                }
+              ]
             },
             "curriculum": {
               "objectivePt": "Explicar função + devolver pergunta.",
@@ -1588,7 +3066,7 @@
               {
                 "contentKey": "start-m01-l04-q01",
                 "sortOrder": 0,
-                "question": "Perguntar a profissão/função de alguém:",
+                "question": "Perguntar profissão/função:",
                 "options": [
                   "What do you do?",
                   "Where do you live?",
@@ -1621,22 +3099,55 @@
               {
                 "contentKey": "start-m01-l04-q04",
                 "sortOrder": 3,
-                "question": "Devolver a mesma pergunta sobre trabalho:",
+                "question": "Dizer cargo/profissão:",
                 "options": [
-                  "What about you?",
-                  "And you?",
-                  "Nice to meet you."
+                  "I'm a developer.",
+                  "I work for developer.",
+                  "I live developer."
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l04-q05",
                 "sortOrder": 4,
+                "question": "Devolver pergunta sobre trabalho:",
+                "options": [
+                  "What about you?",
+                  "Where are you from?",
+                  "Nice to meet you."
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l04-q06",
+                "sortOrder": 5,
+                "question": "Perguntar local de trabalho:",
+                "options": [
+                  "Where do you work?",
+                  "What do you do?",
+                  "How are you?"
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l04-q07",
+                "sortOrder": 6,
                 "question": "Responsabilidade no trabalho:",
                 "options": [
                   "I'm responsible for logistics.",
                   "I'm from logistics.",
                   "I live in logistics."
+                ],
+                "correctIndex": 0
+              },
+              {
+                "contentKey": "start-m01-l04-q08",
+                "sortOrder": 7,
+                "question": "Trabalhar em local específico:",
+                "options": [
+                  "I work at the stadium.",
+                  "I work for the stadium name.",
+                  "I am the stadium."
                 ],
                 "correctIndex": 0
               }
@@ -1648,7 +3159,7 @@
           "title": "My First Conversation",
           "sortOrder": 4,
           "lessonType": "TEXT",
-          "estimatedMinutes": 12,
+          "estimatedMinutes": 18,
           "contentHtml": "<p class=\"mb-4 rounded-md border border-violet-500/30 bg-violet-500/5 px-3 py-2 text-sm\"><strong>Objetivo (≈10 min):</strong> Demonstrar tudo do Módulo 1 em interações curtas e realistas — sem vocabulário novo.</p><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Real Life — Desafio LIVE</h3><p>Este é o <strong>desafio de revisão do módulo</strong>. Você vai completar diálogos usando apenas o que já aprendeu nas lições 1–4.</p><p class=\"text-sm\">Você precisa demonstrar:</p><ul class=\"list-disc pl-5 text-sm space-y-1\"><li>cumprimento adequado</li><li>perguntar/responder <em>how someone is</em></li><li>apresentar-se e perguntar o nome</li><li>dizer de onde é e onde mora</li><li>explicar o que faz</li><li>encerrar a conversa</li></ul></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Build / Practice — Antes do assessment</h3><p>Leia este diálogo modelo (não decore — entenda o fluxo):</p><blockquote class=\"border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm\"><p><strong>A:</strong> Good afternoon! How are you?</p><p><strong>B:</strong> I'm good, thank you. And you?</p><p><strong>A:</strong> I'm great, thanks! I'm Alex. What's your name?</p><p><strong>B:</strong> My name is Carlos. Nice to meet you!</p><p><strong>A:</strong> Nice to meet you too. Where are you from?</p><p><strong>B:</strong> I'm from Brazil. I live in Boston.</p><p><strong>A:</strong> What do you do?</p><p><strong>B:</strong> I work in operations. What about you?</p><p><strong>A:</strong> I work in marketing. See you later!</p><p><strong>B:</strong> See you later!</p></blockquote></section><section class=\"mb-6\"><h3 class=\"text-base font-semibold mb-2\">Execute — Missão final</h3><p><strong>Missão:</strong> <em>Have your first complete conversation in English.</em></p><p class=\"text-sm\">Faça uma conversa real (colega, amigo ou gravação) com cumprimento, nomes, origem, moradia, trabalho e despedida. Aprove no Verify abaixo (70%) antes de considerar o módulo concluído.</p></section>",
           "live": {
             "realLifeContext": "Revisão integrada — primeira conversa completa.",
@@ -1658,10 +3169,10 @@
             "verify": "Assessment de 10 questões — mínimo 70%.",
             "executeMission": "Have your first complete conversation in English.",
             "player": {
-              "version": 1,
+              "version": 2,
               "levelLabel": "START",
               "moduleNumber": 1,
-              "goalPt": "Demonstrar tudo do Módulo 1 em interações curtas e realistas — sem vocabulário novo.",
+              "goalPt": "Integrar tudo do Módulo 1 numa conversa completa e natural — cumprimento, nome, origem, moradia, trabalho e despedida.",
               "steps": [
                 {
                   "id": "context",
@@ -1675,8 +3186,8 @@
                 },
                 {
                   "id": "imitate",
-                  "label": "Listen / Imitate",
-                  "labelPt": "Ouça / Imite"
+                  "label": "Read & Repeat",
+                  "labelPt": "Leia e repita"
                 },
                 {
                   "id": "practice",
@@ -1695,123 +3206,112 @@
                 }
               ],
               "context": {
-                "scenarioPt": "Desafio de revisão do módulo: complete uma conversa real usando apenas o que aprendeu nas lições 1–4 — cumprimento, nomes, origem, moradia, trabalho e despedida.",
-                "dialogue": [
-                  {
-                    "speaker": "A",
-                    "textEn": "Good afternoon! How are you?"
-                  },
-                  {
-                    "speaker": "B",
-                    "textEn": "I'm good, thank you. And you?"
-                  },
-                  {
-                    "speaker": "A",
-                    "textEn": "I'm great, thanks! I'm Alex. What's your name?"
-                  },
-                  {
-                    "speaker": "B",
-                    "textEn": "My name is Carlos. Nice to meet you!"
-                  },
-                  {
-                    "speaker": "A",
-                    "textEn": "Nice to meet you too. Where are you from?"
-                  },
-                  {
-                    "speaker": "B",
-                    "textEn": "I'm from Brazil. I live in Boston."
-                  },
-                  {
-                    "speaker": "A",
-                    "textEn": "What do you do?"
-                  },
-                  {
-                    "speaker": "B",
-                    "textEn": "I work in operations. What about you?"
-                  },
-                  {
-                    "speaker": "A",
-                    "textEn": "I work in marketing. See you later!"
-                  },
-                  {
-                    "speaker": "B",
-                    "textEn": "See you later!"
-                  }
-                ]
+                "scenarioPt": "Desafio do módulo — uma conversa completa do início ao fim.",
+                "dialogue": []
               },
               "learn": {
-                "introPt": "Sem vocabulário novo — integre cumprimentos, nomes, origem, moradia e trabalho das lições anteriores.",
-                "phrases": [
-                  {
-                    "en": "Good afternoon! How are you?",
-                    "pt": "abertura + como está"
-                  },
-                  {
-                    "en": "My name is Carlos. Nice to meet you!",
-                    "pt": "apresentação + prazer"
-                  },
-                  {
-                    "en": "I'm from Brazil. I live in Boston.",
-                    "pt": "origem + moradia"
-                  },
-                  {
-                    "en": "I work in operations. What about you?",
-                    "pt": "trabalho + devolver pergunta"
-                  },
-                  {
-                    "en": "See you later!",
-                    "pt": "encerramento natural"
-                  }
-                ],
-                "languageTip": "Conversas reais seguem um fluxo: cumprimento → nome → origem/moradia → trabalho → despedida."
+                "introPt": "",
+                "phrases": []
               },
               "imitate": {
-                "introPt": "Leia o diálogo completo em voz alta. Não decore — entenda o fluxo natural da conversa.",
-                "phrases": [
-                  {
-                    "en": "Good afternoon! How are you?",
-                    "audioKey": "start-m01-l05-a01"
-                  },
-                  {
-                    "en": "I'm good, thank you. And you?",
-                    "audioKey": "start-m01-l05-a01"
-                  },
-                  {
-                    "en": "My name is Carlos. Nice to meet you!",
-                    "audioKey": "start-m01-l05-a01"
-                  },
-                  {
-                    "en": "I'm from Brazil. I live in Boston.",
-                    "audioKey": "start-m01-l05-a01"
-                  },
-                  {
-                    "en": "I work in operations. What about you?",
-                    "audioKey": "start-m01-l05-a01"
-                  },
-                  {
-                    "en": "See you later!",
-                    "audioKey": "start-m01-l05-a01"
-                  }
-                ],
-                "dialogueEn": "Good afternoon! How are you? — I'm good, thank you. And you? — I'm great, thanks! I'm Alex. What's your name? — My name is Carlos. Nice to meet you! — Nice to meet you too. Where are you from? — I'm from Brazil. I live in Boston. — What do you do? — I work in operations. What about you? — I work in marketing. See you later! — See you later!",
-                "dialogueAudioKey": "start-m01-l05-a01"
+                "introPt": "Leia o diálogo completo em voz alta.",
+                "phrases": []
               },
               "practice": {
-                "introPt": "Antes do assessment — escolha a resposta que mantém a conversa fluindo. Sem nota.",
-                "items": [
+                "introPt": "Interações guiadas — feedback imediato, sem nota.",
+                "items": []
+              },
+              "mission": {
+                "headlineEn": "Have your first complete conversation.",
+                "headlinePt": "Faça sua primeira conversa completa.",
+                "bodyPt": "",
+                "canDo": [
+                  "Good afternoon! How are you?",
+                  "My name is Carlos. Nice to meet you!",
+                  "I'm from Brazil. I live in Boston.",
+                  "I work in operations. What about you?",
+                  "See you later!"
+                ],
+                "production": {
+                  "introPt": "Monte sua primeira conversa completa em inglês — do cumprimento à despedida. Use apenas o que aprendeu nas lições 1 a 4.",
+                  "prompts": [
+                    {
+                      "speaker": "Jamie",
+                      "questionEn": "Let's practice a full conversation."
+                    }
+                  ],
+                  "fields": [
+                    {
+                      "id": "greeting",
+                      "labelPt": "Cumprimento e como está",
+                      "prefixEn": "",
+                      "placeholderEn": "Good afternoon! How are you?"
+                    },
+                    {
+                      "id": "name",
+                      "labelPt": "Seu nome e prazer",
+                      "prefixEn": "My name is",
+                      "placeholderEn": "Carlos. Nice to meet you!"
+                    },
+                    {
+                      "id": "from",
+                      "labelPt": "País de origem",
+                      "prefixEn": "I'm from",
+                      "placeholderEn": "Brazil"
+                    },
+                    {
+                      "id": "live",
+                      "labelPt": "Cidade onde mora",
+                      "prefixEn": "I live in",
+                      "placeholderEn": "Boston"
+                    },
+                    {
+                      "id": "work",
+                      "labelPt": "Trabalho e devolver pergunta",
+                      "prefixEn": "",
+                      "placeholderEn": "I work in operations. What about you?"
+                    },
+                    {
+                      "id": "closing",
+                      "labelPt": "Despedida",
+                      "prefixEn": "",
+                      "placeholderEn": "See you later!"
+                    }
+                  ],
+                  "exampleEn": "Good afternoon! How are you? — My name is Carlos. Nice to meet you! — I'm from Brazil. I live in Boston. — I work in operations. What about you? — See you later!"
+                }
+              },
+              "stepScreens": {
+                "context": [
                   {
-                    "id": "start-m01-l05-p01",
-                    "promptPt": "Reunião à tarde — abertura mais natural:",
+                    "id": "l05-ctx-01",
+                    "type": "intro",
+                    "titleEn": "Module challenge",
+                    "titlePt": "Desafio do módulo",
+                    "bodyPt": "Hora de juntar tudo: cumprimento, nome, origem, moradia, trabalho e despedida — numa conversa real com Jamie. Sem vocabulário novo."
+                  },
+                  {
+                    "id": "l05-ctx-02",
+                    "type": "scenario",
+                    "settingEn": "Office lobby · Afternoon",
+                    "scenarioPt": "Você encontra Jamie no saguão. A conversa começa do zero — passo a passo."
+                  },
+                  {
+                    "id": "l05-ctx-03",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "Good afternoon! How are you?",
+                    "promptPt": "Passo 1 — Jamie cumprimenta. Como responder?",
                     "options": [
                       {
-                        "labelEn": "Good afternoon! How are you?",
+                        "labelEn": "I'm good, thank you. And you?",
                         "correct": true,
-                        "feedbackPt": "Cumprimento + pergunta social — fluxo natural."
+                        "feedbackPt": "Resposta educada + devolve How are you?"
                       },
                       {
-                        "labelEn": "Good morning!",
+                        "labelEn": "My name is Carlos.",
                         "correct": false,
-                        "feedbackPt": "Manhã não combina com reunião à tarde."
+                        "feedbackPt": "Nome vem depois — primeiro responda how are you."
                       },
                       {
                         "labelEn": "What do you do?",
@@ -1821,29 +3321,107 @@
                     ]
                   },
                   {
-                    "id": "start-m01-l05-p02",
-                    "promptPt": "Após \"Nice to meet you!\" — próximo passo natural na conversa:",
+                    "id": "l05-ctx-04",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "I'm great, thanks! I'm Jamie. What's your name?",
+                    "promptPt": "Passo 2 — Jamie se apresenta e pergunta seu nome.",
                     "options": [
                       {
-                        "labelEn": "Where are you from?",
+                        "labelEn": "My name is Carlos. Nice to meet you!",
                         "correct": true,
-                        "feedbackPt": "Pergunta comum após apresentação."
+                        "feedbackPt": "Nome + prazer em conhecer — fluxo natural."
                       },
                       {
-                        "labelEn": "Goodbye!",
+                        "labelEn": "I'm from Brazil.",
                         "correct": false,
-                        "feedbackPt": "Encerra cedo demais."
+                        "feedbackPt": "Origem vem depois da apresentação."
                       },
                       {
-                        "labelEn": "I'm fine.",
+                        "labelEn": "See you later!",
                         "correct": false,
-                        "feedbackPt": "Não avança a conversa após apresentação."
+                        "feedbackPt": "Encerra antes de se apresentar."
                       }
                     ]
                   },
                   {
-                    "id": "start-m01-l05-p03",
-                    "promptPt": "Encerrar a conversa de forma educada:",
+                    "id": "l05-ctx-05",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "Nice to meet you too, Carlos! Where are you from?",
+                    "promptPt": "Passo 3 — Jamie pergunta origem.",
+                    "options": [
+                      {
+                        "labelEn": "I'm from Brazil.",
+                        "correct": true,
+                        "feedbackPt": "Origem com I'm from + país."
+                      },
+                      {
+                        "labelEn": "I live in Brazil.",
+                        "correct": false,
+                        "feedbackPt": "Live fala moradia — a pergunta foi from."
+                      },
+                      {
+                        "labelEn": "I work in Brazil.",
+                        "correct": false,
+                        "feedbackPt": "Work fala emprego, não origem."
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l05-ctx-06",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "Cool! Where do you live?",
+                    "promptPt": "Passo 4 — Jamie pergunta onde você mora.",
+                    "options": [
+                      {
+                        "labelEn": "I live in Boston.",
+                        "correct": true,
+                        "feedbackPt": "Moradia atual — I live in + cidade."
+                      },
+                      {
+                        "labelEn": "I'm from Boston.",
+                        "correct": false,
+                        "feedbackPt": "From indica origem, não moradia."
+                      },
+                      {
+                        "labelEn": "I work in Boston.",
+                        "correct": false,
+                        "feedbackPt": "Work fala emprego — a pergunta foi live."
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l05-ctx-07",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "What do you do?",
+                    "promptPt": "Passo 5 — Jamie pergunta sobre trabalho.",
+                    "options": [
+                      {
+                        "labelEn": "I work in operations. What about you?",
+                        "correct": true,
+                        "feedbackPt": "Área de trabalho + devolve a pergunta."
+                      },
+                      {
+                        "labelEn": "Good afternoon!",
+                        "correct": false,
+                        "feedbackPt": "Repetir cumprimento não responde a pergunta."
+                      },
+                      {
+                        "labelEn": "Nice to meet you.",
+                        "correct": false,
+                        "feedbackPt": "Apresentação já passou — responda sobre trabalho."
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l05-ctx-08",
+                    "type": "dialogue_choice",
+                    "speaker": "Jamie",
+                    "promptEn": "I work in marketing. Great talking to you!",
+                    "promptPt": "Passo 6 — Jamie encerra o papo. Como se despedir?",
                     "options": [
                       {
                         "labelEn": "See you later!",
@@ -1853,29 +3431,463 @@
                       {
                         "labelEn": "What's your name?",
                         "correct": false,
-                        "feedbackPt": "Isso reabre apresentação, não encerra."
+                        "feedbackPt": "Reabre apresentação — conversa já avançou."
                       },
                       {
-                        "labelEn": "Do you live here?",
+                        "labelEn": "Where do you live?",
                         "correct": false,
                         "feedbackPt": "Nova pergunta, não encerramento."
                       }
                     ]
                   }
+                ],
+                "learn": [
+                  {
+                    "id": "l05-learn-01",
+                    "type": "review",
+                    "titleEn": "Step 1 — Greet",
+                    "titlePt": "Passo 1 — Cumprimentar",
+                    "items": [
+                      {
+                        "en": "Good afternoon!",
+                        "pt": "boa tarde"
+                      },
+                      {
+                        "en": "How are you?",
+                        "pt": "como está?"
+                      },
+                      {
+                        "en": "I'm good, thank you.",
+                        "pt": "estou bem"
+                      },
+                      {
+                        "en": "And you?",
+                        "pt": "e você?"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l05-learn-02",
+                    "type": "review",
+                    "titleEn": "Step 2 — Name",
+                    "titlePt": "Passo 2 — Nome",
+                    "items": [
+                      {
+                        "en": "What's your name?",
+                        "pt": "pergunta nome"
+                      },
+                      {
+                        "en": "My name is Carlos.",
+                        "pt": "meu nome é"
+                      },
+                      {
+                        "en": "I'm Carlos.",
+                        "pt": "alternativa natural"
+                      },
+                      {
+                        "en": "Nice to meet you!",
+                        "pt": "prazer"
+                      },
+                      {
+                        "en": "Nice to meet you too.",
+                        "pt": "resposta"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l05-learn-03",
+                    "type": "comparison",
+                    "titleEn": "Step 3 & 4 — From vs Live",
+                    "titlePt": "Passos 3 e 4 — Origem vs moradia",
+                    "left": {
+                      "labelEn": "ORIGIN · FROM",
+                      "exampleEn": "I'm from Brazil.",
+                      "notePt": "De onde você é — raízes, passaporte."
+                    },
+                    "right": {
+                      "labelEn": "HOME · LIVE IN",
+                      "exampleEn": "I live in Boston.",
+                      "notePt": "Onde mora agora — endereço atual."
+                    },
+                    "modelEn": "I'm from Brazil, but I live in Boston.",
+                    "modelPt": "Na conversa, origem e moradia aparecem em momentos diferentes."
+                  },
+                  {
+                    "id": "l05-learn-04",
+                    "type": "review",
+                    "titleEn": "Step 5 — Work",
+                    "titlePt": "Passo 5 — Trabalho",
+                    "items": [
+                      {
+                        "en": "What do you do?",
+                        "pt": "pergunta profissão"
+                      },
+                      {
+                        "en": "I'm a developer.",
+                        "pt": "cargo"
+                      },
+                      {
+                        "en": "I work in operations.",
+                        "pt": "área"
+                      },
+                      {
+                        "en": "What about you?",
+                        "pt": "devolver pergunta"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "l05-learn-05",
+                    "type": "language_focus",
+                    "titleEn": "Conversation flow",
+                    "titlePt": "Fluxo da conversa",
+                    "items": [
+                      {
+                        "formalEn": "Name → Origin → Work → Goodbye",
+                        "naturalEn": "Greet → Name → From → Live → Work → Close",
+                        "notePt": "Conversas reais seguem uma ordem social — não pule etapas."
+                      },
+                      {
+                        "formalEn": "What do you do? (first)",
+                        "naturalEn": "How are you? (first)",
+                        "notePt": "Cumprimento vem antes de perguntas pessoais."
+                      }
+                    ],
+                    "tipPt": "Cada passo prepara o próximo — cumprimento abre, despedida fecha."
+                  },
+                  {
+                    "id": "l05-learn-06",
+                    "type": "review",
+                    "titleEn": "Step 6 — Close",
+                    "titlePt": "Passo 6 — Despedida",
+                    "items": [
+                      {
+                        "en": "Great talking to you!",
+                        "pt": "foi bom conversar"
+                      },
+                      {
+                        "en": "See you later!",
+                        "pt": "até mais"
+                      },
+                      {
+                        "en": "Goodbye!",
+                        "pt": "tchau"
+                      },
+                      {
+                        "en": "Have a good day!",
+                        "pt": "tenha um bom dia"
+                      }
+                    ]
+                  }
+                ],
+                "imitate": [
+                  {
+                    "id": "l05-imit-01",
+                    "type": "read_repeat",
+                    "titleEn": "Full conversation",
+                    "titlePt": "Conversa completa",
+                    "introPt": "Leia o diálogo inteiro em voz alta — pausa entre cada turno. Adapte nome, cidade e trabalho à sua realidade.",
+                    "phrases": [
+                      {
+                        "en": "Good afternoon! How are you?"
+                      },
+                      {
+                        "en": "I'm good, thank you. And you?"
+                      },
+                      {
+                        "en": "I'm great, thanks! I'm Jamie. What's your name?"
+                      },
+                      {
+                        "en": "My name is Carlos. Nice to meet you!"
+                      },
+                      {
+                        "en": "Nice to meet you too! Where are you from?"
+                      },
+                      {
+                        "en": "I'm from Brazil."
+                      },
+                      {
+                        "en": "Where do you live?"
+                      },
+                      {
+                        "en": "I live in Boston."
+                      },
+                      {
+                        "en": "What do you do?"
+                      },
+                      {
+                        "en": "I work in operations. What about you?"
+                      },
+                      {
+                        "en": "I work in marketing. Great talking to you!"
+                      },
+                      {
+                        "en": "See you later!"
+                      }
+                    ],
+                    "dialogueEn": "Good afternoon! How are you? — I'm good, thank you. And you? — I'm great, thanks! I'm Jamie. What's your name? — My name is Carlos. Nice to meet you! — Nice to meet you too! Where are you from? — I'm from Brazil. — Where do you live? — I live in Boston. — What do you do? — I work in operations. What about you? — I work in marketing. Great talking to you! — See you later!"
+                  }
+                ],
+                "mission": [
+                  {
+                    "id": "l05-miss-01",
+                    "type": "mission_intro",
+                    "headlineEn": "Your first full conversation.",
+                    "headlinePt": "Sua primeira conversa completa.",
+                    "bodyPt": "Monte a conversa do início ao fim — cumprimento, nome, origem, moradia, trabalho e despedida. Use suas informações reais.",
+                    "prompts": [
+                      {
+                        "speaker": "Jamie",
+                        "questionEn": "Ready? Let's do a full conversation."
+                      }
+                    ]
+                  }
                 ]
               },
-              "mission": {
-                "headlineEn": "Have your first complete conversation in English.",
-                "headlinePt": "Faça sua primeira conversa completa em inglês.",
-                "bodyPt": "Missão: faça uma conversa real (colega, amigo ou gravação) com cumprimento, nomes, origem, moradia, trabalho e despedida. Aprove no Verify (70%) antes de considerar o módulo concluído.",
-                "canDo": [
-                  "Good afternoon! How are you?",
-                  "My name is Carlos. Nice to meet you!",
-                  "I'm from Brazil. I live in Boston.",
-                  "I work in operations. What about you?",
-                  "See you later!"
-                ]
-              }
+              "practiceInteractions": [
+                {
+                  "id": "l05-prac-01",
+                  "type": "choice",
+                  "promptPt": "Reunião à tarde — melhor abertura:",
+                  "options": [
+                    {
+                      "labelEn": "Good afternoon! How are you?",
+                      "correct": true,
+                      "feedbackPt": "Cumprimento + pergunta social — fluxo natural."
+                    },
+                    {
+                      "labelEn": "Good morning!",
+                      "correct": false,
+                      "feedbackPt": "Manhã não combina com tarde."
+                    },
+                    {
+                      "labelEn": "What do you do?",
+                      "correct": false,
+                      "feedbackPt": "Pular direto para trabalho soa abrupto."
+                    }
+                  ]
+                },
+                {
+                  "id": "l05-prac-02",
+                  "type": "dialogue_complete",
+                  "promptPt": "Jamie pergunta How are you? — você responde:",
+                  "speaker": "You",
+                  "contextEn": "Jamie: How are you?",
+                  "options": [
+                    {
+                      "labelEn": "I'm good, thank you. And you?",
+                      "correct": true,
+                      "feedbackPt": "Resposta educada e devolve a pergunta."
+                    },
+                    {
+                      "labelEn": "My name is Carlos.",
+                      "correct": false,
+                      "feedbackPt": "Responde nome, não how are you."
+                    },
+                    {
+                      "labelEn": "I live in Boston.",
+                      "correct": false,
+                      "feedbackPt": "Responde moradia, não como está."
+                    }
+                  ]
+                },
+                {
+                  "id": "l05-prac-03",
+                  "type": "choice",
+                  "promptPt": "Jamie diz Nice to meet you! — você responde:",
+                  "options": [
+                    {
+                      "labelEn": "Nice to meet you too.",
+                      "correct": true,
+                      "feedbackPt": "Resposta padrão ao prazer em conhecer."
+                    },
+                    {
+                      "labelEn": "Good afternoon!",
+                      "correct": false,
+                      "feedbackPt": "Cumprimento, não resposta ao nice to meet you."
+                    },
+                    {
+                      "labelEn": "Where are you from?",
+                      "correct": false,
+                      "feedbackPt": "Pergunta válida depois — mas não responde ao elogio."
+                    }
+                  ]
+                },
+                {
+                  "id": "l05-prac-04",
+                  "type": "fill_blank",
+                  "promptPt": "Apresentação — complete:",
+                  "templateEn": "My name ___ Carlos.",
+                  "blankLabel": "verbo",
+                  "options": [
+                    {
+                      "labelEn": "is",
+                      "correct": true,
+                      "feedbackPt": "My name is — padrão fixo."
+                    },
+                    {
+                      "labelEn": "are",
+                      "correct": false,
+                      "feedbackPt": "Name é singular — use is."
+                    },
+                    {
+                      "labelEn": "am",
+                      "correct": false,
+                      "feedbackPt": "Am combina com I, não com name."
+                    }
+                  ]
+                },
+                {
+                  "id": "l05-prac-05",
+                  "type": "classify",
+                  "promptPt": "Esta frase fala de origem ou moradia?",
+                  "sentenceEn": "I'm from Brazil.",
+                  "category": "from",
+                  "feedbackCorrectPt": "I'm from = origem (FROM).",
+                  "feedbackWrongPt": "Live in seria moradia — esta frase usa from."
+                },
+                {
+                  "id": "l05-prac-06",
+                  "type": "classify",
+                  "promptPt": "Esta frase fala de origem ou moradia?",
+                  "sentenceEn": "I live in Boston.",
+                  "category": "live",
+                  "feedbackCorrectPt": "I live in = moradia atual (LIVE IN).",
+                  "feedbackWrongPt": "I'm from seria origem — esta frase usa live in."
+                },
+                {
+                  "id": "l05-prac-07",
+                  "type": "reorder",
+                  "promptPt": "Monte a pergunta sobre origem:",
+                  "tokens": [
+                    "from?",
+                    "you",
+                    "are",
+                    "Where"
+                  ],
+                  "correctOrder": [
+                    "Where",
+                    "are",
+                    "you",
+                    "from?"
+                  ],
+                  "feedbackCorrectPt": "Where are you from? — ordem fixa.",
+                  "feedbackWrongPt": "A ordem em inglês é Where + are + you + from?"
+                },
+                {
+                  "id": "l05-prac-08",
+                  "type": "dialogue_complete",
+                  "promptPt": "Jamie pergunta What do you do? — você responde:",
+                  "speaker": "You",
+                  "contextEn": "Jamie: What do you do?",
+                  "options": [
+                    {
+                      "labelEn": "I work in operations. What about you?",
+                      "correct": true,
+                      "feedbackPt": "Trabalho + devolve a pergunta."
+                    },
+                    {
+                      "labelEn": "I'm from Brazil.",
+                      "correct": false,
+                      "feedbackPt": "Origem — a pergunta foi sobre trabalho."
+                    },
+                    {
+                      "labelEn": "See you later!",
+                      "correct": false,
+                      "feedbackPt": "Despedida — a conversa ainda não encerrou."
+                    }
+                  ]
+                },
+                {
+                  "id": "l05-prac-09",
+                  "type": "choice",
+                  "promptPt": "Melhor ordem após cumprimento e nomes:",
+                  "options": [
+                    {
+                      "labelEn": "Where are you from?",
+                      "correct": true,
+                      "feedbackPt": "Origem é pergunta comum após apresentação."
+                    },
+                    {
+                      "labelEn": "Goodbye!",
+                      "correct": false,
+                      "feedbackPt": "Encerra cedo demais."
+                    },
+                    {
+                      "labelEn": "Good morning!",
+                      "correct": false,
+                      "feedbackPt": "Repetir cumprimento não avança a conversa."
+                    }
+                  ]
+                },
+                {
+                  "id": "l05-prac-10",
+                  "type": "fill_blank",
+                  "promptPt": "Trabalho — complete:",
+                  "templateEn": "I work ___ operations.",
+                  "blankLabel": "preposição",
+                  "options": [
+                    {
+                      "labelEn": "in",
+                      "correct": true,
+                      "feedbackPt": "Work in + área/setor."
+                    },
+                    {
+                      "labelEn": "for",
+                      "correct": false,
+                      "feedbackPt": "For combina com empregador, não área."
+                    },
+                    {
+                      "labelEn": "at",
+                      "correct": false,
+                      "feedbackPt": "At combina com local físico."
+                    }
+                  ]
+                },
+                {
+                  "id": "l05-prac-11",
+                  "type": "dialogue_complete",
+                  "promptPt": "Jamie diz Great talking to you! — encerre a conversa:",
+                  "speaker": "You",
+                  "contextEn": "Jamie: Great talking to you!",
+                  "options": [
+                    {
+                      "labelEn": "See you later!",
+                      "correct": true,
+                      "feedbackPt": "Despedida natural."
+                    },
+                    {
+                      "labelEn": "What's your name?",
+                      "correct": false,
+                      "feedbackPt": "Reabre apresentação."
+                    },
+                    {
+                      "labelEn": "Do you live here?",
+                      "correct": false,
+                      "feedbackPt": "Nova pergunta, não encerramento."
+                    }
+                  ]
+                },
+                {
+                  "id": "l05-prac-12",
+                  "type": "reorder",
+                  "promptPt": "Monte a pergunta sobre trabalho:",
+                  "tokens": [
+                    "do",
+                    "you",
+                    "What",
+                    "do?"
+                  ],
+                  "correctOrder": [
+                    "What",
+                    "do",
+                    "you",
+                    "do?"
+                  ],
+                  "feedbackCorrectPt": "What do you do? — ordem fixa.",
+                  "feedbackWrongPt": "A ordem em inglês é What + do + you + do?"
+                }
+              ]
             },
             "curriculum": {
               "objectivePt": "Have your first complete conversation in English.",
@@ -1887,7 +3899,8 @@
                 "start-m01-l04-*"
               ],
               "lessonKind": "challenge",
-              "playerVersionTarget": 1
+              "playerVersionTarget": 1,
+              "estimatedMinutes": 18
             }
           },
           "quiz": {
@@ -1897,110 +3910,110 @@
               {
                 "contentKey": "start-m01-l05-q01",
                 "sortOrder": 0,
-                "question": "Good morning! ___",
+                "question": "Abertura à tarde — cumprimento + How are you?",
                 "options": [
-                  "How are you?",
-                  "What's your name?",
-                  "I live in Boston."
+                  "Good afternoon! How are you?",
+                  "Good morning!",
+                  "What do you do?"
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l05-q02",
                 "sortOrder": 1,
-                "question": "How are you? — Resposta natural:",
+                "question": "Resposta natural a How are you?",
                 "options": [
                   "I'm good, thank you. And you?",
-                  "I'm from Brazil.",
-                  "This is Jamie."
+                  "My name is Carlos.",
+                  "I work in Boston."
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l05-q03",
                 "sortOrder": 2,
-                "question": "I'm Maria. ___",
+                "question": "Após cumprimento — perguntar nome:",
                 "options": [
                   "What's your name?",
-                  "Good evening!",
-                  "No, I don't."
+                  "Where are you from?",
+                  "See you later!"
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l05-q04",
                 "sortOrder": 3,
-                "question": "Nice to meet you! — Resposta:",
+                "question": "Resposta a Nice to meet you!",
                 "options": [
                   "Nice to meet you too.",
-                  "See you later!",
-                  "What do you do?"
+                  "Good morning!",
+                  "I live in Boston."
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l05-q05",
                 "sortOrder": 4,
-                "question": "Where are you from? — Resposta:",
+                "question": "Dizer origem:",
                 "options": [
                   "I'm from Brazil.",
-                  "I work in Boston.",
-                  "I'm good, thanks."
+                  "I live in Brazil.",
+                  "I work Brazil."
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l05-q06",
                 "sortOrder": 5,
-                "question": "Where do you live? — Resposta:",
+                "question": "Dizer onde mora:",
                 "options": [
                   "I live in Boston.",
-                  "I'm Brazilian.",
-                  "Good afternoon!"
+                  "I'm from Boston only origin.",
+                  "I work at Boston."
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l05-q07",
                 "sortOrder": 6,
-                "question": "What do you do? — Resposta plausível:",
+                "question": "Perguntar sobre trabalho:",
                 "options": [
-                  "I work in finance.",
-                  "I live in finance.",
-                  "I'm from finance."
+                  "What do you do?",
+                  "How are you?",
+                  "Who is this?"
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l05-q08",
                 "sortOrder": 7,
-                "question": "Devolver pergunta sobre trabalho:",
+                "question": "Responder sobre função:",
                 "options": [
-                  "What about you?",
-                  "And you?",
-                  "Who is this?"
+                  "I work in operations.",
+                  "I from operations.",
+                  "I live operations."
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l05-q09",
                 "sortOrder": 8,
-                "question": "Encerrar conversa casual:",
+                "question": "Devolver pergunta de trabalho:",
                 "options": [
-                  "See you later!",
-                  "Good morning!",
-                  "What's your name?"
+                  "What about you?",
+                  "Goodbye!",
+                  "And you?"
                 ],
                 "correctIndex": 0
               },
               {
                 "contentKey": "start-m01-l05-q10",
                 "sortOrder": 9,
-                "question": "Qual sequência faz mais sentido no início de uma conversa?",
+                "question": "Encerrar conversa naturalmente:",
                 "options": [
-                  "Greeting → How are you → Names → Nice to meet you",
-                  "What do you do → Goodbye → Where do you live",
-                  "I live in Boston → Good evening → Who is this"
+                  "See you later!",
+                  "What's your name?",
+                  "Good morning!"
                 ],
                 "correctIndex": 0
               }
