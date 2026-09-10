@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api";
 import type { LearningPlayerResponse } from "@/lib/desenvolvimento-types";
-import { PREMIUM_PILOT_LESSON_KEY, parsePremiumPlayer } from "@/lib/learning-player-types";
+import { parsePremiumPlayer } from "@/lib/learning-player-types";
 import { Button } from "@/components/ui/button";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
   const activeLesson = activeIndex >= 0 ? data?.lessons[activeIndex] : null;
 
   const premiumPlayer = useMemo(() => {
-    if (!activeLesson || activeLesson.contentKey !== PREMIUM_PILOT_LESSON_KEY) return null;
+    if (!activeLesson) return null;
     return parsePremiumPlayer(activeLesson.liveMeta);
   }, [activeLesson]);
 

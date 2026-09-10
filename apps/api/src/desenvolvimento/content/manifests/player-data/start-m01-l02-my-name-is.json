@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "levelLabel": "START",
+  "moduleNumber": 1,
+  "goalPt": "Apresentar-se, perguntar o nome de alguém e responder a um elogio de encontro (Nice to meet you).",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Listen / Imitate", "labelPt": "Ouça / Imite" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Após cumprimentar Alex, você precisa se apresentar antes da reunião.",
+    "dialogue": [
+      { "speaker": "Carlos", "textEn": "Hi! My name is Carlos. What's your name?" },
+      { "speaker": "Alex", "textEn": "I'm Alex. Nice to meet you!" },
+      { "speaker": "Carlos", "textEn": "Nice to meet you too." },
+      { "speaker": "Alex", "textEn": "Carlos, this is Jamie." },
+      { "speaker": "Carlos", "textEn": "Hi, Jamie. Nice to meet you." }
+    ]
+  },
+  "learn": {
+    "introPt": "Use frases completas — I'm e My name is são as formas mais comuns de se apresentar.",
+    "phrases": [
+      { "en": "My name is...", "pt": "meu nome é… (formal/claro)" },
+      { "en": "I'm...", "pt": "eu sou… / me chamo… (informal, muito comum)" },
+      { "en": "What's your name?", "pt": "qual é o seu nome?" },
+      { "en": "Nice to meet you.", "pt": "prazer em conhecer você." },
+      { "en": "Nice to meet you too.", "pt": "prazer em conhecer você também." },
+      { "en": "This is...", "pt": "este(a) é… (apresentar alguém)" },
+      { "en": "Who is this?", "pt": "quem é esta pessoa?" }
+    ],
+    "languageTip": "I'm… é mais natural no dia a dia; My name is… soa um pouco mais formal ou claro."
+  },
+  "imitate": {
+    "introPt": "Repita em voz alta cada expressão, depois o mini-diálogo de apresentação.",
+    "phrases": [
+      { "en": "My name is Carlos.", "audioKey": "start-m01-l02-a01" },
+      { "en": "I'm Carlos.", "audioKey": "start-m01-l02-a02" },
+      { "en": "What's your name?", "audioKey": "start-m01-l02-a03" },
+      { "en": "Nice to meet you.", "audioKey": "start-m01-l02-a04" },
+      { "en": "Nice to meet you too.", "audioKey": "start-m01-l02-a05" },
+      { "en": "This is Jamie.", "audioKey": "start-m01-l02-a06" }
+    ],
+    "dialogueEn": "Hi! My name is Carlos. What's your name? — I'm Alex. Nice to meet you! — Nice to meet you too."
+  },
+  "practice": {
+    "introPt": "Escolha a resposta mais natural. Feedback imediato — sem nota.",
+    "items": [
+      {
+        "id": "start-m01-l02-p01",
+        "promptPt": "Primeiro encontro — forma comum de dizer seu nome:",
+        "options": [
+          { "labelEn": "I'm Carlos.", "correct": true, "feedbackPt": "Natural e muito usado no dia a dia." },
+          { "labelEn": "I live Carlos.", "correct": false, "feedbackPt": "Live indica moradia, não nome." },
+          { "labelEn": "I work Carlos.", "correct": false, "feedbackPt": "Work indica trabalho, não nome." }
+        ]
+      },
+      {
+        "id": "start-m01-l02-p02",
+        "promptPt": "Alex diz \"Nice to meet you!\" — você responde:",
+        "options": [
+          { "labelEn": "Nice to meet you too.", "correct": true, "feedbackPt": "Resposta padrão ao prazer em conhecer." },
+          { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Isso cumprimenta, não responde ao nice to meet you." },
+          { "labelEn": "I am fine.", "correct": false, "feedbackPt": "Responde a how are you, não a nice to meet you." }
+        ]
+      },
+      {
+        "id": "start-m01-l02-p03",
+        "promptPt": "Apresentar Jamie a alguém:",
+        "options": [
+          { "labelEn": "This is Jamie.", "correct": true, "feedbackPt": "Forma correta de apresentar um terceiro." },
+          { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Isso pergunta o nome, não apresenta alguém." },
+          { "labelEn": "I'm from Brazil.", "correct": false, "feedbackPt": "Isso fala origem, não apresenta alguém." }
+        ]
+      }
+    ]
+  },
+  "mission": {
+    "headlineEn": "You can introduce yourself in English.",
+    "headlinePt": "Você consegue se apresentar em inglês.",
+    "bodyPt": "Missão: cumprimente alguém, diga seu nome, pergunte o nome da pessoa, responda Nice to meet you too e, se possível, apresente um colega com This is…",
+    "canDo": [
+      "My name is Carlos.",
+      "What's your name?",
+      "Nice to meet you too.",
+      "This is Jamie."
+    ]
+  }
+}

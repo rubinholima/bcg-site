@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "levelLabel": "START",
+  "moduleNumber": 1,
+  "goalPt": "Demonstrar tudo do Módulo 1 em interações curtas e realistas — sem vocabulário novo.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Listen / Imitate", "labelPt": "Ouça / Imite" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Desafio de revisão do módulo: complete uma conversa real usando apenas o que aprendeu nas lições 1–4 — cumprimento, nomes, origem, moradia, trabalho e despedida.",
+    "dialogue": [
+      { "speaker": "A", "textEn": "Good afternoon! How are you?" },
+      { "speaker": "B", "textEn": "I'm good, thank you. And you?" },
+      { "speaker": "A", "textEn": "I'm great, thanks! I'm Alex. What's your name?" },
+      { "speaker": "B", "textEn": "My name is Carlos. Nice to meet you!" },
+      { "speaker": "A", "textEn": "Nice to meet you too. Where are you from?" },
+      { "speaker": "B", "textEn": "I'm from Brazil. I live in Boston." },
+      { "speaker": "A", "textEn": "What do you do?" },
+      { "speaker": "B", "textEn": "I work in operations. What about you?" },
+      { "speaker": "A", "textEn": "I work in marketing. See you later!" },
+      { "speaker": "B", "textEn": "See you later!" }
+    ]
+  },
+  "learn": {
+    "introPt": "Sem vocabulário novo — integre cumprimentos, nomes, origem, moradia e trabalho das lições anteriores.",
+    "phrases": [
+      { "en": "Good afternoon! How are you?", "pt": "abertura + como está" },
+      { "en": "My name is Carlos. Nice to meet you!", "pt": "apresentação + prazer" },
+      { "en": "I'm from Brazil. I live in Boston.", "pt": "origem + moradia" },
+      { "en": "I work in operations. What about you?", "pt": "trabalho + devolver pergunta" },
+      { "en": "See you later!", "pt": "encerramento natural" }
+    ],
+    "languageTip": "Conversas reais seguem um fluxo: cumprimento → nome → origem/moradia → trabalho → despedida."
+  },
+  "imitate": {
+    "introPt": "Leia o diálogo completo em voz alta. Não decore — entenda o fluxo natural da conversa.",
+    "phrases": [
+      { "en": "Good afternoon! How are you?", "audioKey": "start-m01-l05-a01" },
+      { "en": "I'm good, thank you. And you?", "audioKey": "start-m01-l05-a01" },
+      { "en": "My name is Carlos. Nice to meet you!", "audioKey": "start-m01-l05-a01" },
+      { "en": "I'm from Brazil. I live in Boston.", "audioKey": "start-m01-l05-a01" },
+      { "en": "I work in operations. What about you?", "audioKey": "start-m01-l05-a01" },
+      { "en": "See you later!", "audioKey": "start-m01-l05-a01" }
+    ],
+    "dialogueEn": "Good afternoon! How are you? — I'm good, thank you. And you? — I'm great, thanks! I'm Alex. What's your name? — My name is Carlos. Nice to meet you! — Nice to meet you too. Where are you from? — I'm from Brazil. I live in Boston. — What do you do? — I work in operations. What about you? — I work in marketing. See you later! — See you later!",
+    "dialogueAudioKey": "start-m01-l05-a01"
+  },
+  "practice": {
+    "introPt": "Antes do assessment — escolha a resposta que mantém a conversa fluindo. Sem nota.",
+    "items": [
+      {
+        "id": "start-m01-l05-p01",
+        "promptPt": "Reunião à tarde — abertura mais natural:",
+        "options": [
+          { "labelEn": "Good afternoon! How are you?", "correct": true, "feedbackPt": "Cumprimento + pergunta social — fluxo natural." },
+          { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Manhã não combina com reunião à tarde." },
+          { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Pular direto para trabalho soa abrupto." }
+        ]
+      },
+      {
+        "id": "start-m01-l05-p02",
+        "promptPt": "Após \"Nice to meet you!\" — próximo passo natural na conversa:",
+        "options": [
+          { "labelEn": "Where are you from?", "correct": true, "feedbackPt": "Pergunta comum após apresentação." },
+          { "labelEn": "Goodbye!", "correct": false, "feedbackPt": "Encerra cedo demais." },
+          { "labelEn": "I'm fine.", "correct": false, "feedbackPt": "Não avança a conversa após apresentação." }
+        ]
+      },
+      {
+        "id": "start-m01-l05-p03",
+        "promptPt": "Encerrar a conversa de forma educada:",
+        "options": [
+          { "labelEn": "See you later!", "correct": true, "feedbackPt": "Despedida natural e comum." },
+          { "labelEn": "What's your name?", "correct": false, "feedbackPt": "Isso reabre apresentação, não encerra." },
+          { "labelEn": "Do you live here?", "correct": false, "feedbackPt": "Nova pergunta, não encerramento." }
+        ]
+      }
+    ]
+  },
+  "mission": {
+    "headlineEn": "Have your first complete conversation in English.",
+    "headlinePt": "Faça sua primeira conversa completa em inglês.",
+    "bodyPt": "Missão: faça uma conversa real (colega, amigo ou gravação) com cumprimento, nomes, origem, moradia, trabalho e despedida. Aprove no Verify (70%) antes de considerar o módulo concluído.",
+    "canDo": [
+      "Good afternoon! How are you?",
+      "My name is Carlos. Nice to meet you!",
+      "I'm from Brazil. I live in Boston.",
+      "I work in operations. What about you?",
+      "See you later!"
+    ]
+  }
+}

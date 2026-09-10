@@ -11,7 +11,12 @@ import { cn } from "@/lib/utils";
 import { LearningPlayerSidebar } from "./LearningPlayerSidebar";
 import { LearningDialogue } from "./LearningDialogue";
 import { LearningPhraseCard, LearningLanguageTip } from "./LearningPhraseCard";
-import { LearningAudioPhrase } from "./LearningAudioPhrase";
+import {
+  LearningAudioPhrase,
+  LearningAudioUnavailableNote,
+  playerExperienceHasAudio,
+} from "./LearningAudioPhrase";
+import { NativeSelect } from "@/components/ui/native-select";
 import { LearningPracticeActivity } from "./LearningPracticeActivity";
 import { LearningQuizFlow } from "./LearningQuizFlow";
 import { LearningMissionScreen } from "./LearningMissionScreen";
@@ -27,10 +32,14 @@ type Props = {
 export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onReload }: Props) {
   const steps = player.steps;
   const [stepIndex, setStepIndex] = useState(0);
+  const [maxStepReached, setMaxStepReached] = useState(() =>
+    lesson.progress?.status === "completed" ? steps.length - 1 : 0,
+  );
   const [practiceIndex, setPracticeIndex] = useState(0);
   const [verifyPassed, setVerifyPassed] = useState(
     () => lesson.progress?.status === "completed",
   );
+  const hasAudio = playerExperienceHasAudio(player);
 
   const step = steps[stepIndex];
   const stepId = step?.id as LearningPlayerStepId | undefined;
@@ -49,8 +58,36 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
 
   const stepProgressPct = Math.round(((stepIndex + 1) / steps.length) * 100);
 
-  const goNextStep = () => setStepIndex((i) => Math.min(steps.length - 1, i + 1));
-  const goPrevStep = () => setStepIndex((i) => Math.max(0, i - 1));
+  const canGoToStep = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= steps.length) return false;
+      const targetId = steps[index]?.id as LearningPlayerStepId | undefined;
+      if (targetId === "mission" && lesson.quiz && !verifyPassed) return false;
+      if (targetId === "mission" && verifyPassed) return true;
+      return index <= maxStepReached;
+    },
+    [steps, maxStepReached, lesson.quiz, verifyPassed],
+  );
+
+  const goToStep = useCallback(
+    (index: number) => {
+      if (!canGoToStep(index)) return;
+      setStepIndex(index);
+      if (steps[index]?.id !== "practice") setPracticeIndex(0);
+    },
+    [canGoToStep, steps],
+  );
+
+  const goNextStep = () => {
+    const next = Math.min(steps.length - 1, stepIndex + 1);
+    const nextId = steps[next]?.id as LearningPlayerStepId | undefined;
+    if (stepId === "verify" && !verifyPassed) return;
+    if (nextId === "mission" && lesson.quiz && !verifyPassed) return;
+    setMaxStepReached((m) => Math.max(m, next));
+    goToStep(next);
+  };
+
+  const goPrevStep = () => goToStep(Math.max(0, stepIndex - 1));
 
   const handleQuizSubmit = useCallback(
     async (answers: Record<string, number>) => {
@@ -87,11 +124,32 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
       </div>
 
       {/* Mobile compact nav */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/60 bg-card/80 px-4 py-3 lg:hidden">
-        <p className="text-sm font-medium">
-          Módulo {player.moduleNumber} · Lição {lessonNumber}/{lessonsInModule}
-        </p>
-        <p className="text-xs text-muted-foreground">{data.enrollment.progressPct}% curso</p>
+      <div className="space-y-2 rounded-xl border border-border/60 bg-card/80 px-4 py-3 lg:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-medium">
+            Módulo {player.moduleNumber} · Lição {lessonNumber}/{lessonsInModule}
+          </p>
+          <p className="text-xs text-muted-foreground">{data.enrollment.progressPct}% curso</p>
+        </div>
+        <NativeSelect
+          value={lesson.id}
+          onChange={(e) => onLessonChange(e.target.value)}
+          className="min-h-[44px] w-full"
+        >
+          {data.lessons
+            .filter((l) => l.moduleId === lesson.moduleId)
+            .map((l, idx) => (
+              <option key={l.id} value={l.id}>
+                {idx + 1}. {l.title}
+              </option>
+            ))}
+        </NativeSelect>
+        <div className="h-1 overflow-hidden rounded-full bg-muted/40">
+          <div
+            className="h-full rounded-full bg-violet-500 transition-all"
+            style={{ width: `${stepProgressPct}%` }}
+          />
+        </div>
       </div>
 
       <div className="flex gap-6 lg:items-start">
@@ -123,21 +181,26 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
             </div>
 
             <div className="mt-5 flex gap-1 overflow-x-auto pb-1">
-              {steps.map((s, i) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => i <= stepIndex && setStepIndex(i)}
-                  className={cn(
-                    "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors min-h-[36px]",
-                    i === stepIndex && "bg-violet-500 text-white",
-                    i < stepIndex && "bg-violet-500/20 text-violet-300",
-                    i > stepIndex && "bg-muted/30 text-muted-foreground",
-                  )}
-                >
-                  {s.labelPt}
-                </button>
-              ))}
+              {steps.map((s, i) => {
+                const enabled = canGoToStep(i);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    disabled={!enabled}
+                    onClick={() => goToStep(i)}
+                    className={cn(
+                      "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors min-h-[36px]",
+                      i === stepIndex && "bg-violet-500 text-white",
+                      i < stepIndex && enabled && "bg-violet-500/20 text-violet-300",
+                      i > stepIndex && "bg-muted/30 text-muted-foreground",
+                      !enabled && "cursor-not-allowed opacity-50",
+                    )}
+                  >
+                    {s.labelPt}
+                  </button>
+                );
+              })}
             </div>
             <div className="mt-3 h-1 overflow-hidden rounded-full bg-muted/40">
               <div
@@ -172,23 +235,23 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
             ) : null}
 
             {stepId === "imitate" ? (
-              <div className="mx-auto max-w-2xl space-y-6">
+              <div className="mx-auto max-w-2xl space-y-4">
                 <p className="text-sm text-muted-foreground">{player.imitate.introPt}</p>
-                <div className="space-y-4">
+                {!hasAudio ? <LearningAudioUnavailableNote /> : null}
+                <ul className="divide-y divide-border/40 rounded-xl border border-border/60 bg-muted/5">
                   {player.imitate.phrases.map((p) => (
-                    <div key={p.en} className="rounded-xl border border-border/60 bg-muted/10 p-4">
-                      <LearningAudioPhrase textEn={p.en} audioKey={p.audioKey} audioUrl={p.audioUrl} />
-                    </div>
+                    <li key={p.en} className="px-4 py-3">
+                      <LearningAudioPhrase textEn={p.en} audioUrl={p.audioUrl} />
+                    </li>
                   ))}
-                </div>
+                </ul>
                 {player.imitate.dialogueEn ? (
-                  <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                  <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                       Diálogo completo
                     </p>
                     <LearningAudioPhrase
                       textEn={player.imitate.dialogueEn}
-                      audioKey={player.imitate.dialogueAudioKey}
                       audioUrl={player.imitate.dialogueAudioUrl}
                       size="lg"
                     />
@@ -245,7 +308,7 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
               variant="outline"
               size="sm"
               disabled={stepIndex === 0}
-              onClick={goPrevStep}
+              onClick={() => goPrevStep()}
               className="min-h-[44px]"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -260,7 +323,7 @@ export function PremiumLessonPlayer({ data, lesson, player, onLessonChange, onRe
                 type="button"
                 size="sm"
                 disabled={stepIndex >= steps.length - 1 || (stepId === "verify" && !verifyPassed)}
-                onClick={goNextStep}
+                onClick={() => goNextStep()}
                 className="min-h-[44px]"
               >
                 Próxima etapa

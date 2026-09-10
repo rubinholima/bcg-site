@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import type { LearningDialogueLine } from "@/lib/learning-player-types";
-import { LearningAudioPhrase } from "./LearningAudioPhrase";
 
 export function LearningDialogue({
   lines,
@@ -12,31 +11,32 @@ export function LearningDialogue({
   className?: string;
 }) {
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-1.5", className)} role="list">
       {lines.map((line, i) => {
-        const isLeft = i % 2 === 0;
+        const isRight = i % 2 === 1;
         return (
           <div
             key={`${line.speaker}-${i}`}
-            className={cn("flex flex-col gap-1", isLeft ? "items-start" : "items-end")}
+            role="listitem"
+            className={cn("flex gap-2", isRight ? "flex-row-reverse" : "flex-row")}
           >
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+            <span
+              className={cn(
+                "w-14 shrink-0 pt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground",
+                isRight && "text-right",
+              )}
+            >
               {line.speaker}
             </span>
             <div
               className={cn(
-                "max-w-[92%] rounded-2xl border px-4 py-3 sm:max-w-[85%]",
-                isLeft
-                  ? "rounded-tl-sm border-violet-500/25 bg-violet-500/10"
-                  : "rounded-tr-sm border-border/60 bg-card",
+                "min-w-0 max-w-[88%] rounded-lg border px-3 py-2 sm:max-w-[78%]",
+                isRight
+                  ? "rounded-tr-sm border-border/50 bg-muted/20"
+                  : "rounded-tl-sm border-violet-500/20 bg-violet-500/8",
               )}
             >
-              <LearningAudioPhrase
-                textEn={line.textEn}
-                audioKey={line.audioKey}
-                size="lg"
-                align={isLeft ? "start" : "end"}
-              />
+              <p className="text-base sm:text-lg font-semibold leading-snug text-foreground">{line.textEn}</p>
             </div>
           </div>
         );

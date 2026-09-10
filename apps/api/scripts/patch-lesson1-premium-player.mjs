@@ -1,5 +1,5 @@
 /**
- * Injeta liveMeta.player na lição piloto do manifest (local editorial).
+ * Injeta liveMeta.player em todas as lições do Módulo 1 com arquivo player-data correspondente.
  */
 import fs from 'fs';
 import path from 'path';
@@ -10,18 +10,25 @@ const manifestPath = path.join(
   __dirname,
   '../src/desenvolvimento/content/manifests/cup360-english-start-v1.json',
 );
-const playerPath = path.join(
+const playerDataDir = path.join(
   __dirname,
-  '../src/desenvolvimento/content/manifests/player-data/start-m01-l01-hello.json',
+  '../src/desenvolvimento/content/manifests/player-data',
 );
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-const player = JSON.parse(fs.readFileSync(playerPath, 'utf8'));
+manifest.manifestVersion = '1.1.3';
 
-manifest.manifestVersion = '1.1.2';
-const lesson = manifest.modules[0].lessons.find((l) => l.contentKey === 'start-m01-l01-hello');
-if (!lesson) throw new Error('Lição piloto não encontrada no manifest.');
-lesson.live = { ...lesson.live, player };
+const module1 = manifest.modules[0];
+if (!module1) throw new Error('Módulo 1 não encontrado.');
+
+let injected = 0;
+for (const lesson of module1.lessons) {
+  const playerPath = path.join(playerDataDir, `${lesson.contentKey}.json`);
+  if (!fs.existsSync(playerPath)) continue;
+  const player = JSON.parse(fs.readFileSync(playerPath, 'utf8'));
+  lesson.live = { ...lesson.live, player };
+  injected += 1;
+}
 
 fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
-console.log('Manifest v1.1.2 — liveMeta.player injetado em start-m01-l01-hello');
+console.log(`Manifest v1.1.3 — liveMeta.player injetado em ${injected} lição(ões).`);

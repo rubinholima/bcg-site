@@ -77,24 +77,23 @@ export function LearningPracticeActivity({
           <Button type="button" onClick={handleCheck} disabled={selected === null} className="min-h-[44px]">
             Verificar
           </Button>
-        ) : (
+        ) : isCorrect ? (
           <Button type="button" variant="outline" onClick={onComplete} className="min-h-[44px]">
-            {isCorrect ? "Continuar" : "Tentar de novo"}
+            Continuar
           </Button>
-        )}
-        {revealed && !isCorrect ? (
+        ) : (
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={() => {
               setSelected(null);
               setRevealed(false);
             }}
             className="min-h-[44px]"
           >
-            Recomeçar
+            Tentar de novo
           </Button>
-        ) : null}
+        )}
       </div>
     </div>
   );

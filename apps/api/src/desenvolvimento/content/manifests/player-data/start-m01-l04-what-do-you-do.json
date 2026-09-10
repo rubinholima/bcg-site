@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "levelLabel": "START",
+  "moduleNumber": 1,
+  "goalPt": "Explicar de forma simples o que você faz no trabalho e devolver a pergunta.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Listen / Imitate", "labelPt": "Ouça / Imite" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Na mesma conversa, Jamie pergunta sobre seu trabalho — vale para escritório, clube ou qualquer empresa.",
+    "dialogue": [
+      { "speaker": "Jamie", "textEn": "What do you do?" },
+      { "speaker": "Carlos", "textEn": "I work for a football club. I'm responsible for logistics." },
+      { "speaker": "Jamie", "textEn": "Interesting! I work in marketing. What about you, Alex?" }
+    ]
+  },
+  "learn": {
+    "introPt": "Monte sua resposta com padrões simples — organização, área e responsabilidade.",
+    "phrases": [
+      { "en": "What do you do?", "pt": "o que você faz? (profissão/função)" },
+      { "en": "I work for...", "pt": "trabalho para… (empresa/organização)" },
+      { "en": "I work at...", "pt": "trabalho em… (local)" },
+      { "en": "I work in...", "pt": "trabalho na área de…" },
+      { "en": "I'm a...", "pt": "sou um(a)… (cargo/profissão)" },
+      { "en": "I'm responsible for...", "pt": "sou responsável por…" },
+      { "en": "I work with...", "pt": "trabalho com… (equipe/área)" },
+      { "en": "What about you?", "pt": "e você? (devolve o tema)" }
+    ],
+    "languageTip": "I work for = organização; I work in = área/setor; I'm responsible for = sua função específica."
+  },
+  "imitate": {
+    "introPt": "Repita em voz alta. Adapte à sua área real de trabalho.",
+    "phrases": [
+      { "en": "What do you do?", "audioKey": "start-m01-l04-a01" },
+      { "en": "I work for a football club.", "audioKey": "start-m01-l04-a02" },
+      { "en": "I'm a coordinator.", "audioKey": "start-m01-l04-a03" },
+      { "en": "I'm responsible for logistics.", "audioKey": "start-m01-l04-a04" },
+      { "en": "I work with the operations team.", "audioKey": "start-m01-l04-a05" },
+      { "en": "What about you?", "audioKey": "start-m01-l04-a06" }
+    ],
+    "dialogueEn": "What do you do? — I work for a football club. I'm responsible for logistics. — I work in marketing. What about you?"
+  },
+  "practice": {
+    "introPt": "Escolha a resposta mais natural. Feedback imediato — sem nota.",
+    "items": [
+      {
+        "id": "start-m01-l04-p01",
+        "promptPt": "Perguntar a profissão ou função de alguém:",
+        "options": [
+          { "labelEn": "What do you do?", "correct": true, "feedbackPt": "Pergunta padrão sobre trabalho." },
+          { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Pergunta moradia, não trabalho." },
+          { "labelEn": "Who is this?", "correct": false, "feedbackPt": "Pergunta identidade, não profissão." }
+        ]
+      },
+      {
+        "id": "start-m01-l04-p02",
+        "promptPt": "Trabalhar para uma organização:",
+        "options": [
+          { "labelEn": "I work for a company.", "correct": true, "feedbackPt": "Work for = empregador/organização." },
+          { "labelEn": "I live for a company.", "correct": false, "feedbackPt": "Live não combina com company neste sentido." },
+          { "labelEn": "I am from a company.", "correct": false, "feedbackPt": "From indica origem, não emprego." }
+        ]
+      },
+      {
+        "id": "start-m01-l04-p03",
+        "promptPt": "Devolver a pergunta sobre trabalho:",
+        "options": [
+          { "labelEn": "What about you?", "correct": true, "feedbackPt": "Devolve o tema de forma natural." },
+          { "labelEn": "Where are you from?", "correct": false, "feedbackPt": "Muda o assunto para origem." },
+          { "labelEn": "Nice to meet you.", "correct": false, "feedbackPt": "Não devolve a pergunta." }
+        ]
+      }
+    ]
+  },
+  "mission": {
+    "headlineEn": "You can talk about your job.",
+    "headlinePt": "Você consegue falar do seu trabalho.",
+    "bodyPt": "Missão: responda What do you do? em no máximo duas frases e devolva com What about you?",
+    "canDo": [
+      "What do you do?",
+      "I work for a football club.",
+      "I'm responsible for logistics.",
+      "What about you?"
+    ]
+  }
+}

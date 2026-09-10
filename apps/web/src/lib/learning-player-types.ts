@@ -89,8 +89,6 @@ export type LearningLiveMeta = {
   player?: LearningPlayerExperience;
 };
 
-export const PREMIUM_PILOT_LESSON_KEY = "start-m01-l01-hello";
-
 export function parsePremiumPlayer(liveMeta: unknown): LearningPlayerExperience | null {
   if (!liveMeta || typeof liveMeta !== "object") return null;
   const player = (liveMeta as LearningLiveMeta).player;
