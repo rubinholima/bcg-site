@@ -711,7 +711,7 @@ export class DesenvolvimentoService {
       include: { quiz: true },
     });
     if (!lesson) throw new NotFoundException('Lição não encontrada.');
-    if (lesson.lessonType === 'QUIZ') {
+    if (lesson.lessonType === 'QUIZ' || lesson.quiz) {
       throw new BadRequestException(
         'Conclua o quiz para finalizar esta lição.',
       );
@@ -754,7 +754,6 @@ export class DesenvolvimentoService {
       where: {
         id: lessonId,
         module: { courseId: enrollment.courseId },
-        lessonType: 'QUIZ',
       },
       include: { quiz: { include: { questions: true } } },
     });

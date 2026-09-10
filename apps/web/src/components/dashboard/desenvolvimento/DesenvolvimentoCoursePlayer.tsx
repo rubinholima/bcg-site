@@ -164,12 +164,12 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
         <section className="min-w-0 rounded-lg border border-border/60 bg-card p-4 sm:p-6">
           <h2 className="text-lg font-semibold">{activeLesson.title}</h2>
           <div className="mt-4 space-y-4">
-            {activeLesson.lessonType === "TEXT" && (
+            {activeLesson.contentHtml ? (
               <div
                 className="prose prose-invert max-w-none text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: activeLesson.contentHtml ?? "" }}
+                dangerouslySetInnerHTML={{ __html: activeLesson.contentHtml }}
               />
-            )}
+            ) : null}
             {activeLesson.lessonType === "LINK" && activeLesson.externalUrl ? (
               <a
                 href={activeLesson.externalUrl}
@@ -189,7 +189,7 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
                 </a>
               )
             ) : null}
-            {activeLesson.lessonType === "QUIZ" && activeLesson.quiz ? (
+            {activeLesson.quiz ? (
               <div className="space-y-4">
                 {activeLesson.quiz.questions.map((q) => (
                   <fieldset key={q.id} className="space-y-2 rounded-md border border-border/50 p-3">
@@ -226,12 +226,12 @@ export function DesenvolvimentoCoursePlayer({ courseId }: { courseId: string }) 
               <ChevronLeft className="h-4 w-4" />
               Anterior
             </Button>
-            {activeLesson.lessonType !== "QUIZ" ? (
+            {activeLesson.quiz ? (
+              <span className="text-xs text-muted-foreground">Conclua via quiz aprovado</span>
+            ) : (
               <Button type="button" size="sm" onClick={() => void handleComplete()}>
                 Marcar como concluída
               </Button>
-            ) : (
-              <span className="text-xs text-muted-foreground">Conclua via quiz aprovado</span>
             )}
             <Button
               type="button"

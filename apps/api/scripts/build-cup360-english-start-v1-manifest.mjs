@@ -1,0 +1,454 @@
+/**
+ * Gera/atualiza o manifest oficial cup360-english-start-v1 (uso interno editorial).
+ * Rodar: node scripts/build-cup360-english-start-v1-manifest.mjs
+ */
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const out = path.join(__dirname, '../src/desenvolvimento/content/manifests/cup360-english-start-v1.json');
+
+const audio = (key, text) =>
+  `<span class="font-medium">${text}</span> <em class="text-xs text-muted-foreground not-italic">[áudio: ${key}]</em>`;
+
+const section = (title, body) => `<section class="mb-6"><h3 class="text-base font-semibold mb-2">${title}</h3>${body}</section>`;
+
+const tip = (text) =>
+  `<aside class="my-3 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm"><strong class="text-amber-400">Language Tip:</strong> ${text}</aside>`;
+
+const goal = (text) =>
+  `<p class="mb-4 rounded-md border border-violet-500/30 bg-violet-500/5 px-3 py-2 text-sm"><strong>Objetivo (≈10 min):</strong> ${text}</p>`;
+
+const manifest = {
+  manifestId: 'cup360-english-start-v1',
+  manifestVersion: '1.1.0',
+  course: {
+    contentKey: 'cup360-english-start-v1',
+    title: 'CUP360 English',
+    subtitle: 'English for Life, Work & Football',
+    description:
+      'Trilha START — Comece a falar. Metodologia LIVE (Learn, Imitate, Verify, Execute). Conteúdo pedagógico oficial CUP360.',
+    category: 'official-cup360',
+    status: 'draft',
+    tenantId: null,
+    methodology: 'LIVE',
+  },
+  modules: [
+    {
+      contentKey: 'start-module-01-hello',
+      title: 'Hello! — Seu primeiro contato',
+      sortOrder: 0,
+      lessons: [
+        {
+          contentKey: 'start-m01-l01-hello',
+          title: 'Hello!',
+          sortOrder: 0,
+          lessonType: 'TEXT',
+          estimatedMinutes: 10,
+          contentHtml: [
+            goal('Ao final desta lição, você consegue cumprimentar alguém de forma adequada e responder a <em>How are you?</em> em uma interação curta e natural.'),
+            section('Real Life — Vida real', `<p>Você chega ao trabalho de manhã e encontra um colega que fala inglês.</p><blockquote class="border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm"><p><strong>Alex:</strong> Good morning!</p><p><strong>Carlos:</strong> Good morning!</p><p><strong>Alex:</strong> How are you?</p><p><strong>Carlos:</strong> I'm good, thank you. And you?</p><p><strong>Alex:</strong> I'm great, thanks!</p></blockquote>`),
+            section('Learn — Aprenda', `<p>Use estas unidades de comunicação — não palavras soltas. Em inglês, a frase inteira é o que você reproduz.</p><ul class="list-disc pl-5 space-y-2 my-3"><li><strong>Hi!</strong> / <strong>Hello!</strong> — oi / olá (informal a neutro)</li><li><strong>Good morning!</strong> — bom dia (até ~meio-dia)</li><li><strong>Good afternoon!</strong> — boa tarde</li><li><strong>Good evening!</strong> — boa noite (chegada) / boa tarde final</li><li><strong>How are you?</strong> — como você está?</li><li><strong>I'm good, thank you.</strong> — estou bem, obrigado.</li><li><strong>I'm great, thanks!</strong> — estou ótimo, valeu! (informal)</li><li><strong>And you?</strong> — e você? (devolve a pergunta)</li><li><strong>Goodbye!</strong> / <strong>See you later!</strong> — tchau / até mais</li></ul>${tip('<em>Good morning</em> depende do horário, não da sua energia. Pela manhã → <em>Good morning</em>.')}`),
+            section('Imitate — Imite', `<p>Repita em voz alta, pausa curta entre cada expressão:</p><ol class="list-decimal pl-5 space-y-2 my-3"><li>${audio('start-m01-l01-a01', 'Hi!')}</li><li>${audio('start-m01-l01-a02', 'Hello!')}</li><li>${audio('start-m01-l01-a03', 'Good morning!')}</li><li>${audio('start-m01-l01-a04', 'How are you?')}</li><li>${audio('start-m01-l01-a05', "I'm good, thank you.")}</li><li>${audio('start-m01-l01-a06', 'And you?')}</li></ol><p class="mt-3">Agora o diálogo completo:</p><p class="text-sm">${audio('start-m01-l01-a07', 'Good morning! — Good morning! — How are you? — I\'m good, thank you. And you? — I\'m great, thanks!')}</p>`),
+            section('Build / Practice — Pratique', `<p><strong>1.</strong> Escolha o cumprimento certo:</p><ul class="list-disc pl-5 text-sm space-y-1"><li>08:30 no escritório → <strong>Good morning!</strong></li><li>15:00 no corredor → <strong>Good afternoon!</strong></li><li>19:00 ao sair → <strong>Good evening!</strong> ou <strong>See you later!</strong></li></ul><p class="mt-3"><strong>2.</strong> Responda <em>How are you?</em> de duas formas (formal e informal).</p>`),
+            section('Execute — Missão', `<p><strong>Missão:</strong> cumprimente um colega, pergunte <em>How are you?</em>, responda à mesma pergunta e encerre a interação de forma natural (<em>Goodbye</em> ou <em>See you later</em>).</p><p class="text-sm text-muted-foreground mt-2">Depois do Verify abaixo, você está pronto para executar.</p>`),
+          ].join(''),
+          live: {
+            realLifeContext: 'Chegada ao trabalho de manhã com colega anglófono.',
+            learn: 'Cumprimentos por período do dia + How are you? / respostas + fechamento.',
+            imitate: 'Repetição de expressões e diálogo completo (slots de áudio reservados).',
+            buildPractice: 'Escolher cumprimento por horário; variar respostas a How are you?',
+            verify: 'Quiz de 5 questões (conteúdo já ensinado).',
+            executeMission:
+              'Cumprimente um colega, pergunte how they are, responda e encerre naturalmente.',
+          },
+          quiz: {
+            passingScore: 70,
+            maxAttempts: 5,
+            questions: [
+              {
+                contentKey: 'start-m01-l01-q01',
+                sortOrder: 0,
+                question: 'São 9h da manhã. Qual cumprimento é o mais natural?',
+                options: ['Good morning!', 'Good evening!', 'Goodbye!'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l01-q02',
+                sortOrder: 1,
+                question: 'Como responder de forma educada a "How are you?"',
+                options: ["I'm good, thank you.", "My name is Carlos.", 'I live in Boston.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l01-q03',
+                sortOrder: 2,
+                question: 'Qual expressão devolve a pergunta "How are you?"',
+                options: ['And you?', "What's your name?", "I'm from Brazil."],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l01-q04',
+                sortOrder: 3,
+                question: 'Final de tarde (17h). Cumprimento adequado:',
+                options: ['Good afternoon!', 'Good morning!', 'Hi! How are you?'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l01-q05',
+                sortOrder: 4,
+                question: 'Encerrar a conversa de forma casual:',
+                options: ['See you later!', 'Good morning!', 'How are you?'],
+                correctIndex: 0,
+              },
+            ],
+          },
+        },
+        {
+          contentKey: 'start-m01-l02-my-name-is',
+          title: 'My name is...',
+          sortOrder: 1,
+          lessonType: 'TEXT',
+          estimatedMinutes: 10,
+          contentHtml: [
+            goal('Apresentar-se, perguntar o nome de alguém e responder a um elogio de encontro (<em>Nice to meet you</em>).'),
+            section('Real Life — Vida real', `<p>Após cumprimentar Alex, você precisa se apresentar antes da reunião.</p><blockquote class="border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm"><p><strong>Carlos:</strong> Hi! My name is Carlos. What's your name?</p><p><strong>Alex:</strong> I'm Alex. Nice to meet you!</p><p><strong>Carlos:</strong> Nice to meet you too.</p><p><strong>Alex:</strong> Carlos, this is Jamie.</p><p><strong>Carlos:</strong> Hi, Jamie. Nice to meet you.</p></blockquote>`),
+            section('Learn — Aprenda', `<ul class="list-disc pl-5 space-y-2"><li><strong>My name is...</strong> — meu nome é… (formal/claro)</li><li><strong>I'm...</strong> — eu sou… / me chamo… (informal, muito comum)</li><li><strong>What's your name?</strong> — qual é o seu nome?</li><li><strong>Nice to meet you.</strong> — prazer em conhecer você.</li><li><strong>Nice to meet you too.</strong> — prazer em conhecer você também.</li><li><strong>This is...</strong> — este(a) é… (apresentar alguém)</li><li><strong>Who is this?</strong> — quem é esta pessoa?</li></ul>${tip('<em>I\'m Alex</em> e <em>My name is Alex</em> significam a mesma coisa na prática. Em conversa rápida, <em>I\'m</em> é mais comum.')}`),
+            section('Imitate — Imite', `<ol class="list-decimal pl-5 space-y-2"><li>${audio('start-m01-l02-a01', 'My name is Carlos.')}</li><li>${audio('start-m01-l02-a02', "I'm Carlos.")}</li><li>${audio('start-m01-l02-a03', "What's your name?")}</li><li>${audio('start-m01-l02-a04', 'Nice to meet you.')}</li><li>${audio('start-m01-l02-a05', 'Nice to meet you too.')}</li><li>${audio('start-m01-l02-a06', 'This is Jamie.')}</li></ol>`),
+            section('Build / Practice — Pratique', `<p><strong>1.</strong> Apresente-se com <em>I'm...</em> e com <em>My name is...</em></p><p><strong>2.</strong> Role-play: você encontra alguém → cumprimento → nome → <em>Nice to meet you</em>.</p><p><strong>3.</strong> Pratique apresentar um terceiro: <em>This is...</em></p>`),
+            section('Execute — Missão', `<p><strong>Missão:</strong> cumprimente alguém, diga seu nome, pergunte o nome da pessoa, responda <em>Nice to meet you too</em> e, se possível, apresente um colega com <em>This is...</em></p>`),
+          ].join(''),
+          live: {
+            realLifeContext: 'Apresentação rápida antes de uma reunião.',
+            learn: 'My name is / I\'m / What\'s your name / Nice to meet you / This is',
+            imitate: 'Frases individuais + mini-diálogo de apresentação.',
+            buildPractice: 'Variar I\'m vs My name is; apresentar terceiro.',
+            verify: 'Quiz de 5 questões.',
+            executeMission: 'Apresentação completa com nome e nice to meet you.',
+          },
+          quiz: {
+            passingScore: 70,
+            maxAttempts: 5,
+            questions: [
+              {
+                contentKey: 'start-m01-l02-q01',
+                sortOrder: 0,
+                question: 'Forma comum e natural de dizer seu nome:',
+                options: ["I'm Carlos.", 'I live Carlos.', 'I work Carlos.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l02-q02',
+                sortOrder: 1,
+                question: 'Perguntar o nome de alguém:',
+                options: ["What's your name?", 'How are you?', 'Where are you from?'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l02-q03',
+                sortOrder: 2,
+                question: 'Resposta a "Nice to meet you!":',
+                options: ['Nice to meet you too.', 'Good morning!', 'I am fine.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l02-q04',
+                sortOrder: 3,
+                question: 'Apresentar uma terceira pessoa:',
+                options: ['This is Jamie.', "What's your name?", "I'm from Brazil."],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l02-q05',
+                sortOrder: 4,
+                question: 'Perguntar quem é alguém que você não conhece:',
+                options: ['Who is this?', 'What do you do?', 'And you?'],
+                correctIndex: 0,
+              },
+            ],
+          },
+        },
+        {
+          contentKey: 'start-m01-l03-im-from-brazil',
+          title: "I'm from Brazil",
+          sortOrder: 2,
+          lessonType: 'TEXT',
+          estimatedMinutes: 10,
+          contentHtml: [
+            goal('Dizer de onde você é, onde mora e responder sim/não de forma curta.'),
+            section('Real Life — Vida real', `<p>Jamie quer saber mais sobre você no café.</p><blockquote class="border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm"><p><strong>Jamie:</strong> Where are you from?</p><p><strong>Carlos:</strong> I'm from Brazil.</p><p><strong>Jamie:</strong> Where do you live?</p><p><strong>Carlos:</strong> I live in Boston.</p><p><strong>Jamie:</strong> Do you live here?</p><p><strong>Carlos:</strong> Yes, I do.</p></blockquote>`),
+            section('Learn — Aprenda', `<ul class="list-disc pl-5 space-y-2"><li><strong>Where are you from?</strong> — de onde você é?</li><li><strong>I'm from...</strong> — sou de…</li><li><strong>Where do you live?</strong> — onde você mora?</li><li><strong>I live in...</strong> — moro em…</li><li><strong>I'm Brazilian.</strong> — sou brasileiro(a).</li><li><strong>I live in Boston.</strong> — moro em Boston.</li><li><strong>Do you live here?</strong> — você mora aqui?</li><li><strong>Yes, I do.</strong> / <strong>No, I don't.</strong> — sim / não (resposta curta)</li></ul>${tip('País: <em>I\'m from Brazil</em>. Cidade: <em>I live in Boston</em>. Não inverta.')}`),
+            section('Imitate — Imite', `<ol class="list-decimal pl-5 space-y-2"><li>${audio('start-m01-l03-a01', "I'm from Brazil.")}</li><li>${audio('start-m01-l03-a02', 'I live in Boston.')}</li><li>${audio('start-m01-l03-a03', "I'm Brazilian.")}</li><li>${audio('start-m01-l03-a04', 'Do you live here? — Yes, I do.')}</li><li>${audio('start-m01-l03-a05', "No, I don't.")}</li></ol>`),
+            section('Build / Practice — Pratique', `<p>Responda em voz alta:</p><ul class="list-disc pl-5 text-sm"><li>Where are you from? → (seu país)</li><li>Where do you live? → (sua cidade)</li><li>Do you live here? → Yes, I do. / No, I don't.</li></ul><p class="mt-2 text-sm">Exemplos neutros: Brazil, United States, Boston — adapte à sua realidade.</p>`),
+            section('Execute — Missão', `<p><strong>Missão:</strong> em uma conversa curta, diga de onde você é, onde mora e responda se mora na cidade atual (<em>Yes, I do</em> / <em>No, I don't</em>).</p>`),
+          ].join(''),
+          live: {
+            realLifeContext: 'Conversa informal no café com colega.',
+            learn: 'Origem, moradia, nacionalidade, respostas curtas yes/no.',
+            imitate: 'Frases-chave com slots de áudio.',
+            buildPractice: 'Personalizar país/cidade; respostas Do you live here?',
+            verify: 'Quiz de 5 questões.',
+            executeMission: 'Origem + moradia + resposta sim/não.',
+          },
+          quiz: {
+            passingScore: 70,
+            maxAttempts: 5,
+            questions: [
+              {
+                contentKey: 'start-m01-l03-q01',
+                sortOrder: 0,
+                question: 'Perguntar de onde alguém é:',
+                options: ['Where are you from?', 'What do you do?', "What's your name?"],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l03-q02',
+                sortOrder: 1,
+                question: 'Dizer que mora em Boston:',
+                options: ['I live in Boston.', "I'm from Boston.", 'I work in Boston.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l03-q03',
+                sortOrder: 2,
+                question: 'Dizer nacionalidade:',
+                options: ["I'm Brazilian.", "I'm from Boston.", "I'm good, thank you."],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l03-q04',
+                sortOrder: 3,
+                question: 'Resposta curta e natural a "Do you live here?" (morando aqui):',
+                options: ['Yes, I do.', 'Nice to meet you.', "I'm Alex."],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l03-q05',
+                sortOrder: 4,
+                question: 'Diferença correta:',
+                options: [
+                  "I'm from Brazil = origem; I live in Boston = moradia atual",
+                  "I'm from Brazil = trabalho; I live in Boston = nome",
+                  'São a mesma pergunta',
+                ],
+                correctIndex: 0,
+              },
+            ],
+          },
+        },
+        {
+          contentKey: 'start-m01-l04-what-do-you-do',
+          title: 'What do you do?',
+          sortOrder: 3,
+          lessonType: 'TEXT',
+          estimatedMinutes: 10,
+          contentHtml: [
+            goal('Explicar de forma simples o que você faz no trabalho e devolver a pergunta.'),
+            section('Real Life — Vida real', `<p>Na mesma conversa, Jamie pergunta sobre seu trabalho — vale para escritório, clube ou qualquer empresa.</p><blockquote class="border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm"><p><strong>Jamie:</strong> What do you do?</p><p><strong>Carlos:</strong> I work for a football club. I'm responsible for logistics.</p><p><strong>Jamie:</strong> Interesting! I work in marketing. What about you, Alex?</p></blockquote>`),
+            section('Learn — Aprenda', `<ul class="list-disc pl-5 space-y-2"><li><strong>What do you do?</strong> — o que você faz? (profissão/função)</li><li><strong>I work for...</strong> — trabalho para… (empresa/organização)</li><li><strong>I work at...</strong> — trabalho em… (local)</li><li><strong>I work in...</strong> — trabalho na área de…</li><li><strong>I'm a...</strong> — sou um(a)… (cargo/profissão)</li><li><strong>I'm responsible for...</strong> — sou responsável por…</li><li><strong>I work with...</strong> — trabalho com… (equipe/área)</li><li><strong>What about you?</strong> — e você? (devolve o tema)</li></ul>${tip('<em>I work for</em> + organização. <em>I work in</em> + setor (marketing, finance, operations).')}`),
+            section('Imitate — Imite', `<ol class="list-decimal pl-5 space-y-2"><li>${audio('start-m01-l04-a01', 'What do you do?')}</li><li>${audio('start-m01-l04-a02', 'I work for a football club.')}</li><li>${audio('start-m01-l04-a03', "I'm a coordinator.")}</li><li>${audio('start-m01-l04-a04', "I'm responsible for logistics.")}</li><li>${audio('start-m01-l04-a05', 'I work with the operations team.')}</li><li>${audio('start-m01-l04-a06', 'What about you?')}</li></ol>`),
+            section('Build / Practice — Pratique', `<p>Monte <strong>uma</strong> frase sobre você usando dois padrões (ex.: <em>I work for...</em> + <em>I'm responsible for...</em>).</p><p class="text-sm mt-2">Funciona com qualquer área: administração, saúde, TI, futebol, RH.</p>`),
+            section('Execute — Missão', `<p><strong>Missão:</strong> responda <em>What do you do?</em> em no máximo duas frases e devolva com <em>What about you?</em></p>`),
+          ].join(''),
+          live: {
+            realLifeContext: 'Pergunta sobre trabalho em conversa casual.',
+            learn: 'Padrões I work for/at/in, I\'m a, responsible for, What about you?',
+            imitate: 'Pergunta + respostas modelo (clube ou empresa genérica).',
+            buildPractice: 'Montar resposta pessoal em 2 frases.',
+            verify: 'Quiz de 5 questões.',
+            executeMission: 'Explicar função + devolver pergunta.',
+          },
+          quiz: {
+            passingScore: 70,
+            maxAttempts: 5,
+            questions: [
+              {
+                contentKey: 'start-m01-l04-q01',
+                sortOrder: 0,
+                question: 'Perguntar a profissão/função de alguém:',
+                options: ['What do you do?', 'Where do you live?', 'Who is this?'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l04-q02',
+                sortOrder: 1,
+                question: 'Trabalhar para uma organização:',
+                options: ['I work for a company.', 'I live for a company.', 'I am from a company.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l04-q03',
+                sortOrder: 2,
+                question: 'Dizer área de atuação:',
+                options: ['I work in marketing.', 'I work at marketing name.', 'I work marketing live.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l04-q04',
+                sortOrder: 3,
+                question: 'Devolver a mesma pergunta sobre trabalho:',
+                options: ['What about you?', 'And you?', 'Nice to meet you.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l04-q05',
+                sortOrder: 4,
+                question: 'Responsabilidade no trabalho:',
+                options: ["I'm responsible for logistics.", "I'm from logistics.", 'I live in logistics.'],
+                correctIndex: 0,
+              },
+            ],
+          },
+        },
+        {
+          contentKey: 'start-m01-l05-first-conversation',
+          title: 'My First Conversation',
+          sortOrder: 4,
+          lessonType: 'TEXT',
+          estimatedMinutes: 12,
+          contentHtml: [
+            goal('Demonstrar tudo do Módulo 1 em interações curtas e realistas — sem vocabulário novo.'),
+            section('Real Life — Desafio LIVE', `<p>Este é o <strong>desafio de revisão do módulo</strong>. Você vai completar diálogos usando apenas o que já aprendeu nas lições 1–4.</p><p class="text-sm">Você precisa demonstrar:</p><ul class="list-disc pl-5 text-sm space-y-1"><li>cumprimento adequado</li><li>perguntar/responder <em>how someone is</em></li><li>apresentar-se e perguntar o nome</li><li>dizer de onde é e onde mora</li><li>explicar o que faz</li><li>encerrar a conversa</li></ul>`),
+            section('Build / Practice — Antes do assessment', `<p>Leia este diálogo modelo (não decore — entenda o fluxo):</p><blockquote class="border-l-2 border-primary/40 pl-3 my-3 space-y-1 text-sm"><p><strong>A:</strong> Good afternoon! How are you?</p><p><strong>B:</strong> I'm good, thank you. And you?</p><p><strong>A:</strong> I'm great, thanks! I'm Alex. What's your name?</p><p><strong>B:</strong> My name is Carlos. Nice to meet you!</p><p><strong>A:</strong> Nice to meet you too. Where are you from?</p><p><strong>B:</strong> I'm from Brazil. I live in Boston.</p><p><strong>A:</strong> What do you do?</p><p><strong>B:</strong> I work in operations. What about you?</p><p><strong>A:</strong> I work in marketing. See you later!</p><p><strong>B:</strong> See you later!</p></blockquote>`),
+            section('Execute — Missão final', `<p><strong>Missão:</strong> <em>Have your first complete conversation in English.</em></p><p class="text-sm">Faça uma conversa real (colega, amigo ou gravação) com cumprimento, nomes, origem, moradia, trabalho e despedida. Aprove no Verify abaixo (70%) antes de considerar o módulo concluído.</p>`),
+          ].join(''),
+          live: {
+            realLifeContext: 'Revisão integrada — primeira conversa completa.',
+            learn: 'Sem conteúdo novo — integração das lições 1–4.',
+            imitate: 'Diálogo modelo completo (slot áudio: start-m01-l05-a01).',
+            buildPractice: 'Completar lacunas nos diálogos do quiz.',
+            verify: 'Assessment de 10 questões — mínimo 70%.',
+            executeMission: 'Have your first complete conversation in English.',
+          },
+          quiz: {
+            passingScore: 70,
+            maxAttempts: 5,
+            questions: [
+              {
+                contentKey: 'start-m01-l05-q01',
+                sortOrder: 0,
+                question: 'Good morning! ___',
+                options: ['How are you?', "What's your name?", 'I live in Boston.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l05-q02',
+                sortOrder: 1,
+                question: 'How are you? — Resposta natural:',
+                options: ["I'm good, thank you. And you?", "I'm from Brazil.", 'This is Jamie.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l05-q03',
+                sortOrder: 2,
+                question: "I'm Maria. ___",
+                options: ["What's your name?", 'Good evening!', 'No, I don\'t.'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l05-q04',
+                sortOrder: 3,
+                question: 'Nice to meet you! — Resposta:',
+                options: ['Nice to meet you too.', 'See you later!', 'What do you do?'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l05-q05',
+                sortOrder: 4,
+                question: 'Where are you from? — Resposta:',
+                options: ["I'm from Brazil.", 'I work in Boston.', "I'm good, thanks."],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l05-q06',
+                sortOrder: 5,
+                question: 'Where do you live? — Resposta:',
+                options: ['I live in Boston.', "I'm Brazilian.", 'Good afternoon!'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l05-q07',
+                sortOrder: 6,
+                question: 'What do you do? — Resposta plausível:',
+                options: ['I work in finance.', 'I live in finance.', "I'm from finance."],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l05-q08',
+                sortOrder: 7,
+                question: 'Devolver pergunta sobre trabalho:',
+                options: ['What about you?', 'And you?', 'Who is this?'],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l05-q09',
+                sortOrder: 8,
+                question: 'Encerrar conversa casual:',
+                options: ['See you later!', 'Good morning!', "What's your name?"],
+                correctIndex: 0,
+              },
+              {
+                contentKey: 'start-m01-l05-q10',
+                sortOrder: 9,
+                question: 'Qual sequência faz mais sentido no início de uma conversa?',
+                options: [
+                  'Greeting → How are you → Names → Nice to meet you',
+                  'What do you do → Goodbye → Where do you live',
+                  'I live in Boston → Good evening → Who is this',
+                ],
+                correctIndex: 0,
+              },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      contentKey: 'start-module-02-getting-to-know-you',
+      title: 'Getting to Know You — Conhecendo alguém',
+      sortOrder: 1,
+      lessons: [],
+    },
+    {
+      contentKey: 'start-module-03-numbers-time-dates',
+      title: 'Numbers, Time & Dates',
+      sortOrder: 2,
+      lessons: [],
+    },
+    {
+      contentKey: 'start-module-04-my-day',
+      title: 'My Day — Minha rotina',
+      sortOrder: 3,
+      lessons: [],
+    },
+    {
+      contentKey: 'start-module-05-at-work',
+      title: 'At Work — No trabalho',
+      sortOrder: 4,
+      lessons: [],
+    },
+    {
+      contentKey: 'start-module-06-food-everyday-life',
+      title: 'Food & Everyday Life',
+      sortOrder: 5,
+      lessons: [],
+    },
+    {
+      contentKey: 'start-module-07-getting-around',
+      title: 'Getting Around',
+      sortOrder: 6,
+      lessons: [],
+    },
+    {
+      contentKey: 'start-module-08-i-can-speak-english',
+      title: 'I Can Speak English',
+      sortOrder: 7,
+      lessons: [],
+    },
+  ],
+};
+
+fs.writeFileSync(out, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+console.log(`Manifest escrito: ${out}`);
+console.log(`Módulo 1 lições: ${manifest.modules[0].lessons.length}`);

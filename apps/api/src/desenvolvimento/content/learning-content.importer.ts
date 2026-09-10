@@ -208,7 +208,7 @@ async function upsertOfficialLesson(
     lessonId = created.id;
   }
 
-  if (lesson.lessonType === 'QUIZ' && lesson.quiz) {
+  if (lesson.quiz) {
     await upsertOfficialQuiz(db, lessonId, lesson.quiz, stats);
   }
 }
