@@ -1,0 +1,64 @@
+{
+  "manifestId": "cup360-english-start-v1",
+  "manifestVersion": "1.0.0",
+  "course": {
+    "contentKey": "cup360-english-start-v1",
+    "title": "CUP360 English",
+    "subtitle": "English for Life, Work & Football",
+    "description": "Trilha START — Comece a falar. Metodologia LIVE (Learn, Imitate, Verify, Execute). Conteúdo pedagógico oficial CUP360 — lições serão importadas conforme aprovação editorial.",
+    "category": "official-cup360",
+    "status": "draft",
+    "tenantId": null,
+    "methodology": "LIVE"
+  },
+  "modules": [
+    {
+      "contentKey": "start-module-01-hello",
+      "title": "Hello! — Seu primeiro contato",
+      "sortOrder": 0,
+      "lessons": []
+    },
+    {
+      "contentKey": "start-module-02-getting-to-know-you",
+      "title": "Getting to Know You — Conhecendo alguém",
+      "sortOrder": 1,
+      "lessons": []
+    },
+    {
+      "contentKey": "start-module-03-numbers-time-dates",
+      "title": "Numbers, Time & Dates",
+      "sortOrder": 2,
+      "lessons": []
+    },
+    {
+      "contentKey": "start-module-04-my-day",
+      "title": "My Day — Minha rotina",
+      "sortOrder": 3,
+      "lessons": []
+    },
+    {
+      "contentKey": "start-module-05-at-work",
+      "title": "At Work — No trabalho",
+      "sortOrder": 4,
+      "lessons": []
+    },
+    {
+      "contentKey": "start-module-06-food-everyday-life",
+      "title": "Food & Everyday Life",
+      "sortOrder": 5,
+      "lessons": []
+    },
+    {
+      "contentKey": "start-module-07-getting-around",
+      "title": "Getting Around",
+      "sortOrder": 6,
+      "lessons": []
+    },
+    {
+      "contentKey": "start-module-08-i-can-speak-english",
+      "title": "I Can Speak English",
+      "sortOrder": 7,
+      "lessons": []
+    }
+  ]
+}

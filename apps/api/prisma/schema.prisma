@@ -4151,6 +4151,10 @@ model PlatformAnnouncementReceipt {
 
 model LearningCourse {
   id              String   @id @default(cuid())
+  /// Chave estável para conteúdo oficial CUP360 (ex.: cup360-english-start-v1)
+  contentKey      String?  @unique
+  manifestVersion String?
+  isOfficial      Boolean  @default(false)
   tenantId        String?
   tenant          Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   title           String
@@ -4171,17 +4175,20 @@ model LearningCourse {
   enrollments     LearningEnrollment[]
   @@index([tenantId, status])
   @@index([status])
+  @@index([isOfficial])
 }
 
 model LearningCourseModule {
-  id        String   @id @default(cuid())
-  courseId  String
-  course    LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  title     String
-  sortOrder Int      @default(0)
-  lessons   LearningLesson[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  courseId   String
+  course     LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  contentKey String?
+  title      String
+  sortOrder  Int      @default(0)
+  lessons    LearningLesson[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@unique([courseId, contentKey])
   @@index([courseId, sortOrder])
 }
 
@@ -4189,6 +4196,7 @@ model LearningLesson {
   id               String   @id @default(cuid())
   moduleId         String
   module           LearningCourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  contentKey       String?
   title            String
   sortOrder        Int      @default(0)
   /// VIDEO | TEXT | DOCUMENT | LINK | QUIZ
@@ -4199,10 +4207,13 @@ model LearningLesson {
   externalUrl      String?
   mimeType         String?
   estimatedMinutes Int?
+  /// Metodologia LIVE e contexto pedagógico (conteúdo oficial)
+  liveMeta         Json?
   quiz             LearningQuiz?
   progress         LearningLessonProgress[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  @@unique([moduleId, contentKey])
   @@index([moduleId, sortOrder])
 }
 
@@ -4278,9 +4289,11 @@ model LearningQuizQuestion {
   id         String @id @default(cuid())
   quizId     String
   quiz       LearningQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  contentKey String?
   sortOrder  Int    @default(0)
   question   String @db.Text
   payload    Json
+  @@unique([quizId, contentKey])
   @@index([quizId, sortOrder])
 }
 

@@ -5,6 +5,12 @@
   "entryFile": "main",
   "compilerOptions": {
     "deleteOutDir": true,
-    "tsConfigPath": "tsconfig.prod.json"
+    "tsConfigPath": "tsconfig.prod.json",
+    "assets": [
+      {
+        "include": "desenvolvimento/content/manifests/**/*.json",
+        "outDir": "dist"
+      }
+    ]
   }
 }

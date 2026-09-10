@@ -7,6 +7,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { DesenvolvimentoService } from './desenvolvimento.service';
 import { DesenvolvimentoAdminController } from './desenvolvimento-admin.controller';
 import { DesenvolvimentoStudentController } from './desenvolvimento-student.controller';
+import { LearningContentImportService } from './content/learning-content-import.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule, S3Module],
@@ -14,7 +15,7 @@ import { DesenvolvimentoStudentController } from './desenvolvimento-student.cont
     DesenvolvimentoAdminController,
     DesenvolvimentoStudentController,
   ],
-  providers: [DesenvolvimentoService, ModuleAccessGuard],
-  exports: [DesenvolvimentoService],
+  providers: [DesenvolvimentoService, LearningContentImportService, ModuleAccessGuard],
+  exports: [DesenvolvimentoService, LearningContentImportService],
 })
 export class DesenvolvimentoModule {}
