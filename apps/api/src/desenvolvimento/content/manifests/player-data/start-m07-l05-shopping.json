@@ -1,0 +1,133 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 7,
+  "goalPt": "Comprar itens básicos em loja — I'm looking for..., Do you have..., tamanho e cor.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Loja de roupas — você procura uma camiseta azul tamanho M.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can shop for basic items.",
+    "headlinePt": "Você consegue comprar itens básicos.",
+    "bodyPt": "",
+    "canDo": ["I'm looking for a blue shirt.", "Do you have this in medium?", "Can I try it on?", "Where is the fitting room?", "I'll buy this one."],
+    "production": {
+      "introPt": "Diga o que procura, pergunte tamanho e diga que vai comprar.",
+      "prompts": [{ "speaker": "Sales associate", "questionEn": "Can I help you find something?" }],
+      "fields": [
+        { "id": "looking", "labelPt": "O que procura", "prefixEn": "I'm looking for", "placeholderEn": "a blue shirt, size medium" },
+        { "id": "try", "labelPt": "Experimentar", "prefixEn": "", "placeholderEn": "Can I try it on, please?" },
+        { "id": "buy", "labelPt": "Decisão de compra", "prefixEn": "", "placeholderEn": "I'll buy this one." }
+      ],
+      "exampleEn": "I'm looking for a blue shirt, size medium. Can I try it on, please? I'll buy this one."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l05-ctx-01", "type": "intro", "titleEn": "Shopping", "titlePt": "Compras", "bodyPt": "I'm looking for... abre a conversa na loja. Do you have...? pergunta tamanho, cor ou disponibilidade." },
+      { "id": "l05-ctx-02", "type": "scenario", "settingEn": "Clothing store · Mall", "scenarioPt": "Atendente se aproxima quando você olha as camisetas." },
+      { "id": "l05-ctx-03", "type": "dialogue_choice", "speaker": "Associate", "promptEn": "Can I help you find something?", "promptPt": "Atendente oferece ajuda.", "options": [
+        { "labelEn": "Yes, I'm looking for a blue shirt.", "correct": true, "feedbackPt": "I'm looking for = estou procurando." },
+        { "labelEn": "Yes, I am store.", "correct": false, "feedbackPt": "Frase sem sentido." },
+        { "labelEn": "Good night!", "correct": false, "feedbackPt": "Despedida — contexto errado." }
+      ]},
+      { "id": "l05-ctx-04", "type": "dialogue_choice", "speaker": "You", "promptEn": "Do you have this in medium?", "promptPt": "Você pergunta se tem tamanho M.", "options": [
+        { "labelEn": "Do you have this in medium?", "correct": true, "feedbackPt": "Pergunta de tamanho natural." },
+        { "labelEn": "Do you have medium this?", "correct": false, "feedbackPt": "Ordem errada." },
+        { "labelEn": "How much is medium?", "correct": false, "feedbackPt": "Medium é tamanho, não preço." }
+      ]},
+      { "id": "l05-ctx-05", "type": "dialogue_choice", "speaker": "You", "promptEn": "Can I try it on?", "promptPt": "Quer experimentar antes de comprar.", "options": [
+        { "labelEn": "Can I try it on, please?", "correct": true, "feedbackPt": "Try it on = experimentar roupa." },
+        { "labelEn": "Can I eat it on?", "correct": false, "feedbackPt": "Eat não combina — try it on." },
+        { "labelEn": "Where is the menu?", "correct": false, "feedbackPt": "Menu é restaurante." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l05-learn-01", "type": "phrase_examples", "titleEn": "I'm looking for...", "titlePt": "Estou procurando...", "introPt": "Frase-chave ao entrar na loja.", "examples": [
+        { "en": "I'm looking for a shirt.", "pt": "Procuro uma camisa." }, { "en": "I'm looking for size medium.", "pt": "Procuro tamanho M." },
+        { "en": "I'm looking for something in blue.", "pt": "Algo azul." }, { "en": "I'm just looking, thanks.", "pt": "Só estou olhando." }
+      ]},
+      { "id": "l05-learn-02", "type": "phrase_examples", "titleEn": "Do you have...?", "titlePt": "Vocês têm...?", "introPt": "Perguntar disponibilidade, tamanho ou cor.", "examples": [
+        { "en": "Do you have this in large?", "pt": "Tem nesse tamanho G?" }, { "en": "Do you have it in black?", "pt": "Tem preto?" },
+        { "en": "Do you have any smaller sizes?", "pt": "Tem tamanhos menores?" }
+      ]},
+      { "id": "l05-learn-03", "type": "phrase_examples", "titleEn": "Sizes & colors", "titlePt": "Tamanhos e cores", "introPt": "Vocabulário básico para roupas e acessórios.", "examples": [
+        { "en": "small / medium / large", "pt": "P / M / G" }, { "en": "extra large (XL)", "pt": "GG" },
+        { "en": "black / white / blue / red", "pt": "cores básicas" }
+      ]},
+      { "id": "l05-learn-04", "type": "comparison", "titleEn": "Buy vs Shop", "titlePt": "Buy vs Shop", "left": { "labelEn": "SHOP · atividade", "exampleEn": "I'm going shopping.", "notePt": "Shop = ir às compras (atividade)." }, "right": { "labelEn": "BUY · ação", "exampleEn": "I'll buy this shirt.", "notePt": "Buy = comprar (decisão)." }, "modelEn": "go shopping · buy something", "modelPt": "Shop = processo; buy = comprar de fato." },
+      { "id": "l05-learn-05", "type": "phrase_examples", "titleEn": "Trying on", "titlePt": "Experimentar", "introPt": "Frases no provador.", "examples": [
+        { "en": "Can I try it on?", "pt": "Posso experimentar?" }, { "en": "Where is the fitting room?", "pt": "Onde fica o provador?" },
+        { "en": "It fits perfectly!", "pt": "Serviu perfeitamente!" }, { "en": "It's too big / too small.", "pt": "Grande / pequeno demais." }
+      ]},
+      { "id": "l05-learn-06", "type": "language_focus", "titleEn": "This one / That one", "titlePt": "Este / aquele", "items": [
+        { "formalEn": "I will purchase this item.", "naturalEn": "I'll buy this one.", "notePt": "This one = este aqui." },
+        { "formalEn": "I prefer that item.", "naturalEn": "I like that one better.", "notePt": "That one = aquele ali." }
+      ], "tipPt": "One substitui o substantivo: this one, that one — comum em lojas." },
+      { "id": "l05-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I want to prove the shirt.", "rightEn": "I want to try on the shirt. / Can I try it on?", "explanationPt": "Prove = provar (demonstrar). Experimentar roupa = try on." },
+      { "id": "l05-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "I'm looking for...", "pt": "estou procurando" }, { "en": "Do you have...?", "pt": "vocês têm?" },
+        { "en": "Can I try it on?", "pt": "experimentar" }, { "en": "I'll buy this one.", "pt": "vou comprar" }
+      ]}
+    ],
+    "imitate": [{ "id": "l05-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta.", "phrases": [
+      { "en": "I'm looking for a blue shirt." }, { "en": "Do you have this in medium?" }, { "en": "Can I try it on, please?" },
+      { "en": "Where is the fitting room?" }, { "en": "It fits perfectly!" }, { "en": "It's too big." },
+      { "en": "I'll buy this one." }, { "en": "I'm just looking, thanks." }
+    ], "dialogueEn": "Can I help you? — Yes, I'm looking for a blue shirt. — Do you have this in medium? — Yes, right here. — Can I try it on? — Fitting rooms are in the back. — It fits perfectly! I'll buy this one." }],
+    "mission": [{ "id": "l05-miss-01", "type": "mission_intro", "headlineEn": "Your turn — shop for something.", "headlinePt": "Sua vez — compre algo.", "bodyPt": "Diga o que procura, experimente e decida comprar.", "prompts": [{ "speaker": "Sales associate", "questionEn": "Can I help you find something?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l05-prac-01", "type": "choice", "promptPt": "Estou procurando uma camisa azul:", "options": [
+      { "labelEn": "I'm looking for a blue shirt.", "correct": true, "feedbackPt": "I'm looking for = procurando." },
+      { "labelEn": "I'm looking a blue shirt.", "correct": false, "feedbackPt": "Falta for — I'm looking for." },
+      { "labelEn": "I look for blue shirt.", "correct": false, "feedbackPt": "Use I'm looking for no presente contínuo." }
+    ]},
+    { "id": "l05-prac-02", "type": "fill_blank", "promptPt": "Complete: Posso experimentar?", "templateEn": "Can I try it ___?", "blankLabel": "partícula", "options": [
+      { "labelEn": "on", "correct": true, "feedbackPt": "Try it on = experimentar roupa." },
+      { "labelEn": "in", "correct": false, "feedbackPt": "Try it in não é a expressão." },
+      { "labelEn": "at", "correct": false, "feedbackPt": "Try it at não funciona." }
+    ]},
+    { "id": "l05-prac-03", "type": "reorder", "promptPt": "Monte: Vocês têm tamanho M?", "tokens": ["medium?", "in", "this", "have", "you", "Do"], "correctOrder": ["Do", "you", "have", "this", "in", "medium?"], "feedbackCorrectPt": "Do you have this in medium?", "feedbackWrongPt": "Do you have + item + in + size." },
+    { "id": "l05-prac-04", "type": "dialogue_complete", "promptPt": "Atendente: Can I help you? — só olhando:", "speaker": "You", "contextEn": "Associate: Can I help you?", "options": [
+      { "labelEn": "I'm just looking, thanks.", "correct": true, "feedbackPt": "Educado — não precisa de ajuda agora." },
+      { "labelEn": "Can I have the check?", "correct": false, "feedbackPt": "Check = conta de restaurante." },
+      { "labelEn": "Where is the airport?", "correct": false, "feedbackPt": "Aeroporto — contexto errado." }
+    ]},
+    { "id": "l05-prac-05", "type": "choice", "promptPt": "Provador em inglês:", "options": [
+      { "labelEn": "fitting room", "correct": true, "feedbackPt": "Fitting room = provador." },
+      { "labelEn": "proving room", "correct": false, "feedbackPt": "Proving room não existe." },
+      { "labelEn": "trying room", "correct": false, "feedbackPt": "Trying room não é o termo." }
+    ]},
+    { "id": "l05-prac-06", "type": "fill_blank", "promptPt": "Complete: Vou comprar este.", "templateEn": "I'll buy this ___.", "blankLabel": "pronome", "options": [
+      { "labelEn": "one", "correct": true, "feedbackPt": "This one = este aqui." },
+      { "labelEn": "it on", "correct": false, "feedbackPt": "It on não funciona aqui." },
+      { "labelEn": "looking", "correct": false, "feedbackPt": "Looking não completa a frase." }
+    ]},
+    { "id": "l05-prac-07", "type": "reorder", "promptPt": "Monte: Onde fica o provador?", "tokens": ["room?", "fitting", "the", "is", "Where"], "correctOrder": ["Where", "is", "the", "fitting", "room?"], "feedbackCorrectPt": "Where is the fitting room?", "feedbackWrongPt": "Where is the + lugar." },
+    { "id": "l05-prac-08", "type": "dialogue_complete", "promptPt": "A roupa ficou grande:", "speaker": "You", "contextEn": "You tried on a jacket.", "options": [
+      { "labelEn": "It's too big.", "correct": true, "feedbackPt": "Too big = grande demais." },
+      { "labelEn": "It's too much.", "correct": false, "feedbackPt": "Too much = quantidade, não tamanho." },
+      { "labelEn": "It's too expensive.", "correct": false, "feedbackPt": "Expensive = preço, não tamanho." }
+    ]},
+    { "id": "l05-prac-09", "type": "choice", "promptPt": "Tamanho M em lojas americanas:", "options": [
+      { "labelEn": "medium", "correct": true, "feedbackPt": "Medium = M." },
+      { "labelEn": "middle", "correct": false, "feedbackPt": "Middle = meio — não é tamanho de roupa." },
+      { "labelEn": "mean", "correct": false, "feedbackPt": "Mean = significar/mau — contexto errado." }
+    ]},
+    { "id": "l05-prac-10", "type": "dialogue_complete", "promptPt": "Quer algo na cor preta:", "speaker": "You", "contextEn": "You like a shirt but need another color.", "options": [
+      { "labelEn": "Do you have it in black?", "correct": true, "feedbackPt": "Pergunta de cor natural." },
+      { "labelEn": "Do you have black it?", "correct": false, "feedbackPt": "Ordem errada." },
+      { "labelEn": "How much is black?", "correct": false, "feedbackPt": "Black é cor, não preço." }
+    ]}
+  ]
+}

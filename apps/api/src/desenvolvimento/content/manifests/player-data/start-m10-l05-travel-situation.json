@@ -4,20 +4,53 @@
   "moduleNumber": 10,
   "goalPt": "Consolidar viagem — direções, hotel e reserva (revisão Módulo 8).",
   "steps": [
-    { "id": "context", "label": "Context", "labelPt": "Contexto" },
-    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
-    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
-    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
-    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
-    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
   ],
   "context": {
     "scenarioPt": "Viagem a trabalho — check-in no hotel e pedir direção.",
     "dialogue": []
   },
-  "learn": { "introPt": "", "phrases": [] },
-  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
-  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta e repita cada frase.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
+  },
   "mission": {
     "headlineEn": "Handle a travel situation.",
     "headlinePt": "Resolva uma situação de viagem.",
@@ -31,12 +64,30 @@
     "production": {
       "introPt": "Simule check-in no hotel e pedir direção ao elevador.",
       "prompts": [
-        { "speaker": "Receptionist", "questionEn": "Good evening! How can I help you?" }
+        {
+          "speaker": "Receptionist",
+          "questionEn": "Good evening! How can I help you?"
+        }
       ],
       "fields": [
-        { "id": "reservation", "labelPt": "Confirmar reserva", "prefixEn": "", "placeholderEn": "I have a reservation under Carlos." },
-        { "id": "direction", "labelPt": "Pedir direção", "prefixEn": "", "placeholderEn": "Where is the elevator?" },
-        { "id": "thanks", "labelPt": "Agradecer", "prefixEn": "", "placeholderEn": "Thank you very much." }
+        {
+          "id": "reservation",
+          "labelPt": "Confirmar reserva",
+          "prefixEn": "",
+          "placeholderEn": "I have a reservation under Carlos."
+        },
+        {
+          "id": "direction",
+          "labelPt": "Pedir direção",
+          "prefixEn": "",
+          "placeholderEn": "Where is the elevator?"
+        },
+        {
+          "id": "thanks",
+          "labelPt": "Agradecer",
+          "prefixEn": "",
+          "placeholderEn": "Thank you very much."
+        }
       ],
       "exampleEn": "I have a reservation under Carlos. Where is the elevator? Thank you very much."
     }
@@ -63,9 +114,21 @@
         "promptEn": "Good evening! How can I help you?",
         "promptPt": "Recepcionista cumprimenta. Você tem reserva:",
         "options": [
-          { "labelEn": "Good evening! I have a reservation under Carlos.", "correct": true, "feedbackPt": "Cumprimento + reserva — padrão hotel." },
-          { "labelEn": "Good evening! I live in Carlos.", "correct": false, "feedbackPt": "Live = moradia." },
-          { "labelEn": "Good evening! I work in Carlos.", "correct": false, "feedbackPt": "Work = emprego." }
+          {
+            "labelEn": "Good evening! I have a reservation under Carlos.",
+            "correct": true,
+            "feedbackPt": "Cumprimento + reserva — padrão hotel."
+          },
+          {
+            "labelEn": "Good evening! I live in Carlos.",
+            "correct": false,
+            "feedbackPt": "Live = moradia."
+          },
+          {
+            "labelEn": "Good evening! I work in Carlos.",
+            "correct": false,
+            "feedbackPt": "Work = emprego."
+          }
         ]
       },
       {
@@ -75,9 +138,21 @@
         "promptEn": "Yes, Mr. Silva. Room 405. The elevator is over there.",
         "promptPt": "Recepcionista confirma. Você não achou o elevador:",
         "options": [
-          { "labelEn": "Excuse me. Where is the elevator?", "correct": true, "feedbackPt": "Where is + lugar — pedir direção." },
-          { "labelEn": "Excuse me. What is the elevator?", "correct": false, "feedbackPt": "What = o que é — não onde fica." },
-          { "labelEn": "Excuse me. Who is the elevator?", "correct": false, "feedbackPt": "Who = quem." }
+          {
+            "labelEn": "Excuse me. Where is the elevator?",
+            "correct": true,
+            "feedbackPt": "Where is + lugar — pedir direção."
+          },
+          {
+            "labelEn": "Excuse me. What is the elevator?",
+            "correct": false,
+            "feedbackPt": "What = o que é — não onde fica."
+          },
+          {
+            "labelEn": "Excuse me. Who is the elevator?",
+            "correct": false,
+            "feedbackPt": "Who = quem."
+          }
         ]
       },
       {
@@ -87,9 +162,21 @@
         "promptEn": "Go straight and turn left. The elevator is on your right.",
         "promptPt": "Recepcionista dá direção. Como agradecer:",
         "options": [
-          { "labelEn": "Thank you very much!", "correct": true, "feedbackPt": "Agradecimento educado." },
-          { "labelEn": "Where are you from?", "correct": false, "feedbackPt": "Fora de contexto." },
-          { "labelEn": "I'd like a coffee.", "correct": false, "feedbackPt": "Pedido de restaurante." }
+          {
+            "labelEn": "Thank you very much!",
+            "correct": true,
+            "feedbackPt": "Agradecimento educado."
+          },
+          {
+            "labelEn": "Where are you from?",
+            "correct": false,
+            "feedbackPt": "Fora de contexto."
+          },
+          {
+            "labelEn": "I'd like a coffee.",
+            "correct": false,
+            "feedbackPt": "Pedido de restaurante."
+          }
         ]
       }
     ],
@@ -100,10 +187,22 @@
         "titleEn": "Hotel check-in",
         "titlePt": "Check-in no hotel",
         "items": [
-          { "en": "I have a reservation.", "pt": "tenho reserva" },
-          { "en": "I have a reservation under Carlos.", "pt": "reserva no nome Carlos" },
-          { "en": "My name is Carlos Silva.", "pt": "confirmar nome" },
-          { "en": "Room 405, please.", "pt": "número do quarto" }
+          {
+            "en": "I have a reservation.",
+            "pt": "tenho reserva"
+          },
+          {
+            "en": "I have a reservation under Carlos.",
+            "pt": "reserva no nome Carlos"
+          },
+          {
+            "en": "My name is Carlos Silva.",
+            "pt": "confirmar nome"
+          },
+          {
+            "en": "Room 405, please.",
+            "pt": "número do quarto"
+          }
         ]
       },
       {
@@ -112,10 +211,22 @@
         "titleEn": "Asking directions",
         "titlePt": "Pedir direções",
         "items": [
-          { "en": "Where is the elevator?", "pt": "onde fica o elevador?" },
-          { "en": "Where is the bathroom?", "pt": "onde fica o banheiro?" },
-          { "en": "Excuse me.", "pt": "com licença" },
-          { "en": "How do I get to...?", "pt": "como chego em...?" }
+          {
+            "en": "Where is the elevator?",
+            "pt": "onde fica o elevador?"
+          },
+          {
+            "en": "Where is the bathroom?",
+            "pt": "onde fica o banheiro?"
+          },
+          {
+            "en": "Excuse me.",
+            "pt": "com licença"
+          },
+          {
+            "en": "How do I get to...?",
+            "pt": "como chego em...?"
+          }
         ]
       },
       {
@@ -124,10 +235,22 @@
         "titleEn": "Understanding directions",
         "titlePt": "Entender direções",
         "items": [
-          { "en": "Go straight.", "pt": "siga em frente" },
-          { "en": "Turn left.", "pt": "vire à esquerda" },
-          { "en": "Turn right.", "pt": "vire à direita" },
-          { "en": "It's on your right.", "pt": "fica à sua direita" }
+          {
+            "en": "Go straight.",
+            "pt": "siga em frente"
+          },
+          {
+            "en": "Turn left.",
+            "pt": "vire à esquerda"
+          },
+          {
+            "en": "Turn right.",
+            "pt": "vire à direita"
+          },
+          {
+            "en": "It's on your right.",
+            "pt": "fica à sua direita"
+          }
         ]
       },
       {
@@ -136,10 +259,22 @@
         "titleEn": "Transport & airport",
         "titlePt": "Transporte e aeroporto",
         "items": [
-          { "en": "Where is the gate?", "pt": "portão" },
-          { "en": "I need a taxi.", "pt": "preciso de táxi" },
-          { "en": "How much is the ticket?", "pt": "preço passagem" },
-          { "en": "The flight is at 8 PM.", "pt": "horário voo" }
+          {
+            "en": "Where is the gate?",
+            "pt": "portão"
+          },
+          {
+            "en": "I need a taxi.",
+            "pt": "preciso de táxi"
+          },
+          {
+            "en": "How much is the ticket?",
+            "pt": "preço passagem"
+          },
+          {
+            "en": "The flight is at 8 PM.",
+            "pt": "horário voo"
+          }
         ]
       },
       {
@@ -148,10 +283,46 @@
         "titleEn": "Quick review",
         "titlePt": "Revisão rápida",
         "items": [
-          { "en": "I have a reservation under Carlos.", "pt": "reserva" },
-          { "en": "Where is the elevator?", "pt": "direção" },
-          { "en": "Go straight and turn left.", "pt": "instrução" },
-          { "en": "Thank you very much.", "pt": "agradecimento" }
+          {
+            "en": "I have a reservation under Carlos.",
+            "pt": "reserva"
+          },
+          {
+            "en": "Where is the elevator?",
+            "pt": "direção"
+          },
+          {
+            "en": "Go straight and turn left.",
+            "pt": "instrução"
+          },
+          {
+            "en": "Thank you very much.",
+            "pt": "agradecimento"
+          }
+        ]
+      },
+      {
+        "id": "m10l05-learn-06",
+        "type": "phrase_examples",
+        "titleEn": "Travel block",
+        "titlePt": "Bloco viagem",
+        "examples": [
+          {
+            "en": "I have a reservation under Silva.",
+            "pt": "hotel"
+          },
+          {
+            "en": "Where is the subway?",
+            "pt": "localizar"
+          },
+          {
+            "en": "Go straight, then turn left.",
+            "pt": "direção"
+          },
+          {
+            "en": "Here's my boarding pass.",
+            "pt": "aeroporto"
+          }
         ]
       }
     ],
@@ -163,13 +334,27 @@
         "titlePt": "Diálogo no hotel",
         "introPt": "Leia em voz alta. Use seu nome na reserva.",
         "phrases": [
-          { "en": "Good evening! How can I help you?" },
-          { "en": "Good evening! I have a reservation under Carlos." },
-          { "en": "Yes, Mr. Silva. Room 405." },
-          { "en": "Excuse me. Where is the elevator?" },
-          { "en": "Go straight and turn left." },
-          { "en": "The elevator is on your right." },
-          { "en": "Thank you very much!" }
+          {
+            "en": "Good evening! How can I help you?"
+          },
+          {
+            "en": "Good evening! I have a reservation under Carlos."
+          },
+          {
+            "en": "Yes, Mr. Silva. Room 405."
+          },
+          {
+            "en": "Excuse me. Where is the elevator?"
+          },
+          {
+            "en": "Go straight and turn left."
+          },
+          {
+            "en": "The elevator is on your right."
+          },
+          {
+            "en": "Thank you very much!"
+          }
         ],
         "dialogueEn": "Good evening! How can I help you? — I have a reservation under Carlos. — Room 405. — Where is the elevator? — Go straight and turn left. — Thank you very much!"
       }
@@ -182,7 +367,10 @@
         "headlinePt": "Check-in e direções.",
         "bodyPt": "Confirme reserva, peça direção e agradeça.",
         "prompts": [
-          { "speaker": "Receptionist", "questionEn": "Good evening! How can I help you?" }
+          {
+            "speaker": "Receptionist",
+            "questionEn": "Good evening! How can I help you?"
+          }
         ]
       }
     ]
@@ -193,9 +381,21 @@
       "type": "choice",
       "promptPt": "Confirmar reserva no hotel:",
       "options": [
-        { "labelEn": "I have a reservation under Carlos.", "correct": true, "feedbackPt": "Under + nome — padrão hotel." },
-        { "labelEn": "I have a reservation in Carlos.", "correct": false, "feedbackPt": "Use under para nome." },
-        { "labelEn": "I live under Carlos.", "correct": false, "feedbackPt": "Sem sentido." }
+        {
+          "labelEn": "I have a reservation under Carlos.",
+          "correct": true,
+          "feedbackPt": "Under + nome — padrão hotel."
+        },
+        {
+          "labelEn": "I have a reservation in Carlos.",
+          "correct": false,
+          "feedbackPt": "Use under para nome."
+        },
+        {
+          "labelEn": "I live under Carlos.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
       ]
     },
     {
@@ -203,9 +403,21 @@
       "type": "choice",
       "promptPt": "Onde fica o elevador?",
       "options": [
-        { "labelEn": "Where is the elevator?", "correct": true, "feedbackPt": "Where is + lugar." },
-        { "labelEn": "What is the elevator?", "correct": false, "feedbackPt": "What = o que é." },
-        { "labelEn": "Who is the elevator?", "correct": false, "feedbackPt": "Who = quem." }
+        {
+          "labelEn": "Where is the elevator?",
+          "correct": true,
+          "feedbackPt": "Where is + lugar."
+        },
+        {
+          "labelEn": "What is the elevator?",
+          "correct": false,
+          "feedbackPt": "What = o que é."
+        },
+        {
+          "labelEn": "Who is the elevator?",
+          "correct": false,
+          "feedbackPt": "Who = quem."
+        }
       ]
     },
     {
@@ -215,9 +427,21 @@
       "speaker": "You",
       "contextEn": "Receptionist: How can I help you?",
       "options": [
-        { "labelEn": "I have a reservation under Silva.", "correct": true, "feedbackPt": "Reserva confirmada." },
-        { "labelEn": "I go straight.", "correct": false, "feedbackPt": "Direção, não check-in." },
-        { "labelEn": "I'd like a coffee.", "correct": false, "feedbackPt": "Restaurante." }
+        {
+          "labelEn": "I have a reservation under Silva.",
+          "correct": true,
+          "feedbackPt": "Reserva confirmada."
+        },
+        {
+          "labelEn": "I go straight.",
+          "correct": false,
+          "feedbackPt": "Direção, não check-in."
+        },
+        {
+          "labelEn": "I'd like a coffee.",
+          "correct": false,
+          "feedbackPt": "Restaurante."
+        }
       ]
     },
     {
@@ -227,17 +451,35 @@
       "templateEn": "Go ___.",
       "blankLabel": "palavra",
       "options": [
-        { "labelEn": "straight", "correct": true, "feedbackPt": "Go straight = siga em frente." },
-        { "labelEn": "left", "correct": false, "feedbackPt": "Go left existe, mas straight = em frente." },
-        { "labelEn": "right", "correct": false, "feedbackPt": "Go right = vire direita." }
+        {
+          "labelEn": "straight",
+          "correct": true,
+          "feedbackPt": "Go straight = siga em frente."
+        },
+        {
+          "labelEn": "left",
+          "correct": false,
+          "feedbackPt": "Go left existe, mas straight = em frente."
+        },
+        {
+          "labelEn": "right",
+          "correct": false,
+          "feedbackPt": "Go right = vire direita."
+        }
       ]
     },
     {
       "id": "m10l05-prac-05",
       "type": "reorder",
       "promptPt": "Monte — vire à esquerda:",
-      "tokens": ["left.", "Turn"],
-      "correctOrder": ["Turn", "left."],
+      "tokens": [
+        "left.",
+        "Turn"
+      ],
+      "correctOrder": [
+        "Turn",
+        "left."
+      ],
       "feedbackCorrectPt": "Turn left.",
       "feedbackWrongPt": "Turn + left/right."
     },
@@ -248,9 +490,21 @@
       "speaker": "You",
       "contextEn": "Receptionist: Go straight and turn left.",
       "options": [
-        { "labelEn": "Thank you very much!", "correct": true, "feedbackPt": "Agradecimento." },
-        { "labelEn": "Where is the elevator?", "correct": false, "feedbackPt": "Já recebeu direção." },
-        { "labelEn": "I have a reservation.", "correct": false, "feedbackPt": "Já fez check-in." }
+        {
+          "labelEn": "Thank you very much!",
+          "correct": true,
+          "feedbackPt": "Agradecimento."
+        },
+        {
+          "labelEn": "Where is the elevator?",
+          "correct": false,
+          "feedbackPt": "Já recebeu direção."
+        },
+        {
+          "labelEn": "I have a reservation.",
+          "correct": false,
+          "feedbackPt": "Já fez check-in."
+        }
       ]
     },
     {
@@ -258,17 +512,39 @@
       "type": "choice",
       "promptPt": "Com licença antes de perguntar:",
       "options": [
-        { "labelEn": "Excuse me.", "correct": true, "feedbackPt": "Educado antes de interromper." },
-        { "labelEn": "Goodbye.", "correct": false, "feedbackPt": "Despedida." },
-        { "labelEn": "See you later.", "correct": false, "feedbackPt": "Despedida." }
+        {
+          "labelEn": "Excuse me.",
+          "correct": true,
+          "feedbackPt": "Educado antes de interromper."
+        },
+        {
+          "labelEn": "Goodbye.",
+          "correct": false,
+          "feedbackPt": "Despedida."
+        },
+        {
+          "labelEn": "See you later.",
+          "correct": false,
+          "feedbackPt": "Despedida."
+        }
       ]
     },
     {
       "id": "m10l05-prac-08",
       "type": "reorder",
       "promptPt": "Monte — onde fica o banheiro?",
-      "tokens": ["bathroom?", "the", "is", "Where"],
-      "correctOrder": ["Where", "is", "the", "bathroom?"],
+      "tokens": [
+        "bathroom?",
+        "the",
+        "is",
+        "Where"
+      ],
+      "correctOrder": [
+        "Where",
+        "is",
+        "the",
+        "bathroom?"
+      ],
       "feedbackCorrectPt": "Where is the bathroom?",
       "feedbackWrongPt": "Where + is + the + lugar."
     },
@@ -279,9 +555,21 @@
       "templateEn": "It's on your ___.",
       "blankLabel": "direção",
       "options": [
-        { "labelEn": "right", "correct": true, "feedbackPt": "On your right." },
-        { "labelEn": "straight", "correct": false, "feedbackPt": "Straight = em frente." },
-        { "labelEn": "left", "correct": false, "feedbackPt": "Left = esquerda — também válido, mas right combina com o exemplo." }
+        {
+          "labelEn": "right",
+          "correct": true,
+          "feedbackPt": "On your right."
+        },
+        {
+          "labelEn": "straight",
+          "correct": false,
+          "feedbackPt": "Straight = em frente."
+        },
+        {
+          "labelEn": "left",
+          "correct": false,
+          "feedbackPt": "Left = esquerda — também válido, mas right combina com o exemplo."
+        }
       ]
     },
     {
@@ -291,9 +579,21 @@
       "speaker": "You",
       "contextEn": "You need transportation.",
       "options": [
-        { "labelEn": "I need a taxi, please.", "correct": true, "feedbackPt": "Pedido de transporte." },
-        { "labelEn": "I have a reservation.", "correct": false, "feedbackPt": "Hotel, não táxi." },
-        { "labelEn": "Turn left.", "correct": false, "feedbackPt": "Direção, não pedido." }
+        {
+          "labelEn": "I need a taxi, please.",
+          "correct": true,
+          "feedbackPt": "Pedido de transporte."
+        },
+        {
+          "labelEn": "I have a reservation.",
+          "correct": false,
+          "feedbackPt": "Hotel, não táxi."
+        },
+        {
+          "labelEn": "Turn left.",
+          "correct": false,
+          "feedbackPt": "Direção, não pedido."
+        }
       ]
     }
   ]

@@ -1,0 +1,719 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 7,
+  "goalPt": "Revisão cumulativa — simular restaurante completo e compra rápida usando todo o vocabulário do Módulo 7.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Desafio do módulo — almoço no restaurante e parada rápida na loja.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia o diálogo completo em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Complete a food & shopping scenario.",
+    "headlinePt": "Complete um cenário de comida e compras.",
+    "bodyPt": "",
+    "canDo": [
+      "I'd like the chicken, please.",
+      "Can I have the check, please?",
+      "How much is this?",
+      "I'm looking for a blue shirt.",
+      "Two bottles of water, please."
+    ],
+    "production": {
+      "introPt": "Simule: pedido no restaurante (prato + conta) e compra na loja (item + preço + quantidade). Use só vocabulário do Módulo 7.",
+      "prompts": [
+        {
+          "speaker": "Waiter",
+          "questionEn": "Are you ready to order?"
+        },
+        {
+          "speaker": "Shop clerk",
+          "questionEn": "Can I help you?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "restaurant",
+          "labelPt": "Pedido no restaurante",
+          "prefixEn": "",
+          "placeholderEn": "I'd like the chicken and water, please. Can I have the check?"
+        },
+        {
+          "id": "shop",
+          "labelPt": "Compra na loja",
+          "prefixEn": "",
+          "placeholderEn": "I'm looking for a shirt. How much is it? Two bottles of water, please."
+        }
+      ],
+      "exampleEn": "I'd like the chicken and water, please. Can I have the check, please? — I'm looking for a blue shirt. How much is it? I'll take it. Two bottles of water, please."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "l07-ctx-01",
+        "type": "intro",
+        "titleEn": "Module challenge",
+        "titlePt": "Desafio do módulo",
+        "bodyPt": "Hora de juntar tudo: comida, pedidos, restaurante, preços, compras e quantidades — num fluxo real de almoço + loja."
+      },
+      {
+        "id": "l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Restaurant → Souvenir shop · Afternoon",
+        "scenarioPt": "Almoço com colega, depois parada rápida na loja antes de voltar ao hotel."
+      },
+      {
+        "id": "l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "Are you ready to order?",
+        "promptPt": "Passo 1 — pedido no restaurante.",
+        "options": [
+          {
+            "labelEn": "Yes, I'd like the chicken and a glass of water, please.",
+            "correct": true,
+            "feedbackPt": "Pedido completo e educado."
+          },
+          {
+            "labelEn": "Where is the airport?",
+            "correct": false,
+            "feedbackPt": "Direção — contexto errado."
+          },
+          {
+            "labelEn": "I'm from Brazil.",
+            "correct": false,
+            "feedbackPt": "Origem — contexto errado."
+          }
+        ]
+      },
+      {
+        "id": "l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Waiter",
+        "promptEn": "How was everything?",
+        "promptPt": "Passo 2 — fim da refeição.",
+        "options": [
+          {
+            "labelEn": "Everything was great! Can I have the check, please?",
+            "correct": true,
+            "feedbackPt": "Elogio + pedido de conta."
+          },
+          {
+            "labelEn": "Can I see the menu?",
+            "correct": false,
+            "feedbackPt": "Menu é no início."
+          },
+          {
+            "labelEn": "Turn left, please.",
+            "correct": false,
+            "feedbackPt": "Direção — contexto errado."
+          }
+        ]
+      },
+      {
+        "id": "l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Clerk",
+        "promptEn": "Can I help you?",
+        "promptPt": "Passo 3 — na loja de souvenirs.",
+        "options": [
+          {
+            "labelEn": "Yes, how much is this mug? I'll take it.",
+            "correct": true,
+            "feedbackPt": "Preço + decisão de compra."
+          },
+          {
+            "labelEn": "I'd like the chicken.",
+            "correct": false,
+            "feedbackPt": "Pedido de restaurante — contexto errado."
+          },
+          {
+            "labelEn": "Where is gate B12?",
+            "correct": false,
+            "feedbackPt": "Aeroporto — contexto errado."
+          }
+        ]
+      },
+      {
+        "id": "l07-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Clerk",
+        "promptEn": "Anything else?",
+        "promptPt": "Passo 4 — finalizar compra.",
+        "options": [
+          {
+            "labelEn": "Two bottles of water, please. That's all.",
+            "correct": true,
+            "feedbackPt": "Quantidade + encerramento."
+          },
+          {
+            "labelEn": "I have a reservation.",
+            "correct": false,
+            "feedbackPt": "Hotel — M8."
+          },
+          {
+            "labelEn": "What time is it?",
+            "correct": false,
+            "feedbackPt": "Horário — M3."
+          }
+        ]
+      },
+      {
+        "id": "l07-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Thank you! Have a good day.",
+        "promptPt": "Passo 5 — despedida educada na loja.",
+        "options": [
+          {
+            "labelEn": "You too! See you later!",
+            "correct": true,
+            "feedbackPt": "Despedida natural."
+          },
+          {
+            "labelEn": "Can I have the menu?",
+            "correct": false,
+            "feedbackPt": "Restaurante — já terminou."
+          },
+          {
+            "labelEn": "Where is gate B12?",
+            "correct": false,
+            "feedbackPt": "Aeroporto — M8."
+          }
+        ]
+      },
+      {
+        "id": "l07-ctx-08",
+        "type": "scenario",
+        "settingEn": "Challenge complete · Real life",
+        "scenarioPt": "Você completou restaurante + loja usando só o Módulo 7. Pronto para a missão final."
+      }
+    ],
+    "learn": [
+      {
+        "id": "l07-learn-01",
+        "type": "review",
+        "titleEn": "Module 7 review",
+        "titlePt": "Revisão Módulo 7",
+        "items": [
+          {
+            "en": "I like coffee. / I'd like a coffee.",
+            "pt": "gosto vs pedido"
+          },
+          {
+            "en": "Can I have the check?",
+            "pt": "conta"
+          },
+          {
+            "en": "How much is it?",
+            "pt": "preço"
+          },
+          {
+            "en": "I'm looking for...",
+            "pt": "procurando"
+          },
+          {
+            "en": "Two bottles of water.",
+            "pt": "quantidade"
+          }
+        ]
+      },
+      {
+        "id": "l07-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Full restaurant flow",
+        "titlePt": "Fluxo completo restaurante",
+        "introPt": "Do menu à conta — sequência natural.",
+        "examples": [
+          {
+            "en": "Can I see the menu?",
+            "pt": "início"
+          },
+          {
+            "en": "I'd like..., please.",
+            "pt": "pedido"
+          },
+          {
+            "en": "Can I have the check?",
+            "pt": "conta"
+          },
+          {
+            "en": "Thank you!",
+            "pt": "encerramento"
+          }
+        ]
+      },
+      {
+        "id": "l07-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Full shopping flow",
+        "titlePt": "Fluxo completo compras",
+        "introPt": "Da busca à compra.",
+        "examples": [
+          {
+            "en": "I'm looking for...",
+            "pt": "procurar"
+          },
+          {
+            "en": "Do you have this in medium?",
+            "pt": "tamanho"
+          },
+          {
+            "en": "How much is it?",
+            "pt": "preço"
+          },
+          {
+            "en": "I'll take it.",
+            "pt": "comprar"
+          }
+        ]
+      },
+      {
+        "id": "l07-learn-04",
+        "type": "comparison",
+        "titleEn": "Like vs Would like",
+        "titlePt": "Like vs Would like",
+        "left": {
+          "labelEn": "I like coffee.",
+          "exampleEn": "I like coffee.",
+          "notePt": "preferência geral"
+        },
+        "right": {
+          "labelEn": "I'd like a coffee.",
+          "exampleEn": "I'd like a coffee, please.",
+          "notePt": "pedido agora"
+        },
+        "modelEn": "I'd like the chicken, please.",
+        "modelPt": "No restaurante, peça com would like."
+      },
+      {
+        "id": "l07-learn-05",
+        "type": "phrase_examples",
+        "titleEn": "Prices & payment",
+        "titlePt": "Preços e pagamento",
+        "introPt": "Frases úteis na loja e no restaurante.",
+        "examples": [
+          {
+            "en": "It's ten dollars.",
+            "pt": "preço"
+          },
+          {
+            "en": "Do you take cards?",
+            "pt": "pagamento"
+          },
+          {
+            "en": "That's all, thank you.",
+            "pt": "encerrar"
+          },
+          {
+            "en": "Can I have a receipt?",
+            "pt": "recibo"
+          }
+        ]
+      },
+      {
+        "id": "l07-learn-06",
+        "type": "review",
+        "titleEn": "Challenge checklist",
+        "titlePt": "Checklist do desafio",
+        "items": [
+          {
+            "en": "I'd like..., please.",
+            "pt": "pedido"
+          },
+          {
+            "en": "Can I have the check?",
+            "pt": "conta"
+          },
+          {
+            "en": "How much is it?",
+            "pt": "preço"
+          },
+          {
+            "en": "I'm looking for...",
+            "pt": "procurar"
+          },
+          {
+            "en": "Two bottles of water.",
+            "pt": "quantidade"
+          },
+          {
+            "en": "I'll take it.",
+            "pt": "comprar"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio — leia o cenário completo em voz alta.",
+        "phrases": [
+          {
+            "en": "I'd like the chicken and water, please."
+          },
+          {
+            "en": "Can I have the check, please?"
+          },
+          {
+            "en": "How much is this?"
+          },
+          {
+            "en": "OK, I'll take it."
+          },
+          {
+            "en": "I'm looking for a souvenir."
+          },
+          {
+            "en": "Two bottles of water, please."
+          }
+        ],
+        "dialogueEn": "Are you ready to order? — I'd like the chicken and water, please. — How was everything? — Great! Can I have the check? — Can I help you? — How much is this mug? — Ten dollars. — I'll take it. And two bottles of water, please."
+      }
+    ],
+    "mission": [
+      {
+        "id": "l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — full module challenge.",
+        "headlinePt": "Sua vez — desafio completo.",
+        "bodyPt": "Simule restaurante + loja com todo o vocabulário do módulo.",
+        "prompts": [
+          {
+            "speaker": "Waiter",
+            "questionEn": "Are you ready to order?"
+          },
+          {
+            "speaker": "Shop clerk",
+            "questionEn": "Can I help you?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "l07-prac-01",
+      "type": "choice",
+      "promptPt": "Pedido educado de café:",
+      "options": [
+        {
+          "labelEn": "I'd like a coffee, please.",
+          "correct": true,
+          "feedbackPt": "M7 — pedidos educados."
+        },
+        {
+          "labelEn": "Give me coffee.",
+          "correct": false,
+          "feedbackPt": "Soa rude."
+        },
+        {
+          "labelEn": "Where is coffee?",
+          "correct": false,
+          "feedbackPt": "Localização."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "No restaurante — pedir conta:",
+      "speaker": "You",
+      "contextEn": "You finished eating.",
+      "options": [
+        {
+          "labelEn": "Can I have the check, please?",
+          "correct": true,
+          "feedbackPt": "Conta em restaurante americano."
+        },
+        {
+          "labelEn": "Can I have the menu?",
+          "correct": false,
+          "feedbackPt": "Menu no início."
+        },
+        {
+          "labelEn": "How do I get to the hotel?",
+          "correct": false,
+          "feedbackPt": "M8 — direções."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete: Quanto custa?",
+      "templateEn": "How much ___ it?",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "is",
+          "correct": true,
+          "feedbackPt": "How much is it?"
+        },
+        {
+          "labelEn": "are",
+          "correct": false,
+          "feedbackPt": "It com are — incorreto."
+        },
+        {
+          "labelEn": "do",
+          "correct": false,
+          "feedbackPt": "Do não combina."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: Estou procurando uma camisa azul.",
+      "tokens": [
+        "shirt.",
+        "blue",
+        "a",
+        "for",
+        "looking",
+        "I'm"
+      ],
+      "correctOrder": [
+        "I'm",
+        "looking",
+        "for",
+        "a",
+        "blue",
+        "shirt."
+      ],
+      "feedbackCorrectPt": "I'm looking for a blue shirt.",
+      "feedbackWrongPt": "I'm looking for + item."
+    },
+    {
+      "id": "l07-prac-05",
+      "type": "choice",
+      "promptPt": "Duas garrafas de água:",
+      "options": [
+        {
+          "labelEn": "Two bottles of water, please.",
+          "correct": true,
+          "feedbackPt": "Quantidade correta."
+        },
+        {
+          "labelEn": "Two waters bottle.",
+          "correct": false,
+          "feedbackPt": "Ordem errada."
+        },
+        {
+          "labelEn": "Much water two.",
+          "correct": false,
+          "feedbackPt": "Sem sentido."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Garçom: Can I get you something to drink?",
+      "speaker": "You",
+      "contextEn": "Waiter: Can I get you something to drink?",
+      "options": [
+        {
+          "labelEn": "I'd like water, please.",
+          "correct": true,
+          "feedbackPt": "Pedido de bebida."
+        },
+        {
+          "labelEn": "I'll take the bus.",
+          "correct": false,
+          "feedbackPt": "Transporte — M8."
+        },
+        {
+          "labelEn": "I have a reservation.",
+          "correct": false,
+          "feedbackPt": "Hotel — M8."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Complete: Vou levar (comprar).",
+      "templateEn": "OK, I'll ___ it.",
+      "blankLabel": "verbo",
+      "options": [
+        {
+          "labelEn": "take",
+          "correct": true,
+          "feedbackPt": "I'll take it = vou levar."
+        },
+        {
+          "labelEn": "go",
+          "correct": false,
+          "feedbackPt": "I'll go it — incorreto."
+        },
+        {
+          "labelEn": "turn",
+          "correct": false,
+          "feedbackPt": "Turn — direção."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Na loja — experimentar roupa:",
+      "speaker": "You",
+      "contextEn": "You found a jacket you like.",
+      "options": [
+        {
+          "labelEn": "Can I try it on, please?",
+          "correct": true,
+          "feedbackPt": "Try it on = experimentar."
+        },
+        {
+          "labelEn": "Can I fly it on?",
+          "correct": false,
+          "feedbackPt": "Fly — sem sentido."
+        },
+        {
+          "labelEn": "Where is the gate?",
+          "correct": false,
+          "feedbackPt": "Aeroporto."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte: Gostaria do frango, por favor.",
+      "tokens": [
+        "please.",
+        "chicken,",
+        "the",
+        "like",
+        "I'd"
+      ],
+      "correctOrder": [
+        "I'd",
+        "like",
+        "the",
+        "chicken,",
+        "please."
+      ],
+      "feedbackCorrectPt": "I'd like the chicken, please.",
+      "feedbackWrongPt": "I'd like the + item + please."
+    },
+    {
+      "id": "l07-prac-10",
+      "type": "choice",
+      "promptPt": "Do you have any apples? — any em pergunta significa:",
+      "options": [
+        {
+          "labelEn": "alguma / algumas (qualquer)",
+          "correct": true,
+          "feedbackPt": "Any em pergunta = algum(a)."
+        },
+        {
+          "labelEn": "muito",
+          "correct": false,
+          "feedbackPt": "Much = muito."
+        },
+        {
+          "labelEn": "nunca",
+          "correct": false,
+          "feedbackPt": "Never = nunca."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-11",
+      "type": "dialogue_complete",
+      "promptPt": "Preço alto — comentário educado:",
+      "speaker": "You",
+      "contextEn": "Clerk: It's forty dollars.",
+      "options": [
+        {
+          "labelEn": "That's a little expensive.",
+          "correct": true,
+          "feedbackPt": "Comentário sobre preço."
+        },
+        {
+          "labelEn": "Turn right.",
+          "correct": false,
+          "feedbackPt": "Direção."
+        },
+        {
+          "labelEn": "I'm checking in.",
+          "correct": false,
+          "feedbackPt": "Hotel."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-12",
+      "type": "choice",
+      "promptPt": "Sequência correta no restaurante:",
+      "options": [
+        {
+          "labelEn": "Menu → Order → Eat → Check",
+          "correct": true,
+          "feedbackPt": "Fluxo natural."
+        },
+        {
+          "labelEn": "Check → Menu → Order",
+          "correct": false,
+          "feedbackPt": "Conta vem no final."
+        },
+        {
+          "labelEn": "Order → Check → Menu",
+          "correct": false,
+          "feedbackPt": "Menu vem antes do pedido."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 8,
+  "goalPt": "Usar transporte público e apps — bus, subway, taxi, Uber, take the..., How do I get to...?",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você precisa ir do hotel ao centro — várias opções de transporte.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can talk about transportation.",
+    "headlinePt": "Você consegue falar de transporte.",
+    "bodyPt": "",
+    "canDo": ["How do I get to downtown?", "Take the subway.", "Where is the bus stop?", "I'd like a taxi to the airport.", "Can I get an Uber?" ],
+    "production": {
+      "introPt": "Pergunte como chegar a um lugar e diga qual transporte você vai usar.",
+      "prompts": [{ "speaker": "Hotel clerk", "questionEn": "How can I help you?" }],
+      "fields": [
+        { "id": "ask", "labelPt": "Como chegar", "prefixEn": "", "placeholderEn": "How do I get to downtown?" },
+        { "id": "transport", "labelPt": "Transporte escolhido", "prefixEn": "", "placeholderEn": "I'll take the subway." }
+      ],
+      "exampleEn": "How do I get to downtown? I'll take the subway."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l03-ctx-01", "type": "intro", "titleEn": "Transportation", "titlePt": "Transporte", "bodyPt": "Bus, subway, taxi, Uber — como perguntar o caminho e dizer qual transporte usar." },
+      { "id": "l03-ctx-02", "type": "scenario", "settingEn": "Hotel lobby · Morning", "scenarioPt": "Você quer ir ao centro da cidade e pergunta na recepção." },
+      { "id": "l03-ctx-03", "type": "dialogue_choice", "speaker": "You", "promptEn": "How do I get to downtown?", "promptPt": "Perguntar como chegar ao centro.", "options": [
+        { "labelEn": "How do I get to downtown?", "correct": true, "feedbackPt": "Pergunta padrão de transporte." },
+        { "labelEn": "How much is downtown?", "correct": false, "feedbackPt": "Preço, não rota." },
+        { "labelEn": "Where is downtown expensive?", "correct": false, "feedbackPt": "Frase sem sentido." }
+      ]},
+      { "id": "l03-ctx-04", "type": "dialogue_choice", "speaker": "Clerk", "promptEn": "You can take the subway. The station is two blocks away.", "promptPt": "Clerk sugere metrô. Você confirma:", "options": [
+        { "labelEn": "Great, I'll take the subway.", "correct": true, "feedbackPt": "Take the subway = pegar o metrô." },
+        { "labelEn": "Great, I'll eat the subway.", "correct": false, "feedbackPt": "Eat não combina." },
+        { "labelEn": "Great, I'll turn the subway.", "correct": false, "feedbackPt": "Turn não combina." }
+      ]},
+      { "id": "l03-ctx-05", "type": "dialogue_choice", "speaker": "You", "promptEn": "Where is the bus stop?", "promptPt": "Alternativa — perguntar ponto de ônibus.", "options": [
+        { "labelEn": "Where is the bus stop?", "correct": true, "feedbackPt": "Bus stop = ponto de ônibus." },
+        { "labelEn": "Where is the bus check?", "correct": false, "feedbackPt": "Check = conta — contexto errado." },
+        { "labelEn": "How much is the bus stop?", "correct": false, "feedbackPt": "Localização, não preço." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l03-learn-01", "type": "phrase_examples", "titleEn": "Types of transport", "titlePt": "Tipos de transporte", "introPt": "Vocabulário básico.", "examples": [
+        { "en": "bus", "pt": "ônibus" }, { "en": "subway / train", "pt": "metrô / trem" },
+        { "en": "taxi / cab", "pt": "táxi" }, { "en": "Uber / Lyft", "pt": "apps de corrida" }
+      ]},
+      { "id": "l03-learn-02", "type": "phrase_examples", "titleEn": "Take the...", "titlePt": "Pegar o/a...", "introPt": "Take + transporte = usar/pegar aquele meio.", "examples": [
+        { "en": "Take the bus.", "pt": "Pegue o ônibus." }, { "en": "Take the subway.", "pt": "Pegue o metrô." },
+        { "en": "Take a taxi.", "pt": "Pegue um táxi." }, { "en": "Take an Uber.", "pt": "Chame um Uber." }
+      ]},
+      { "id": "l03-learn-03", "type": "phrase_examples", "titleEn": "How do I get to...?", "titlePt": "Como chego em...?", "introPt": "Pergunta completa sobre rota.", "examples": [
+        { "en": "How do I get to the airport?", "pt": "Como chego ao aeroporto?" }, { "en": "How do I get to downtown?", "pt": "Como chego ao centro?" },
+        { "en": "What's the best way to get there?", "pt": "Qual a melhor forma?" }
+      ]},
+      { "id": "l03-learn-04", "type": "comparison", "titleEn": "Subway vs Bus", "titlePt": "Metrô vs ônibus", "left": { "labelEn": "SUBWAY · metrô", "exampleEn": "Take the subway to Times Square.", "notePt": "Rápido em cidades grandes; subway station." }, "right": { "labelEn": "BUS · ônibus", "exampleEn": "Take the bus to the mall.", "notePt": "Mais superfície; bus stop." }, "modelEn": "subway station · bus stop", "modelPt": "Station (metrô/trem) vs stop (ônibus)." },
+      { "id": "l03-learn-05", "type": "phrase_examples", "titleEn": "Taxi & rideshare", "titlePt": "Táxi e app", "introPt": "Frases para corrida.", "examples": [
+        { "en": "I'd like a taxi to the airport, please.", "pt": "Táxi para o aeroporto." }, { "en": "Can I get an Uber?", "pt": "Posso chamar Uber?" },
+        { "en": "Drop me off here, please.", "pt": "Me deixe aqui." }
+      ]},
+      { "id": "l03-learn-06", "type": "language_focus", "titleEn": "Ticket / Fare", "titlePt": "Passagem / tarifa", "items": [
+        { "formalEn": "I need to purchase a ticket.", "naturalEn": "One ticket, please.", "notePt": "Ticket = passagem." },
+        { "formalEn": "What is the fare?", "naturalEn": "How much is the fare?", "notePt": "Fare = tarifa de transporte." }
+      ], "tipPt": "How much is the fare? — comum em ônibus e metrô." },
+      { "id": "l03-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I will take bus.", "rightEn": "I'll take the bus. / I'll take a bus.", "explanationPt": "Take the bus (ônibus específico/linha) ou take a bus (um ônibus). Nunca take bus sem artigo." },
+      { "id": "l03-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "How do I get to...?", "pt": "como chegar" }, { "en": "Take the subway.", "pt": "pegar metrô" },
+        { "en": "bus stop / subway station", "pt": "parada / estação" }, { "en": "I'd like a taxi.", "pt": "táxi" }
+      ]}
+    ],
+    "imitate": [{ "id": "l03-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta.", "phrases": [
+      { "en": "How do I get to downtown?" }, { "en": "Take the subway." }, { "en": "Where is the bus stop?" },
+      { "en": "I'd like a taxi to the airport." }, { "en": "Can I get an Uber?" }, { "en": "One ticket, please." },
+      { "en": "How much is the fare?" }, { "en": "Drop me off here, please." }
+    ], "dialogueEn": "How do I get to downtown? — Take the subway — the station is two blocks away. — Where is the bus stop? — On Main Street. — I'll take the subway. Thank you!" }],
+    "mission": [{ "id": "l03-miss-01", "type": "mission_intro", "headlineEn": "Your turn — talk about transport.", "headlinePt": "Sua vez — fale de transporte.", "bodyPt": "Pergunte como chegar e diga qual transporte usar.", "prompts": [{ "speaker": "Hotel clerk", "questionEn": "How can I help you?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l03-prac-01", "type": "choice", "promptPt": "Como chego ao aeroporto?", "options": [
+      { "labelEn": "How do I get to the airport?", "correct": true, "feedbackPt": "Pergunta padrão." },
+      { "labelEn": "How much is the airport?", "correct": false, "feedbackPt": "Preço." },
+      { "labelEn": "Where are the airport?", "correct": false, "feedbackPt": "Are com singular." }
+    ]},
+    { "id": "l03-prac-02", "type": "fill_blank", "promptPt": "Complete: Pegue o metrô.", "templateEn": "Take ___ subway.", "blankLabel": "artigo", "options": [
+      { "labelEn": "the", "correct": true, "feedbackPt": "Take the subway." },
+      { "labelEn": "a", "correct": false, "feedbackPt": "Take a subway — possível mas menos comum." },
+      { "labelEn": "an", "correct": false, "feedbackPt": "An subway — incorreto." }
+    ]},
+    { "id": "l03-prac-03", "type": "reorder", "promptPt": "Monte: Onde fica o ponto de ônibus?", "tokens": ["stop?", "bus", "the", "is", "Where"], "correctOrder": ["Where", "is", "the", "bus", "stop?"], "feedbackCorrectPt": "Where is the bus stop?", "feedbackWrongPt": "Where is the bus stop?" },
+    { "id": "l03-prac-04", "type": "dialogue_complete", "promptPt": "Quer táxi para o aeroporto:", "speaker": "You", "contextEn": "At the hotel entrance.", "options": [
+      { "labelEn": "I'd like a taxi to the airport, please.", "correct": true, "feedbackPt": "Pedido educado." },
+      { "labelEn": "I'd like the check to the airport.", "correct": false, "feedbackPt": "Check = conta." },
+      { "labelEn": "Turn left to the airport.", "correct": false, "feedbackPt": "Direção, não pedido de táxi." }
+    ]},
+    { "id": "l03-prac-05", "type": "choice", "promptPt": "Subway station vs bus stop:", "options": [
+      { "labelEn": "station = metrô/trem; stop = ônibus", "correct": true, "feedbackPt": "Distinção correta." },
+      { "labelEn": "stop = metrô; station = ônibus", "correct": false, "feedbackPt": "Invertido." },
+      { "labelEn": "both mean the same", "correct": false, "feedbackPt": "São termos diferentes." }
+    ]},
+    { "id": "l03-prac-06", "type": "fill_blank", "promptPt": "Complete: Uma passagem, por favor.", "templateEn": "One ___, please.", "blankLabel": "palavra", "options": [
+      { "labelEn": "ticket", "correct": true, "feedbackPt": "Ticket = passagem." },
+      { "labelEn": "fare", "correct": false, "feedbackPt": "Fare = tarifa — How much is the fare?" },
+      { "labelEn": "gate", "correct": false, "feedbackPt": "Gate = portão de embarque." }
+    ]},
+    { "id": "l03-prac-07", "type": "reorder", "promptPt": "Monte: Vou pegar o ônibus.", "tokens": ["bus.", "the", "take", "I'll"], "correctOrder": ["I'll", "take", "the", "bus."], "feedbackCorrectPt": "I'll take the bus.", "feedbackWrongPt": "I'll take the + transporte." },
+    { "id": "l03-prac-08", "type": "dialogue_complete", "promptPt": "No Uber — pedir para parar:", "speaker": "You", "contextEn": "You're almost at your destination.", "options": [
+      { "labelEn": "Drop me off here, please.", "correct": true, "feedbackPt": "Drop off = deixar/desembarcar." },
+      { "labelEn": "Pick me off here.", "correct": false, "feedbackPt": "Pick up = buscar; drop off = deixar." },
+      { "labelEn": "Turn me off here.", "correct": false, "feedbackPt": "Sem sentido." }
+    ]},
+    { "id": "l03-prac-09", "type": "choice", "promptPt": "Fare significa:", "options": [
+      { "labelEn": "transport price / tariff", "correct": true, "feedbackPt": "Tarifa de transporte." },
+      { "labelEn": "bus driver", "correct": false, "feedbackPt": "Driver = motorista." },
+      { "labelEn": "schedule", "correct": false, "feedbackPt": "Schedule = horário." }
+    ]},
+    { "id": "l03-prac-10", "type": "dialogue_complete", "promptPt": "Recepção sugere metrô — você aceita:", "speaker": "You", "contextEn": "Clerk: The subway is the fastest way.", "options": [
+      { "labelEn": "OK, I'll take the subway.", "correct": true, "feedbackPt": "Confirma transporte." },
+      { "labelEn": "OK, I'll take the menu.", "correct": false, "feedbackPt": "Menu = cardápio." },
+      { "labelEn": "OK, I'll take the check.", "correct": false, "feedbackPt": "Check = conta." }
+    ]}
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 8,
+  "goalPt": "Confirmar reserva em hotel ou restaurante — I have a reservation under..., confirm, booking.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Restaurante popular — você tem reserva para jantar.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can confirm a reservation.",
+    "headlinePt": "Você consegue confirmar uma reserva.",
+    "bodyPt": "",
+    "canDo": ["I have a reservation under Silva.", "Reservation for two at 7 PM.", "Can you confirm my booking?", "Yes, that's correct.", "Table for two, please."],
+    "production": {
+      "introPt": "Confirme reserva no restaurante — nome, horário e número de pessoas.",
+      "prompts": [{ "speaker": "Host", "questionEn": "Do you have a reservation?" }],
+      "fields": [
+        { "id": "reservation", "labelPt": "Apresentar reserva", "prefixEn": "", "placeholderEn": "Yes, I have a reservation under Silva." },
+        { "id": "details", "labelPt": "Detalhes", "prefixEn": "", "placeholderEn": "For two people at 7 PM." }
+      ],
+      "exampleEn": "Yes, I have a reservation under Silva. For two people at 7 PM."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l06-ctx-01", "type": "intro", "titleEn": "I have a reservation", "titlePt": "Tenho uma reserva", "bodyPt": "Hotel ou restaurante — I have a reservation under... é a frase-chave para confirmar sua reserva." },
+      { "id": "l06-ctx-02", "type": "scenario", "settingEn": "Popular restaurant · 6:55 PM", "scenarioPt": "Host na entrada pergunta se você tem reserva — fila atrás de você." },
+      { "id": "l06-ctx-03", "type": "dialogue_choice", "speaker": "Host", "promptEn": "Do you have a reservation?", "promptPt": "Host pergunta sobre reserva.", "options": [
+        { "labelEn": "Yes, I have a reservation under Silva.", "correct": true, "feedbackPt": "Confirma com nome." },
+        { "labelEn": "Yes, I have a direction under Silva.", "correct": false, "feedbackPt": "Direction ≠ reservation." },
+        { "labelEn": "No, I have a gate.", "correct": false, "feedbackPt": "Gate = aeroporto." }
+      ]},
+      { "id": "l06-ctx-04", "type": "dialogue_choice", "speaker": "Host", "promptEn": "Silva, party of two at 7 PM — is that correct?", "promptPt": "Host confirma detalhes.", "options": [
+        { "labelEn": "Yes, that's correct.", "correct": true, "feedbackPt": "Confirmação clara." },
+        { "labelEn": "Yes, turn left.", "correct": false, "feedbackPt": "Direção — contexto errado." },
+        { "labelEn": "Yes, how much is it?", "correct": false, "feedbackPt": "Preço — momento errado." }
+      ]},
+      { "id": "l06-ctx-05", "type": "dialogue_choice", "speaker": "Host", "promptEn": "Right this way, please.", "promptPt": "Host leva à mesa. Você responde:", "options": [
+        { "labelEn": "Thank you!", "correct": true, "feedbackPt": "Agradecimento natural." },
+        { "labelEn": "Can I have the check?", "correct": false, "feedbackPt": "Acabou de sentar — cedo para conta." },
+        { "labelEn": "Where is the gate?", "correct": false, "feedbackPt": "Aeroporto." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l06-learn-01", "type": "phrase_examples", "titleEn": "I have a reservation", "titlePt": "Tenho reserva", "introPt": "Frase principal — hotel e restaurante.", "examples": [
+        { "en": "I have a reservation.", "pt": "Tenho reserva." }, { "en": "I have a reservation under Silva.", "pt": "Reserva em nome de Silva." },
+        { "en": "Reservation for tonight.", "pt": "Reserva para hoje à noite." }
+      ]},
+      { "id": "l06-learn-02", "type": "phrase_examples", "titleEn": "Under the name", "titlePt": "Em nome de", "introPt": "Under identifica quem fez a reserva.", "examples": [
+        { "en": "under Silva", "pt": "em nome de Silva" }, { "en": "under Carlos Silva", "pt": "nome completo" },
+        { "en": "The reservation is under my name.", "pt": "Está no meu nome." }
+      ]},
+      { "id": "l06-learn-03", "type": "phrase_examples", "titleEn": "Party of / Table for", "titlePt": "Grupo de / mesa para", "introPt": "Número de pessoas na reserva.", "examples": [
+        { "en": "party of two", "pt": "grupo de dois" }, { "en": "table for four", "pt": "mesa para quatro" },
+        { "en": "Reservation for two at 7 PM.", "pt": "Reserva para dois às 19h." }
+      ]},
+      { "id": "l06-learn-04", "type": "comparison", "titleEn": "Reservation vs Booking", "titlePt": "Reservation vs Booking", "left": { "labelEn": "RESERVATION · comum", "exampleEn": "I have a reservation.", "notePt": "Restaurante e hotel — fala e escrita." }, "right": { "labelEn": "BOOKING · reserva (geral)", "exampleEn": "Can you confirm my booking?", "notePt": "Booking = reserva (hotel, voo, online)." }, "modelEn": "reservation (restaurant/hotel) · booking (general/online)", "modelPt": "Ambos funcionam — reservation é mais comum na chegada presencial." },
+      { "id": "l06-learn-05", "type": "phrase_examples", "titleEn": "Confirm", "titlePt": "Confirmar", "introPt": "Verificar detalhes da reserva.", "examples": [
+        { "en": "Can you confirm my reservation?", "pt": "Pode confirmar minha reserva?" }, { "en": "Yes, that's correct.", "pt": "Sim, está correto." },
+        { "en": "Is the reservation still valid?", "pt": "A reserva ainda vale?" }
+      ]},
+      { "id": "l06-learn-06", "type": "language_focus", "titleEn": "Make a reservation", "titlePt": "Fazer reserva", "items": [
+        { "formalEn": "I would like to make a reservation.", "naturalEn": "I'd like to make a reservation.", "notePt": "Make a reservation = criar reserva." },
+        { "formalEn": "For this evening at seven o'clock.", "naturalEn": "For tonight at 7.", "notePt": "Horário na reserva." }
+      ], "tipPt": "Make = criar. Have = já tenho reserva feita." },
+      { "id": "l06-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I have reservation on name Silva.", "rightEn": "I have a reservation under Silva.", "explanationPt": "Precisa do artigo a + under (não on name)." },
+      { "id": "l06-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "I have a reservation.", "pt": "tenho reserva" }, { "en": "under Silva", "pt": "em nome de" },
+        { "en": "party of two", "pt": "dois pessoas" }, { "en": "Yes, that's correct.", "pt": "confirmar" }
+      ]}
+    ],
+    "imitate": [{ "id": "l06-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta.", "phrases": [
+      { "en": "I have a reservation." }, { "en": "I have a reservation under Silva." }, { "en": "Reservation for two at 7 PM." },
+      { "en": "Party of two." }, { "en": "Yes, that's correct." }, { "en": "Can you confirm my booking?" },
+      { "en": "Table for four, please." }, { "en": "Right this way, please." }
+    ], "dialogueEn": "Do you have a reservation? — Yes, I have a reservation under Silva. For two at 7 PM. — Silva, party of two — is that correct? — Yes, that's correct. — Right this way, please. — Thank you!" }],
+    "mission": [{ "id": "l06-miss-01", "type": "mission_intro", "headlineEn": "Your turn — confirm your reservation.", "headlinePt": "Sua vez — confirme sua reserva.", "bodyPt": "Apresente reserva com nome, horário e número de pessoas.", "prompts": [{ "speaker": "Host", "questionEn": "Do you have a reservation?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l06-prac-01", "type": "choice", "promptPt": "Reserva em nome de Silva:", "options": [
+      { "labelEn": "I have a reservation under Silva.", "correct": true, "feedbackPt": "Under + nome." },
+      { "labelEn": "I have a reservation on Silva.", "correct": false, "feedbackPt": "On Silva — incorreto." },
+      { "labelEn": "I have a reservation in Silva.", "correct": false, "feedbackPt": "In Silva — incorreto." }
+    ]},
+    { "id": "l06-prac-02", "type": "fill_blank", "promptPt": "Complete: Grupo de duas pessoas.", "templateEn": "Party ___ two.", "blankLabel": "preposição", "options": [
+      { "labelEn": "of", "correct": true, "feedbackPt": "Party of two." },
+      { "labelEn": "for", "correct": false, "feedbackPt": "Table for two — party of two." },
+      { "labelEn": "at", "correct": false, "feedbackPt": "At two = às duas (horário)." }
+    ]},
+    { "id": "l06-prac-03", "type": "reorder", "promptPt": "Monte: Tenho uma reserva.", "tokens": ["reservation.", "a", "have", "I"], "correctOrder": ["I", "have", "a", "reservation."], "feedbackCorrectPt": "I have a reservation.", "feedbackWrongPt": "I have a reservation." },
+    { "id": "l06-prac-04", "type": "dialogue_complete", "promptPt": "Host confirma detalhes — você concorda:", "speaker": "You", "contextEn": "Host: Party of two at 7 — correct?", "options": [
+      { "labelEn": "Yes, that's correct.", "correct": true, "feedbackPt": "Confirmação." },
+      { "labelEn": "Yes, turn right.", "correct": false, "feedbackPt": "Direção." },
+      { "labelEn": "Yes, I'll take it.", "correct": false, "feedbackPt": "Compra." }
+    ]},
+    { "id": "l06-prac-05", "type": "choice", "promptPt": "Table for four significa:", "options": [
+      { "labelEn": "a table for 4 people", "correct": true, "feedbackPt": "Mesa para quatro." },
+      { "labelEn": "four tables", "correct": false, "feedbackPt": "Seria four tables." },
+      { "labelEn": "table number four only", "correct": false, "feedbackPt": "É número de pessoas, não mesa 4." }
+    ]},
+    { "id": "l06-prac-06", "type": "fill_blank", "promptPt": "Complete: Fazer uma reserva.", "templateEn": "I'd like to ___ a reservation.", "blankLabel": "verbo", "options": [
+      { "labelEn": "make", "correct": true, "feedbackPt": "Make a reservation." },
+      { "labelEn": "do", "correct": false, "feedbackPt": "Do a reservation — menos comum." },
+      { "labelEn": "check", "correct": false, "feedbackPt": "Check in ≠ make reservation." }
+    ]},
+    { "id": "l06-prac-07", "type": "reorder", "promptPt": "Monte: Reserva para dois às 19h.", "tokens": ["PM.", "7", "at", "two", "for", "Reservation"], "correctOrder": ["Reservation", "for", "two", "at", "7", "PM."], "feedbackCorrectPt": "Reservation for two at 7 PM.", "feedbackWrongPt": "Reservation for + número + at + hora." },
+    { "id": "l06-prac-08", "type": "dialogue_complete", "promptPt": "Sem reserva — pedir mesa:", "speaker": "You", "contextEn": "Host: Do you have a reservation? — You don't.", "options": [
+      { "labelEn": "No, table for two, please.", "correct": true, "feedbackPt": "Alternativa sem reserva." },
+      { "labelEn": "No, gate B12.", "correct": false, "feedbackPt": "Aeroporto." },
+      { "labelEn": "No, boarding pass.", "correct": false, "feedbackPt": "Aeroporto." }
+    ]},
+    { "id": "l06-prac-09", "type": "choice", "promptPt": "Booking e reservation neste nível:", "options": [
+      { "labelEn": "both mean a saved spot (hotel/restaurant)", "correct": true, "feedbackPt": "Sinônimos práticos." },
+      { "labelEn": "booking = food only", "correct": false, "feedbackPt": "Booking é geral." },
+      { "labelEn": "reservation = airport only", "correct": false, "feedbackPt": "Reservation = hotel/restaurante." }
+    ]},
+    { "id": "l06-prac-10", "type": "dialogue_complete", "promptPt": "Confirmar reserva por telefone/email:", "speaker": "You", "contextEn": "You want to verify before arriving.", "options": [
+      { "labelEn": "Can you confirm my reservation?", "correct": true, "feedbackPt": "Pedido de confirmação." },
+      { "labelEn": "Can you turn my reservation?", "correct": false, "feedbackPt": "Sem sentido." },
+      { "labelEn": "Can you eat my reservation?", "correct": false, "feedbackPt": "Sem sentido." }
+    ]}
+  ]
+}

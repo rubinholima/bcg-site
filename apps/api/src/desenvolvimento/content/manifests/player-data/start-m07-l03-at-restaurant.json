@@ -1,0 +1,140 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 7,
+  "goalPt": "Navegar menu, interagir com garçom, fazer pedido e pedir a conta em restaurante.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Jantar em restaurante americano — garçom traz menu e anota seu pedido.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can order at a restaurant.",
+    "headlinePt": "Você consegue pedir em restaurante.",
+    "bodyPt": "",
+    "canDo": ["Can I see the menu, please?", "I'd like the chicken, please.", "Are you ready to order?", "Can I have the check, please?", "Everything was great, thank you."],
+    "production": {
+      "introPt": "Simule um pedido completo: peça entrada/prato e depois a conta.",
+      "prompts": [
+        { "speaker": "Waiter", "questionEn": "Are you ready to order?" },
+        { "speaker": "Waiter", "questionEn": "Anything else?" },
+        { "speaker": "Waiter", "questionEn": "How was everything?" }
+      ],
+      "fields": [
+        { "id": "order", "labelPt": "Seu pedido principal", "prefixEn": "I'd like", "placeholderEn": "the chicken with rice, please" },
+        { "id": "extra", "labelPt": "Bebida ou extra", "prefixEn": "And", "placeholderEn": "a glass of water, please" },
+        { "id": "check", "labelPt": "Pedir a conta", "prefixEn": "", "placeholderEn": "Can I have the check, please?" }
+      ],
+      "exampleEn": "I'd like the chicken with rice, please. And a glass of water, please. Can I have the check, please?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l03-ctx-01", "type": "intro", "titleEn": "At a restaurant", "titlePt": "No restaurante", "bodyPt": "Menu, garçom, pedido e conta — frases essenciais para jantar fora nos EUA." },
+      { "id": "l03-ctx-02", "type": "scenario", "settingEn": "American restaurant · Dinner", "scenarioPt": "Você senta à mesa. O garçom traz cardápio e volta para anotar o pedido." },
+      { "id": "l03-ctx-03", "type": "dialogue_choice", "speaker": "Waiter", "promptEn": "Here's your menu. Can I get you something to drink?", "promptPt": "Garçom oferece bebida primeiro.", "options": [
+        { "labelEn": "I'd like water, please.", "correct": true, "feedbackPt": "Pedido educado de bebida." },
+        { "labelEn": "Menu is my name.", "correct": false, "feedbackPt": "Não responde sobre bebida." },
+        { "labelEn": "The check, please.", "correct": false, "feedbackPt": "Conta vem no final — ainda nem pediu." }
+      ]},
+      { "id": "l03-ctx-04", "type": "dialogue_choice", "speaker": "Waiter", "promptEn": "Are you ready to order?", "promptPt": "Garçom pergunta se está pronto para pedir.", "options": [
+        { "labelEn": "Yes, I'd like the chicken, please.", "correct": true, "feedbackPt": "Confirma e faz pedido claro." },
+        { "labelEn": "No, I'm chicken.", "correct": false, "feedbackPt": "Frase sem sentido." },
+        { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Cumprimento — contexto errado." }
+      ]},
+      { "id": "l03-ctx-05", "type": "dialogue_choice", "speaker": "Waiter", "promptEn": "How was everything?", "promptPt": "No final, garçom pergunta como foi a refeição.", "options": [
+        { "labelEn": "Everything was great, thank you!", "correct": true, "feedbackPt": "Resposta educada e positiva." },
+        { "labelEn": "Can I have the menu?", "correct": false, "feedbackPt": "Menu é no início — refeição já acabou." },
+        { "labelEn": "I'm ready to order.", "correct": false, "feedbackPt": "Order é no início — já comeu." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l03-learn-01", "type": "phrase_examples", "titleEn": "Menu & table", "titlePt": "Menu e mesa", "introPt": "Vocabulário básico ao sentar no restaurante.", "examples": [
+        { "en": "Can I see the menu, please?", "pt": "Posso ver o cardápio?" }, { "en": "A table for two, please.", "pt": "Mesa para dois." },
+        { "en": "Here's your menu.", "pt": "Aqui está o cardápio." }
+      ]},
+      { "id": "l03-learn-02", "type": "phrase_examples", "titleEn": "Ordering", "titlePt": "Fazendo pedido", "introPt": "Frases do garçom e suas respostas.", "examples": [
+        { "en": "Are you ready to order?", "pt": "Pronto para pedir?" }, { "en": "What would you like?", "pt": "O que gostaria?" },
+        { "en": "I'd like the steak, please.", "pt": "Gostaria do bife." }, { "en": "I'll have the salad.", "pt": "Vou querer a salada." }
+      ]},
+      { "id": "l03-learn-03", "type": "phrase_examples", "titleEn": "The check", "titlePt": "A conta", "introPt": "Nos EUA, check = conta (não bill em restaurante).", "examples": [
+        { "en": "Can I have the check, please?", "pt": "A conta, por favor." }, { "en": "The check, please.", "pt": "Conta, por favor (curto)." },
+        { "en": "We'd like to pay, please.", "pt": "Gostaríamos de pagar." }
+      ]},
+      { "id": "l03-learn-04", "type": "comparison", "titleEn": "Check vs Bill", "titlePt": "Check vs Bill", "left": { "labelEn": "CHECK · restaurante EUA", "exampleEn": "Can I have the check, please?", "notePt": "Padrão americano em restaurantes." }, "right": { "labelEn": "BILL · UK / formal", "exampleEn": "Can I have the bill, please?", "notePt": "Bill é mais comum no UK — nos EUA use check." }, "modelEn": "US restaurant → the check · UK → the bill", "modelPt": "Curriculum americano — prefira check." },
+      { "id": "l03-learn-05", "type": "language_focus", "titleEn": "I'll have / I'd like", "titlePt": "I'll have / I'd like", "items": [
+        { "formalEn": "I would like the chicken.", "naturalEn": "I'd like the chicken.", "notePt": "I'd like = educado." },
+        { "formalEn": "I will have the chicken.", "naturalEn": "I'll have the chicken.", "notePt": "I'll have = decisão firme — comum em restaurante." }
+      ], "tipPt": "Ambos funcionam ao pedir. I'd like soa um pouco mais suave; I'll have é direto e comum." },
+      { "id": "l03-learn-06", "type": "phrase_examples", "titleEn": "During the meal", "titlePt": "Durante a refeição", "introPt": "Pedidos extras e cortesia.", "examples": [
+        { "en": "Can I have some more water?", "pt": "Mais água, por favor." }, { "en": "Excuse me!", "pt": "Com licença! (chamar garçom)" },
+        { "en": "Everything is delicious!", "pt": "Está tudo delicioso!" }
+      ]},
+      { "id": "l03-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "Can I have the menu of payment?", "rightEn": "Can I have the check, please?", "explanationPt": "Conta em restaurante americano = the check. Menu of payment não existe." },
+      { "id": "l03-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Can I see the menu?", "pt": "ver cardápio" }, { "en": "Are you ready to order?", "pt": "pronto para pedir" },
+        { "en": "I'd like..., please.", "pt": "fazer pedido" }, { "en": "Can I have the check?", "pt": "pedir conta" }
+      ]}
+    ],
+    "imitate": [{ "id": "l03-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia o diálogo de restaurante em voz alta.", "phrases": [
+      { "en": "Can I see the menu, please?" }, { "en": "Are you ready to order?" }, { "en": "I'd like the chicken, please." },
+      { "en": "And a glass of water, please." }, { "en": "Can I have the check, please?" }, { "en": "Everything was great, thank you!" },
+      { "en": "Excuse me!" }, { "en": "How was everything?" }
+    ], "dialogueEn": "Here's your menu. — Can I get you something to drink? — I'd like water, please. — Are you ready to order? — Yes, I'd like the chicken, please. — Can I have the check, please? — Everything was great, thank you!" }],
+    "mission": [{ "id": "l03-miss-01", "type": "mission_intro", "headlineEn": "Your turn — order at a restaurant.", "headlinePt": "Sua vez — peça no restaurante.", "bodyPt": "Monte seu pedido completo: prato, bebida e conta.", "prompts": [
+      { "speaker": "Waiter", "questionEn": "Are you ready to order?" },
+      { "speaker": "Waiter", "questionEn": "Anything else?" }
+    ]}]
+  },
+  "practiceInteractions": [
+    { "id": "l03-prac-01", "type": "choice", "promptPt": "Como pedir a conta nos EUA?", "options": [
+      { "labelEn": "Can I have the check, please?", "correct": true, "feedbackPt": "Check = conta em restaurante americano." },
+      { "labelEn": "Can I have the menu?", "correct": false, "feedbackPt": "Menu = cardápio, não conta." },
+      { "labelEn": "Are you ready to order?", "correct": false, "feedbackPt": "Isso pergunta o garçom — não pede conta." }
+    ]},
+    { "id": "l03-prac-02", "type": "dialogue_complete", "promptPt": "Waiter: Are you ready to order?", "speaker": "You", "contextEn": "Waiter: Are you ready to order?", "options": [
+      { "labelEn": "Yes, I'd like the chicken, please.", "correct": true, "feedbackPt": "Pedido claro e educado." },
+      { "labelEn": "The check, please.", "correct": false, "feedbackPt": "Conta vem depois de comer." },
+      { "labelEn": "Good night!", "correct": false, "feedbackPt": "Despedida — contexto errado." }
+    ]},
+    { "id": "l03-prac-03", "type": "fill_blank", "promptPt": "Complete: Posso ver o cardápio?", "templateEn": "Can I ___ the menu, please?", "blankLabel": "verbo", "options": [
+      { "labelEn": "see", "correct": true, "feedbackPt": "Can I see the menu? — padrão." },
+      { "labelEn": "look", "correct": false, "feedbackPt": "Look precisa de at — Can I look at the menu também ok, mas see é mais comum." },
+      { "labelEn": "watch", "correct": false, "feedbackPt": "Watch é para filmes/TV." }
+    ]},
+    { "id": "l03-prac-04", "type": "reorder", "promptPt": "Monte: Gostaria do bife, por favor.", "tokens": ["please.", "like", "I'd", "steak,", "the"], "correctOrder": ["I'd", "like", "the", "steak,", "please."], "feedbackCorrectPt": "I'd like the steak, please.", "feedbackWrongPt": "I'd like + the + item + please." },
+    { "id": "l03-prac-05", "type": "choice", "promptPt": "Garçom pergunta How was everything? — resposta positiva:", "options": [
+      { "labelEn": "Everything was great, thank you!", "correct": true, "feedbackPt": "Resposta educada." },
+      { "labelEn": "I'd like the menu.", "correct": false, "feedbackPt": "Menu é no início." },
+      { "labelEn": "A table for two.", "correct": false, "feedbackPt": "Reserva de mesa — contexto errado." }
+    ]},
+    { "id": "l03-prac-06", "type": "fill_blank", "promptPt": "Complete: Vou querer a salada.", "templateEn": "I'll ___ the salad.", "blankLabel": "verbo", "options": [
+      { "labelEn": "have", "correct": true, "feedbackPt": "I'll have = vou querer — comum em restaurante." },
+      { "labelEn": "am", "correct": false, "feedbackPt": "I am the salad não faz sentido." },
+      { "labelEn": "see", "correct": false, "feedbackPt": "See não combina com pedido." }
+    ]},
+    { "id": "l03-prac-07", "type": "dialogue_complete", "promptPt": "Precisa chamar o garçom:", "speaker": "You", "contextEn": "You need the waiter's attention.", "options": [
+      { "labelEn": "Excuse me!", "correct": true, "feedbackPt": "Forma educada de chamar atenção." },
+      { "labelEn": "Goodbye!", "correct": false, "feedbackPt": "Despedida — não chama garçom." },
+      { "labelEn": "I'm hungry.", "correct": false, "feedbackPt": "Informação, não chama atenção." }
+    ]},
+    { "id": "l03-prac-08", "type": "reorder", "promptPt": "Monte: A conta, por favor.", "tokens": ["please?", "check,", "the", "Can", "I", "have"], "correctOrder": ["Can", "I", "have", "the", "check,", "please?"], "feedbackCorrectPt": "Can I have the check, please?", "feedbackWrongPt": "Can I have the check, please?" },
+    { "id": "l03-prac-09", "type": "choice", "promptPt": "Mesa para dois em inglês:", "options": [
+      { "labelEn": "A table for two, please.", "correct": true, "feedbackPt": "Padrão em restaurantes." },
+      { "labelEn": "Two tables for one.", "correct": false, "feedbackPt": "Não faz sentido." },
+      { "labelEn": "A check for two.", "correct": false, "feedbackPt": "Check é conta, não mesa." }
+    ]},
+    { "id": "l03-prac-10", "type": "dialogue_complete", "promptPt": "Waiter: Can I get you something to drink?", "speaker": "You", "contextEn": "Waiter: Can I get you something to drink?", "options": [
+      { "labelEn": "I'd like water, please.", "correct": true, "feedbackPt": "Pedido de bebida educado." },
+      { "labelEn": "Can I have the check?", "correct": false, "feedbackPt": "Conta vem no final." },
+      { "labelEn": "I'm from Brazil.", "correct": false, "feedbackPt": "Origem — contexto errado." }
+    ]}
+  ]
+}

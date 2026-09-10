@@ -1,0 +1,363 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 2,
+  "goalPt": "Falar da família — mother, father, brother, sister, This is my... — e apresentar pessoas próximas em contexto adulto.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Colega vê foto da família no seu celular e pergunta sobre ela.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta e repita cada frase.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can talk about your family in English.",
+    "headlinePt": "Você consegue falar da sua família em inglês.",
+    "bodyPt": "",
+    "canDo": [
+      "This is my mother.",
+      "This is my father.",
+      "I have a brother and a sister.",
+      "Do you have any siblings?"
+    ],
+    "production": {
+      "introPt": "Jamie viu uma foto no seu celular. Apresente dois membros da família em inglês — use sua família real ou nomes de prática.",
+      "prompts": [
+        { "speaker": "Jamie", "questionEn": "Who is that?" },
+        { "speaker": "Jamie", "questionEn": "Do you have any siblings?" }
+      ],
+      "fields": [
+        { "id": "introPerson1", "labelPt": "Apresentar pessoa 1", "prefixEn": "This is my", "placeholderEn": "mother. Her name is Ana." },
+        { "id": "introPerson2", "labelPt": "Apresentar pessoa 2", "prefixEn": "This is my", "placeholderEn": "brother. He's 25." },
+        { "id": "siblings", "labelPt": "Irmãos", "prefixEn": "", "placeholderEn": "I have one brother and one sister." }
+      ],
+      "exampleEn": "Who is that? — This is my mother. Her name is Ana. — Do you have any siblings? — I have one brother and one sister."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "l04-ctx-01",
+        "type": "intro",
+        "titleEn": "My family",
+        "titlePt": "Minha família",
+        "bodyPt": "Conversas sobre família surgem no trabalho — happy hour, almoço, foto no celular, formulário de emergência. Nesta lição: palavras básicas e This is my... para apresentar quem você ama."
+      },
+      {
+        "id": "l04-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office lunch · Casual conversation",
+        "scenarioPt": "Você mostra uma foto recente no celular. Jamie, colega americana, olha curiosa e pergunta sobre as pessoas."
+      },
+      {
+        "id": "l04-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Who is that?",
+        "promptPt": "Jamie aponta para uma pessoa na foto. Como apresentar sua mãe?",
+        "options": [
+          { "labelEn": "This is my mother.", "correct": true, "feedbackPt": "This is my + parentesco — padrão para apresentar." },
+          { "labelEn": "I have mother.", "correct": false, "feedbackPt": "Gramaticalmente incorreto — use This is my ou I have a mother." },
+          { "labelEn": "She is mother my.", "correct": false, "feedbackPt": "Ordem das palavras errada." }
+        ]
+      },
+      {
+        "id": "l04-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "And who is this guy?",
+        "promptPt": "Jamie pergunta sobre um homem na foto — seu pai.",
+        "options": [
+          { "labelEn": "This is my father.", "correct": true, "feedbackPt": "Apresentação clara com father." },
+          { "labelEn": "This is my brother.", "correct": false, "feedbackPt": "Brother = irmão — contexto da foto indica pai." },
+          { "labelEn": "My father is this.", "correct": false, "feedbackPt": "Ordem invertida — não soa natural." }
+        ]
+      },
+      {
+        "id": "l04-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Jamie",
+        "promptEn": "Do you have any siblings?",
+        "promptPt": "Jamie pergunta sobre irmãos. Você tem um irmão e uma irmã:",
+        "options": [
+          { "labelEn": "I have one brother and one sister.", "correct": true, "feedbackPt": "Resposta completa e natural." },
+          { "labelEn": "I have siblings one.", "correct": false, "feedbackPt": "Ordem incorreta." },
+          { "labelEn": "No, I don't have family.", "correct": false, "feedbackPt": "Contradiz o cenário — você tem irmãos." }
+        ]
+      },
+      {
+        "id": "l04-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "This is my sister.",
+        "promptPt": "Você quer apresentar sua irmã na foto. Qual frase usar?",
+        "options": [
+          { "labelEn": "This is my sister.", "correct": true, "feedbackPt": "Padrão fixo — This is my + parentesco." },
+          { "labelEn": "This is sister my.", "correct": false, "feedbackPt": "My vem antes do substantivo." },
+          { "labelEn": "I am my sister.", "correct": false, "feedbackPt": "Você não É sua irmã — você a apresenta." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "l04-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Parents",
+        "titlePt": "Pais",
+        "introPt": "Palavras básicas para mãe e pai — use com This is my...",
+        "examples": [
+          { "en": "mother / mom", "pt": "mãe (formal / informal)" },
+          { "en": "father / dad", "pt": "pai (formal / informal)" },
+          { "en": "This is my mother.", "pt": "esta é minha mãe" },
+          { "en": "This is my father.", "pt": "este é meu pai" },
+          { "en": "My parents live in Brazil.", "pt": "parents = pais (plural)" }
+        ]
+      },
+      {
+        "id": "l04-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Siblings",
+        "titlePt": "Irmãos",
+        "introPt": "Brother = irmão · sister = irmã. Siblings = irmãos (grupo).",
+        "examples": [
+          { "en": "brother", "pt": "irmão" },
+          { "en": "sister", "pt": "irmã" },
+          { "en": "siblings", "pt": "irmãos (grupo)" },
+          { "en": "I have a brother.", "pt": "tenho um irmão" },
+          { "en": "I have two sisters.", "pt": "tenho duas irmãs" }
+        ]
+      },
+      {
+        "id": "l04-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "This is my...",
+        "titlePt": "Este(a) é meu/minha...",
+        "introPt": "Padrão para apresentar alguém — foto, videochamada ou pessoa presente.",
+        "examples": [
+          { "en": "This is my mother.", "pt": "minha mãe" },
+          { "en": "This is my brother.", "pt": "meu irmão" },
+          { "en": "This is my sister.", "pt": "minha irmã" },
+          { "en": "This is my family.", "pt": "minha família" },
+          { "en": "These are my parents.", "pt": "plural — meus pais" }
+        ]
+      },
+      {
+        "id": "l04-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Asking about family",
+        "titlePt": "Perguntar sobre família",
+        "introPt": "Perguntas comuns em conversa informal — responda curto e natural.",
+        "examples": [
+          { "en": "Do you have any siblings?", "pt": "tem irmãos?" },
+          { "en": "Who is that?", "pt": "quem é?" },
+          { "en": "How many brothers and sisters do you have?", "pt": "quantos irmãos?" },
+          { "en": "Where does your family live?", "pt": "onde mora sua família?" }
+        ]
+      },
+      {
+        "id": "l04-learn-05",
+        "type": "language_focus",
+        "titleEn": "Have vs This is",
+        "titlePt": "Ter vs apresentar",
+        "items": [
+          { "formalEn": "I have brother.", "naturalEn": "I have a brother.", "notePt": "Singular precisa de a/an — I have a brother." },
+          { "formalEn": "My mother.", "naturalEn": "This is my mother.", "notePt": "Apresentando alguém — use This is my + person." }
+        ],
+        "tipPt": "Who is that? → This is my... · Do you have siblings? → I have a brother and a sister."
+      },
+      {
+        "id": "l04-learn-06",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I have 2 brothers and 1 sister. (missing article in singular)",
+        "rightEn": "I have two brothers and one sister.",
+        "explanationPt": "Números maiores que 1 não precisam de a/an (two brothers). Com um só: I have a brother (precisa do a). Also: This is my mother — não 'This is mother my'."
+      },
+      {
+        "id": "l04-learn-07",
+        "type": "vocabulary",
+        "titleEn": "More family words",
+        "titlePt": "Mais palavras de família",
+        "words": [
+          { "en": "family", "pt": "família", "exampleEn": "This is my family." },
+          { "en": "wife / husband", "pt": "esposa / marido", "exampleEn": "This is my wife." },
+          { "en": "son / daughter", "pt": "filho / filha", "exampleEn": "I have a son and a daughter." },
+          { "en": "children", "pt": "filhos", "exampleEn": "I have two children." }
+        ]
+      },
+      {
+        "id": "l04-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "mother / father", "pt": "mãe / pai" },
+          { "en": "brother / sister", "pt": "irmão / irmã" },
+          { "en": "This is my mother.", "pt": "apresentar" },
+          { "en": "I have a brother.", "pt": "ter um irmão" },
+          { "en": "Do you have any siblings?", "pt": "perguntar" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l04-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia em voz alta. Adapte à sua família real.",
+        "phrases": [
+          { "en": "This is my mother." },
+          { "en": "This is my father." },
+          { "en": "This is my brother." },
+          { "en": "This is my sister." },
+          { "en": "I have a brother." },
+          { "en": "I have one sister." },
+          { "en": "Do you have any siblings?" },
+          { "en": "Who is that?" }
+        ],
+        "dialogueEn": "Who is that? — This is my mother. — And this? — This is my father. — Do you have any siblings? — I have one brother and one sister."
+      }
+    ],
+    "mission": [
+      {
+        "id": "l04-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — introduce your family.",
+        "headlinePt": "Sua vez — apresente sua família.",
+        "bodyPt": "Jamie viu sua foto. Apresente membros da família e responda sobre irmãos em inglês.",
+        "prompts": [
+          { "speaker": "Jamie", "questionEn": "Who is that?" },
+          { "speaker": "Jamie", "questionEn": "Do you have any siblings?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "l04-prac-01",
+      "type": "choice",
+      "promptPt": "Apresentar sua mãe na foto:",
+      "options": [
+        { "labelEn": "This is my mother.", "correct": true, "feedbackPt": "Padrão This is my + parentesco." },
+        { "labelEn": "I have mother.", "correct": false, "feedbackPt": "Falta a/my — gramaticalmente incorreto." },
+        { "labelEn": "This is mother my.", "correct": false, "feedbackPt": "Ordem errada — my vem antes." }
+      ]
+    },
+    {
+      "id": "l04-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete — apresentar seu pai:",
+      "templateEn": "This is my ___.",
+      "blankLabel": "parentesco",
+      "options": [
+        { "labelEn": "father", "correct": true, "feedbackPt": "Father = pai." },
+        { "labelEn": "brother", "correct": false, "feedbackPt": "Brother = irmão." },
+        { "labelEn": "sister", "correct": false, "feedbackPt": "Sister = irmã." }
+      ]
+    },
+    {
+      "id": "l04-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte a frase correta:",
+      "tokens": ["sister.", "my", "This", "is"],
+      "correctOrder": ["This", "is", "my", "sister."],
+      "feedbackCorrectPt": "This is my sister. — ordem fixa.",
+      "feedbackWrongPt": "A ordem correta é This + is + my + sister."
+    },
+    {
+      "id": "l04-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie pergunta Do you have any siblings? — você tem um irmão:",
+      "speaker": "You",
+      "contextEn": "Jamie: Do you have any siblings?",
+      "options": [
+        { "labelEn": "I have one brother.", "correct": true, "feedbackPt": "Resposta natural e completa." },
+        { "labelEn": "This is my brother.", "correct": false, "feedbackPt": "Apresenta alguém — não responde sim/não + quantidade." },
+        { "labelEn": "I have brother.", "correct": false, "feedbackPt": "Falta one/a antes de brother." }
+      ]
+    },
+    {
+      "id": "l04-prac-05",
+      "type": "choice",
+      "promptPt": "Brother significa:",
+      "options": [
+        { "labelEn": "irmão", "correct": true, "feedbackPt": "Brother = irmão." },
+        { "labelEn": "irmã", "correct": false, "feedbackPt": "Irmã = sister." },
+        { "labelEn": "pai", "correct": false, "feedbackPt": "Pai = father." }
+      ]
+    },
+    {
+      "id": "l04-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete — ter uma irmã:",
+      "templateEn": "I have ___ sister.",
+      "blankLabel": "artigo/número",
+      "options": [
+        { "labelEn": "a", "correct": true, "feedbackPt": "I have a sister. — singular precisa de a." },
+        { "labelEn": "the", "correct": false, "feedbackPt": "The implica irmã específica conhecida." },
+        { "labelEn": "—", "correct": false, "feedbackPt": "Singular em inglês precisa de a/an." }
+      ]
+    },
+    {
+      "id": "l04-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte a resposta sobre irmãos:",
+      "tokens": ["sister.", "brother", "one", "and", "one", "I", "have", "a"],
+      "correctOrder": ["I", "have", "one", "brother", "and", "one", "sister."],
+      "feedbackCorrectPt": "I have one brother and one sister. — ordem natural.",
+      "feedbackWrongPt": "Comece com I have + quantidade + parentesco."
+    },
+    {
+      "id": "l04-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Jamie aponta para alguém: Who is that? — é seu pai:",
+      "speaker": "You",
+      "contextEn": "Jamie: Who is that?",
+      "options": [
+        { "labelEn": "This is my father.", "correct": true, "feedbackPt": "Apresentação clara." },
+        { "labelEn": "I have a father.", "correct": false, "feedbackPt": "Verdade, mas não apresenta a pessoa na foto." },
+        { "labelEn": "How old are you?", "correct": false, "feedbackPt": "Pergunta idade — não responde quem é." }
+      ]
+    },
+    {
+      "id": "l04-prac-09",
+      "type": "choice",
+      "promptPt": "Siblings significa:",
+      "options": [
+        { "labelEn": "irmãos (grupo)", "correct": true, "feedbackPt": "Siblings = irmãos no sentido geral." },
+        { "labelEn": "pais", "correct": false, "feedbackPt": "Pais = parents." },
+        { "labelEn": "filhos", "correct": false, "feedbackPt": "Filhos = children." }
+      ]
+    },
+    {
+      "id": "l04-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Complete a pergunta sobre irmãos:",
+      "templateEn": "Do you have any ___?",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "siblings", "correct": true, "feedbackPt": "Do you have any siblings? — pergunta comum." },
+        { "labelEn": "family", "correct": false, "feedbackPt": "Muito amplo — siblings é mais específico." },
+        { "labelEn": "parents", "correct": false, "feedbackPt": "Parents = pais, não irmãos." }
+      ]
+    }
+  ]
+}

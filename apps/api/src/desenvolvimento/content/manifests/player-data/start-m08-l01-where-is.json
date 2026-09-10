@@ -1,0 +1,133 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 8,
+  "goalPt": "Perguntar localização na cidade — Where is the...?, near here, on Main Street.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Você chega a uma cidade nova e precisa encontrar o hotel.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can ask where places are.",
+    "headlinePt": "Você consegue perguntar onde ficam lugares.",
+    "bodyPt": "",
+    "canDo": ["Where is the hotel?", "Where is the nearest subway?", "Is it near here?", "It's on Main Street.", "Excuse me, can you help me?"],
+    "production": {
+      "introPt": "Pergunte onde fica um lugar que você precisa encontrar — duas frases em inglês.",
+      "prompts": [{ "speaker": "Local", "questionEn": "Can I help you?" }],
+      "fields": [
+        { "id": "ask", "labelPt": "Perguntar localização", "prefixEn": "", "placeholderEn": "Excuse me, where is the hotel?" },
+        { "id": "follow", "labelPt": "Confirmar se é perto", "prefixEn": "", "placeholderEn": "Is it near here?" }
+      ],
+      "exampleEn": "Excuse me, where is the hotel? Is it near here?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l01-ctx-01", "type": "intro", "titleEn": "Where is...?", "titlePt": "Onde fica...?", "bodyPt": "Where is the...? é a pergunta mais direta para encontrar lugares — hotel, estação, farmácia, banheiro." },
+      { "id": "l01-ctx-02", "type": "scenario", "settingEn": "City street · First day", "scenarioPt": "Você sai do aeroporto shuttle com sua mala e precisa achar o hotel." },
+      { "id": "l01-ctx-03", "type": "dialogue_choice", "speaker": "You", "promptEn": "Excuse me, where is the hotel?", "promptPt": "Perguntar onde fica o hotel.", "options": [
+        { "labelEn": "Excuse me, where is the hotel?", "correct": true, "feedbackPt": "Excuse me + Where is the + lugar." },
+        { "labelEn": "Excuse me, where are the hotel?", "correct": false, "feedbackPt": "Hotel = singular → is." },
+        { "labelEn": "Where hotel is?", "correct": false, "feedbackPt": "Ordem errada — Where is the hotel?" }
+      ]},
+      { "id": "l01-ctx-04", "type": "dialogue_choice", "speaker": "Local", "promptEn": "It's on Main Street, two blocks from here.", "promptPt": "Pessoa responde. Você confirma se é perto:", "options": [
+        { "labelEn": "Is it near here?", "correct": true, "feedbackPt": "Near here = perto daqui." },
+        { "labelEn": "Is it expensive?", "correct": false, "feedbackPt": "Expensive = preço, não distância." },
+        { "labelEn": "How much is it?", "correct": false, "feedbackPt": "Preço — contexto errado." }
+      ]},
+      { "id": "l01-ctx-05", "type": "dialogue_choice", "speaker": "Local", "promptEn": "Yes, just walk straight.", "promptPt": "Confirma que é perto. Você agradece:", "options": [
+        { "labelEn": "Thank you so much!", "correct": true, "feedbackPt": "Agradecimento natural." },
+        { "labelEn": "I'd like the check.", "correct": false, "feedbackPt": "Restaurante — contexto errado." },
+        { "labelEn": "Can I try it on?", "correct": false, "feedbackPt": "Loja — contexto errado." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l01-learn-01", "type": "phrase_examples", "titleEn": "Where is the...?", "titlePt": "Onde fica o/a...?", "introPt": "Padrão fixo para perguntar localização.", "examples": [
+        { "en": "Where is the hotel?", "pt": "Onde fica o hotel?" }, { "en": "Where is the bathroom?", "pt": "Onde fica o banheiro?" },
+        { "en": "Where is the subway station?", "pt": "Onde fica o metrô?" }, { "en": "Where is the nearest ATM?", "pt": "Caixa eletrônico mais perto?" }
+      ]},
+      { "id": "l01-learn-02", "type": "phrase_examples", "titleEn": "Places in the city", "titlePt": "Lugares na cidade", "introPt": "Vocabulário útil para Where is the...?", "examples": [
+        { "en": "hotel / restaurant / pharmacy", "pt": "hotel / restaurante / farmácia" },
+        { "en": "subway station / bus stop", "pt": "metrô / ponto de ônibus" },
+        { "en": "park / museum / store", "pt": "parque / museu / loja" }
+      ]},
+      { "id": "l01-learn-03", "type": "phrase_examples", "titleEn": "Near here / Far from here", "titlePt": "Perto / longe daqui", "introPt": "Confirmar distância.", "examples": [
+        { "en": "Is it near here?", "pt": "É perto daqui?" }, { "en": "It's not far.", "pt": "Não é longe." },
+        { "en": "It's about five minutes away.", "pt": "Fica a uns cinco minutos." }
+      ]},
+      { "id": "l01-learn-04", "type": "comparison", "titleEn": "Where is vs Where are", "titlePt": "Where is vs Where are", "left": { "labelEn": "IS · singular", "exampleEn": "Where is the hotel?", "notePt": "The hotel = um lugar." }, "right": { "labelEn": "ARE · plural", "exampleEn": "Where are the restrooms?", "notePt": "Restrooms = plural → are." }, "modelEn": "Where is the bank? · Where are the restrooms?", "modelPt": "Singular = is; plural = are." },
+      { "id": "l01-learn-05", "type": "phrase_examples", "titleEn": "On / At + street", "titlePt": "On / At + rua", "introPt": "Respostas com endereço.", "examples": [
+        { "en": "It's on Main Street.", "pt": "Fica na Main Street." }, { "en": "It's at the corner.", "pt": "Fica na esquina." },
+        { "en": "It's next to the bank.", "pt": "Fica ao lado do banco." }
+      ]},
+      { "id": "l01-learn-06", "type": "language_focus", "titleEn": "Excuse me", "titlePt": "Com licença", "items": [
+        { "formalEn": "Excuse me, could you tell me where the hotel is?", "naturalEn": "Excuse me, where is the hotel?", "notePt": "Excuse me abre pedido de ajuda — educado." },
+        { "formalEn": "Pardon me.", "naturalEn": "Excuse me!", "notePt": "Excuse me é mais comum nos EUA." }
+      ], "tipPt": "Sempre comece com Excuse me ao parar alguém na rua." },
+      { "id": "l01-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "Where is located the hotel?", "rightEn": "Where is the hotel located? / Where is the hotel?", "explanationPt": "Where is the hotel? já basta. Se usar located, vai no final: Where is the hotel located?" },
+      { "id": "l01-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Where is the...?", "pt": "onde fica" }, { "en": "Is it near here?", "pt": "é perto?" },
+        { "en": "It's on Main Street.", "pt": "fica na rua X" }, { "en": "Excuse me!", "pt": "com licença" }
+      ]}
+    ],
+    "imitate": [{ "id": "l01-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta.", "phrases": [
+      { "en": "Excuse me, where is the hotel?" }, { "en": "Where is the nearest subway?" }, { "en": "Is it near here?" },
+      { "en": "It's on Main Street." }, { "en": "It's not far." }, { "en": "Thank you so much!" },
+      { "en": "Where is the bathroom?" }, { "en": "It's next to the bank." }
+    ], "dialogueEn": "Excuse me, where is the hotel? — It's on Main Street, two blocks from here. — Is it near here? — Yes, just walk straight. — Thank you so much!" }],
+    "mission": [{ "id": "l01-miss-01", "type": "mission_intro", "headlineEn": "Your turn — ask where something is.", "headlinePt": "Sua vez — pergunte onde fica.", "bodyPt": "Pergunte localização de um lugar e confirme se é perto.", "prompts": [{ "speaker": "Local", "questionEn": "Can I help you?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l01-prac-01", "type": "choice", "promptPt": "Onde fica o hotel?", "options": [
+      { "labelEn": "Where is the hotel?", "correct": true, "feedbackPt": "Padrão correto." },
+      { "labelEn": "Where are the hotel?", "correct": false, "feedbackPt": "Hotel = singular." },
+      { "labelEn": "How much is the hotel?", "correct": false, "feedbackPt": "Preço, não localização." }
+    ]},
+    { "id": "l01-prac-02", "type": "fill_blank", "promptPt": "Complete: É perto daqui?", "templateEn": "Is it ___ here?", "blankLabel": "palavra", "options": [
+      { "labelEn": "near", "correct": true, "feedbackPt": "Near here = perto daqui." },
+      { "labelEn": "far", "correct": false, "feedbackPt": "Far here não existe — Is it far from here?" },
+      { "labelEn": "next", "correct": false, "feedbackPt": "Next precisa de to: next to." }
+    ]},
+    { "id": "l01-prac-03", "type": "reorder", "promptPt": "Monte: Onde fica o banheiro?", "tokens": ["bathroom?", "the", "is", "Where"], "correctOrder": ["Where", "is", "the", "bathroom?"], "feedbackCorrectPt": "Where is the bathroom?", "feedbackWrongPt": "Where is the + lugar." },
+    { "id": "l01-prac-04", "type": "dialogue_complete", "promptPt": "Parar alguém na rua educadamente:", "speaker": "You", "contextEn": "You need to ask for directions.", "options": [
+      { "labelEn": "Excuse me!", "correct": true, "feedbackPt": "Forma educada de chamar atenção." },
+      { "labelEn": "Good night!", "correct": false, "feedbackPt": "Despedida." },
+      { "labelEn": "I'll take it.", "correct": false, "feedbackPt": "Compra." }
+    ]},
+    { "id": "l01-prac-05", "type": "choice", "promptPt": "Resposta: Fica na Main Street.", "options": [
+      { "labelEn": "It's on Main Street.", "correct": true, "feedbackPt": "On + nome da rua." },
+      { "labelEn": "It's in Main Street.", "correct": false, "feedbackPt": "In é possível no UK; nos EUA prefira on." },
+      { "labelEn": "It's at Main Street.", "correct": false, "feedbackPt": "At + endereço numérico; on + rua." }
+    ]},
+    { "id": "l01-prac-06", "type": "fill_blank", "promptPt": "Complete: Onde ficam os banheiros? (plural)", "templateEn": "Where ___ the restrooms?", "blankLabel": "verbo", "options": [
+      { "labelEn": "are", "correct": true, "feedbackPt": "Restrooms = plural → are." },
+      { "labelEn": "is", "correct": false, "feedbackPt": "Is com plural — incorreto." },
+      { "labelEn": "do", "correct": false, "feedbackPt": "Do não combina." }
+    ]},
+    { "id": "l01-prac-07", "type": "reorder", "promptPt": "Monte: Com licença, onde fica o hotel?", "tokens": ["hotel?", "the", "is", "me,", "where", "Excuse"], "correctOrder": ["Excuse", "me,", "where", "is", "the", "hotel?"], "feedbackCorrectPt": "Excuse me, where is the hotel?", "feedbackWrongPt": "Excuse me + Where is the..." },
+    { "id": "l01-prac-08", "type": "dialogue_complete", "promptPt": "Local ajudou — você agradece:", "speaker": "You", "contextEn": "Local: It's right there.", "options": [
+      { "labelEn": "Thank you so much!", "correct": true, "feedbackPt": "Agradecimento." },
+      { "labelEn": "How much is it?", "correct": false, "feedbackPt": "Preço." },
+      { "labelEn": "Can I have the check?", "correct": false, "feedbackPt": "Restaurante." }
+    ]},
+    { "id": "l01-prac-09", "type": "choice", "promptPt": "It's next to the bank significa:", "options": [
+      { "labelEn": "It's beside the bank.", "correct": true, "feedbackPt": "Next to = ao lado de." },
+      { "labelEn": "It's inside the bank.", "correct": false, "feedbackPt": "Inside = dentro." },
+      { "labelEn": "It's far from the bank.", "correct": false, "feedbackPt": "Far = longe." }
+    ]},
+    { "id": "l01-prac-10", "type": "dialogue_complete", "promptPt": "Precisa do metrô mais perto:", "speaker": "You", "contextEn": "You're on a busy street.", "options": [
+      { "labelEn": "Where is the nearest subway station?", "correct": true, "feedbackPt": "Nearest = mais próximo." },
+      { "labelEn": "How much is the subway?", "correct": false, "feedbackPt": "Preço, não localização." },
+      { "labelEn": "I'd like the subway.", "correct": false, "feedbackPt": "Pedido, não pergunta de lugar." }
+    ]}
+  ]
+}

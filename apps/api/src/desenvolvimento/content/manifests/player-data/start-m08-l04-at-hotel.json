@@ -1,0 +1,132 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 8,
+  "goalPt": "Fazer check-in no hotel — reservation, room, room key, reception, pedidos básicos.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Chegada ao hotel — recepção, check-in e quarto.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can check in at a hotel.",
+    "headlinePt": "Você consegue fazer check-in no hotel.",
+    "bodyPt": "",
+    "canDo": ["I have a reservation.", "Check-in, please.", "What time is checkout?", "Can I have an extra key?", "Where is the elevator?"],
+    "production": {
+      "introPt": "Simule check-in na recepção — apresente reserva e faça uma pergunta.",
+      "prompts": [{ "speaker": "Receptionist", "questionEn": "Good evening! How can I help you?" }],
+      "fields": [
+        { "id": "checkin", "labelPt": "Apresentar reserva", "prefixEn": "", "placeholderEn": "Hi, I have a reservation. Check-in, please." },
+        { "id": "question", "labelPt": "Pergunta na recepção", "prefixEn": "", "placeholderEn": "What time is checkout?" }
+      ],
+      "exampleEn": "Hi, I have a reservation under Silva. Check-in, please. What time is checkout?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l04-ctx-01", "type": "intro", "titleEn": "At the hotel", "titlePt": "No hotel", "bodyPt": "Check-in, quarto, chave e recepção — frases essenciais ao chegar em viagem." },
+      { "id": "l04-ctx-02", "type": "scenario", "settingEn": "Hotel reception · Evening", "scenarioPt": "Você entra com malas. Recepcionista cumprimenta na recepção (front desk)." },
+      { "id": "l04-ctx-03", "type": "dialogue_choice", "speaker": "Receptionist", "promptEn": "Good evening! Do you have a reservation?", "promptPt": "Recepcionista pergunta sobre reserva.", "options": [
+        { "labelEn": "Yes, I have a reservation under Silva.", "correct": true, "feedbackPt": "Reservation under + sobrenome — padrão." },
+        { "labelEn": "Yes, I am a reservation.", "correct": false, "feedbackPt": "Am não combina." },
+        { "labelEn": "Yes, I have a restaurant.", "correct": false, "feedbackPt": "Restaurant ≠ reservation." }
+      ]},
+      { "id": "l04-ctx-04", "type": "dialogue_choice", "speaker": "Receptionist", "promptEn": "Here's your room key. You're in room 412.", "promptPt": "Recepcionista entrega chave.", "options": [
+        { "labelEn": "Thank you! Where is the elevator?", "correct": true, "feedbackPt": "Agradecer + pergunta útil." },
+        { "labelEn": "Thank you! Where is the check?", "correct": false, "feedbackPt": "Check = conta de restaurante." },
+        { "labelEn": "Thank you! Turn left.", "correct": false, "feedbackPt": "Você pergunta, não dá direção." }
+      ]},
+      { "id": "l04-ctx-05", "type": "dialogue_choice", "speaker": "Receptionist", "promptEn": "Checkout is at 11 AM.", "promptPt": "Informação de checkout. Você confirma:", "options": [
+        { "labelEn": "Perfect, thank you.", "correct": true, "feedbackPt": "Confirmação educada." },
+        { "labelEn": "I'd like the chicken.", "correct": false, "feedbackPt": "Restaurante." },
+        { "labelEn": "How do I get to the gate?", "correct": false, "feedbackPt": "Aeroporto." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l04-learn-01", "type": "phrase_examples", "titleEn": "Check-in", "titlePt": "Check-in", "introPt": "Chegada e registro no hotel.", "examples": [
+        { "en": "Check-in, please.", "pt": "Check-in, por favor." }, { "en": "I'd like to check in.", "pt": "Quero fazer check-in." },
+        { "en": "I have a reservation.", "pt": "Tenho reserva." }
+      ]},
+      { "id": "l04-learn-02", "type": "phrase_examples", "titleEn": "Room & key", "titlePt": "Quarto e chave", "introPt": "Vocabulário do quarto.", "examples": [
+        { "en": "room key / key card", "pt": "chave / cartão-chave" }, { "en": "Room 412", "pt": "Quarto 412" },
+        { "en": "a single / double room", "pt": "quarto single / duplo" }
+      ]},
+      { "id": "l04-learn-03", "type": "phrase_examples", "titleEn": "Reception / Front desk", "titlePt": "Recepção", "introPt": "Onde pedir ajuda no hotel.", "examples": [
+        { "en": "reception / front desk", "pt": "recepção" }, { "en": "Can you help me?", "pt": "Pode me ajudar?" },
+        { "en": "Is breakfast included?", "pt": "Café da manhã incluído?" }
+      ]},
+      { "id": "l04-learn-04", "type": "comparison", "titleEn": "Check-in vs Check-out", "titlePt": "Check-in vs Check-out", "left": { "labelEn": "CHECK-IN · chegada", "exampleEn": "I'd like to check in.", "notePt": "Ao chegar — pegar chave." }, "right": { "labelEn": "CHECK-OUT · saída", "exampleEn": "What time is checkout?", "notePt": "Ao sair — devolver chave, pagar extras." }, "modelEn": "check in (verb) · checkout (noun/time)", "modelPt": "Check-in = verbo de chegada; checkout = horário de saída." },
+      { "id": "l04-learn-05", "type": "phrase_examples", "titleEn": "Hotel requests", "titlePt": "Pedidos no hotel", "introPt": "Perguntas comuns na recepção.", "examples": [
+        { "en": "What time is checkout?", "pt": "Que horas é o checkout?" }, { "en": "Where is the elevator?", "pt": "Onde fica o elevador?" },
+        { "en": "Can I have an extra towel?", "pt": "Toalha extra?" }, { "en": "Is there Wi-Fi?", "pt": "Tem Wi-Fi?" }
+      ]},
+      { "id": "l04-learn-06", "type": "language_focus", "titleEn": "Under the name", "titlePt": "Under the name", "items": [
+        { "formalEn": "My reservation is registered under the name Silva.", "naturalEn": "I have a reservation under Silva.", "notePt": "Under = em nome de." },
+        { "formalEn": "The booking is under Carlos Silva.", "naturalEn": "Reservation under Silva.", "notePt": "Sobrenome bastando na fala." }
+      ], "tipPt": "Under + sobrenome é padrão em hotel e restaurante com reserva." },
+      { "id": "l04-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I want to make check-in.", "rightEn": "I'd like to check in. / Check-in, please.", "explanationPt": "Check in = verbo (sem make). Make a reservation = fazer reserva; check in = registrar chegada." },
+      { "id": "l04-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "I have a reservation.", "pt": "tenho reserva" }, { "en": "Check-in, please.", "pt": "check-in" },
+        { "en": "room key", "pt": "chave" }, { "en": "What time is checkout?", "pt": "horário saída" }
+      ]}
+    ],
+    "imitate": [{ "id": "l04-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta.", "phrases": [
+      { "en": "Good evening. I have a reservation." }, { "en": "Check-in, please." }, { "en": "Under the name Silva." },
+      { "en": "Here's your room key." }, { "en": "Where is the elevator?" }, { "en": "What time is checkout?" },
+      { "en": "Is breakfast included?" }, { "en": "Thank you very much!" }
+    ], "dialogueEn": "Good evening! Do you have a reservation? — Yes, I have a reservation under Silva. Check-in, please. — Here's your room key. Room 412. — Thank you! Where is the elevator? — Down the hall on your left." }],
+    "mission": [{ "id": "l04-miss-01", "type": "mission_intro", "headlineEn": "Your turn — check in at a hotel.", "headlinePt": "Sua vez — check-in no hotel.", "bodyPt": "Apresente sua reserva e faça uma pergunta na recepção.", "prompts": [{ "speaker": "Receptionist", "questionEn": "Good evening! How can I help you?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l04-prac-01", "type": "choice", "promptPt": "Na recepção — dizer que tem reserva:", "options": [
+      { "labelEn": "I have a reservation.", "correct": true, "feedbackPt": "Frase padrão." },
+      { "labelEn": "I have a restaurant.", "correct": false, "feedbackPt": "Restaurant ≠ reservation." },
+      { "labelEn": "I am checking.", "correct": false, "feedbackPt": "Incompleto — check in." }
+    ]},
+    { "id": "l04-prac-02", "type": "fill_blank", "promptPt": "Complete: Que horas é o checkout?", "templateEn": "What time is ___?", "blankLabel": "palavra", "options": [
+      { "labelEn": "checkout", "correct": true, "feedbackPt": "Checkout = saída do hotel." },
+      { "labelEn": "check-in", "correct": false, "feedbackPt": "Check-in = chegada." },
+      { "labelEn": "check", "correct": false, "feedbackPt": "Check sozinho = conta." }
+    ]},
+    { "id": "l04-prac-03", "type": "reorder", "promptPt": "Monte: Check-in, por favor.", "tokens": ["please.", "Check-in,"], "correctOrder": ["Check-in,", "please."], "feedbackCorrectPt": "Check-in, please.", "feedbackWrongPt": "Check-in, please." },
+    { "id": "l04-prac-04", "type": "dialogue_complete", "promptPt": "Recepcionista entregou chave — perguntar elevador:", "speaker": "You", "contextEn": "Receptionist: Here's your key. Room 305.", "options": [
+      { "labelEn": "Thank you! Where is the elevator?", "correct": true, "feedbackPt": "Pergunta útil." },
+      { "labelEn": "Thank you! Where is the gate?", "correct": false, "feedbackPt": "Gate = aeroporto." },
+      { "labelEn": "Thank you! Can I have the check?", "correct": false, "feedbackPt": "Check = restaurante." }
+    ]},
+    { "id": "l04-prac-05", "type": "choice", "promptPt": "Room key / key card significa:", "options": [
+      { "labelEn": "hotel room access card", "correct": true, "feedbackPt": "Chave do quarto." },
+      { "labelEn": "credit card", "correct": false, "feedbackPt": "Credit card = pagamento." },
+      { "labelEn": "boarding pass", "correct": false, "feedbackPt": "Boarding pass = aeroporto." }
+    ]},
+    { "id": "l04-prac-06", "type": "fill_blank", "promptPt": "Complete: Reserva em nome de Silva.", "templateEn": "A reservation ___ Silva.", "blankLabel": "preposição", "options": [
+      { "labelEn": "under", "correct": true, "feedbackPt": "Under = em nome de." },
+      { "labelEn": "over", "correct": false, "feedbackPt": "Over = sobre." },
+      { "labelEn": "in", "correct": false, "feedbackPt": "In Silva — incorreto." }
+    ]},
+    { "id": "l04-prac-07", "type": "reorder", "promptPt": "Monte: Quero fazer check-in.", "tokens": ["in.", "check", "to", "like", "I'd"], "correctOrder": ["I'd", "like", "to", "check", "in."], "feedbackCorrectPt": "I'd like to check in.", "feedbackWrongPt": "I'd like to check in." },
+    { "id": "l04-prac-08", "type": "dialogue_complete", "promptPt": "Recepcionista: Do you have a reservation?", "speaker": "You", "contextEn": "Receptionist: Do you have a reservation?", "options": [
+      { "labelEn": "Yes, under Silva.", "correct": true, "feedbackPt": "Confirma com nome." },
+      { "labelEn": "Yes, under restaurant.", "correct": false, "feedbackPt": "Sem sentido." },
+      { "labelEn": "No, turn left.", "correct": false, "feedbackPt": "Direção — contexto errado." }
+    ]},
+    { "id": "l04-prac-09", "type": "choice", "promptPt": "Front desk significa:", "options": [
+      { "labelEn": "hotel reception", "correct": true, "feedbackPt": "Recepção do hotel." },
+      { "labelEn": "restaurant counter", "correct": false, "feedbackPt": "Contexto diferente." },
+      { "labelEn": "airport gate", "correct": false, "feedbackPt": "Gate = aeroporto." }
+    ]},
+    { "id": "l04-prac-10", "type": "dialogue_complete", "promptPt": "Perguntar se café da manhã está incluído:", "speaker": "You", "contextEn": "At check-in.", "options": [
+      { "labelEn": "Is breakfast included?", "correct": true, "feedbackPt": "Pergunta comum." },
+      { "labelEn": "Is breakfast expensive?", "correct": false, "feedbackPt": "Pergunta diferente — included vs preço." },
+      { "labelEn": "Where is breakfast left?", "correct": false, "feedbackPt": "Sem sentido." }
+    ]}
+  ]
+}

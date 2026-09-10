@@ -1,0 +1,133 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 8,
+  "goalPt": "Entender e seguir direções simples — go straight, turn left/right, blocks, next to.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Alguém te deu instruções — você precisa seguir até o hotel.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can follow simple directions.",
+    "headlinePt": "Você consegue seguir direções simples.",
+    "bodyPt": "",
+    "canDo": ["Go straight.", "Turn left.", "Turn right.", "It's two blocks from here.", "It's on your right."],
+    "production": {
+      "introPt": "Descreva como chegar a um lugar próximo — três instruções em inglês.",
+      "prompts": [{ "speaker": "Friend", "questionEn": "How do I get to the coffee shop?" }],
+      "fields": [
+        { "id": "step1", "labelPt": "Primeira instrução", "prefixEn": "", "placeholderEn": "Go straight for two blocks." },
+        { "id": "step2", "labelPt": "Segunda instrução", "prefixEn": "", "placeholderEn": "Turn left on Oak Street." },
+        { "id": "step3", "labelPt": "Destino", "prefixEn": "", "placeholderEn": "It's on your right, next to the bank." }
+      ],
+      "exampleEn": "Go straight for two blocks. Turn left on Oak Street. It's on your right, next to the bank."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l02-ctx-01", "type": "intro", "titleEn": "Directions", "titlePt": "Direções", "bodyPt": "Go straight, turn left, turn right — instruções básicas para chegar a qualquer lugar a pé." },
+      { "id": "l02-ctx-02", "type": "scenario", "settingEn": "City sidewalk · Afternoon", "scenarioPt": "Você perguntou onde fica o hotel. Agora precisa entender as direções." },
+      { "id": "l02-ctx-03", "type": "dialogue_choice", "speaker": "Local", "promptEn": "Go straight for two blocks, then turn left.", "promptPt": "Primeira instrução — o que fazer primeiro?", "options": [
+        { "labelEn": "Go straight for two blocks.", "correct": true, "feedbackPt": "Primeiro: seguir em frente." },
+        { "labelEn": "Turn left immediately.", "correct": false, "feedbackPt": "Left vem depois de two blocks." },
+        { "labelEn": "Turn around.", "correct": false, "feedbackPt": "Turn around = voltar — não é a instrução." }
+      ]},
+      { "id": "l02-ctx-04", "type": "dialogue_choice", "speaker": "Local", "promptEn": "Then turn left on Oak Street.", "promptPt": "Depois de duas quadras:", "options": [
+        { "labelEn": "Turn left on Oak Street.", "correct": true, "feedbackPt": "Turn left = vire à esquerda." },
+        { "labelEn": "Turn right on Oak Street.", "correct": false, "feedbackPt": "Right ≠ left." },
+        { "labelEn": "Go straight on Oak Street.", "correct": false, "feedbackPt": "Instrução era turn left." }
+      ]},
+      { "id": "l02-ctx-05", "type": "dialogue_choice", "speaker": "Local", "promptEn": "The hotel is on your right.", "promptPt": "Última instrução — hotel fica:", "options": [
+        { "labelEn": "On my right side.", "correct": true, "feedbackPt": "On your right = à sua direita." },
+        { "labelEn": "On my left side.", "correct": false, "feedbackPt": "Left ≠ right." },
+        { "labelEn": "Behind me.", "correct": false, "feedbackPt": "Behind = atrás — instrução era right." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l02-learn-01", "type": "phrase_examples", "titleEn": "Go straight", "titlePt": "Siga em frente", "introPt": "Instrução mais comum — continuar na mesma direção.", "examples": [
+        { "en": "Go straight.", "pt": "Siga em frente." }, { "en": "Go straight for two blocks.", "pt": "Siga duas quadras." },
+        { "en": "Keep going straight.", "pt": "Continue em frente." }
+      ]},
+      { "id": "l02-learn-02", "type": "phrase_examples", "titleEn": "Turn left / Turn right", "titlePt": "Vire à esquerda / direita", "introPt": "Mudar de direção.", "examples": [
+        { "en": "Turn left.", "pt": "Vire à esquerda." }, { "en": "Turn right.", "pt": "Vire à direita." },
+        { "en": "Turn left at the corner.", "pt": "Vire na esquina." }, { "en": "Take a right on Main Street.", "pt": "Pegue à direita na Main." }
+      ]},
+      { "id": "l02-learn-03", "type": "phrase_examples", "titleEn": "Blocks", "titlePt": "Quadras (blocks)", "introPt": "Block = quarteirão/quadras entre ruas — muito usado nos EUA.", "examples": [
+        { "en": "two blocks", "pt": "duas quadras" }, { "en": "It's three blocks from here.", "pt": "Fica a três quadras daqui." },
+        { "en": "Walk two blocks and turn left.", "pt": "Ande duas quadras e vire." }
+      ]},
+      { "id": "l02-learn-04", "type": "comparison", "titleEn": "Left vs Right", "titlePt": "Esquerda vs direita", "left": { "labelEn": "LEFT · esquerda", "exampleEn": "Turn left.", "notePt": "L em Left ajuda a lembrar." }, "right": { "labelEn": "RIGHT · direita", "exampleEn": "Turn right.", "notePt": "On your right = do seu lado direito." }, "modelEn": "Turn left at the light · It's on your right", "modelPt": "Left/right são opostos — preste atenção!" },
+      { "id": "l02-learn-05", "type": "phrase_examples", "titleEn": "Next to / Across from", "titlePt": "Ao lado / em frente", "introPt": "Descrever posição relativa.", "examples": [
+        { "en": "It's next to the bank.", "pt": "Fica ao lado do banco." }, { "en": "It's across from the park.", "pt": "Fica em frente ao parque." },
+        { "en": "It's between the store and the café.", "pt": "Fica entre a loja e o café." }
+      ]},
+      { "id": "l02-learn-06", "type": "language_focus", "titleEn": "On your left / On your right", "titlePt": "À sua esquerda / direita", "items": [
+        { "formalEn": "It will be located on your right side.", "naturalEn": "It's on your right.", "notePt": "On your right = à mão direita enquanto caminha." },
+        { "formalEn": "You will see it on the left.", "naturalEn": "Look for it on your left.", "notePt": "Look for = procure." }
+      ], "tipPt": "Your = de quem caminha. My quando você repete as instruções." },
+      { "id": "l02-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "Go straight ahead two blocks and make left.", "rightEn": "Go straight for two blocks and turn left.", "explanationPt": "Turn left/right — não make left. For two blocks ou two blocks ahead." },
+      { "id": "l02-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "Go straight.", "pt": "siga em frente" }, { "en": "Turn left / Turn right.", "pt": "vire" },
+        { "en": "two blocks", "pt": "duas quadras" }, { "en": "on your right", "pt": "à sua direita" },
+        { "en": "next to / across from", "pt": "ao lado / em frente" }
+      ]}
+    ],
+    "imitate": [{ "id": "l02-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta.", "phrases": [
+      { "en": "Go straight." }, { "en": "Go straight for two blocks." }, { "en": "Turn left." }, { "en": "Turn right." },
+      { "en": "It's on your right." }, { "en": "It's next to the bank." }, { "en": "It's three blocks from here." }, { "en": "You can't miss it!" }
+    ], "dialogueEn": "Go straight for two blocks, then turn left on Oak Street. The hotel is on your right, next to the bank. You can't miss it!" }],
+    "mission": [{ "id": "l02-miss-01", "type": "mission_intro", "headlineEn": "Your turn — give directions.", "headlinePt": "Sua vez — dê direções.", "bodyPt": "Explique como chegar a um lugar com três instruções.", "prompts": [{ "speaker": "Friend", "questionEn": "How do I get to the coffee shop?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l02-prac-01", "type": "choice", "promptPt": "Siga em frente em inglês:", "options": [
+      { "labelEn": "Go straight.", "correct": true, "feedbackPt": "Padrão mais comum." },
+      { "labelEn": "Go right.", "correct": false, "feedbackPt": "Go right = vire/vá à direita." },
+      { "labelEn": "Go left.", "correct": false, "feedbackPt": "Go left = vire à esquerda." }
+    ]},
+    { "id": "l02-prac-02", "type": "fill_blank", "promptPt": "Complete: Vire à esquerda.", "templateEn": "Turn ___.", "blankLabel": "direção", "options": [
+      { "labelEn": "left", "correct": true, "feedbackPt": "Turn left." },
+      { "labelEn": "straight", "correct": false, "feedbackPt": "Go straight — não turn straight." },
+      { "labelEn": "blocks", "correct": false, "feedbackPt": "Blocks = quadras." }
+    ]},
+    { "id": "l02-prac-03", "type": "reorder", "promptPt": "Monte: Siga duas quadras.", "tokens": ["blocks.", "two", "for", "straight", "Go"], "correctOrder": ["Go", "straight", "for", "two", "blocks."], "feedbackCorrectPt": "Go straight for two blocks.", "feedbackWrongPt": "Go straight for + número + blocks." },
+    { "id": "l02-prac-04", "type": "dialogue_complete", "promptPt": "Instrução: hotel à direita:", "speaker": "Local", "contextEn": "You're giving directions.", "options": [
+      { "labelEn": "It's on your right.", "correct": true, "feedbackPt": "On your right = à direita." },
+      { "labelEn": "It's on your left.", "correct": false, "feedbackPt": "Left ≠ right." },
+      { "labelEn": "Turn straight.", "correct": false, "feedbackPt": "Turn straight não existe." }
+    ]},
+    { "id": "l02-prac-05", "type": "choice", "promptPt": "Block em direções americanas significa:", "options": [
+      { "labelEn": "city block (quarteirão)", "correct": true, "feedbackPt": "Distância entre ruas." },
+      { "labelEn": "building", "correct": false, "feedbackPt": "Building = prédio." },
+      { "labelEn": "traffic light", "correct": false, "feedbackPt": "Traffic light = semáforo." }
+    ]},
+    { "id": "l02-prac-06", "type": "fill_blank", "promptPt": "Complete: Fica ao lado do banco.", "templateEn": "It's next ___ the bank.", "blankLabel": "preposição", "options": [
+      { "labelEn": "to", "correct": true, "feedbackPt": "Next to = ao lado de." },
+      { "labelEn": "from", "correct": false, "feedbackPt": "Next from não existe." },
+      { "labelEn": "at", "correct": false, "feedbackPt": "Next at — incorreto." }
+    ]},
+    { "id": "l02-prac-07", "type": "reorder", "promptPt": "Monte: Vire à direita na esquina.", "tokens": ["corner.", "the", "at", "right", "Turn"], "correctOrder": ["Turn", "right", "at", "the", "corner."], "feedbackCorrectPt": "Turn right at the corner.", "feedbackWrongPt": "Turn + direção + at the corner." },
+    { "id": "l02-prac-08", "type": "dialogue_complete", "promptPt": "Sequência: primeiro em frente, depois esquerda:", "speaker": "Local", "contextEn": "Giving directions to the museum.", "options": [
+      { "labelEn": "Go straight, then turn left.", "correct": true, "feedbackPt": "Sequência lógica." },
+      { "labelEn": "Turn left, then go straight.", "correct": false, "feedbackPt": "Ordem invertida — depende do contexto, mas straight first é comum." },
+      { "labelEn": "Go right, then turn straight.", "correct": false, "feedbackPt": "Turn straight não existe." }
+    ]},
+    { "id": "l02-prac-09", "type": "choice", "promptPt": "Across from significa:", "options": [
+      { "labelEn": "on the opposite side (em frente)", "correct": true, "feedbackPt": "Do outro lado da rua." },
+      { "labelEn": "next to (ao lado)", "correct": false, "feedbackPt": "Next to = ao lado." },
+      { "labelEn": "behind (atrás)", "correct": false, "feedbackPt": "Behind = atrás." }
+    ]},
+    { "id": "l02-prac-10", "type": "dialogue_complete", "promptPt": "Local termina direções com confiança:", "speaker": "Local", "contextEn": "End of directions.", "options": [
+      { "labelEn": "You can't miss it!", "correct": true, "feedbackPt": "Expressão comum — é fácil de achar." },
+      { "labelEn": "You can miss it!", "correct": false, "feedbackPt": "Can't miss = não tem como errar." },
+      { "labelEn": "How much is it?", "correct": false, "feedbackPt": "Preço." }
+    ]}
+  ]
+}

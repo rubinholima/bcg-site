@@ -1,0 +1,133 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 7,
+  "goalPt": "Nomear comidas e bebidas comuns em frases simples — e dizer o que você gosta com I like...",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Almoço de equipe — colegas pedem comida e bebida.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can talk about food and drinks.",
+    "headlinePt": "Você consegue falar de comida e bebida.",
+    "bodyPt": "",
+    "canDo": ["I like coffee.", "I don't like soda.", "Do you want water?", "This is delicious!", "I'm hungry.", "I'm thirsty."],
+    "production": {
+      "introPt": "Conte o que você gosta de comer e beber — duas frases em inglês.",
+      "prompts": [{ "speaker": "Sam", "questionEn": "What do you like to eat and drink?" }],
+      "fields": [
+        { "id": "food", "labelPt": "Comida que você gosta", "prefixEn": "I like", "placeholderEn": "chicken and rice" },
+        { "id": "drink", "labelPt": "Bebida que você gosta", "prefixEn": "I like", "placeholderEn": "water and coffee" }
+      ],
+      "exampleEn": "I like chicken and rice. I like water and coffee."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l01-ctx-01", "type": "intro", "titleEn": "Food & drinks", "titlePt": "Comida e bebida", "bodyPt": "No almoço de equipe, todo mundo fala do que vai comer e beber. Você aprende vocabulário básico e como dizer I like..." },
+      { "id": "l01-ctx-02", "type": "scenario", "settingEn": "Office cafeteria · Lunch break", "scenarioPt": "Sam olha o cardápio e pergunta o que você prefere." },
+      { "id": "l01-ctx-03", "type": "dialogue_choice", "speaker": "Sam", "promptEn": "What do you want to drink?", "promptPt": "Sam pergunta sua bebida.", "options": [
+        { "labelEn": "I'd like water, please.", "correct": true, "feedbackPt": "Resposta educada e clara." },
+        { "labelEn": "I am water.", "correct": false, "feedbackPt": "Am não combina — use I'd like ou I want." },
+        { "labelEn": "Water is good morning.", "correct": false, "feedbackPt": "Frase sem sentido no contexto." }
+      ]},
+      { "id": "l01-ctx-04", "type": "dialogue_choice", "speaker": "Sam", "promptEn": "Do you like coffee?", "promptPt": "Sam pergunta se você gosta de café.", "options": [
+        { "labelEn": "Yes, I like coffee.", "correct": true, "feedbackPt": "I like + substantivo — padrão natural." },
+        { "labelEn": "Yes, I am coffee.", "correct": false, "feedbackPt": "Am descreve identidade, não preferência." },
+        { "labelEn": "Coffee is my name.", "correct": false, "feedbackPt": "Name fala nome, não gosto." }
+      ]},
+      { "id": "l01-ctx-05", "type": "dialogue_choice", "speaker": "Sam", "promptEn": "This sandwich is really good!", "promptPt": "Sam elogia a comida. Como concordar?", "options": [
+        { "labelEn": "Yes, it's delicious!", "correct": true, "feedbackPt": "Delicious = muito gostoso — natural." },
+        { "labelEn": "I'm delicious.", "correct": false, "feedbackPt": "Delicious descreve comida, não a pessoa." },
+        { "labelEn": "Good night!", "correct": false, "feedbackPt": "Good night é despedida — contexto errado." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l01-learn-01", "type": "phrase_examples", "titleEn": "Common drinks", "titlePt": "Bebidas comuns", "introPt": "Vocabulário essencial para pedir ou comentar bebidas.", "examples": [
+        { "en": "water", "pt": "água" }, { "en": "coffee", "pt": "café" }, { "en": "tea", "pt": "chá" },
+        { "en": "juice", "pt": "suco" }, { "en": "soda", "pt": "refrigerante" }, { "en": "milk", "pt": "leite" }
+      ]},
+      { "id": "l01-learn-02", "type": "phrase_examples", "titleEn": "Common foods", "titlePt": "Comidas comuns", "introPt": "Palavras úteis no dia a dia — refeições e lanches.", "examples": [
+        { "en": "bread", "pt": "pão" }, { "en": "rice", "pt": "arroz" }, { "en": "chicken", "pt": "frango" },
+        { "en": "salad", "pt": "salada" }, { "en": "sandwich", "pt": "sanduíche" }, { "en": "fruit", "pt": "fruta" }
+      ]},
+      { "id": "l01-learn-03", "type": "phrase_examples", "titleEn": "I like...", "titlePt": "Eu gosto de...", "introPt": "Use I like + substantivo para preferências. I don't like = não gosto.", "examples": [
+        { "en": "I like coffee.", "pt": "Eu gosto de café." }, { "en": "I like chicken and rice.", "pt": "Gosto de frango e arroz." },
+        { "en": "I don't like soda.", "pt": "Não gosto de refrigerante." }, { "en": "Do you like tea?", "pt": "Você gosta de chá?" }
+      ]},
+      { "id": "l01-learn-04", "type": "comparison", "titleEn": "Hungry vs Thirsty", "titlePt": "Com fome vs com sede", "left": { "labelEn": "HUNGRY · com fome", "exampleEn": "I'm hungry.", "notePt": "Quer comer — use com food, meal, lunch." }, "right": { "labelEn": "THIRSTY · com sede", "exampleEn": "I'm thirsty.", "notePt": "Quer beber — use com water, drink, coffee." }, "modelEn": "I'm hungry — let's get lunch. · I'm thirsty — I need water.", "modelPt": "Hungry = comida; thirsty = bebida." },
+      { "id": "l01-learn-05", "type": "phrase_examples", "titleEn": "Meals", "titlePt": "Refeições", "introPt": "Nomes das refeições do dia — úteis em restaurante e rotina.", "examples": [
+        { "en": "breakfast", "pt": "café da manhã" }, { "en": "lunch", "pt": "almoço" }, { "en": "dinner", "pt": "jantar" },
+        { "en": "a snack", "pt": "um lanche" }
+      ]},
+      { "id": "l01-learn-06", "type": "language_focus", "titleEn": "Delicious / Tasty", "titlePt": "Delicioso / gostoso", "items": [
+        { "formalEn": "This food is very delicious.", "naturalEn": "This is delicious!", "notePt": "Delicious é comum para elogiar comida." },
+        { "formalEn": "It tastes very good.", "naturalEn": "It's really good!", "notePt": "Really good = informal e natural." }
+      ], "tipPt": "It's delicious! ou This is really good! — reações naturais quando a comida é boa." },
+      { "id": "l01-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I like very much coffee.", "rightEn": "I really like coffee. / I like coffee a lot.", "explanationPt": "Em inglês, very much não fica no meio de I like + substantivo. Use really like ou like... a lot." },
+      { "id": "l01-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "water / coffee / juice", "pt": "bebidas" }, { "en": "bread / rice / chicken", "pt": "comidas" },
+        { "en": "I like...", "pt": "gosto de" }, { "en": "I don't like...", "pt": "não gosto" },
+        { "en": "I'm hungry. / I'm thirsty.", "pt": "fome / sede" }, { "en": "It's delicious!", "pt": "está gostoso" }
+      ]}
+    ],
+    "imitate": [{ "id": "l01-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta, pausa curta entre frases.", "phrases": [
+      { "en": "I like coffee." }, { "en": "I like chicken and rice." }, { "en": "I don't like soda." },
+      { "en": "Do you like tea?" }, { "en": "I'm hungry." }, { "en": "I'm thirsty." },
+      { "en": "This is delicious!" }, { "en": "I'd like water, please." }
+    ], "dialogueEn": "What do you want to drink? — I'd like water, please. — Do you like coffee? — Yes, I like coffee. — This sandwich is really good! — Yes, it's delicious!" }],
+    "mission": [{ "id": "l01-miss-01", "type": "mission_intro", "headlineEn": "Your turn — talk about food and drinks.", "headlinePt": "Sua vez — fale de comida e bebida.", "bodyPt": "Sam quer saber suas preferências. Diga o que você gosta de comer e beber.", "prompts": [{ "speaker": "Sam", "questionEn": "What do you like to eat and drink?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l01-prac-01", "type": "choice", "promptPt": "Como dizer 'Eu gosto de café'?", "options": [
+      { "labelEn": "I like coffee.", "correct": true, "feedbackPt": "I like + substantivo — correto." },
+      { "labelEn": "I am coffee.", "correct": false, "feedbackPt": "Am descreve identidade, não gosto." },
+      { "labelEn": "I have coffee like.", "correct": false, "feedbackPt": "Ordem errada — use I like coffee." }
+    ]},
+    { "id": "l01-prac-02", "type": "choice", "promptPt": "Você está com sede. O que dizer?", "options": [
+      { "labelEn": "I'm thirsty.", "correct": true, "feedbackPt": "Thirsty = com sede." },
+      { "labelEn": "I'm hungry.", "correct": false, "feedbackPt": "Hungry = com fome, não sede." },
+      { "labelEn": "I'm tired.", "correct": false, "feedbackPt": "Tired = cansado — contexto diferente." }
+    ]},
+    { "id": "l01-prac-03", "type": "fill_blank", "promptPt": "Complete: Eu não gosto de refrigerante.", "templateEn": "I ___ like soda.", "blankLabel": "negativo", "options": [
+      { "labelEn": "don't", "correct": true, "feedbackPt": "I don't like = não gosto." },
+      { "labelEn": "not", "correct": false, "feedbackPt": "Not sozinho não funciona — use don't." },
+      { "labelEn": "no", "correct": false, "feedbackPt": "No não combina aqui — use don't." }
+    ]},
+    { "id": "l01-prac-04", "type": "reorder", "promptPt": "Monte: Você gosta de chá?", "tokens": ["like", "you", "tea?", "Do"], "correctOrder": ["Do", "you", "like", "tea?"], "feedbackCorrectPt": "Do you like tea? — ordem de pergunta.", "feedbackWrongPt": "Perguntas com like começam com Do you..." },
+    { "id": "l01-prac-05", "type": "dialogue_complete", "promptPt": "Sam: Do you like coffee? — melhor resposta:", "speaker": "You", "contextEn": "Sam: Do you like coffee?", "options": [
+      { "labelEn": "Yes, I like coffee.", "correct": true, "feedbackPt": "Resposta direta e natural." },
+      { "labelEn": "Yes, I am coffee.", "correct": false, "feedbackPt": "Am não expressa gosto." },
+      { "labelEn": "Coffee is my lunch.", "correct": false, "feedbackPt": "Não responde à pergunta sobre gosto." }
+    ]},
+    { "id": "l01-prac-06", "type": "choice", "promptPt": "Qual palavra é uma BEBIDA?", "options": [
+      { "labelEn": "juice", "correct": true, "feedbackPt": "Juice = suco — bebida." },
+      { "labelEn": "bread", "correct": false, "feedbackPt": "Bread = pão — comida." },
+      { "labelEn": "chicken", "correct": false, "feedbackPt": "Chicken = frango — comida." }
+    ]},
+    { "id": "l01-prac-07", "type": "fill_blank", "promptPt": "Complete: Está muito gostoso!", "templateEn": "This is ___!", "blankLabel": "adjetivo", "options": [
+      { "labelEn": "delicious", "correct": true, "feedbackPt": "Delicious = delicioso/gostoso." },
+      { "labelEn": "hungry", "correct": false, "feedbackPt": "Hungry descreve pessoa com fome." },
+      { "labelEn": "thirsty", "correct": false, "feedbackPt": "Thirsty descreve pessoa com sede." }
+    ]},
+    { "id": "l01-prac-08", "type": "reorder", "promptPt": "Monte: Eu gosto de frango e arroz.", "tokens": ["rice.", "like", "I", "chicken", "and"], "correctOrder": ["I", "like", "chicken", "and", "rice."], "feedbackCorrectPt": "I like chicken and rice. — ordem natural.", "feedbackWrongPt": "Comece com I like + substantivos." },
+    { "id": "l01-prac-09", "type": "dialogue_complete", "promptPt": "Alguém elogia a comida. Você concorda:", "speaker": "You", "contextEn": "Friend: This is really good!", "options": [
+      { "labelEn": "Yes, it's delicious!", "correct": true, "feedbackPt": "Concordância natural." },
+      { "labelEn": "I'm delicious.", "correct": false, "feedbackPt": "Delicious descreve comida, não você." },
+      { "labelEn": "Good morning!", "correct": false, "feedbackPt": "Cumprimento — contexto errado." }
+    ]},
+    { "id": "l01-prac-10", "type": "choice", "promptPt": "Qual é o almoço em inglês?", "options": [
+      { "labelEn": "lunch", "correct": true, "feedbackPt": "Lunch = almoço." },
+      { "labelEn": "breakfast", "correct": false, "feedbackPt": "Breakfast = café da manhã." },
+      { "labelEn": "dinner", "correct": false, "feedbackPt": "Dinner = jantar." }
+    ]}
+  ]
+}

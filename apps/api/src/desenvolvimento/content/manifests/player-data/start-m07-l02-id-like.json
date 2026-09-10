@@ -1,0 +1,132 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 7,
+  "goalPt": "Fazer pedidos educados com I'd like... e Can I have...? — sempre com please e thank you.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Café da manhã no hotel — você pede comida e bebida na recepção.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can order politely.",
+    "headlinePt": "Você consegue pedir de forma educada.",
+    "bodyPt": "",
+    "canDo": ["I'd like a coffee, please.", "Can I have some water?", "I want a sandwich.", "For here, please.", "To go, please."],
+    "production": {
+      "introPt": "Peça uma bebida e um lanche de forma educada — duas frases em inglês.",
+      "prompts": [{ "speaker": "Clerk", "questionEn": "What can I get for you?" }],
+      "fields": [
+        { "id": "drink", "labelPt": "Pedido de bebida", "prefixEn": "I'd like", "placeholderEn": "a coffee, please" },
+        { "id": "food", "labelPt": "Pedido de comida", "prefixEn": "Can I have", "placeholderEn": "a sandwich, please?" }
+      ],
+      "exampleEn": "I'd like a coffee, please. Can I have a sandwich, please?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l02-ctx-01", "type": "intro", "titleEn": "I'd like...", "titlePt": "Eu gostaria de...", "bodyPt": "I'd like... é a forma mais educada de pedir comida ou bebida. Can I have...? também funciona — especialmente em lojas e cafés." },
+      { "id": "l02-ctx-02", "type": "scenario", "settingEn": "Hotel breakfast counter · Morning", "scenarioPt": "O atendente pergunta o que você quer. Hora de praticar pedidos educados." },
+      { "id": "l02-ctx-03", "type": "dialogue_choice", "speaker": "Clerk", "promptEn": "What can I get for you?", "promptPt": "Atendente pergunta seu pedido.", "options": [
+        { "labelEn": "I'd like a coffee, please.", "correct": true, "feedbackPt": "Pedido educado e completo." },
+        { "labelEn": "Give me coffee.", "correct": false, "feedbackPt": "Funciona, mas soa rude — prefira I'd like." },
+        { "labelEn": "Coffee is good.", "correct": false, "feedbackPt": "Isso comenta, não pede." }
+      ]},
+      { "id": "l02-ctx-04", "type": "dialogue_choice", "speaker": "Clerk", "promptEn": "Anything else?", "promptPt": "Atendente pergunta se quer mais algo.", "options": [
+        { "labelEn": "Can I have some water, please?", "correct": true, "feedbackPt": "Can I have...? — pedido educado comum." },
+        { "labelEn": "Water is my name.", "correct": false, "feedbackPt": "Não faz sentido como pedido." },
+        { "labelEn": "I water please.", "correct": false, "feedbackPt": "Frase incompleta — falta verbo e estrutura." }
+      ]},
+      { "id": "l02-ctx-05", "type": "dialogue_choice", "speaker": "Clerk", "promptEn": "For here or to go?", "promptPt": "Comer no local ou levar?", "options": [
+        { "labelEn": "To go, please.", "correct": true, "feedbackPt": "To go = para levar." },
+        { "labelEn": "For here, please.", "correct": false, "feedbackPt": "For here também é válido — neste diálogo você prefere levar." },
+        { "labelEn": "Good morning, please.", "correct": false, "feedbackPt": "Não responde à pergunta for here or to go." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l02-learn-01", "type": "phrase_examples", "titleEn": "I'd like...", "titlePt": "Eu gostaria de...", "introPt": "Forma educada e muito comum para pedir — restaurante, café, hotel.", "examples": [
+        { "en": "I'd like a coffee, please.", "pt": "Gostaria de um café." }, { "en": "I'd like the chicken, please.", "pt": "Gostaria do frango." },
+        { "en": "I'd like some water.", "pt": "Gostaria de água." }, { "en": "I'd like a table for two.", "pt": "Mesa para dois." }
+      ]},
+      { "id": "l02-learn-02", "type": "phrase_examples", "titleEn": "Can I have...?", "titlePt": "Posso ter...?", "introPt": "Alternativa educada — comum em cafés, lojas e pedidos rápidos.", "examples": [
+        { "en": "Can I have a sandwich, please?", "pt": "Posso ter um sanduíche?" }, { "en": "Can I have the check, please?", "pt": "A conta, por favor." },
+        { "en": "Can I have some napkins?", "pt": "Guardanapos, por favor." }
+      ]},
+      { "id": "l02-learn-03", "type": "comparison", "titleEn": "I'd like vs I want", "titlePt": "I'd like vs I want", "left": { "labelEn": "I'D LIKE · educado", "exampleEn": "I'd like a coffee, please.", "notePt": "Preferido em restaurantes e serviço." }, "right": { "labelEn": "I WANT · direto", "exampleEn": "I want a coffee.", "notePt": "Funciona, mas pode soar rude com estranhos." }, "modelEn": "I'd like... (polite) · I want... (direct — use with friends)", "modelPt": "Com atendentes, prefira I'd like ou Can I have." },
+      { "id": "l02-learn-04", "type": "phrase_examples", "titleEn": "Please & Thank you", "titlePt": "Por favor e obrigado", "introPt": "Please no final do pedido; thank you quando receber.", "examples": [
+        { "en": "A coffee, please.", "pt": "Um café, por favor." }, { "en": "Thank you!", "pt": "Obrigado!" },
+        { "en": "Thanks!", "pt": "Valeu! (informal)" }, { "en": "You're welcome.", "pt": "De nada." }
+      ]},
+      { "id": "l02-learn-05", "type": "language_focus", "titleEn": "A / An / Some", "titlePt": "Artigos com pedidos", "items": [
+        { "formalEn": "I'd like a coffee.", "naturalEn": "I'd like coffee.", "notePt": "A coffee = uma xícara; coffee sem artigo também ok." },
+        { "formalEn": "Can I have some water?", "naturalEn": "Can I have water?", "notePt": "Some com líquidos não contáveis — water, juice, milk." }
+      ], "tipPt": "A/an com itens contáveis (a sandwich, an apple). Some com não contáveis (some water, some rice)." },
+      { "id": "l02-learn-06", "type": "phrase_examples", "titleEn": "For here / To go", "titlePt": "Comer aqui / para levar", "introPt": "Pergunta comum em cafés e restaurantes rápidos nos EUA.", "examples": [
+        { "en": "For here, please.", "pt": "Para comer aqui." }, { "en": "To go, please.", "pt": "Para levar." },
+        { "en": "For here or to go?", "pt": "Aqui ou para levar?" }
+      ]},
+      { "id": "l02-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I want one coffee, please you.", "rightEn": "I'd like a coffee, please.", "explanationPt": "Please you não existe. Please vai no final: I'd like a coffee, please. Can I have a coffee, please?" },
+      { "id": "l02-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "I'd like..., please.", "pt": "pedido educado" }, { "en": "Can I have...?", "pt": "alternativa educada" },
+        { "en": "Thank you!", "pt": "agradecer" }, { "en": "For here / To go", "pt": "aqui ou levar" }
+      ]}
+    ],
+    "imitate": [{ "id": "l02-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta, pausa curta entre frases.", "phrases": [
+      { "en": "I'd like a coffee, please." }, { "en": "Can I have some water, please?" }, { "en": "I'd like the chicken, please." },
+      { "en": "Can I have a sandwich, please?" }, { "en": "For here, please." }, { "en": "To go, please." },
+      { "en": "Thank you!" }, { "en": "Anything else? — No, thank you." }
+    ], "dialogueEn": "What can I get for you? — I'd like a coffee, please. — Anything else? — Can I have a sandwich, please? — For here or to go? — To go, please. — Thank you!" }],
+    "mission": [{ "id": "l02-miss-01", "type": "mission_intro", "headlineEn": "Your turn — order politely.", "headlinePt": "Sua vez — peça de forma educada.", "bodyPt": "O atendente pergunta seu pedido. Use I'd like e Can I have com please.", "prompts": [{ "speaker": "Clerk", "questionEn": "What can I get for you?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l02-prac-01", "type": "choice", "promptPt": "Forma mais educada de pedir um café:", "options": [
+      { "labelEn": "I'd like a coffee, please.", "correct": true, "feedbackPt": "Educado e natural." },
+      { "labelEn": "Give me coffee now.", "correct": false, "feedbackPt": "Soa rude — evite com estranhos." },
+      { "labelEn": "Coffee I want.", "correct": false, "feedbackPt": "Ordem errada em inglês." }
+    ]},
+    { "id": "l02-prac-02", "type": "fill_blank", "promptPt": "Complete o pedido educado:", "templateEn": "Can I ___ a sandwich, please?", "blankLabel": "verbo", "options": [
+      { "labelEn": "have", "correct": true, "feedbackPt": "Can I have...? — padrão fixo." },
+      { "labelEn": "want", "correct": false, "feedbackPt": "Can I want não é natural — use have." },
+      { "labelEn": "like", "correct": false, "feedbackPt": "Can I like não funciona para pedir." }
+    ]},
+    { "id": "l02-prac-03", "type": "reorder", "promptPt": "Monte: Gostaria de um chá, por favor.", "tokens": ["please.", "like", "I'd", "tea,", "a"], "correctOrder": ["I'd", "like", "a", "tea,", "please."], "feedbackCorrectPt": "I'd like a tea, please.", "feedbackWrongPt": "Comece com I'd like..." },
+    { "id": "l02-prac-04", "type": "dialogue_complete", "promptPt": "Clerk: For here or to go? — você quer levar:", "speaker": "You", "contextEn": "Clerk: For here or to go?", "options": [
+      { "labelEn": "To go, please.", "correct": true, "feedbackPt": "To go = para levar." },
+      { "labelEn": "Good night!", "correct": false, "feedbackPt": "Despedida — não responde à pergunta." },
+      { "labelEn": "I'm hungry.", "correct": false, "feedbackPt": "Não responde for here or to go." }
+    ]},
+    { "id": "l02-prac-05", "type": "choice", "promptPt": "Depois de receber o pedido, você diz:", "options": [
+      { "labelEn": "Thank you!", "correct": true, "feedbackPt": "Agradecimento natural." },
+      { "labelEn": "Please you!", "correct": false, "feedbackPt": "Please you não existe." },
+      { "labelEn": "I'd like!", "correct": false, "feedbackPt": "I'd like abre pedido, não agradece." }
+    ]},
+    { "id": "l02-prac-06", "type": "fill_blank", "promptPt": "Complete: Posso ter água?", "templateEn": "Can I have ___ water?", "blankLabel": "quantificador", "options": [
+      { "labelEn": "some", "correct": true, "feedbackPt": "Some water — líquido não contável." },
+      { "labelEn": "a", "correct": false, "feedbackPt": "A water soa estranho — use some water ou a bottle of water." },
+      { "labelEn": "many", "correct": false, "feedbackPt": "Many com water não combina." }
+    ]},
+    { "id": "l02-prac-07", "type": "reorder", "promptPt": "Monte: Um café, por favor.", "tokens": ["please.", "coffee,", "A"], "correctOrder": ["A", "coffee,", "please."], "feedbackCorrectPt": "A coffee, please. — pedido curto e educado.", "feedbackWrongPt": "Ordem: artigo + item + please." },
+    { "id": "l02-prac-08", "type": "dialogue_complete", "promptPt": "Clerk: Anything else? — você não quer mais nada:", "speaker": "You", "contextEn": "Clerk: Anything else?", "options": [
+      { "labelEn": "No, thank you.", "correct": true, "feedbackPt": "Resposta educada e completa." },
+      { "labelEn": "Yes, I'm coffee.", "correct": false, "feedbackPt": "Frase sem sentido." },
+      { "labelEn": "For here, please.", "correct": false, "feedbackPt": "Não responde anything else." }
+    ]},
+    { "id": "l02-prac-09", "type": "choice", "promptPt": "I'd like é contração de:", "options": [
+      { "labelEn": "I would like", "correct": true, "feedbackPt": "I'd = I would — condicional educado." },
+      { "labelEn": "I will like", "correct": false, "feedbackPt": "Would, não will." },
+      { "labelEn": "I was like", "correct": false, "feedbackPt": "Was like não é pedido." }
+    ]},
+    { "id": "l02-prac-10", "type": "dialogue_complete", "promptPt": "Clerk: What can I get for you? — pedido completo:", "speaker": "You", "contextEn": "Clerk: What can I get for you?", "options": [
+      { "labelEn": "I'd like a coffee and a sandwich, please.", "correct": true, "feedbackPt": "Pedido educado e claro." },
+      { "labelEn": "Coffee sandwich is good.", "correct": false, "feedbackPt": "Comenta, não pede." },
+      { "labelEn": "How are you?", "correct": false, "feedbackPt": "Pergunta social — contexto errado." }
+    ]}
+  ]
+}

@@ -1,0 +1,360 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 2,
+  "goalPt": "Soletrar nome e palavras com o alfabeto — Can you spell that?, How do you spell...?, letras A–Z.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Recepção pede para soletrar seu sobrenome no cadastro.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta e repita cada frase.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can spell your name in English.",
+    "headlinePt": "Você consegue soletrar seu nome em inglês.",
+    "bodyPt": "",
+    "canDo": [
+      "Can you spell that?",
+      "How do you spell your last name?",
+      "Sure. S-I-L-V-A.",
+      "That's S as in Sam."
+    ],
+    "production": {
+      "introPt": "A recepcionista pediu para soletrar seu sobrenome. Responda em inglês — use seu sobrenome real ou Silva de prática.",
+      "prompts": [
+        { "speaker": "Reception", "questionEn": "Can you spell your last name?" },
+        { "speaker": "Reception", "questionEn": "How do you spell that?" }
+      ],
+      "fields": [
+        { "id": "spellLastName", "labelPt": "Soletrar sobrenome", "prefixEn": "Sure.", "placeholderEn": "S-I-L-V-A." },
+        { "id": "clarifyLetter", "labelPt": "Esclarecer uma letra", "prefixEn": "", "placeholderEn": "That's S as in Sam." }
+      ],
+      "exampleEn": "Can you spell your last name? — Sure. S-I-L-V-A. — Is that S as in Sam? — Yes. S as in Sam."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "l03-ctx-01",
+        "type": "intro",
+        "titleEn": "Can you spell that?",
+        "titlePt": "Pode soletrar?",
+        "bodyPt": "Em cadastros, recepção, banco, clínica ou hotel — nomes brasileiros muitas vezes precisam ser soletrados. Nesta lição: alfabeto, pedir e dar spelling em inglês americano."
+      },
+      {
+        "id": "l03-ctx-02",
+        "type": "scenario",
+        "settingEn": "Building reception · Visitor check-in",
+        "scenarioPt": "Você chega para uma reunião. A recepcionista precisa cadastrar seu nome no sistema — e pede o spelling do sobrenome."
+      },
+      {
+        "id": "l03-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Reception",
+        "promptEn": "Can you spell your last name?",
+        "promptPt": "Recepção pede spelling do sobrenome. Como responder?",
+        "options": [
+          { "labelEn": "Sure. S-I-L-V-A.", "correct": true, "feedbackPt": "Sure + letras separadas por hífen — padrão claro." },
+          { "labelEn": "My name is Carlos.", "correct": false, "feedbackPt": "Nome completo — ela pediu spelling, letra por letra." },
+          { "labelEn": "I live in Boston.", "correct": false, "feedbackPt": "Moradia — não responde spelling." }
+        ]
+      },
+      {
+        "id": "l03-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Reception",
+        "promptEn": "How do you spell that?",
+        "promptPt": "Outra forma comum de pedir spelling. Resposta equivalente:",
+        "options": [
+          { "labelEn": "S-I-L-V-A.", "correct": true, "feedbackPt": "Letras separadas — direto ao ponto." },
+          { "labelEn": "Silva.", "correct": false, "feedbackPt": "Pronúncia, não spelling — ela precisa das letras." },
+          { "labelEn": "I'm Brazilian.", "correct": false, "feedbackPt": "Nacionalidade — não soletra." }
+        ]
+      },
+      {
+        "id": "l03-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Reception",
+        "promptEn": "Is that S as in Sam or F as in Frank?",
+        "promptPt": "Letras parecidas (S/F) — recepção pede confirmação. Como esclarecer?",
+        "options": [
+          { "labelEn": "S as in Sam.", "correct": true, "feedbackPt": "X as in [palavra] — técnica padrão para clareza." },
+          { "labelEn": "Yes, the first one.", "correct": false, "feedbackPt": "Funciona, mas S as in Sam é mais claro por telefone/cadastro." },
+          { "labelEn": "Spell again.", "correct": false, "feedbackPt": "Não responde — você deve esclarecer a letra." }
+        ]
+      },
+      {
+        "id": "l03-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Can you spell that?",
+        "promptPt": "Agora você não entendeu o sobrenome de alguém. Qual pergunta usar?",
+        "options": [
+          { "labelEn": "Can you spell that?", "correct": true, "feedbackPt": "Pedido direto e educado." },
+          { "labelEn": "How old are you?", "correct": false, "feedbackPt": "Pergunta idade, não spelling." },
+          { "labelEn": "What's your number?", "correct": false, "feedbackPt": "Pergunta telefone, não spelling." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "l03-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Asking for spelling",
+        "titlePt": "Pedir soletração",
+        "introPt": "Use quando não entendeu um nome ou palavra — muito comum em cadastros.",
+        "examples": [
+          { "en": "Can you spell that?", "pt": "pode soletrar?" },
+          { "en": "How do you spell your last name?", "pt": "sobrenome" },
+          { "en": "How do you spell your first name?", "pt": "nome" },
+          { "en": "Could you spell it for me?", "pt": "mais formal" }
+        ]
+      },
+      {
+        "id": "l03-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Giving spelling",
+        "titlePt": "Soletrar",
+        "introPt": "Responda com letras separadas por hífen ou pausa. Comece com Sure se quiser.",
+        "examples": [
+          { "en": "Sure. S-I-L-V-A.", "pt": "sobrenome Silva" },
+          { "en": "C-A-R-L-O-S.", "pt": "nome Carlos" },
+          { "en": "That's M as in Mike.", "pt": "esclarecer letra" },
+          { "en": "B as in Boston.", "pt": "alternativa comum" }
+        ]
+      },
+      {
+        "id": "l03-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Alphabet A–M",
+        "titlePt": "Alfabeto A–M",
+        "introPt": "Pronúncia americana — pratique em voz alta.",
+        "examples": [
+          { "en": "A · B · C · D · E · F · G", "pt": "A a G" },
+          { "en": "H · I · J · K · L · M", "pt": "H a M" },
+          { "en": "G = gee (not 'jee')", "pt": "G americano" },
+          { "en": "H = aitch", "pt": "H — atenção à pronúncia" }
+        ]
+      },
+      {
+        "id": "l03-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Alphabet N–Z",
+        "titlePt": "Alfabeto N–Z",
+        "introPt": "Segunda metade — letras que confundem brasileiros: R, W, Y.",
+        "examples": [
+          { "en": "N · O · P · Q · R · S · T", "pt": "N a T" },
+          { "en": "U · V · W · X · Y · Z", "pt": "U a Z" },
+          { "en": "W = double-u", "pt": "W — não 'vé double'" },
+          { "en": "Z = zee (US) / zed (UK)", "pt": "Z americano = zee" }
+        ]
+      },
+      {
+        "id": "l03-learn-05",
+        "type": "language_focus",
+        "titleEn": "X as in [word]",
+        "titlePt": "X de [palavra]",
+        "items": [
+          { "formalEn": "S.", "naturalEn": "S as in Sam.", "notePt": "Esclarece letras parecidas — S/F, M/N, B/D." },
+          { "formalEn": "M.", "naturalEn": "M as in Mike. / M as in Mary.", "notePt": "Palavras comuns: Sam, Mike, Boston, David." }
+        ],
+        "tipPt": "Em telefone ou barulho, sempre use as in [word] para letras ambíguas."
+      },
+      {
+        "id": "l03-learn-06",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "My name is C-A-R-L-O-S Silva. (mixing spelling with full name)",
+        "rightEn": "Sure. S-I-L-V-A.",
+        "explanationPt": "Quando pedem spell, dê só as letras — não repita o nome inteiro falado. Separe: 'My name is Carlos Silva' vs 'Can you spell your last name? — S-I-L-V-A.'"
+      },
+      {
+        "id": "l03-learn-07",
+        "type": "vocabulary",
+        "titleEn": "Spelling words",
+        "titlePt": "Palavras úteis",
+        "words": [
+          { "en": "spell", "pt": "soletrar", "exampleEn": "Can you spell that?" },
+          { "en": "letter", "pt": "letra", "exampleEn": "What letter is that?" },
+          { "en": "last name", "pt": "sobrenome", "exampleEn": "How do you spell your last name?" },
+          { "en": "first name", "pt": "nome", "exampleEn": "How do you spell your first name?" },
+          { "en": "repeat", "pt": "repetir", "exampleEn": "Can you repeat the spelling?" }
+        ]
+      },
+      {
+        "id": "l03-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "Can you spell that?", "pt": "pedir spelling" },
+          { "en": "How do you spell your last name?", "pt": "sobrenome" },
+          { "en": "Sure. S-I-L-V-A.", "pt": "responder" },
+          { "en": "S as in Sam.", "pt": "esclarecer letra" },
+          { "en": "A–Z alphabet", "pt": "alfabeto completo" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l03-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia em voz alta. Soletrar devagar, letra por letra.",
+        "phrases": [
+          { "en": "Can you spell that?" },
+          { "en": "How do you spell your last name?" },
+          { "en": "Sure. S-I-L-V-A." },
+          { "en": "C-A-R-L-O-S." },
+          { "en": "S as in Sam." },
+          { "en": "M as in Mike." },
+          { "en": "B as in Boston." },
+          { "en": "A, B, C, D, E, F, G." }
+        ],
+        "dialogueEn": "Can you spell your last name? — Sure. S-I-L-V-A. — Is that S as in Sam? — Yes. S as in Sam."
+      }
+    ],
+    "mission": [
+      {
+        "id": "l03-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — spell your name.",
+        "headlinePt": "Sua vez — soletrar seu nome.",
+        "bodyPt": "Recepção pediu spelling do sobrenome. Responda com letras claras em inglês.",
+        "prompts": [
+          { "speaker": "Reception", "questionEn": "Can you spell your last name?" },
+          { "speaker": "Reception", "questionEn": "How do you spell that?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "l03-prac-01",
+      "type": "choice",
+      "promptPt": "Recepção pede spelling — melhor resposta:",
+      "options": [
+        { "labelEn": "Sure. S-I-L-V-A.", "correct": true, "feedbackPt": "Letras separadas — padrão claro." },
+        { "labelEn": "My name is Silva.", "correct": false, "feedbackPt": "Pronúncia, não spelling letra a letra." },
+        { "labelEn": "I'm 30 years old.", "correct": false, "feedbackPt": "Idade — não responde spelling." }
+      ]
+    },
+    {
+      "id": "l03-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete o pedido de soletração:",
+      "templateEn": "Can you ___ that?",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "spell", "correct": true, "feedbackPt": "Can you spell that? — padrão fixo." },
+        { "labelEn": "say", "correct": false, "feedbackPt": "Say that pede repetição falada, não letras." },
+        { "labelEn": "tell", "correct": false, "feedbackPt": "Tell that não é o padrão para spelling." }
+      ]
+    },
+    {
+      "id": "l03-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta sobre sobrenome:",
+      "tokens": ["name?", "last", "spell", "you", "do", "How", "your"],
+      "correctOrder": ["How", "do", "you", "spell", "your", "last", "name?"],
+      "feedbackCorrectPt": "How do you spell your last name? — ordem natural.",
+      "feedbackWrongPt": "A ordem correta é How + do + you + spell + your + last + name?"
+    },
+    {
+      "id": "l03-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Você não entendeu um sobrenome — pergunta:",
+      "speaker": "You",
+      "contextEn": "Colleague: My last name is Nguyen.",
+      "options": [
+        { "labelEn": "Can you spell that?", "correct": true, "feedbackPt": "Pedido educado e direto." },
+        { "labelEn": "What's your number?", "correct": false, "feedbackPt": "Pergunta telefone." },
+        { "labelEn": "How old are you?", "correct": false, "feedbackPt": "Pergunta idade." }
+      ]
+    },
+    {
+      "id": "l03-prac-05",
+      "type": "choice",
+      "promptPt": "Esclarecer a letra S (não F):",
+      "options": [
+        { "labelEn": "S as in Sam.", "correct": true, "feedbackPt": "Técnica padrão X as in [word]." },
+        { "labelEn": "S like yes.", "correct": false, "feedbackPt": "Confuso — use palavra conhecida." },
+        { "labelEn": "The snake letter.", "correct": false, "feedbackPt": "Informal demais para cadastro." }
+      ]
+    },
+    {
+      "id": "l03-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete — esclarecer letra M:",
+      "templateEn": "M as ___ Mike.",
+      "blankLabel": "preposição",
+      "options": [
+        { "labelEn": "in", "correct": true, "feedbackPt": "M as in Mike — padrão fixo." },
+        { "labelEn": "on", "correct": false, "feedbackPt": "As in, não as on." },
+        { "labelEn": "at", "correct": false, "feedbackPt": "As in, não as at." }
+      ]
+    },
+    {
+      "id": "l03-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte o spelling de CARLOS:",
+      "tokens": ["C-A-R-L-O-S.", "Sure."],
+      "correctOrder": ["Sure.", "C-A-R-L-O-S."],
+      "feedbackCorrectPt": "Sure. C-A-R-L-O-S. — educado e claro.",
+      "feedbackWrongPt": "Comece com Sure (opcional) + letras separadas."
+    },
+    {
+      "id": "l03-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Recepção: How do you spell that? — você responde:",
+      "speaker": "You",
+      "contextEn": "Reception: How do you spell that?",
+      "options": [
+        { "labelEn": "S-I-L-V-A.", "correct": true, "feedbackPt": "Spelling direto." },
+        { "labelEn": "Silva.", "correct": false, "feedbackPt": "Ela quer letras, não pronúncia." },
+        { "labelEn": "I am Silva.", "correct": false, "feedbackPt": "Identidade, não spelling." }
+      ]
+    },
+    {
+      "id": "l03-prac-09",
+      "type": "choice",
+      "promptPt": "Letra W em inglês americano se chama:",
+      "options": [
+        { "labelEn": "double-u", "correct": true, "feedbackPt": "W = double-u nos EUA." },
+        { "labelEn": "double-v", "correct": false, "feedbackPt": "Double-v não é o nome em inglês." },
+        { "labelEn": "dub-u", "correct": false, "feedbackPt": "Abreviação informal — o correto é double-u." }
+      ]
+    },
+    {
+      "id": "l03-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Complete — pedir spelling do nome:",
+      "templateEn": "How do you spell your ___ name?",
+      "blankLabel": "tipo",
+      "options": [
+        { "labelEn": "first", "correct": true, "feedbackPt": "First name = nome · last name = sobrenome." },
+        { "labelEn": "good", "correct": false, "feedbackPt": "Good name não existe neste contexto." },
+        { "labelEn": "full", "correct": false, "feedbackPt": "Full name pede nome inteiro, não spelling típico." }
+      ]
+    }
+  ]
+}

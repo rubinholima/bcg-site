@@ -1,0 +1,732 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 8,
+  "goalPt": "Revisão cumulativa — simular chegada, hotel, direções e aeroporto com todo o vocabulário do Módulo 8.",
+  "steps": [
+    {
+      "id": "context",
+      "label": "Context",
+      "labelPt": "Contexto"
+    },
+    {
+      "id": "learn",
+      "label": "Learn",
+      "labelPt": "Aprenda"
+    },
+    {
+      "id": "imitate",
+      "label": "Read & Repeat",
+      "labelPt": "Leia e repita"
+    },
+    {
+      "id": "practice",
+      "label": "Practice",
+      "labelPt": "Pratique"
+    },
+    {
+      "id": "verify",
+      "label": "Verify",
+      "labelPt": "Verifique"
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "labelPt": "Missão"
+    }
+  ],
+  "context": {
+    "scenarioPt": "Desafio do módulo — viagem completa: aeroporto → hotel → cidade → restaurante com reserva.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia o diálogo completo em voz alta.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "Complete a travel scenario.",
+    "headlinePt": "Complete um cenário de viagem.",
+    "bodyPt": "",
+    "canDo": [
+      "Where is the hotel?",
+      "Go straight, then turn left.",
+      "I have a reservation under Silva.",
+      "Here's my boarding pass.",
+      "How do I get to downtown?"
+    ],
+    "production": {
+      "introPt": "Simule viagem completa: check-in no hotel, pergunta de direção e confirmação de reserva no restaurante. Use só vocabulário do Módulo 8.",
+      "prompts": [
+        {
+          "speaker": "Receptionist",
+          "questionEn": "Good evening! How can I help you?"
+        },
+        {
+          "speaker": "Local",
+          "questionEn": "Can I help you?"
+        },
+        {
+          "speaker": "Host",
+          "questionEn": "Do you have a reservation?"
+        }
+      ],
+      "fields": [
+        {
+          "id": "hotel",
+          "labelPt": "Check-in hotel",
+          "prefixEn": "",
+          "placeholderEn": "I have a reservation under Silva. Check-in, please."
+        },
+        {
+          "id": "directions",
+          "labelPt": "Perguntar direção",
+          "prefixEn": "",
+          "placeholderEn": "Excuse me, where is the subway station?"
+        },
+        {
+          "id": "restaurant",
+          "labelPt": "Reserva restaurante",
+          "prefixEn": "",
+          "placeholderEn": "Yes, reservation under Silva. Party of two at 7 PM."
+        }
+      ],
+      "exampleEn": "I have a reservation under Silva. Check-in, please. — Excuse me, where is the subway? — Go straight two blocks. — Do you have a reservation? — Yes, under Silva, party of two."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "l07-ctx-01",
+        "type": "intro",
+        "titleEn": "Travel challenge",
+        "titlePt": "Desafio de viagem",
+        "bodyPt": "Junte tudo: localização, direções, transporte, hotel, aeroporto e reserva — fluxo real de viagem."
+      },
+      {
+        "id": "l07-ctx-02",
+        "type": "scenario",
+        "settingEn": "Airport → Hotel → City → Restaurant",
+        "scenarioPt": "Dia de chegada até jantar com reserva — passo a passo."
+      },
+      {
+        "id": "l07-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Receptionist",
+        "promptEn": "Good evening! Do you have a reservation?",
+        "promptPt": "Passo 1 — hotel.",
+        "options": [
+          {
+            "labelEn": "Yes, I have a reservation under Silva. Check-in, please.",
+            "correct": true,
+            "feedbackPt": "Check-in completo."
+          },
+          {
+            "labelEn": "I'd like the chicken, please.",
+            "correct": false,
+            "feedbackPt": "M7 — restaurante."
+          },
+          {
+            "labelEn": "How much is this shirt?",
+            "correct": false,
+            "feedbackPt": "M7 — compras."
+          }
+        ]
+      },
+      {
+        "id": "l07-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Local",
+        "promptEn": "The subway? Go straight two blocks, then turn right.",
+        "promptPt": "Passo 2 — direções.",
+        "options": [
+          {
+            "labelEn": "Thank you! Go straight, then turn right — got it.",
+            "correct": true,
+            "feedbackPt": "Confirma que entendeu."
+          },
+          {
+            "labelEn": "Can I have the check?",
+            "correct": false,
+            "feedbackPt": "M7 — conta."
+          },
+          {
+            "labelEn": "Two bottles of water.",
+            "correct": false,
+            "feedbackPt": "M7 — quantidades."
+          }
+        ]
+      },
+      {
+        "id": "l07-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Host",
+        "promptEn": "Do you have a reservation?",
+        "promptPt": "Passo 3 — restaurante.",
+        "options": [
+          {
+            "labelEn": "Yes, under Silva. Party of two at 7 PM.",
+            "correct": true,
+            "feedbackPt": "Reserva confirmada."
+          },
+          {
+            "labelEn": "Here's my boarding pass.",
+            "correct": false,
+            "feedbackPt": "Aeroporto — contexto errado."
+          },
+          {
+            "labelEn": "Where is gate B12?",
+            "correct": false,
+            "feedbackPt": "Aeroporto — contexto errado."
+          }
+        ]
+      },
+      {
+        "id": "l08-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Agent",
+        "promptEn": "Boarding pass, please.",
+        "promptPt": "Passo 4 — aeroporto.",
+        "options": [
+          {
+            "labelEn": "Here's my boarding pass.",
+            "correct": true,
+            "feedbackPt": "Entrega do cartão de embarque."
+          },
+          {
+            "labelEn": "I have a reservation under Silva.",
+            "correct": false,
+            "feedbackPt": "Hotel — contexto errado."
+          },
+          {
+            "labelEn": "I'd like a coffee.",
+            "correct": false,
+            "feedbackPt": "Restaurante — M7."
+          }
+        ]
+      },
+      {
+        "id": "l08-ctx-07",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "Excuse me, where is the subway station?",
+        "promptPt": "Passo 5 — pedir direção na cidade.",
+        "options": [
+          {
+            "labelEn": "Excuse me, where is the subway station?",
+            "correct": true,
+            "feedbackPt": "Pergunta de localização educada."
+          },
+          {
+            "labelEn": "How much is the subway?",
+            "correct": false,
+            "feedbackPt": "Preço — M7."
+          },
+          {
+            "labelEn": "What do you do?",
+            "correct": false,
+            "feedbackPt": "Trabalho — M1."
+          }
+        ]
+      },
+      {
+        "id": "l08-ctx-08",
+        "type": "scenario",
+        "settingEn": "Travel day complete",
+        "scenarioPt": "Aeroporto → hotel → direções → reserva. Fluxo completo do Módulo 8."
+      }
+    ],
+    "learn": [
+      {
+        "id": "l07-learn-01",
+        "type": "review",
+        "titleEn": "Module 8 review",
+        "titlePt": "Revisão Módulo 8",
+        "items": [
+          {
+            "en": "Where is the...?",
+            "pt": "localização"
+          },
+          {
+            "en": "Go straight / Turn left",
+            "pt": "direções"
+          },
+          {
+            "en": "Take the subway.",
+            "pt": "transporte"
+          },
+          {
+            "en": "Check-in / checkout",
+            "pt": "hotel"
+          },
+          {
+            "en": "boarding pass / gate",
+            "pt": "aeroporto"
+          },
+          {
+            "en": "reservation under...",
+            "pt": "reserva"
+          }
+        ]
+      },
+      {
+        "id": "l07-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Travel day flow",
+        "titlePt": "Fluxo do dia de viagem",
+        "introPt": "Sequência típica.",
+        "examples": [
+          {
+            "en": "Airport: boarding pass, gate, security",
+            "pt": "aeroporto"
+          },
+          {
+            "en": "Hotel: reservation, check-in, room key",
+            "pt": "hotel"
+          },
+          {
+            "en": "City: Where is...? / Go straight",
+            "pt": "cidade"
+          },
+          {
+            "en": "Restaurant: reservation under...",
+            "pt": "jantar"
+          }
+        ]
+      },
+      {
+        "id": "l08-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Airport essentials",
+        "titlePt": "Essencial no aeroporto",
+        "introPt": "Frases fixas — memorize o fluxo.",
+        "examples": [
+          {
+            "en": "Here's my boarding pass.",
+            "pt": "embarque"
+          },
+          {
+            "en": "Where is gate B12?",
+            "pt": "portão"
+          },
+          {
+            "en": "Is the flight on time?",
+            "pt": "horário do voo"
+          },
+          {
+            "en": "Where is security?",
+            "pt": "segurança"
+          }
+        ]
+      },
+      {
+        "id": "l08-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Hotel & reservation",
+        "titlePt": "Hotel e reserva",
+        "examples": [
+          {
+            "en": "I have a reservation under Silva.",
+            "pt": "check-in"
+          },
+          {
+            "en": "What time is checkout?",
+            "pt": "saída"
+          },
+          {
+            "en": "Party of two at 7 PM.",
+            "pt": "restaurante"
+          },
+          {
+            "en": "Could I have a late checkout?",
+            "pt": "pedido extra"
+          }
+        ]
+      },
+      {
+        "id": "l08-learn-05",
+        "type": "comparison",
+        "titleEn": "Where is vs How do I get to",
+        "titlePt": "Where is vs How do I get to",
+        "left": {
+          "labelEn": "Where is the hotel?",
+          "exampleEn": "Where is the hotel?",
+          "notePt": "localização fixa"
+        },
+        "right": {
+          "labelEn": "How do I get to downtown?",
+          "exampleEn": "How do I get to downtown?",
+          "notePt": "rota / caminho"
+        },
+        "modelEn": "Go straight two blocks, then turn right.",
+        "modelPt": "Depois de where/how, espere direções passo a passo."
+      },
+      {
+        "id": "l08-learn-06",
+        "type": "review",
+        "titleEn": "Challenge checklist",
+        "titlePt": "Checklist do desafio",
+        "items": [
+          {
+            "en": "Where is the...?",
+            "pt": "localizar"
+          },
+          {
+            "en": "Go straight / Turn left",
+            "pt": "direções"
+          },
+          {
+            "en": "Take the subway.",
+            "pt": "transporte"
+          },
+          {
+            "en": "Check-in, please.",
+            "pt": "hotel"
+          },
+          {
+            "en": "Here's my boarding pass.",
+            "pt": "aeroporto"
+          },
+          {
+            "en": "Reservation under Silva.",
+            "pt": "reserva"
+          }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l07-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio — leia o cenário completo.",
+        "phrases": [
+          {
+            "en": "Here's my boarding pass."
+          },
+          {
+            "en": "Where is gate B12?"
+          },
+          {
+            "en": "I have a reservation under Silva."
+          },
+          {
+            "en": "Where is the subway?"
+          },
+          {
+            "en": "Go straight, then turn right."
+          },
+          {
+            "en": "Party of two at 7 PM."
+          }
+        ],
+        "dialogueEn": "Boarding pass, please. — Here's my boarding pass. — I have a reservation under Silva. Check-in, please. — Where is the subway? — Go straight two blocks, turn right. — Do you have a reservation? — Yes, under Silva, party of two at 7."
+      }
+    ],
+    "mission": [
+      {
+        "id": "l07-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — full travel challenge.",
+        "headlinePt": "Sua vez — desafio completo.",
+        "bodyPt": "Simule hotel + direção + reserva no restaurante.",
+        "prompts": [
+          {
+            "speaker": "Receptionist",
+            "questionEn": "Good evening! How can I help you?"
+          },
+          {
+            "speaker": "Host",
+            "questionEn": "Do you have a reservation?"
+          }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "l07-prac-01",
+      "type": "choice",
+      "promptPt": "Onde fica o hotel?",
+      "options": [
+        {
+          "labelEn": "Where is the hotel?",
+          "correct": true,
+          "feedbackPt": "M8 — localização."
+        },
+        {
+          "labelEn": "How much is the hotel?",
+          "correct": false,
+          "feedbackPt": "Preço — M7."
+        },
+        {
+          "labelEn": "I'd like the hotel.",
+          "correct": false,
+          "feedbackPt": "Pedido — não pergunta."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-02",
+      "type": "dialogue_complete",
+      "promptPt": "Direção: siga em frente e vire à esquerda:",
+      "speaker": "Local",
+      "contextEn": "Giving directions.",
+      "options": [
+        {
+          "labelEn": "Go straight, then turn left.",
+          "correct": true,
+          "feedbackPt": "Sequência correta."
+        },
+        {
+          "labelEn": "Go left, then turn straight.",
+          "correct": false,
+          "feedbackPt": "Turn straight não existe."
+        },
+        {
+          "labelEn": "Can I try it on?",
+          "correct": false,
+          "feedbackPt": "M7 — loja."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-03",
+      "type": "fill_blank",
+      "promptPt": "Complete: Pegue o metrô.",
+      "templateEn": "Take ___ subway.",
+      "blankLabel": "artigo",
+      "options": [
+        {
+          "labelEn": "the",
+          "correct": true,
+          "feedbackPt": "Take the subway."
+        },
+        {
+          "labelEn": "a",
+          "correct": false,
+          "feedbackPt": "Menos comum."
+        },
+        {
+          "labelEn": "an",
+          "correct": false,
+          "feedbackPt": "Incorreto."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte: Tenho reserva em nome de Silva.",
+      "tokens": [
+        "Silva.",
+        "under",
+        "reservation",
+        "a",
+        "have",
+        "I"
+      ],
+      "correctOrder": [
+        "I",
+        "have",
+        "a",
+        "reservation",
+        "under",
+        "Silva."
+      ],
+      "feedbackCorrectPt": "I have a reservation under Silva.",
+      "feedbackWrongPt": "I have a reservation under + nome."
+    },
+    {
+      "id": "l07-prac-05",
+      "type": "choice",
+      "promptPt": "No aeroporto — cartão de embarque:",
+      "options": [
+        {
+          "labelEn": "boarding pass",
+          "correct": true,
+          "feedbackPt": "Termo correto."
+        },
+        {
+          "labelEn": "room key",
+          "correct": false,
+          "feedbackPt": "Hotel."
+        },
+        {
+          "labelEn": "receipt",
+          "correct": false,
+          "feedbackPt": "Recibo de compra."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-06",
+      "type": "dialogue_complete",
+      "promptPt": "Hotel — perguntar checkout:",
+      "speaker": "You",
+      "contextEn": "At reception after check-in.",
+      "options": [
+        {
+          "labelEn": "What time is checkout?",
+          "correct": true,
+          "feedbackPt": "Pergunta comum."
+        },
+        {
+          "labelEn": "What time is boarding?",
+          "correct": false,
+          "feedbackPt": "Boarding = embarque avião."
+        },
+        {
+          "labelEn": "What time is the check?",
+          "correct": false,
+          "feedbackPt": "Check = conta restaurante."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-07",
+      "type": "fill_blank",
+      "promptPt": "Complete: O voo está no horário?",
+      "templateEn": "Is the flight on ___?",
+      "blankLabel": "palavra",
+      "options": [
+        {
+          "labelEn": "time",
+          "correct": true,
+          "feedbackPt": "On time = no horário."
+        },
+        {
+          "labelEn": "gate",
+          "correct": false,
+          "feedbackPt": "Gate = portão."
+        },
+        {
+          "labelEn": "board",
+          "correct": false,
+          "feedbackPt": "On board = a bordo."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "Restaurante — confirmar reserva:",
+      "speaker": "You",
+      "contextEn": "Host: Do you have a reservation?",
+      "options": [
+        {
+          "labelEn": "Yes, under Silva. Party of two.",
+          "correct": true,
+          "feedbackPt": "Confirmação completa."
+        },
+        {
+          "labelEn": "Yes, go straight.",
+          "correct": false,
+          "feedbackPt": "Direção."
+        },
+        {
+          "labelEn": "Yes, two bottles.",
+          "correct": false,
+          "feedbackPt": "M7 — quantidades."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte: Onde fica o ponto de ônibus?",
+      "tokens": [
+        "stop?",
+        "bus",
+        "the",
+        "is",
+        "Where"
+      ],
+      "correctOrder": [
+        "Where",
+        "is",
+        "the",
+        "bus",
+        "stop?"
+      ],
+      "feedbackCorrectPt": "Where is the bus stop?",
+      "feedbackWrongPt": "Where is the bus stop?"
+    },
+    {
+      "id": "l07-prac-10",
+      "type": "choice",
+      "promptPt": "Party of two significa:",
+      "options": [
+        {
+          "labelEn": "a group of 2 people",
+          "correct": true,
+          "feedbackPt": "Duas pessoas na reserva."
+        },
+        {
+          "labelEn": "two parties",
+          "correct": false,
+          "feedbackPt": "Interpretação errada."
+        },
+        {
+          "labelEn": "table number two",
+          "correct": false,
+          "feedbackPt": "Não é número da mesa."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-11",
+      "type": "dialogue_complete",
+      "promptPt": "Pedir ajuda na rua:",
+      "speaker": "You",
+      "contextEn": "You're lost.",
+      "options": [
+        {
+          "labelEn": "Excuse me, where is the nearest subway station?",
+          "correct": true,
+          "feedbackPt": "Pedido educado de localização."
+        },
+        {
+          "labelEn": "Excuse me, how much is the subway?",
+          "correct": false,
+          "feedbackPt": "Preço, não localização."
+        },
+        {
+          "labelEn": "Excuse me, I'd like subway.",
+          "correct": false,
+          "feedbackPt": "Pedido de comida confundido."
+        }
+      ]
+    },
+    {
+      "id": "l07-prac-12",
+      "type": "choice",
+      "promptPt": "Sequência correta de viagem:",
+      "options": [
+        {
+          "labelEn": "Airport → Hotel check-in → City → Restaurant",
+          "correct": true,
+          "feedbackPt": "Fluxo lógico do módulo."
+        },
+        {
+          "labelEn": "Restaurant → Airport → Hotel",
+          "correct": false,
+          "feedbackPt": "Ordem invertida."
+        },
+        {
+          "labelEn": "Hotel → Airport only",
+          "correct": false,
+          "feedbackPt": "Incompleto."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 7,
+  "goalPt": "Usar quantidades em compras e refeições — a bottle, two bags, some, any, How many...?",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Supermercado — você compra itens com quantidades específicas.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can use quantities when buying.",
+    "headlinePt": "Você consegue usar quantidades nas compras.",
+    "bodyPt": "",
+    "canDo": ["Two bottles of water, please.", "I'd like some bread.", "Do you have any apples?", "How many do you need?", "A few bananas, please."],
+    "production": {
+      "introPt": "Faça uma lista de compras em inglês — três itens com quantidade.",
+      "prompts": [{ "speaker": "Cashier", "questionEn": "What do you need today?" }],
+      "fields": [
+        { "id": "item1", "labelPt": "Item 1 com quantidade", "prefixEn": "", "placeholderEn": "Two bottles of water" },
+        { "id": "item2", "labelPt": "Item 2 com quantidade", "prefixEn": "", "placeholderEn": "Some bread" },
+        { "id": "item3", "labelPt": "Item 3 com quantidade", "prefixEn": "", "placeholderEn": "A few apples" }
+      ],
+      "exampleEn": "Two bottles of water, some bread, and a few apples."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l06-ctx-01", "type": "intro", "titleEn": "Quantities", "titlePt": "Quantidades", "bodyPt": "A bottle, two bags, some rice, a few apples — quantidades corretas fazem diferença no supermercado e no restaurante." },
+      { "id": "l06-ctx-02", "type": "scenario", "settingEn": "Grocery store · Checkout line", "scenarioPt": "Você coloca itens no carrinho e conversa com o caixa." },
+      { "id": "l06-ctx-03", "type": "dialogue_choice", "speaker": "You", "promptEn": "Two bottles of water, please.", "promptPt": "Pedir duas garrafas de água.", "options": [
+        { "labelEn": "Two bottles of water, please.", "correct": true, "feedbackPt": "Two + contável + of + substantivo." },
+        { "labelEn": "Two waters bottle, please.", "correct": false, "feedbackPt": "Ordem e plural errados." },
+        { "labelEn": "Some two water, please.", "correct": false, "feedbackPt": "Some two não combina." }
+      ]},
+      { "id": "l06-ctx-04", "type": "dialogue_choice", "speaker": "You", "promptEn": "Do you have any apples?", "promptPt": "Perguntar se tem maçãs (pergunta).", "options": [
+        { "labelEn": "Do you have any apples?", "correct": true, "feedbackPt": "Any em pergunta = alguma/algumas." },
+        { "labelEn": "Do you have some apples?", "correct": false, "feedbackPt": "Some em pergunta é possível, mas any é mais comum em loja." },
+        { "labelEn": "Do you have many apple?", "correct": false, "feedbackPt": "Many apple — plural e estrutura errados." }
+      ]},
+      { "id": "l06-ctx-05", "type": "dialogue_choice", "speaker": "Cashier", "promptEn": "How many bags do you need?", "promptPt": "Caixa pergunta quantas sacolas.", "options": [
+        { "labelEn": "Just one, please.", "correct": true, "feedbackPt": "Resposta clara à pergunta How many." },
+        { "labelEn": "How much is it?", "correct": false, "feedbackPt": "Preço — não responde quantidade de sacolas." },
+        { "labelEn": "I'm looking for bags.", "correct": false, "feedbackPt": "Procurando — não responde how many." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l06-learn-01", "type": "phrase_examples", "titleEn": "Countables — a / two / three", "titlePt": "Contáveis — a / two / three", "introPt": "Itens que você pode contar: bottles, bags, apples, sandwiches.", "examples": [
+        { "en": "a bottle of water", "pt": "uma garrafa de água" }, { "en": "two bags", "pt": "duas sacolas" },
+        { "en": "three apples", "pt": "três maçãs" }, { "en": "a dozen eggs", "pt": "uma dúzia de ovos" }
+      ]},
+      { "id": "l06-learn-02", "type": "phrase_examples", "titleEn": "Some / Any", "titlePt": "Some / Any", "introPt": "Some em afirmativas; any em perguntas e negativas.", "examples": [
+        { "en": "I'd like some bread.", "pt": "Gostaria de pão (afirmativa)." }, { "en": "Do you have any milk?", "pt": "Tem leite? (pergunta)" },
+        { "en": "We don't have any.", "pt": "Não temos. (negativa)" }
+      ]},
+      { "id": "l06-learn-03", "type": "phrase_examples", "titleEn": "A few / A lot of", "titlePt": "Alguns / muito", "introPt": "A few = alguns (poucos). A lot of = muito/muitos.", "examples": [
+        { "en": "A few bananas, please.", "pt": "Algumas bananas." }, { "en": "A lot of people today.", "pt": "Muita gente hoje." },
+        { "en": "I need a lot of rice.", "pt": "Preciso de muito arroz." }
+      ]},
+      { "id": "l06-learn-04", "type": "comparison", "titleEn": "How many vs How much", "titlePt": "How many vs How much", "left": { "labelEn": "HOW MANY · contáveis", "exampleEn": "How many apples?", "notePt": "Many com itens que você conta." }, "right": { "labelEn": "HOW MUCH · não contáveis", "exampleEn": "How much rice?", "notePt": "Much com rice, water, bread (sem contar unidades)." }, "modelEn": "How many bottles? · How much water?", "modelPt": "Many = contável; much = não contável." },
+      { "id": "l06-learn-05", "type": "language_focus", "titleEn": "A bottle of / A bag of", "titlePt": "A bottle of / A bag of", "items": [
+        { "formalEn": "I would like one bottle of water.", "naturalEn": "A bottle of water, please.", "notePt": "Of liga container ao conteúdo." },
+        { "formalEn": "I need two bags for groceries.", "naturalEn": "Two bags, please.", "notePt": "Bags = sacolas de compra." }
+      ], "tipPt": "A bottle of water, a bag of chips, a box of cereal — padrão comum no supermercado." },
+      { "id": "l06-learn-06", "type": "phrase_examples", "titleEn": "At the store", "titlePt": "Na loja", "introPt": "Frases práticas com quantidade.", "examples": [
+        { "en": "How many do you need?", "pt": "Quantos você precisa?" }, { "en": "Just one, please.", "pt": "Só um, por favor." },
+        { "en": "I'll take two of those.", "pt": "Vou levar dois daqueles." }
+      ]},
+      { "id": "l06-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "I want two waters.", "rightEn": "I want two bottles of water. / Two waters, please. (informal at a bar)", "explanationPt": "Water é não contável — em supermercado use two bottles of water. Two waters só em bar (dois copos)." },
+      { "id": "l06-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "a bottle / two bags", "pt": "contáveis com container" }, { "en": "some bread / any apples?", "pt": "some / any" },
+        { "en": "a few / a lot of", "pt": "alguns / muito" }, { "en": "How many...?", "pt": "pergunta contável" }
+      ]}
+    ],
+    "imitate": [{ "id": "l06-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta.", "phrases": [
+      { "en": "Two bottles of water, please." }, { "en": "I'd like some bread." }, { "en": "Do you have any apples?" },
+      { "en": "A few bananas, please." }, { "en": "How many bags do you need?" }, { "en": "Just one, please." },
+      { "en": "I'll take two of those." }, { "en": "A lot of people today." }
+    ], "dialogueEn": "What do you need? — Two bottles of water and some bread, please. — Do you have any apples? — Yes, over there. — How many bags? — Just one, please." }],
+    "mission": [{ "id": "l06-miss-01", "type": "mission_intro", "headlineEn": "Your turn — use quantities.", "headlinePt": "Sua vez — use quantidades.", "bodyPt": "Liste três itens com quantidades corretas.", "prompts": [{ "speaker": "Cashier", "questionEn": "What do you need today?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l06-prac-01", "type": "choice", "promptPt": "Duas garrafas de água — forma correta:", "options": [
+      { "labelEn": "Two bottles of water", "correct": true, "feedbackPt": "Bottle = contável; of water." },
+      { "labelEn": "Two waters bottle", "correct": false, "feedbackPt": "Ordem errada." },
+      { "labelEn": "Much water two", "correct": false, "feedbackPt": "Sem sentido." }
+    ]},
+    { "id": "l06-prac-02", "type": "fill_blank", "promptPt": "Complete: Gostaria de pão.", "templateEn": "I'd like ___ bread.", "blankLabel": "quantificador", "options": [
+      { "labelEn": "some", "correct": true, "feedbackPt": "Some bread — afirmativa." },
+      { "labelEn": "any", "correct": false, "feedbackPt": "Any em afirmativa é raro — prefira some." },
+      { "labelEn": "many", "correct": false, "feedbackPt": "Many bread — bread não contável assim." }
+    ]},
+    { "id": "l06-prac-03", "type": "reorder", "promptPt": "Monte: Vocês têm maçãs?", "tokens": ["apples?", "any", "have", "you", "Do"], "correctOrder": ["Do", "you", "have", "any", "apples?"], "feedbackCorrectPt": "Do you have any apples?", "feedbackWrongPt": "Do you have any + substantivo plural." },
+    { "id": "l06-prac-04", "type": "dialogue_complete", "promptPt": "Cashier: How many bags do you need?", "speaker": "You", "contextEn": "Cashier: How many bags do you need?", "options": [
+      { "labelEn": "Just one, please.", "correct": true, "feedbackPt": "Resposta direta." },
+      { "labelEn": "How much is it?", "correct": false, "feedbackPt": "Preço — contexto errado." },
+      { "labelEn": "I'm thirsty.", "correct": false, "feedbackPt": "Não responde how many." }
+    ]},
+    { "id": "l06-prac-05", "type": "choice", "promptPt": "Algumas bananas (poucas):", "options": [
+      { "labelEn": "A few bananas", "correct": true, "feedbackPt": "A few = alguns/poucos." },
+      { "labelEn": "A little bananas", "correct": false, "feedbackPt": "A little com não contáveis — bananas são contáveis." },
+      { "labelEn": "Much bananas", "correct": false, "feedbackPt": "Much não combina com bananas." }
+    ]},
+    { "id": "l06-prac-06", "type": "fill_blank", "promptPt": "Complete: Quantas maçãs?", "templateEn": "How ___ apples do you want?", "blankLabel": "palavra", "options": [
+      { "labelEn": "many", "correct": true, "feedbackPt": "How many + contável." },
+      { "labelEn": "much", "correct": false, "feedbackPt": "Much com não contáveis." },
+      { "labelEn": "some", "correct": false, "feedbackPt": "Some não inicia How...?" }
+    ]},
+    { "id": "l06-prac-07", "type": "reorder", "promptPt": "Monte: Vou levar dois daqueles.", "tokens": ["those.", "two", "of", "take", "I'll"], "correctOrder": ["I'll", "take", "two", "of", "those."], "feedbackCorrectPt": "I'll take two of those.", "feedbackWrongPt": "I'll take + número + of those." },
+    { "id": "l06-prac-08", "type": "dialogue_complete", "promptPt": "Precisa de muito arroz:", "speaker": "You", "contextEn": "You're cooking for a big group.", "options": [
+      { "labelEn": "I need a lot of rice.", "correct": true, "feedbackPt": "A lot of + substantivo." },
+      { "labelEn": "I need a few rice.", "correct": false, "feedbackPt": "A few com rice — incorreto." },
+      { "labelEn": "I need many rice.", "correct": false, "feedbackPt": "Many rice — rice é não contável." }
+    ]},
+    { "id": "l06-prac-09", "type": "choice", "promptPt": "Some vs Any — em PERGUNTA na loja:", "options": [
+      { "labelEn": "Do you have any milk?", "correct": true, "feedbackPt": "Any comum em perguntas." },
+      { "labelEn": "You have some milk.", "correct": false, "feedbackPt": "Afirmativa, não pergunta." },
+      { "labelEn": "I any milk.", "correct": false, "feedbackPt": "Frase incompleta." }
+    ]},
+    { "id": "l06-prac-10", "type": "dialogue_complete", "promptPt": "Pedido no mercado:", "speaker": "You", "contextEn": "At the deli counter.", "options": [
+      { "labelEn": "Two sandwiches, please.", "correct": true, "feedbackPt": "Quantidade + item contável." },
+      { "labelEn": "Two sandwichs, please.", "correct": false, "feedbackPt": "Plural errado — sandwiches." },
+      { "labelEn": "Much sandwiches, please.", "correct": false, "feedbackPt": "Much não combina." }
+    ]}
+  ]
+}

@@ -1,0 +1,353 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 2,
+  "goalPt": "Perguntar e informar número de telefone — What's your number?, digits 0–9, e formatos comuns nos EUA.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "RH pede seu número de celular para contato de emergência.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta e repita cada frase.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can share your phone number in English.",
+    "headlinePt": "Você consegue informar seu número de telefone em inglês.",
+    "bodyPt": "",
+    "canDo": [
+      "What's your phone number?",
+      "What's your number?",
+      "My number is 617-555-0142.",
+      "It's 617-555-0142."
+    ],
+    "production": {
+      "introPt": "A coordenadora de RH pediu seu celular. Responda em inglês com um número de prática (não use seu número real se preferir).",
+      "prompts": [
+        { "speaker": "HR", "questionEn": "What's your phone number?" },
+        { "speaker": "HR", "questionEn": "Can I have your cell number?" }
+      ],
+      "fields": [
+        { "id": "fullNumber", "labelPt": "Número completo", "prefixEn": "My number is", "placeholderEn": "617-555-0142" },
+        { "id": "shortAnswer", "labelPt": "Resposta curta", "prefixEn": "It's", "placeholderEn": "617-555-0142." }
+      ],
+      "exampleEn": "What's your phone number? — My number is 617-555-0142. — Can I have your cell number? — Sure. It's 617-555-0142."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "l02-ctx-01",
+        "type": "intro",
+        "titleEn": "Your phone number",
+        "titlePt": "Seu número de telefone",
+        "bodyPt": "No trabalho, em formulários de RH, cadastros de emergência ou troca de contato com colega — você precisa dizer seu número em inglês. Nesta lição: perguntar, responder e dizer os dígitos com clareza."
+      },
+      {
+        "id": "l02-ctx-02",
+        "type": "scenario",
+        "settingEn": "HR office · Onboarding · Real life",
+        "scenarioPt": "Primeiro dia. A coordenadora de RH precisa do seu celular para contato de emergência e comunicação interna."
+      },
+      {
+        "id": "l02-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "HR",
+        "promptEn": "What's your phone number?",
+        "promptPt": "RH pergunta seu número. Como responder de forma clara?",
+        "options": [
+          { "labelEn": "My number is 617-555-0142.", "correct": true, "feedbackPt": "Resposta direta — My number is + número." },
+          { "labelEn": "I live in Boston.", "correct": false, "feedbackPt": "Moradia — não responde telefone." },
+          { "labelEn": "I'm 30 years old.", "correct": false, "feedbackPt": "Idade — não responde telefone." }
+        ]
+      },
+      {
+        "id": "l02-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "HR",
+        "promptEn": "Can I have your cell number?",
+        "promptPt": "Outra forma comum de pedir o celular. Resposta curta natural:",
+        "options": [
+          { "labelEn": "Sure. It's 617-555-0142.", "correct": true, "feedbackPt": "Sure + It's + número — natural e educado." },
+          { "labelEn": "No, I don't.", "correct": false, "feedbackPt": "Recusar sem contexto soa estranho em onboarding." },
+          { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Não responde ao pedido de número." }
+        ]
+      },
+      {
+        "id": "l02-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "HR",
+        "promptEn": "Sorry, can you repeat that slowly?",
+        "promptPt": "RH não entendeu. Como repetir dígito a dígito com clareza?",
+        "options": [
+          { "labelEn": "Six-one-seven, five-five-five, zero-one-four-two.", "correct": true, "feedbackPt": "Grupos de 3-3-4 — padrão americano comum." },
+          { "labelEn": "My phone is good.", "correct": false, "feedbackPt": "Não repete o número." },
+          { "labelEn": "I have phone.", "correct": false, "feedbackPt": "Vago — RH precisa dos dígitos." }
+        ]
+      },
+      {
+        "id": "l02-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "What's your number?",
+        "promptPt": "Depois do cadastro, você quer o contato de um colega. Qual pergunta usar?",
+        "options": [
+          { "labelEn": "What's your number?", "correct": true, "feedbackPt": "Curto e comum entre colegas — contexto informal." },
+          { "labelEn": "How old are you?", "correct": false, "feedbackPt": "Pergunta idade, não telefone." },
+          { "labelEn": "Where are you from?", "correct": false, "feedbackPt": "Pergunta origem, não telefone." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "l02-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "Asking for a number",
+        "titlePt": "Pedir o número",
+        "introPt": "Formas comuns no trabalho e na vida nos EUA — phone number ou só number.",
+        "examples": [
+          { "en": "What's your phone number?", "pt": "formal / RH" },
+          { "en": "What's your number?", "pt": "informal / colega" },
+          { "en": "Can I have your cell number?", "pt": "celular" },
+          { "en": "What's the best number to reach you?", "pt": "contato principal" }
+        ]
+      },
+      {
+        "id": "l02-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "Giving your number",
+        "titlePt": "Informar seu número",
+        "introPt": "Responda com My number is ou It's + o número. Fale devagar se pedirem repeat.",
+        "examples": [
+          { "en": "My number is 617-555-0142.", "pt": "resposta completa" },
+          { "en": "It's 617-555-0142.", "pt": "resposta curta" },
+          { "en": "Sure. My cell is 617-555-0142.", "pt": "com Sure" },
+          { "en": "You can reach me at 617-555-0142.", "pt": "contato profissional" }
+        ]
+      },
+      {
+        "id": "l02-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Digits 0–9",
+        "titlePt": "Dígitos 0 a 9",
+        "introPt": "Saiba pronunciar cada dígito — essencial quando pedem repeat slowly.",
+        "examples": [
+          { "en": "0 = zero / oh", "pt": "zero ou oh na fala" },
+          { "en": "1 = one", "pt": "um" },
+          { "en": "2 = two", "pt": "dois" },
+          { "en": "3 = three", "pt": "três" },
+          { "en": "4 = four", "pt": "quatro" },
+          { "en": "5 = five", "pt": "cinco" },
+          { "en": "6 = six", "pt": "seis" },
+          { "en": "7 = seven", "pt": "sete" },
+          { "en": "8 = eight", "pt": "oito" },
+          { "en": "9 = nine", "pt": "nove" }
+        ]
+      },
+      {
+        "id": "l02-learn-04",
+        "type": "language_focus",
+        "titleEn": "US phone format",
+        "titlePt": "Formato americano",
+        "items": [
+          { "formalEn": "6175550142", "naturalEn": "617-555-0142", "notePt": "Escrito: grupos 3-3-4 com hífen ou parênteses." },
+          { "formalEn": "(617) 555-0142", "naturalEn": "six-one-seven, five-five-five, zero-one-four-two", "notePt": "Falado: dígito a dígito ou em grupos." }
+        ],
+        "tipPt": "555 é prefixo fictício comum em exemplos — use números de prática, não seu real se preferir privacidade."
+      },
+      {
+        "id": "l02-learn-05",
+        "type": "vocabulary",
+        "titleEn": "Phone vocabulary",
+        "titlePt": "Vocabulário de telefone",
+        "words": [
+          { "en": "phone", "pt": "telefone", "exampleEn": "What's your phone number?" },
+          { "en": "cell / mobile", "pt": "celular", "exampleEn": "Can I have your cell number?" },
+          { "en": "number", "pt": "número", "exampleEn": "My number is..." },
+          { "en": "repeat", "pt": "repetir", "exampleEn": "Can you repeat that?" },
+          { "en": "slowly", "pt": "devagar", "exampleEn": "Can you say that slowly?" }
+        ]
+      },
+      {
+        "id": "l02-learn-06",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "My telephone is 617... (without 'number')",
+        "rightEn": "My number is 617-555-0142.",
+        "explanationPt": "Em inglês americano, number é a palavra-chave — My number is ou It's + dígitos. 'My telephone is...' soa incompleto; prefira phone number ou cell number."
+      },
+      {
+        "id": "l02-learn-07",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "What's your phone number?", "pt": "pergunta" },
+          { "en": "My number is...", "pt": "resposta" },
+          { "en": "It's 617-555-0142.", "pt": "resposta curta" },
+          { "en": "zero / oh (0)", "pt": "dígito zero" },
+          { "en": "Can you repeat that?", "pt": "pedir repetição" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l02-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia em voz alta, pausa entre frases. Pratique os dígitos devagar.",
+        "phrases": [
+          { "en": "What's your phone number?" },
+          { "en": "What's your number?" },
+          { "en": "My number is 617-555-0142." },
+          { "en": "It's 617-555-0142." },
+          { "en": "Can I have your cell number?" },
+          { "en": "Sure." },
+          { "en": "Can you repeat that slowly?" },
+          { "en": "Six-one-seven, five-five-five, zero-one-four-two." }
+        ],
+        "dialogueEn": "What's your phone number? — My number is 617-555-0142. — Can you repeat that slowly? — Six-one-seven, five-five-five, zero-one-four-two."
+      }
+    ],
+    "mission": [
+      {
+        "id": "l02-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — share your number.",
+        "headlinePt": "Sua vez — informe seu número.",
+        "bodyPt": "RH pediu seu celular. Responda em inglês com um número de prática.",
+        "prompts": [
+          { "speaker": "HR", "questionEn": "What's your phone number?" },
+          { "speaker": "HR", "questionEn": "Can I have your cell number?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "l02-prac-01",
+      "type": "choice",
+      "promptPt": "RH pergunta What's your phone number? — melhor resposta:",
+      "options": [
+        { "labelEn": "My number is 617-555-0142.", "correct": true, "feedbackPt": "Resposta direta e clara." },
+        { "labelEn": "I'm from Brazil.", "correct": false, "feedbackPt": "Origem — não responde telefone." },
+        { "labelEn": "How old are you?", "correct": false, "feedbackPt": "Pergunta, não resposta." }
+      ]
+    },
+    {
+      "id": "l02-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete a pergunta informal:",
+      "templateEn": "What's your ___?",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "number", "correct": true, "feedbackPt": "What's your number? — comum entre colegas." },
+        { "labelEn": "name", "correct": false, "feedbackPt": "Pergunta nome, não telefone." },
+        { "labelEn": "from", "correct": false, "feedbackPt": "Gramaticalmente incorreto neste contexto." }
+      ]
+    },
+    {
+      "id": "l02-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte a resposta completa:",
+      "tokens": ["617-555-0142.", "is", "My", "number"],
+      "correctOrder": ["My", "number", "is", "617-555-0142."],
+      "feedbackCorrectPt": "My number is 617-555-0142. — ordem natural.",
+      "feedbackWrongPt": "A ordem correta é My + number + is + número."
+    },
+    {
+      "id": "l02-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Colega pede seu celular — você responde:",
+      "speaker": "You",
+      "contextEn": "Colleague: Can I have your cell number?",
+      "options": [
+        { "labelEn": "Sure. It's 617-555-0142.", "correct": true, "feedbackPt": "Educado e direto." },
+        { "labelEn": "I work in Boston.", "correct": false, "feedbackPt": "Não responde telefone." },
+        { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Pergunta profissão." }
+      ]
+    },
+    {
+      "id": "l02-prac-05",
+      "type": "choice",
+      "promptPt": "Como dizer o dígito 0 em inglês (na fala de números)?",
+      "options": [
+        { "labelEn": "zero / oh", "correct": true, "feedbackPt": "Ambos são comuns em números de telefone." },
+        { "labelEn": "null", "correct": false, "feedbackPt": "Null não se usa para dígitos de telefone." },
+        { "labelEn": "nothing", "correct": false, "feedbackPt": "Nothing não é o nome do dígito." }
+      ]
+    },
+    {
+      "id": "l02-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Resposta curta — complete:",
+      "templateEn": "___ 617-555-0142.",
+      "blankLabel": "início",
+      "options": [
+        { "labelEn": "It's", "correct": true, "feedbackPt": "It's + número — resposta curta natural." },
+        { "labelEn": "I'm", "correct": false, "feedbackPt": "I'm é para identidade/idade, não telefone." },
+        { "labelEn": "I have", "correct": false, "feedbackPt": "I have 617... soa menos natural que It's." }
+      ]
+    },
+    {
+      "id": "l02-prac-07",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta formal de RH:",
+      "tokens": ["number?", "phone", "your", "What's"],
+      "correctOrder": ["What's", "your", "phone", "number?"],
+      "feedbackCorrectPt": "What's your phone number? — ordem fixa.",
+      "feedbackWrongPt": "A ordem em inglês é What's + your + phone + number?"
+    },
+    {
+      "id": "l02-prac-08",
+      "type": "dialogue_complete",
+      "promptPt": "RH pediu repeat slowly — você diz:",
+      "speaker": "You",
+      "contextEn": "HR: Sorry, can you repeat that slowly?",
+      "options": [
+        { "labelEn": "Six-one-seven, five-five-five, zero-one-four-two.", "correct": true, "feedbackPt": "Dígitos claros em grupos." },
+        { "labelEn": "My number is good.", "correct": false, "feedbackPt": "Não repete os dígitos." },
+        { "labelEn": "See you later!", "correct": false, "feedbackPt": "Despedida — não ajuda RH." }
+      ]
+    },
+    {
+      "id": "l02-prac-09",
+      "type": "choice",
+      "promptPt": "Qual palavra significa celular em contexto americano?",
+      "options": [
+        { "labelEn": "cell", "correct": true, "feedbackPt": "Cell number = celular nos EUA." },
+        { "labelEn": "hand", "correct": false, "feedbackPt": "Hand não significa telefone." },
+        { "labelEn": "mobile phone only UK", "correct": false, "feedbackPt": "Mobile funciona, mas cell é mais comum nos EUA." }
+      ]
+    },
+    {
+      "id": "l02-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Complete — pedir repetição:",
+      "templateEn": "Can you ___ that slowly?",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "repeat", "correct": true, "feedbackPt": "Can you repeat that slowly? — comum ao dar números." },
+        { "labelEn": "say", "correct": false, "feedbackPt": "Say that slowly também funciona, mas repeat é mais específico aqui." },
+        { "labelEn": "tell", "correct": false, "feedbackPt": "Tell that slowly soa menos natural." }
+      ]
+    }
+  ]
+}

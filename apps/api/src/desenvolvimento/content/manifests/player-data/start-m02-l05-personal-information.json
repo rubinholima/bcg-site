@@ -1,0 +1,369 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 2,
+  "goalPt": "Integrar idade, telefone, família e possessivos my/your — numa conversa de informações pessoais no contexto adulto.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Colega novo quer te conhecer melhor num almoço de equipe.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta e repita cada frase.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can share personal information in English.",
+    "headlinePt": "Você consegue compartilhar informações pessoais em inglês.",
+    "bodyPt": "",
+    "canDo": [
+      "How old are you?",
+      "What's your number?",
+      "This is my family.",
+      "What's your name? / My name is..."
+    ],
+    "production": {
+      "introPt": "Alex quer te conhecer melhor. Responda com idade, telefone e um membro da família — use dados de prática se preferir.",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "How old are you?" },
+        { "speaker": "Alex", "questionEn": "What's your number?" },
+        { "speaker": "Alex", "questionEn": "Tell me about your family." }
+      ],
+      "fields": [
+        { "id": "age", "labelPt": "Sua idade", "prefixEn": "I'm", "placeholderEn": "32 years old." },
+        { "id": "phone", "labelPt": "Seu telefone", "prefixEn": "My number is", "placeholderEn": "617-555-0142" },
+        { "id": "family", "labelPt": "Sua família", "prefixEn": "", "placeholderEn": "I have a brother. This is my mother." }
+      ],
+      "exampleEn": "How old are you? — I'm 32 years old. — What's your number? — My number is 617-555-0142. — Tell me about your family. — I have a brother and a sister. This is my mother."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "l05-ctx-01",
+        "type": "intro",
+        "titleEn": "Personal information",
+        "titlePt": "Informações pessoais",
+        "bodyPt": "Depois de nome e origem, conversas avançam para idade, contato e família. Nesta lição, você integra tudo do Módulo 2 com possessivos my e your."
+      },
+      {
+        "id": "l05-ctx-02",
+        "type": "scenario",
+        "settingEn": "Team lunch · Getting to know you",
+        "scenarioPt": "Almoço de equipe. Alex, colega novo, senta ao seu lado e quer saber mais sobre você — de forma natural e educada."
+      },
+      {
+        "id": "l05-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "How old are you, if you don't mind me asking?",
+        "promptPt": "Alex pergunta idade com educação. Como responder?",
+        "options": [
+          { "labelEn": "I'm 34 years old.", "correct": true, "feedbackPt": "Resposta direta — BE, não HAVE." },
+          { "labelEn": "I have 34 years.", "correct": false, "feedbackPt": "Tradução literal — use I'm X years old." },
+          { "labelEn": "My number is 34.", "correct": false, "feedbackPt": "Number é telefone, não idade." }
+        ]
+      },
+      {
+        "id": "l05-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What's your number? I'll add you to the team chat.",
+        "promptPt": "Alex quer seu celular para o grupo do trabalho.",
+        "options": [
+          { "labelEn": "Sure. It's 617-555-0198.", "correct": true, "feedbackPt": "Educado e direto — número claro." },
+          { "labelEn": "I'm from Brazil.", "correct": false, "feedbackPt": "Origem — não responde telefone." },
+          { "labelEn": "This is my brother.", "correct": false, "feedbackPt": "Família — não responde telefone." }
+        ]
+      },
+      {
+        "id": "l05-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Tell me about your family.",
+        "promptPt": "Alex quer saber da família. Resposta integrada:",
+        "options": [
+          { "labelEn": "I have a brother and a sister. My parents live in Brazil.", "correct": true, "feedbackPt": "Irmãos + pais — resposta completa e natural." },
+          { "labelEn": "Can you spell that?", "correct": false, "feedbackPt": "Pergunta spelling — não responde sobre família." },
+          { "labelEn": "How old are you?", "correct": false, "feedbackPt": "Devolve pergunta errada — Alex perguntou sobre família." }
+        ]
+      },
+      {
+        "id": "l05-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "What's your last name again? I want to save your contact.",
+        "promptPt": "Alex precisa do sobrenome para salvar contato — spelling:",
+        "options": [
+          { "labelEn": "Sure. S-I-L-V-A.", "correct": true, "feedbackPt": "Spelling claro — integra lição de soletração." },
+          { "labelEn": "My family is big.", "correct": false, "feedbackPt": "Família — não responde sobrenome." },
+          { "labelEn": "I'm 34.", "correct": false, "feedbackPt": "Idade — não responde spelling." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "l05-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "My / Your",
+        "titlePt": "Meu / Seu",
+        "introPt": "Possessivos básicos — my = meu/minha · your = seu/sua (de você).",
+        "examples": [
+          { "en": "my name", "pt": "meu nome" },
+          { "en": "your number", "pt": "seu número" },
+          { "en": "my family", "pt": "minha família" },
+          { "en": "your age", "pt": "sua idade" },
+          { "en": "What's your phone number?", "pt": "pergunta com your" }
+        ]
+      },
+      {
+        "id": "l05-learn-02",
+        "type": "comparison",
+        "titleEn": "My vs Your",
+        "titlePt": "Meu vs seu",
+        "left": {
+          "labelEn": "MY · sobre mim",
+          "exampleEn": "My number is 617-555-0142.",
+          "notePt": "Quando você fala de si — my age, my family, my name."
+        },
+        "right": {
+          "labelEn": "YOUR · sobre você (pergunta)",
+          "exampleEn": "What's your number?",
+          "notePt": "Quando pergunta ao outro — your age, your name, your family."
+        },
+        "modelEn": "What's your number? — My number is 617-555-0142.",
+        "modelPt": "Pergunta com your → resposta com my."
+      },
+      {
+        "id": "l05-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Age + phone together",
+        "titlePt": "Idade + telefone juntos",
+        "introPt": "Em cadastros e conversas, idade e telefone aparecem seguidos.",
+        "examples": [
+          { "en": "I'm 30 years old.", "pt": "idade" },
+          { "en": "My number is 617-555-0142.", "pt": "telefone" },
+          { "en": "What's your number?", "pt": "perguntar telefone" },
+          { "en": "How old are you?", "pt": "perguntar idade" }
+        ]
+      },
+      {
+        "id": "l05-learn-04",
+        "type": "phrase_examples",
+        "titleEn": "Family in context",
+        "titlePt": "Família no contexto",
+        "introPt": "Combine possessivos com palavras de família do Módulo 2.",
+        "examples": [
+          { "en": "This is my mother.", "pt": "apresentar" },
+          { "en": "My parents live in Brazil.", "pt": "my + parents" },
+          { "en": "Do you have any siblings?", "pt": "perguntar irmãos" },
+          { "en": "I have a brother.", "pt": "responder" }
+        ]
+      },
+      {
+        "id": "l05-learn-05",
+        "type": "language_focus",
+        "titleEn": "Putting it together",
+        "titlePt": "Juntando tudo",
+        "items": [
+          { "formalEn": "Age. Phone. Family. (separate)", "naturalEn": "I'm 32. My number is... I have a brother.", "notePt": "Conversas reais misturam tópicos — responda cada pergunta." },
+          { "formalEn": "Your name is?", "naturalEn": "What's your name?", "notePt": "What's your... = padrão para perguntas pessoais." }
+        ],
+        "tipPt": "Cadastro ou almoço de equipe: idade → telefone → família → spelling do sobrenome. Um tópico por vez."
+      },
+      {
+        "id": "l05-learn-06",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "What is your age? / I have 30 years.",
+        "rightEn": "How old are you? / I'm 30 years old.",
+        "explanationPt": "Idade: How old are you? (não What is your age? — soa formal/estranho). Resposta: I'm 30 years old (não I have 30 years). Telefone: What's your number? (não What is your telephone?)."
+      },
+      {
+        "id": "l05-learn-07",
+        "type": "review",
+        "titleEn": "Quick review — Module 2",
+        "titlePt": "Revisão — Módulo 2",
+        "items": [
+          { "en": "How old are you? / I'm 30 years old.", "pt": "idade" },
+          { "en": "What's your number? / My number is...", "pt": "telefone" },
+          { "en": "Can you spell that? / S-I-L-V-A.", "pt": "spelling" },
+          { "en": "This is my mother.", "pt": "família" },
+          { "en": "my / your", "pt": "possessivos" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l05-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia o diálogo integrado em voz alta. Adapte à sua realidade.",
+        "phrases": [
+          { "en": "How old are you?" },
+          { "en": "I'm 32 years old." },
+          { "en": "What's your number?" },
+          { "en": "My number is 617-555-0142." },
+          { "en": "Tell me about your family." },
+          { "en": "I have a brother and a sister." },
+          { "en": "This is my mother." },
+          { "en": "Can you spell your last name?" },
+          { "en": "Sure. S-I-L-V-A." }
+        ],
+        "dialogueEn": "How old are you? — I'm 32 years old. — What's your number? — My number is 617-555-0142. — Tell me about your family. — I have a brother. My parents live in Brazil."
+      }
+    ],
+    "mission": [
+      {
+        "id": "l05-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — personal info.",
+        "headlinePt": "Sua vez — informações pessoais.",
+        "bodyPt": "Alex fez três perguntas. Responda com idade, telefone e família em inglês.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "How old are you?" },
+          { "speaker": "Alex", "questionEn": "What's your number?" },
+          { "speaker": "Alex", "questionEn": "Tell me about your family." }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "l05-prac-01",
+      "type": "choice",
+      "promptPt": "Possessivo correto — falar do SEU número:",
+      "options": [
+        { "labelEn": "My number is 617-555-0142.", "correct": true, "feedbackPt": "My = meu/minha — sobre você." },
+        { "labelEn": "Your number is 617-555-0142.", "correct": false, "feedbackPt": "Your = de quem ouve — seria o número de Alex." },
+        { "labelEn": "I number is 617.", "correct": false, "feedbackPt": "Gramaticalmente incorreto." }
+      ]
+    },
+    {
+      "id": "l05-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Perguntar idade de Alex:",
+      "templateEn": "How old ___ you?",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "are", "correct": true, "feedbackPt": "How old are you?" },
+        { "labelEn": "is", "correct": false, "feedbackPt": "Com you, use are." },
+        { "labelEn": "am", "correct": false, "feedbackPt": "Am combina com I." }
+      ]
+    },
+    {
+      "id": "l05-prac-03",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: What's your number? — você responde:",
+      "speaker": "You",
+      "contextEn": "Alex: What's your number?",
+      "options": [
+        { "labelEn": "My number is 617-555-0142.", "correct": true, "feedbackPt": "My + number is — resposta padrão." },
+        { "labelEn": "I'm 30 years old.", "correct": false, "feedbackPt": "Idade — pergunta foi telefone." },
+        { "labelEn": "This is my mother.", "correct": false, "feedbackPt": "Família — pergunta foi telefone." }
+      ]
+    },
+    {
+      "id": "l05-prac-04",
+      "type": "reorder",
+      "promptPt": "Monte a frase sobre família:",
+      "tokens": ["Brazil.", "in", "live", "parents", "My"],
+      "correctOrder": ["My", "parents", "live", "in", "Brazil."],
+      "feedbackCorrectPt": "My parents live in Brazil. — ordem natural.",
+      "feedbackWrongPt": "Comece com My + substantivo + verbo."
+    },
+    {
+      "id": "l05-prac-05",
+      "type": "choice",
+      "promptPt": "Qual pergunta usa YOUR corretamente?",
+      "options": [
+        { "labelEn": "What's your phone number?", "correct": true, "feedbackPt": "Your = pergunta ao outro." },
+        { "labelEn": "What's my phone number?", "correct": false, "feedbackPt": "My seria você perguntando sobre si — estranho." },
+        { "labelEn": "How old am you?", "correct": false, "feedbackPt": "Gramaticalmente incorreto." }
+      ]
+    },
+    {
+      "id": "l05-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Complete — apresentar mãe:",
+      "templateEn": "This is ___ mother.",
+      "blankLabel": "possessivo",
+      "options": [
+        { "labelEn": "my", "correct": true, "feedbackPt": "My = minha." },
+        { "labelEn": "your", "correct": false, "feedbackPt": "Your = sua — seria a mãe de Alex." },
+        { "labelEn": "I", "correct": false, "feedbackPt": "I não é possessivo." }
+      ]
+    },
+    {
+      "id": "l05-prac-07",
+      "type": "dialogue_complete",
+      "promptPt": "Alex: Tell me about your family. — melhor resposta:",
+      "speaker": "You",
+      "contextEn": "Alex: Tell me about your family.",
+      "options": [
+        { "labelEn": "I have a brother and a sister.", "correct": true, "feedbackPt": "Resposta direta sobre irmãos." },
+        { "labelEn": "617-555-0142.", "correct": false, "feedbackPt": "Telefone — pergunta foi família." },
+        { "labelEn": "S-I-L-V-A.", "correct": false, "feedbackPt": "Spelling — pergunta foi família." }
+      ]
+    },
+    {
+      "id": "l05-prac-08",
+      "type": "choice",
+      "promptPt": "Resposta ERRADA sobre idade:",
+      "options": [
+        { "labelEn": "I have 28 years.", "correct": true, "feedbackPt": "Esta está errada — use I'm 28 years old." },
+        { "labelEn": "I'm 28 years old.", "correct": false, "feedbackPt": "Esta está correta." },
+        { "labelEn": "I'm twenty-eight.", "correct": false, "feedbackPt": "Esta também está correta." }
+      ]
+    },
+    {
+      "id": "l05-prac-09",
+      "type": "reorder",
+      "promptPt": "Monte pergunta sobre telefone:",
+      "tokens": ["number?", "your", "What's"],
+      "correctOrder": ["What's", "your", "number?"],
+      "feedbackCorrectPt": "What's your number? — ordem fixa.",
+      "feedbackWrongPt": "A ordem é What's + your + number?"
+    },
+    {
+      "id": "l05-prac-10",
+      "type": "dialogue_complete",
+      "promptPt": "Alex precisa do spelling do sobrenome:",
+      "speaker": "You",
+      "contextEn": "Alex: Can you spell your last name?",
+      "options": [
+        { "labelEn": "Sure. S-I-L-V-A.", "correct": true, "feedbackPt": "Spelling claro e educado." },
+        { "labelEn": "I have two siblings.", "correct": false, "feedbackPt": "Irmãos — não responde spelling." },
+        { "labelEn": "My number is 617.", "correct": false, "feedbackPt": "Telefone — não responde spelling." }
+      ]
+    },
+    {
+      "id": "l05-prac-11",
+      "type": "fill_blank",
+      "promptPt": "Integração — complete idade:",
+      "templateEn": "I'm 30 years ___.",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "old", "correct": true, "feedbackPt": "I'm 30 years old." },
+        { "labelEn": "have", "correct": false, "feedbackPt": "Years have está errado." },
+        { "labelEn": "age", "correct": false, "feedbackPt": "Years age não existe." }
+      ]
+    }
+  ]
+}

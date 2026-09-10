@@ -1,0 +1,366 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 2,
+  "goalPt": "Perguntar e responder idade com How old are you? e I'm X years old — e evitar a tradução literal do português (I have X years).",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": {
+    "scenarioPt": "Alex pergunta sua idade numa conversa informal no escritório.",
+    "dialogue": []
+  },
+  "learn": {
+    "introPt": "",
+    "phrases": []
+  },
+  "imitate": {
+    "introPt": "Leia em voz alta e repita cada frase.",
+    "phrases": []
+  },
+  "practice": {
+    "introPt": "Interações guiadas — feedback imediato, sem nota.",
+    "items": []
+  },
+  "mission": {
+    "headlineEn": "You can ask and answer age in English.",
+    "headlinePt": "Você consegue perguntar e responder idade em inglês.",
+    "bodyPt": "",
+    "canDo": [
+      "How old are you?",
+      "I'm 30 years old.",
+      "I'm twenty-eight.",
+      "What about you?"
+    ],
+    "production": {
+      "introPt": "Alex perguntou sua idade e devolveu a pergunta. Responda em inglês com sua idade real ou de prática.",
+      "prompts": [
+        { "speaker": "Alex", "questionEn": "How old are you?" },
+        { "speaker": "Alex", "questionEn": "What about you?" }
+      ],
+      "fields": [
+        { "id": "ageQuestion", "labelPt": "Perguntar idade de Alex", "prefixEn": "", "placeholderEn": "How old are you?" },
+        { "id": "myAge", "labelPt": "Sua idade", "prefixEn": "I'm", "placeholderEn": "30 years old." },
+        { "id": "returnQuestion", "labelPt": "Devolver a pergunta", "prefixEn": "", "placeholderEn": "What about you?" }
+      ],
+      "exampleEn": "How old are you? — I'm 30 years old. What about you?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      {
+        "id": "l01-ctx-01",
+        "type": "intro",
+        "titleEn": "How old are you?",
+        "titlePt": "Quantos anos você tem?",
+        "bodyPt": "Em conversas informais no trabalho ou na vida nos EUA, idade pode surgir naturalmente — em onboarding, happy hour ou papo com colega. Nesta lição, você aprende a perguntar e responder idade em inglês americano."
+      },
+      {
+        "id": "l01-ctx-02",
+        "type": "scenario",
+        "settingEn": "Office break room · Casual chat",
+        "scenarioPt": "Você toma café com Alex, colega americano. A conversa fica mais pessoal depois de falar de origem e moradia."
+      },
+      {
+        "id": "l01-ctx-03",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "So, how old are you?",
+        "promptPt": "Alex pergunta sua idade de forma direta e comum. Como responder?",
+        "options": [
+          { "labelEn": "I'm 32 years old.", "correct": true, "feedbackPt": "Resposta padrão — I'm + número + years old." },
+          { "labelEn": "I have 32 years.", "correct": false, "feedbackPt": "Tradução do português — em inglês use BE (I'm), não HAVE." },
+          { "labelEn": "I am old.", "correct": false, "feedbackPt": "Vago demais — Alex quer um número ou idade aproximada." }
+        ]
+      },
+      {
+        "id": "l01-ctx-04",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "Nice! I'm 35.",
+        "promptPt": "Alex responde com idade curta. Como devolver a pergunta de forma natural?",
+        "options": [
+          { "labelEn": "What about you?", "correct": true, "feedbackPt": "Devolve a pergunta de forma curta e comum." },
+          { "labelEn": "How are you?", "correct": false, "feedbackPt": "Pergunta como está, não idade." },
+          { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Muda de assunto — ainda estão falando de idade." }
+        ]
+      },
+      {
+        "id": "l01-ctx-05",
+        "type": "dialogue_choice",
+        "speaker": "You",
+        "promptEn": "How old are you?",
+        "promptPt": "Agora é sua vez de perguntar. Alex responde — qual forma é natural para você usar?",
+        "options": [
+          { "labelEn": "How old are you?", "correct": true, "feedbackPt": "Pergunta padrão para idade — direta e educada em contexto informal." },
+          { "labelEn": "What years do you have?", "correct": false, "feedbackPt": "Não existe — tradução literal do português." },
+          { "labelEn": "How many years?", "correct": false, "feedbackPt": "Incompleto — falta are you ou the contexto." }
+        ]
+      },
+      {
+        "id": "l01-ctx-06",
+        "type": "dialogue_choice",
+        "speaker": "Alex",
+        "promptEn": "I'm twenty-eight.",
+        "promptPt": "Alex responde só com número por extenso — também é natural. Qual resposta equivalente sua?",
+        "options": [
+          { "labelEn": "I'm thirty.", "correct": true, "feedbackPt": "Sem years old também funciona — número por extenso ou dígito." },
+          { "labelEn": "I have thirty.", "correct": false, "feedbackPt": "Have não combina com idade em inglês." },
+          { "labelEn": "My age is have thirty.", "correct": false, "feedbackPt": "Forma gramatical incorreta." }
+        ]
+      }
+    ],
+    "learn": [
+      {
+        "id": "l01-learn-01",
+        "type": "phrase_examples",
+        "titleEn": "How old are you?",
+        "titlePt": "Quantos anos você tem?",
+        "introPt": "Pergunta direta e comum em contexto informal. Responda com I'm + idade.",
+        "examples": [
+          { "en": "How old are you?", "pt": "pergunta padrão" },
+          { "en": "How old is she?", "pt": "perguntar sobre outra pessoa" },
+          { "en": "How old are they?", "pt": "plural" },
+          { "en": "What about you?", "pt": "devolver a pergunta" }
+        ]
+      },
+      {
+        "id": "l01-learn-02",
+        "type": "phrase_examples",
+        "titleEn": "I'm X years old",
+        "titlePt": "Tenho X anos",
+        "introPt": "Resposta completa e clara. Use BE (I'm), não HAVE.",
+        "examples": [
+          { "en": "I'm 25 years old.", "pt": "25 anos" },
+          { "en": "I'm 30 years old.", "pt": "30 anos" },
+          { "en": "I'm 42 years old.", "pt": "42 anos" },
+          { "en": "I'm twenty-five.", "pt": "forma curta, também ok" }
+        ]
+      },
+      {
+        "id": "l01-learn-03",
+        "type": "phrase_examples",
+        "titleEn": "Numbers for age",
+        "titlePt": "Números para idade",
+        "introPt": "Na fala, dígitos ou palavras funcionam. Conheça os básicos para responder com confiança.",
+        "examples": [
+          { "en": "twenty (20)", "pt": "vinte" },
+          { "en": "twenty-five (25)", "pt": "vinte e cinco" },
+          { "en": "thirty (30)", "pt": "trinta" },
+          { "en": "forty (40)", "pt": "quarenta" },
+          { "en": "fifty (50)", "pt": "cinquenta" }
+        ]
+      },
+      {
+        "id": "l01-learn-04",
+        "type": "language_focus",
+        "titleEn": "Short vs full answer",
+        "titlePt": "Resposta curta vs completa",
+        "items": [
+          { "formalEn": "I am thirty years old.", "naturalEn": "I'm 30. / I'm thirty.", "notePt": "Na conversa real, a forma curta é mais comum." },
+          { "formalEn": "I am twenty-eight years of age.", "naturalEn": "I'm twenty-eight.", "notePt": "Years of age é formal — evite no dia a dia." }
+        ],
+        "tipPt": "Em formulários ou HR, years old pode ser pedido por escrito. Na fala, I'm 30 basta."
+      },
+      {
+        "id": "l01-learn-05",
+        "type": "comparison",
+        "titleEn": "BE vs HAVE",
+        "titlePt": "Ser vs ter — idade",
+        "left": {
+          "labelEn": "ENGLISH · BE",
+          "exampleEn": "I'm 30 years old.",
+          "notePt": "Idade = estado — use I'm (I am)."
+        },
+        "right": {
+          "labelEn": "PORTUGUESE · TER",
+          "exampleEn": "I have 30 years. ✗",
+          "notePt": "Tradução literal soa errada — nunca use have para idade."
+        },
+        "modelEn": "I'm 30 years old. — NOT I have 30 years.",
+        "modelPt": "Em português você TEM anos; em inglês você É (BE) X years old."
+      },
+      {
+        "id": "l01-learn-06",
+        "type": "mistake",
+        "titlePt": "Erro comum de brasileiros",
+        "wrongEn": "I have 30 years.",
+        "rightEn": "I'm 30 years old.",
+        "explanationPt": "Em português: 'Eu tenho 30 anos.' Em inglês, idade usa o verbo BE: I'm 30 years old ou I'm thirty. Nunca I have X years — soa como tradução literal e está gramaticalmente errado."
+      },
+      {
+        "id": "l01-learn-07",
+        "type": "vocabulary",
+        "titleEn": "Useful words",
+        "titlePt": "Vocabulário em contexto",
+        "words": [
+          { "en": "year", "pt": "ano", "exampleEn": "One year · two years · thirty years old." },
+          { "en": "old", "pt": "de idade", "exampleEn": "How old are you?" },
+          { "en": "young", "pt": "jovem", "exampleEn": "She's young — she's 22." },
+          { "en": "about", "pt": "cerca de", "exampleEn": "I'm about 30." }
+        ]
+      },
+      {
+        "id": "l01-learn-08",
+        "type": "review",
+        "titleEn": "Quick review",
+        "titlePt": "Revisão rápida",
+        "items": [
+          { "en": "How old are you?", "pt": "pergunta" },
+          { "en": "I'm 30 years old.", "pt": "resposta completa" },
+          { "en": "I'm thirty.", "pt": "resposta curta" },
+          { "en": "What about you?", "pt": "devolver pergunta" },
+          { "en": "I'm 30. ✓", "pt": "BE, não HAVE" }
+        ]
+      }
+    ],
+    "imitate": [
+      {
+        "id": "l01-imit-01",
+        "type": "read_repeat",
+        "titleEn": "Read & Repeat",
+        "titlePt": "Leia e repita",
+        "introPt": "Sem áudio ainda — leia em voz alta, pausa curta entre frases. Adapte o número à sua idade.",
+        "phrases": [
+          { "en": "How old are you?" },
+          { "en": "I'm 30 years old." },
+          { "en": "I'm thirty." },
+          { "en": "What about you?" },
+          { "en": "I'm twenty-eight." },
+          { "en": "I'm 35 years old." },
+          { "en": "How old is she?" },
+          { "en": "She's 40." }
+        ],
+        "dialogueEn": "How old are you? — I'm 30 years old. What about you? — I'm twenty-eight."
+      }
+    ],
+    "mission": [
+      {
+        "id": "l01-miss-01",
+        "type": "mission_intro",
+        "headlineEn": "Your turn — talk about age.",
+        "headlinePt": "Sua vez — fale sobre idade.",
+        "bodyPt": "Alex perguntou sua idade. Responda, devolva a pergunta e pratique o diálogo completo em inglês.",
+        "prompts": [
+          { "speaker": "Alex", "questionEn": "How old are you?" },
+          { "speaker": "Alex", "questionEn": "What about you?" }
+        ]
+      }
+    ]
+  },
+  "practiceInteractions": [
+    {
+      "id": "l01-prac-01",
+      "type": "choice",
+      "promptPt": "Alex pergunta How old are you? — melhor resposta:",
+      "options": [
+        { "labelEn": "I'm 32 years old.", "correct": true, "feedbackPt": "Padrão correto — I'm + idade + years old." },
+        { "labelEn": "I have 32 years.", "correct": false, "feedbackPt": "Tradução literal — use BE, não HAVE." },
+        { "labelEn": "I am 32 years.", "correct": false, "feedbackPt": "Falta old — ou use I'm 32 / I'm thirty-two." }
+      ]
+    },
+    {
+      "id": "l01-prac-02",
+      "type": "fill_blank",
+      "promptPt": "Complete a pergunta sobre idade:",
+      "templateEn": "How ___ are you?",
+      "blankLabel": "palavra",
+      "options": [
+        { "labelEn": "old", "correct": true, "feedbackPt": "How old are you? — padrão fixo." },
+        { "labelEn": "many", "correct": false, "feedbackPt": "How many are you? não existe neste contexto." },
+        { "labelEn": "age", "correct": false, "feedbackPt": "How age are you? está gramaticalmente errado." }
+      ]
+    },
+    {
+      "id": "l01-prac-03",
+      "type": "reorder",
+      "promptPt": "Monte a resposta correta:",
+      "tokens": ["old.", "I'm", "30", "years"],
+      "correctOrder": ["I'm", "30", "years", "old."],
+      "feedbackCorrectPt": "I'm 30 years old. — ordem natural.",
+      "feedbackWrongPt": "A ordem correta é I'm + número + years + old."
+    },
+    {
+      "id": "l01-prac-04",
+      "type": "dialogue_complete",
+      "promptPt": "Alex pergunta idade — você responde:",
+      "speaker": "You",
+      "contextEn": "Alex: How old are you?",
+      "options": [
+        { "labelEn": "I'm 28 years old.", "correct": true, "feedbackPt": "Resposta natural e completa." },
+        { "labelEn": "I have 28 years.", "correct": false, "feedbackPt": "Erro clássico de tradução — use I'm." },
+        { "labelEn": "Where do you live?", "correct": false, "feedbackPt": "Muda de assunto — não responde idade." }
+      ]
+    },
+    {
+      "id": "l01-prac-05",
+      "type": "choice",
+      "promptPt": "Devolver a pergunta depois de responder idade:",
+      "options": [
+        { "labelEn": "What about you?", "correct": true, "feedbackPt": "Forma curta e comum." },
+        { "labelEn": "How are you?", "correct": false, "feedbackPt": "Pergunta como está, não idade." },
+        { "labelEn": "What do you do?", "correct": false, "feedbackPt": "Pergunta profissão, não idade." }
+      ]
+    },
+    {
+      "id": "l01-prac-06",
+      "type": "fill_blank",
+      "promptPt": "Resposta curta — complete:",
+      "templateEn": "I'm ___.",
+      "blankLabel": "idade",
+      "options": [
+        { "labelEn": "thirty", "correct": true, "feedbackPt": "I'm thirty. — forma curta natural." },
+        { "labelEn": "have thirty", "correct": false, "feedbackPt": "Have não combina com idade." },
+        { "labelEn": "years thirty", "correct": false, "feedbackPt": "Ordem incorreta." }
+      ]
+    },
+    {
+      "id": "l01-prac-07",
+      "type": "choice",
+      "promptPt": "Qual frase está ERRADA em inglês?",
+      "options": [
+        { "labelEn": "I have 25 years.", "correct": true, "feedbackPt": "Esta é a errada — use I'm 25 years old." },
+        { "labelEn": "I'm 25 years old.", "correct": false, "feedbackPt": "Esta está correta." },
+        { "labelEn": "I'm twenty-five.", "correct": false, "feedbackPt": "Esta também está correta." }
+      ]
+    },
+    {
+      "id": "l01-prac-08",
+      "type": "reorder",
+      "promptPt": "Monte a pergunta sobre idade:",
+      "tokens": ["you?", "old", "How", "are"],
+      "correctOrder": ["How", "old", "are", "you?"],
+      "feedbackCorrectPt": "How old are you? — ordem fixa.",
+      "feedbackWrongPt": "A ordem em inglês é How + old + are + you?"
+    },
+    {
+      "id": "l01-prac-09",
+      "type": "dialogue_complete",
+      "promptPt": "Você quer saber a idade de Alex:",
+      "speaker": "You",
+      "contextEn": "Alex told you about his job. Now you want to ask about age.",
+      "options": [
+        { "labelEn": "How old are you?", "correct": true, "feedbackPt": "Pergunta direta e educada em contexto informal." },
+        { "labelEn": "How many years do you have?", "correct": false, "feedbackPt": "Tradução literal — não existe assim em inglês." },
+        { "labelEn": "What is your years?", "correct": false, "feedbackPt": "Forma gramatical incorreta." }
+      ]
+    },
+    {
+      "id": "l01-prac-10",
+      "type": "fill_blank",
+      "promptPt": "Corrija o erro — complete com BE:",
+      "templateEn": "I ___ 40 years old.",
+      "blankLabel": "verbo",
+      "options": [
+        { "labelEn": "'m", "correct": true, "feedbackPt": "I'm 40 years old. — use BE (am)." },
+        { "labelEn": "have", "correct": false, "feedbackPt": "I have 40 years old está errado." },
+        { "labelEn": "do", "correct": false, "feedbackPt": "Do não combina nesta frase." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 8,
+  "goalPt": "Frases essenciais no aeroporto — flight, gate, boarding pass, security, check-in.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Dia de viagem — check-in, segurança e portão de embarque.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can navigate the airport.",
+    "headlinePt": "Você consegue se orientar no aeroporto.",
+    "bodyPt": "",
+    "canDo": ["Where is my gate?", "Here's my boarding pass.", "Is this flight on time?", "Security checkpoint", "Window or aisle seat?"],
+    "production": {
+      "introPt": "Simule aeroporto: pergunte o portão e apresente boarding pass.",
+      "prompts": [
+        { "speaker": "Agent", "questionEn": "Boarding pass, please." },
+        { "speaker": "Staff", "questionEn": "Can I help you?" }
+      ],
+      "fields": [
+        { "id": "pass", "labelPt": "Apresentar boarding pass", "prefixEn": "", "placeholderEn": "Here's my boarding pass." },
+        { "id": "gate", "labelPt": "Perguntar portão", "prefixEn": "", "placeholderEn": "Where is gate B12?" }
+      ],
+      "exampleEn": "Here's my boarding pass. Where is gate B12? Is the flight on time?"
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l05-ctx-01", "type": "intro", "titleEn": "At the airport", "titlePt": "No aeroporto", "bodyPt": "Flight, gate, boarding pass, security — vocabulário mínimo para não se perder no aeroporto." },
+      { "id": "l05-ctx-02", "type": "scenario", "settingEn": "International airport · Travel day", "scenarioPt": "Você passou pelo check-in e agora precisa achar o portão e a segurança." },
+      { "id": "l05-ctx-03", "type": "dialogue_choice", "speaker": "Agent", "promptEn": "Boarding pass, please.", "promptPt": "Agente pede cartão de embarque.", "options": [
+        { "labelEn": "Here's my boarding pass.", "correct": true, "feedbackPt": "Apresentar documento." },
+        { "labelEn": "Here's my room key.", "correct": false, "feedbackPt": "Room key = hotel." },
+        { "labelEn": "Here's my check.", "correct": false, "feedbackPt": "Check = conta." }
+      ]},
+      { "id": "l05-ctx-04", "type": "dialogue_choice", "speaker": "You", "promptEn": "Where is gate B12?", "promptPt": "Perguntar localização do portão.", "options": [
+        { "labelEn": "Excuse me, where is gate B12?", "correct": true, "feedbackPt": "Gate = portão de embarque." },
+        { "labelEn": "How much is gate B12?", "correct": false, "feedbackPt": "Preço — contexto errado." },
+        { "labelEn": "I'd like gate B12.", "correct": false, "feedbackPt": "Pedido — não pergunta de lugar." }
+      ]},
+      { "id": "l05-ctx-05", "type": "dialogue_choice", "speaker": "Staff", "promptEn": "Your flight is on time. Boarding starts at 3:30.", "promptPt": "Informação do voo. Você confirma:", "options": [
+        { "labelEn": "Great, thank you!", "correct": true, "feedbackPt": "Confirmação educada." },
+        { "labelEn": "Can I have the check?", "correct": false, "feedbackPt": "Restaurante." },
+        { "labelEn": "Turn left at the corner.", "correct": false, "feedbackPt": "Você recebe info, não dá direção." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l05-learn-01", "type": "phrase_examples", "titleEn": "Flight basics", "titlePt": "Básico de voo", "introPt": "Termos essenciais.", "examples": [
+        { "en": "flight", "pt": "voo" }, { "en": "departure / arrival", "pt": "partida / chegada" },
+        { "en": "Is the flight on time?", "pt": "O voo está no horário?" }, { "en": "delayed / canceled", "pt": "atrasado / cancelado" }
+      ]},
+      { "id": "l05-learn-02", "type": "phrase_examples", "titleEn": "Gate & boarding", "titlePt": "Portão e embarque", "introPt": "Gate = portão. Boarding = embarque.", "examples": [
+        { "en": "gate B12", "pt": "portão B12" }, { "en": "Where is my gate?", "pt": "Onde fica meu portão?" },
+        { "en": "boarding pass", "pt": "cartão de embarque" }, { "en": "Now boarding.", "pt": "Embarcando agora." }
+      ]},
+      { "id": "l05-learn-03", "type": "phrase_examples", "titleEn": "Security", "titlePt": "Segurança", "introPt": "Checkpoint de segurança.", "examples": [
+        { "en": "security / security checkpoint", "pt": "segurança / raio-X" }, { "en": "Please take off your shoes.", "pt": "Tire os sapatos." },
+        { "en": "Laptops out of the bag.", "pt": "Notebook fora da mala." }
+      ]},
+      { "id": "l05-learn-04", "type": "comparison", "titleEn": "Boarding pass vs Passport", "titlePt": "Boarding pass vs Passport", "left": { "labelEn": "BOARDING PASS · embarque", "exampleEn": "Here's my boarding pass.", "notePt": "Para passar portão e embarcar." }, "right": { "labelEn": "PASSPORT · identidade", "exampleEn": "Here's my passport.", "notePt": "Documento internacional — check-in e imigração." }, "modelEn": "passport (ID) · boarding pass (gate)", "modelPt": "Dois documentos diferentes — ambos importantes." },
+      { "id": "l05-learn-05", "type": "phrase_examples", "titleEn": "At check-in counter", "titlePt": "No balcão de check-in", "introPt": "Frases no balcão da companhia.", "examples": [
+        { "en": "I'd like to check in for my flight.", "pt": "Check-in do voo." }, { "en": "Window or aisle?", "pt": "Janela ou corredor?" },
+        { "en": "I'd like a window seat, please.", "pt": "Assento na janela." }
+      ]},
+      { "id": "l05-learn-06", "type": "language_focus", "titleEn": "On time / Delayed", "titlePt": "No horário / atrasado", "items": [
+        { "formalEn": "The flight is operating on schedule.", "naturalEn": "The flight is on time.", "notePt": "On time = no horário." },
+        { "formalEn": "The flight has been delayed.", "naturalEn": "The flight is delayed.", "notePt": "Delayed = atrasado." }
+      ], "tipPt": "Pergunte: Is my flight on time? — especialmente em conexões." },
+      { "id": "l05-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "Where is the boarding?", "rightEn": "Where is the gate? / Where is my boarding gate?", "explanationPt": "Boarding = processo; gate = portão. Pergunte Where is gate B12?" },
+      { "id": "l05-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "flight / gate", "pt": "voo / portão" }, { "en": "boarding pass", "pt": "cartão embarque" },
+        { "en": "security", "pt": "segurança" }, { "en": "Is the flight on time?", "pt": "no horário?" }
+      ]}
+    ],
+    "imitate": [{ "id": "l05-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta.", "phrases": [
+      { "en": "Here's my boarding pass." }, { "en": "Where is gate B12?" }, { "en": "Is the flight on time?" },
+      { "en": "The flight is delayed." }, { "en": "Security checkpoint" }, { "en": "Window or aisle?" },
+      { "en": "I'd like a window seat." }, { "en": "Now boarding at gate B12." }
+    ], "dialogueEn": "Boarding pass, please. — Here's my boarding pass. — Where is gate B12? — Down the hall, on your left. — Is the flight on time? — Yes, boarding at 3:30." }],
+    "mission": [{ "id": "l05-miss-01", "type": "mission_intro", "headlineEn": "Your turn — at the airport.", "headlinePt": "Sua vez — no aeroporto.", "bodyPt": "Apresente boarding pass e pergunte sobre o portão.", "prompts": [
+      { "speaker": "Agent", "questionEn": "Boarding pass, please." },
+      { "speaker": "Staff", "questionEn": "Can I help you?" }
+    ]}]
+  },
+  "practiceInteractions": [
+    { "id": "l05-prac-01", "type": "choice", "promptPt": "Cartão de embarque em inglês:", "options": [
+      { "labelEn": "boarding pass", "correct": true, "feedbackPt": "Termo correto." },
+      { "labelEn": "boarding check", "correct": false, "feedbackPt": "Boarding check não é o termo." },
+      { "labelEn": "room key", "correct": false, "feedbackPt": "Hotel." }
+    ]},
+    { "id": "l05-prac-02", "type": "fill_blank", "promptPt": "Complete: Onde fica o portão B12?", "templateEn": "Where is ___ B12?", "blankLabel": "palavra", "options": [
+      { "labelEn": "gate", "correct": true, "feedbackPt": "Gate = portão." },
+      { "labelEn": "flight", "correct": false, "feedbackPt": "Flight = voo." },
+      { "labelEn": "security", "correct": false, "feedbackPt": "Security = raio-X." }
+    ]},
+    { "id": "l05-prac-03", "type": "reorder", "promptPt": "Monte: Aqui está meu cartão de embarque.", "tokens": ["pass.", "boarding", "my", "Here's"], "correctOrder": ["Here's", "my", "boarding", "pass."], "feedbackCorrectPt": "Here's my boarding pass.", "feedbackWrongPt": "Here's my boarding pass." },
+    { "id": "l05-prac-04", "type": "dialogue_complete", "promptPt": "Perguntar se voo está no horário:", "speaker": "You", "contextEn": "You're at the gate area.", "options": [
+      { "labelEn": "Is the flight on time?", "correct": true, "feedbackPt": "On time = no horário." },
+      { "labelEn": "Is the flight expensive?", "correct": false, "feedbackPt": "Preço, não horário." },
+      { "labelEn": "Is the flight delicious?", "correct": false, "feedbackPt": "Sem sentido." }
+    ]},
+    { "id": "l05-prac-05", "type": "choice", "promptPt": "Delayed significa:", "options": [
+      { "labelEn": "late / not on time", "correct": true, "feedbackPt": "Atrasado." },
+      { "labelEn": "early", "correct": false, "feedbackPt": "Early = cedo." },
+      { "labelEn": "canceled only", "correct": false, "feedbackPt": "Canceled = cancelado — diferente." }
+    ]},
+    { "id": "l05-prac-06", "type": "fill_blank", "promptPt": "Complete: O voo está atrasado.", "templateEn": "The flight is ___.", "blankLabel": "palavra", "options": [
+      { "labelEn": "delayed", "correct": true, "feedbackPt": "Delayed = atrasado." },
+      { "labelEn": "on time", "correct": false, "feedbackPt": "On time = no horário — oposto." },
+      { "labelEn": "boarding", "correct": false, "feedbackPt": "Boarding = embarcando." }
+    ]},
+    { "id": "l05-prac-07", "type": "reorder", "promptPt": "Monte: Assento na janela, por favor.", "tokens": ["please.", "seat,", "window", "a", "like", "I'd"], "correctOrder": ["I'd", "like", "a", "window", "seat,", "please."], "feedbackCorrectPt": "I'd like a window seat, please.", "feedbackWrongPt": "I'd like a window seat, please." },
+    { "id": "l05-prac-08", "type": "dialogue_complete", "promptPt": "Agente pede documento de embarque:", "speaker": "You", "contextEn": "Agent: Boarding pass, please.", "options": [
+      { "labelEn": "Here's my boarding pass.", "correct": true, "feedbackPt": "Apresentar documento." },
+      { "labelEn": "Here's my reservation.", "correct": false, "feedbackPt": "Reservation = hotel/restaurante." },
+      { "labelEn": "Go straight.", "correct": false, "feedbackPt": "Direção." }
+    ]},
+    { "id": "l05-prac-09", "type": "choice", "promptPt": "Security checkpoint é:", "options": [
+      { "labelEn": "airport security screening area", "correct": true, "feedbackPt": "Raio-X e controle." },
+      { "labelEn": "hotel reception", "correct": false, "feedbackPt": "Hotel." },
+      { "labelEn": "restaurant counter", "correct": false, "feedbackPt": "Restaurante." }
+    ]},
+    { "id": "l05-prac-10", "type": "dialogue_complete", "promptPt": "Escolher assento — janela:", "speaker": "You", "contextEn": "Agent: Window or aisle?", "options": [
+      { "labelEn": "Window, please.", "correct": true, "feedbackPt": "Window = janela." },
+      { "labelEn": "Gate, please.", "correct": false, "feedbackPt": "Gate = portão." },
+      { "labelEn": "Check, please.", "correct": false, "feedbackPt": "Check = conta." }
+    ]}
+  ]
+}

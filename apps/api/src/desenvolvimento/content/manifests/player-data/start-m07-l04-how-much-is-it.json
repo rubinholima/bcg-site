@@ -1,0 +1,132 @@
+{
+  "version": 2,
+  "levelLabel": "START",
+  "moduleNumber": 7,
+  "goalPt": "Perguntar e entender preços — How much is it?, dollars, e respostas com números.",
+  "steps": [
+    { "id": "context", "label": "Context", "labelPt": "Contexto" },
+    { "id": "learn", "label": "Learn", "labelPt": "Aprenda" },
+    { "id": "imitate", "label": "Read & Repeat", "labelPt": "Leia e repita" },
+    { "id": "practice", "label": "Practice", "labelPt": "Pratique" },
+    { "id": "verify", "label": "Verify", "labelPt": "Verifique" },
+    { "id": "mission", "label": "Mission", "labelPt": "Missão" }
+  ],
+  "context": { "scenarioPt": "Loja de souvenirs — você pergunta preço antes de comprar.", "dialogue": [] },
+  "learn": { "introPt": "", "phrases": [] },
+  "imitate": { "introPt": "Leia em voz alta e repita cada frase.", "phrases": [] },
+  "practice": { "introPt": "Interações guiadas — feedback imediato, sem nota.", "items": [] },
+  "mission": {
+    "headlineEn": "You can ask about prices.",
+    "headlinePt": "Você consegue perguntar preços.",
+    "bodyPt": "",
+    "canDo": ["How much is it?", "How much are these?", "It's ten dollars.", "That's too expensive.", "I'll take it."],
+    "production": {
+      "introPt": "Pergunte o preço de um item e diga se vai comprar ou não.",
+      "prompts": [{ "speaker": "Shop clerk", "questionEn": "Can I help you?" }],
+      "fields": [
+        { "id": "ask", "labelPt": "Perguntar preço", "prefixEn": "", "placeholderEn": "How much is this shirt?" },
+        { "id": "response", "labelPt": "Sua decisão", "prefixEn": "", "placeholderEn": "It's fifteen dollars. I'll take it." }
+      ],
+      "exampleEn": "How much is this shirt? — It's fifteen dollars. I'll take it."
+    }
+  },
+  "stepScreens": {
+    "context": [
+      { "id": "l04-ctx-01", "type": "intro", "titleEn": "How much is it?", "titlePt": "Quanto custa?", "bodyPt": "Antes de comprar, você precisa saber o preço. How much is it? funciona para um item; How much are these? para vários." },
+      { "id": "l04-ctx-02", "type": "scenario", "settingEn": "Souvenir shop · Downtown", "scenarioPt": "Você segura uma camiseta e quer saber quanto custa." },
+      { "id": "l04-ctx-03", "type": "dialogue_choice", "speaker": "You", "promptEn": "How much is this shirt?", "promptPt": "Você pergunta o preço de UMA camiseta.", "options": [
+        { "labelEn": "How much is this shirt?", "correct": true, "feedbackPt": "Is = singular — uma camiseta." },
+        { "labelEn": "How much are this shirt?", "correct": false, "feedbackPt": "Are com this shirt — use is." },
+        { "labelEn": "How many is this shirt?", "correct": false, "feedbackPt": "Many pergunta quantidade, não preço." }
+      ]},
+      { "id": "l04-ctx-04", "type": "dialogue_choice", "speaker": "Clerk", "promptEn": "It's twenty-five dollars.", "promptPt": "Atendente diz o preço. Você acha caro:", "options": [
+        { "labelEn": "That's a little expensive.", "correct": true, "feedbackPt": "Comentário educado sobre preço." },
+        { "labelEn": "That's my name.", "correct": false, "feedbackPt": "Não responde ao preço." },
+        { "labelEn": "How much is it?", "correct": false, "feedbackPt": "Já recebeu o preço — repetir não ajuda." }
+      ]},
+      { "id": "l04-ctx-05", "type": "dialogue_choice", "speaker": "Clerk", "promptEn": "It's only ten dollars.", "promptPt": "Preço bom — você decide comprar:", "options": [
+        { "labelEn": "OK, I'll take it.", "correct": true, "feedbackPt": "I'll take it = vou levar/comprar." },
+        { "labelEn": "I'll go straight.", "correct": false, "feedbackPt": "Go straight é direção — contexto errado." },
+        { "labelEn": "Good night!", "correct": false, "feedbackPt": "Despedida — contexto errado." }
+      ]}
+    ],
+    "learn": [
+      { "id": "l04-learn-01", "type": "phrase_examples", "titleEn": "Asking price", "titlePt": "Perguntar preço", "introPt": "How much + is/are — singular vs plural.", "examples": [
+        { "en": "How much is it?", "pt": "Quanto custa? (um item)" }, { "en": "How much is this?", "pt": "Quanto custa isto?" },
+        { "en": "How much are these?", "pt": "Quanto custam estes?" }, { "en": "How much is that?", "pt": "Quanto custa aquilo?" }
+      ]},
+      { "id": "l04-learn-02", "type": "phrase_examples", "titleEn": "Answering price", "titlePt": "Responder preço", "introPt": "It's / They're + número + dollars.", "examples": [
+        { "en": "It's five dollars.", "pt": "Custa cinco dólares." }, { "en": "It's ten ninety-nine.", "pt": "Dez dólares e noventa e nove centavos." },
+        { "en": "They're twenty dollars.", "pt": "Custam vinte dólares." }, { "en": "It's free.", "pt": "É grátis." }
+      ]},
+      { "id": "l04-learn-03", "type": "comparison", "titleEn": "Is vs Are", "titlePt": "Is vs Are no preço", "left": { "labelEn": "IS · um item", "exampleEn": "How much is this shirt?", "notePt": "This shirt = singular → is." }, "right": { "labelEn": "ARE · vários itens", "exampleEn": "How much are these shoes?", "notePt": "These shoes = plural → are." }, "modelEn": "How much is it? · How much are they?", "modelPt": "Singular = is; plural = are." },
+      { "id": "l04-learn-04", "type": "phrase_examples", "titleEn": "Dollars & cents", "titlePt": "Dólares e centavos", "introPt": "Preços americanos — dollars e cents.", "examples": [
+        { "en": "three dollars", "pt": "três dólares" }, { "en": "ten dollars and fifty cents", "pt": "dez dólares e cinquenta centavos" },
+        { "en": "$12.99", "pt": "twelve ninety-nine (fala)" }, { "en": "a dollar", "pt": "um dólar" }
+      ]},
+      { "id": "l04-learn-05", "type": "language_focus", "titleEn": "Expensive / Cheap", "titlePt": "Caro / barato", "items": [
+        { "formalEn": "That is too expensive for me.", "naturalEn": "That's too expensive.", "notePt": "Comentário comum ao ouvir preço." },
+        { "formalEn": "That is a good price.", "naturalEn": "That's a good deal!", "notePt": "Good deal = bom preço/oferta." }
+      ], "tipPt": "I'll take it = decidir comprar. Maybe later = talvez depois (recusar educadamente)." },
+      { "id": "l04-learn-06", "type": "phrase_examples", "titleEn": "Buying decisions", "titlePt": "Decisão de compra", "introPt": "Frases após saber o preço.", "examples": [
+        { "en": "I'll take it.", "pt": "Vou levar." }, { "en": "I'll think about it.", "pt": "Vou pensar." },
+        { "en": "Do you take credit cards?", "pt": "Aceita cartão?" }, { "en": "Cash or card?", "pt": "Dinheiro ou cartão?" }
+      ]},
+      { "id": "l04-learn-07", "type": "mistake", "titlePt": "Erro comum de brasileiros", "wrongEn": "How much costs this?", "rightEn": "How much is this? / How much does this cost?", "explanationPt": "How much costs não é natural. Use How much is it? ou How much does it cost?" },
+      { "id": "l04-learn-08", "type": "review", "titleEn": "Quick review", "titlePt": "Revisão rápida", "items": [
+        { "en": "How much is it?", "pt": "quanto custa (1 item)" }, { "en": "How much are these?", "pt": "quanto custam" },
+        { "en": "It's ten dollars.", "pt": "resposta de preço" }, { "en": "I'll take it.", "pt": "vou comprar" }
+      ]}
+    ],
+    "imitate": [{ "id": "l04-imit-01", "type": "read_repeat", "titleEn": "Read & Repeat", "titlePt": "Leia e repita", "introPt": "Sem áudio — leia em voz alta.", "phrases": [
+      { "en": "How much is it?" }, { "en": "How much is this?" }, { "en": "How much are these?" },
+      { "en": "It's ten dollars." }, { "en": "It's twenty-five dollars." }, { "en": "That's too expensive." },
+      { "en": "That's a good deal!" }, { "en": "OK, I'll take it." }
+    ], "dialogueEn": "How much is this shirt? — It's twenty-five dollars. — That's a little expensive. — How about this one? — It's only ten dollars. — OK, I'll take it." }],
+    "mission": [{ "id": "l04-miss-01", "type": "mission_intro", "headlineEn": "Your turn — ask about prices.", "headlinePt": "Sua vez — pergunte preços.", "bodyPt": "Pergunte quanto custa um item e diga se vai comprar.", "prompts": [{ "speaker": "Shop clerk", "questionEn": "Can I help you?" }] }]
+  },
+  "practiceInteractions": [
+    { "id": "l04-prac-01", "type": "choice", "promptPt": "Perguntar preço de UM item:", "options": [
+      { "labelEn": "How much is it?", "correct": true, "feedbackPt": "Is = singular." },
+      { "labelEn": "How much are it?", "correct": false, "feedbackPt": "It com are — incorreto." },
+      { "labelEn": "How many is it?", "correct": false, "feedbackPt": "Many = quantidade, não preço." }
+    ]},
+    { "id": "l04-prac-02", "type": "fill_blank", "promptPt": "Complete: Quanto custam estes?", "templateEn": "How much ___ these?", "blankLabel": "verbo", "options": [
+      { "labelEn": "are", "correct": true, "feedbackPt": "These = plural → are." },
+      { "labelEn": "is", "correct": false, "feedbackPt": "Is com these — incorreto." },
+      { "labelEn": "do", "correct": false, "feedbackPt": "Do não combina diretamente." }
+    ]},
+    { "id": "l04-prac-03", "type": "reorder", "promptPt": "Monte: Custa dez dólares.", "tokens": ["dollars.", "ten", "It's"], "correctOrder": ["It's", "ten", "dollars."], "feedbackCorrectPt": "It's ten dollars.", "feedbackWrongPt": "It's + número + dollars." },
+    { "id": "l04-prac-04", "type": "dialogue_complete", "promptPt": "Preço ok — você compra:", "speaker": "You", "contextEn": "Clerk: It's only eight dollars.", "options": [
+      { "labelEn": "OK, I'll take it.", "correct": true, "feedbackPt": "I'll take it = vou levar." },
+      { "labelEn": "Turn left, please.", "correct": false, "feedbackPt": "Direção — contexto errado." },
+      { "labelEn": "Where is the hotel?", "correct": false, "feedbackPt": "Localização — contexto errado." }
+    ]},
+    { "id": "l04-prac-05", "type": "choice", "promptPt": "Comentário educado quando acha caro:", "options": [
+      { "labelEn": "That's a little expensive.", "correct": true, "feedbackPt": "Educado e claro." },
+      { "labelEn": "That's my lunch.", "correct": false, "feedbackPt": "Sem sentido no contexto." },
+      { "labelEn": "How are you?", "correct": false, "feedbackPt": "Pergunta social — contexto errado." }
+    ]},
+    { "id": "l04-prac-06", "type": "fill_blank", "promptPt": "Complete alternativa: Quanto custa?", "templateEn": "How much ___ it cost?", "blankLabel": "auxiliar", "options": [
+      { "labelEn": "does", "correct": true, "feedbackPt": "How much does it cost? — também correto." },
+      { "labelEn": "is", "correct": false, "feedbackPt": "Is it cost não funciona — use does." },
+      { "labelEn": "do", "correct": false, "feedbackPt": "It com do — incorreto." }
+    ]},
+    { "id": "l04-prac-07", "type": "reorder", "promptPt": "Monte: Quanto custa isto?", "tokens": ["this?", "much", "How", "is"], "correctOrder": ["How", "much", "is", "this?"], "feedbackCorrectPt": "How much is this?", "feedbackWrongPt": "How much is + item." },
+    { "id": "l04-prac-08", "type": "dialogue_complete", "promptPt": "Clerk: They're fifteen dollars.", "speaker": "You", "contextEn": "Clerk: They're fifteen dollars.", "options": [
+      { "labelEn": "That's a good deal!", "correct": true, "feedbackPt": "Reação positiva ao preço." },
+      { "labelEn": "How much is it?", "correct": false, "feedbackPt": "Já recebeu o preço." },
+      { "labelEn": "I'm fifteen.", "correct": false, "feedbackPt": "Sem sentido." }
+    ]},
+    { "id": "l04-prac-09", "type": "choice", "promptPt": "I'll take it significa:", "options": [
+      { "labelEn": "I'll buy it / I'll get it.", "correct": true, "feedbackPt": "Decisão de comprar." },
+      { "labelEn": "I'll leave it.", "correct": false, "feedbackPt": "Take = levar/comprar, não deixar." },
+      { "labelEn": "I'll eat it.", "correct": false, "feedbackPt": "Pode ser comida, mas take it = comprar/levar." }
+    ]},
+    { "id": "l04-prac-10", "type": "dialogue_complete", "promptPt": "Na loja, antes de comprar:", "speaker": "You", "contextEn": "You hold a mug and want to know the price.", "options": [
+      { "labelEn": "How much is this mug?", "correct": true, "feedbackPt": "Pergunta de preço correta." },
+      { "labelEn": "How many mugs?", "correct": false, "feedbackPt": "Many = quantidade, não preço." },
+      { "labelEn": "Where is the mug?", "correct": false, "feedbackPt": "Where = localização." }
+    ]}
+  ]
+}
