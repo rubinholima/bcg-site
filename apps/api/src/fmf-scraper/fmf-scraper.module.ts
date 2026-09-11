@@ -13,6 +13,7 @@ import { FmfScraperService } from './fmf-scraper.service';
 import { FmfScraperSchedulerService } from './fmf-scraper-scheduler.service';
 import { FmfTravelSyncService } from './fmf-travel-sync.service';
 import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
+import { FmfCatalogDiscoveryService } from './fmf-catalog-discovery.service';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
     FmfPageSyncService,
     FmfMatchReportService,
     FmfScraperSchedulerService,
+    FmfCatalogDiscoveryService,
     ModuleAccessGuard,
   ],
   exports: [

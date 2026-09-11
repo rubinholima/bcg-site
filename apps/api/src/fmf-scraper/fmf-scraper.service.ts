@@ -15,6 +15,7 @@ import {
   listFmfPresetKeysForImport,
   loadFmfPresetExtensionMap,
 } from './fmf-preset-registry.util';
+import { FmfCatalogDiscoveryService } from './fmf-catalog-discovery.service';
 import {
   FMF_SCRAPER_PRESETS,
   type FmfScraperPreset,
@@ -209,7 +210,10 @@ export class FmfScraperService {
   private readonly log = new Logger(FmfScraperService.name);
   private busy = false;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly catalogDiscovery: FmfCatalogDiscoveryService,
+  ) {}
 
   async getPresets() {
     const extensions = await loadFmfPresetExtensionMap(this.prisma);
@@ -233,7 +237,16 @@ export class FmfScraperService {
     const store = await this.loadStore();
     store.lastRunError = null;
 
-    const extensions = await loadFmfPresetExtensionMap(this.prisma);
+    let extensions = await loadFmfPresetExtensionMap(this.prisma);
+    if (options.all) {
+      try {
+        extensions = await this.catalogDiscovery.discoverAndMergeExtensions(extensions);
+      } catch (e) {
+        this.log.warn(
+          `FMF discovery catálogo: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
     const importable = listFmfPresetKeysForImport(extensions);
     const keys: string[] = options.all
       ? importable
