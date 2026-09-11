@@ -268,6 +268,46 @@ describe('planFmfDisciplineScopeRepair', () => {
     expect(patch.unrelatedFingerprint.before).toBe(patch.unrelatedFingerprint.after);
   });
 
+  it('bloqueia partida com rawParsed ausente ou inválido sem mutar', async () => {
+    const update = jest.fn();
+    const prismaMissing = basePrisma({
+      fmfMatchReport: {
+        findMany: async () => {
+          const rows = await basePrisma().fmfMatchReport.findMany();
+          return rows.map((row) => ({ ...row, rawParsed: null }));
+        },
+      },
+      fmfPlayerMatchStat: { update },
+    });
+    const planMissing = await planFmfDisciplineScopeRepair(prismaMissing, {
+      tenantId: 't1',
+      matchIds: [ALLOWED_MATCH],
+      downloadAndParse: async () => parsedBostonAway(),
+      skipAllowlistForTests: true,
+    });
+    expect(planMissing.matches[0]?.safe).toBe(false);
+    expect(planMissing.matches[0]?.blockReasons.join(' ')).toMatch(/rawParsed existente ausente/);
+
+    const prismaInvalid = basePrisma({
+      fmfMatchReport: {
+        findMany: async () => {
+          const rows = await basePrisma().fmfMatchReport.findMany();
+          return rows.map((row) => ({ ...row, rawParsed: { invalid: true } }));
+        },
+      },
+      fmfPlayerMatchStat: { update },
+    });
+    const planInvalid = await planFmfDisciplineScopeRepair(prismaInvalid, {
+      tenantId: 't1',
+      matchIds: [ALLOWED_MATCH],
+      downloadAndParse: async () => parsedBostonAway(),
+      skipAllowlistForTests: true,
+    });
+    expect(planInvalid.matches[0]?.safe).toBe(false);
+    expect(planInvalid.matches[0]?.blockReasons.join(' ')).toMatch(/rawParsed existente inválido/);
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it('bloqueia fonte incompleta', async () => {
     const parsed = parsedBostonAway();
     parsed.stats = parsed.stats.filter((s) => s.cbfRegistration !== '111111');

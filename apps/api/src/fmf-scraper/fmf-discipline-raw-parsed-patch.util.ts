@@ -48,6 +48,39 @@ export function extractDisciplineRawPatchSlice(
 }
 
 /** Patch mínimo: cartões + yellow/red em stats do nosso lado. Preserva todo o resto. */
+export class ExistingRawParsedRepairBlockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ExistingRawParsedRepairBlockedError';
+  }
+}
+
+function resolveExistingCanonicalRawParsed(existingRaw: unknown): ParsedFmfMatchReport {
+  if (existingRaw == null) {
+    throw new ExistingRawParsedRepairBlockedError(
+      'rawParsed existente ausente — repair bloqueado',
+    );
+  }
+  const existing = normalizeParsedFmfReport(existingRaw);
+  if (!existing) {
+    throw new ExistingRawParsedRepairBlockedError(
+      'rawParsed existente inválido — repair bloqueado',
+    );
+  }
+  const hasTeams = Boolean(existing.homeTeam?.trim() && existing.awayTeam?.trim());
+  const hasCanonicalBody =
+    existing.stats.length > 0 ||
+    existing.roster.length > 0 ||
+    existing.playerGoalEvents.length > 0 ||
+    existing.substitutionEvents.length > 0;
+  if (!hasTeams || !hasCanonicalBody) {
+    throw new ExistingRawParsedRepairBlockedError(
+      'rawParsed existente inválido — repair bloqueado',
+    );
+  }
+  return existing;
+}
+
 export function patchRawParsedDisciplineOnly(
   existingRaw: unknown,
   parsed: ParsedFmfMatchReport,
@@ -58,7 +91,7 @@ export function patchRawParsedDisciplineOnly(
   after: DisciplineRawPatchSlice;
   unrelatedFingerprint: { before: string; after: string };
 } {
-  const existing = normalizeParsedFmfReport(existingRaw) ?? parsed;
+  const existing = resolveExistingCanonicalRawParsed(existingRaw);
   const before = extractDisciplineRawPatchSlice(existing, ourSide);
 
   const patched: ParsedFmfMatchReport = {

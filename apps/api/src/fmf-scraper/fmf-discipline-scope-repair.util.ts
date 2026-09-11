@@ -11,6 +11,7 @@ import {
 } from './fmf-discipline-only-repair.sync';
 import {
   disciplineRawPatchSlicesEqual,
+  ExistingRawParsedRepairBlockedError,
   extractDisciplineRawPatchSlice,
   patchRawParsedDisciplineOnly,
   type DisciplineRawPatchSlice,
@@ -459,15 +460,23 @@ export async function planFmfDisciplineScopeRepair(
       preservedStats = built.preservedStats;
       blockReasons.push(...built.blockReasons);
 
-      const patch = patchRawParsedDisciplineOnly(report.rawParsed, parsed, ourSide);
-      rawParsedPatch = {
-        before: patch.before,
-        after: patch.after,
-        willMutate: !disciplineRawPatchSlicesEqual(patch.before, patch.after),
-        unrelatedFingerprint: patch.unrelatedFingerprint,
-      };
-      if (patch.unrelatedFingerprint.before !== patch.unrelatedFingerprint.after) {
-        blockReasons.push('Patch rawParsed alteraria conteúdo não-disciplinar — abortado');
+      try {
+        const patch = patchRawParsedDisciplineOnly(report.rawParsed, parsed, ourSide);
+        rawParsedPatch = {
+          before: patch.before,
+          after: patch.after,
+          willMutate: !disciplineRawPatchSlicesEqual(patch.before, patch.after),
+          unrelatedFingerprint: patch.unrelatedFingerprint,
+        };
+        if (patch.unrelatedFingerprint.before !== patch.unrelatedFingerprint.after) {
+          blockReasons.push('Patch rawParsed alteraria conteúdo não-disciplinar — abortado');
+        }
+      } catch (err) {
+        if (err instanceof ExistingRawParsedRepairBlockedError) {
+          blockReasons.push(err.message);
+        } else {
+          throw err;
+        }
       }
 
       const cardDrafts = buildDisciplineCardDraftsForRepair({
