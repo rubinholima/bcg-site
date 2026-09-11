@@ -177,7 +177,7 @@ export class FmfCatalogDiscoveryService {
         season,
       });
       if (FMF_SCRAPER_PRESETS[preset.key as keyof typeof FMF_SCRAPER_PRESETS]) continue;
-      out[preset.key] = preset;
+      out[preset.key] = preset as unknown as FmfScraperPreset;
       knownDs.add(row.fmfD);
       added++;
       this.log.log(

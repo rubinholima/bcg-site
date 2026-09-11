@@ -1,7 +1,7 @@
 import type { FmfParsedMatch } from './fmf-proxjogos.parser';
 import { parseFmfProxJogosHtml } from './fmf-proxjogos.parser';
 import type { FmfCompetitionCatalogEntry } from './fmf-competition-catalog.util';
-import type { FmfScraperPreset } from './fmf-scraper.presets';
+import type { FmfScraperPresetExtension } from './fmf-preset-registry.util';
 import { inferCategoryFromCompetitionLabel } from './fmf-scraper.presets';
 import { isFmfTeamMatch } from './fmf-team-match.util';
 
@@ -63,7 +63,7 @@ export function inferPresetFromCompetitionContext(
     catalogEntry?: FmfCompetitionCatalogEntry;
     season?: number;
   },
-): FmfScraperPreset & { key: string } {
+): FmfScraperPresetExtension {
   const season = opts.season ?? new Date().getFullYear();
   const label = opts.officialLabel?.trim() ?? '';
   const fromLabel = inferCategoryFromCompetitionLabel(label);

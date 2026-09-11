@@ -8,8 +8,8 @@ import {
 
 export const FMF_SCRAPER_PRESET_EXTENSIONS_KEY = 'fmf_scraper_preset_extensions';
 
-export type FmfScraperPresetExtension = FmfScraperPreset & {
-  /** Chave estável no store (ex.: copa_master_mg). */
+export type FmfScraperPresetExtension = Omit<FmfScraperPreset, 'key'> & {
+  /** Chave estável no store (ex.: copa_master_mg, sub15_2div). */
   key: string;
 };
 
