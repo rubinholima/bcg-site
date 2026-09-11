@@ -22,6 +22,8 @@ export interface LiveUserItem {
   lastActivityAt: string;
   connectedDuration: string;
   connectedDurationMs: number;
+  /** Outras sessões/dispositivos ativos do mesmo usuário (somente detalhe). */
+  otherSessions?: LiveUserItem[];
 }
 
 export interface LiveUsersResponse {
