@@ -117,7 +117,10 @@ import {
   normalizeCompetitionKey,
   reportMatchesCompetitionFilter,
 } from './cartoes-suspensao.util';
-import { mapDisciplineOpeningRows } from './player-discipline-opening.util';
+import {
+  mapDisciplineOpeningRows,
+  mergeTransferDisciplineOpenings,
+} from './player-discipline-opening.util';
 import {
   buildMatchDisciplineFromOfficialEvents,
   buildPendingDisciplineMessages,
@@ -2820,7 +2823,13 @@ export class FutebolRelatoriosService {
         suspensionRoundsLeft: true,
       },
     });
-    const openingByPlayerId = mapDisciplineOpeningRows(openingRows);
+    const openingByPlayerId = mergeTransferDisciplineOpenings(
+      mapDisciplineOpeningRows(openingRows),
+      disciplinePlayers.map((player) => ({
+        id: player.id,
+        registrationProfile: player.registrationProfile,
+      })),
+    );
 
     const grid = buildDisciplineGrid({
       matches: disciplineMatches.map((row) => ({
@@ -2845,10 +2854,6 @@ export class FutebolRelatoriosService {
     });
 
     const staffResolutionPool = await this.loadTechnicalStaffForDisciplineResolution(input.tenantId);
-    const staffDisplayRoster = await this.loadTechnicalStaffForDiscipline(
-      input.tenantId,
-      referenceCategory,
-    );
     const disciplineMatchesWithStaffCards =
       sourceDecision.effectiveMode === 'events'
         ? disciplineMatches
@@ -2875,7 +2880,7 @@ export class FutebolRelatoriosService {
         eventStaffCards: row.eventStaffCards,
         playerStats: row.playerStats,
       })),
-      staff: staffDisplayRoster.map((member) => this.mapStaffDisciplineInput(member)),
+      staff: [],
       staffCandidates: staffResolutionPool.map((member) => this.mapStaffDisciplineInput(member)),
       clubName,
       aliases,

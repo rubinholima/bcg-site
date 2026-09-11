@@ -230,20 +230,102 @@ function pushSubstitutionEvent(input: {
 }
 
 function splitTimedRows(value: string): string[] {
+  return splitCardSectionRows(value);
+}
+
+/** Cartões Amarelos/Vermelhos: HH:MM 1T|2T ou marcador INT/ANT/TER (com ou sem hífen inicial). */
+export function splitCardSectionRows(value: string): string[] {
   const rows: string[] = [];
   let current = '';
   for (const rawLine of value.split(/\r?\n/)) {
     const line = cleanLine(rawLine);
     if (!line || /^Tempo\s+/i.test(line) || /^NR\s*=/i.test(line)) continue;
-    if (/^\d{1,2}:\d{2}\s+(?:1T|2T)\b/i.test(line)) {
+    const normalized = line.replace(/^-\s+/, '');
+    const isNewRow =
+      /^\d{1,2}:\d{2}\s+(?:1T|2T)\b/i.test(normalized) ||
+      /^(INT|ANT|TER)\s+\d+\b/i.test(normalized);
+    if (isNewRow) {
       if (current) rows.push(current);
-      current = line;
+      current = normalized;
     } else if (current) {
       current += ` ${line}`;
     }
   }
   if (current) rows.push(current);
   return rows;
+}
+
+function playerCardKindsFromNarrative(narrative: string): Array<'yellow' | 'red'> {
+  const text = cleanLine(narrative);
+  if (!text) return [];
+  const secondYellowRed = /2º cart[aã]o amarelo|segundo amarelo|segundo cart[aã]o amarelo/i.test(text);
+  const mentionsYellow = /cart[aã]o amarelo|advertid[oa] com amarelo|apresentei o segundo amarelo/i.test(text);
+  const mentionsRed = /vermelho/i.test(text);
+  if (secondYellowRed || (mentionsYellow && mentionsRed)) return ['yellow'];
+  if (mentionsRed) return ['red'];
+  if (mentionsYellow) return ['yellow'];
+  return [];
+}
+
+type ParsedPlayerCardEventRow = {
+  kind: 'yellow' | 'red';
+  teamSide: 'home' | 'away' | null;
+  jerseyNumber: number;
+  clock: string;
+  period: string;
+  minute: number;
+  excerpt: string;
+};
+
+function parsePlayerCardEventRow(
+  row: string,
+  sectionKind: 'yellow' | 'red',
+  homeTeam: string,
+  awayTeam: string,
+  firstHalfMinutes: number,
+  totalMinutes: number,
+): ParsedPlayerCardEventRow[] {
+  const timed = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(\d+)\b/i);
+  const marker = row.match(/^(INT|ANT|TER)\s+(\d+)\b/i);
+  if (!timed && !marker) return [];
+
+  const side = sideFromRow(row, homeTeam, awayTeam);
+  if (!side) return [];
+
+  const jersey = Number((timed ?? marker)![timed ? 3 : 2]);
+  const narrativeStart = timed
+    ? row.slice(timed[0]!.length).trim()
+    : row.slice(marker![0]!.length).trim();
+
+  let kinds: Array<'yellow' | 'red'>;
+  if (sectionKind === 'yellow') {
+    kinds = ['yellow'];
+  } else if (marker) {
+    kinds = playerCardKindsFromNarrative(narrativeStart);
+    if (kinds.length === 0) kinds = ['red'];
+  } else {
+    kinds = ['red'];
+  }
+
+  const clock = timed ? timed[1]! : marker![1]!.toUpperCase();
+  const period = timed ? timed[2]!.toUpperCase() : marker![1]!.toUpperCase();
+  const minute = timed
+    ? Number(timed[1]!.split(':')[0])
+    : absoluteMinuteForTimingMarker(
+        marker![1]!.toUpperCase() as FmfSourceTimingMarker,
+        firstHalfMinutes,
+        totalMinutes,
+      );
+
+  return kinds.map((kind) => ({
+    kind,
+    teamSide: side,
+    jerseyNumber: jersey,
+    clock,
+    period,
+    minute,
+    excerpt: row.slice(0, 240),
+  }));
 }
 
 /**
@@ -820,48 +902,70 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     }
   }
 
-  const yellowCardRows = splitTimedRows(section(text, '\nCartões Amarelos\n', '\nCartões Vermelhos\n'));
+  const yellowCardRows = splitCardSectionRows(
+    section(text, '\nCartões Amarelos\n', '\nCartões Vermelhos\n'),
+  );
   for (const row of yellowCardRows) {
-    const match = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(\d+)\b/i);
-    if (!match) continue;
-    const side = sideFromRow(row, homeTeam, awayTeam);
-    if (!side) continue;
-    const jersey = Number(match[3]);
-    const rosterPlayer = findRoster(side, jersey);
-    playerCardEvents.push({
-      kind: 'yellow',
-      teamSide: side,
-      jerseyNumber: jersey,
-      cbfRegistration: rosterPlayer?.cbfRegistration ?? null,
-      sourceName: rosterPlayer?.sourceName ?? null,
-      clock: match[1]!,
-      period: match[2]!.toUpperCase(),
-      minute: Number(match[1]!.split(':')[0]),
-      excerpt: row.slice(0, 240),
-    });
-    if (rosterPlayer) rosterPlayer.yellowCards += 1;
+    const parsedRows = parsePlayerCardEventRow(
+      row,
+      'yellow',
+      homeTeam,
+      awayTeam,
+      effectiveFirst,
+      totalMinutes,
+    );
+    for (const parsed of parsedRows) {
+      if (!parsed.teamSide) continue;
+      const side = parsed.teamSide;
+      const rosterPlayer = findRoster(side, parsed.jerseyNumber);
+      playerCardEvents.push({
+        kind: parsed.kind,
+        teamSide: side,
+        jerseyNumber: parsed.jerseyNumber,
+        cbfRegistration: rosterPlayer?.cbfRegistration ?? null,
+        sourceName: rosterPlayer?.sourceName ?? null,
+        clock: parsed.clock,
+        period: parsed.period,
+        minute: parsed.minute,
+        excerpt: parsed.excerpt,
+      });
+      if (!rosterPlayer) continue;
+      if (parsed.kind === 'yellow') rosterPlayer.yellowCards += 1;
+      else rosterPlayer.redCards += 1;
+    }
   }
 
-  const redCardRows = splitTimedRows(section(text, '\nCartões Vermelhos\n', '\nOcorrências / Observações\n'));
+  const redCardRows = splitCardSectionRows(
+    section(text, '\nCartões Vermelhos\n', '\nOcorrências / Observações\n'),
+  );
   for (const row of redCardRows) {
-    const match = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(\d+)\b/i);
-    if (!match) continue;
-    const side = sideFromRow(row, homeTeam, awayTeam);
-    if (!side) continue;
-    const jersey = Number(match[3]);
-    const rosterPlayer = findRoster(side, jersey);
-    playerCardEvents.push({
-      kind: 'red',
-      teamSide: side,
-      jerseyNumber: jersey,
-      cbfRegistration: rosterPlayer?.cbfRegistration ?? null,
-      sourceName: rosterPlayer?.sourceName ?? null,
-      clock: match[1]!,
-      period: match[2]!.toUpperCase(),
-      minute: Number(match[1]!.split(':')[0]),
-      excerpt: row.slice(0, 240),
-    });
-    if (rosterPlayer) rosterPlayer.redCards += 1;
+    const parsedRows = parsePlayerCardEventRow(
+      row,
+      'red',
+      homeTeam,
+      awayTeam,
+      effectiveFirst,
+      totalMinutes,
+    );
+    for (const parsed of parsedRows) {
+      if (!parsed.teamSide) continue;
+      const side = parsed.teamSide;
+      const rosterPlayer = findRoster(side, parsed.jerseyNumber);
+      playerCardEvents.push({
+        kind: parsed.kind,
+        teamSide: side,
+        jerseyNumber: parsed.jerseyNumber,
+        cbfRegistration: rosterPlayer?.cbfRegistration ?? null,
+        sourceName: rosterPlayer?.sourceName ?? null,
+        clock: parsed.clock,
+        period: parsed.period,
+        minute: parsed.minute,
+        excerpt: parsed.excerpt,
+      });
+      if (!rosterPlayer) continue;
+      if (parsed.kind === 'yellow') rosterPlayer.yellowCards += 1;
+      else rosterPlayer.redCards += 1;
+    }
   }
 
   const staffCardEvents: FmfStaffCardEvent[] = [

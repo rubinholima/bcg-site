@@ -993,7 +993,7 @@ describe('buildStaffDisciplineGrid', () => {
       clubName: 'Boston City',
       aliases: [],
       nextMatchDate: '2026-08-24',
-      staff: staffResolution,
+      staff: [],
       staffCandidates: staffResolution,
       matches: [
         {
@@ -1012,6 +1012,173 @@ describe('buildStaffDisciplineGrid', () => {
     });
 
     expect(u17Grid.staff[0]?.nextRoundCell).toBe('S');
-    expect(u20Grid.staff[0]?.nextRoundCell).toBe('');
+    expect(u20Grid.staff).toHaveLength(0);
+  });
+
+  it('não lista comissão sem registro disciplinar relevante', () => {
+    const result = buildStaffDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      nextMatchDate: '2026-08-24',
+      staff: [],
+      staffCandidates: [
+        { id: 'tec1', name: 'Técnico Com Cartão', roleLabel: 'Técnico' },
+        { id: 'tec2', name: 'Paulinho Sem Cartão', roleLabel: 'Técnico' },
+      ],
+      matches: [
+        {
+          id: 'm1',
+          round: 1,
+          matchDate: new Date('2026-08-10T12:00:00Z'),
+          homeTeam: 'Boston City',
+          awayTeam: 'NAC',
+          homeScore: 1,
+          awayScore: 0,
+          occurrencesText: null,
+          staffCardEvents: [
+            {
+              kind: 'yellow',
+              roleLabel: 'Técnico',
+              name: 'Técnico Com Cartão',
+              excerpt: '20:00 2T Técnico Com Cartão',
+            },
+          ],
+          playerStats: [],
+        },
+      ],
+    });
+    expect(result.staff.map((row) => row.name)).toEqual(['Técnico Com Cartão']);
+  });
+});
+
+describe('buildDisciplineGrid post-match and transfer boundary', () => {
+  it('amarelo pós-jogo (TER) conta para acúmulo e 3º gera suspensão cumprível', () => {
+    const player = {
+      id: '894409',
+      name: 'Thaylan Samuel Flores De Souza',
+      jerseyNumber: 6,
+      position: 'ATA',
+      status: 'available',
+      statusDetails: null,
+      yellowCards: null,
+      redCards: null,
+      registrationProfile: null,
+    };
+    const baseMatch = {
+      homeTeam: 'Boston City',
+      awayTeam: 'Betim',
+      homeScore: 1,
+      awayScore: 0,
+      occurrencesText: null,
+    };
+    const matches = [
+      {
+        id: 'm1',
+        round: 1,
+        matchDate: new Date('2026-05-16T12:00:00Z'),
+        ...baseMatch,
+        playerStats: [{ ...player, playerId: player.id, played: true, yellowCards: 1, redCards: 0 }],
+      },
+      {
+        id: 'm2',
+        round: 2,
+        matchDate: new Date('2026-05-23T12:00:00Z'),
+        ...baseMatch,
+        playerStats: [{ ...player, playerId: player.id, played: true, yellowCards: 1, redCards: 0 }],
+      },
+      {
+        id: 'm3',
+        round: 3,
+        matchDate: new Date('2026-06-13T12:00:00Z'),
+        ...baseMatch,
+        playerStats: [{ ...player, playerId: player.id, played: true, yellowCards: 1, redCards: 0 }],
+      },
+      {
+        id: 'm4',
+        round: 4,
+        matchDate: new Date('2026-06-20T12:00:00Z'),
+        ...baseMatch,
+        playerStats: [{ ...player, playerId: player.id, played: false, yellowCards: 0, redCards: 0 }],
+      },
+      {
+        id: 'm5',
+        round: 5,
+        matchDate: new Date('2026-06-27T12:00:00Z'),
+        ...baseMatch,
+        playerStats: [{ ...player, playerId: player.id, played: true, yellowCards: 0, redCards: 0 }],
+      },
+    ];
+
+    const grid = buildDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      disciplineCategory: 'sub14',
+      nextMatchDate: '2026-06-27',
+      players: [player],
+      matches,
+    });
+
+    const row = grid.players.find((p) => p.playerId === '894409');
+    expect(row?.roundCells[2]).toBe('AV');
+    expect(row?.roundCells[3]).toBe('SA');
+    expect(row?.nextRoundCell).toBe('');
+    expect(row?.yellowCardsTotal).toBe(3);
+  });
+
+  it('ignora jogos anteriores à chegada no clube', () => {
+    const player = {
+      id: '965644',
+      name: 'Victor Hugo Santos Sales',
+      jerseyNumber: 7,
+      position: 'ATA',
+      status: 'available',
+      statusDetails: null,
+      yellowCards: null,
+      redCards: null,
+      registrationProfile: { personal: { clubArrivalDate: '2026-07-06' } },
+    };
+    const baseMatch = {
+      homeTeam: 'Boston City',
+      awayTeam: 'NAC',
+      homeScore: 1,
+      awayScore: 0,
+      occurrencesText: null,
+    };
+    const grid = buildDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      disciplineCategory: 'sub13',
+      nextMatchDate: '2026-08-24',
+      players: [player],
+      openingByPlayerId: new Map([
+        ['965644', { effectiveFrom: '2026-07-06', yellowAccum: 0, suspensionRoundsLeft: 0 }],
+      ]),
+      matches: [
+        {
+          id: 'before',
+          round: 1,
+          matchDate: new Date('2026-06-01T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [{ ...player, playerId: player.id, played: true, yellowCards: 2, redCards: 0 }],
+        },
+        {
+          id: 'after1',
+          round: 2,
+          matchDate: new Date('2026-08-09T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [{ ...player, playerId: player.id, played: true, yellowCards: 1, redCards: 0 }],
+        },
+        {
+          id: 'after2',
+          round: 3,
+          matchDate: new Date('2026-08-22T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [{ ...player, playerId: player.id, played: true, yellowCards: 1, redCards: 0 }],
+        },
+      ],
+    });
+    const row = grid.players.find((p) => p.playerId === '965644');
+    expect(row?.yellowCardsTotal).toBe(2);
+    expect(row?.nextRoundCell).toBe('P');
   });
 });

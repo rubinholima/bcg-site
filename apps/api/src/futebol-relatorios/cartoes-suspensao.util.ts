@@ -1,3 +1,4 @@
+import { dateKeyInBrazil } from '../common/brazil-time.util';
 import { getFootballPositionLabel } from '../common/football-positions.util';
 import { getPlayerMatchAvailability, buildPlayerMatchAvailabilityInput } from '../common/player-match-availability.util';
 import {
@@ -15,6 +16,7 @@ import {
 import type { FmfStaffCardEventInput } from './fmf-staff-cards.util';
 import {
   applyDisciplineOpeningIfDue,
+  readClubArrivalDateKey,
   type DisciplineOpeningBalance,
 } from './player-discipline-opening.util';
 
@@ -696,6 +698,13 @@ export function buildDisciplineGrid(input: {
         state.pendurado = false;
       }
 
+      const arrivalDay = readClubArrivalDateKey(player.registrationProfile);
+      const matchDay = dateKeyInBrazil(match.matchDate);
+      if (arrivalDay && matchDay < arrivalDay) {
+        cells[roundIndex] = pendingCode;
+        continue;
+      }
+
       const stat = findPlayerStatForMatch(match.playerStats, player);
       let code: DisciplineCellCode = pendingCode;
       if (stat && (stat.played || stat.redCards > 0)) {
@@ -1127,6 +1136,18 @@ export function buildStaffDisciplineGrid(input: {
 
   const matchCount = sortedMatches.length;
   const staffRows: DisciplineStaffRow[] = disciplineStaff
+    .filter((member) => {
+      const state = states.get(member.id)!;
+      const yellowTotal = yellowTotals.get(member.id) ?? 0;
+      const redTotal = redTotals.get(member.id) ?? 0;
+      return (
+        yellowTotal > 0 ||
+        redTotal > 0 ||
+        state.pendurado ||
+        state.suspensionRoundsLeft > 0 ||
+        state.stjdRoundsLeft > 0
+      );
+    })
     .map((member, index) => {
       const state = states.get(member.id)!;
       const cells = roundCells.get(member.id) ?? [];

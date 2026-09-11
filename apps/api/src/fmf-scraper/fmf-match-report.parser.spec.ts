@@ -226,6 +226,86 @@ ANT = Antes do Início
     expect(parsed.playerCardEvents).toHaveLength(1);
   });
 
+  it('extrai cartão amarelo pós-jogo (TER) na seção Cartões Amarelos', () => {
+    const text = `
+Competição: SUB 14 - 1ª DIVISÃO 2026 Fase: DECAGONAL FINAL Rodada: 10
+Jogo: BETIM FUTEBOL (AMDH) X BOSTON CITY FUTEBOL CLUBE SAF
+Data: 13/06/2026 Hora: 15:00
+Resultado do Jogo
+0 x 1
+Arbitragem
+Início do 1º Tempo: 15:00
+Término do 1º Tempo: 15:35
+Início do 2º Tempo: 15:50
+Término do 2º Tempo: 16:35
+Relação de Jogadores
+Nº Apelido Nome Completo CBF
+Nº Apelido Nome Completo CBF
+6 Thaylan Thaylan Samuel Flores De Souza 894409
+Gols
+Cartões Amarelos
+- TER 6 Thaylan Samuel Flores De Souza
+- fazer gestos ou praticar ações provocativos;
+BOSTON CITY FUTEBOL CLUBE SAF
+Cartões Vermelhos
+Ocorrências / Observações
+Substituições
+TER = Após o Término do Jogo
+`;
+    const parsed = parseFmfMatchReportText(text);
+    const thaylan = parsed.stats.find((p) => p.cbfRegistration === '894409');
+    expect(thaylan?.yellowCards).toBe(1);
+    expect(parsed.playerCardEvents).toEqual([
+      expect.objectContaining({
+        kind: 'yellow',
+        jerseyNumber: 6,
+        clock: 'TER',
+        period: 'TER',
+        cbfRegistration: '894409',
+      }),
+    ]);
+  });
+
+  it('2º amarelo pós-jogo (TER) na seção vermelhos vira amarelo sem vermelho duplicado', () => {
+    const text = `
+Competição: SUB 13 - 1ª DIVISÃO 2026 Fase: DECAGONAL FINAL Rodada: 5
+Jogo: ATHLETIC CLUB ESPORTES S.A.F. X BOSTON CITY FUTEBOL CLUBE SAF
+Data: 31/05/2026 Hora: 15:00
+Resultado do Jogo
+1 x 0
+Arbitragem
+Início do 1º Tempo: 15:00
+Término do 1º Tempo: 15:35
+Início do 2º Tempo: 15:50
+Término do 2º Tempo: 16:35
+Relação de Jogadores
+Nº Apelido Nome Completo CBF
+Nº Apelido Nome Completo CBF
+3 Marcos Luiz Marcos Luiz Fernandes Silva 964959
+Gols
+Cartões Amarelos
+32:00 2T 3 Marcos Luiz Fernandes Silva
+- praticar uma falta ou ação temerária;
+BOSTON CITY FUTEBOL CLUBE SAF
+Cartões Vermelhos
+- TER 3 Marcos Luiz Fernandes Silva
+Vermelho direto.
+Ao término da partida foi apresentado o 2º cartão amarelo e consequentemente o cartão vermelho.
+BOSTON CITY FUTEBOL CLUBE SAF
+Ocorrências / Observações
+Substituições
+TER = Após o Término do Jogo
+`;
+    const parsed = parseFmfMatchReportText(text);
+    const marcos = parsed.stats.find((p) => p.cbfRegistration === '964959');
+    expect(marcos?.yellowCards).toBe(2);
+    expect(marcos?.redCards).toBe(0);
+    expect(parsed.playerCardEvents.filter((c) => c.cbfRegistration === '964959')).toEqual([
+      expect.objectContaining({ kind: 'yellow', clock: '32:00', period: '2T' }),
+      expect.objectContaining({ kind: 'yellow', clock: 'TER', period: 'TER' }),
+    ]);
+  });
+
   it('parseStaffRoster separa mandante e visitante', () => {
     const chunk = `
 Técnico: Guilherme Fontana
