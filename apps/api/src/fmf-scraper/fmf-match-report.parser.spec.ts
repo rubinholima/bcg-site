@@ -404,6 +404,34 @@ Substituições
     expect(parsed.playerCardEvents[0]?.sourceName).toContain('Jose Maria');
   });
 
+  it('rejeita relógio inválido com camisa e time válidos', () => {
+    const text = `
+Competição: Teste Fase: 1ª Fase Rodada: 1
+Jogo: BOSTON CITY FUTEBOL CLUBE SAF X NACIONAL ATLETICO CLUBE
+Data: 01/01/2026 Hora: 15:00
+Resultado do Jogo
+0 x 0
+Arbitragem
+Início do 1º Tempo: 15:00
+Término do 1º Tempo: 15:45
+Início do 2º Tempo: 16:00
+Término do 2º Tempo: 16:45
+Relação de Jogadores
+Nº Apelido Nome Completo CBF
+10 Atleta Dez Atleta Dez 101010
+Gols
+Cartões Amarelos
+99:99 2T 10 Atleta Dez
+- conduta antidesportiva;
+BOSTON CITY FUTEBOL CLUBE SAF
+Cartões Vermelhos
+Ocorrências / Observações
+Substituições
+`;
+    const parsed = parseFmfMatchReportText(text);
+    expect(parsed.playerCardEvents.filter((c) => c.jerseyNumber === 10)).toHaveLength(0);
+  });
+
   it('ignora camisa inválida ou ausente', () => {
     const text = `
 Competição: Teste Fase: 1ª Fase Rodada: 1

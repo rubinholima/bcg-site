@@ -1,9 +1,9 @@
 /**
- * Reparo cirúrgico de stats/eventos FMF — allowlist explícita, dry-run por padrão.
+ * Reparo cirúrgico de disciplina FMF — allowlist explícita, dry-run por padrão.
  *
  * Uso:
  *   pnpm --filter api exec ts-node scripts/repair-fmf-discipline-scope.ts \
- *     --tenantId=XXX --matchIds=id1,id2 [--competition=SUB 13] [--apply]
+ *     "--tenantId=XXX" "--matchIds=id1,id2" [--competition=Sub-14] [--apply]
  */
 import { NestFactory } from '@nestjs/core';
 import { PDFParse } from 'pdf-parse';
@@ -11,8 +11,9 @@ import { FmfScraperScriptModule } from '../src/fmf-scraper/fmf-scraper-script.mo
 import { PrismaService } from '../src/prisma/prisma.service';
 import { parseFmfMatchReportText } from '../src/fmf-scraper/fmf-match-report.parser';
 import {
-  applyFmfDisciplineScopeRepair,
+  applyValidatedMatchRepair,
   planFmfDisciplineScopeRepair,
+  PRODUCTION_DISCIPLINE_REPAIR_ALLOWLIST,
 } from '../src/fmf-scraper/fmf-discipline-scope-repair.util';
 
 async function downloadAndParse(url: string) {
@@ -38,7 +39,7 @@ async function main() {
   const { tenantId, matchIds, competition, apply } = parseArgs(process.argv.slice(2));
   if (!tenantId || matchIds.length === 0) {
     console.error(
-      'Uso: ts-node scripts/repair-fmf-discipline-scope.ts --tenantId=XXX --matchIds=id1,id2 [--competition=SUB] [--apply]',
+      'Uso: ts-node scripts/repair-fmf-discipline-scope.ts --tenantId=XXX --matchIds=id1,id2 [--competition=Sub-14] [--apply]',
     );
     process.exit(1);
   }
@@ -53,6 +54,7 @@ async function main() {
     matchIds,
     competitionContains: competition,
     downloadAndParse,
+    enforceProductionAllowlist: false,
   });
 
   console.log(
@@ -60,8 +62,9 @@ async function main() {
       {
         ...plan,
         dryRun: !apply,
+        productionAllowlist: PRODUCTION_DISCIPLINE_REPAIR_ALLOWLIST,
         hint: apply
-          ? 'Mutations aplicadas apenas nas partidas safe da allowlist'
+          ? 'Apply usa exatamente o plano validado (fingerprint + diffs)'
           : 'Dry-run — use --apply para mutar',
       },
       null,
@@ -82,26 +85,17 @@ async function main() {
 
   const applyResults: Array<{ matchId: string; ok: boolean; error?: string; result?: unknown }> = [];
 
-  for (const match of plan.matches) {
-    if (!match.safe) {
+  for (const validatedMatch of plan.matches) {
+    if (!validatedMatch.safe) {
       applyResults.push({
-        matchId: match.matchId,
+        matchId: validatedMatch.matchId,
         ok: false,
-        error: match.blockReasons.join('; '),
+        error: validatedMatch.blockReasons.join('; '),
       });
       continue;
     }
-    const report = await prisma.fmfMatchReport.findUnique({
-      where: { id: match.matchId },
-      select: { sourceUrl: true },
-    });
-    if (!report?.sourceUrl) {
-      applyResults.push({ matchId: match.matchId, ok: false, error: 'sourceUrl ausente' });
-      continue;
-    }
     try {
-      const parsed = await downloadAndParse(report.sourceUrl);
-      const result = await applyFmfDisciplineScopeRepair(prisma, {
+      const result = await applyValidatedMatchRepair(prisma, {
         tenant: {
           id: tenant.id,
           name: tenant.name,
@@ -109,21 +103,20 @@ async function main() {
           slug: tenant.slug,
           aliases: [tenant.slug, 'boston city', 'boston'].filter(Boolean) as string[],
         },
-        matchId: match.matchId,
-        parsed,
+        validatedMatch,
         downloadAndParse,
       });
-      applyResults.push({ matchId: match.matchId, ok: true, result });
+      applyResults.push({ matchId: validatedMatch.matchId, ok: true, result });
     } catch (err) {
       applyResults.push({
-        matchId: match.matchId,
+        matchId: validatedMatch.matchId,
         ok: false,
         error: (err as Error).message,
       });
     }
   }
 
-  console.log(JSON.stringify({ applyResults }, null, 2));
+  console.log(JSON.stringify({ planFingerprint: plan.planFingerprint, applyResults }, null, 2));
   await app.close();
 }
 

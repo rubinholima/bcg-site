@@ -2565,6 +2565,7 @@ export class FutebolRelatoriosService {
             sourceRoleLabel: true,
             sourceTeamSide: true,
             sourceExcerpt: true,
+            sourceSections: true,
           },
         },
         playerStats: {

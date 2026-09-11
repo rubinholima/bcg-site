@@ -138,6 +138,17 @@ function parseClock(value: string): number | null {
   return Number(match[1]) * 60 + Number(match[2]);
 }
 
+/** Rejeita relógios impossíveis (ex.: 99:99) em cartões HH:MM 1T|2T. */
+export function isValidFmfTimedCardClock(clock: string): boolean {
+  const match = clock.match(/^(\d{1,3}):(\d{2})$/);
+  if (!match) return false;
+  const minutes = Number(match[1]);
+  const seconds = Number(match[2]);
+  if (seconds >= 60) return false;
+  if (minutes > 130) return false;
+  return true;
+}
+
 function clockDifference(start: string | undefined, end: string | undefined): number | null {
   if (!start || !end) return null;
   const startMinutes = parseClock(start);
@@ -318,6 +329,7 @@ function parsePlayerCardEventRow(
   const timed = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(\d+)\b/i);
   const marker = row.match(/^(INT|ANT|TER)\s+(\d+)\b/i);
   if (!timed && !marker) return [];
+  if (timed && !isValidFmfTimedCardClock(timed[1]!)) return [];
 
   const side = sideFromRow(row, homeTeam, awayTeam);
   if (!side) return [];

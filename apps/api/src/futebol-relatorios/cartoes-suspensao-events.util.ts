@@ -13,16 +13,21 @@ export type DisciplineOfficialEvent = {
   sourceRoleLabel?: string | null;
   sourceTeamSide?: string | null;
   sourceExcerpt?: string | null;
-  sourceSections?: string[] | null;
+  sourceSections?: unknown;
 };
 
 const SECOND_YELLOW_EXPULSION_SECTION = 'Expulsão por 2º amarelo';
 
+function normalizeSourceSections(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is string => typeof entry === 'string');
+}
+
 function eventMarksSecondYellowExpulsion(event: DisciplineOfficialEvent): boolean {
+  const sections = normalizeSourceSections(event.sourceSections);
   return (
     event.factType === 'PLAYER_YELLOW_CARD' &&
-    Array.isArray(event.sourceSections) &&
-    event.sourceSections.includes(SECOND_YELLOW_EXPULSION_SECTION)
+    sections.includes(SECOND_YELLOW_EXPULSION_SECTION)
   );
 }
 

@@ -142,6 +142,23 @@ describe('buildMatchDisciplineFromOfficialEvents', () => {
     expect(grid.players[0]?.nextRoundCell).toBe('S');
   });
 
+  it('marca expulsão por 2Y via sourceSections persistido (Json Prisma)', () => {
+    const result = buildMatchDisciplineFromOfficialEvents({
+      events: [
+        {
+          factType: 'PLAYER_YELLOW_CARD',
+          resolutionStatus: 'resolved',
+          playerId: 'p1',
+          sourceTeamSide: 'home',
+          sourceSections: ['Cartões Vermelhos', 'Expulsão por 2º amarelo'],
+        },
+      ],
+      ...matchBase,
+      ...club,
+    });
+    expect(result.playerStats[0]?.expulsionBySecondYellow).toBe(true);
+  });
+
   it('marca expulsão por 2Y via sourceSections explícito', () => {
     const result = buildMatchDisciplineFromOfficialEvents({
       events: [
