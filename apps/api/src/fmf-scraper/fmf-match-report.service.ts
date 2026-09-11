@@ -243,7 +243,28 @@ export class FmfMatchReportService {
       throw new BadRequestException('Informe externalMatchId, preset ou all=true.');
     }
     if (candidates.length === 0) {
-      throw new NotFoundException('Nenhuma súmula FMF encontrada para os filtros informados.');
+      if (options.externalMatchId) {
+        const allCandidates = await this.listCandidates(options.tenantId, {
+          allowRefresh: false,
+        });
+        const exists = allCandidates.some(
+          (item) => item.externalMatchId === options.externalMatchId,
+        );
+        if (!exists) {
+          throw new NotFoundException(
+            'Nenhuma súmula FMF encontrada para os filtros informados.',
+          );
+        }
+      }
+      return {
+        tenantId: options.tenantId,
+        imported: 0,
+        failed: 0,
+        pending: 0,
+        linked: 0,
+        unresolved: 0,
+        results: [],
+      };
     }
 
     const results: Array<{
@@ -274,10 +295,12 @@ export class FmfMatchReportService {
     }
 
     await this.refreshPlayerCareerTotals(options.tenantId);
+    const imported = results.filter((item) => item.ok).length;
     return {
       tenantId: options.tenantId,
-      imported: results.filter((item) => item.ok).length,
+      imported,
       failed: results.filter((item) => !item.ok).length,
+      pending: candidates.length - imported,
       linked: results.reduce((sum, item) => sum + item.linked, 0),
       unresolved: results.reduce((sum, item) => sum + item.unresolved, 0),
       results,
