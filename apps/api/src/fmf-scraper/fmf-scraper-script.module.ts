@@ -11,6 +11,7 @@ import { FmfScraperService } from './fmf-scraper.service';
 import { FmfTravelSyncService } from './fmf-travel-sync.service';
 import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
 import { FmfCatalogDiscoveryService } from './fmf-catalog-discovery.service';
+import { FmfFullSyncService } from './fmf-full-sync.service';
 
 /** Contexto mínimo para scripts CLI (sem controller/guards). */
 @Module({
@@ -29,6 +30,7 @@ import { FmfCatalogDiscoveryService } from './fmf-catalog-discovery.service';
     FmfPageSyncService,
     FmfMatchReportService,
     FmfCatalogDiscoveryService,
+    FmfFullSyncService,
   ],
   exports: [
     FmfScraperService,
@@ -36,6 +38,7 @@ import { FmfCatalogDiscoveryService } from './fmf-catalog-discovery.service';
     FmfTravelSyncService,
     FmfPageSyncService,
     FmfMatchReportService,
+    FmfFullSyncService,
   ],
 })
 export class FmfScraperScriptModule {}

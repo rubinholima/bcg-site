@@ -3,21 +3,16 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
-import { FmfAgendaSyncService, type FmfAgendaSyncResult } from '../futebol-agenda/fmf-agenda-sync.service';
+import { FmfAgendaSyncService } from '../futebol-agenda/fmf-agenda-sync.service';
 import {
   FmfPageSyncService,
   type FmfScraperSyncConfig,
 } from './fmf-page-sync.service';
 import { FmfScraperService } from './fmf-scraper.service';
+import { FmfFullSyncError, FmfFullSyncService } from './fmf-full-sync.service';
 import { FmfMatchReportService } from './fmf-match-report.service';
-import {
-  FmfTravelSyncService,
-  type FmfTravelSyncResult,
-} from './fmf-travel-sync.service';
-import {
-  FmfVisitingTeamsSyncService,
-  type FmfVisitingTeamsSyncResult,
-} from './fmf-visiting-teams-sync.service';
+import { FmfTravelSyncService } from './fmf-travel-sync.service';
+import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
 
 @Controller('api/fmf-scraper')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -25,6 +20,7 @@ import {
 export class FmfScraperController {
   constructor(
     private readonly fmfScraper: FmfScraperService,
+    private readonly fullSync: FmfFullSyncService,
     private readonly fmfSync: FmfPageSyncService,
     private readonly fmfAgendaSync: FmfAgendaSyncService,
     private readonly visitingTeamsSync: FmfVisitingTeamsSyncService,
@@ -44,70 +40,29 @@ export class FmfScraperController {
 
   @Post('run')
   async run(@Body() body: { preset?: string; all?: boolean }) {
+    if (body?.all === true) {
+      try {
+        const full = await this.fullSync.runFullSync();
+        return { ok: true, fullSync: full };
+      } catch (e) {
+        if (e instanceof FmfFullSyncError) {
+          return {
+            ok: false,
+            stage: e.stage,
+            error: e.message,
+            fullSync: e.partial,
+          };
+        }
+        throw e;
+      }
+    }
+
     const store = await this.fmfScraper.runImport({
       preset: body?.preset,
-      all: body?.all === true,
+      all: false,
     });
 
-    let visitingTeams: FmfVisitingTeamsSyncResult | null = null;
-    try {
-      visitingTeams = await this.visitingTeamsSync.syncFromStore(store);
-    } catch {
-      /* opcional */
-    }
-
-    let agendaSync: FmfAgendaSyncResult | null = null;
-    try {
-      agendaSync = await this.fmfAgendaSync.syncAll();
-    } catch {
-      /* agenda sync opcional após import */
-    }
-
-    let travelSync: FmfTravelSyncResult | null = null;
-    try {
-      travelSync = await this.travelSync.syncAll();
-    } catch {
-      /* viagens sync opcional após import */
-    }
-
-    const matchReportSync: Array<{
-      tenantId: string;
-      imported: number;
-      failed: number;
-      linked: number;
-      unresolved: number;
-    }> = [];
-    try {
-      const tenants = await this.fmfSync.getSyncCandidates();
-      for (const tenant of tenants) {
-        try {
-          const result = await this.matchReports.importReports({
-            tenantId: tenant.tenantId,
-            all: true,
-          });
-          matchReportSync.push({
-            tenantId: tenant.tenantId,
-            imported: result.imported,
-            failed: result.failed,
-            linked: result.linked,
-            unresolved: result.unresolved,
-          });
-        } catch {
-          /* clube sem súmula publicada */
-        }
-      }
-    } catch {
-      /* súmulas opcionais após import */
-    }
-
-    return {
-      ok: true,
-      store,
-      visitingTeams,
-      agendaSync,
-      travelSync,
-      matchReportSync,
-    };
+    return { ok: true, store };
   }
 
   @Get('sync/candidates')

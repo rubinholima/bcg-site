@@ -14,6 +14,7 @@ import { FmfScraperSchedulerService } from './fmf-scraper-scheduler.service';
 import { FmfTravelSyncService } from './fmf-travel-sync.service';
 import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
 import { FmfCatalogDiscoveryService } from './fmf-catalog-discovery.service';
+import { FmfFullSyncService } from './fmf-full-sync.service';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { FmfCatalogDiscoveryService } from './fmf-catalog-discovery.service';
     FmfMatchReportService,
     FmfScraperSchedulerService,
     FmfCatalogDiscoveryService,
+    FmfFullSyncService,
     ModuleAccessGuard,
   ],
   exports: [
@@ -41,6 +43,7 @@ import { FmfCatalogDiscoveryService } from './fmf-catalog-discovery.service';
     FmfVisitingTeamsSyncService,
     FmfTravelSyncService,
     FmfMatchReportService,
+    FmfFullSyncService,
   ],
 })
 export class FmfScraperModule {}
