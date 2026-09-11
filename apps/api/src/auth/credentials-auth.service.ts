@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizeUsernameInput } from '../users/user-username.util';
+import { isSuperAdminRole } from './session-token.util';
 
 export const JWT_ISSUER = 'bcg-platform';
 
@@ -11,6 +12,7 @@ export interface LocalJwtPayload {
   email: string;
   username: string;
   role: string;
+  tokenVersion?: number;
   exp?: number;
   iat?: number;
 }
@@ -67,11 +69,23 @@ export class CredentialsAuthService {
     if (!user) {
       throw new UnauthorizedException('Usuário ou senha inválidos');
     }
+
+    let tokenVersion = dbUser?.tokenVersion ?? 0;
+    if (!isSuperAdminRole(user.role)) {
+      const updated = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { tokenVersion: { increment: 1 } },
+        select: { tokenVersion: true },
+      });
+      tokenVersion = updated.tokenVersion;
+    }
+
     const payload: LocalJwtPayload = {
       sub: user.id,
       email: user.email,
       username: user.username,
       role: user.role,
+      tokenVersion,
     };
     const access_token = this.jwtService.sign(payload, {
       expiresIn: '7d',

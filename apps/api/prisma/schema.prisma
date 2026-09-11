@@ -19,6 +19,8 @@ model User {
   mustChangePassword Boolean @default(false)
   /// true = login e API bloqueados até desbloqueio por super admin.
   blocked      Boolean  @default(false)
+  /// Incrementado a cada login (exceto super_admin) — invalida JWTs anteriores.
+  tokenVersion Int      @default(0)
   role         String?  @default("editor") // super_admin | company_admin | editor | gerente | administrativo | …
   /// Quando true, módulos vêm de UserModuleAccess (não da matriz do perfil).
   customModuleAccess Boolean @default(false)

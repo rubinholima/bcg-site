@@ -61,9 +61,7 @@ function LiveUserDetail({ item }: { item: LiveUserItem }) {
         </div>
         <div>
           <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">Página</dt>
-          <dd className="truncate" title={item.currentPageTitle ?? item.currentPath ?? undefined}>
-            {item.currentPageTitle ?? item.currentPath ?? "—"}
-          </dd>
+          <dd className="break-words">{item.currentPageTitle ?? item.currentPath ?? "—"}</dd>
         </div>
         <div>
           <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">Sessão</dt>
@@ -74,11 +72,42 @@ function LiveUserDetail({ item }: { item: LiveUserItem }) {
           <dd>{formatDateTimeDayMonYear(item.lastActivityAt)}</dd>
         </div>
       </dl>
+      {item.otherSessions?.length ? (
+        <div className="mt-4 border-t border-border/50 pt-3">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Outras sessões ativas ({item.otherSessions.length})
+          </p>
+          <ul className="mt-2 space-y-2">
+            {item.otherSessions.map((session) => (
+              <li
+                key={session.id}
+                className="rounded-md border border-border/40 bg-background/40 px-3 py-2 text-xs"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <PresenceStatusBadge status={session.status} />
+                  <span className="tabular-nums text-muted-foreground">
+                    Sessão: {session.connectedDuration}
+                  </span>
+                  {session.browserLabel || session.deviceLabel ? (
+                    <span className="text-muted-foreground">
+                      {[session.deviceLabel, session.browserLabel].filter(Boolean).join(" · ")}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-1 break-words text-muted-foreground">
+                  {session.currentModule ?? "Dashboard"}
+                  {session.currentPageTitle ? ` · ${session.currentPageTitle}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function CellTruncate({
+function ModulePageTruncate({
   children,
   title,
   className,
@@ -98,9 +127,8 @@ export function MasterOperationsConsole() {
   const [live, setLive] = useState<LiveUsersResponse | null>(null);
   const [insights, setInsights] = useState<PlatformInsightsResponse | null>(null);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "online" | "idle">("all");
   const [companyFilter, setCompanyFilter] = useState("all");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -140,19 +168,18 @@ export function MasterOperationsConsole() {
 
   const filtered = useMemo(() => {
     let items = live?.items ?? [];
-    if (statusFilter !== "all") items = items.filter((i) => i.status === statusFilter);
     if (companyFilter !== "all") items = items.filter((i) => liveUserCompanyKey(i) === companyFilter);
     return items;
-  }, [live, statusFilter, companyFilter]);
+  }, [live, companyFilter]);
 
   const selected =
-    filtered.find((i) => i.id === selectedId) ?? filtered[0] ?? null;
+    filtered.find((i) => i.user.id === selectedUserId) ?? filtered[0] ?? null;
 
   useEffect(() => {
-    if (selectedId && !filtered.some((i) => i.id === selectedId)) {
-      setSelectedId(null);
+    if (selectedUserId && !filtered.some((i) => i.user.id === selectedUserId)) {
+      setSelectedUserId(null);
     }
-  }, [filtered, selectedId]);
+  }, [filtered, selectedUserId]);
 
   const kpis = {
     online: insights?.live.online ?? live?.online ?? 0,
@@ -203,7 +230,7 @@ export function MasterOperationsConsole() {
 
       <OpsSection
         title="Operação ao vivo"
-        description="Sessões ativas na plataforma — atualização automática a cada 15 segundos"
+        description="Usuários online agora — atualização automática a cada 15 segundos"
         action={
           live?.asOf ? (
             <span className={cup360.type.caption}>
@@ -239,17 +266,6 @@ export function MasterOperationsConsole() {
                 ))}
               </select>
             </FilterBarField>
-            <FilterBarField label="Status" className="min-w-0 sm:max-w-[9rem]">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="flex h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm text-foreground"
-              >
-                <option value="all">Todos</option>
-                <option value="online">Online</option>
-                <option value="idle">Ocioso</option>
-              </select>
-            </FilterBarField>
           </DashboardFilterBar>
 
           {loading && !live ? (
@@ -269,25 +285,18 @@ export function MasterOperationsConsole() {
           ) : (
             <>
               <div className="hidden xl:block min-w-0 w-full rounded-lg border border-border/60">
-                <Table containerClassName="overflow-visible" className="w-full table-fixed">
-                  <colgroup>
-                    <col className="w-[24%]" />
-                    <col className="w-[11%]" />
-                    <col className="w-[14%]" />
-                    <col className="w-[24%]" />
-                    <col className="w-[8%]" />
-                    <col className="w-[11%]" />
-                    <col className="w-[8%]" />
-                  </colgroup>
+                <Table containerClassName="overflow-visible" className="w-full">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="h-9 px-2 text-xs">Usuário</TableHead>
-                      <TableHead className="h-9 px-2 text-xs">Perfil</TableHead>
-                      <TableHead className="h-9 px-2 text-xs">Empresa</TableHead>
-                      <TableHead className="h-9 px-2 text-xs">Módulo / Página</TableHead>
-                      <TableHead className="h-9 px-2 text-xs">Sessão</TableHead>
-                      <TableHead className="h-9 px-2 text-xs">Atividade</TableHead>
-                      <TableHead className="h-9 px-2 text-xs">Status</TableHead>
+                      <TableHead className="h-9 w-0 whitespace-nowrap px-2 text-xs">
+                        Usuário
+                      </TableHead>
+                      <TableHead className="h-9 whitespace-normal px-2 text-xs">Empresa</TableHead>
+                      <TableHead className="h-9 whitespace-normal px-2 text-xs">Perfil</TableHead>
+                      <TableHead className="h-9 w-full max-w-0 px-2 text-xs">Módulo / Página</TableHead>
+                      <TableHead className="h-9 w-0 whitespace-nowrap px-2 text-xs">Sessão</TableHead>
+                      <TableHead className="h-9 w-0 whitespace-nowrap px-2 text-xs">Atividade</TableHead>
+                      <TableHead className="h-9 w-0 whitespace-nowrap px-2 text-xs">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -302,57 +311,64 @@ export function MasterOperationsConsole() {
 
                       return (
                         <TableRow
-                          key={item.id}
+                          key={item.user.id}
                           className={cn(
-                            "h-10 cursor-pointer",
-                            selected?.id === item.id && "bg-muted/40",
+                            "min-h-10 cursor-pointer align-top",
+                            selected?.user.id === item.user.id && "bg-muted/40",
                           )}
-                          onClick={() => setSelectedId(item.id)}
+                          onClick={() => setSelectedUserId(item.user.id)}
                         >
-                          <TableCell className="px-2 py-2">
-                            <div className="flex min-w-0 items-center gap-2">
+                          <TableCell className="w-0 whitespace-nowrap px-2 py-2 align-top">
+                            <div className="flex items-start gap-2">
                               <UserAvatar
                                 name={item.user.name}
                                 username={item.user.username}
                                 status={item.status}
                               />
-                              <div className="min-w-0">
-                                <p
-                                  className="truncate text-sm font-medium leading-tight"
-                                  title={fullName}
-                                >
+                              <div>
+                                <p className="text-sm font-medium leading-tight" title={fullName}>
                                   {compactName}
                                 </p>
-                                <p className="truncate text-[11px] text-muted-foreground leading-tight">
+                                <p
+                                  className="max-w-[9rem] truncate text-[11px] text-muted-foreground leading-tight"
+                                  title={`@${item.user.username}`}
+                                >
                                   @{item.user.username}
                                 </p>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="px-2 py-2 text-xs" title={roleLabel}>
-                            <CellTruncate>{roleLabel}</CellTruncate>
+                          <TableCell className="px-2 py-2 align-top text-xs leading-snug">
+                            <span className="inline-block whitespace-normal break-words">
+                              {company}
+                            </span>
                           </TableCell>
-                          <TableCell className="px-2 py-2 text-xs" title={company}>
-                            <CellTruncate>{company}</CellTruncate>
+                          <TableCell className="px-2 py-2 align-top text-xs leading-snug">
+                            <span className="inline-block whitespace-normal break-words">
+                              {roleLabel}
+                            </span>
                           </TableCell>
-                          <TableCell className="px-2 py-2 min-w-0">
-                            <CellTruncate className="text-xs" title={modulePageTitle}>
+                          <TableCell className="w-full max-w-0 px-2 py-2 align-top">
+                            <ModulePageTruncate className="text-xs" title={modulePageTitle}>
                               {moduleLine}
-                            </CellTruncate>
-                            <CellTruncate className="text-[11px] text-muted-foreground" title={pageLine}>
+                            </ModulePageTruncate>
+                            <ModulePageTruncate
+                              className="text-[11px] text-muted-foreground"
+                              title={pageLine}
+                            >
                               {pageLine}
-                            </CellTruncate>
+                            </ModulePageTruncate>
                           </TableCell>
-                          <TableCell className="px-2 py-2 text-xs tabular-nums whitespace-nowrap">
+                          <TableCell className="w-0 whitespace-nowrap px-2 py-2 align-top text-xs tabular-nums">
                             {item.connectedDuration}
                           </TableCell>
                           <TableCell
-                            className="px-2 py-2 text-xs tabular-nums whitespace-nowrap text-muted-foreground"
+                            className="w-0 whitespace-nowrap px-2 py-2 align-top text-xs tabular-nums text-muted-foreground"
                             title={formatDateTimeDayMonYear(item.lastActivityAt)}
                           >
                             {formatCompactActivityTime(item.lastActivityAt)}
                           </TableCell>
-                          <TableCell className="px-2 py-2">
+                          <TableCell className="w-0 whitespace-nowrap px-2 py-2 align-top">
                             <PresenceStatusBadge status={item.status} />
                           </TableCell>
                         </TableRow>
@@ -374,7 +390,7 @@ export function MasterOperationsConsole() {
                   const compactName = formatCompactDisplayName(item.user.name, item.user.username);
                   return (
                     <div
-                      key={item.id}
+                      key={item.user.id}
                       className="rounded-lg border border-border/60 bg-muted/10 p-3"
                     >
                       <div className="flex items-start gap-3">

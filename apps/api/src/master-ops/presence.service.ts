@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { PresenceHeartbeatDto } from './dto/presence-heartbeat.dto';
+import { isSuperAdminRole } from '../auth/session-token.util';
 import {
   formatDurationMs,
   parseUserAgentLabels,
   PRESENCE_IDLE_MS,
   PRESENCE_STALE_MS,
+  projectMasterLiveUsers,
   resolvePresenceStatus,
 } from './presence.util';
 
@@ -27,7 +29,15 @@ export class PresenceService {
     });
 
     if (existing && existing.userId !== userId) {
-      await this.prisma.userPresenceSession.delete({ where: { id: existing.id } });
+      await this.prisma.userPresenceSession.delete({
+        where: { id: existing.id },
+      });
+    }
+
+    if (!isSuperAdminRole(role)) {
+      await this.prisma.userPresenceSession.deleteMany({
+        where: { userId, sessionKey: { not: dto.sessionKey } },
+      });
     }
 
     const data = {
@@ -100,10 +110,13 @@ export class PresenceService {
       hourlyUsers.get(hour)!.add(session.userId);
     }
     const currentHour = now.getHours();
-    const hourlyActivity = Array.from({ length: currentHour + 1 }, (_, hour) => ({
-      hour: `${String(hour).padStart(2, '0')}:00`,
-      users: hourlyUsers.get(hour)?.size ?? 0,
-    }));
+    const hourlyActivity = Array.from(
+      { length: currentHour + 1 },
+      (_, hour) => ({
+        hour: `${String(hour).padStart(2, '0')}:00`,
+        users: hourlyUsers.get(hour)?.size ?? 0,
+      }),
+    );
 
     const companyCounts = new Map<string, number>();
     const moduleCounts = new Map<string, number>();
@@ -113,7 +126,10 @@ export class PresenceService {
       const company = item.tenant?.name?.trim() || 'Grupo Master';
       companyCounts.set(company, (companyCounts.get(company) ?? 0) + 1);
 
-      const module = item.currentModule?.trim() || item.currentPageTitle?.trim() || 'Dashboard';
+      const module =
+        item.currentModule?.trim() ||
+        item.currentPageTitle?.trim() ||
+        'Dashboard';
       moduleCounts.set(module, (moduleCounts.get(module) ?? 0) + 1);
 
       const role = item.user.role?.trim() || 'user';
@@ -127,7 +143,9 @@ export class PresenceService {
         .slice(0, limit);
 
     const activeTenantKeys = new Set(
-      live.items.map((item) => item.tenant?.id ?? item.tenant?.name ?? 'master'),
+      live.items.map(
+        (item) => item.tenant?.id ?? item.tenant?.name ?? 'master',
+      ),
     );
 
     return {
@@ -153,16 +171,58 @@ export class PresenceService {
     const sessions = await this.prisma.userPresenceSession.findMany({
       where: { lastSeenAt: { gte: minSeen } },
       include: {
-        user: { select: { id: true, name: true, username: true, email: true, role: true } },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            email: true,
+            role: true,
+          },
+        },
         tenant: { select: { id: true, name: true, slug: true } },
       },
       orderBy: [{ lastActivityAt: 'desc' }],
     });
 
     const needle = query?.trim().toLowerCase();
-    const items = sessions
+
+    const sessionMatchesQuery = (item: {
+      user: {
+        name: string | null;
+        username: string;
+        email: string;
+        role: string | null;
+      };
+      tenant: { name: string } | null;
+      currentModule: string | null;
+      currentPageTitle: string | null;
+      currentPath: string | null;
+    }) => {
+      if (!needle) return true;
+      const hay = [
+        item.user.name,
+        item.user.username,
+        item.user.email,
+        item.user.role,
+        item.tenant?.name,
+        item.currentModule,
+        item.currentPageTitle,
+        item.currentPath,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(needle);
+    };
+
+    const rawItems = sessions
       .map((s) => {
-        const status = resolvePresenceStatus(s.lastActivityAt, s.lastSeenAt, now);
+        const status = resolvePresenceStatus(
+          s.lastActivityAt,
+          s.lastSeenAt,
+          now,
+        );
         if (!status) return null;
         const connectedMs = now.getTime() - s.startedAt.getTime();
         return {
@@ -193,30 +253,26 @@ export class PresenceService {
           connectedDurationMs: connectedMs,
         };
       })
-      .filter((item): item is NonNullable<typeof item> => {
-        if (!item) return false;
-        if (!needle) return true;
-        const hay = [
-          item.user.name,
-          item.user.username,
-          item.user.email,
-          item.user.role,
-          item.tenant?.name,
-          item.currentModule,
-          item.currentPageTitle,
-          item.currentPath,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return hay.includes(needle);
-      });
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    let candidateItems = rawItems;
+    if (needle) {
+      const matchingUserIds = new Set<string>();
+      for (const item of rawItems) {
+        if (sessionMatchesQuery(item)) matchingUserIds.add(item.user.id);
+      }
+      candidateItems = rawItems.filter((item) =>
+        matchingUserIds.has(item.user.id),
+      );
+    }
+
+    const projected = projectMasterLiveUsers(candidateItems);
 
     return {
-      total: items.length,
-      online: items.filter((i) => i.status === 'online').length,
-      idle: items.filter((i) => i.status === 'idle').length,
-      items,
+      total: projected.total,
+      online: projected.online,
+      idle: projected.idle,
+      items: projected.items,
       asOf: now.toISOString(),
     };
   }
