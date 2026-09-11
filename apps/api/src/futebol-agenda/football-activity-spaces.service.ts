@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantsService } from '../tenants/tenants.service';
 
@@ -80,20 +81,43 @@ export class FootballActivitySpacesService {
     return { ok: true };
   }
 
-  /** Resolve ou cria espaço pelo nome (import Beatscode / texto livre). */
+  /** Resolve ou cria espaço pelo nome (import Beatscode / FMF / texto livre). */
   async resolveByName(tenantId: string, name: string | null | undefined): Promise<string | null> {
     const trimmed = name?.trim();
     if (!trimmed) return null;
 
-    const existing = await this.prisma.footballActivitySpace.findFirst({
-      where: { tenantId, name: { equals: trimmed, mode: 'insensitive' }, active: true },
-    });
+    const existing = await this.findSpaceByTenantAndName(tenantId, trimmed);
     if (existing) return existing.id;
 
-    const created = await this.prisma.footballActivitySpace.create({
-      data: { tenantId, name: trimmed },
+    try {
+      const created = await this.prisma.footballActivitySpace.create({
+        data: { tenantId, name: trimmed },
+      });
+      return created.id;
+    } catch (error) {
+      if (this.isTenantNameUniqueViolation(error)) {
+        const raced = await this.findSpaceByTenantAndName(tenantId, trimmed);
+        if (raced) return raced.id;
+      }
+      throw error;
+    }
+  }
+
+  private findSpaceByTenantAndName(tenantId: string, name: string) {
+    return this.prisma.footballActivitySpace.findFirst({
+      where: { tenantId, name: { equals: name, mode: 'insensitive' } },
     });
-    return created.id;
+  }
+
+  private isTenantNameUniqueViolation(error: unknown): boolean {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+      return false;
+    }
+    const target = error.meta?.target;
+    if (Array.isArray(target)) {
+      return target.includes('tenantId') && target.includes('name');
+    }
+    return typeof target === 'string' && target.includes('tenantId') && target.includes('name');
   }
 
   /** Espaços padrão quando o clube ainda não tem nenhum cadastrado. */
