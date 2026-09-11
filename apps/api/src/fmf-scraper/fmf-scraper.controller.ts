@@ -33,7 +33,7 @@ export class FmfScraperController {
   ) {}
 
   @Get('presets')
-  getPresets() {
+  async getPresets() {
     return this.fmfScraper.getPresets();
   }
 

@@ -22,9 +22,11 @@ import {
   resolveFmfPresetKeys,
 } from '../fmf-scraper/fmf-fixture.util';
 import {
+  FMF_SYNC_TENANT_DEFAULTS,
   isFmfSyncTenantSlug,
   parseTenantCategoryKeys,
 } from '../fmf-scraper/fmf-sync-tenants.config';
+import { loadFmfPresetExtensionMap, mergeFmfPresetMaps } from '../fmf-scraper/fmf-preset-registry.util';
 import { FixtureCategoriesService } from '../cadastros/fixture-categories.service';
 
 function extractPlayerNickname(registrationProfile: unknown): string | null {
@@ -616,11 +618,29 @@ export class PublicService {
       return list;
     }
     try {
+      const slug = tenantSlug.trim();
       const status = await this.fmfScraper.getStatus();
       const { busy: _busy, ...store } = status;
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { slug },
+        select: { name: true, tradeName: true },
+      });
+      const defaults = FMF_SYNC_TENANT_DEFAULTS[slug];
+      const aliases = [
+        ...(defaults?.fmfTeamNames ?? []),
+        tenant?.tradeName,
+        tenant?.name,
+      ].filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+      const extensions = await loadFmfPresetExtensionMap(this.prisma);
       const presetKeys = resolveFmfPresetKeys(
         store,
         parseTenantCategoryKeys(tenantCategories),
+        {
+          presetMap: mergeFmfPresetMaps(extensions),
+          club: tenant
+            ? { tenantName: tenant.name, aliases }
+            : undefined,
+        },
       );
       const league = buildLeagueFixturesFromFmfStore(store, presetKeys);
       return this.mergeExtraFixtures(list, league);

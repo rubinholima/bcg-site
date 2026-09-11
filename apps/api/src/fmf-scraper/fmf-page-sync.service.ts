@@ -13,13 +13,14 @@ import {
 import {
   FMF_SCRAPER_PRESET_KEYS,
   FMF_SCRAPER_PRESETS,
-  type FmfScraperPresetKey,
 } from './fmf-scraper.presets';
 import { FmfScraperService, type FmfScraperStore, type FmfStandingsRow } from './fmf-scraper.service';
 import {
   buildFmfExternalId,
   fmfMatchToStartISO,
+  resolveFmfPresetKeys,
 } from './fmf-fixture.util';
+import { loadFmfPresetExtensionMap, mergeFmfPresetMaps } from './fmf-preset-registry.util';
 import { isFmfTeamMatch } from './fmf-team-match.util';
 import {
   FMF_SYNC_TENANT_DEFAULTS,
@@ -39,8 +40,8 @@ export type FmfScraperSyncTenantConfig = {
   enabled?: boolean;
   /** Nomes como aparecem na FMF (ex.: AMÉRICA). Se vazio, usa tenant.name. */
   fmfTeamNames?: string[];
-  /** Presets a sincronizar; se vazio, todos importados. */
-  presetKeys?: FmfScraperPresetKey[];
+  /** Presets a sincronizar; se vazio, categorias + descoberta automática. */
+  presetKeys?: string[];
 };
 
 export type FmfScraperSyncConfig = {
@@ -75,7 +76,7 @@ export type FmfSyncCandidate = {
   tenantSlug: string;
   hasPage: boolean;
   fmfTeamNames: string[];
-  matchCountByPreset: Partial<Record<FmfScraperPresetKey, number>>;
+  matchCountByPreset: Partial<Record<string, number>>;
   totalMatches: number;
   missingLogosPreview: string[];
 };
@@ -150,11 +151,13 @@ export class FmfPageSyncService {
     const clubLogoMap = await this.buildClubTenantLogoMap();
     const clubs = await this.listClubTenants();
     const syncConfig = await this.getSyncConfig();
+    const extensions = await loadFmfPresetExtensionMap(this.prisma);
+    const presetMap = mergeFmfPresetMaps(extensions);
 
     return clubs.map((t) => {
       const cfg = syncConfig.tenants?.find((c) => c.tenantId === t.id);
       const aliases = this.resolveAliases(t.slug, t.name, cfg);
-      const presetKeys = this.resolvePresetKeys(cfg, store, t.categoryKeys);
+      const presetKeys = this.resolvePresetKeys(cfg, store, t.categoryKeys, t.name, aliases, presetMap);
       const { matches, missingLogos } = this.collectTenantData(
         store,
         presetKeys,
@@ -165,7 +168,7 @@ export class FmfPageSyncService {
         clubLogoMap,
       );
 
-      const matchCountByPreset: Partial<Record<FmfScraperPresetKey, number>> = {};
+      const matchCountByPreset: Partial<Record<string, number>> = {};
       for (const m of matches) {
         const pk = m.presetKey;
         matchCountByPreset[pk] = (matchCountByPreset[pk] ?? 0) + 1;
@@ -207,6 +210,8 @@ export class FmfPageSyncService {
     const clubLogoMap = await this.buildClubTenantLogoMap();
     const clubs = await this.listClubTenants();
     const syncConfig = await this.getSyncConfig();
+    const extensions = await loadFmfPresetExtensionMap(this.prisma);
+    const presetMap = mergeFmfPresetMaps(extensions);
 
     let targets = clubs;
     if (options.tenantId) {
@@ -263,7 +268,14 @@ export class FmfPageSyncService {
         continue;
       }
 
-      const presetKeys = this.resolvePresetKeys(cfg, store, tenant.categoryKeys);
+      const presetKeys = this.resolvePresetKeys(
+        cfg,
+        store,
+        tenant.categoryKeys,
+        tenant.name,
+        aliases,
+        presetMap,
+      );
       const collected = this.collectTenantData(
         store,
         presetKeys,
@@ -490,36 +502,34 @@ export class FmfPageSyncService {
     cfg: FmfScraperSyncTenantConfig | undefined,
     store: FmfScraperStore,
     tenantCategoryKeys: string[],
-  ): FmfScraperPresetKey[] {
-    if (cfg?.presetKeys?.length) {
-      return cfg.presetKeys.filter((k) => store.categories[k]);
-    }
-    const available = FMF_SCRAPER_PRESET_KEYS.filter((k) => store.categories[k]);
-    if (tenantCategoryKeys.length === 0) return available;
-    const wanted = new Set(tenantCategoryKeys);
-    const matched = available.filter((k) =>
-      wanted.has(FMF_SCRAPER_PRESETS[k].fixtureCategory),
-    );
-    return matched.length > 0 ? matched : available;
+    tenantName: string,
+    aliases: string[],
+    presetMap: Record<string, { fixtureCategory: string }>,
+  ): string[] {
+    return resolveFmfPresetKeys(store, tenantCategoryKeys, {
+      configured: cfg?.presetKeys,
+      presetMap,
+      club: { tenantName, aliases },
+    });
   }
 
   private collectTenantData(
     store: FmfScraperStore,
-    presetKeys: FmfScraperPresetKey[],
+    presetKeys: string[],
     tenantName: string,
     aliases: string[],
     tenantLogoUrl: string | null,
     logoMap: Map<string, string>,
     clubLogoMap: Map<string, string>,
   ): {
-    matches: Array<{ presetKey: FmfScraperPresetKey; fixture: ManualFixture }>;
+    matches: Array<{ presetKey: string; fixture: ManualFixture }>;
     resultadosManuais: Record<string, { homeScore: number; awayScore: number }>;
     tabelaRows: TabelaRow[];
     leagueFixtures: ManualFixture[];
     missingLogos: Set<string>;
   } {
     const missingLogos = new Set<string>();
-    const matches: Array<{ presetKey: FmfScraperPresetKey; fixture: ManualFixture }> = [];
+    const matches: Array<{ presetKey: string; fixture: ManualFixture }> = [];
     const resultadosManuais: Record<string, { homeScore: number; awayScore: number }> = {};
     const tabelaRows: TabelaRow[] = [];
     const leagueFixtures: ManualFixture[] = [];

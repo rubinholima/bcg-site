@@ -133,7 +133,9 @@ function cbfFromProfile(value: unknown): string {
 
 /** Snapshots antigos não guardavam o link do PDF da súmula. */
 function storeHasReportLinks(store: {
-  categories: Record<string, { matches: Array<{ reportUrl?: string | null }> } | null>;
+  categories: Partial<
+    Record<string, { matches?: Array<{ reportUrl?: string | null }> } | undefined>
+  >;
 }): boolean {
   return Object.values(store.categories).some((snapshot) =>
     (snapshot?.matches ?? []).some((match) => !!match.reportUrl),

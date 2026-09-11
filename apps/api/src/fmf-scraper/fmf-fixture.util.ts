@@ -2,6 +2,11 @@ import type { FixtureDto } from '../public/dto/fixture.dto';
 import { normalizeTeamNameKeyForMerge } from '../public/visiting-team-logo-merge.util';
 import type { FmfParsedMatch } from './fmf-proxjogos.parser';
 import {
+  discoverFmfPresetKeysForClub,
+  type FmfClubPresetDiscoveryContext,
+} from './fmf-club-preset-discovery.util';
+import { mergeFmfPresetMaps } from './fmf-preset-registry.util';
+import {
   FMF_SCRAPER_PRESET_KEYS,
   FMF_SCRAPER_PRESETS,
   type FmfScraperPresetKey,
@@ -30,7 +35,7 @@ export function fmfMatchToStartISO(m: FmfParsedMatch): string {
 
 export function buildLeagueFixturesFromFmfStore(
   store: FmfScraperStore,
-  presetKeys: FmfScraperPresetKey[],
+  presetKeys: string[],
 ): FixtureDto[] {
   const out: FixtureDto[] = [];
   const seen = new Set<string>();
@@ -72,19 +77,61 @@ export function buildLeagueFixturesFromFmfStore(
   );
 }
 
+export type ResolveFmfPresetKeysOptions = {
+  configured?: string[];
+  presetMap?: Record<string, { fixtureCategory: string }>;
+  club?: FmfClubPresetDiscoveryContext;
+  /** Quando true (default), une categorias cadastradas + presets descobertos no snapshot. */
+  mergeDiscovered?: boolean;
+};
+
 export function resolveFmfPresetKeys(
+  store: FmfScraperStore,
+  tenantCategoryKeys: string[],
+  configuredOrOptions?: string[] | ResolveFmfPresetKeysOptions,
+): string[] {
+  const options: ResolveFmfPresetKeysOptions = Array.isArray(configuredOrOptions)
+    ? { configured: configuredOrOptions }
+    : (configuredOrOptions ?? {});
+  const presetMap = options.presetMap ?? mergeFmfPresetMaps();
+  const allKnownKeys = Object.keys(presetMap);
+  const available = allKnownKeys.filter((k) => store.categories[k]);
+
+  if (options.configured?.length) {
+    return options.configured.filter((k) => store.categories[k]);
+  }
+
+  const wanted = new Set(tenantCategoryKeys.map((k) => k.trim().toLowerCase()).filter(Boolean));
+  const byCategory =
+    wanted.size === 0
+      ? []
+      : available.filter((k) => wanted.has(presetMap[k]?.fixtureCategory ?? ''));
+
+  const discovered =
+    options.mergeDiscovered !== false && options.club
+      ? discoverFmfPresetKeysForClub(store, options.club).filter((k) =>
+          store.categories[k],
+        )
+      : [];
+
+  const merged = [...new Set([...byCategory, ...discovered])].filter((k) =>
+    store.categories[k],
+  );
+
+  if (merged.length > 0) return merged.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  if (wanted.size === 0) return available;
+  return available;
+}
+
+/** Compat: presets built-in disponíveis no store (sem extensões). */
+export function resolveFmfBuiltinPresetKeys(
   store: FmfScraperStore,
   tenantCategoryKeys: string[],
   configured?: FmfScraperPresetKey[],
 ): FmfScraperPresetKey[] {
-  if (configured?.length) {
-    return configured.filter((k) => store.categories[k]);
-  }
-  const available = FMF_SCRAPER_PRESET_KEYS.filter((k) => store.categories[k]);
-  if (tenantCategoryKeys.length === 0) return available;
-  const wanted = new Set(tenantCategoryKeys);
-  const matched = available.filter((k) =>
-    wanted.has(FMF_SCRAPER_PRESETS[k].fixtureCategory),
-  );
-  return matched.length > 0 ? matched : available;
+  return resolveFmfPresetKeys(store, tenantCategoryKeys, {
+    configured,
+    presetMap: FMF_SCRAPER_PRESETS,
+    mergeDiscovered: false,
+  }) as FmfScraperPresetKey[];
 }

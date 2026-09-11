@@ -12,8 +12,12 @@ import {
   type FmfParsedMatch,
 } from './fmf-proxjogos.parser';
 import {
-  FMF_SCRAPER_PRESET_KEYS,
+  listFmfPresetKeysForImport,
+  loadFmfPresetExtensionMap,
+} from './fmf-preset-registry.util';
+import {
   FMF_SCRAPER_PRESETS,
+  type FmfScraperPreset,
   type FmfScraperPresetKey,
   fmfProxJogosUrl,
   isFmfPresetKey,
@@ -37,7 +41,7 @@ export type FmfStandingsRow = {
 };
 
 export type FmfCategorySnapshot = {
-  preset: FmfScraperPresetKey;
+  preset: string;
   fmfD: number;
   slug: string;
   name: string;
@@ -57,7 +61,7 @@ export type FmfScraperStore = {
   updatedAt: string;
   lastRunOk: boolean;
   lastRunError?: string | null;
-  categories: Partial<Record<FmfScraperPresetKey, FmfCategorySnapshot>>;
+  categories: Partial<Record<string, FmfCategorySnapshot>>;
 };
 
 function sleep(ms: number): Promise<void> {
@@ -207,11 +211,15 @@ export class FmfScraperService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  getPresets() {
-    return FMF_SCRAPER_PRESET_KEYS.map((key) => ({
-      ...FMF_SCRAPER_PRESETS[key],
-      sourceUrl: fmfProxJogosUrl(FMF_SCRAPER_PRESETS[key].fmfD),
-    }));
+  async getPresets() {
+    const extensions = await loadFmfPresetExtensionMap(this.prisma);
+    return listFmfPresetKeysForImport(extensions).map((key) => {
+      const preset = extensions[key] ?? FMF_SCRAPER_PRESETS[key as FmfScraperPresetKey];
+      return {
+        ...preset,
+        sourceUrl: fmfProxJogosUrl(preset.fmfD),
+      };
+    });
   }
 
   async getStatus(): Promise<FmfScraperStore & { busy: boolean }> {
@@ -225,9 +233,12 @@ export class FmfScraperService {
     const store = await this.loadStore();
     store.lastRunError = null;
 
-    const keys: FmfScraperPresetKey[] = options.all
-      ? [...FMF_SCRAPER_PRESET_KEYS]
-      : options.preset && isFmfPresetKey(options.preset)
+    const extensions = await loadFmfPresetExtensionMap(this.prisma);
+    const importable = listFmfPresetKeysForImport(extensions);
+    const keys: string[] = options.all
+      ? importable
+      : options.preset &&
+          (isFmfPresetKey(options.preset) || extensions[options.preset])
         ? [options.preset]
         : [];
 
@@ -246,7 +257,12 @@ export class FmfScraperService {
       for (let i = 0; i < keys.length; i++) {
         const key = keys[i]!;
         if (i > 0) await sleep(betweenMs);
-        const snapshot = await this.fetchPreset(key, delayMs);
+        const presetDef =
+          extensions[key] ?? FMF_SCRAPER_PRESETS[key as FmfScraperPresetKey];
+        if (!presetDef) {
+          throw new Error(`Preset FMF desconhecido: ${key}`);
+        }
+        const snapshot = await this.fetchPreset(presetDef, delayMs);
         store.categories[key] = snapshot;
       }
       store.updatedAt = new Date().toISOString();
@@ -279,8 +295,8 @@ export class FmfScraperService {
     }
   }
 
-  private async fetchPreset(key: FmfScraperPresetKey, delayMs: number): Promise<FmfCategorySnapshot> {
-    const preset = FMF_SCRAPER_PRESETS[key];
+  private async fetchPreset(preset: FmfScraperPreset, delayMs: number): Promise<FmfCategorySnapshot> {
+    const key = preset.key;
     const sourceUrl = fmfProxJogosUrl(preset.fmfD);
     await sleep(delayMs);
 

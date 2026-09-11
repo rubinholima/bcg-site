@@ -6,13 +6,10 @@ import { isClubKind } from '../public/public.service';
 import {
   buildFmfTravelExternalId,
   fmfMatchToStartISO,
+  resolveFmfPresetKeys,
 } from './fmf-fixture.util';
+import { loadFmfPresetExtensionMap, mergeFmfPresetMaps } from './fmf-preset-registry.util';
 import { isFmfTeamMatch } from './fmf-team-match.util';
-import {
-  FMF_SCRAPER_PRESET_KEYS,
-  FMF_SCRAPER_PRESETS,
-  type FmfScraperPresetKey,
-} from './fmf-scraper.presets';
 import { FmfScraperService, type FmfScraperStore } from './fmf-scraper.service';
 import {
   FMF_SYNC_TENANT_DEFAULTS,
@@ -61,6 +58,8 @@ export class FmfTravelSyncService {
     const syncedAt = new Date().toISOString();
     const tenants: FmfTravelSyncResult['tenants'] = [];
     const now = new Date();
+    const extensions = await loadFmfPresetExtensionMap(this.prisma);
+    const presetMap = mergeFmfPresetMaps(extensions);
 
     for (const tenant of targets) {
       let created = 0;
@@ -68,8 +67,11 @@ export class FmfTravelSyncService {
       let skippedPast = 0;
       let skippedHome = 0;
 
-      const presetKeys = this.resolvePresetKeys(store, tenant.categoryKeys);
       const aliases = this.resolveAliases(tenant.slug, tenant.name);
+      const presetKeys = resolveFmfPresetKeys(store, tenant.categoryKeys, {
+        presetMap,
+        club: { tenantName: tenant.name, aliases },
+      });
 
       for (const presetKey of presetKeys) {
         const snap = store.categories[presetKey];
@@ -197,16 +199,4 @@ export class FmfTravelSyncService {
     return [tenantName];
   }
 
-  private resolvePresetKeys(
-    store: FmfScraperStore,
-    tenantCategoryKeys: string[],
-  ): FmfScraperPresetKey[] {
-    const available = FMF_SCRAPER_PRESET_KEYS.filter((k) => store.categories[k]);
-    if (tenantCategoryKeys.length === 0) return available;
-    const wanted = new Set(tenantCategoryKeys);
-    const matched = available.filter((k) =>
-      wanted.has(FMF_SCRAPER_PRESETS[k].fixtureCategory),
-    );
-    return matched.length > 0 ? matched : available;
-  }
 }
