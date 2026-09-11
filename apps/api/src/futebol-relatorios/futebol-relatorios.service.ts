@@ -118,6 +118,7 @@ import {
   reportMatchesCompetitionFilter,
 } from './cartoes-suspensao.util';
 import {
+  findTransferBoundaryConflicts,
   mapDisciplineOpeningRows,
   mergeTransferDisciplineOpenings,
 } from './player-discipline-opening.util';
@@ -2720,6 +2721,7 @@ export class FutebolRelatoriosService {
         played: boolean;
         yellowCards: number;
         redCards: number;
+        expulsionBySecondYellow?: boolean;
       }>;
       eventStaffCards?: Map<
         string,
@@ -2768,7 +2770,7 @@ export class FutebolRelatoriosService {
       }
     }
 
-    const sourceInfo: CartoesSuspensaoReportDto['sourceInfo'] = {
+    let sourceInfo: CartoesSuspensaoReportDto['sourceInfo'] = {
       configured: sourceDecision.configured,
       effectiveMode: sourceDecision.effectiveMode,
       fallbackReason: sourceDecision.fallbackReason ?? null,
@@ -2830,6 +2832,28 @@ export class FutebolRelatoriosService {
         registrationProfile: player.registrationProfile,
       })),
     );
+
+    const transferBoundaryConflicts = findTransferBoundaryConflicts({
+      players: disciplinePlayers.map((player) => ({
+        id: player.id,
+        registrationProfile: player.registrationProfile,
+      })),
+      matches: disciplineMatches.map((row) => ({
+        id: row.id,
+        matchDate: row.matchDate,
+        playerStats: row.playerStats,
+      })),
+      manualOpeningPlayerIds: new Set(openingRows.map((row) => row.playerId)),
+    });
+    if (transferBoundaryConflicts.length > 0) {
+      sourceInfo = {
+        ...sourceInfo,
+        transferBoundaryWarnings: transferBoundaryConflicts.map(
+          (conflict) =>
+            `Player ${conflict.playerId}: cartão (${conflict.yellowCards}A/${conflict.redCards}V) em ${conflict.matchDate} anterior à chegada ${conflict.clubArrivalDate}`,
+        ),
+      };
+    }
 
     const grid = buildDisciplineGrid({
       matches: disciplineMatches.map((row) => ({

@@ -455,6 +455,8 @@ export type CartoesSuspensaoSourceInfoDto = {
   pendingPlayerCards: number;
   pendingStaffCards: number;
   pendingMessages: string[];
+  /** Cartões anteriores à clubArrivalDate — exige revisão manual. */
+  transferBoundaryWarnings?: string[];
 };
 
 export type CartoesSuspensaoReportDto = {

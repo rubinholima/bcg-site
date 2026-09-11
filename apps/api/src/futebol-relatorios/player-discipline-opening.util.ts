@@ -67,6 +67,60 @@ export function applyDisciplineOpeningIfDue(
   return true;
 }
 
+export type TransferBoundaryConflict = {
+  playerId: string;
+  clubArrivalDate: string;
+  matchId: string;
+  matchDate: string;
+  yellowCards: number;
+  redCards: number;
+};
+
+/**
+ * Detecta cartões oficiais anteriores à clubArrivalDate — não descarta silenciosamente.
+ * Abertura manual (PlayerDisciplineOpening) tem precedência e não gera conflito aqui.
+ */
+export function findTransferBoundaryConflicts(input: {
+  players: Array<{ id: string; registrationProfile: unknown }>;
+  matches: Array<{
+    id: string;
+    matchDate: Date;
+    playerStats: Array<{
+      playerId: string;
+      yellowCards: number;
+      redCards: number;
+    }>;
+  }>;
+  manualOpeningPlayerIds?: Set<string>;
+}): TransferBoundaryConflict[] {
+  const conflicts: TransferBoundaryConflict[] = [];
+  const manual = input.manualOpeningPlayerIds ?? new Set<string>();
+
+  for (const player of input.players) {
+    if (manual.has(player.id)) continue;
+    const arrival = readClubArrivalDateKey(player.registrationProfile);
+    if (!arrival) continue;
+
+    for (const match of input.matches) {
+      const matchDay = dateKeyInBrazil(match.matchDate);
+      if (matchDay >= arrival) continue;
+      const stat = match.playerStats.find((row) => row.playerId === player.id);
+      if (!stat) continue;
+      if (stat.yellowCards <= 0 && stat.redCards <= 0) continue;
+      conflicts.push({
+        playerId: player.id,
+        clubArrivalDate: arrival,
+        matchId: match.id,
+        matchDate: matchDay,
+        yellowCards: stat.yellowCards,
+        redCards: stat.redCards,
+      });
+    }
+  }
+
+  return conflicts;
+}
+
 export function mapDisciplineOpeningRows(
   rows: Array<{
     playerId: string;

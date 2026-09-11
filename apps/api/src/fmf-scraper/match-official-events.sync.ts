@@ -88,6 +88,10 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
     const seqKey = `${card.teamSide}:${card.jerseyNumber}:${card.kind}:${card.period}:${card.clock}`;
     const seq = yellowSeq.get(seqKey) ?? 0;
     if (card.kind === 'yellow') yellowSeq.set(seqKey, seq + 1);
+    const sourceSections = [
+      card.kind === 'yellow' ? 'Cartões Amarelos' : 'Cartões Vermelhos',
+      ...(card.expulsionBySecondYellow ? ['Expulsão por 2º amarelo'] : []),
+    ];
     drafts.push({
       factType: card.kind === 'yellow' ? 'PLAYER_YELLOW_CARD' : 'PLAYER_RED_CARD',
       provenance: 'fmf_official',
@@ -103,7 +107,7 @@ export function buildOfficialEventDrafts(input: BuildOfficialEventDraftsInput): 
       period: card.period,
       sourceClock: card.clock,
       sourceExcerpt: card.excerpt,
-      sourceSections: [card.kind === 'yellow' ? 'Cartões Amarelos' : 'Cartões Vermelhos'],
+      sourceSections,
       externalKey: buildPlayerCardExternalKey({
         kind: card.kind,
         teamSide: card.teamSide,

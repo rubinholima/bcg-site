@@ -137,8 +137,32 @@ describe('buildMatchDisciplineFromOfficialEvents', () => {
         },
       ],
     });
-    expect(grid.players[0]?.roundCells[0]).toBe('AV');
+    expect(fromEvents.playerStats[0]?.expulsionBySecondYellow).toBe(true);
+    expect(grid.players[0]?.roundCells[0]).toBe('V');
     expect(grid.players[0]?.nextRoundCell).toBe('S');
+  });
+
+  it('marca expulsão por 2Y via sourceSections explícito', () => {
+    const result = buildMatchDisciplineFromOfficialEvents({
+      events: [
+        {
+          factType: 'PLAYER_YELLOW_CARD',
+          resolutionStatus: 'resolved',
+          playerId: 'p1',
+          sourceTeamSide: 'home',
+        },
+        {
+          factType: 'PLAYER_YELLOW_CARD',
+          resolutionStatus: 'resolved',
+          playerId: 'p1',
+          sourceTeamSide: 'home',
+          sourceSections: ['Cartões Amarelos', 'Expulsão por 2º amarelo'],
+        },
+      ],
+      ...matchBase,
+      ...club,
+    });
+    expect(result.playerStats[0]?.expulsionBySecondYellow).toBe(true);
   });
 });
 

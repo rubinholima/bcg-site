@@ -115,8 +115,24 @@ type MatchInput = {
     played: boolean;
     yellowCards: number;
     redCards: number;
+    /** Expulsão por 2º amarelo — sem vermelho direto acumulável. */
+    expulsionBySecondYellow?: boolean;
   }>;
 };
+
+/**
+ * Política de acúmulo disciplinar CUP360 (Mineiro / padrão operacional):
+ * - Amarelos da partida em que houve expulsão (incl. 2Y) continuam no saldo.
+ * - Expulsão gera 1 rodada de suspensão; não zera o acúmulo de amarelos.
+ * - 3º amarelo acumulado → suspensão automática (SA) e saldo zera.
+ * Não há regra configurável por competição no schema — comportamento explícito aqui.
+ */
+export const DISCIPLINE_ACCUMULATION_POLICY = {
+  yellowCardsForAutoSuspension: 3,
+  yellowCardsForPendurado: 2,
+  expulsionSuspensionRounds: 1,
+  expulsionDoesNotResetYellowAccum: true,
+} as const;
 
 type PlayerInput = {
   id: string;
@@ -494,8 +510,13 @@ export function compareDisciplinePlayers(
   );
 }
 
+function isSecondYellowExpulsion(stat: MatchInput['playerStats'][number]): boolean {
+  if (stat.expulsionBySecondYellow) return true;
+  return stat.redCards === 0 && stat.played && stat.yellowCards >= 2;
+}
+
 function isExpulsionStat(stat: MatchInput['playerStats'][number]): boolean {
-  return stat.redCards > 0 || (stat.played && stat.yellowCards >= 2);
+  return stat.redCards > 0 || isSecondYellowExpulsion(stat);
 }
 
 /**
@@ -527,17 +548,16 @@ function applyMatchDisciplineCards(input: {
       stat.jerseyNumber ?? player.jerseyNumber,
     );
     const manual = Boolean(occ && occurrenceIsManual(occ));
-    code =
-      stat.redCards > 0
-        ? manual
-          ? 'VM'
-          : 'V'
-        : stat.yellowCards > 0
-          ? manual
-            ? 'AM'
-            : 'AV'
-          : 'V';
-    state.suspensionRoundsLeft = 1;
+    if (stat.redCards > 0) {
+      code = manual ? 'VM' : 'V';
+    } else if (isSecondYellowExpulsion(stat)) {
+      code = manual ? 'VM' : 'V';
+    } else if (stat.yellowCards > 0) {
+      code = manual ? 'AM' : 'AV';
+    } else {
+      code = 'V';
+    }
+    state.suspensionRoundsLeft = DISCIPLINE_ACCUMULATION_POLICY.expulsionSuspensionRounds;
     state.pendurado = false;
     return code;
   }
@@ -580,7 +600,7 @@ function resolveFriendlyDisciplineCellCode(
     );
     code = occ && occurrenceIsManual(occ) ? 'AM' : 'AV';
   }
-  if (stat.redCards > 0 || (stat.played && stat.yellowCards >= 2)) {
+  if (stat.redCards > 0 || isSecondYellowExpulsion(stat)) {
     const occ = findOccurrenceForPlayer(
       match.occurrencesText,
       player.name,

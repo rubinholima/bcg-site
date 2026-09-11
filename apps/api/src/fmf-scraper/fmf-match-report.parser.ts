@@ -70,6 +70,8 @@ export interface FmfReportPlayerCardEvent {
   period: string;
   minute: number;
   excerpt: string;
+  /** 2º amarelo na partida que gera expulsão sem cartão vermelho direto. */
+  expulsionBySecondYellow?: boolean;
 }
 
 /** Marcador temporal FMF quando não há relógio HH:MM (legenda oficial da súmula). */
@@ -275,7 +277,35 @@ type ParsedPlayerCardEventRow = {
   period: string;
   minute: number;
   excerpt: string;
+  expulsionBySecondYellow?: boolean;
 };
+
+/** Marca o último amarelo quando há 2+ na mesma partida sem vermelho direto. */
+export function markInMatchSecondYellowExpulsions(events: FmfReportPlayerCardEvent[]): void {
+  const yellowsByKey = new Map<string, FmfReportPlayerCardEvent[]>();
+  for (const event of events) {
+    if (event.kind !== 'yellow') continue;
+    const key = `${event.teamSide}:${event.jerseyNumber}`;
+    const list = yellowsByKey.get(key) ?? [];
+    list.push(event);
+    yellowsByKey.set(key, list);
+  }
+  const hasDirectRed = new Set(
+    events.filter((event) => event.kind === 'red').map((event) => `${event.teamSide}:${event.jerseyNumber}`),
+  );
+  for (const [key, yellows] of yellowsByKey) {
+    if (hasDirectRed.has(key) || yellows.length < 2) continue;
+    const last = yellows[yellows.length - 1]!;
+    if (!last.expulsionBySecondYellow) last.expulsionBySecondYellow = true;
+  }
+}
+
+/** Narrativa FMF indica 2º amarelo → expulsão (sem vermelho direto acumulável). */
+export function isSecondYellowExpulsionNarrative(narrative: string): boolean {
+  const text = cleanLine(narrative);
+  if (!text) return false;
+  return /2º cart[aã]o amarelo|segundo amarelo|segundo cart[aã]o amarelo/i.test(text);
+}
 
 function parsePlayerCardEventRow(
   row: string,
@@ -317,6 +347,13 @@ function parsePlayerCardEventRow(
         totalMinutes,
       );
 
+  const expulsionBySecondYellow =
+    kinds.length === 1 &&
+    kinds[0] === 'yellow' &&
+    sectionKind === 'red' &&
+    Boolean(marker) &&
+    isSecondYellowExpulsionNarrative(narrativeStart);
+
   return kinds.map((kind) => ({
     kind,
     teamSide: side,
@@ -325,6 +362,7 @@ function parsePlayerCardEventRow(
     period,
     minute,
     excerpt: row.slice(0, 240),
+    ...(expulsionBySecondYellow ? { expulsionBySecondYellow: true } : {}),
   }));
 }
 
@@ -928,6 +966,7 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
         period: parsed.period,
         minute: parsed.minute,
         excerpt: parsed.excerpt,
+        ...(parsed.expulsionBySecondYellow ? { expulsionBySecondYellow: true } : {}),
       });
       if (!rosterPlayer) continue;
       if (parsed.kind === 'yellow') rosterPlayer.yellowCards += 1;
@@ -961,12 +1000,15 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
         period: parsed.period,
         minute: parsed.minute,
         excerpt: parsed.excerpt,
+        ...(parsed.expulsionBySecondYellow ? { expulsionBySecondYellow: true } : {}),
       });
       if (!rosterPlayer) continue;
       if (parsed.kind === 'yellow') rosterPlayer.yellowCards += 1;
       else rosterPlayer.redCards += 1;
     }
   }
+
+  markInMatchSecondYellowExpulsions(playerCardEvents);
 
   const staffCardEvents: FmfStaffCardEvent[] = [
     ...parseStaffCardEventsFromTimedRows(yellowCardRows, 'yellow', homeTeam, awayTeam),

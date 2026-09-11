@@ -1015,6 +1015,72 @@ describe('buildStaffDisciplineGrid', () => {
     expect(u20Grid.staff).toHaveLength(0);
   });
 
+  it('regressão staff: zero-only oculto; AV/V/P/SA visíveis; ST não fabricado', () => {
+    const staffCandidates = [
+      { id: 'zero-only', name: 'Paulinho Zero', roleLabel: 'Técnico' },
+      { id: 'with-cards', name: 'Com Cartões', roleLabel: 'Técnico' },
+    ];
+    const baseMatch = {
+      homeTeam: 'Boston City',
+      awayTeam: 'NAC',
+      homeScore: 1,
+      awayScore: 0,
+      occurrencesText: null,
+      playerStats: [],
+    };
+    const result = buildStaffDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      nextMatchDate: '2026-08-24',
+      staff: [],
+      staffCandidates,
+      matches: [
+        {
+          id: 'm1',
+          round: 1,
+          matchDate: new Date('2026-08-01T12:00:00Z'),
+          ...baseMatch,
+          staffCardEvents: [
+            { kind: 'yellow', roleLabel: 'Técnico', name: 'Com Cartões', excerpt: '10:00 1T' },
+          ],
+        },
+        {
+          id: 'm2',
+          round: 2,
+          matchDate: new Date('2026-08-08T12:00:00Z'),
+          ...baseMatch,
+          staffCardEvents: [
+            { kind: 'yellow', roleLabel: 'Técnico', name: 'Com Cartões', excerpt: '20:00 2T' },
+          ],
+        },
+        {
+          id: 'm3',
+          round: 3,
+          matchDate: new Date('2026-08-15T12:00:00Z'),
+          ...baseMatch,
+          staffCardEvents: [
+            { kind: 'red', roleLabel: 'Técnico', name: 'Com Cartões', excerpt: '80:00 2T' },
+          ],
+        },
+        {
+          id: 'm4',
+          round: 4,
+          matchDate: new Date('2026-08-22T12:00:00Z'),
+          ...baseMatch,
+          staffCardEvents: [],
+        },
+      ],
+    });
+
+    expect(result.staff.map((row) => row.staffId)).toEqual(['with-cards']);
+    const row = result.staff[0]!;
+    expect(row.roundCells[0]).toBe('AV');
+    expect(row.roundCells[2]).toBe('V');
+    expect(row.roundCells[3]).toBe('SA');
+    expect(row.nextRoundCell).toBe('P');
+    expect(row.roundCells.every((code) => code !== 'ST')).toBe(true);
+  });
+
   it('não lista comissão sem registro disciplinar relevante', () => {
     const result = buildStaffDisciplineGrid({
       clubName: 'Boston City',

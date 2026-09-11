@@ -13,7 +13,18 @@ export type DisciplineOfficialEvent = {
   sourceRoleLabel?: string | null;
   sourceTeamSide?: string | null;
   sourceExcerpt?: string | null;
+  sourceSections?: string[] | null;
 };
+
+const SECOND_YELLOW_EXPULSION_SECTION = 'Expulsão por 2º amarelo';
+
+function eventMarksSecondYellowExpulsion(event: DisciplineOfficialEvent): boolean {
+  return (
+    event.factType === 'PLAYER_YELLOW_CARD' &&
+    Array.isArray(event.sourceSections) &&
+    event.sourceSections.includes(SECOND_YELLOW_EXPULSION_SECTION)
+  );
+}
 
 export type DisciplinePlayerStatFromEvents = {
   playerId: string;
@@ -23,6 +34,8 @@ export type DisciplinePlayerStatFromEvents = {
   played: boolean;
   yellowCards: number;
   redCards: number;
+  /** Expulsão por 2º amarelo na mesma partida — sem vermelho direto acumulável. */
+  expulsionBySecondYellow?: boolean;
 };
 
 export type DisciplineStaffCardsFromEvents = {
@@ -104,7 +117,12 @@ export function buildMatchDisciplineFromOfficialEvents(input: {
         };
         playerById.set(playerId, stat);
       }
-      if (event.factType === 'PLAYER_YELLOW_CARD') stat.yellowCards += 1;
+      if (event.factType === 'PLAYER_YELLOW_CARD') {
+        stat.yellowCards += 1;
+        if (eventMarksSecondYellowExpulsion(event)) {
+          stat.expulsionBySecondYellow = true;
+        }
+      }
       if (event.factType === 'PLAYER_RED_CARD') stat.redCards += 1;
       continue;
     }
@@ -123,6 +141,13 @@ export function buildMatchDisciplineFromOfficialEvents(input: {
     if (event.factType === 'STAFF_RED_CARD') current.redCards += 1;
     if (isManualExcerpt(event.sourceExcerpt)) current.manual = true;
     staffById.set(staffId, current);
+  }
+
+  for (const stat of playerById.values()) {
+    if (stat.expulsionBySecondYellow) continue;
+    if (stat.yellowCards >= 2 && stat.redCards === 0) {
+      stat.expulsionBySecondYellow = true;
+    }
   }
 
   return {

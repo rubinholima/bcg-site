@@ -302,8 +302,132 @@ TER = Após o Término do Jogo
     expect(marcos?.redCards).toBe(0);
     expect(parsed.playerCardEvents.filter((c) => c.cbfRegistration === '964959')).toEqual([
       expect.objectContaining({ kind: 'yellow', clock: '32:00', period: '2T' }),
-      expect.objectContaining({ kind: 'yellow', clock: 'TER', period: 'TER' }),
+      expect.objectContaining({
+        kind: 'yellow',
+        clock: 'TER',
+        period: 'TER',
+        expulsionBySecondYellow: true,
+      }),
     ]);
+  });
+
+  it('parseia HH:MM 1T e HH:MM 2T', () => {
+    const text = `
+Competição: Teste Fase: 1ª Fase Rodada: 1
+Jogo: A X B
+Data: 01/01/2026 Hora: 15:00
+Resultado do Jogo
+0 x 0
+Arbitragem
+Início do 1º Tempo: 15:00
+Término do 1º Tempo: 15:45
+Início do 2º Tempo: 16:00
+Término do 2º Tempo: 16:45
+Relação de Jogadores
+Nº Apelido Nome Completo CBF
+10 Atleta Um Atleta Um 111111
+Gols
+Cartões Amarelos
+12:00 1T 10 Atleta Um
+Cartões Vermelhos
+55:00 2T 10 Atleta Um
+Ocorrências / Observações
+Substituições
+`;
+    const parsed = parseFmfMatchReportText(text);
+    expect(parsed.playerCardEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ clock: '12:00', period: '1T', kind: 'yellow' }),
+        expect.objectContaining({ clock: '55:00', period: '2T', kind: 'red' }),
+      ]),
+    );
+  });
+
+  it('parseia marcadores INT e ANT', () => {
+    const text = `
+Competição: Teste Fase: 1ª Fase Rodada: 1
+Jogo: A X B
+Data: 01/01/2026 Hora: 15:00
+Resultado do Jogo
+0 x 0
+Arbitragem
+Início do 1º Tempo: 15:00
+Término do 1º Tempo: 15:45
+Início do 2º Tempo: 16:00
+Término do 2º Tempo: 16:45
+Relação de Jogadores
+Nº Apelido Nome Completo CBF
+7 Atleta Dois Atleta Dois 222222
+Gols
+Cartões Amarelos
+INT 7 Atleta Dois
+Cartões Vermelhos
+ANT 7 Atleta Dois
+Ocorrências / Observações
+Substituições
+`;
+    const parsed = parseFmfMatchReportText(text);
+    expect(parsed.playerCardEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ clock: 'INT', period: 'INT', kind: 'yellow' }),
+        expect.objectContaining({ clock: 'ANT', period: 'ANT', kind: 'red' }),
+      ]),
+    );
+  });
+
+  it('ignora linhas malformadas e nomes multi-token', () => {
+    const text = `
+Competição: Teste Fase: 1ª Fase Rodada: 1
+Jogo: A X B
+Data: 01/01/2026 Hora: 15:00
+Resultado do Jogo
+0 x 0
+Arbitragem
+Início do 1º Tempo: 15:00
+Término do 1º Tempo: 15:45
+Início do 2º Tempo: 16:00
+Término do 2º Tempo: 16:45
+Relação de Jogadores
+Nº Apelido Nome Completo CBF
+9 Jose Maria Jose Maria Da Silva Santos 333333
+Gols
+Cartões Amarelos
+linha sem sentido aqui
+20:00 2T 9 Jose Maria Da Silva Santos
+- motivo qualquer
+Cartões Vermelhos
+Ocorrências / Observações
+Substituições
+`;
+    const parsed = parseFmfMatchReportText(text);
+    expect(parsed.playerCardEvents.filter((c) => c.jerseyNumber === 9)).toHaveLength(1);
+    expect(parsed.playerCardEvents[0]?.sourceName).toContain('Jose Maria');
+  });
+
+  it('ignora camisa inválida ou ausente', () => {
+    const text = `
+Competição: Teste Fase: 1ª Fase Rodada: 1
+Jogo: A X B
+Data: 01/01/2026 Hora: 15:00
+Resultado do Jogo
+0 x 0
+Arbitragem
+Início do 1º Tempo: 15:00
+Término do 1º Tempo: 15:45
+Início do 2º Tempo: 16:00
+Término do 2º Tempo: 16:45
+Relação de Jogadores
+Nº Apelido Nome Completo CBF
+Gols
+Cartões Amarelos
+- TER Nome Sem Camisa
+99:99 2T abc Nome Invalido
+Cartões Vermelhos
+Ocorrências / Observações
+Substituições
+`;
+    const parsed = parseFmfMatchReportText(text);
+    expect(parsed.playerCardEvents).toHaveLength(0);
   });
 
   it('parseStaffRoster separa mandante e visitante', () => {
