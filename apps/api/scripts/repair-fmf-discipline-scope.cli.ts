@@ -76,6 +76,7 @@ export async function runRepairDisciplineCli(
       return { exitCode: 1, payload: { error: 'Tenant não encontrado' } };
     }
 
+    const reviewedPlanFingerprint = args.planFingerprint?.trim() ?? '';
     const applyResults = await applyValidatedRepairPlan(prisma, {
       tenant: {
         id: tenant.id,
@@ -84,7 +85,7 @@ export async function runRepairDisciplineCli(
         slug: tenant.slug,
         aliases: [tenant.slug, 'boston city', 'boston'].filter(Boolean) as string[],
       },
-      reviewedPlanFingerprint: args.planFingerprint.trim(),
+      reviewedPlanFingerprint,
       tenantId: args.tenantId,
       matchIds: args.matchIds,
       competitionContains: args.competition,
@@ -94,7 +95,7 @@ export async function runRepairDisciplineCli(
     return {
       exitCode: 0,
       payload: {
-        planFingerprint: args.planFingerprint.trim(),
+        planFingerprint: reviewedPlanFingerprint,
         applyResults,
       },
     };
