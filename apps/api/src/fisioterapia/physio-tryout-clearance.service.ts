@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../common/mail.service';
-import { CAPTACAO_MANAGER_EMAIL } from '../captacao/captacao.constants';
+import { resolveCaptacaoManagerEmail } from '../captacao/captacao-notify.util';
 import {
   CreatePhysioTryoutClearanceDto,
   UpdatePhysioTryoutClearanceDto,
@@ -238,8 +238,13 @@ export class PhysioTryoutClearanceService {
     const settings = await this.prisma.purchaseSetting.findUnique({
       where: { tenantId: row.tenantId },
     });
-    const supervisorEmail = CAPTACAO_MANAGER_EMAIL?.trim() || '';
-    const managerEmail = settings?.diretoriaNotifyEmail?.trim() || '';
+    const operationalManagerEmail = resolveCaptacaoManagerEmail();
+    const gerenciaEmail =
+      settings?.diretoriaNotifyEmail?.trim() || operationalManagerEmail;
+    const distinctGerenciaEmail =
+      gerenciaEmail.toLowerCase() !== operationalManagerEmail.toLowerCase()
+        ? gerenciaEmail
+        : null;
 
     const subject = `Fisioterapia — liberação try-out ${row.outcome === 'aprovado' ? 'APROVADA' : 'REPROVADA'}: ${row.prospectName ?? 'Atleta'}`;
     const text = [
@@ -260,36 +265,44 @@ export class PhysioTryoutClearanceService {
     let managerSent = false;
     const errors: string[] = [];
 
-    if (supervisorEmail) {
-      const r = await this.mail.sendMail({ to: supervisorEmail, subject, text });
-      supervisorSent = r.sent;
-      if (!r.sent && r.error) errors.push(`Supervisão: ${r.error}`);
-      if (r.sent) {
-        await this.prisma.physioTryoutClearance.update({
-          where: { id: row.id },
-          data: { supervisorNotifiedAt: new Date() },
-        });
-      }
-    } else {
-      errors.push('Supervisão: destinatário não configurado (CAPTACAO_MANAGER_EMAIL)');
+    const rSupervisor = await this.mail.sendMail({
+      to: operationalManagerEmail,
+      subject,
+      text,
+    });
+    supervisorSent = rSupervisor.sent;
+    if (!rSupervisor.sent && rSupervisor.error) {
+      errors.push(`Supervisão: ${rSupervisor.error}`);
+    }
+    if (rSupervisor.sent) {
+      await this.prisma.physioTryoutClearance.update({
+        where: { id: row.id },
+        data: { supervisorNotifiedAt: new Date() },
+      });
     }
 
-    if (managerEmail) {
-      const r = await this.mail.sendMail({ to: managerEmail, subject, text });
-      managerSent = r.sent;
-      if (!r.sent && r.error) errors.push(`Gerência: ${r.error}`);
-      if (r.sent) {
+    if (distinctGerenciaEmail) {
+      const rManager = await this.mail.sendMail({
+        to: distinctGerenciaEmail,
+        subject,
+        text,
+      });
+      managerSent = rManager.sent;
+      if (!rManager.sent && rManager.error) errors.push(`Gerência: ${rManager.error}`);
+      if (rManager.sent) {
         await this.prisma.physioTryoutClearance.update({
           where: { id: row.id },
           data: { managerNotifiedAt: new Date() },
         });
       }
     } else {
-      errors.push('Gerência: diretoriaNotifyEmail não configurado para o clube');
-    }
-
-    if (!supervisorEmail && !managerEmail) {
-      return { sent: false, error: errors.join(' · '), supervisorSent, managerSent };
+      managerSent = supervisorSent;
+      if (supervisorSent) {
+        await this.prisma.physioTryoutClearance.update({
+          where: { id: row.id },
+          data: { managerNotifiedAt: new Date() },
+        });
+      }
     }
 
     return {

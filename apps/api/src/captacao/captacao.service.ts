@@ -15,14 +15,15 @@ import { ApproveProspectDto, PromoteProspectDto } from './dto/approve-prospect.d
 import { UpdateCtScheduleDto } from './dto/update-ct-schedule.dto';
 import {
   SCOUTING_EVALUATION_OUTCOMES,
-  CAPTACAO_MANAGER_EMAIL,
   CT_SCHEDULE_STATUSES,
   type CtScheduleStatus,
   type ScoutingEvaluationOutcome,
 } from './captacao.constants';
 import {
-  buildSchedulerNotificationMessage,
-  buildWhatsAppNotifyUrl,
+  buildOperationalSchedulerNotification,
+  resolveCaptacaoManagerEmail,
+} from './captacao-notify.util';
+import {
   buildManagerApprovalEmailText,
   captacaoProspectProfileUrl,
   computeReportDimensionRatings,
@@ -91,49 +92,10 @@ export class CaptacaoService {
     return 'pendente';
   }
 
-  private buildSchedulerNotification(input: {
-    prospect: {
-      name: string;
-      position?: string | null;
-      currentClub?: string | null;
-      targetCategory?: string | null;
-      priority?: string | null;
-      evaluationOutcome?: string | null;
-      agentPhone?: string | null;
-    };
-    scoutName?: string | null;
-    overallRating?: number | null;
-    technicalRating?: number | null;
-    tacticalRating?: number | null;
-    physicalRating?: number | null;
-    cognitiveRating?: number | null;
-    matchName?: string | null;
-    recommendation?: string | null;
-    prospectId: string;
-  }) {
-    const message = buildSchedulerNotificationMessage({
-      prospectName: input.prospect.name,
-      position: input.prospect.position,
-      currentClub: input.prospect.currentClub,
-      targetCategory: input.prospect.targetCategory,
-      priority: input.prospect.priority,
-      evaluationOutcome: input.prospect.evaluationOutcome,
-      scoutName: input.scoutName,
-      overallRating: input.overallRating,
-      technicalRating: input.technicalRating,
-      tacticalRating: input.tacticalRating,
-      physicalRating: input.physicalRating,
-      cognitiveRating: input.cognitiveRating,
-      matchName: input.matchName,
-      recommendation: input.recommendation,
-      dashboardUrl: `/dashboard/futebol/captacao/prospects/${input.prospectId}`,
-    });
-    const contactPhone = input.prospect.agentPhone?.trim() || null;
-    return {
-      phone: contactPhone,
-      message,
-      whatsappUrl: buildWhatsAppNotifyUrl(message, contactPhone),
-    };
+  private buildSchedulerNotification(
+    input: Parameters<typeof buildOperationalSchedulerNotification>[0],
+  ) {
+    return buildOperationalSchedulerNotification(input);
   }
 
   private async notifyManagerForApproval(input: {
@@ -154,10 +116,7 @@ export class CaptacaoService {
     needsLodging?: boolean | null;
     presentationDate?: string | null;
   }): Promise<{ sent: boolean; error?: string }> {
-    const to = CAPTACAO_MANAGER_EMAIL;
-    if (!to) {
-      return { sent: false, error: 'CAPTACAO_MANAGER_EMAIL não configurado no servidor' };
-    }
+    const to = resolveCaptacaoManagerEmail();
     const { subject, text } = buildManagerApprovalEmailText({
       prospectName: input.prospect.name,
       position: input.prospect.position,
@@ -1029,14 +988,13 @@ export class CaptacaoService {
                   : ('nao_agendado' as CtScheduleStatus),
             }
           : {}),
-        ...(evaluationOutcome === 'para_teste' ? { schedulerNotifiedAt: new Date() } : {}),
-        ...(evaluationOutcome === 'aprovado' ? { managerNotifiedAt: new Date() } : {}),
       },
     });
 
     let schedulerNotification: ReturnType<CaptacaoService['buildSchedulerNotification']> | null =
       null;
     let managerEmail: { sent: boolean; error?: string } | null = null;
+    const notifyTimestamps: Prisma.ScoutingProspectUpdateInput = {};
 
     if (evaluationOutcome === 'para_teste') {
       schedulerNotification = this.buildSchedulerNotification({
@@ -1056,6 +1014,9 @@ export class CaptacaoService {
         recommendation: dto.recommendation,
         prospectId: dto.prospectId,
       });
+      if (schedulerNotification.whatsappUrl) {
+        notifyTimestamps.schedulerNotifiedAt = new Date();
+      }
     } else if (evaluationOutcome === 'aprovado') {
       managerEmail = await this.notifyManagerForApproval({
         prospect: {
@@ -1071,6 +1032,16 @@ export class CaptacaoService {
         ...dimensionRatings,
         needsLodging: needsLodging ?? null,
         presentationDate: presentationDate ?? null,
+      });
+      if (managerEmail.sent) {
+        notifyTimestamps.managerNotifiedAt = new Date();
+      }
+    }
+
+    if (Object.keys(notifyTimestamps).length > 0) {
+      await this.prisma.scoutingProspect.update({
+        where: { id: dto.prospectId },
+        data: notifyTimestamps,
       });
     }
 

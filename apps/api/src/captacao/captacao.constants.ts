@@ -1,9 +1,17 @@
 /** Responsável pelo agendamento de avaliações (captação). */
 export const CAPTACAO_SCHEDULER_PHONE = '33984133636';
 
-/** Gerente que aprova prospects encaminhados (ex.: Odair) — env CAPTACAO_MANAGER_EMAIL */
-export const CAPTACAO_MANAGER_EMAIL =
-  process.env.CAPTACAO_MANAGER_EMAIL?.trim() || '';
+/** E-mail operacional do gerente — use resolveCaptacaoManagerEmail() em captacao-notify.util.ts */
+
+/** Decisão do gerente sobre prospect encaminhado (fluxo supervisor). */
+export const CAPTACAO_MANAGER_DECISIONS = [
+  'pendente',
+  'aprovado',
+  'reprovado',
+  'ajuste',
+] as const;
+
+export type CaptacaoManagerDecision = (typeof CAPTACAO_MANAGER_DECISIONS)[number];
 
 export const SCOUTING_EVALUATION_OUTCOMES = [
   'pendente',
