@@ -2,7 +2,19 @@ import { createHash } from 'crypto';
 import type { Prisma } from '@prisma/client';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { ParsedFmfMatchReport } from './fmf-match-report.parser';
-import { syncMatchOfficialEvents } from './match-official-events.sync';
+import {
+  applyDisciplineEventOperations,
+  buildDisciplineCardDraftsForRepair,
+  isDisciplineCardFactType,
+  planDisciplineEventOperations,
+  type DisciplineEventOperationPlan,
+} from './fmf-discipline-only-repair.sync';
+import {
+  disciplineRawPatchSlicesEqual,
+  extractDisciplineRawPatchSlice,
+  patchRawParsedDisciplineOnly,
+  type DisciplineRawPatchSlice,
+} from './fmf-discipline-raw-parsed-patch.util';
 import {
   buildPlayersByNormalizedName,
   resolvePlayerForFmfStat,
@@ -51,13 +63,6 @@ export type PreservedStatSnapshot = {
   redCards: number;
 };
 
-export type EventCountSnapshot = {
-  playerYellow: number;
-  playerRed: number;
-  staffYellow: number;
-  staffRed: number;
-};
-
 export type ValidatedMatchRepairPlan = {
   matchId: string;
   externalMatchId: string;
@@ -70,15 +75,19 @@ export type ValidatedMatchRepairPlan = {
   sourceFingerprint: string;
   statUpdates: DisciplineStatUpdatePlan[];
   preservedStats: PreservedStatSnapshot[];
-  reportMutations: {
-    rawParsedDisciplineFingerprint: { before: string; after: string; willMutate: boolean };
-    occurrencesText: { before: string | null; after: string | null; willMutate: boolean };
-  };
-  eventMutations: {
-    before: EventCountSnapshot;
-    after: EventCountSnapshot;
+  rawParsedPatch: {
+    before: DisciplineRawPatchSlice;
+    after: DisciplineRawPatchSlice;
     willMutate: boolean;
+    unrelatedFingerprint: { before: string; after: string };
   };
+  eventOperations: DisciplineEventOperationPlan[];
+  nonDisciplineEventSnapshot: Array<{
+    id: string;
+    factType: string;
+    externalKey: string;
+    provenance: string;
+  }>;
 };
 
 export type ValidatedRepairPlan = {
@@ -125,6 +134,19 @@ type ExistingStatRow = {
   redCards: number;
 };
 
+type ExistingEventRow = {
+  id: string;
+  factType: string;
+  provenance: string;
+  externalKey: string;
+  playerId: string | null;
+  technicalStaffId: string | null;
+  sourceClock: string | null;
+  period: string | null;
+  sourceSections: unknown;
+  sourceExcerpt: string | null;
+};
+
 function digits(v: unknown): string {
   return String(v ?? '').replace(/\D/g, '');
 }
@@ -144,24 +166,6 @@ function buildPlayersByCbf(players: PlayerRow[]): Map<string, PlayerRow[]> {
   return map;
 }
 
-function countEvents(events: Array<{ factType: string }>): EventCountSnapshot {
-  return {
-    playerYellow: events.filter((e) => e.factType === 'PLAYER_YELLOW_CARD').length,
-    playerRed: events.filter((e) => e.factType === 'PLAYER_RED_CARD').length,
-    staffYellow: events.filter((e) => e.factType === 'STAFF_YELLOW_CARD').length,
-    staffRed: events.filter((e) => e.factType === 'STAFF_RED_CARD').length,
-  };
-}
-
-function eventsEqual(a: EventCountSnapshot, b: EventCountSnapshot): boolean {
-  return (
-    a.playerYellow === b.playerYellow &&
-    a.playerRed === b.playerRed &&
-    a.staffYellow === b.staffYellow &&
-    a.staffRed === b.staffRed
-  );
-}
-
 /** Fingerprint estável da fatia disciplinar regenerável do PDF. */
 export function computeDisciplineSourceFingerprint(
   parsed: ParsedFmfMatchReport,
@@ -179,7 +183,7 @@ export function computeDisciplineSourceFingerprint(
         expulsionBySecondYellow: event.expulsionBySecondYellow ?? false,
       })),
     staffCardEvents: parsed.staffCardEvents
-      .filter((event) => event.teamSide === ourSide)
+      .filter((event) => !event.teamSide || event.teamSide === ourSide)
       .map((event) => ({
         kind: event.kind,
         name: event.name,
@@ -199,17 +203,8 @@ export function computeDisciplineSourceFingerprint(
 }
 
 export function fingerprintRawParsedDiscipline(rawParsed: unknown, ourSide: 'home' | 'away'): string {
-  if (!rawParsed || typeof rawParsed !== 'object') return '';
-  const parsed = rawParsed as ParsedFmfMatchReport;
-  return computeDisciplineSourceFingerprint(
-    {
-      ...parsed,
-      playerCardEvents: Array.isArray(parsed.playerCardEvents) ? parsed.playerCardEvents : [],
-      staffCardEvents: Array.isArray(parsed.staffCardEvents) ? parsed.staffCardEvents : [],
-      stats: Array.isArray(parsed.stats) ? parsed.stats : [],
-    } as ParsedFmfMatchReport,
-    ourSide,
-  );
+  const slice = extractDisciplineRawPatchSlice(rawParsed, ourSide);
+  return createHash('sha256').update(JSON.stringify(slice)).digest('hex');
 }
 
 function hashPlan(plan: Omit<ValidatedRepairPlan, 'planFingerprint'>): string {
@@ -239,7 +234,6 @@ function buildDisciplineStatUpdates(
   blockReasons: string[];
 } {
   const blockReasons: string[] = [];
-  const existingByPlayerId = new Map(existingStats.map((row) => [row.playerId, row]));
   const parsedDisciplineByPlayerId = new Map<string, { yellowCards: number; redCards: number }>();
 
   for (const stat of parsed.stats.filter((row) => row.teamSide === ourSide)) {
@@ -315,19 +309,18 @@ export function assertAllowlistScope(input: {
       `matchIds fora da allowlist de produção disciplinar: ${unknown.join(', ')}`,
     );
   }
-  if (input.competitionContains?.trim()) {
-    const allowed = PRODUCTION_DISCIPLINE_REPAIR_ALLOWLIST.filter((entry) =>
-      input.matchIds.includes(entry.matchId),
-    );
-    for (const entry of allowed) {
-      if (
-        !entry.competition.toLowerCase().includes(input.competitionContains!.trim().toLowerCase()) &&
-        !input.competitionContains!.trim().toLowerCase().includes(entry.competition.toLowerCase())
-      ) {
-        throw new Error(
-          `Filtro competition="${input.competitionContains}" incompatível com ${entry.label}`,
-        );
-      }
+  for (const matchId of input.matchIds) {
+    const entry = PRODUCTION_DISCIPLINE_REPAIR_ALLOWLIST.find((row) => row.matchId === matchId);
+    if (!entry) continue;
+    const reportCompetition = entry.competition.toLowerCase();
+    if (
+      input.competitionContains?.trim() &&
+      !reportCompetition.includes(input.competitionContains.trim().toLowerCase()) &&
+      !input.competitionContains.trim().toLowerCase().includes(reportCompetition)
+    ) {
+      throw new Error(
+        `Filtro competition="${input.competitionContains}" incompatível com ${entry.label}`,
+      );
     }
   }
 }
@@ -339,10 +332,11 @@ export async function planFmfDisciplineScopeRepair(
     matchIds: string[];
     competitionContains?: string;
     downloadAndParse: (url: string) => Promise<ParsedFmfMatchReport>;
-    enforceProductionAllowlist?: boolean;
+    /** Somente testes internos — CLI produtivo sempre enforce. */
+    skipAllowlistForTests?: boolean;
   },
 ): Promise<ValidatedRepairPlan> {
-  if (input.enforceProductionAllowlist) {
+  if (!input.skipAllowlistForTests) {
     assertAllowlistScope(input);
   }
 
@@ -365,7 +359,20 @@ export async function planFmfDisciplineScopeRepair(
     },
     include: {
       playerStats: true,
-      matchOfficialEvents: { select: { factType: true, provenance: true } },
+      matchOfficialEvents: {
+        select: {
+          id: true,
+          factType: true,
+          provenance: true,
+          externalKey: true,
+          playerId: true,
+          technicalStaffId: true,
+          sourceClock: true,
+          period: true,
+          sourceSections: true,
+          sourceExcerpt: true,
+        },
+      },
       coachStatOverride: { select: { id: true } },
     },
     orderBy: { matchDate: 'asc' },
@@ -380,6 +387,10 @@ export async function planFmfDisciplineScopeRepair(
   const players = await prisma.player.findMany({
     where: { tenantId: input.tenantId },
     select: { id: true, name: true, cbfRegistration: true, registrationProfile: true },
+  });
+  const staffPool = await prisma.technicalStaff.findMany({
+    where: { tenantId: input.tenantId },
+    select: { id: true, name: true, role: true, licenseNumber: true },
   });
   const playersByCbf = buildPlayersByCbf(players);
   const playersByName = buildPlayersByNormalizedName(players);
@@ -417,13 +428,24 @@ export async function planFmfDisciplineScopeRepair(
     let statUpdates: DisciplineStatUpdatePlan[] = [];
     let preservedStats: PreservedStatSnapshot[] = [];
     let sourceFingerprint = '';
-    let rawBefore = '';
-    let rawAfter = '';
+    let rawParsedPatch: ValidatedMatchRepairPlan['rawParsedPatch'] = {
+      before: { playerCardEvents: [], staffCardEvents: [], statsDiscipline: [] },
+      after: { playerCardEvents: [], staffCardEvents: [], statsDiscipline: [] },
+      willMutate: false,
+      unrelatedFingerprint: { before: '', after: '' },
+    };
+    let eventOperations: DisciplineEventOperationPlan[] = [];
+    const nonDisciplineEventSnapshot = report.matchOfficialEvents
+      .filter((event) => !isDisciplineCardFactType(event.factType))
+      .map((event) => ({
+        id: event.id,
+        factType: event.factType,
+        externalKey: event.externalKey,
+        provenance: event.provenance,
+      }));
 
     if (parsed && ourSide) {
       sourceFingerprint = computeDisciplineSourceFingerprint(parsed, ourSide);
-      rawBefore = fingerprintRawParsedDiscipline(report.rawParsed, ourSide);
-      rawAfter = sourceFingerprint;
 
       const built = buildDisciplineStatUpdates(
         report.playerStats,
@@ -436,22 +458,34 @@ export async function planFmfDisciplineScopeRepair(
       statUpdates = built.statUpdates;
       preservedStats = built.preservedStats;
       blockReasons.push(...built.blockReasons);
+
+      const patch = patchRawParsedDisciplineOnly(report.rawParsed, parsed, ourSide);
+      rawParsedPatch = {
+        before: patch.before,
+        after: patch.after,
+        willMutate: !disciplineRawPatchSlicesEqual(patch.before, patch.after),
+        unrelatedFingerprint: patch.unrelatedFingerprint,
+      };
+      if (patch.unrelatedFingerprint.before !== patch.unrelatedFingerprint.after) {
+        blockReasons.push('Patch rawParsed alteraria conteúdo não-disciplinar — abortado');
+      }
+
+      const cardDrafts = buildDisciplineCardDraftsForRepair({
+        parsed,
+        ourTeamSide: ourSide,
+        players,
+        staff: staffPool.map((s) => ({
+          id: s.id,
+          name: s.name,
+          role: s.role,
+          licenseNumber: s.licenseNumber,
+        })),
+      });
+      eventOperations = planDisciplineEventOperations({
+        existingEvents: report.matchOfficialEvents as ExistingEventRow[],
+        drafts: cardDrafts,
+      });
     }
-
-    const eventBefore = countEvents(report.matchOfficialEvents);
-    const eventAfter = parsed
-      ? {
-          playerYellow: parsed.playerCardEvents.filter((c) => c.kind === 'yellow').length,
-          playerRed: parsed.playerCardEvents.filter((c) => c.kind === 'red').length,
-          staffYellow: parsed.staffCardEvents.filter((c) => c.kind === 'yellow').length,
-          staffRed: parsed.staffCardEvents.filter((c) => c.kind === 'red').length,
-        }
-      : eventBefore;
-
-    const occurrencesAfter = parsed?.occurrencesText ?? report.occurrencesText;
-    const rawWillMutate = rawBefore !== rawAfter;
-    const occurrencesWillMutate = (report.occurrencesText ?? null) !== (occurrencesAfter ?? null);
-    const eventsWillMutate = !eventsEqual(eventBefore, eventAfter);
 
     matches.push({
       matchId: report.id,
@@ -465,23 +499,9 @@ export async function planFmfDisciplineScopeRepair(
       sourceFingerprint,
       statUpdates,
       preservedStats,
-      reportMutations: {
-        rawParsedDisciplineFingerprint: {
-          before: rawBefore,
-          after: rawAfter,
-          willMutate: rawWillMutate,
-        },
-        occurrencesText: {
-          before: report.occurrencesText,
-          after: occurrencesAfter ?? null,
-          willMutate: occurrencesWillMutate,
-        },
-      },
-      eventMutations: {
-        before: eventBefore,
-        after: eventAfter,
-        willMutate: eventsWillMutate,
-      },
+      rawParsedPatch,
+      eventOperations,
+      nonDisciplineEventSnapshot,
     });
   }
 
@@ -501,16 +521,142 @@ export async function planFmfDisciplineScopeRepair(
   };
 }
 
+function assertMatchPlansEqual(
+  reviewed: ValidatedMatchRepairPlan,
+  fresh: ValidatedMatchRepairPlan,
+): void {
+  if (JSON.stringify(reviewed) !== JSON.stringify(fresh)) {
+    throw new Error('Plano regenerado difere do revisado — abortado; execute novo dry-run');
+  }
+}
+
+function assertLiveStateMatchesPlan(
+  report: {
+    rawParsed: unknown;
+    playerStats: ExistingStatRow[];
+    matchOfficialEvents: ExistingEventRow[];
+  },
+  plan: ValidatedMatchRepairPlan,
+  ourSide: 'home' | 'away',
+): void {
+  for (const update of plan.statUpdates) {
+    const current = report.playerStats.find((row) => row.id === update.statId);
+    if (!current) throw new Error(`Stat ${update.statId} não encontrado — abortado`);
+    if (
+      current.yellowCards !== update.yellowCards.before ||
+      current.redCards !== update.redCards.before
+    ) {
+      throw new Error(`Stat ${update.statId} stale — abortado; execute novo dry-run`);
+    }
+  }
+
+  const liveDisciplineBefore = extractDisciplineRawPatchSlice(report.rawParsed, ourSide);
+  if (!disciplineRawPatchSlicesEqual(liveDisciplineBefore, plan.rawParsedPatch.before)) {
+    throw new Error('rawParsed disciplinar stale — abortado; execute novo dry-run');
+  }
+
+  const currentNonDiscipline = report.matchOfficialEvents
+    .filter((event) => !isDisciplineCardFactType(event.factType))
+    .map((event) => ({
+      id: event.id,
+      factType: event.factType,
+      externalKey: event.externalKey,
+      provenance: event.provenance,
+    }));
+  if (JSON.stringify(currentNonDiscipline) !== JSON.stringify(plan.nonDisciplineEventSnapshot)) {
+    throw new Error('Eventos não-disciplinares divergiram — abortado; execute novo dry-run');
+  }
+
+  const manualCount = report.matchOfficialEvents.filter(
+    (event) => event.provenance !== 'fmf_official',
+  ).length;
+  if (manualCount > 0) {
+    throw new Error('Eventos manuais detectados — abortado');
+  }
+
+  for (const operation of plan.eventOperations) {
+    if (operation.op === 'UPDATE' || operation.op === 'DELETE') {
+      const current = report.matchOfficialEvents.find((event) => event.id === operation.eventId);
+      if (!current) {
+        throw new Error(`Evento ${operation.eventId} stale — abortado`);
+      }
+      if (JSON.stringify({
+        factType: current.factType,
+        externalKey: current.externalKey,
+        playerId: current.playerId,
+        technicalStaffId: current.technicalStaffId,
+        sourceClock: current.sourceClock,
+        period: current.period,
+        sourceSections: current.sourceSections,
+        sourceExcerpt: current.sourceExcerpt,
+      }) !== JSON.stringify(operation.before)) {
+        throw new Error(`Evento disciplinar ${operation.externalKey} stale — abortado`);
+      }
+    }
+  }
+}
+
+export async function applyValidatedRepairPlan(
+  prisma: PrismaService,
+  input: {
+    tenant: TenantInfo;
+    reviewedPlanFingerprint: string;
+    tenantId: string;
+    matchIds: string[];
+    competitionContains?: string;
+    downloadAndParse: (url: string) => Promise<ParsedFmfMatchReport>;
+    skipAllowlistForTests?: boolean;
+  },
+): Promise<Array<{ matchId: string; statUpdatesApplied: number; events: { created: number; updated: number; deleted: number } }>> {
+  if (!input.reviewedPlanFingerprint?.trim()) {
+    throw new Error('planFingerprint obrigatório para --apply');
+  }
+
+  const freshPlan = await planFmfDisciplineScopeRepair(prisma, {
+    tenantId: input.tenantId,
+    matchIds: input.matchIds,
+    competitionContains: input.competitionContains,
+    downloadAndParse: input.downloadAndParse,
+    skipAllowlistForTests: input.skipAllowlistForTests,
+  });
+
+  if (freshPlan.planFingerprint !== input.reviewedPlanFingerprint) {
+    throw new Error('planFingerprint divergiu — abortado; execute novo dry-run');
+  }
+
+  const results: Array<{
+    matchId: string;
+    statUpdatesApplied: number;
+    events: { created: number; updated: number; deleted: number };
+  }> = [];
+
+  for (const matchPlan of freshPlan.matches) {
+    if (!matchPlan.safe) {
+      throw new Error(`Partida insegura: ${matchPlan.blockReasons.join('; ')}`);
+    }
+    const result = await applyValidatedMatchRepair(prisma, {
+      tenant: input.tenant,
+      validatedMatch: matchPlan,
+      downloadAndParse: input.downloadAndParse,
+      skipPlanRegeneration: true,
+    });
+    results.push({ matchId: matchPlan.matchId, ...result });
+  }
+
+  return results;
+}
+
 export async function applyValidatedMatchRepair(
   prisma: PrismaService,
   input: {
     tenant: TenantInfo;
     validatedMatch: ValidatedMatchRepairPlan;
     downloadAndParse: (url: string) => Promise<ParsedFmfMatchReport>;
+    skipPlanRegeneration?: boolean;
   },
 ): Promise<{
   statUpdatesApplied: number;
-  events: { created: number; updated: number; removed: number };
+  events: { created: number; updated: number; deleted: number };
 }> {
   if (!input.validatedMatch.safe) {
     throw new Error(`Partida insegura: ${input.validatedMatch.blockReasons.join('; ')}`);
@@ -524,6 +670,20 @@ export async function applyValidatedMatchRepair(
     include: {
       coachStatOverride: true,
       playerStats: true,
+      matchOfficialEvents: {
+        select: {
+          id: true,
+          factType: true,
+          provenance: true,
+          externalKey: true,
+          playerId: true,
+          technicalStaffId: true,
+          sourceClock: true,
+          period: true,
+          sourceSections: true,
+          sourceExcerpt: true,
+        },
+      },
     },
   });
   if (!report) throw new Error('Partida não encontrada');
@@ -540,25 +700,23 @@ export async function applyValidatedMatchRepair(
 
   const liveFingerprint = computeDisciplineSourceFingerprint(parsed, ourSide);
   if (liveFingerprint !== input.validatedMatch.sourceFingerprint) {
-    throw new Error(
-      'Source fingerprint divergiu desde o dry-run — abortado; execute novo dry-run',
-    );
+    throw new Error('Source fingerprint divergiu — abortado; execute novo dry-run');
   }
 
-  for (const update of input.validatedMatch.statUpdates) {
-    const current = report.playerStats.find((row) => row.id === update.statId);
-    if (!current) {
-      throw new Error(`Stat ${update.statId} não encontrado — abortado`);
-    }
-    if (
-      current.yellowCards !== update.yellowCards.before ||
-      current.redCards !== update.redCards.before
-    ) {
-      throw new Error(
-        `Stat ${update.statId} divergiu do dry-run (yellow/red before) — abortado`,
-      );
-    }
+  if (!input.skipPlanRegeneration) {
+    const freshMatchPlan = (
+      await planFmfDisciplineScopeRepair(prisma, {
+        tenantId: input.tenant.id,
+        matchIds: [input.validatedMatch.matchId],
+        downloadAndParse: input.downloadAndParse,
+        skipAllowlistForTests: true,
+      })
+    ).matches[0];
+    if (!freshMatchPlan) throw new Error('Plano regenerado vazio');
+    assertMatchPlansEqual(input.validatedMatch, freshMatchPlan);
   }
+
+  assertLiveStateMatchesPlan(report, input.validatedMatch, ourSide);
 
   const staffPool = await prisma.technicalStaff.findMany({
     where: { tenantId: input.tenant.id },
@@ -568,6 +726,34 @@ export async function applyValidatedMatchRepair(
     where: { tenantId: input.tenant.id },
     select: { id: true, name: true, cbfRegistration: true, registrationProfile: true },
   });
+
+  const cardDrafts = buildDisciplineCardDraftsForRepair({
+    parsed,
+    ourTeamSide: ourSide,
+    players,
+    staff: staffPool.map((s) => ({
+      id: s.id,
+      name: s.name,
+      role: s.role,
+      licenseNumber: s.licenseNumber,
+    })),
+  });
+  const draftsByExternalKey = new Map(cardDrafts.map((draft) => [draft.externalKey, draft]));
+
+  if (input.validatedMatch.eventOperations.length > 0) {
+    for (const operation of input.validatedMatch.eventOperations) {
+      if (!draftsByExternalKey.has(operation.externalKey) && operation.op !== 'DELETE') {
+        throw new Error(`Operação ${operation.op} ${operation.externalKey} sem draft — abortado`);
+      }
+    }
+  }
+
+  const patch = patchRawParsedDisciplineOnly(report.rawParsed, parsed, ourSide);
+  if (patch.unrelatedFingerprint.before !== patch.unrelatedFingerprint.after) {
+    throw new Error('Patch rawParsed alteraria conteúdo não-disciplinar — abortado');
+  }
+
+  let eventResult = { created: 0, updated: 0, deleted: 0 };
 
   await prisma.$transaction(async (tx) => {
     for (const update of input.validatedMatch.statUpdates) {
@@ -580,20 +766,21 @@ export async function applyValidatedMatchRepair(
       });
     }
 
-    if (input.validatedMatch.reportMutations.rawParsedDisciplineFingerprint.willMutate) {
+    if (input.validatedMatch.rawParsedPatch.willMutate) {
       await tx.fmfMatchReport.update({
         where: { id: report.id },
         data: {
-          rawParsed: parsed as unknown as Prisma.InputJsonValue,
-          ...(input.validatedMatch.reportMutations.occurrencesText.willMutate
-            ? { occurrencesText: parsed.occurrencesText }
-            : {}),
+          rawParsed: patch.patchedRaw as unknown as Prisma.InputJsonValue,
         },
       });
-    } else if (input.validatedMatch.reportMutations.occurrencesText.willMutate) {
-      await tx.fmfMatchReport.update({
-        where: { id: report.id },
-        data: { occurrencesText: parsed.occurrencesText },
+    }
+
+    if (input.validatedMatch.eventOperations.length > 0) {
+      eventResult = await applyDisciplineEventOperations(tx, {
+        tenantId: input.tenant.id,
+        matchId: report.id,
+        operations: input.validatedMatch.eventOperations,
+        draftsByExternalKey,
       });
     }
 
@@ -618,38 +805,8 @@ export async function applyValidatedMatchRepair(
     }
   });
 
-  let eventResult = { created: 0, updated: 0, removed: 0 };
-  if (input.validatedMatch.eventMutations.willMutate) {
-    eventResult = await syncMatchOfficialEvents(prisma, {
-      tenantId: input.tenant.id,
-      matchId: report.id,
-      parsed,
-      ourTeamSide: ourSide,
-      players,
-      staff: staffPool.map((s) => ({
-        id: s.id,
-        name: s.name,
-        role: s.role,
-        licenseNumber: s.licenseNumber,
-      })),
-      parseSucceeded: true,
-    });
-  }
-
   return {
     statUpdatesApplied: input.validatedMatch.statUpdates.length,
     events: eventResult,
   };
-}
-
-/** @deprecated Use applyValidatedMatchRepair com plano validado. */
-export async function applyFmfDisciplineScopeRepair(
-  prisma: PrismaService,
-  input: {
-    tenant: TenantInfo;
-    validatedMatch: ValidatedMatchRepairPlan;
-    downloadAndParse: (url: string) => Promise<ParsedFmfMatchReport>;
-  },
-) {
-  return applyValidatedMatchRepair(prisma, input);
 }
