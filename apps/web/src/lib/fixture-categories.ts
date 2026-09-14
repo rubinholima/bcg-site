@@ -48,14 +48,71 @@ export function mapApiFixtureCategory(row: {
   };
 }
 
+function catalogByValue(all: readonly FixtureCategoryItem[]): Map<string, FixtureCategoryItem> {
+  return new Map(all.map((c) => [c.value.trim().toLowerCase(), c]));
+}
+
+/**
+ * Deriva rótulo a partir da chave canônica do tenant quando não há item exato no cadastro central.
+ * Preserva o value original (ex.: sub15_2div) — não normaliza para sub15.
+ */
+export function deriveCategoryItemFromKey(
+  key: string,
+  all: readonly FixtureCategoryItem[],
+): FixtureCategoryItem {
+  const trimmed = key.trim();
+  const normalized = trimmed.toLowerCase();
+  const byValue = catalogByValue(all);
+
+  const exact = byValue.get(normalized);
+  if (exact) {
+    return { ...exact, value: trimmed };
+  }
+
+  const isSecondDiv = normalized.endsWith("_2div");
+  const baseKey = isSecondDiv ? normalized.slice(0, -"_2div".length) : normalized;
+  const base = byValue.get(baseKey);
+
+  if (base) {
+    return {
+      value: trimmed,
+      labelPT: isSecondDiv ? `${base.labelPT} 2ª Div` : base.labelPT,
+      labelEN: isSecondDiv ? `${base.labelEN} 2nd Div` : base.labelEN,
+      sortOrder: base.sortOrder,
+    };
+  }
+
+  const subMatch = normalized.match(/^sub(\d+)(_2div)?$/);
+  if (subMatch) {
+    const num = subMatch[1]!;
+    const is2 = !!subMatch[2];
+    const sortOrder = byValue.get(`sub${num}`)?.sortOrder;
+    return {
+      value: trimmed,
+      labelPT: is2 ? `Sub-${num} 2ª Div` : `Sub-${num}`,
+      labelEN: is2 ? `U-${num} 2nd Div` : `U-${num}`,
+      sortOrder,
+    };
+  }
+
+  return {
+    value: trimmed,
+    labelPT: trimmed,
+    labelEN: trimmed,
+  };
+}
+
 export function getCategoryLabel(
   value: string,
   lang: "pt" | "en",
   list?: readonly FixtureCategoryItem[],
 ): string {
   const source = list ?? FIXTURE_CATEGORIES_FALLBACK;
-  const cat = source.find((c) => c.value === value);
-  return cat ? (lang === "pt" ? cat.labelPT : cat.labelEN) : value;
+  const normalized = value.trim().toLowerCase();
+  const cat = source.find((c) => c.value.trim().toLowerCase() === normalized);
+  if (cat) return lang === "pt" ? cat.labelPT : cat.labelEN;
+  const derived = deriveCategoryItemFromKey(value, source);
+  return lang === "pt" ? derived.labelPT : derived.labelEN;
 }
 
 /** Categorias ativas do cadastro central (server components). */
@@ -74,14 +131,34 @@ export async function fetchFixtureCategories(options?: {
   }
 }
 
-/** Filtra pelo que o clube liberou em Empresas (Tenant.categories). */
+/**
+ * Opções de filtro/cadastro a partir das chaves canônicas liberadas em Empresas (Tenant.categories).
+ * O value de cada opção é sempre a chave do tenant; o label vem do cadastro central ou é derivado.
+ */
 export function filterCategoriesForTenant(
   all: readonly FixtureCategoryItem[],
   tenantCategories: string[] | null | undefined,
 ): FixtureCategoryItem[] {
   if (!tenantCategories?.length) return [...all];
-  const set = new Set(
-    tenantCategories.map((s) => s.trim().toLowerCase()).filter(Boolean),
-  );
-  return all.filter((c) => set.has(c.value.trim().toLowerCase()));
+
+  const seen = new Set<string>();
+  const items: FixtureCategoryItem[] = [];
+
+  for (const raw of tenantCategories) {
+    const key = raw.trim();
+    if (!key) continue;
+    const dedupeKey = key.toLowerCase();
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+
+    const exact = all.find((c) => c.value.trim().toLowerCase() === dedupeKey);
+    items.push(exact ? { ...exact } : deriveCategoryItemFromKey(key, all));
+  }
+
+  return items.sort((a, b) => {
+    const ao = a.sortOrder ?? 999;
+    const bo = b.sortOrder ?? 999;
+    if (ao !== bo) return ao - bo;
+    return a.labelPT.localeCompare(b.labelPT, "pt-BR");
+  });
 }

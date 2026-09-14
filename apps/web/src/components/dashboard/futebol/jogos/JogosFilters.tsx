@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -35,7 +35,22 @@ export function JogosFilters() {
   const status = (searchParams.get("status") ?? "all") as JogosStatusFilter;
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
-  const { categories: categoriesForDropdown } = useCategoriesForTenant(selectedTenant?.categories);
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(
+    tenantId ? selectedTenant?.categories : undefined,
+    { requireTenantSelection: !!tenantId },
+  );
+
+  const pushParams = useCallback(
+    (patch: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(patch)) {
+        if (value) params.set(key, value);
+        else params.delete(key);
+      }
+      router.push(`${BASE}?${params.toString()}`);
+    },
+    [router, searchParams],
+  );
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
@@ -43,14 +58,12 @@ export function JogosFilters() {
     });
   }, []);
 
-  const pushParams = (patch: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(patch)) {
-      if (value) params.set(key, value);
-      else params.delete(key);
+  useEffect(() => {
+    if (!tenantId || !category || !categoriesForDropdown.length) return;
+    if (!categoriesForDropdown.some((c) => c.value === category)) {
+      pushParams({ category: null });
     }
-    router.push(`${BASE}?${params.toString()}`);
-  };
+  }, [tenantId, category, categoriesForDropdown, pushParams]);
 
   return (
     <Card>
