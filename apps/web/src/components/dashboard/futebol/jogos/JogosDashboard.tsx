@@ -1,19 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronRight, FileText, Loader2, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
+import { resolveJogosListFetchGate } from "@/lib/jogos-list-fetch-gate";
 import {
   gameDetailPath,
   type FutebolGamesListResponse,
   type FutebolGameListItem,
 } from "@/lib/futebol-jogos.types";
 import { JogosFilters } from "./JogosFilters";
+
+interface Tenant {
+  id: string;
+  name: string;
+  categories?: string[] | null;
+}
 
 function resultBadge(result: FutebolGameListItem["result"]) {
   if (!result) return null;
@@ -43,28 +51,83 @@ function statusBadge(status: FutebolGameListItem["status"]) {
 export function JogosDashboard() {
   const searchParams = useSearchParams();
   const tenantId = searchParams.get("tenantId") ?? "";
-  const category = searchParams.get("category") ?? undefined;
+  const urlCategory = searchParams.get("category") ?? "";
   const season = searchParams.get("season") ?? String(new Date().getFullYear());
   const status = searchParams.get("status") ?? undefined;
 
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [tenantsReady, setTenantsReady] = useState(false);
   const [data, setData] = useState<FutebolGamesListResponse | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const selectedTenant = tenants.find((t) => t.id === tenantId);
+  const { categories: tenantCategoryOptions, loading: fixtureCategoriesLoading } =
+    useCategoriesForTenant(tenantId && tenantsReady ? selectedTenant?.categories : undefined, {
+      requireTenantSelection: !!tenantId,
+    });
+
+  const fetchGate = useMemo(
+    () =>
+      resolveJogosListFetchGate({
+        tenantId,
+        urlCategory,
+        tenantsReady,
+        selectedTenantFound: !!selectedTenant,
+        fixtureCategoriesReady: !fixtureCategoriesLoading,
+        tenantCategoryOptions,
+      }),
+    [
+      tenantId,
+      urlCategory,
+      tenantsReady,
+      selectedTenant,
+      fixtureCategoriesLoading,
+      tenantCategoryOptions,
+    ],
+  );
+
+  useEffect(() => {
+    api
+      .get<Tenant[]>("/tenants?clubsOnly=1")
+      .then(({ data: payload }) => {
+        setTenants(Array.isArray(payload) ? payload : []);
+      })
+      .finally(() => setTenantsReady(true));
+  }, []);
 
   useEffect(() => {
     if (!tenantId) {
       setData(null);
+      setLoading(false);
       return;
     }
+    if (!fetchGate.canFetch) {
+      setLoading(true);
+      return;
+    }
+
+    let cancelled = false;
     setLoading(true);
     const params = new URLSearchParams({ tenantId, season });
-    if (category) params.set("category", category);
+    if (fetchGate.categoryParam) params.set("category", fetchGate.categoryParam);
     if (status && status !== "all") params.set("status", status);
+
     api
       .get<FutebolGamesListResponse>(`/futebol-jogos?${params}`)
-      .then(({ data: payload }) => setData(payload))
-      .catch(() => setData(null))
-      .finally(() => setLoading(false));
-  }, [tenantId, category, season, status]);
+      .then(({ data: payload }) => {
+        if (!cancelled) setData(payload);
+      })
+      .catch(() => {
+        if (!cancelled) setData(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, season, status, fetchGate.canFetch, fetchGate.categoryParam]);
 
   return (
     <div className="space-y-6">
