@@ -3,15 +3,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   buildFmfCompetitionCatalog,
   FMF_COMPETITION_CATALOG_KEY,
-  inferOperationalCategoryFromCatalogEntry,
   isFmfCatalogStale,
   parseStoredFmfCompetitionCatalog,
   type FmfCompetitionCatalog,
 } from './fmf-competition-catalog.util';
 import { toOperationalCategory } from './fmf-operational-category.util';
 import {
-  buildFmfFixtureSignature,
-  clubMatchesInSeason,
+  catalogEntryMatchesOperationalCategoriesAfterProbe,
+  filterCatalogEntriesForOperationalDiscovery,
+} from './fmf-bounded-discovery.util';
+import {
   discoverClubCompetitionsFromCatalog,
   inferPresetFromCompetitionContext,
   type FmfSyncClubRef,
@@ -86,24 +87,6 @@ export class FmfCatalogDiscoveryService {
     return new Set(Object.values(merged).map((p) => p.fmfD));
   }
 
-  private existingStoreSignatures(
-    store: FmfScraperStore,
-    clubs: FmfSyncClubRef[],
-    season: number,
-  ): Set<string> {
-    const sigs = new Set<string>();
-    for (const snap of Object.values(store.categories ?? {})) {
-      if (!snap?.matches?.length) continue;
-      for (const club of clubs) {
-        const clubMatches = clubMatchesInSeason(snap.matches, club, season);
-        if (clubMatches.length > 0) {
-          sigs.add(buildFmfFixtureSignature(clubMatches));
-        }
-      }
-    }
-    return sigs;
-  }
-
   private async loadStoreSnapshot(): Promise<FmfScraperStore> {
     const row = await this.prisma.integrationConfig.findUnique({
       where: { key: 'fmf_scraper_data' },
@@ -140,9 +123,8 @@ export class FmfCatalogDiscoveryService {
     const delayMs = Math.max(800, options.delayMs ?? 1200);
     const catalog = await this.refreshCatalogIfStale(false);
     const knownDs = this.knownFmfDs(extensions);
+    const mergedPresets = mergeFmfPresetMaps(extensions);
     const clubs = this.syncClubs();
-    const store = await this.loadStoreSnapshot();
-    const storeSignatures = this.existingStoreSignatures(store, clubs, season);
 
     const tenantOps =
       options.tenantOperationalCategories?.length
@@ -151,13 +133,10 @@ export class FmfCatalogDiscoveryService {
     const opsSet = new Set(tenantOps);
 
     const htmlByD = new Map<number, string>();
-    const catalogScoped =
-      opsSet.size === 0
-        ? catalog.entries
-        : catalog.entries.filter((e) => {
-            const op = inferOperationalCategoryFromCatalogEntry(e);
-            return op != null && opsSet.has(op);
-          });
+    const catalogScoped = filterCatalogEntriesForOperationalDiscovery(
+      catalog.entries,
+      tenantOps,
+    );
     const candidates = catalogScoped.filter((e) => !knownDs.has(e.fmfD));
 
     if (opsSet.size > 0) {
@@ -185,24 +164,30 @@ export class FmfCatalogDiscoveryService {
       }
     }
 
+    const probedEntries = catalogScoped.filter((entry) => htmlByD.has(entry.fmfD));
     const discovered = discoverClubCompetitionsFromCatalog(
-      catalogScoped,
+      probedEntries,
       clubs,
       htmlByD,
       season,
     ).filter((row) => {
       if (opsSet.size === 0) return true;
-      return opsSet.has(toOperationalCategory(row.fixtureCategory));
+      const html = htmlByD.get(row.fmfD) ?? '';
+      return catalogEntryMatchesOperationalCategoriesAfterProbe(
+        row.catalogEntry,
+        html,
+        tenantOps,
+      );
     });
 
     const out = { ...extensions };
     let added = 0;
     for (const row of discovered) {
       if (knownDs.has(row.fmfD)) continue;
-      if (storeSignatures.has(row.signature)) {
-        this.log.debug(`FMF discovery: d=${row.fmfD} duplicado (assinatura já no store)`);
-        continue;
-      }
+      const presetTakenByOtherD = Object.values(mergedPresets).some(
+        (p) => p.fmfD === row.fmfD,
+      );
+      if (presetTakenByOtherD) continue;
       if (out[row.presetKey] && out[row.presetKey]!.fmfD !== row.fmfD) {
         this.log.warn(
           `FMF discovery: preset ${row.presetKey} já mapeado para d=${out[row.presetKey]!.fmfD}, ignorando d=${row.fmfD}`,

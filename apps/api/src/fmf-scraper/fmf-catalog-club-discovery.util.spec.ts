@@ -36,14 +36,15 @@ function match(
 }
 
 describe('fmf-catalog-club-discovery', () => {
-  it('d=12 e d=13 produzem a mesma assinatura (alias FMF)', () => {
-    const fixtures = [
-      match('2026-09-12', 'VILLA NOVA', 'UBERLANDIA S.A.F', 51),
-      match('2026-09-27', 'CA PATROCINENSE', 'VILLA NOVA', 58),
-    ];
-    const sigA = buildFmfFixtureSignature(fixtures);
-    const sigB = buildFmfFixtureSignature([...fixtures]);
-    expect(sigA).toBe(sigB);
+  it('infere preset sub17_2div a partir do rótulo oficial (d=13)', () => {
+    const preset = inferPresetFromCompetitionContext(13, {
+      officialLabel: 'SUB 17 - 2ª DIVISÃO - 2026',
+      catalogEntry: { fmfD: 13, navLabel: '2ª Divisão', categoryHint: null, url: '' },
+      season: 2026,
+    });
+    expect(preset.key).toBe('sub17_2div');
+    expect(preset.fixtureCategory).toBe('sub17');
+    expect(preset.fmfD).toBe(13);
   });
 
   it('infere preset sub20_2div a partir do rótulo oficial', () => {

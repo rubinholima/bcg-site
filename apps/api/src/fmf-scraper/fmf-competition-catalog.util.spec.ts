@@ -1,5 +1,6 @@
 import {
   inferOperationalCategoryFromCatalogEntry,
+  inferOperationalCategoryFromProbedHtml,
   catalogEntryMatchesOperationalCategory,
 } from './fmf-competition-catalog.util';
 
@@ -12,6 +13,14 @@ describe('fmf-competition-catalog util', () => {
         categoryHint: 'Sub 17',
         url: '',
       }),
+    ).toBe('sub17');
+  });
+
+  it('probe HTML infere sub17 operacional', () => {
+    expect(
+      inferOperationalCategoryFromProbedHtml(
+        '<html>SUB 17 - 2ª DIVISÃO - 2026</html>',
+      ),
     ).toBe('sub17');
   });
 

@@ -1,6 +1,9 @@
 import type { FmfParsedMatch } from './fmf-proxjogos.parser';
 import { parseFmfProxJogosHtml } from './fmf-proxjogos.parser';
-import type { FmfCompetitionCatalogEntry } from './fmf-competition-catalog.util';
+import {
+  extractOfficialCompetitionLabelFromHtml,
+  type FmfCompetitionCatalogEntry,
+} from './fmf-competition-catalog.util';
 import type { FmfScraperPresetExtension } from './fmf-preset-registry.util';
 import { toOperationalCategory } from './fmf-operational-category.util';
 import { inferCategoryFromCompetitionLabel } from './fmf-scraper.presets';
@@ -100,15 +103,7 @@ export function inferPresetFromCompetitionContext(
   };
 }
 
-export function extractOfficialCompetitionLabelFromHtml(html: string): string | null {
-  const m = html.match(/SUB\s*\d+\s*-\s*2\s*[ªA]?\s*DIVIS[AÃ]O\s*-\s*\d{4}/i);
-  if (m) return m[0].replace(/\s+/g, ' ').trim();
-  const m2 = html.match(/M[ÓO]DULO\s*II\s*-\s*\d{4}/i);
-  if (m2) return m2[0].replace(/\s+/g, ' ').trim();
-  const m3 = html.match(/SUB\s*\d+\s*-\s*2\s*[ªA]?\s*DIVIS[AÃ]O\s*\d{4}/i);
-  if (m3) return m3[0].replace(/\s+/g, ' ').trim();
-  return null;
-}
+export { extractOfficialCompetitionLabelFromHtml } from './fmf-competition-catalog.util';
 
 export function discoverClubCompetitionsFromCatalog(
   catalogEntries: FmfCompetitionCatalogEntry[],
@@ -116,10 +111,11 @@ export function discoverClubCompetitionsFromCatalog(
   htmlByD: Map<number, string>,
   season: number,
 ): FmfDiscoveredCompetition[] {
-  const seenSignatures = new Set<string>();
+  const seenFmfD = new Set<number>();
   const found: FmfDiscoveredCompetition[] = [];
 
   for (const entry of catalogEntries) {
+    if (seenFmfD.has(entry.fmfD)) continue;
     const html = htmlByD.get(entry.fmfD);
     if (!html) continue;
     const matches = parseFmfProxJogosHtml(html);
@@ -129,10 +125,7 @@ export function discoverClubCompetitionsFromCatalog(
       const clubMatches = clubMatchesInSeason(matches, club, season);
       if (clubMatches.length === 0) continue;
 
-      const signature = buildFmfFixtureSignature(clubMatches);
-      if (seenSignatures.has(signature)) continue;
-      seenSignatures.add(signature);
-
+      seenFmfD.add(entry.fmfD);
       const preset = inferPresetFromCompetitionContext(entry.fmfD, {
         officialLabel,
         catalogEntry: entry,
@@ -145,7 +138,7 @@ export function discoverClubCompetitionsFromCatalog(
         officialLabel,
         fixtureCategory: preset.fixtureCategory,
         villaFixtureCount: clubMatches.length,
-        signature,
+        signature: buildFmfFixtureSignature(clubMatches),
         catalogEntry: entry,
       });
       break;

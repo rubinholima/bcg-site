@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import { toOperationalCategory } from './fmf-operational-category.util';
 import { fmfProxJogosUrl, inferCategoryFromCompetitionLabel } from './fmf-scraper.presets';
 
 export const FMF_COMPETITION_CATALOG_KEY = 'fmf_competition_catalog';
@@ -43,8 +44,17 @@ export function parseFmfCompetitionCatalogFromHtml(
     const navLabel = normalizeLabel($(el).text());
     if (!navLabel) return;
 
-    const parentText = normalizeLabel($(el).parent().prev('a, span, strong, b').first().text());
-    const subInParent = parentText.match(SUB_HINT_RE);
+    let parentText = normalizeLabel($(el).parent().prev('a, span, strong, b').first().text());
+    let subInParent = parentText.match(SUB_HINT_RE);
+    if (!subInParent) {
+      const ancestors = $(el).parents().slice(0, 6);
+      ancestors.each((_, anc) => {
+        if (subInParent) return false;
+        const t = normalizeLabel($(anc).find('> a, > span, > strong, > b').first().text());
+        subInParent = t.match(SUB_HINT_RE);
+        if (subInParent) parentText = t;
+      });
+    }
     if (subInParent) {
       currentCategoryHint = `Sub ${subInParent[1]}`;
     } else if (/^SUB\s/i.test(navLabel)) {
@@ -141,4 +151,25 @@ export function catalogEntryMatchesOperationalCategory(
   const op = inferOperationalCategoryFromCatalogEntry(entry);
   const wanted = operationalCategory.trim().toLowerCase();
   return op != null && op === wanted;
+}
+
+/** Rótulo oficial da página ProxJogos (súmula/header) → categoria operacional. */
+export function inferOperationalCategoryFromProbedHtml(html: string): string | null {
+  const label = extractOfficialCompetitionLabelFromHtml(html);
+  if (!label) return null;
+  const raw = inferCategoryFromCompetitionLabel(label);
+  return raw ? toOperationalCategory(raw) : null;
+}
+
+/** Extrai rótulo oficial da competição no HTML ProxJogos. */
+export function extractOfficialCompetitionLabelFromHtml(html: string): string | null {
+  const m = html.match(/SUB\s*\d+\s*-\s*2\s*[ªA]?\s*DIVIS[AÃ]O\s*-\s*\d{4}/i);
+  if (m) return m[0].replace(/\s+/g, ' ').trim();
+  const m2 = html.match(/M[ÓO]DULO\s*II\s*-\s*\d{4}/i);
+  if (m2) return m2[0].replace(/\s+/g, ' ').trim();
+  const m3 = html.match(/SUB\s*\d+\s*-\s*2\s*[ªA]?\s*DIVIS[AÃ]O\s*\d{4}/i);
+  if (m3) return m3[0].replace(/\s+/g, ' ').trim();
+  const m4 = html.match(/SUB\s*\d+\s*-\s*1\s*[ªA]?\s*DIVIS[AÃ]O\s*-\s*\d{4}/i);
+  if (m4) return m4[0].replace(/\s+/g, ' ').trim();
+  return null;
 }
