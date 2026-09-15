@@ -11,10 +11,16 @@ import {
   resolveCurrentFmfGroupPhase,
   type FmfParsedMatch,
 } from './fmf-proxjogos.parser';
+import { resolvePresetKeysForOperationalCategories } from './fmf-fixture.util';
 import {
   listFmfPresetKeysForImport,
   loadFmfPresetExtensionMap,
+  mergeFmfPresetMaps,
 } from './fmf-preset-registry.util';
+import {
+  FMF_SYNC_TENANT_SLUGS,
+  unionOperationalCategoriesFromTenants,
+} from './fmf-sync-tenants.config';
 import { FmfCatalogDiscoveryService } from './fmf-catalog-discovery.service';
 import {
   FMF_SCRAPER_PRESETS,
@@ -238,18 +244,21 @@ export class FmfScraperService {
     store.lastRunError = null;
 
     let extensions = await loadFmfPresetExtensionMap(this.prisma);
+    const tenantOps = await this.loadFmfSyncOperationalCategories();
     if (options.all) {
       try {
-        extensions = await this.catalogDiscovery.discoverAndMergeExtensions(extensions);
+        extensions = await this.catalogDiscovery.discoverAndMergeExtensions(extensions, {
+          tenantOperationalCategories: tenantOps,
+        });
       } catch (e) {
         this.log.warn(
           `FMF discovery catálogo: ${e instanceof Error ? e.message : String(e)}`,
         );
       }
     }
-    const importable = listFmfPresetKeysForImport(extensions);
+    const presetMap = mergeFmfPresetMaps(extensions);
     const keys: string[] = options.all
-      ? importable
+      ? resolvePresetKeysForOperationalCategories(presetMap, tenantOps)
       : options.preset &&
           (isFmfPresetKey(options.preset) || extensions[options.preset])
         ? [options.preset]
@@ -374,5 +383,14 @@ export class FmfScraperService {
       create: { key: STORE_KEY, config: store as object },
       update: { config: store as object },
     });
+  }
+
+  /** União das categorias operacionais administrativas dos tenants FMF (somente leitura). */
+  private async loadFmfSyncOperationalCategories(): Promise<string[]> {
+    const rows = await this.prisma.tenant.findMany({
+      where: { slug: { in: [...FMF_SYNC_TENANT_SLUGS] } },
+      select: { categories: true },
+    });
+    return unionOperationalCategoriesFromTenants(rows);
   }
 }

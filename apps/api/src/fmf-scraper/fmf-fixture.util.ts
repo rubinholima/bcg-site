@@ -116,9 +116,25 @@ export type ResolveFmfPresetKeysOptions = {
   configured?: string[];
   presetMap?: Record<string, { fixtureCategory: string }>;
   club?: FmfClubPresetDiscoveryContext;
-  /** Quando true (default), une categorias cadastradas + presets descobertos no snapshot. */
+  /** Quando true (default), inclui presets do snapshot em que o clube participa — filtrados pelas categorias do tenant. */
   mergeDiscovered?: boolean;
 };
+
+/** Presets cujo fixtureCategory operacional bate com categorias administrativas selecionadas. */
+export function resolvePresetKeysForOperationalCategories(
+  presetMap: Record<string, { fixtureCategory: string }>,
+  operationalCategories: string[],
+): string[] {
+  const wanted = new Set(
+    operationalCategories.map((k) => toOperationalCategory(k)).filter(Boolean),
+  );
+  if (wanted.size === 0) {
+    return Object.keys(presetMap).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }
+  return Object.keys(presetMap)
+    .filter((k) => wanted.has(toOperationalCategory(presetMap[k]?.fixtureCategory ?? '')))
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
 
 export function resolveFmfPresetKeys(
   store: FmfScraperStore,
@@ -148,9 +164,12 @@ export function resolveFmfPresetKeys(
 
   const discovered =
     options.mergeDiscovered !== false && options.club
-      ? discoverFmfPresetKeysForClub(store, options.club).filter((k) =>
-          store.categories[k],
-        )
+      ? discoverFmfPresetKeysForClub(store, options.club).filter((k) => {
+          if (!store.categories[k]) return false;
+          if (wanted.size === 0) return true;
+          const op = toOperationalCategory(presetMap[k]?.fixtureCategory ?? '');
+          return wanted.has(op);
+        })
       : [];
 
   const merged = [...new Set([...byCategory, ...discovered])].filter((k) =>
@@ -159,7 +178,7 @@ export function resolveFmfPresetKeys(
 
   if (merged.length > 0) return merged.sort((a, b) => a.localeCompare(b, 'pt-BR'));
   if (wanted.size === 0) return available;
-  return available;
+  return byCategory.sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
 /** Compat: presets built-in disponíveis no store (sem extensões). */

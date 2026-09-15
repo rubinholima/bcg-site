@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { fmfProxJogosUrl } from './fmf-scraper.presets';
+import { fmfProxJogosUrl, inferCategoryFromCompetitionLabel } from './fmf-scraper.presets';
 
 export const FMF_COMPETITION_CATALOG_KEY = 'fmf_competition_catalog';
 
@@ -118,4 +118,27 @@ export function isFmfCatalogStale(
   const t = Date.parse(catalog.updatedAt);
   if (Number.isNaN(t)) return true;
   return Date.now() - t > maxAgeMs;
+}
+
+/** Categoria operacional do elenco inferida do catálogo FMF (Sub 17 → sub17). */
+export function inferOperationalCategoryFromCatalogEntry(
+  entry: FmfCompetitionCatalogEntry,
+): string | null {
+  if (entry.categoryHint) {
+    const fromHint = inferCategoryFromCompetitionLabel(entry.categoryHint);
+    if (fromHint) return fromHint;
+  }
+  const fromNav = inferCategoryFromCompetitionLabel(entry.navLabel);
+  if (fromNav) return fromNav;
+  if (/M[ÓO]DULO\s*II/i.test(entry.navLabel)) return 'modulo_ii';
+  return null;
+}
+
+export function catalogEntryMatchesOperationalCategory(
+  entry: FmfCompetitionCatalogEntry,
+  operationalCategory: string,
+): boolean {
+  const op = inferOperationalCategoryFromCatalogEntry(entry);
+  const wanted = operationalCategory.trim().toLowerCase();
+  return op != null && op === wanted;
 }

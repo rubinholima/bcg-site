@@ -3,10 +3,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   buildFmfCompetitionCatalog,
   FMF_COMPETITION_CATALOG_KEY,
+  inferOperationalCategoryFromCatalogEntry,
   isFmfCatalogStale,
   parseStoredFmfCompetitionCatalog,
   type FmfCompetitionCatalog,
 } from './fmf-competition-catalog.util';
+import { toOperationalCategory } from './fmf-operational-category.util';
 import {
   buildFmfFixtureSignature,
   clubMatchesInSeason,
@@ -24,6 +26,7 @@ import { FMF_SCRAPER_PRESETS, fmfProxJogosUrl, type FmfScraperPreset } from './f
 import {
   FMF_SYNC_TENANT_DEFAULTS,
   FMF_SYNC_TENANT_SLUGS,
+  unionOperationalCategoriesFromTenants,
 } from './fmf-sync-tenants.config';
 
 function sleep(ms: number): Promise<void> {
@@ -116,9 +119,22 @@ export class FmfCatalogDiscoveryService {
    * Varredura de participação por clube — apenas em importação completa (não em request HTTP).
    * Dedup por assinatura de fixtures; ignora d= espelhados.
    */
+  private async loadSyncTenantOperationalCategories(): Promise<string[]> {
+    const rows = await this.prisma.tenant.findMany({
+      where: { slug: { in: [...FMF_SYNC_TENANT_SLUGS] } },
+      select: { categories: true },
+    });
+    return unionOperationalCategoriesFromTenants(rows);
+  }
+
   async discoverAndMergeExtensions(
     extensions: Record<string, FmfScraperPreset>,
-    options: { season?: number; delayMs?: number } = {},
+    options: {
+      season?: number;
+      delayMs?: number;
+      /** Categorias operacionais selecionadas nos tenants FMF — direciona a varredura. */
+      tenantOperationalCategories?: string[];
+    } = {},
   ): Promise<Record<string, FmfScraperPreset>> {
     const season = options.season ?? new Date().getFullYear();
     const delayMs = Math.max(800, options.delayMs ?? 1200);
@@ -128,8 +144,27 @@ export class FmfCatalogDiscoveryService {
     const store = await this.loadStoreSnapshot();
     const storeSignatures = this.existingStoreSignatures(store, clubs, season);
 
+    const tenantOps =
+      options.tenantOperationalCategories?.length
+        ? options.tenantOperationalCategories.map(toOperationalCategory).filter(Boolean)
+        : await this.loadSyncTenantOperationalCategories();
+    const opsSet = new Set(tenantOps);
+
     const htmlByD = new Map<number, string>();
-    const candidates = catalog.entries.filter((e) => !knownDs.has(e.fmfD));
+    const catalogScoped =
+      opsSet.size === 0
+        ? catalog.entries
+        : catalog.entries.filter((e) => {
+            const op = inferOperationalCategoryFromCatalogEntry(e);
+            return op != null && opsSet.has(op);
+          });
+    const candidates = catalogScoped.filter((e) => !knownDs.has(e.fmfD));
+
+    if (opsSet.size > 0) {
+      this.log.log(
+        `FMF discovery category-driven: ${[...opsSet].join(', ')} — ${catalogScoped.length} competições no catálogo, ${candidates.length} d= novos`,
+      );
+    }
 
     for (let i = 0; i < candidates.length; i++) {
       const entry = candidates[i]!;
@@ -151,11 +186,14 @@ export class FmfCatalogDiscoveryService {
     }
 
     const discovered = discoverClubCompetitionsFromCatalog(
-      catalog.entries,
+      catalogScoped,
       clubs,
       htmlByD,
       season,
-    );
+    ).filter((row) => {
+      if (opsSet.size === 0) return true;
+      return opsSet.has(toOperationalCategory(row.fixtureCategory));
+    });
 
     const out = { ...extensions };
     let added = 0;

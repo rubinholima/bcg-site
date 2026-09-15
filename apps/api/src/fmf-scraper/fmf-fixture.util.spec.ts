@@ -4,6 +4,7 @@ import {
   buildFmfTravelExternalId,
   fmfExternalIdCandidates,
   resolveFmfPresetKeys,
+  resolvePresetKeysForOperationalCategories,
 } from './fmf-fixture.util';
 import { FMF_SCRAPER_PRESETS } from './fmf-scraper.presets';
 import type { FmfScraperStore } from './fmf-scraper.service';
@@ -152,7 +153,7 @@ describe('resolveFmfPresetKeys', () => {
     expect(keys).toEqual(['sub13', 'sub14']);
   });
 
-  it('Villa Nova: une categorias cadastradas com presets descobertos no snapshot', () => {
+  it('Villa Nova: ignora presets do clube fora das categorias administrativas', () => {
     const keys = resolveFmfPresetKeys(store, ['modulo_ii', 'sub20'], {
       presetMap: {
         ...FMF_SCRAPER_PRESETS,
@@ -171,6 +172,24 @@ describe('resolveFmfPresetKeys', () => {
         season: 2026,
       },
     });
-    expect(keys).toEqual(['copa_master_mg', 'modulo_ii']);
+    expect(keys).toEqual(['modulo_ii']);
+  });
+
+  it('resolve presets por categorias operacionais selecionadas', () => {
+    const keys = resolvePresetKeysForOperationalCategories(
+      {
+        ...FMF_SCRAPER_PRESETS,
+        sub20_2div: {
+          key: 'sub20_2div' as never,
+          fmfD: 31,
+          slug: 'mineiro-sub20-2div-2026',
+          name: 'Mineiro Sub-20 2ª divisão 2026',
+          fixtureCategory: 'sub20',
+          competitionLabelTemplate: 'SUB 20 - 2ª DIVISÃO - {year}',
+        },
+      },
+      ['sub20', 'sub15_2div'],
+    );
+    expect(keys).toEqual(['sub15', 'sub20', 'sub20_2div']);
   });
 });
