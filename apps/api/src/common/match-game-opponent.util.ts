@@ -1,4 +1,5 @@
 import { dateKeyInBrazil } from './brazil-time.util';
+import { operationalCategoryMergeKey } from '../fmf-scraper/fmf-operational-category.util';
 import { softNormalizeTeamNameKey } from '../public/visiting-team-logo-merge.util';
 
 /** Chave de adversário para agrupar o mesmo jogo (FMF + logística + hub Jogos). */
@@ -28,14 +29,9 @@ export function gameOpponentDateKey(
   return `${dateKeyInBrazil(matchDate)}|${matchOpponentMergeKey(opponentName)}`;
 }
 
-/** Chave normalizada de categoria — nunca faz merge entre sub13 e sub14. */
+/** Chave normalizada de categoria operacional — sub20_2div ≡ sub20; nunca merge sub13/sub14. */
 export function matchCategoryMergeKey(value: string | null | undefined): string {
-  const key = (value ?? '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]/g, '');
-  return key || '_';
+  return operationalCategoryMergeKey(value);
 }
 
 export function matchCategoriesEquivalent(

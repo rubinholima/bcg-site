@@ -3,6 +3,8 @@ export const FMF_SYNC_TENANT_SLUGS = ['boston-city-fc-brasil', 'villa-nova-saf']
 
 export type FmfSyncTenantSlug = (typeof FMF_SYNC_TENANT_SLUGS)[number];
 
+import { normalizeTenantOperationalCategories } from './fmf-operational-category.util';
+
 /** Aliases padrão na FMF quando o nome difere do cadastro BCG. */
 export const FMF_SYNC_TENANT_DEFAULTS: Record<
   FmfSyncTenantSlug,
@@ -21,12 +23,5 @@ export function isFmfSyncTenantSlug(slug: string): slug is FmfSyncTenantSlug {
 }
 
 export function parseTenantCategoryKeys(categories: unknown): string[] {
-  if (!Array.isArray(categories)) return [];
-  return [
-    ...new Set(
-      categories
-        .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
-        .map((c) => c.trim().toLowerCase()),
-    ),
-  ];
+  return normalizeTenantOperationalCategories(categories);
 }

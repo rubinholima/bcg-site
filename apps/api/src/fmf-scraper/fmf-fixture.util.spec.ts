@@ -1,4 +1,10 @@
-import { resolveFmfPresetKeys } from './fmf-fixture.util';
+import {
+  buildFmfExternalId,
+  buildLegacyFmfTravelExternalId,
+  buildFmfTravelExternalId,
+  fmfExternalIdCandidates,
+  resolveFmfPresetKeys,
+} from './fmf-fixture.util';
 import { FMF_SCRAPER_PRESETS } from './fmf-scraper.presets';
 import type { FmfScraperStore } from './fmf-scraper.service';
 
@@ -17,6 +23,37 @@ const emptySnap = (key: string, fixtureCategory: string) => ({
   standings: [],
   upcoming: [],
   recentResults: [],
+});
+
+describe('fmf external ids', () => {
+  const match = {
+    matchDate: '2026-09-27',
+    homeName: 'CA PATROCINENSE',
+    awayName: 'VILLA NOVA',
+    fmfJogoNumber: 58,
+    phaseLabel: 'CLASSIFICATÓRIA',
+    roundNumber: 10,
+    kickoffTime: '15:00:00',
+    homeGoals: null,
+    awayGoals: null,
+    status: 'scheduled' as const,
+    homeEscudoUrl: null,
+    awayEscudoUrl: null,
+    venueText: null,
+    reportUrl: null,
+    externalMatchId: null,
+  };
+
+  it('usa d + jogo FMF como identidade canônica', () => {
+    expect(buildFmfExternalId(31, match as never)).toBe('fmf-d31-j58');
+    expect(buildFmfTravelExternalId(31, match as never)).toBe('fmf-travel-d31-j58');
+  });
+
+  it('localiza legado preset-key no upsert', () => {
+    const ids = fmfExternalIdCandidates('sub20_2div', 31, match as never);
+    expect(ids.travel).toContain('fmf-travel-d31-j58');
+    expect(ids.travel).toContain(buildLegacyFmfTravelExternalId('sub20_2div', match as never));
+  });
 });
 
 describe('resolveFmfPresetKeys', () => {

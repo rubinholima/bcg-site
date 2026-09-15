@@ -20,6 +20,7 @@ import {
   fmfMatchToStartISO,
   resolveFmfPresetKeys,
 } from './fmf-fixture.util';
+import { toOperationalCategory } from './fmf-operational-category.util';
 import { loadFmfPresetExtensionMap, mergeFmfPresetMaps } from './fmf-preset-registry.util';
 import { isFmfTeamMatch } from './fmf-team-match.util';
 import {
@@ -558,7 +559,7 @@ export class FmfPageSyncService {
       );
 
       for (const m of ourMatches) {
-        const extId = buildFmfExternalId(presetKey, m);
+        const extId = buildFmfExternalId(snap.fmfD, m);
         const isHome = isFmfTeamMatch(m.homeName, tenantName, aliases);
         const homeLogo = isHome
           ? ourLogo
@@ -598,7 +599,7 @@ export class FmfPageSyncService {
           venueName: m.venueText ?? undefined,
           homeTeamName: m.homeName,
           awayTeamName: m.awayName,
-          category: snap.fixtureCategory,
+          category: toOperationalCategory(snap.fixtureCategory),
           isOurTeamHome: isHome,
           homeTeamLogoUrl: homeLogo,
           awayTeamLogoUrl: awayLogo,
@@ -619,7 +620,7 @@ export class FmfPageSyncService {
       }
 
       for (const m of snap.matches) {
-        const extId = buildFmfExternalId(presetKey, m);
+        const extId = buildFmfExternalId(snap.fmfD, m);
         if (leagueFixtureIds.has(extId)) continue;
 
         const isHome = isFmfTeamMatch(m.homeName, tenantName, aliases);
@@ -661,7 +662,7 @@ export class FmfPageSyncService {
           venueName: m.venueText ?? undefined,
           homeTeamName: m.homeName,
           awayTeamName: m.awayName,
-          category: snap.fixtureCategory,
+          category: toOperationalCategory(snap.fixtureCategory),
           isOurTeamHome: isHome,
           homeTeamLogoUrl: homeLogo,
           awayTeamLogoUrl: awayLogo,
@@ -676,7 +677,7 @@ export class FmfPageSyncService {
       }
 
       for (const row of snap.standings) {
-        const rowKey = `${snap.fixtureCategory}:${normalizeTeamNameKeyForMerge(row.time)}`;
+        const rowKey = `${toOperationalCategory(snap.fixtureCategory)}:${normalizeTeamNameKeyForMerge(row.time)}`;
         if (tabelaKeys.has(rowKey)) continue;
         tabelaKeys.add(rowKey);
 

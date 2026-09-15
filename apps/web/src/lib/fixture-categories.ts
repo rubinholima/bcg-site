@@ -52,54 +52,12 @@ function catalogByValue(all: readonly FixtureCategoryItem[]): Map<string, Fixtur
   return new Map(all.map((c) => [c.value.trim().toLowerCase(), c]));
 }
 
-/**
- * Deriva rótulo a partir da chave canônica do tenant quando não há item exato no cadastro central.
- * Preserva o value original (ex.: sub15_2div) — não normaliza para sub15.
- */
-export function deriveCategoryItemFromKey(
-  key: string,
-  all: readonly FixtureCategoryItem[],
-): FixtureCategoryItem {
-  const trimmed = key.trim();
-  const normalized = trimmed.toLowerCase();
-  const byValue = catalogByValue(all);
-
-  const exact = byValue.get(normalized);
-  if (exact) {
-    return { ...exact, value: trimmed };
-  }
-
-  const isSecondDiv = normalized.endsWith("_2div");
-  const baseKey = isSecondDiv ? normalized.slice(0, -"_2div".length) : normalized;
-  const base = byValue.get(baseKey);
-
-  if (base) {
-    return {
-      value: trimmed,
-      labelPT: isSecondDiv ? `${base.labelPT} 2ª Div` : base.labelPT,
-      labelEN: isSecondDiv ? `${base.labelEN} 2nd Div` : base.labelEN,
-      sortOrder: base.sortOrder,
-    };
-  }
-
-  const subMatch = normalized.match(/^sub(\d+)(_2div)?$/);
-  if (subMatch) {
-    const num = subMatch[1]!;
-    const is2 = !!subMatch[2];
-    const sortOrder = byValue.get(`sub${num}`)?.sortOrder;
-    return {
-      value: trimmed,
-      labelPT: is2 ? `Sub-${num} 2ª Div` : `Sub-${num}`,
-      labelEN: is2 ? `U-${num} 2nd Div` : `U-${num}`,
-      sortOrder,
-    };
-  }
-
-  return {
-    value: trimmed,
-    labelPT: trimmed,
-    labelEN: trimmed,
-  };
+/** Categoria operacional do elenco — sub15_2div → sub15; competição fica fora do selector. */
+export function toOperationalCategoryKey(key: string): string {
+  const normalized = key.trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized.endsWith("_2div")) return normalized.slice(0, -"_2div".length);
+  return normalized;
 }
 
 export function getCategoryLabel(
@@ -110,9 +68,10 @@ export function getCategoryLabel(
   const source = list ?? FIXTURE_CATEGORIES_FALLBACK;
   const normalized = value.trim().toLowerCase();
   const cat = source.find((c) => c.value.trim().toLowerCase() === normalized);
-  if (cat) return lang === "pt" ? cat.labelPT : cat.labelEN;
-  const derived = deriveCategoryItemFromKey(value, source);
-  return lang === "pt" ? derived.labelPT : derived.labelEN;
+  const operational = toOperationalCategoryKey(value);
+  const opCat = source.find((c) => c.value.trim().toLowerCase() === operational);
+  if (opCat) return lang === "pt" ? opCat.labelPT : opCat.labelEN;
+  return operational || value;
 }
 
 /** Categorias ativas do cadastro central (server components). */
@@ -132,8 +91,8 @@ export async function fetchFixtureCategories(options?: {
 }
 
 /**
- * Opções de filtro/cadastro a partir das chaves canônicas liberadas em Empresas (Tenant.categories).
- * O value de cada opção é sempre a chave do tenant; o label vem do cadastro central ou é derivado.
+ * Opções de filtro/cadastro a partir das categorias operacionais liberadas em Empresas.
+ * Chaves legadas (*_2div) colapsam para sub20/sub15/sub13 — divisão não é categoria de elenco.
  */
 export function filterCategoriesForTenant(
   all: readonly FixtureCategoryItem[],
@@ -145,14 +104,20 @@ export function filterCategoriesForTenant(
   const items: FixtureCategoryItem[] = [];
 
   for (const raw of tenantCategories) {
-    const key = raw.trim();
-    if (!key) continue;
-    const dedupeKey = key.toLowerCase();
-    if (seen.has(dedupeKey)) continue;
-    seen.add(dedupeKey);
+    const operational = toOperationalCategoryKey(raw);
+    if (!operational || seen.has(operational)) continue;
+    seen.add(operational);
 
-    const exact = all.find((c) => c.value.trim().toLowerCase() === dedupeKey);
-    items.push(exact ? { ...exact } : deriveCategoryItemFromKey(key, all));
+    const exact = all.find((c) => c.value.trim().toLowerCase() === operational);
+    if (exact) {
+      items.push({ ...exact });
+      continue;
+    }
+    items.push({
+      value: operational,
+      labelPT: operational,
+      labelEN: operational,
+    });
   }
 
   return items.sort((a, b) => {

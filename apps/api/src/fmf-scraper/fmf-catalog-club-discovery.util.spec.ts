@@ -53,7 +53,7 @@ describe('fmf-catalog-club-discovery', () => {
       season: 2026,
     });
     expect(preset.key).toBe('sub20_2div');
-    expect(preset.fixtureCategory).toBe('sub20_2div');
+    expect(preset.fixtureCategory).toBe('sub20');
   });
 
   it('assinatura muda quando fixtures diferem', () => {

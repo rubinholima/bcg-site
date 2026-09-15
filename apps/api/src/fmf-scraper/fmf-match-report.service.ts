@@ -21,6 +21,7 @@ import {
   resolvePlayerForFmfStat,
 } from './fmf-player-link.util';
 import { syncFmfMatchIncidents } from '../futebol-jogos/football-match-records.sync';
+import { toOperationalCategory } from './fmf-operational-category.util';
 import { FmfScraperService } from './fmf-scraper.service';
 import { syncMatchOfficialEvents, buildOfficialEventDrafts } from './match-official-events.sync';
 import { buildPlayerLinkPool } from './match-official-event.identity';
@@ -205,7 +206,7 @@ export class FmfMatchReportService {
           reportUrl: match.reportUrl,
           preset,
           competition: snapshot.name,
-          category: snapshot.fixtureCategory,
+          category: toOperationalCategory(snapshot.fixtureCategory),
           phase: match.phaseLabel,
           round: match.roundNumber,
           matchDate: match.matchDate,
@@ -1270,7 +1271,7 @@ export class FmfMatchReportService {
       competition: parsed.competition || candidate.competition,
       phase: parsed.phase ?? candidate.phase,
       round: parsed.round ?? candidate.round,
-      category: candidate.category || parsed.category,
+      category: toOperationalCategory(candidate.category || parsed.category),
       season: parsed.season,
       matchDate: new Date(`${parsed.matchDate}T12:00:00-03:00`),
       kickoffTime: parsed.kickoffTime,

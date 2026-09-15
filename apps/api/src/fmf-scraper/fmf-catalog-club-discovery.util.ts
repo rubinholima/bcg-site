@@ -2,6 +2,7 @@ import type { FmfParsedMatch } from './fmf-proxjogos.parser';
 import { parseFmfProxJogosHtml } from './fmf-proxjogos.parser';
 import type { FmfCompetitionCatalogEntry } from './fmf-competition-catalog.util';
 import type { FmfScraperPresetExtension } from './fmf-preset-registry.util';
+import { toOperationalCategory } from './fmf-operational-category.util';
 import { inferCategoryFromCompetitionLabel } from './fmf-scraper.presets';
 import { isFmfTeamMatch } from './fmf-team-match.util';
 
@@ -69,17 +70,18 @@ export function inferPresetFromCompetitionContext(
   const fromLabel = inferCategoryFromCompetitionLabel(label);
   const isSecondDiv = /2\s*[ªA]?\s*DIV/i.test(label) || /2\s*[ªA]?\s*Div/i.test(opts.catalogEntry?.navLabel ?? '');
 
-  let fixtureCategory = fromLabel ?? 'fmf_comp';
+  let competitionKey = fromLabel ?? 'fmf_comp';
   if (fromLabel?.startsWith('sub') && isSecondDiv) {
-    fixtureCategory = `${fromLabel}_2div`;
+    competitionKey = `${fromLabel}_2div`;
   } else if (opts.catalogEntry?.categoryHint && /sub\s*(\d+)/i.test(opts.catalogEntry.categoryHint)) {
     const num = opts.catalogEntry.categoryHint.match(/sub\s*(\d+)/i)![1]!;
-    fixtureCategory = isSecondDiv ? `sub${num}_2div` : `sub${num}`;
+    competitionKey = isSecondDiv ? `sub${num}_2div` : `sub${num}`;
   } else if (/m[óo]dulo\s*ii/i.test(label)) {
-    fixtureCategory = 'modulo_ii';
+    competitionKey = 'modulo_ii';
   }
 
-  const key = fixtureCategory;
+  const key = competitionKey;
+  const fixtureCategory = toOperationalCategory(competitionKey);
   const name =
     label ||
     [opts.catalogEntry?.categoryHint, opts.catalogEntry?.navLabel].filter(Boolean).join(' — ') ||

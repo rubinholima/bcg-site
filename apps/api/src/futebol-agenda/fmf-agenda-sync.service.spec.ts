@@ -135,5 +135,13 @@ describe('FmfAgendaSyncService', () => {
     expect(result.tenants).toHaveLength(1);
     expect(result.tenants[0]?.tenantSlug).toBe('villa-nova-saf');
     expect(spaces.resolveByName).toHaveBeenCalledWith(VILLA_ID, 'Castor Cifuentes');
+    expect(prisma.footballAgendaEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          category: 'sub20',
+          externalId: 'fmf-d31-j51',
+        }),
+      }),
+    );
   });
 });

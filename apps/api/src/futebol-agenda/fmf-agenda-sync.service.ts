@@ -4,9 +4,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { isClubKind } from '../public/public.service';
 import {
   buildFmfExternalId,
+  fmfExternalIdCandidates,
   fmfMatchToStartISO,
   resolveFmfPresetKeys,
 } from '../fmf-scraper/fmf-fixture.util';
+import { toOperationalCategory } from '../fmf-scraper/fmf-operational-category.util';
 import { loadFmfPresetExtensionMap, mergeFmfPresetMaps } from '../fmf-scraper/fmf-preset-registry.util';
 import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
 import { FmfScraperService, type FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
@@ -95,7 +97,11 @@ export class FmfAgendaSyncService {
           if (!isOurs) continue;
 
           const isHome = isFmfTeamMatch(m.homeName, tenant.name, aliases);
-          const externalId = buildFmfExternalId(presetKey, m);
+          const preset = presetMap[presetKey];
+          const fmfD = snap.fmfD ?? preset?.fmfD ?? 0;
+          const externalId = buildFmfExternalId(fmfD, m);
+          const idCandidates = fmfExternalIdCandidates(presetKey, fmfD, m).agenda;
+          const operationalCategory = toOperationalCategory(snap.fixtureCategory);
           const opponent = isHome ? m.awayName.trim() : m.homeName.trim();
           const title = isHome
             ? `Casa — ${opponent}`
@@ -108,7 +114,8 @@ export class FmfAgendaSyncService {
             : null;
 
           const existing = await this.prisma.footballAgendaEntry.findFirst({
-            where: { tenantId: tenant.id, externalId },
+            where: { tenantId: tenant.id, externalId: { in: idCandidates } },
+            orderBy: { updatedAt: 'desc' },
           });
 
           if (existing?.agendaLocked) {
@@ -119,6 +126,7 @@ export class FmfAgendaSyncService {
           const meta = {
             source: 'fmf',
             presetKey,
+            fmfD,
             phaseLabel: m.phaseLabel,
             fmfJogoNumber: m.fmfJogoNumber,
             homeName: m.homeName,
@@ -132,7 +140,8 @@ export class FmfAgendaSyncService {
             await this.prisma.footballAgendaEntry.update({
               where: { id: existing.id },
               data: {
-                category: snap.fixtureCategory,
+                externalId,
+                category: operationalCategory,
                 type: 'jogo',
                 title,
                 startAt,
@@ -151,7 +160,7 @@ export class FmfAgendaSyncService {
               data: {
                 tenantId: tenant.id,
                 externalId,
-                category: snap.fixtureCategory,
+                category: operationalCategory,
                 type: 'jogo',
                 title,
                 startAt,

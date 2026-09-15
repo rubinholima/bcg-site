@@ -1,6 +1,7 @@
 import type { FixtureDto } from '../public/dto/fixture.dto';
 import { normalizeTeamNameKeyForMerge } from '../public/visiting-team-logo-merge.util';
 import type { FmfParsedMatch } from './fmf-proxjogos.parser';
+import { toOperationalCategory } from './fmf-operational-category.util';
 import {
   discoverFmfPresetKeysForClub,
   type FmfClubPresetDiscoveryContext,
@@ -13,7 +14,22 @@ import {
 } from './fmf-scraper.presets';
 import type { FmfScraperStore } from './fmf-scraper.service';
 
-export function buildFmfExternalId(presetKey: string, m: FmfParsedMatch): string {
+/** Identidade canônica estável — d + número do jogo FMF (independe do preset key). */
+export function buildFmfExternalId(fmfD: number, m: FmfParsedMatch): string {
+  if (m.fmfJogoNumber != null) return `fmf-d${fmfD}-j${m.fmfJogoNumber}`;
+  const h = normalizeTeamNameKeyForMerge(m.homeName);
+  const a = normalizeTeamNameKeyForMerge(m.awayName);
+  const phase = normalizeTeamNameKeyForMerge(m.phaseLabel ?? '') || 'fase';
+  return `fmf-d${fmfD}-${phase}-${m.matchDate ?? 'nodate'}-${h}-${a}`;
+}
+
+export function buildFmfTravelExternalId(fmfD: number, m: FmfParsedMatch): string {
+  if (m.fmfJogoNumber != null) return `fmf-travel-d${fmfD}-j${m.fmfJogoNumber}`;
+  return `fmf-travel-${buildFmfExternalId(fmfD, m).replace(/^fmf-/, '')}`;
+}
+
+/** Formato legado (preset key) — usado só para localizar registros antigos no upsert. */
+export function buildLegacyFmfExternalId(presetKey: string, m: FmfParsedMatch): string {
   if (m.fmfJogoNumber != null) return `fmf-${presetKey}-j${m.fmfJogoNumber}`;
   const h = normalizeTeamNameKeyForMerge(m.homeName);
   const a = normalizeTeamNameKeyForMerge(m.awayName);
@@ -21,9 +37,28 @@ export function buildFmfExternalId(presetKey: string, m: FmfParsedMatch): string
   return `fmf-${presetKey}-${phase}-${m.matchDate ?? 'nodate'}-${h}-${a}`;
 }
 
-export function buildFmfTravelExternalId(presetKey: string, m: FmfParsedMatch): string {
+export function buildLegacyFmfTravelExternalId(presetKey: string, m: FmfParsedMatch): string {
   if (m.fmfJogoNumber != null) return `fmf-travel-${presetKey}-j${m.fmfJogoNumber}`;
-  return `fmf-travel-${buildFmfExternalId(presetKey, m).replace(/^fmf-/, '')}`;
+  return `fmf-travel-${buildLegacyFmfExternalId(presetKey, m).replace(/^fmf-/, '')}`;
+}
+
+export function fmfExternalIdCandidates(
+  presetKey: string,
+  fmfD: number,
+  m: FmfParsedMatch,
+): { agenda: string[]; travel: string[] } {
+  const agenda = [
+    buildFmfExternalId(fmfD, m),
+    buildLegacyFmfExternalId(presetKey, m),
+  ];
+  const travel = [
+    buildFmfTravelExternalId(fmfD, m),
+    buildLegacyFmfTravelExternalId(presetKey, m),
+  ];
+  return {
+    agenda: [...new Set(agenda)],
+    travel: [...new Set(travel)],
+  };
 }
 
 export function fmfMatchToStartISO(m: FmfParsedMatch): string {
@@ -48,7 +83,7 @@ export function buildLeagueFixturesFromFmfStore(
       const startISO = fmfMatchToStartISO(m);
       if (!startISO) continue;
 
-      const externalId = buildFmfExternalId(presetKey, m);
+      const externalId = buildFmfExternalId(snap.fmfD, m);
       if (seen.has(externalId)) continue;
       seen.add(externalId);
 
@@ -65,7 +100,7 @@ export function buildLeagueFixturesFromFmfStore(
         venueName: m.venueText ?? undefined,
         homeTeamName: m.homeName,
         awayTeamName: m.awayName,
-        category: snap.fixtureCategory,
+        category: toOperationalCategory(snap.fixtureCategory),
         homeScore: finished ? (m.homeGoals ?? undefined) : undefined,
         awayScore: finished ? (m.awayGoals ?? undefined) : undefined,
       });
@@ -101,11 +136,15 @@ export function resolveFmfPresetKeys(
     return options.configured.filter((k) => store.categories[k]);
   }
 
-  const wanted = new Set(tenantCategoryKeys.map((k) => k.trim().toLowerCase()).filter(Boolean));
+  const wanted = new Set(
+    tenantCategoryKeys.map((k) => toOperationalCategory(k)).filter(Boolean),
+  );
   const byCategory =
     wanted.size === 0
       ? []
-      : available.filter((k) => wanted.has(presetMap[k]?.fixtureCategory ?? ''));
+      : available.filter((k) =>
+          wanted.has(toOperationalCategory(presetMap[k]?.fixtureCategory ?? '')),
+        );
 
   const discovered =
     options.mergeDiscovered !== false && options.club

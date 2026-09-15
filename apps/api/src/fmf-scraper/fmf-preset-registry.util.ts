@@ -1,4 +1,5 @@
 import type { PrismaService } from '../prisma/prisma.service';
+import { toOperationalCategory } from './fmf-operational-category.util';
 import type { FmfScraperPreset } from './fmf-scraper.presets';
 import {
   FMF_SCRAPER_PRESET_KEYS,
@@ -40,7 +41,7 @@ export function parseFmfPresetExtensions(raw: unknown): Record<string, FmfScrape
       fmfD: entry.fmfD,
       slug: entry.slug.trim(),
       name: entry.name.trim(),
-      fixtureCategory: entry.fixtureCategory.trim().toLowerCase(),
+      fixtureCategory: toOperationalCategory(entry.fixtureCategory),
       competitionLabelTemplate: entry.competitionLabelTemplate.trim(),
     };
   }

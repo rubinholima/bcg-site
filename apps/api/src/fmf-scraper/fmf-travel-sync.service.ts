@@ -5,9 +5,11 @@ import { mergeTravelBeatscodeMeta } from '../common/travel-beatscode-meta.util';
 import { isClubKind } from '../public/public.service';
 import {
   buildFmfTravelExternalId,
+  fmfExternalIdCandidates,
   fmfMatchToStartISO,
   resolveFmfPresetKeys,
 } from './fmf-fixture.util';
+import { toOperationalCategory } from './fmf-operational-category.util';
 import { loadFmfPresetExtensionMap, mergeFmfPresetMaps } from './fmf-preset-registry.util';
 import { isFmfTeamMatch } from './fmf-team-match.util';
 import { FmfScraperService, type FmfScraperStore } from './fmf-scraper.service';
@@ -93,7 +95,11 @@ export class FmfTravelSyncService {
             continue;
           }
 
-          const externalId = buildFmfTravelExternalId(presetKey, m);
+          const preset = presetMap[presetKey];
+          const fmfD = snap.fmfD ?? preset?.fmfD ?? 0;
+          const externalId = buildFmfTravelExternalId(fmfD, m);
+          const idCandidates = fmfExternalIdCandidates(presetKey, fmfD, m).travel;
+          const operationalCategory = toOperationalCategory(snap.fixtureCategory);
           const isHomeMatch = isHome;
           const opponentName = (isHomeMatch ? m.awayName : m.homeName).trim() || null;
           const championshipParts = [
@@ -107,6 +113,7 @@ export class FmfTravelSyncService {
           const meta = {
             source: 'fmf',
             presetKey,
+            fmfD,
             phaseLabel: m.phaseLabel,
             fmfJogoNumber: m.fmfJogoNumber,
             homeName: m.homeName,
@@ -117,7 +124,8 @@ export class FmfTravelSyncService {
           } satisfies Record<string, unknown>;
 
           const existing = await this.prisma.travelLogistics.findFirst({
-            where: { tenantId: tenant.id, externalId },
+            where: { tenantId: tenant.id, externalId: { in: idCandidates } },
+            orderBy: { updatedAt: 'desc' },
           });
 
           if (existing) {
@@ -125,7 +133,8 @@ export class FmfTravelSyncService {
             await this.prisma.travelLogistics.update({
               where: { id: existing.id },
               data: {
-                category: snap.fixtureCategory,
+                externalId,
+                category: operationalCategory,
                 matchDate,
                 isHomeMatch,
                 opponentName,
@@ -144,7 +153,7 @@ export class FmfTravelSyncService {
               data: {
                 tenantId: tenant.id,
                 externalId,
-                category: snap.fixtureCategory,
+                category: operationalCategory,
                 matchDate,
                 isHomeMatch,
                 opponentName,
