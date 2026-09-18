@@ -89,6 +89,36 @@ export interface ForwardRequestOptions {
   responseHeaders?: Record<string, string>;
 }
 
+const BOSTON_TV_INSTALL_HEADER = "X-Boston-Tv-Install-Secret";
+const BCG_TV_CLIENT_HEADER = "X-BcgTv-Client";
+
+/** Repassa headers do APK / instalação Hall quando o tráfego passa pelo Next (Nginx → 3000 → Nest). */
+function applyBostonTvProxyHeaders(
+  request: NextRequest,
+  backendPath: string,
+  headers: Record<string, string>,
+): void {
+  const clientType = request.headers.get("x-bcg-tv-client")?.trim();
+  if (clientType && !headers[BCG_TV_CLIENT_HEADER]) {
+    headers[BCG_TV_CLIENT_HEADER] = clientType;
+  }
+
+  const userAgent = request.headers.get("user-agent")?.trim();
+  if (userAgent && !headers["User-Agent"]) {
+    headers["User-Agent"] = userAgent;
+  }
+
+  const isHallInstall = backendPath.startsWith("/public/boston-tv/hall");
+  if (!isHallInstall) return;
+
+  const fromClient = request.headers.get("x-boston-tv-install-secret")?.trim();
+  const fromEnv = process.env.BOSTON_TV_INSTALL_SECRET?.trim();
+  const secret = fromClient || fromEnv;
+  if (secret && !headers[BOSTON_TV_INSTALL_HEADER]) {
+    headers[BOSTON_TV_INSTALL_HEADER] = secret;
+  }
+}
+
 /**
  * Faz proxy de uma requisição Next.js para o backend NestJS.
  * 
@@ -129,6 +159,7 @@ export async function forwardRequest(
 
   // Prepara headers
   const headers: Record<string, string> = { ...extraHeaders };
+  applyBostonTvProxyHeaders(request, cleanPath, headers);
 
   // Adiciona Authorization se houver token
   const token = getToken(request);
