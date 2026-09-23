@@ -289,6 +289,8 @@ export interface ScoutingProspect {
   presentationDate?: string | null;
   ctScheduleStatus?: CtScheduleStatus | null;
   ctScheduledAt?: string | null;
+  proposedCtAt?: string | null;
+  ctRoom?: string | null;
   ctScheduleNotes?: string | null;
   ctEvaluationStartedAt?: string | null;
   ctEvaluationCompletedAt?: string | null;
