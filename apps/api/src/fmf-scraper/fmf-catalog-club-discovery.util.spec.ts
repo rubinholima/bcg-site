@@ -57,6 +57,23 @@ describe('fmf-catalog-club-discovery', () => {
     expect(preset.fixtureCategory).toBe('sub20');
   });
 
+  it('infere preset sub20_inconfidencia (Copa Inconfidência d=35)', () => {
+    const preset = inferPresetFromCompetitionContext(35, {
+      officialLabel: 'COPA INCONFIDÊNCIA - SUB 20 - 2026',
+      catalogEntry: {
+        fmfD: 35,
+        navLabel: 'Copa Inconfidência - Sub 20',
+        categoryHint: 'Sub 20',
+        url: '',
+      },
+      season: 2026,
+    });
+    expect(preset.key).toBe('sub20_inconfidencia');
+    expect(preset.fmfD).toBe(35);
+    expect(preset.fixtureCategory).toBe('sub20');
+    expect(preset.competitionLabelTemplate).toContain('INCONFID');
+  });
+
   it('assinatura muda quando fixtures diferem', () => {
     const a = buildFmfFixtureSignature([match('2026-09-12', 'VILLA NOVA', 'UBERLANDIA S.A.F', 51)]);
     const b = buildFmfFixtureSignature([match('2026-09-12', 'VILLA NOVA', 'OUTRO', 51)]);

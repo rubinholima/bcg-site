@@ -72,9 +72,13 @@ export function inferPresetFromCompetitionContext(
   const label = opts.officialLabel?.trim() ?? '';
   const fromLabel = inferCategoryFromCompetitionLabel(label);
   const isSecondDiv = /2\s*[ªA]?\s*DIV/i.test(label) || /2\s*[ªA]?\s*Div/i.test(opts.catalogEntry?.navLabel ?? '');
+  const navAndLabel = `${label} ${opts.catalogEntry?.navLabel ?? ''}`;
+  const isInconfidencia = /inconfid[eê]ncia/i.test(navAndLabel);
 
   let competitionKey = fromLabel ?? 'fmf_comp';
-  if (fromLabel?.startsWith('sub') && isSecondDiv) {
+  if (fromLabel?.startsWith('sub') && isInconfidencia) {
+    competitionKey = `${fromLabel}_inconfidencia`;
+  } else if (fromLabel?.startsWith('sub') && isSecondDiv) {
     competitionKey = `${fromLabel}_2div`;
   } else if (opts.catalogEntry?.categoryHint && /sub\s*(\d+)/i.test(opts.catalogEntry.categoryHint)) {
     const num = opts.catalogEntry.categoryHint.match(/sub\s*(\d+)/i)![1]!;

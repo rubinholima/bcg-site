@@ -163,6 +163,10 @@ export function inferOperationalCategoryFromProbedHtml(html: string): string | n
 
 /** Extrai rótulo oficial da competição no HTML ProxJogos. */
 export function extractOfficialCompetitionLabelFromHtml(html: string): string | null {
+  const inconf = html.match(
+    /COPA\s+INCONFID[EÊ]NCIA\s*-\s*SUB\s*\d+\s*-\s*\d{4}/i,
+  );
+  if (inconf) return inconf[0].replace(/\s+/g, ' ').trim();
   const m = html.match(/SUB\s*\d+\s*-\s*2\s*[ªA]?\s*DIVIS[AÃ]O\s*-\s*\d{4}/i);
   if (m) return m[0].replace(/\s+/g, ' ').trim();
   const m2 = html.match(/M[ÓO]DULO\s*II\s*-\s*\d{4}/i);

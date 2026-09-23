@@ -1,5 +1,7 @@
 import {
+  FMF_BUILTIN_PRESET_EXTENSIONS,
   listFmfPresetKeysForImport,
+  mergeFmfPresetMaps,
   parseFmfPresetExtensions,
 } from './fmf-preset-registry.util';
 
@@ -18,6 +20,16 @@ describe('fmf-preset-registry.util', () => {
     });
     expect(Object.keys(parsed)).toEqual(['copa_master_mg']);
     expect(parsed.copa_master_mg?.fmfD).toBe(12);
+  });
+
+  it('mescla preset builtin Copa Inconfidência Sub-20 (d=35)', () => {
+    const merged = mergeFmfPresetMaps({});
+    expect(merged.sub20_inconfidencia?.fmfD).toBe(35);
+    expect(FMF_BUILTIN_PRESET_EXTENSIONS.sub20_inconfidencia.fixtureCategory).toBe(
+      'sub20',
+    );
+    const keys = listFmfPresetKeysForImport({});
+    expect(keys).toContain('sub20_inconfidencia');
   });
 
   it('lista builtins antes de extensões extras', () => {

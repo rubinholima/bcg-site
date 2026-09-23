@@ -199,7 +199,12 @@ export class FmfCatalogDiscoveryService {
         catalogEntry: row.catalogEntry,
         season,
       });
-      if (FMF_SCRAPER_PRESETS[preset.key as keyof typeof FMF_SCRAPER_PRESETS]) continue;
+      if (FMF_SCRAPER_PRESETS[preset.key as keyof typeof FMF_SCRAPER_PRESETS]) {
+        continue;
+      }
+      if (mergedPresets[preset.key] && mergedPresets[preset.key]!.fmfD === preset.fmfD) {
+        continue;
+      }
       out[preset.key] = preset as unknown as FmfScraperPreset;
       knownDs.add(row.fmfD);
       added++;

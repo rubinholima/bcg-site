@@ -11,6 +11,10 @@ describe('fmf-operational-category.util', () => {
     expect(toOperationalCategory('sub13_2div')).toBe('sub13');
   });
 
+  it('colapsa *_inconfidencia para categoria operacional', () => {
+    expect(toOperationalCategory('sub20_inconfidencia')).toBe('sub20');
+  });
+
   it('preserva categorias operacionais existentes', () => {
     expect(toOperationalCategory('sub20')).toBe('sub20');
     expect(toOperationalCategory('modulo_ii')).toBe('modulo_ii');

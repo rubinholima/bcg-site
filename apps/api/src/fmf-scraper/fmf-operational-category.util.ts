@@ -8,6 +8,7 @@ export function toOperationalCategory(raw: string | null | undefined): string {
   const key = (raw ?? '').trim().toLowerCase();
   if (!key) return '';
   if (key.endsWith('_2div')) return key.slice(0, -'_2div'.length);
+  if (key.endsWith('_inconfidencia')) return key.slice(0, -'_inconfidencia'.length);
   return key;
 }
 
