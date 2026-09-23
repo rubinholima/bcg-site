@@ -260,7 +260,18 @@ export default function FmfScraperPage() {
         setError(await readApiErrorMessage(res, "Falha na importação."));
         return;
       }
+      if (data.ok === false) {
+        const stage = typeof data.stage === "string" ? data.stage : "";
+        const detail = typeof data.error === "string" ? data.error : "Falha na importação.";
+        setError(stage ? `${detail} (etapa: ${stage})` : detail);
+        if (data.fullSync?.store) {
+          setStatus({ ...data.fullSync.store, busy: false });
+        }
+        await load();
+        return;
+      }
       if (data.store) setStatus({ ...data.store, busy: false });
+      else if (data.fullSync?.store) setStatus({ ...data.fullSync.store, busy: false });
       else await load();
     } catch {
       setError("Erro ao importar da FMF.");

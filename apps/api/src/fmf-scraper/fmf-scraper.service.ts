@@ -279,8 +279,7 @@ export class FmfScraperService {
       for (let i = 0; i < keys.length; i++) {
         const key = keys[i]!;
         if (i > 0) await sleep(betweenMs);
-        const presetDef =
-          extensions[key] ?? FMF_SCRAPER_PRESETS[key as FmfScraperPresetKey];
+        const presetDef = presetMap[key];
         if (!presetDef) {
           throw new Error(`Preset FMF desconhecido: ${key}`);
         }
