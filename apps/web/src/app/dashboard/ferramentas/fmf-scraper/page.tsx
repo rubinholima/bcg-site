@@ -78,8 +78,17 @@ type FmfStatus = {
   lastRunOk: boolean;
   lastRunError?: string | null;
   busy: boolean;
+  fullSyncRunning?: boolean;
+  fullSyncOk?: boolean | null;
+  fullSyncError?: string | null;
+  fullSyncStage?: string | null;
+  fullSyncFinishedAt?: string | null;
   categories: Record<string, CategorySnapshot>;
 };
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
 
 type SyncCandidate = {
   tenantId: string;
@@ -153,8 +162,12 @@ async function readApiErrorMessage(res: Response, fallback: string): Promise<str
   const data = await res.json().catch(() => ({}));
   const raw =
     (typeof data.message === "string" && data.message) ||
+    (Array.isArray(data.message) && data.message.join("; ")) ||
     (typeof data.error === "string" && data.error) ||
     fallback;
+  if (res.status === 504 || res.status === 502) {
+    return "A operação demorou mais que o limite do proxy. A sincronização pode continuar no servidor — recarregue a página em 1–2 minutos.";
+  }
   if (/fetch failed|failed to fetch|econnrefused|etimedout/i.test(raw)) {
     return "Não foi possível falar com a API. Confirme se ela está no ar (porta 3001) e tente de novo em alguns segundos.";
   }
@@ -181,6 +194,40 @@ export default function FmfScraperPage() {
   const [reportMessage, setReportMessage] = useState<string | null>(null);
 
   const canView = canAccessModule("fmf_scraper");
+
+  const fetchStatus = useCallback(async (): Promise<FmfStatus | null> => {
+    try {
+      const statusRes = await authFetch("/api/fmf-scraper/status");
+      if (!statusRes.ok) return null;
+      return (await statusRes.json()) as FmfStatus;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const pollFullSyncUntilIdle = useCallback(async () => {
+    const deadline = Date.now() + 45 * 60 * 1000;
+    while (Date.now() < deadline) {
+      await sleep(4000);
+      const st = await fetchStatus();
+      if (!st) continue;
+      setStatus(st);
+      if (!st.busy && !st.fullSyncRunning) {
+        if (st.fullSyncOk === false && st.fullSyncError) {
+          const stage = st.fullSyncStage?.trim();
+          setError(
+            stage ? `${st.fullSyncError} (etapa: ${stage})` : st.fullSyncError,
+          );
+        } else if (!st.lastRunOk && st.lastRunError) {
+          setError(st.lastRunError);
+        }
+        return;
+      }
+    }
+    setError(
+      "A sincronização ainda está em andamento no servidor. Recarregue a página em alguns minutos.",
+    );
+  }, [fetchStatus]);
 
   const load = useCallback(async () => {
     setError(null);
@@ -267,6 +314,13 @@ export default function FmfScraperPage() {
         if (data.fullSync?.store) {
           setStatus({ ...data.fullSync.store, busy: false });
         }
+        await load();
+        return;
+      }
+      if (data.async === true && opts.all) {
+        const st = await fetchStatus();
+        if (st) setStatus(st);
+        await pollFullSyncUntilIdle();
         await load();
         return;
       }
@@ -407,7 +461,13 @@ export default function FmfScraperPage() {
             <Button
               variant="outline"
               onClick={() => handleSync({ all: true })}
-              disabled={!!syncing || !!running || status?.busy || !status?.updatedAt}
+              disabled={
+                !!syncing ||
+                !!running ||
+                status?.busy ||
+                status?.fullSyncRunning ||
+                !status?.updatedAt
+              }
             >
               {syncing === "all" ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -418,7 +478,7 @@ export default function FmfScraperPage() {
             </Button>
             <Button
               onClick={() => handleRun({ all: true })}
-              disabled={!!running || status?.busy || !!syncing}
+              disabled={!!running || status?.busy || status?.fullSyncRunning || !!syncing}
             >
               {running === "all" ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

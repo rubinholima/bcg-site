@@ -63,10 +63,24 @@ export type FmfFullSyncOptions = {
   skipMatchReports?: boolean;
 };
 
+export type FmfFullSyncPublicState = {
+  running: boolean;
+  ok: boolean | null;
+  error: string | null;
+  stage: string | null;
+  finishedAt: string | null;
+};
+
 @Injectable()
 export class FmfFullSyncService {
   private readonly log = new Logger(FmfFullSyncService.name);
   private running = false;
+  private lastPublic: Omit<FmfFullSyncPublicState, 'running'> = {
+    ok: null,
+    error: null,
+    stage: null,
+    finishedAt: null,
+  };
 
   constructor(
     private readonly scraper: FmfScraperService,
@@ -81,12 +95,17 @@ export class FmfFullSyncService {
     return this.running;
   }
 
+  getPublicState(): FmfFullSyncPublicState {
+    return { running: this.running, ...this.lastPublic };
+  }
+
   async runFullSync(options: FmfFullSyncOptions = {}): Promise<FmfFullSyncResult> {
     if (this.running) {
       throw new Error('Sincronização FMF completa já em andamento.');
     }
 
     this.running = true;
+    this.lastPublic = { ok: null, error: null, stage: null, finishedAt: null };
     const startedAt = new Date().toISOString();
     const failedStages: string[] = [];
     const tenantScope = options.tenantId?.trim()
@@ -182,17 +201,39 @@ export class FmfFullSyncService {
         }
       }
 
-      return this.buildResult(startedAt, store, stages, failedStages);
+      const result = this.buildResult(startedAt, store, stages, failedStages);
+      this.lastPublic = {
+        ok: result.ok,
+        error: result.failedStages.length ? result.failedStages.join(', ') : null,
+        stage: result.failedStages[0] ?? null,
+        finishedAt: result.finishedAt,
+      };
+      return result;
     } catch (e) {
-      if (e instanceof FmfFullSyncError) throw e;
+      if (e instanceof FmfFullSyncError) {
+        this.lastPublic = {
+          ok: false,
+          error: e.message,
+          stage: e.stage,
+          finishedAt: new Date().toISOString(),
+        };
+        throw e;
+      }
       const msg = e instanceof Error ? e.message : String(e);
       stages.discoveryImport = { ok: false, error: msg };
       failedStages.push('discoveryImport');
-      throw new FmfFullSyncError(
+      const err = new FmfFullSyncError(
         'discoveryImport',
         msg,
         this.buildResult(startedAt, store, stages, failedStages),
       );
+      this.lastPublic = {
+        ok: false,
+        error: err.message,
+        stage: err.stage,
+        finishedAt: new Date().toISOString(),
+      };
+      throw err;
     } finally {
       this.running = false;
     }

@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
@@ -9,7 +18,7 @@ import {
   type FmfScraperSyncConfig,
 } from './fmf-page-sync.service';
 import { FmfScraperService } from './fmf-scraper.service';
-import { FmfFullSyncError, FmfFullSyncService } from './fmf-full-sync.service';
+import { FmfFullSyncService } from './fmf-full-sync.service';
 import { FmfMatchReportService } from './fmf-match-report.service';
 import { FmfTravelSyncService } from './fmf-travel-sync.service';
 import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
@@ -18,6 +27,8 @@ import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('fmf_scraper')
 export class FmfScraperController {
+  private readonly log = new Logger(FmfScraperController.name);
+
   constructor(
     private readonly fmfScraper: FmfScraperService,
     private readonly fullSync: FmfFullSyncService,
@@ -34,27 +45,44 @@ export class FmfScraperController {
   }
 
   @Get('status')
-  getStatus() {
-    return this.fmfScraper.getStatus();
+  async getStatus() {
+    const store = await this.fmfScraper.getStatus();
+    const fullSync = this.fullSync.getPublicState();
+    return {
+      ...store,
+      fullSyncRunning: fullSync.running,
+      fullSyncOk: fullSync.ok,
+      fullSyncError: fullSync.error,
+      fullSyncStage: fullSync.stage,
+      fullSyncFinishedAt: fullSync.finishedAt,
+    };
   }
 
   @Post('run')
   async run(@Body() body: { preset?: string; all?: boolean }) {
     if (body?.all === true) {
-      try {
-        const full = await this.fullSync.runFullSync();
-        return { ok: true, fullSync: full };
-      } catch (e) {
-        if (e instanceof FmfFullSyncError) {
-          return {
-            ok: false,
-            stage: e.stage,
-            error: e.message,
-            fullSync: e.partial,
-          };
-        }
-        throw e;
+      if (this.fullSync.isRunning()) {
+        return { ok: false, error: 'Sincronização FMF completa já em andamento.' };
       }
+      const live = await this.fmfScraper.getStatus();
+      if (live.busy) {
+        return {
+          ok: false,
+          error: 'Importação FMF já em andamento. Aguarde a conclusão.',
+        };
+      }
+
+      void this.fullSync.runFullSync().catch((e) => {
+        const msg = e instanceof Error ? e.message : String(e);
+        this.log.warn(`FMF full sync (background): ${msg}`);
+      });
+
+      return {
+        ok: true,
+        async: true,
+        message:
+          'Sincronização completa iniciada em segundo plano. O status atualiza automaticamente.',
+      };
     }
 
     const store = await this.fmfScraper.runImport({

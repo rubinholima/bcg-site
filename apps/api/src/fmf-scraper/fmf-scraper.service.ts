@@ -223,13 +223,14 @@ export class FmfScraperService {
 
   async getPresets() {
     const extensions = await loadFmfPresetExtensionMap(this.prisma);
-    return listFmfPresetKeysForImport(extensions).map((key) => {
-      const preset = extensions[key] ?? FMF_SCRAPER_PRESETS[key as FmfScraperPresetKey];
-      return {
+    const presetMap = mergeFmfPresetMaps(extensions);
+    return listFmfPresetKeysForImport(extensions)
+      .map((key) => presetMap[key])
+      .filter((preset): preset is FmfScraperPreset => !!preset)
+      .map((preset) => ({
         ...preset,
         sourceUrl: fmfProxJogosUrl(preset.fmfD),
-      };
-    });
+      }));
   }
 
   async getStatus(): Promise<FmfScraperStore & { busy: boolean }> {
