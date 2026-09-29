@@ -150,6 +150,7 @@ export function buildMatchDisciplineFromOfficialEvents(input: {
 
   for (const stat of playerById.values()) {
     if (stat.expulsionBySecondYellow) continue;
+    if (stat.redCards > 0) continue;
     if (stat.yellowCards >= 2 && stat.redCards === 0) {
       stat.expulsionBySecondYellow = true;
     }

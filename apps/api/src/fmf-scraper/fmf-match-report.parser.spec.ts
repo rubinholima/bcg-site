@@ -266,7 +266,7 @@ TER = Após o Término do Jogo
     ]);
   });
 
-  it('2º amarelo pós-jogo (TER) na seção vermelhos vira amarelo sem vermelho duplicado', () => {
+  it('TER na seção vermelhos com Vermelho direto gera vermelho (amarelo em jogo separado)', () => {
     const text = `
 Competição: SUB 13 - 1ª DIVISÃO 2026 Fase: DECAGONAL FINAL Rodada: 5
 Jogo: ATHLETIC CLUB ESPORTES S.A.F. X BOSTON CITY FUTEBOL CLUBE SAF
@@ -298,17 +298,21 @@ TER = Após o Término do Jogo
 `;
     const parsed = parseFmfMatchReportText(text);
     const marcos = parsed.stats.find((p) => p.cbfRegistration === '964959');
-    expect(marcos?.yellowCards).toBe(2);
-    expect(marcos?.redCards).toBe(0);
+    expect(marcos?.yellowCards).toBe(1);
+    expect(marcos?.redCards).toBe(1);
     expect(parsed.playerCardEvents.filter((c) => c.cbfRegistration === '964959')).toEqual([
       expect.objectContaining({ kind: 'yellow', clock: '32:00', period: '2T' }),
       expect.objectContaining({
-        kind: 'yellow',
+        kind: 'red',
         clock: 'TER',
         period: 'TER',
-        expulsionBySecondYellow: true,
       }),
     ]);
+    expect(
+      parsed.playerCardEvents.some(
+        (c) => c.cbfRegistration === '964959' && c.expulsionBySecondYellow,
+      ),
+    ).toBe(false);
   });
 
   it('parseia HH:MM 1T e HH:MM 2T', () => {

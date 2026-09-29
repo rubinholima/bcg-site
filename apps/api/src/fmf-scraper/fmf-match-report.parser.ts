@@ -268,9 +268,17 @@ export function splitCardSectionRows(value: string): string[] {
   return rows;
 }
 
+/** Súmula FMF: "Vermelho direto" prevalece sobre texto genérico de 2º amarelo na mesma linha. */
+export function isDirectRedCardNarrative(narrative: string): boolean {
+  const text = cleanLine(narrative);
+  if (!text) return false;
+  return /vermelho\s+direto/i.test(text);
+}
+
 function playerCardKindsFromNarrative(narrative: string): Array<'yellow' | 'red'> {
   const text = cleanLine(narrative);
   if (!text) return [];
+  if (isDirectRedCardNarrative(text)) return ['red'];
   const secondYellowRed = /2º cart[aã]o amarelo|segundo amarelo|segundo cart[aã]o amarelo/i.test(text);
   const mentionsYellow = /cart[aã]o amarelo|advertid[oa] com amarelo|apresentei o segundo amarelo/i.test(text);
   const mentionsRed = /vermelho/i.test(text);
@@ -364,6 +372,7 @@ function parsePlayerCardEventRow(
     kinds[0] === 'yellow' &&
     sectionKind === 'red' &&
     Boolean(marker) &&
+    !isDirectRedCardNarrative(narrativeStart) &&
     isSecondYellowExpulsionNarrative(narrativeStart);
 
   return kinds.map((kind) => ({

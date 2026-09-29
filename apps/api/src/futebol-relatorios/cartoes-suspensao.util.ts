@@ -706,6 +706,7 @@ export function buildDisciplineGrid(input: {
       }
 
       let pendingCode: DisciplineCellCode = '';
+      let servedPenduradoThisRound = false;
       if (state.stjdRoundsLeft > 0) {
         pendingCode = 'ST';
         state.stjdRoundsLeft -= 1;
@@ -716,6 +717,7 @@ export function buildDisciplineGrid(input: {
       } else if (state.pendurado) {
         pendingCode = 'P';
         state.pendurado = false;
+        servedPenduradoThisRound = true;
       }
 
       const arrivalDay = readClubArrivalDateKey(player.registrationProfile);
@@ -725,6 +727,7 @@ export function buildDisciplineGrid(input: {
         continue;
       }
 
+      const yellowsBeforeThisRound = yellowTotals.get(player.id) ?? 0;
       const stat = findPlayerStatForMatch(match.playerStats, player);
       let code: DisciplineCellCode = pendingCode;
       if (stat && (stat.played || stat.redCards > 0)) {
@@ -737,6 +740,18 @@ export function buildDisciplineGrid(input: {
           redTotals,
         });
         if (actionCode) code = actionCode;
+      }
+
+      if (
+        servedPenduradoThisRound &&
+        stat?.played &&
+        (stat.yellowCards ?? 0) === 0 &&
+        (stat.redCards ?? 0) === 0
+      ) {
+        code = 'P';
+        if (yellowsBeforeThisRound >= 2) {
+          state.yellowAccum = 0;
+        }
       }
 
       cells[roundIndex] = code;

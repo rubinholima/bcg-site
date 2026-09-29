@@ -1,13 +1,8 @@
 import { parseFmfMatchReportText } from '../fmf-scraper/fmf-match-report.parser';
 import { buildOfficialEventDrafts } from '../fmf-scraper/match-official-events.sync';
 import { buildPlayerLinkPool } from '../fmf-scraper/match-official-event.identity';
-import {
-  buildMatchDisciplineFromOfficialEvents,
-} from './cartoes-suspensao-events.util';
-import {
-  buildDisciplineGrid,
-  DISCIPLINE_ACCUMULATION_POLICY,
-} from './cartoes-suspensao.util';
+import { buildMatchDisciplineFromOfficialEvents } from './cartoes-suspensao-events.util';
+import { buildDisciplineGrid } from './cartoes-suspensao.util';
 
 const ATHLETIC_SUMULA = `
 Competição: SUB 13 - 1ª DIVISÃO 2026 Fase: DECAGONAL FINAL Rodada: 5
@@ -39,7 +34,7 @@ Substituições
 TER = Após o Término do Jogo
 `;
 
-describe('Marcos 964959 — cadeia parser → eventos → grid', () => {
+describe('Marcos 964959 — amarelo em jogo + vermelho direto pós-jogo', () => {
   const playerId = 'marcos-964959';
   const player = {
     id: playerId,
@@ -53,22 +48,17 @@ describe('Marcos 964959 — cadeia parser → eventos → grid', () => {
     registrationProfile: null,
   };
 
-  it('parser → stats → eventos oficiais → projeção disciplinar → grid', () => {
+  it('parser → eventos → grid: amarelo acumula, vermelho suspende', () => {
     const parsed = parseFmfMatchReportText(ATHLETIC_SUMULA);
     const marcosStat = parsed.stats.find((p) => p.cbfRegistration === '964959');
-    expect(marcosStat?.yellowCards).toBe(2);
-    expect(marcosStat?.redCards).toBe(0);
+    expect(marcosStat?.yellowCards).toBe(1);
+    expect(marcosStat?.redCards).toBe(1);
 
     const marcosCards = parsed.playerCardEvents.filter((c) => c.cbfRegistration === '964959');
     expect(marcosCards).toHaveLength(2);
     expect(marcosCards[0]).toMatchObject({ kind: 'yellow', clock: '32:00', period: '2T' });
-    expect(marcosCards[1]).toMatchObject({
-      kind: 'yellow',
-      clock: 'TER',
-      period: 'TER',
-      expulsionBySecondYellow: true,
-    });
-    expect(parsed.playerCardEvents.some((c) => c.kind === 'red')).toBe(false);
+    expect(marcosCards[1]).toMatchObject({ kind: 'red', clock: 'TER', period: 'TER' });
+    expect(marcosCards.some((c) => c.expulsionBySecondYellow)).toBe(false);
 
     const pool = buildPlayerLinkPool([
       { id: playerId, name: player.name, cbfRegistration: '964959', registrationProfile: null },
@@ -80,8 +70,8 @@ describe('Marcos 964959 — cadeia parser → eventos → grid', () => {
       staffPool: [],
     });
     const marcosDrafts = drafts.filter((d) => d.playerId === playerId);
-    expect(marcosDrafts.filter((d) => d.factType === 'PLAYER_YELLOW_CARD')).toHaveLength(2);
-    expect(marcosDrafts.some((d) => d.factType === 'PLAYER_RED_CARD')).toBe(false);
+    expect(marcosDrafts.filter((d) => d.factType === 'PLAYER_YELLOW_CARD')).toHaveLength(1);
+    expect(marcosDrafts.filter((d) => d.factType === 'PLAYER_RED_CARD')).toHaveLength(1);
     expect(
       marcosDrafts.some(
         (d) =>
@@ -89,7 +79,7 @@ describe('Marcos 964959 — cadeia parser → eventos → grid', () => {
           Array.isArray(d.sourceSections) &&
           d.sourceSections.includes('Expulsão por 2º amarelo'),
       ),
-    ).toBe(true);
+    ).toBe(false);
 
     const fromEvents = buildMatchDisciplineFromOfficialEvents({
       events: drafts.map((d) => ({
@@ -105,9 +95,9 @@ describe('Marcos 964959 — cadeia parser → eventos → grid', () => {
       aliases: [],
     });
     const stat = fromEvents.playerStats[0];
-    expect(stat?.yellowCards).toBe(2);
-    expect(stat?.redCards).toBe(0);
-    expect(stat?.expulsionBySecondYellow).toBe(true);
+    expect(stat?.yellowCards).toBe(1);
+    expect(stat?.redCards).toBe(1);
+    expect(stat?.expulsionBySecondYellow).toBeFalsy();
 
     const baseMatch = {
       homeTeam: parsed.homeTeam,
@@ -115,6 +105,15 @@ describe('Marcos 964959 — cadeia parser → eventos → grid', () => {
       homeScore: 1,
       awayScore: 0,
       occurrencesText: null,
+    };
+    const athleticStat = {
+      playerId,
+      jerseyNumber: 3,
+      playerName: player.name,
+      played: true,
+      yellowCards: 1,
+      redCards: 1,
+      expulsionBySecondYellow: false,
     };
     const grid = buildDisciplineGrid({
       clubName: 'Boston City',
@@ -124,11 +123,27 @@ describe('Marcos 964959 — cadeia parser → eventos → grid', () => {
       players: [player],
       matches: [
         {
+          id: 'prior',
+          round: 4,
+          matchDate: new Date('2026-05-24T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [
+            {
+              playerId,
+              jerseyNumber: 3,
+              playerName: player.name,
+              played: true,
+              yellowCards: 1,
+              redCards: 0,
+            },
+          ],
+        },
+        {
           id: 'athletic',
           round: 5,
           matchDate: new Date('2026-05-31T12:00:00Z'),
           ...baseMatch,
-          playerStats: fromEvents.playerStats,
+          playerStats: [athleticStat],
         },
         {
           id: 'sa-round',
@@ -148,10 +163,10 @@ describe('Marcos 964959 — cadeia parser → eventos → grid', () => {
     });
 
     const row = grid.players.find((p) => p.playerId === playerId);
-    expect(row?.roundCells[0]).toBe('V');
-    expect(row?.roundCells[1]).toBe('SA');
+    expect(row?.roundCells[1]).toBe('V');
+    expect(row?.roundCells[2]).toBe('SA');
     expect(row?.nextRoundCell).toBe('P');
     expect(row?.yellowCardsTotal).toBe(2);
-    expect(DISCIPLINE_ACCUMULATION_POLICY.expulsionDoesNotResetYellowAccum).toBe(true);
+    expect(row?.redCardsTotal).toBe(1);
   });
 });

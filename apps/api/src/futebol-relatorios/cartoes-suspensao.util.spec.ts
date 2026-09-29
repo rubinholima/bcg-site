@@ -1247,4 +1247,76 @@ describe('buildDisciplineGrid post-match and transfer boundary', () => {
     expect(row?.yellowCardsTotal).toBe(2);
     expect(row?.nextRoundCell).toBe('P');
   });
+
+  it('cumprir rodada pendurado (P) sem novo cartão zera acúmulo de amarelos', () => {
+    const d = (iso: string) => new Date(iso);
+    const player = {
+      id: 'victor-like',
+      name: 'Victor Hugo Santos Sales',
+      jerseyNumber: 7,
+      position: 'ATA',
+      status: 'available',
+      statusDetails: null,
+      yellowCards: null,
+      redCards: null,
+      registrationProfile: null,
+    };
+    const baseMatch = {
+      homeTeam: 'Boston City',
+      awayTeam: 'NAC',
+      homeScore: 1,
+      awayScore: 0,
+      occurrencesText: null,
+    };
+    const grid = buildDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      disciplineCategory: 'sub13',
+      nextMatchDate: '2026-08-30',
+      players: [player],
+      matches: [
+        {
+          id: 'm1',
+          round: 1,
+          matchDate: d('2026-08-09T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [
+            { playerId: player.id, jerseyNumber: 7, playerName: player.name, played: true, yellowCards: 1, redCards: 0 },
+          ],
+        },
+        {
+          id: 'm2',
+          round: 2,
+          matchDate: d('2026-08-16T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [
+            { playerId: player.id, jerseyNumber: 7, playerName: player.name, played: true, yellowCards: 1, redCards: 0 },
+          ],
+        },
+        {
+          id: 'm3',
+          round: 3,
+          matchDate: d('2026-08-23T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [
+            { playerId: player.id, jerseyNumber: 7, playerName: player.name, played: true, yellowCards: 0, redCards: 0 },
+          ],
+        },
+        {
+          id: 'm4',
+          round: 4,
+          matchDate: d('2026-08-30T12:00:00Z'),
+          ...baseMatch,
+          playerStats: [
+            { playerId: player.id, jerseyNumber: 7, playerName: player.name, played: true, yellowCards: 0, redCards: 0 },
+          ],
+        },
+      ],
+    });
+    const row = grid.players.find((p) => p.playerId === player.id);
+    expect(row?.roundCells[2]).toBe('P');
+    expect(row?.roundCells[3]).toBe('AT');
+    expect(row?.nextRoundCell).toBe('');
+    expect(row?.yellowCardsTotal).toBe(2);
+  });
 });
