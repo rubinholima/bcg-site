@@ -27,6 +27,7 @@ import {
 } from '../common/brazil-time.util';
 import { FootballActivitySpacesService } from './football-activity-spaces.service';
 import { travelMatchesCategoryFilter, parseTravelCategories } from './travel-categories.util';
+import { entryMatchesOperationalCategoryFilter } from './agenda-entry-category.util';
 import { normalizeTeamNameKeyForMerge } from '../public/visiting-team-logo-merge.util';
 import {
   buildTravelMatchKey,
@@ -282,10 +283,6 @@ export class FutebolAgendaService {
       travelWhere.tenantId = filters.tenantId;
       entryWhere.tenantId = filters.tenantId;
     }
-    if (filters.category?.trim()) {
-      entryWhere.category = filters.category.trim();
-    }
-
     const includeTravelMatch =
       !typeFilter || typeFilter.includes('viagem') || typeFilter.includes('jogo');
     const includeTravelAgendaItems =
@@ -306,6 +303,11 @@ export class FutebolAgendaService {
     const includeEntries =
       !typeFilter || (entryTypeList != null && entryTypeList.length > 0);
     const categoryFilter = filters.category?.trim() || null;
+    let tenantCategoryKeys: string[] | null = null;
+    if (categoryFilter && filters.tenantId) {
+      const tenant = await this.tenants.findOne(filters.tenantId);
+      tenantCategoryKeys = (tenant as { categories?: string[] | null }).categories ?? [];
+    }
 
     // Amplia busca de viagens: agenda do jogo pode ter itens em D-1 / D-2
     const travelPadMs = 7 * 24 * 60 * 60 * 1000;
@@ -353,6 +355,12 @@ export class FutebolAgendaService {
           })
         : Promise.resolve([]),
     ]);
+
+    const entriesForCalendar = categoryFilter
+      ? entries.filter((e) =>
+          entryMatchesOperationalCategoryFilter(e.category, categoryFilter, tenantCategoryKeys),
+        )
+      : entries;
 
     const travelsRawDeduped = categoryFilter
       ? travelsRaw.filter((t) =>
@@ -472,7 +480,7 @@ export class FutebolAgendaService {
       }
     }
 
-    for (const e of entries) {
+    for (const e of entriesForCalendar) {
       if (e.type === 'jogo') {
         if (e.travelLogisticsId && travelIdsInCalendar.has(e.travelLogisticsId)) {
           continue;
@@ -701,13 +709,26 @@ export class FutebolAgendaService {
     }
   }
 
-  private async syncParticipants(entryId: string, playerIds?: string[]) {
+  private async syncParticipants(
+    entryId: string,
+    playerIds?: string[],
+    tenantId?: string,
+  ) {
     if (!playerIds) return;
     const unique = [...new Set(playerIds.filter(Boolean))];
     await this.prisma.footballAgendaEntryParticipant.deleteMany({ where: { entryId } });
     if (unique.length === 0) return;
+    const validRows = await this.prisma.player.findMany({
+      where: {
+        id: { in: unique },
+        ...(tenantId ? { tenantId } : {}),
+      },
+      select: { id: true },
+    });
+    const validIds = validRows.map((r) => r.id);
+    if (validIds.length === 0) return;
     await this.prisma.footballAgendaEntryParticipant.createMany({
-      data: unique.map((playerId) => ({ entryId, playerId })),
+      data: validIds.map((playerId) => ({ entryId, playerId })),
       skipDuplicates: true,
     });
   }
@@ -1058,6 +1079,7 @@ export class FutebolAgendaService {
     weekdays: number[];
     untilDate: string;
     category?: string;
+    entryIds?: string[];
     skipExisting?: boolean;
     allowConflict?: boolean;
   }): Promise<{
@@ -1088,28 +1110,41 @@ export class FutebolAgendaService {
     }
 
     const categoryFilter = dto.category?.trim() || null;
+    const tenant = await this.tenants.findOne(dto.tenantId);
+    const tenantCategoryKeys =
+      (tenant as { categories?: string[] | null }).categories ?? [];
+
+    const entryIdFilter = dto.entryIds?.map((id) => id.trim()).filter(Boolean) ?? [];
     const rangeStart = parseDateOnlyBrazil(sourceDate);
-    const rangeEnd = parseDateOnlyBrazil(untilDate);
-    rangeEnd.setUTCHours(23, 59, 59, 999);
+    const sourceDayEnd = new Date(`${sourceDate}T23:59:59-03:00`);
 
     const sourceEntries = await this.prisma.footballAgendaEntry.findMany({
       where: {
         tenantId: dto.tenantId,
         status: { not: 'cancelado' },
         type: { notIn: ['jogo', 'aniversario'] },
-        startAt: { gte: rangeStart, lte: new Date(`${sourceDate}T23:59:59-03:00`) },
-        ...(categoryFilter ? { category: categoryFilter } : {}),
+        startAt: { gte: rangeStart, lte: sourceDayEnd },
+        ...(entryIdFilter.length > 0 ? { id: { in: entryIdFilter } } : {}),
       },
       include: entryInclude,
       orderBy: [{ startAt: 'asc' }, { title: 'asc' }],
     });
 
-    const sources = sourceEntries.filter(
+    let sources = sourceEntries.filter(
       (row) => dateKeyInBrazil(row.startAt) === sourceDate,
     );
+    if (categoryFilter) {
+      sources = sources.filter((row) =>
+        entryMatchesOperationalCategoryFilter(
+          row.category,
+          categoryFilter,
+          tenantCategoryKeys,
+        ),
+      );
+    }
     if (sources.length === 0) {
       throw new BadRequestException(
-        'Nenhum compromisso replicável neste dia (treinos, reuniões, etc.). Jogos e aniversários não entram.',
+        'Nenhuma atividade replicável neste dia (treinos, reuniões, preparação, etc.). Jogos, viagens e aniversários não entram.',
       );
     }
 
@@ -1190,10 +1225,22 @@ export class FutebolAgendaService {
 
         const playerIds = source.participants?.map((p) => p.playerId) ?? [];
         if (playerIds.length > 0) {
-          await this.syncParticipants(row.id, playerIds);
+          await this.syncParticipants(row.id, playerIds, dto.tenantId);
         }
         created += 1;
       }
+    }
+
+    if (created === 0 && sources.length > 0 && targetDateKeys.length > 0) {
+      const hint =
+        conflicts.length > 0
+          ? ` Todos ignorados por conflito de horário (${conflicts.length}).`
+          : skipped > 0
+            ? ' As cópias deste dia já existiam (replicação anterior).'
+            : '';
+      throw new BadRequestException(
+        `Nenhuma atividade foi criada.${hint} Ajuste os dias ou libere o espaço/horário.`,
+      );
     }
 
     return {

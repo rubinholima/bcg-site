@@ -102,6 +102,15 @@ type ViewMode = "day" | "week" | "month";
 
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
 
+function extractAgendaApiMessage(err: unknown): string | null {
+  if (!err || typeof err !== "object" || !("response" in err)) return null;
+  const data = (err as { response?: { data?: { message?: string | string[] } } }).response?.data;
+  const msg = data?.message;
+  if (Array.isArray(msg)) return msg.join(", ");
+  if (typeof msg === "string" && msg.trim()) return msg;
+  return null;
+}
+
 function dateKeyFromDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -302,6 +311,8 @@ export function FutebolAgendaOperacional() {
   const [spaceFilter, setSpaceFilter] = useState("all");
   const [calendarSpaces, setCalendarSpaces] = useState<ActivitySpace[]>([]);
   const [items, setItems] = useState<FootballAgendaCalendarItem[]>([]);
+  /** Calendário sem filtro de tipo — contagem/replicação inclui treino, reunião, etc. */
+  const [itemsAllTypes, setItemsAllTypes] = useState<FootballAgendaCalendarItem[]>([]);
   const [overview, setOverview] = useState<FootballAgendaOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<string | null>(() => todayKey());
@@ -324,6 +335,8 @@ export function FutebolAgendaOperacional() {
   const [repeatSourceDate, setRepeatSourceDate] = useState("");
   const [repeatUntilDate, setRepeatUntilDate] = useState("");
   const [repeatWeekdays, setRepeatWeekdays] = useState<Set<number>>(() => new Set());
+  const [formRepeatWeekdays, setFormRepeatWeekdays] = useState<Set<number>>(() => new Set());
+  const [formRepeatUntilDate, setFormRepeatUntilDate] = useState("");
   const [repeatFeedback, setRepeatFeedback] = useState<{
     open: boolean;
     title: string;
@@ -410,19 +423,29 @@ export function FutebolAgendaOperacional() {
     });
     if (tenantFilter) overviewParams.set("tenantId", tenantFilter);
     if (categoryFilter !== "all") overviewParams.set("category", categoryFilter);
+    const paramsAllTypes = new URLSearchParams({ from, to, excludeBirthdays: "1" });
+    if (tenantFilter) paramsAllTypes.set("tenantId", tenantFilter);
+    if (categoryFilter !== "all") paramsAllTypes.set("category", categoryFilter);
     try {
-      const [calRes, ovRes] = await Promise.all([
+      const [calRes, ovRes, calAllRes] = await Promise.all([
         api.get<FootballAgendaCalendarItem[]>(`/futebol-agenda/calendar?${params}`),
         api.get<FootballAgendaOverview>(`/futebol-agenda/overview?${overviewParams}`),
+        api.get<FootballAgendaCalendarItem[]>(`/futebol-agenda/calendar?${paramsAllTypes}`),
       ]);
       setItems(
         Array.isArray(calRes.data)
           ? calRes.data.filter((item) => item.type !== "aniversario")
           : [],
       );
+      setItemsAllTypes(
+        Array.isArray(calAllRes.data)
+          ? calAllRes.data.filter((item) => item.type !== "aniversario")
+          : [],
+      );
       setOverview(ovRes.data ?? null);
     } catch {
       setItems([]);
+      setItemsAllTypes([]);
       setOverview(null);
     } finally {
       setLoading(false);
@@ -469,6 +492,21 @@ export function FutebolAgendaOperacional() {
     return map;
   }, [visibleItems]);
 
+  const byDayRepeatEligible = useMemo(() => {
+    const visible =
+      spaceFilter === "all"
+        ? itemsAllTypes
+        : itemsAllTypes.filter((item) => item.spaceId === spaceFilter);
+    const map = new Map<string, FootballAgendaCalendarItem[]>();
+    for (const item of visible) {
+      const key = resolveAgendaCalendarDateKey(item);
+      const list = map.get(key) ?? [];
+      list.push(item);
+      map.set(key, list);
+    }
+    return map;
+  }, [itemsAllTypes, spaceFilter]);
+
   const monthLabel = periodLabel(focusDate, viewMode);
   const today = todayKey();
 
@@ -503,6 +541,15 @@ export function FutebolAgendaOperacional() {
     });
   };
 
+  const toggleFormRepeatWeekday = (day: number) => {
+    setFormRepeatWeekdays((prev) => {
+      const next = new Set(prev);
+      if (next.has(day)) next.delete(day);
+      else next.add(day);
+      return next;
+    });
+  };
+
   const openRepeatDialog = (dateKey: string) => {
     if (!tenantFilter) {
       setRepeatFeedback({
@@ -513,16 +560,13 @@ export function FutebolAgendaOperacional() {
       });
       return;
     }
-    const count = (byDay.get(dateKey) ?? []).filter(
-      (item) =>
-        item.source === "entry" && item.type !== "jogo" && item.type !== "aniversario",
-    ).length;
+    const count = repeatableEntryCount(dateKey);
     if (count === 0) {
       setRepeatFeedback({
         open: true,
         title: "Nada para replicar",
         message:
-          "Este dia não tem compromissos cadastrados replicáveis (jogos e aniversários não entram).",
+          "Este dia não tem atividades cadastradas replicáveis (treino, reunião, preparação…). Jogos de viagem/logística e aniversários não entram.",
         variant: "warning",
       });
       return;
@@ -566,20 +610,14 @@ export function FutebolAgendaOperacional() {
       setRepeatFeedback({
         open: true,
         title: "Programação replicada",
-        message: `${data.created} compromisso(s) criado(s) em ${data.targetDays} dia(s).${conflictNote}`,
+        message: `${data.created} atividade(s) criada(s) em ${data.targetDays} dia(s) (${data.sourceCount} no dia base).${conflictNote}`,
         variant: data.created > 0 ? "success" : "warning",
       });
     } catch (e: unknown) {
-      const msg =
-        e && typeof e === "object" && "response" in e
-          ? (e as { response?: { data?: { message?: string | string[] } } }).response?.data
-              ?.message
-          : null;
-      const detail = Array.isArray(msg) ? msg.join(", ") : typeof msg === "string" ? msg : null;
       setRepeatFeedback({
         open: true,
         title: "Erro",
-        message: detail ?? "Não foi possível replicar a programação.",
+        message: extractAgendaApiMessage(e) ?? "Não foi possível replicar a programação.",
         variant: "error",
       });
     } finally {
@@ -587,14 +625,16 @@ export function FutebolAgendaOperacional() {
     }
   };
 
-  const repeatableCountForDay = useCallback(
+  const repeatableEntryCount = useCallback(
     (dateKey: string) =>
-      (byDay.get(dateKey) ?? []).filter(
+      (byDayRepeatEligible.get(dateKey) ?? []).filter(
         (item) =>
           item.source === "entry" && item.type !== "jogo" && item.type !== "aniversario",
       ).length,
-    [byDay],
+    [byDayRepeatEligible],
   );
+
+  const repeatableCountForDay = repeatableEntryCount;
 
   const renderRepeatButton = (dateKey: string, size: "sm" | "default" = "sm") => (
     <Button
@@ -682,6 +722,8 @@ export function FutebolAgendaOperacional() {
     const base = dateKey ?? today;
     const tid = tenantFilter || tenants[0]?.id || "";
     setEditingId(null);
+    setFormRepeatWeekdays(new Set());
+    setFormRepeatUntilDate("");
     setForm({
       ...emptyForm(),
       tenantId: tid,
@@ -929,6 +971,10 @@ export function FutebolAgendaOperacional() {
       setError("Informe o adversário do jogo.");
       return;
     }
+    if (!editingId && formRepeatWeekdays.size > 0 && !formRepeatUntilDate) {
+      setError("Informe a data limite para repetir a atividade.");
+      return;
+    }
     setSaving(true);
     setError(null);
     const period = isAgendaDayPeriod(form.dayPeriod) ? form.dayPeriod : null;
@@ -963,6 +1009,36 @@ export function FutebolAgendaOperacional() {
 
       if (form.type === "jogo" && entryId) {
         await ensureTravelForFormEntry(entryId);
+      }
+
+      if (
+        !editingId &&
+        entryId &&
+        form.type !== "jogo" &&
+        formRepeatWeekdays.size > 0 &&
+        formRepeatUntilDate
+      ) {
+        try {
+          await api.post<FootballAgendaRepeatDayResult>("/futebol-agenda/entries/repeat-day", {
+            tenantId: form.tenantId,
+            sourceDate: form.startAt,
+            untilDate: formRepeatUntilDate,
+            weekdays: [...formRepeatWeekdays].sort((a, b) => a - b),
+            category: form.category || undefined,
+            entryIds: [entryId],
+            skipExisting: true,
+          });
+        } catch (repeatErr: unknown) {
+          const repeatMsg = extractAgendaApiMessage(repeatErr);
+          setRepeatFeedback({
+            open: true,
+            title: "Atividade salva — replicação parcial",
+            message:
+              repeatMsg ??
+              "A atividade foi criada, mas não foi possível repetir nos outros dias.",
+            variant: "warning",
+          });
+        }
       }
 
       await load();
@@ -1685,6 +1761,43 @@ export function FutebolAgendaOperacional() {
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               />
             </div>
+            {!editingId && form.type !== "jogo" ? (
+              <div className="space-y-3 rounded-lg border border-border/60 p-3">
+                <Label>Repetir nos dias da semana (opcional)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {WEEKDAY_LABELS.map((label, idx) => {
+                    const active = formRepeatWeekdays.has(idx);
+                    return (
+                      <button
+                        key={`form-repeat-${label}`}
+                        type="button"
+                        onClick={() => toggleFormRepeatWeekday(idx)}
+                        className={cn(
+                          "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors",
+                          active
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50",
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {formRepeatWeekdays.size > 0 ? (
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="agenda-form-repeat-until">Repetir até *</Label>
+                    <Input
+                      id="agenda-form-repeat-until"
+                      type="date"
+                      className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                      value={formRepeatUntilDate}
+                      onChange={(e) => setFormRepeatUntilDate(e.target.value)}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </div>
           <DialogFooter className="flex-col gap-2 sm:flex-row">
@@ -1755,8 +1868,8 @@ export function FutebolAgendaOperacional() {
             </div>
             {repeatSourceDate ? (
               <p className="text-sm text-muted-foreground">
-                {repeatableCountForDay(repeatSourceDate)} compromisso(s) base ·{" "}
-                {repeatWeekdays.size} dia(s) da semana selecionado(s)
+                {repeatableCountForDay(repeatSourceDate)} atividade(s) no dia base (treino, reunião,
+                preparação, compromisso…) · {repeatWeekdays.size} dia(s) da semana selecionado(s)
               </p>
             ) : null}
           </div>

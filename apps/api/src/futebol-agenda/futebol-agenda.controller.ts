@@ -157,6 +157,7 @@ export class FutebolAgendaController {
       weekdays: number[];
       untilDate: string;
       category?: string;
+      entryIds?: string[];
       skipExisting?: boolean;
       allowConflict?: boolean;
     },
