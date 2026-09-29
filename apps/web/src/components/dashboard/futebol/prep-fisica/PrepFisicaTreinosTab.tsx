@@ -30,6 +30,12 @@ import type {
   CoachTrainingSession,
 } from "@/lib/treinadores-types";
 import { COACH_ACTIVITY_KINDS, COACH_TRAINING_ATTACHMENT_KINDS } from "@/lib/treinadores-types";
+import {
+  decodePrepBlockFields,
+  encodePrepBlockFields,
+  PREP_BLOCK_MODE_OPTIONS,
+  type PrepBlockRelationMode,
+} from "@/lib/prep-fisica-block-ui";
 import { PrepFisicaPlanLibrary } from "./PrepFisicaPlanLibrary";
 import { TreinadoresMediaPicker } from "../treinadores/TreinadoresMediaPicker";
 
@@ -59,8 +65,25 @@ interface Props {
   context: PrepContextResponse | null;
 }
 
-function emptyActivities(): CoachTrainingActivity[] {
-  return [{ kind: "aquecimento", title: "", description: "", durationMinutes: null, mediaUrl: "" }];
+type TrainingObjectiveOption = { id: string; title: string; description?: string | null };
+
+type PrepActivityDraft = CoachTrainingActivity & {
+  objectiveId?: string;
+  objectiveText?: string;
+};
+
+function emptyActivities(): PrepActivityDraft[] {
+  return [
+    {
+      kind: "aquecimento",
+      title: "",
+      description: "",
+      durationMinutes: null,
+      mediaUrl: "",
+      objectiveId: "",
+      objectiveText: "",
+    },
+  ];
 }
 
 function emptyAttachments(): AttachmentDraft[] {
@@ -96,8 +119,15 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
   const [planTemplateId, setPlanTemplateId] = useState("");
   const [agendaOptions, setAgendaOptions] = useState<CoachAgendaTreinoOption[]>([]);
   const [attachments, setAttachments] = useState<AttachmentDraft[]>(emptyAttachments());
-  const [activities, setActivities] = useState<CoachTrainingActivity[]>(emptyActivities());
+  const [activities, setActivities] = useState<PrepActivityDraft[]>(emptyActivities());
   const [showActivities, setShowActivities] = useState(false);
+  const [trainingObjectives, setTrainingObjectives] = useState<TrainingObjectiveOption[]>([]);
+  const [newObjectiveByIdx, setNewObjectiveByIdx] = useState<Record<number, string>>({});
+  const [creatingObjectiveIdx, setCreatingObjectiveIdx] = useState<number | null>(null);
+  const [blockMode, setBlockMode] = useState<PrepBlockRelationMode>("separate");
+  const [blockSequentialOrder, setBlockSequentialOrder] = useState(1);
+  const [blockPeerSessionId, setBlockPeerSessionId] = useState("");
+  const [daySessions, setDaySessions] = useState<CoachTrainingSession[]>([]);
   const [playerEntries, setPlayerEntries] = useState<PlayerEntryDraft[]>([]);
   const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
     open: false,
@@ -123,6 +153,17 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
   }, [tenantId, category]);
 
   useEffect(() => {
+    if (!tenantId) {
+      setTrainingObjectives([]);
+      return;
+    }
+    api
+      .get<TrainingObjectiveOption[]>(`/prep-fisica/objectives?tenantId=${encodeURIComponent(tenantId)}`)
+      .then(({ data }) => setTrainingObjectives(Array.isArray(data) ? data : []))
+      .catch(() => setTrainingObjectives([]));
+  }, [tenantId]);
+
+  useEffect(() => {
     if (!tenantId || !sessionDate) {
       setAgendaOptions([]);
       return;
@@ -133,6 +174,19 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
       .get<CoachAgendaTreinoOption[]>(`/prep-fisica/agenda-treinos?${params}`)
       .then(({ data }) => setAgendaOptions(Array.isArray(data) ? data : []))
       .catch(() => setAgendaOptions([]));
+  }, [tenantId, category, sessionDate]);
+
+  useEffect(() => {
+    if (!tenantId || !sessionDate) {
+      setDaySessions([]);
+      return;
+    }
+    const params = new URLSearchParams({ tenantId, sessionDate });
+    if (category) params.set("category", category);
+    api
+      .get<CoachTrainingSession[]>(`/prep-fisica/training-sessions?${params}`)
+      .then(({ data }) => setDaySessions(Array.isArray(data) ? data : []))
+      .catch(() => setDaySessions([]));
   }, [tenantId, category, sessionDate]);
 
   const resetForm = () => {
@@ -150,7 +204,44 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
     setAttachments(emptyAttachments());
     setActivities(emptyActivities());
     setShowActivities(false);
+    setBlockMode("separate");
+    setBlockSequentialOrder(1);
+    setBlockPeerSessionId("");
     setPlayerEntries(emptyPlayerEntries(context?.players ?? []));
+  };
+
+  const createObjectiveForActivity = async (idx: number) => {
+    const title = (newObjectiveByIdx[idx] ?? "").trim();
+    if (!title || !tenantId) return;
+    setCreatingObjectiveIdx(idx);
+    try {
+      const { data } = await api.post<TrainingObjectiveOption>("/prep-fisica/objectives", {
+        tenantId,
+        title,
+      });
+      if (data?.id) {
+        setTrainingObjectives((prev) => {
+          if (prev.some((o) => o.id === data.id)) return prev;
+          return [...prev, data].sort((a, b) => a.title.localeCompare(b.title));
+        });
+        setActivities((prev) => {
+          const next = [...prev];
+          const row = next[idx];
+          if (!row) return prev;
+          next[idx] = { ...row, objectiveId: data.id, objectiveText: "" };
+          return next;
+        });
+        setNewObjectiveByIdx((prev) => ({ ...prev, [idx]: "" }));
+      }
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível cadastrar o objetivo.",
+      });
+    } finally {
+      setCreatingObjectiveIdx(null);
+    }
   };
 
   useEffect(() => {
@@ -169,6 +260,15 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
       setStaffId(data.staffId ?? data.staff?.id ?? "");
       setLocation((data as { location?: string }).location ?? "");
       setAgendaEntryId(data.agendaEntryId ?? data.agendaEntry?.id ?? "");
+      const blockMeta = decodePrepBlockFields({
+        id: data.id,
+        blockGroupId: (data as { blockGroupId?: string | null }).blockGroupId,
+        agendaEntryId: data.agendaEntryId ?? data.agendaEntry?.id,
+        blockSequence: (data as { blockSequence?: number | null }).blockSequence,
+      });
+      setBlockMode(blockMeta.mode);
+      setBlockSequentialOrder(blockMeta.sequentialOrder || 1);
+      setBlockPeerSessionId(blockMeta.peerSessionId ?? "");
       setPlanTemplateId(data.planTemplateId ?? data.planTemplate?.id ?? "");
       setAttachments(
         (data.attachments ?? []).length > 0
@@ -182,13 +282,20 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
       setShowActivities((data.activities ?? []).some((a) => a.title?.trim()));
       setActivities(
         data.activities.length > 0
-          ? data.activities.map((a) => ({
-              kind: a.kind,
-              title: a.title,
-              description: a.description ?? "",
-              durationMinutes: a.durationMinutes,
-              mediaUrl: a.mediaUrl ?? "",
-            }))
+          ? data.activities.map((a) => {
+              const ext = a as PrepActivityDraft & {
+                objective?: { id: string; title: string } | null;
+              };
+              return {
+                kind: a.kind,
+                title: a.title,
+                description: a.description ?? "",
+                durationMinutes: a.durationMinutes,
+                mediaUrl: a.mediaUrl ?? "",
+                objectiveId: ext.objectiveId ?? ext.objective?.id ?? "",
+                objectiveText: ext.objectiveText ?? "",
+              };
+            })
           : emptyActivities(),
       );
       const byId = new Map(data.playerEntries.map((e) => [e.playerId, e]));
@@ -231,6 +338,13 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
     }
     setSaving(true);
     try {
+      const blockFields = encodePrepBlockFields({
+        mode: blockMode,
+        sessionId: selectedId || "draft",
+        agendaEntryId: agendaEntryId || null,
+        sequentialOrder: blockSequentialOrder,
+        peerSessionId: blockPeerSessionId || null,
+      });
       const payload = {
         id: selectedId || undefined,
         tenantId,
@@ -245,6 +359,8 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
         status,
         agendaEntryId: agendaEntryId || null,
         planTemplateId: planTemplateId || null,
+        blockGroupId: blockFields.blockGroupId,
+        blockSequence: blockFields.blockSequence,
         attachments: attachments.filter((a) => a.fileUrl.trim()),
         activities: showActivities
           ? activities
@@ -253,6 +369,8 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
                 kind: a.kind,
                 title: a.title.trim(),
                 description: a.description || null,
+                objectiveId: a.objectiveId?.trim() || null,
+                objectiveText: !a.objectiveId?.trim() ? a.objectiveText?.trim() || null : null,
                 durationMinutes: a.durationMinutes ?? null,
                 sortOrder: i,
                 mediaUrl: a.mediaUrl || null,
@@ -432,6 +550,53 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
             </div>
           ) : null}
 
+          <div className="space-y-3 rounded-xl border border-border/60 bg-muted/20 p-4">
+            <Label>Relação com outros treinos do dia (minutos)</Label>
+            <NativeSelectField
+              value={blockMode}
+              onChange={(e) => setBlockMode(e.target.value as PrepBlockRelationMode)}
+              options={PREP_BLOCK_MODE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+            />
+            <p className="text-xs text-muted-foreground">
+              {PREP_BLOCK_MODE_OPTIONS.find((o) => o.value === blockMode)?.hint}
+            </p>
+            {blockMode === "simultaneous" && !agendaEntryId ? (
+              <div className="space-y-2">
+                <Label className="text-xs">Mesmo bloco que outra sessão (sem agenda)</Label>
+                <NativeSelectField
+                  value={blockPeerSessionId}
+                  onChange={(e) => setBlockPeerSessionId(e.target.value)}
+                  placeholder="Selecione a sessão de referência…"
+                  options={daySessions
+                    .filter((s) => s.id !== selectedId)
+                    .map((s) => ({
+                      value: s.id,
+                      label: `${s.sessionDate}${s.startTime ? ` · ${s.startTime}` : ""}${s.category ? ` · ${s.category}` : ""}`,
+                    }))}
+                />
+              </div>
+            ) : null}
+            {blockMode === "simultaneous" && agendaEntryId ? (
+              <p className="text-xs text-emerald-400/90">
+                Com o compromisso da agenda selecionado, os minutos serão consolidados com outras sessões
+                finalizadas no mesmo horário.
+              </p>
+            ) : null}
+            {blockMode === "sequential" ? (
+              <div className="space-y-2">
+                <Label className="text-xs">Ordem do bloco no dia</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={99}
+                  className="max-w-[120px] text-foreground"
+                  value={blockSequentialOrder}
+                  onChange={(e) => setBlockSequentialOrder(Math.max(1, Number(e.target.value) || 1))}
+                />
+              </div>
+            ) : null}
+          </div>
+
           <div className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
             <div className="flex items-center justify-between gap-2">
               <Label>Planos anexados (PDF ou vídeo)</Label>
@@ -596,7 +761,15 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
                     onClick={() =>
                       setActivities((prev) => [
                         ...prev,
-                        { kind: "principal", title: "", description: "", durationMinutes: null, mediaUrl: "" },
+                        {
+                          kind: "principal",
+                          title: "",
+                          description: "",
+                          durationMinutes: null,
+                          mediaUrl: "",
+                          objectiveId: "",
+                          objectiveText: "",
+                        },
                       ])
                     }
                   >
@@ -646,6 +819,75 @@ export function PrepFisicaTreinosTab({ tenantId, category, context }: Props) {
                           setActivities(next);
                         }}
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Objetivo da atividade</Label>
+                      <NativeSelectField
+                        value={a.objectiveId || ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          const next = [...activities];
+                          if (v === "__new__") {
+                            next[idx] = { ...a, objectiveId: "", objectiveText: "" };
+                          } else {
+                            next[idx] = { ...a, objectiveId: v, objectiveText: "" };
+                          }
+                          setActivities(next);
+                        }}
+                        placeholder="Selecione ou cadastre…"
+                        options={[
+                          { value: "", label: "Sem objetivo cadastrado" },
+                          ...trainingObjectives.map((o) => ({ value: o.id, label: o.title })),
+                          { value: "__new__", label: "+ Cadastrar novo objetivo…" },
+                        ]}
+                      />
+                      {a.objectiveId ? (
+                        <p className="text-xs text-muted-foreground">
+                          Objetivo:{" "}
+                          {trainingObjectives.find((o) => o.id === a.objectiveId)?.title ?? "Selecionado"}
+                        </p>
+                      ) : null}
+                      {(!a.objectiveId || a.objectiveId === "__new__") && (
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <Label className="text-xs">Novo objetivo (reutilizável)</Label>
+                            <Input
+                              value={newObjectiveByIdx[idx] ?? ""}
+                              placeholder="Ex.: Força explosiva"
+                              onChange={(e) =>
+                                setNewObjectiveByIdx((prev) => ({ ...prev, [idx]: e.target.value }))
+                              }
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            disabled={creatingObjectiveIdx === idx}
+                            onClick={() => void createObjectiveForActivity(idx)}
+                          >
+                            {creatingObjectiveIdx === idx ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Salvar objetivo"
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                      {!a.objectiveId ? (
+                        <div className="space-y-1">
+                          <Label className="text-xs">Texto livre (opcional)</Label>
+                          <Input
+                            value={a.objectiveText ?? ""}
+                            placeholder="Objetivo só desta sessão"
+                            onChange={(e) => {
+                              const next = [...activities];
+                              next[idx] = { ...a, objectiveText: e.target.value };
+                              setActivities(next);
+                            }}
+                          />
+                        </div>
+                      ) : null}
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs">Descrição</Label>

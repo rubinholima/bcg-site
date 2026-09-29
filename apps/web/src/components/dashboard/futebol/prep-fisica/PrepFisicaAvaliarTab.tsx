@@ -31,7 +31,6 @@ export function PrepFisicaAvaliarTab({ tenantId, category, context }: Props) {
   const [sessions, setSessions] = useState<CoachTrainingSession[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [entries, setEntries] = useState<EntryDraft[]>([]);
-  const [sessionDate, setSessionDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
     open: false,
@@ -57,7 +56,6 @@ export function PrepFisicaAvaliarTab({ tenantId, category, context }: Props) {
     if (!selectedId) return;
     api.get<CoachTrainingSession>(`/prep-fisica/training-sessions/${selectedId}`).then(({ data }) => {
       if (!data) return;
-      setSessionDate(data.sessionDate);
       const byId = new Map(data.playerEntries.map((e) => [e.playerId, e]));
       setEntries(
         (context?.players ?? []).map((p) => {
@@ -75,18 +73,15 @@ export function PrepFisicaAvaliarTab({ tenantId, category, context }: Props) {
   }, [selectedId, context?.players]);
 
   const handleSave = async () => {
-    if (!selectedId || !sessionDate) return;
+    if (!selectedId) return;
     setSaving(true);
     try {
-      await api.post("/prep-fisica/training-sessions", {
-        id: selectedId,
+      await api.patch(`/prep-fisica/training-sessions/${selectedId}/player-entries`, {
         tenantId,
-        category: category || null,
-        sessionDate,
-        status: "finalizado",
         playerEntries: entries.map((e) => ({
           playerId: e.playerId,
           available: e.available,
+          unavailableReason: e.available ? null : "Indisponível",
           rating: e.rating === "" ? null : Number(e.rating),
           notes: e.notes || null,
         })),

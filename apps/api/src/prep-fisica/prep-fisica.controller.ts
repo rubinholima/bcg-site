@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -48,9 +49,17 @@ export class PrepFisicaController {
   }
 
   @Get('training-sessions')
-  listTrainingSessions(@Query('tenantId') tenantId: string, @Query('category') category?: string) {
+  listTrainingSessions(
+    @Query('tenantId') tenantId: string,
+    @Query('category') category?: string,
+    @Query('sessionDate') sessionDate?: string,
+  ) {
     if (!tenantId?.trim()) return [];
-    return this.service.listTrainingSessions(tenantId.trim(), category?.trim() || undefined);
+    return this.service.listTrainingSessions(
+      tenantId.trim(),
+      category?.trim() || undefined,
+      sessionDate?.trim() || undefined,
+    );
   }
 
   @Get('training-sessions/:id')
@@ -96,6 +105,19 @@ export class PrepFisicaController {
         : undefined,
     };
     return this.service.upsertTrainingSession(input);
+  }
+
+  @Patch('training-sessions/:id/player-entries')
+  patchPlayerEntries(
+    @Param('id') id: string,
+    @Body() body: { tenantId?: string; playerEntries?: UpsertPrepSessionInput['playerEntries'] },
+  ) {
+    const tenantId = body?.tenantId?.trim();
+    if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
+    if (!Array.isArray(body.playerEntries)) {
+      throw new BadRequestException('playerEntries é obrigatório');
+    }
+    return this.service.updateSessionPlayerEntries(id, tenantId, body.playerEntries);
   }
 
   @Delete('training-sessions/:id')

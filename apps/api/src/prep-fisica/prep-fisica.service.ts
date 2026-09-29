@@ -23,6 +23,7 @@ import {
   computeCanonicalTrainingMinutesForPlayer,
   type TrainingSessionForMinutes,
 } from './prep-load-minutes.util';
+import { normalizeIndepBlockGroupId } from './prep-block-mapping.util';
 
 function clampRating(value: unknown): number | null {
   if (value == null || value === '') return null;
@@ -149,12 +150,13 @@ export class PrepFisicaService {
     });
   }
 
-  listTrainingSessions(tenantId: string, category?: string) {
+  listTrainingSessions(tenantId: string, category?: string, sessionDate?: string) {
     return this.prisma.coachTrainingSession.findMany({
       where: {
         tenantId,
         sessionDomain: TRAINING_SESSION_DOMAIN.PREP,
         ...(category ? { category } : {}),
+        ...(sessionDate ? { sessionDate } : {}),
       },
       orderBy: [{ sessionDate: 'desc' }, { createdAt: 'desc' }],
       include: coachTrainingSessionInclude,
@@ -213,6 +215,14 @@ export class PrepFisicaService {
       });
     } else {
       session = await this.prisma.coachTrainingSession.create({ data });
+    }
+
+    const normalizedBg = normalizeIndepBlockGroupId(session.blockGroupId, session.id);
+    if (normalizedBg !== session.blockGroupId) {
+      session = await this.prisma.coachTrainingSession.update({
+        where: { id: session.id },
+        data: { blockGroupId: normalizedBg },
+      });
     }
 
     if (input.activities) {
@@ -283,6 +293,45 @@ export class PrepFisicaService {
     }
 
     const full = await this.getTrainingSession(session.id);
+    if (!full) throw new NotFoundException('Treino não encontrado');
+    return full;
+  }
+
+  async updateSessionPlayerEntries(
+    sessionId: string,
+    tenantId: string,
+    entries: Array<{
+      playerId: string;
+      available?: boolean;
+      unavailableReason?: string | null;
+      rating?: number | null;
+      notes?: string | null;
+    }>,
+  ) {
+    const session = await this.prisma.coachTrainingSession.findFirst({
+      where: { id: sessionId, tenantId, sessionDomain: TRAINING_SESSION_DOMAIN.PREP },
+    });
+    if (!session) throw new NotFoundException('Treino não encontrado');
+
+    await this.prisma.coachTrainingPlayerEntry.deleteMany({ where: { sessionId } });
+    if (entries.length > 0) {
+      await this.prisma.coachTrainingPlayerEntry.createMany({
+        data: entries.map((e) => ({
+          sessionId,
+          playerId: e.playerId,
+          available: e.available !== false,
+          unavailableReason: e.available === false ? e.unavailableReason?.trim() || 'Indisponível' : null,
+          rating: clampRating(e.rating),
+          notes: e.notes?.trim() || null,
+        })),
+      });
+    }
+
+    if (session.status === 'finalizado' && session.category) {
+      await this.loadSync.syncForTrainingDay(session.tenantId, session.category, session.sessionDate);
+    }
+
+    const full = await this.getTrainingSession(sessionId);
     if (!full) throw new NotFoundException('Treino não encontrado');
     return full;
   }
