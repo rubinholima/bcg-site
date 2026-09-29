@@ -88,6 +88,31 @@ export type ExecutiveFinanceSummary = {
   lancamentosVencidos?: number;
 };
 
+export type ExecutiveNegotiationsSummary = {
+  inProgress: number;
+  agreed: number;
+  effective: number;
+  cancelled: number;
+  expired: number;
+  totalNegotiatedValue: number;
+  periodNegotiatedValue: number;
+  byType: Record<string, { count: number; value: number }>;
+  byStatus: Record<string, { count: number; value: number }>;
+  byClub: Record<string, { count: number; value: number }>;
+  averageNegotiatedPercentage: number | null;
+  averageRetainedPercentage: number | null;
+  installments: {
+    total: number;
+    paidAmount: number;
+    pendingAmount: number;
+    overdueAmount: number;
+    overdueCount: number;
+    upcomingDueCount: number;
+  };
+  purchaseOptionsApproaching: number;
+  topClubsByValue: Array<{ name: string; count: number; value: number }>;
+};
+
 export type ExecutiveDashboardDto = {
   generatedAt: string;
   filters: { tenantId?: string; category?: string; periodDays: number };
@@ -103,5 +128,6 @@ export type ExecutiveDashboardDto = {
   logistics: ExecutiveLogisticsSummary | null;
   agenda: ExecutiveAgendaItem[];
   finance: ExecutiveFinanceSummary | null;
+  negotiations: ExecutiveNegotiationsSummary | null;
   quickActions: Array<{ label: string; href: string; moduleSlug: string }>;
 };

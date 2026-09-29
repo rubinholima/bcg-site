@@ -641,6 +641,162 @@ export class PlayerNegotiationsService {
     };
   }
 
+  /** Agregação para Dashboard Executivo (multi-tenant, período, categoria opcional). */
+  async executiveSummary(
+    input: { tenantIds: string[]; periodDays: number; category?: string },
+    allowed: string[] | null,
+  ) {
+    if (!input.tenantIds.length) {
+      return this.emptyExecutiveSummary();
+    }
+
+    const today = startOfTodayUtc();
+    const periodStart = new Date(today);
+    periodStart.setUTCDate(periodStart.getUTCDate() - input.periodDays);
+    const periodEnd = new Date(today);
+    periodEnd.setUTCDate(periodEnd.getUTCDate() + input.periodDays);
+    const in30 = new Date(today);
+    in30.setUTCDate(in30.getUTCDate() + 30);
+
+    let inProgress = 0;
+    let agreed = 0;
+    let effective = 0;
+    let cancelled = 0;
+    let expired = 0;
+    let totalNegotiatedValue = 0;
+    let periodNegotiatedValue = 0;
+    let totalInstallments = 0;
+    let paidAmount = 0;
+    let pendingAmount = 0;
+    let overdueAmount = 0;
+    let overdueInstallmentCount = 0;
+    let upcomingDueCount = 0;
+    const byType: Record<string, { count: number; value: number }> = {};
+    const byStatus: Record<string, { count: number; value: number }> = {};
+    const byClub: Record<string, { count: number; value: number }> = {};
+    let pctNegotiatedSum = 0;
+    let pctRetainedSum = 0;
+    let pctCount = 0;
+
+    for (const tenantId of input.tenantIds) {
+      this.assertTenant(allowed, tenantId);
+      const rows = await this.list({ tenantId }, allowed);
+      for (const n of rows) {
+        if (input.category?.trim() && n.player.category !== input.category.trim()) continue;
+
+        const val = n.totalValue ?? 0;
+        totalNegotiatedValue += val;
+
+        if (n.status === 'in_progress') inProgress += 1;
+        else if (n.status === 'agreed') agreed += 1;
+        else if (n.status === 'effective') effective += 1;
+        else if (n.status === 'cancelled') cancelled += 1;
+        else if (n.status === 'expired') expired += 1;
+
+        if (n.negotiatedAt) {
+          const nd = new Date(n.negotiatedAt);
+          if (nd >= periodStart && nd <= periodEnd) periodNegotiatedValue += val;
+        }
+
+        byType[n.negotiationType] = byType[n.negotiationType] ?? { count: 0, value: 0 };
+        byType[n.negotiationType].count += 1;
+        byType[n.negotiationType].value += val;
+        byStatus[n.status] = byStatus[n.status] ?? { count: 0, value: 0 };
+        byStatus[n.status].count += 1;
+        byStatus[n.status].value += val;
+        const club = n.counterpartyName;
+        byClub[club] = byClub[club] ?? { count: 0, value: 0 };
+        byClub[club].count += 1;
+        byClub[club].value += val;
+
+        if (n.negotiatedPercentage != null) {
+          pctNegotiatedSum += n.negotiatedPercentage;
+          pctCount += 1;
+        }
+        if (n.retainedPercentage != null) pctRetainedSum += n.retainedPercentage;
+
+        for (const i of n.installments) {
+          totalInstallments += 1;
+          const st = i.computedStatus;
+          if (st === 'paid') paidAmount += i.amount;
+          else if (st === 'overdue') {
+            overdueAmount += i.amount;
+            overdueInstallmentCount += 1;
+          } else if (st === 'pending') {
+            pendingAmount += i.amount;
+            if (new Date(i.dueDate) <= in30) upcomingDueCount += 1;
+          }
+        }
+      }
+    }
+
+    const purchaseOptionsApproaching = await this.prisma.playerNegotiation.count({
+      where: {
+        tenantId: { in: input.tenantIds },
+        hasPurchaseOption: true,
+        status: { in: [...NEGOTIATION_ACTIVE_LIST_STATUSES] },
+        purchaseOptionDeadline: { gte: today, lte: periodEnd },
+      },
+    });
+
+    const topClubsByValue = Object.entries(byClub)
+      .map(([name, v]) => ({ name, count: v.count, value: v.value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+
+    return {
+      inProgress,
+      agreed,
+      effective,
+      cancelled,
+      expired,
+      totalNegotiatedValue,
+      periodNegotiatedValue,
+      byType,
+      byStatus,
+      byClub,
+      averageNegotiatedPercentage: pctCount ? pctNegotiatedSum / pctCount : null,
+      averageRetainedPercentage: pctCount ? pctRetainedSum / pctCount : null,
+      installments: {
+        total: totalInstallments,
+        paidAmount,
+        pendingAmount,
+        overdueAmount,
+        overdueCount: overdueInstallmentCount,
+        upcomingDueCount,
+      },
+      purchaseOptionsApproaching,
+      topClubsByValue,
+    };
+  }
+
+  private emptyExecutiveSummary() {
+    return {
+      inProgress: 0,
+      agreed: 0,
+      effective: 0,
+      cancelled: 0,
+      expired: 0,
+      totalNegotiatedValue: 0,
+      periodNegotiatedValue: 0,
+      byType: {} as Record<string, { count: number; value: number }>,
+      byStatus: {} as Record<string, { count: number; value: number }>,
+      byClub: {} as Record<string, { count: number; value: number }>,
+      averageNegotiatedPercentage: null as number | null,
+      averageRetainedPercentage: null as number | null,
+      installments: {
+        total: 0,
+        paidAmount: 0,
+        pendingAmount: 0,
+        overdueAmount: 0,
+        overdueCount: 0,
+        upcomingDueCount: 0,
+      },
+      purchaseOptionsApproaching: 0,
+      topClubsByValue: [] as Array<{ name: string; count: number; value: number }>,
+    };
+  }
+
   exportCsv(
     filters: Parameters<PlayerNegotiationsService['summary']>[0],
     allowed: string[] | null,

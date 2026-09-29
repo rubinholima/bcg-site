@@ -5,6 +5,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ModulesService } from '../modules/modules.service';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { PhysioTryoutClearanceService } from '../fisioterapia/physio-tryout-clearance.service';
+import { PlayerNegotiationsService } from '../player-negotiations/player-negotiations.service';
+import { TenantsService } from '../tenants/tenants.service';
 import { canAccessExecutiveDashboard } from './futebol-executive-access.util';
 
 describe('canAccessExecutiveDashboard', () => {
@@ -46,6 +48,7 @@ describe('FutebolExecutiveService', () => {
     physioPlayerEvaluation: { count: jest.fn().mockResolvedValue(0) },
     coachPlayerEvaluation: { count: jest.fn().mockResolvedValue(0) },
     financeiroLancamento: { count: jest.fn().mockResolvedValue(0) },
+    playerNegotiation: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) },
   };
 
   const modulesService = {
@@ -60,6 +63,14 @@ describe('FutebolExecutiveService', () => {
     getOperationalStatusForProspect: jest.fn().mockResolvedValue({ status: 'aprovado', canStartFieldEvaluation: true }),
   };
 
+  const playerNegotiations = {
+    executiveSummary: jest.fn().mockResolvedValue(null),
+  };
+
+  const tenantsService = {
+    findAll: jest.fn().mockResolvedValue([{ id: 'tenant-1', name: 'Clube' }]),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     modulesService.getSlugsForActor.mockResolvedValue(['tipos', 'futebol_logistica', 'futebol_captacao']);
@@ -71,6 +82,8 @@ describe('FutebolExecutiveService', () => {
         { provide: ModulesService, useValue: modulesService },
         { provide: TenantAccessService, useValue: tenantAccess },
         { provide: PhysioTryoutClearanceService, useValue: physioTryout },
+        { provide: PlayerNegotiationsService, useValue: playerNegotiations },
+        { provide: TenantsService, useValue: tenantsService },
       ],
     }).compile();
 

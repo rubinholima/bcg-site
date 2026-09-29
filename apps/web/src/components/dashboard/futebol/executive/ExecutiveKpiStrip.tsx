@@ -6,8 +6,10 @@ import {
   CalendarDays,
   ClipboardCheck,
   ShieldCheck,
+  Handshake,
   UserPlus,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,6 +24,9 @@ const KPI_ICONS: Record<string, LucideIcon> = {
   alerts: AlertTriangle,
   "captacao-action": UserPlus,
   agenda: CalendarDays,
+  "negotiations-pipeline": Handshake,
+  "negotiations-installments": Wallet,
+  "negotiations-purchase-option": AlertTriangle,
 };
 
 function breakdownLabel(key: string): string {
@@ -30,6 +35,11 @@ function breakdownLabel(key: string): string {
   if (key === "atencao") return "Atenção";
   if (key === "sem_agendamento") return "Sem CT";
   if (key === "aprovacao_supervisor") return "Supervisor";
+  if (key === "em_negociacao") return "Em neg.";
+  if (key === "acordadas") return "Acord.";
+  if (key === "efetivadas") return "Efet.";
+  if (key === "valor_vencido") return "R$ venc.";
+  if (key === "proximas_30d") return "30d";
   return getCategoryLabel(key, "pt") || key.replace(/_/g, " ");
 }
 

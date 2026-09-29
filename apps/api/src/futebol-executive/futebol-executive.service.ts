@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ModulesService } from '../modules/modules.service';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { PhysioTryoutClearanceService } from '../fisioterapia/physio-tryout-clearance.service';
+import { PlayerNegotiationsService } from '../player-negotiations/player-negotiations.service';
+import { TenantsService } from '../tenants/tenants.service';
 import {
   buildPlayerMatchAvailabilityInput,
   getPlayerMatchAvailability,
@@ -22,6 +24,7 @@ import type {
   ExecutiveAgendaItem,
   ExecutiveDashboardDto,
   ExecutiveKpi,
+  ExecutiveNegotiationsSummary,
   ExecutiveSeverity,
 } from './futebol-executive.types';
 
@@ -41,6 +44,8 @@ export class FutebolExecutiveService {
     private readonly modulesService: ModulesService,
     private readonly tenantAccess: TenantAccessService,
     private readonly physioTryout: PhysioTryoutClearanceService,
+    private readonly playerNegotiations: PlayerNegotiationsService,
+    private readonly tenantsService: TenantsService,
   ) {}
 
   async getDashboard(
@@ -82,6 +87,7 @@ export class FutebolExecutiveService {
       logistics,
       agenda,
       finance,
+      negotiations,
     ] = await Promise.all([
       this.buildDecisions(ctx),
       this.buildAlerts(ctx),
@@ -93,6 +99,7 @@ export class FutebolExecutiveService {
       this.buildLogistics(ctx),
       this.buildAgenda(ctx),
       this.buildFinance(ctx),
+      this.buildNegotiations(ctx),
     ]);
 
     const kpis = this.buildKpis(ctx, {
@@ -102,6 +109,7 @@ export class FutebolExecutiveService {
       captacao,
       agenda,
       health,
+      negotiations,
     });
 
     return {
@@ -123,8 +131,41 @@ export class FutebolExecutiveService {
       logistics,
       agenda,
       finance,
+      negotiations,
       quickActions: this.buildQuickActions(modules),
     };
+  }
+
+  private canSeeNegotiationExecutive(modules: Set<string>): boolean {
+    return hasAnyModule(modules, [
+      'cad_jogadores_negociados',
+      'diretoria',
+      'adm_financeiro',
+      'juridico',
+    ]);
+  }
+
+  private async resolveNegotiationTenantIds(ctx: Ctx): Promise<string[]> {
+    if (ctx.tenantId) return [ctx.tenantId];
+    if (ctx.allowedTenants !== null && ctx.allowedTenants.length > 0) {
+      return ctx.allowedTenants;
+    }
+    const all = await this.tenantsService.findAll(true, null);
+    return all.map((t) => t.id);
+  }
+
+  private async buildNegotiations(ctx: Ctx): Promise<ExecutiveNegotiationsSummary | null> {
+    if (!this.canSeeNegotiationExecutive(ctx.modules)) return null;
+    const tenantIds = await this.resolveNegotiationTenantIds(ctx);
+    if (tenantIds.length === 0) return null;
+    return this.playerNegotiations.executiveSummary(
+      {
+        tenantIds,
+        periodDays: ctx.periodDays,
+        category: ctx.category,
+      },
+      ctx.allowedTenants,
+    );
   }
 
   private playerWhere(ctx: Ctx): Prisma.PlayerWhereInput {
@@ -293,6 +334,45 @@ export class FutebolExecutiveService {
     const tenantFilter = ctx.tenantId ? { tenantId: ctx.tenantId } : ctx.allowedTenants
       ? { tenantId: { in: ctx.allowedTenants } }
       : {};
+
+    if (this.canSeeNegotiationExecutive(ctx.modules)) {
+      const tenantIds = await this.resolveNegotiationTenantIds(ctx);
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const deadlineEnd = new Date(today);
+      deadlineEnd.setUTCDate(deadlineEnd.getUTCDate() + ctx.periodDays);
+      const opts =
+        tenantIds.length > 0
+          ? await this.prisma.playerNegotiation.findMany({
+              where: {
+                tenantId: { in: tenantIds },
+                hasPurchaseOption: true,
+                status: { in: ['in_progress', 'agreed', 'effective'] },
+                purchaseOptionDeadline: { gte: today, lte: deadlineEnd },
+              },
+              take: 8,
+              orderBy: { purchaseOptionDeadline: 'asc' },
+              select: {
+                id: true,
+                counterpartyName: true,
+                purchaseOptionDeadline: true,
+                player: { select: { id: true, name: true } },
+              },
+            })
+          : [];
+      for (const o of opts) {
+        items.push({
+          id: `alert-neg-option-${o.id}`,
+          type: 'opcao_compra_negociacao',
+          title: `Opção de compra: ${o.player.name}`,
+          subtitle: `${o.counterpartyName} · ${o.purchaseOptionDeadline?.toISOString().slice(0, 10) ?? ''}`,
+          severity: 'attention',
+          dueAt: o.purchaseOptionDeadline?.toISOString(),
+          actionUrl: '/dashboard/cadastros/jogadores/negociados',
+          moduleRequired: 'cad_jogadores_negociados',
+        });
+      }
+    }
 
     if (hasAnyModule(ctx.modules, ['juridico', 'diretoria', 'tipos'])) {
       const expiring = await this.prisma.legalDocument.findMany({
@@ -1053,6 +1133,7 @@ export class FutebolExecutiveService {
       captacao: Awaited<ReturnType<FutebolExecutiveService['buildCaptacao']>>;
       agenda: ExecutiveAgendaItem[];
       health: Awaited<ReturnType<FutebolExecutiveService['buildHealth']>>;
+      negotiations: ExecutiveNegotiationsSummary | null;
     },
   ): ExecutiveKpi[] {
     const kpis: ExecutiveKpi[] = [];
@@ -1115,6 +1196,39 @@ export class FutebolExecutiveService {
       href: '#agenda',
     });
 
+    if (data.negotiations) {
+      const n = data.negotiations;
+      kpis.push({
+        id: 'negotiations-pipeline',
+        label: 'Negociações',
+        value: n.inProgress + n.agreed,
+        breakdown: {
+          em_negociacao: n.inProgress,
+          acordadas: n.agreed,
+          efetivadas: n.effective,
+        },
+        href: '/dashboard/cadastros/jogadores/negociados',
+      });
+      kpis.push({
+        id: 'negotiations-installments',
+        label: 'Parc. vencidas',
+        value: n.installments.overdueCount,
+        breakdown: {
+          valor_vencido: Math.round(n.installments.overdueAmount),
+          proximas_30d: n.installments.upcomingDueCount,
+        },
+        href: '/dashboard/cadastros/jogadores/negociados',
+      });
+      if (n.purchaseOptionsApproaching > 0) {
+        kpis.push({
+          id: 'negotiations-purchase-option',
+          label: 'Opções compra',
+          value: n.purchaseOptionsApproaching,
+          href: '/dashboard/cadastros/jogadores/negociados',
+        });
+      }
+    }
+
     return kpis;
   }
 
@@ -1144,6 +1258,11 @@ export class FutebolExecutiveService {
       { label: 'Aprovações compras', href: '/dashboard/diretoria/aprovacoes-compras', moduleSlug: 'diretoria' },
       { label: 'Aprovações financeiro', href: '/dashboard/adm/financeiro/aprovacoes', moduleSlug: 'adm_financeiro' },
       { label: 'Elenco', href: '/dashboard/cadastros/jogadores', moduleSlug: 'tipos' },
+      {
+        label: 'Atletas negociados',
+        href: '/dashboard/cadastros/jogadores/negociados',
+        moduleSlug: 'cad_jogadores_negociados',
+      },
       { label: 'Fisioterapia', href: '/dashboard/saude/fisioterapia', moduleSlug: 'saude' },
       { label: 'Avaliação treinador', href: '/dashboard/futebol/treinadores/avaliacao-jogador', moduleSlug: 'futebol_treinadores' },
     ];

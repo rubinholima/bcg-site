@@ -15,6 +15,7 @@ import {
   ExecutiveLogisticsPanel,
   ExecutiveQuickActionsGrid,
 } from "./ExecutiveBottomPanels";
+import { ExecutiveNegotiationsPanel } from "./ExecutiveNegotiationsPanel";
 import type { ExecutiveDashboardDto, TenantOption } from "@/lib/futebol-executive-types";
 import type { FixtureCategoryItem } from "@/lib/fixture-categories";
 
@@ -110,6 +111,12 @@ export function ExecutiveDashboardView({
           {data.logistics ? <ExecutiveLogisticsPanel logistics={data.logistics} /> : null}
           {financeVisible && data.finance ? (
             <ExecutiveFinancePanel finance={data.finance} />
+          ) : null}
+          {data.negotiations ? (
+            <ExecutiveNegotiationsPanel
+              negotiations={data.negotiations}
+              periodDays={periodDays}
+            />
           ) : null}
         </div>
 

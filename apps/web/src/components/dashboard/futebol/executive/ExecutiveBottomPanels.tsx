@@ -10,6 +10,7 @@ import {
   Shield,
   Target,
   UserPlus,
+  Handshake,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type {
@@ -38,6 +39,7 @@ const ACTION_ICONS: Record<string, LucideIcon> = {
   Elenco: UserPlus,
   Fisioterapia: Target,
   "Avaliação treinador": FileBarChart,
+  "Atletas negociados": Handshake,
 };
 
 export function ExecutiveContractsPanel({
