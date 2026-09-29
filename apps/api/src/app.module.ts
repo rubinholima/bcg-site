@@ -48,6 +48,7 @@ import { FutebolExecutiveModule } from './futebol-executive/futebol-executive.mo
 import { FisiologiaModule } from './fisiologia/fisiologia.module';
 import { EnfermariaModule } from './enfermaria/enfermaria.module';
 import { MedicalDeparturesModule } from './medical-departures/medical-departures.module';
+import { MedicalEncountersModule } from './medical-encounters/medical-encounters.module';
 import { PsychologySupportMaterialsModule } from './psychology-support-materials/psychology-support-materials.module';
 import { InfrastructureModule } from './infraestrutura/infrastructure.module';
 import { RolesModule } from './roles/roles.module';
@@ -111,6 +112,7 @@ import { DesenvolvimentoModule } from './desenvolvimento/desenvolvimento.module'
     FisiologiaModule,
     EnfermariaModule,
     MedicalDeparturesModule,
+    MedicalEncountersModule,
     PsychologySupportMaterialsModule,
     InfrastructureModule,
     ComunicacaoModule,

@@ -989,6 +989,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "saude",
         children: [
           {
+            slug: "medico_prontuario",
+            label: "Prontuário",
+            href: "/dashboard/medico/prontuario",
+            icon: Stethoscope,
+            moduleSlug: "medico",
+          },
+          {
             slug: "medico_historico",
             label: "Histórico médico",
             href: "/dashboard/medico",

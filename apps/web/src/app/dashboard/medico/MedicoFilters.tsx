@@ -33,12 +33,15 @@ interface MedicoFiltersProps {
   players: PlayerOption[];
   selectedPlayerId: string;
   onSelectPlayer: (id: string) => void;
+  /** Rota base dos filtros (padrão: histórico médico legado). */
+  basePath?: string;
 }
 
 export function MedicoFilters({
   players,
   selectedPlayerId,
   onSelectPlayer,
+  basePath = "/dashboard/medico",
 }: MedicoFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,9 +76,9 @@ export function MedicoFilters({
       if (t) params.set("tenantId", t);
       if (c) params.set("category", c);
       if (s.trim()) params.set("search", s.trim());
-      router.push(`/dashboard/medico?${params.toString()}`);
+      router.push(`${basePath}?${params.toString()}`);
     },
-    [router, tenantId, category, search]
+    [router, tenantId, category, search, basePath]
   );
 
   const clearFilters = useCallback(() => {
@@ -83,8 +86,8 @@ export function MedicoFilters({
     setCategory("");
     setSearch("");
     onSelectPlayer("");
-    router.push("/dashboard/medico");
-  }, [router, onSelectPlayer]);
+    router.push(basePath);
+  }, [router, onSelectPlayer, basePath]);
 
   const categoryLabel = (cat: string | null | undefined) =>
     cat

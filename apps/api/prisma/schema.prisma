@@ -193,6 +193,7 @@ model Tenant {
   physiologyLoadSessions       PhysiologyLoadSession[]
   nursingSessions              NursingSession[]
   medicalDepartures            PlayerMedicalDeparture[]
+  medicalEncounters            MedicalEncounter[]
   presenceSessions             UserPresenceSession[]
   learningCourses              LearningCourse[]
   learningAssignments          LearningAssignment[]
@@ -1144,6 +1145,7 @@ model Player {
   physiologyLoadEntries      PhysiologyLoadEntry[]
   nursingSessions            NursingSession[]
   medicalDepartures          PlayerMedicalDeparture[]
+  medicalEncounters          MedicalEncounter[]
   @@index([tenantId])
   @@index([tenantId, category])
   @@index([tenantId, cbfRegistration])
@@ -3605,6 +3607,44 @@ model PlayerMedicalDeparture {
   @@index([tenantId, category])
   @@index([careType])
   @@index([transportMode])
+}
+
+/// Atendimento médico (prontuário) — núcleo clínico do módulo Médico
+model MedicalEncounter {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId            String
+  player              Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  category            String?
+  occurredAt          DateTime
+  physicianStaffId    String?
+  physicianName       String?
+  chiefComplaint      String?  @db.Text
+  anamnesis           String?  @db.Text
+  physicalExam        String?  @db.Text
+  diagnosis           String?  @db.Text
+  conduct             String?  @db.Text
+  examsRequested      String?  @db.Text
+  observations        String?  @db.Text
+  restrictTraining    Boolean  @default(false)
+  restrictMatch       Boolean  @default(false)
+  returnForecastAt    DateTime?
+  referPhysio         Boolean  @default(false)
+  referPhysioNotes    String?  @db.Text
+  /// Referência opcional a sessão fisio existente (sem duplicar episódio)
+  referPhysioSessionId String?
+  /// [{ label, fileUrl, kind }]
+  attachments         Json?
+  /// [{ medication, presentation, dose, route, frequency, duration, instructions }]
+  prescriptions       Json?
+  status              String   @default("finalized") // draft | finalized | cancelled
+  createdByUserId     String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  @@index([tenantId, playerId])
+  @@index([playerId, occurredAt])
+  @@index([tenantId, occurredAt])
 }
 
 model NursingSessionDiagnosis {
