@@ -6,6 +6,7 @@ import {
   isFootballManagementRole,
   isFootballOperationalModuleSlug,
 } from './football-domain-access.util';
+import { moduleMatrixRoleSlug } from './module-matrix-role.util';
 
 export interface ModuleWithPermissions {
   slug: string;
@@ -122,8 +123,9 @@ export class ModulesService {
   }
 
   async getSlugsForRole(role: string): Promise<string[]> {
+    const matrixRole = moduleMatrixRoleSlug(role);
     const rows = await this.prisma.moduleRole.findMany({
-      where: { role, canAccess: true },
+      where: { role: matrixRole, canAccess: true },
       include: { module: true },
       orderBy: { module: { sortOrder: 'asc' } },
     });
