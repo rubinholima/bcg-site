@@ -16,6 +16,7 @@ import {
   isValidPlayerEvaluationPeriodKey,
   resolvePlayerEvaluationCumulativeRange,
   validatePlayerEvaluationSubmit,
+  pickCoachPlayerEvaluationPersistedStats,
   type CoachTeamReportPeriodKey,
 } from './coach-player-evaluation.util';
 
@@ -377,6 +378,8 @@ export class CoachPlayerEvaluationService {
       }
     }
 
+    const persistedStats = pickCoachPlayerEvaluationPersistedStats(statsPayload.stats);
+
     const data = {
       tenantId: input.tenantId,
       playerId: input.playerId,
@@ -386,7 +389,7 @@ export class CoachPlayerEvaluationService {
       periodStart: cumulativeRange.start,
       periodEnd: cumulativeRange.end,
       status,
-      ...statsPayload.stats,
+      ...persistedStats,
       ...parsedScores,
       ...averages,
       technicalAssessment: input.technicalAssessment?.trim() || null,
@@ -419,6 +422,12 @@ export class CoachPlayerEvaluationService {
       if ((err as { code?: string }).code === 'P2002') {
         throw new BadRequestException(
           'Já existe avaliação para este atleta neste período.',
+        );
+      }
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('Unknown arg') || msg.includes('Invalid `prisma')) {
+        throw new BadRequestException(
+          'Não foi possível salvar a avaliação. Atualize a página e tente novamente.',
         );
       }
       throw err;

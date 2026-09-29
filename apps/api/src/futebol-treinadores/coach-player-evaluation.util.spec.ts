@@ -4,6 +4,7 @@ import {
   buildIndividualPlayerPeriodStats,
   buildCategorySortOrderMap,
   isHigherCategory,
+  pickCoachPlayerEvaluationPersistedStats,
   resolvePlayerEvaluationCumulativeRange,
 } from './coach-player-evaluation.util';
 
@@ -208,6 +209,37 @@ describe('coach-player-evaluation.util', () => {
     it('identifica categoria superior pelo sortOrder', () => {
       expect(isHigherCategory('sub17', 'sub20', sortMap)).toBe(true);
       expect(isHigherCategory('sub20', 'sub17', sortMap)).toBe(false);
+    });
+  });
+
+  describe('pickCoachPlayerEvaluationPersistedStats', () => {
+    it('remove campos extras retornados só na API de stats', () => {
+      const picked = pickCoachPlayerEvaluationPersistedStats({
+        gamesListed: 15,
+        gamesPlayed: 9,
+        gamesStarted: 1,
+        gamesListedHigherCategory: 0,
+        gamesPlayedHigherCategory: 0,
+        matchMinutes: 173,
+        trainingMinutes: 0,
+        goals: 0,
+        assists: 0,
+        yellowCards: 2,
+        redCards: 1,
+        trainingSessionsCount: 5,
+      });
+      expect(picked).toEqual({
+        gamesListed: 15,
+        gamesPlayed: 9,
+        gamesStarted: 1,
+        gamesListedHigherCategory: 0,
+        gamesPlayedHigherCategory: 0,
+        matchMinutes: 173,
+        trainingMinutes: 0,
+        goals: 0,
+        assists: 0,
+      });
+      expect(Object.keys(picked)).not.toContain('yellowCards');
     });
   });
 });

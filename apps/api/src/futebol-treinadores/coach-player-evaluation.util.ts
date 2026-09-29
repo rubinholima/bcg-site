@@ -43,6 +43,35 @@ export type CoachPlayerPeriodStats = {
   assists: number;
 };
 
+/** Campos persistidos em CoachPlayerEvaluation (sem cartões/contagem extra da API de stats). */
+export const COACH_PLAYER_EVALUATION_PERSISTED_STAT_KEYS = [
+  'gamesListed',
+  'gamesPlayed',
+  'gamesStarted',
+  'gamesListedHigherCategory',
+  'gamesPlayedHigherCategory',
+  'matchMinutes',
+  'trainingMinutes',
+  'goals',
+  'assists',
+] as const satisfies ReadonlyArray<keyof CoachPlayerPeriodStats>;
+
+export function pickCoachPlayerEvaluationPersistedStats(
+  stats: CoachPlayerPeriodStats & Record<string, unknown>,
+): CoachPlayerPeriodStats {
+  return {
+    gamesListed: Number(stats.gamesListed ?? 0),
+    gamesPlayed: Number(stats.gamesPlayed ?? 0),
+    gamesStarted: Number(stats.gamesStarted ?? 0),
+    gamesListedHigherCategory: Number(stats.gamesListedHigherCategory ?? 0),
+    gamesPlayedHigherCategory: Number(stats.gamesPlayedHigherCategory ?? 0),
+    matchMinutes: Number(stats.matchMinutes ?? 0),
+    trainingMinutes: Number(stats.trainingMinutes ?? 0),
+    goals: Number(stats.goals ?? 0),
+    assists: Number(stats.assists ?? 0),
+  };
+}
+
 type MatchAggregate = {
   listed: boolean;
   played: boolean;
