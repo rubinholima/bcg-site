@@ -249,6 +249,7 @@ export const COACH_ATTACHMENT_KINDS = [
 
 export const COACH_TRAINING_ATTACHMENT_KINDS = [
   { value: "plano_treino", label: "Plano de treino (PDF)" },
+  { value: "keeper_scout", label: "Keeper Scout (PDF)" },
   { value: "video_referencia", label: "Vídeo de referência" },
   { value: "outro", label: "Outro" },
 ] as const;

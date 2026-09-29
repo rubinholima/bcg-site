@@ -27,10 +27,12 @@ import type {
   ExecutiveNegotiationsSummary,
   ExecutiveSeasonHighlightsSummary,
   ExecutivePrepPhysiologySummary,
+  ExecutiveGoalkeeperCoachSummary,
   ExecutiveSeverity,
 } from './futebol-executive.types';
 import { SeasonHighlightsService } from '../season-highlights/season-highlights.service';
 import { PrepFisicaService } from '../prep-fisica/prep-fisica.service';
+import { TreinadorGoleirosService } from '../treinador-goleiros/treinador-goleiros.service';
 
 type Ctx = {
   role: string;
@@ -52,6 +54,7 @@ export class FutebolExecutiveService {
     private readonly tenantsService: TenantsService,
     private readonly seasonHighlights: SeasonHighlightsService,
     private readonly prepFisica: PrepFisicaService,
+    private readonly treinadorGoleiros: TreinadorGoleirosService,
   ) {}
 
   async getDashboard(
@@ -964,6 +967,22 @@ export class FutebolExecutiveService {
       );
     }
 
+    let goalkeeperCoach: ExecutiveGoalkeeperCoachSummary | null = null;
+    if (hasModule(ctx.modules, 'futebol_treinador_goleiros') && ctx.tenantId) {
+      const gk = await this.treinadorGoleiros.getExecutiveSummary(
+        ctx.tenantId,
+        ctx.category,
+        ctx.periodDays,
+      );
+      goalkeeperCoach = {
+        gkSessions: gk.gkSessions,
+        crossCategoryParticipations: gk.crossCategoryParticipations,
+        matchAnalysesCompleted: gk.matchAnalysesCompleted,
+        missingAnalysisArtifacts: gk.missingAnalysisArtifacts,
+        actionUrl: gk.actionUrl,
+      };
+    }
+
     return {
       available,
       unavailable,
@@ -971,6 +990,7 @@ export class FutebolExecutiveService {
       activeTransitions,
       seasonHighlights,
       prepPhysiology,
+      goalkeeperCoach,
     };
   }
 

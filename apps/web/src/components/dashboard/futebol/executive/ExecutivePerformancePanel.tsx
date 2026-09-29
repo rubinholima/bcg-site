@@ -74,6 +74,33 @@ export function ExecutivePerformancePanel({
               />
             </>
           ) : null}
+          {performance.goalkeeperCoach ? (
+            <>
+              <ExecutiveCompactStat
+                label="Treinos de goleiros"
+                value={performance.goalkeeperCoach.gkSessions}
+                href={performance.goalkeeperCoach.actionUrl}
+              />
+              <ExecutiveCompactStat
+                label="Cross-category (GK)"
+                value={performance.goalkeeperCoach.crossCategoryParticipations}
+                href={performance.goalkeeperCoach.actionUrl}
+              />
+              <ExecutiveCompactStat
+                label="Análises GK concluídas"
+                value={performance.goalkeeperCoach.matchAnalysesCompleted}
+                href={`${performance.goalkeeperCoach.actionUrl}/analises`}
+              />
+              <ExecutiveCompactStat
+                label="Análises sem artefato"
+                value={performance.goalkeeperCoach.missingAnalysisArtifacts}
+                href={`${performance.goalkeeperCoach.actionUrl}/analises`}
+                highlight={
+                  performance.goalkeeperCoach.missingAnalysisArtifacts > 0 ? "warning" : undefined
+                }
+              />
+            </>
+          ) : null}
         </div>
       </div>
     </section>

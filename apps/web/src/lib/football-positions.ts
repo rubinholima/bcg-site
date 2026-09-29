@@ -150,3 +150,9 @@ export const LEGACY_FIELD_ON_MIGRATE: Partial<
   RW: { code: "EXTREMO", x: 82, y: 25 },
   CF: { code: "CENTROAVANTE", x: 50, y: 12 },
 };
+
+export function isGoalkeeperPositionCode(position: string | null | undefined): boolean {
+  if (!position?.trim()) return false;
+  const n = position.trim().toLowerCase();
+  return n === "goleiro" || n === "gol" || n === "gk" || n === "goleiros";
+}

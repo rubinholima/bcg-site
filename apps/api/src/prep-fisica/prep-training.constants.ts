@@ -1,6 +1,7 @@
 export const TRAINING_SESSION_DOMAIN = {
   COMISSAO: 'comissao_tecnica',
   PREP: 'preparacao_fisica',
+  GOALKEEPER: 'treinador_goleiros',
 } as const;
 
 export type TrainingSessionDomain =

@@ -99,6 +99,15 @@ export class PlayersController {
     return this.service.findTrainingHistory(id, allowed);
   }
 
+  @Get(':id/goalkeeper-history')
+  async findGoalkeeperHistory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.findGoalkeeperHistory(id, allowed);
+  }
+
   @Get(':id/nutrition-history')
   async findNutritionHistory(
     @Req() req: Request & { user: CognitoJwtPayload },

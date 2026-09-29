@@ -412,6 +412,7 @@ export class PlayersService {
       startTime: e.session.startTime,
       endTime: e.session.endTime,
       category: e.session.category,
+      sessionDomain: e.session.sessionDomain,
       status: e.session.status,
       objectives: e.session.objectives,
       staffName: e.session.staff?.name ?? null,
@@ -422,7 +423,31 @@ export class PlayersService {
       unavailableReason: e.unavailableReason,
       rating: e.rating,
       notes: e.notes,
+      playerCategoryAtEntry: e.playerCategoryAtEntry,
+      crossCategory: e.crossCategory,
     }));
+  }
+
+  async findGoalkeeperHistory(playerId: string, allowedTenantIds: string[] | null = null) {
+    const player = await this.findOne(playerId, allowedTenantIds);
+    const training = await this.prisma.coachTrainingPlayerEntry.findMany({
+      where: {
+        playerId,
+        session: { tenantId: player.tenantId, sessionDomain: 'treinador_goleiros' },
+      },
+      orderBy: [{ session: { sessionDate: 'desc' } }],
+      include: {
+        session: { include: { attachments: true, staff: { select: { name: true } } } },
+      },
+    });
+    const analyses = await this.prisma.goalkeeperMatchAnalysisPlayer.findMany({
+      where: { playerId, analysis: { tenantId: player.tenantId } },
+      orderBy: [{ analysis: { matchDate: 'desc' } }],
+      include: {
+        analysis: { include: { attachments: true, staff: { select: { name: true } } } },
+      },
+    });
+    return { player: { id: player.id, name: player.name, category: player.category }, training, analyses };
   }
 
   async findNutritionHistory(playerId: string, allowedTenantIds: string[] | null = null) {

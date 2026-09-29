@@ -65,6 +65,7 @@ import { MasterOpsModule } from './master-ops/master-ops.module';
 import { DesenvolvimentoModule } from './desenvolvimento/desenvolvimento.module';
 import { PlayerNegotiationsModule } from './player-negotiations/player-negotiations.module';
 import { PrepFisicaModule } from './prep-fisica/prep-fisica.module';
+import { TreinadorGoleirosModule } from './treinador-goleiros/treinador-goleiros.module';
 
 @Module({
   imports: [
@@ -132,6 +133,7 @@ import { PrepFisicaModule } from './prep-fisica/prep-fisica.module';
     DesenvolvimentoModule,
     PlayerNegotiationsModule,
     PrepFisicaModule,
+    TreinadorGoleirosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

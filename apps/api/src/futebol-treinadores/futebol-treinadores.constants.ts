@@ -23,6 +23,7 @@ export const COACH_REPORT_ATTACHMENT_KINDS = [
 
 export const COACH_TRAINING_ATTACHMENT_KINDS = [
   'plano_treino',
+  'keeper_scout',
   'video_referencia',
   'outro',
 ] as const;
@@ -32,6 +33,7 @@ export const COACH_TRAINING_ATTACHMENT_LABELS: Record<
   string
 > = {
   plano_treino: 'Plano de treino (PDF)',
+  keeper_scout: 'Keeper Scout (PDF)',
   video_referencia: 'Vídeo de referência',
   outro: 'Outro',
 };

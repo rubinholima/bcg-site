@@ -75,6 +75,14 @@ export type ExecutivePrepPhysiologySummary = {
   actionUrl: string;
 };
 
+export type ExecutiveGoalkeeperCoachSummary = {
+  gkSessions: number;
+  crossCategoryParticipations: number;
+  matchAnalysesCompleted: number;
+  missingAnalysisArtifacts: number;
+  actionUrl: string;
+};
+
 export type ExecutivePerformanceSummary = {
   available: number;
   unavailable: number;
@@ -82,6 +90,7 @@ export type ExecutivePerformanceSummary = {
   activeTransitions: number;
   seasonHighlights: ExecutiveSeasonHighlightsSummary | null;
   prepPhysiology: ExecutivePrepPhysiologySummary | null;
+  goalkeeperCoach: ExecutiveGoalkeeperCoachSummary | null;
 };
 
 export type ExecutiveContractsSummary = {

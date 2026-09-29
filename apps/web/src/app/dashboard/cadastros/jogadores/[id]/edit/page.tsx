@@ -39,6 +39,8 @@ import { resolvePlayerTabInGroups, buildPlayerTabGroups } from "@/lib/player-rec
 import { PlayerRecordGroupedNav } from "@/components/dashboard/players/PlayerRecordGroupedNav";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
 import { PlayerTrainingHistoryTab } from "@/components/dashboard/players/PlayerTrainingHistoryTab";
+import { PlayerGoalkeeperHistoryTab } from "@/components/dashboard/players/PlayerGoalkeeperHistoryTab";
+import { isGoalkeeperPositionCode } from "@/lib/football-positions";
 import { PlayerNegotiationsPanel } from "@/components/dashboard/players/PlayerNegotiationsPanel";
 import {
   FIELD_POSITION_DEFAULTS,
@@ -632,8 +634,14 @@ export default function EditJogadorPage() {
           <CardHeader>
             <CardTitle>Treinos</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <PlayerTrainingHistoryTab playerId={player.id} />
+            {isGoalkeeperPositionCode(player.position) ? (
+              <div className="border-t border-border/60 pt-6">
+                <p className="mb-3 text-sm font-medium">Treinador de goleiros</p>
+                <PlayerGoalkeeperHistoryTab playerId={player.id} />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       )}

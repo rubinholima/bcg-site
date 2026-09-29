@@ -21,5 +21,6 @@ import { PrepFisicaModule } from '../prep-fisica/prep-fisica.module';
   ],
   controllers: [FutebolTreinadoresController],
   providers: [FutebolTreinadoresService, CoachPlayerEvaluationService, ModuleAccessGuard],
+  exports: [FutebolTreinadoresService],
 })
 export class FutebolTreinadoresModule {}

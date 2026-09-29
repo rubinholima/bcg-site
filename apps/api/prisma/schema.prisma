@@ -188,6 +188,8 @@ model Tenant {
   coachPlayerEvaluations       CoachPlayerEvaluation[]
   coachTrainingSessions        CoachTrainingSession[]
   coachTrainingPlanTemplates   CoachTrainingPlanTemplate[]
+  goalkeeperMatchAnalyses      GoalkeeperMatchAnalysis[]
+  goalkeeperReportDistributions GoalkeeperReportDistribution[]
   trainingObjectives           TrainingObjective[]
   physiologySessionRpeTokens   PhysiologySessionRpeToken[]
   physiologySessionRpeSubmissions PhysiologySessionRpeSubmission[]
@@ -318,6 +320,7 @@ model TravelLogistics {
   /** Convocados / passageiros ligados ao cadastro (Player / TechnicalStaff) — base dos relatórios e da ficha do atleta */
   participants          TravelParticipant[]
   coachMatchReport      CoachMatchReport?
+  goalkeeperMatchAnalyses GoalkeeperMatchAnalysis[]
   matchIncidents        FootballMatchIncident[]
   matchAttachments      FootballMatchAttachment[]
 }
@@ -1154,6 +1157,7 @@ model Player {
   coachTeamReportPlayerEvaluations CoachTeamReportPlayerEvaluation[]
   coachPlayerEvaluations           CoachPlayerEvaluation[]
   coachTrainingPlayerEntries CoachTrainingPlayerEntry[]
+  goalkeeperMatchAnalysisPlayers GoalkeeperMatchAnalysisPlayer[]
   physiologyAssessments      PhysiologyAssessment[]
   physiologyHydrations       PhysiologyHydration[]
   physiologyLoadEntries      PhysiologyLoadEntry[]
@@ -1291,6 +1295,7 @@ model FmfMatchReport {
   playerStats         FmfPlayerMatchStat[]
   matchOfficialEvents MatchOfficialEvent[]
   coachMatchReport    CoachMatchReport?
+  goalkeeperMatchAnalyses GoalkeeperMatchAnalysis[]
   coachStatOverride   CoachMatchStatOverride?
   matchIncidents      FootballMatchIncident[]
   matchAttachments    FootballMatchAttachment[]
@@ -1493,6 +1498,7 @@ model TechnicalStaff {
   coachMatchReports    CoachMatchReport[]
   coachTeamReports     CoachTeamReport[]
   coachTrainingSessions CoachTrainingSession[]
+  goalkeeperMatchAnalyses GoalkeeperMatchAnalysis[]
   matchOfficialEvents   MatchOfficialEvent[]
   @@index([tenantId])
   @@index([jobRoleId])
@@ -4114,6 +4120,7 @@ model CoachMatchReport {
   opponentHighlights CoachMatchReportOpponentPlayer[]
   opponentHighlightEvents OpponentHighlightEvent[]
   attachments        CoachMatchReportAttachment[]
+  goalkeeperAnalyses GoalkeeperMatchAnalysis[]
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   @@index([tenantId, category])
@@ -4340,9 +4347,13 @@ model CoachTrainingSession {
   startTime   String?  // HH:mm
   endTime     String?
   objectives  String?  @db.Text
+  /// Treinador de goleiros — características da sessão
+  characteristics String? @db.Text
+  /// Treinador de goleiros — valências físicas
+  physicalQualities String? @db.Text
   notes       String?  @db.Text
   status      String   @default("rascunho") // rascunho | finalizado
-  /// comissao_tecnica | preparacao_fisica
+  /// comissao_tecnica | preparacao_fisica | treinador_goleiros
   sessionDomain String  @default("comissao_tecnica")
   /// field | gym (preparação física)
   location    String?
@@ -4440,8 +4451,78 @@ model CoachTrainingPlayerEntry {
   unavailableReason String?
   rating            Float?
   notes             String? @db.Text
+  /// Categoria oficial do atleta no momento da participação
+  playerCategoryAtEntry String?
+  crossCategory     Boolean @default(false)
   @@unique([sessionId, playerId])
   @@index([playerId])
+}
+
+/// Análise pós-jogo de goleiro(s) — artefatos Keeper Scout + vídeo (CUP360 = registro/distribuição).
+model GoalkeeperMatchAnalysis {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category           String?
+  staffId            String?
+  staff              TechnicalStaff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  authorUserId       String?
+  coachMatchReportId String?
+  coachMatchReport   CoachMatchReport? @relation(fields: [coachMatchReportId], references: [id], onDelete: SetNull)
+  travelLogisticsId  String?
+  travelLogistics    TravelLogistics? @relation(fields: [travelLogisticsId], references: [id], onDelete: SetNull)
+  fmfMatchReportId   String?
+  fmfMatchReport     FmfMatchReport? @relation(fields: [fmfMatchReportId], references: [id], onDelete: SetNull)
+  matchDate          DateTime?
+  opponentName       String?
+  observations       String?  @db.Text
+  highlightsVideoUrl String?
+  status             String   @default("rascunho") // rascunho | finalizado
+  players            GoalkeeperMatchAnalysisPlayer[]
+  attachments        GoalkeeperMatchAnalysisAttachment[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@index([tenantId, category])
+  @@index([tenantId, matchDate])
+  @@index([coachMatchReportId])
+  @@index([travelLogisticsId])
+  @@index([fmfMatchReportId])
+  @@index([staffId])
+}
+
+model GoalkeeperMatchAnalysisPlayer {
+  id                    String @id @default(cuid())
+  analysisId            String
+  analysis              GoalkeeperMatchAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  playerId              String
+  player                Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerCategoryAtEntry String?
+  @@unique([analysisId, playerId])
+  @@index([playerId])
+}
+
+model GoalkeeperMatchAnalysisAttachment {
+  id         String @id @default(cuid())
+  analysisId String
+  analysis   GoalkeeperMatchAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  label      String?
+  fileUrl    String
+  kind       String @default("keeper_scout") // keeper_scout | outro
+  @@index([analysisId])
+}
+
+model GoalkeeperReportDistribution {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  kind          String   // training_session | match_analysis | period_report | goalkeeper_report
+  referenceId   String
+  sentAt        DateTime @default(now())
+  sentByUserId  String?
+  recipients    Json     // string[] emails
+  subject       String?
+  @@index([tenantId, kind, referenceId])
+  @@index([tenantId, sentAt])
 }
 
 /** Estatísticas complementares de jogo (posse, bolas paradas) — manual ou ajuste sobre dados oficiais. */
