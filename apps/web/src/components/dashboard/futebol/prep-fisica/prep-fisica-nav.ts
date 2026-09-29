@@ -1,4 +1,10 @@
-export const PREP_FISICA_NAV = [
+export type PrepFisicaNavItem = {
+  href: string;
+  label: string;
+  exact?: boolean;
+};
+
+export const PREP_FISICA_NAV: PrepFisicaNavItem[] = [
   { href: "/dashboard/futebol/preparacao-fisica", label: "Visão geral", exact: true },
   { href: "/dashboard/futebol/preparacao-fisica/treinos", label: "Treinos" },
   { href: "/dashboard/futebol/preparacao-fisica/planos", label: "Planos" },
@@ -7,4 +13,4 @@ export const PREP_FISICA_NAV = [
   { href: "/dashboard/futebol/preparacao-fisica/carga", label: "Carga / Performance" },
   { href: "/dashboard/futebol/preparacao-fisica/avaliacoes", label: "Avaliações físicas" },
   { href: "/dashboard/futebol/preparacao-fisica/performance", label: "Performance" },
-] as const;
+];

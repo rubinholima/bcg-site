@@ -212,6 +212,11 @@ export type CoachTrainingSession = {
   objectives: string | null;
   notes: string | null;
   status: string;
+  sessionDomain?: string | null;
+  staffId?: string | null;
+  staff?: { id: string; name: string; role?: string } | null;
+  characteristics?: string | null;
+  physicalQualities?: string | null;
   agendaEntryId?: string | null;
   planTemplateId?: string | null;
   agendaEntry?: CoachAgendaTreinoOption | null;
@@ -224,11 +229,14 @@ export type CoachTrainingSession = {
     unavailableReason: string | null;
     rating: number | null;
     notes: string | null;
+    playerCategoryAtEntry?: string | null;
+    crossCategory?: boolean;
     player?: {
       id: string;
       name: string;
       nickname: string | null;
       jerseyNumber: number | null;
+      category?: string | null;
     };
   }>;
 };
