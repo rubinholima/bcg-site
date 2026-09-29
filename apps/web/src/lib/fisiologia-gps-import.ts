@@ -96,7 +96,10 @@ const NICKNAME_KEYS = ["nickname", "nick name", "apelido", "nick"] as const;
 
 const DISTANCE_M_HEADERS = ["distance(m)", "distance m"];
 const LOW_INTENSITY_M_HEADERS = ["[6,00-12,00]km/h (m)"];
-const HIGH_INTENSITY_M_HEADERS = ["[12,00-18,00]km/h (m)"];
+/** Aba distance — col. AD (HUD): distância de alta intensidade 21–24 km/h. */
+const HIGH_INTENSITY_M_HEADERS = ["[21,00-24,00]km/h cnt]", "[21,00-24,00]km/h (m)"];
+/** Aba distance — col. AE (HUD): distância em sprint 24–50 km/h. */
+const SPRINT_DISTANCE_M_HEADERS = ["[24,00-50,00]km/h cnt]", "[24,00-50,00]km/h (m)"];
 const POSITIONING_DURATION_HEADERS = ["positioning duration", "drills duration"];
 const ACCELERATIONS_HEADERS = ["accelerations"];
 const DECELERATIONS_HEADERS = ["decelerations"];
@@ -112,7 +115,8 @@ const SHEET_COLUMN_FALLBACK: Record<
     trainingMinutes: "D",
     maxDistanceM: "E",
     lowIntensityDistanceM: "O",
-    highIntensityDistanceM: "P",
+    highIntensityDistanceM: "AD",
+    sprintDistanceM: "AE",
   },
   acceleration: {
     accelerations: "D",
@@ -260,8 +264,15 @@ function parseHudDateToIso(value: string | undefined): string | undefined {
   return undefined;
 }
 
-function letterToIndex(letter: string): number {
-  return letter.toUpperCase().charCodeAt(0) - 65;
+/** Índice 0-based da coluna Excel (A, Z, AD, AE…). */
+function excelColumnToIndex(column: string): number {
+  const s = column.trim().toUpperCase();
+  if (!/^[A-Z]+$/.test(s)) return -1;
+  let n = 0;
+  for (let i = 0; i < s.length; i++) {
+    n = n * 26 + (s.charCodeAt(i) - 64);
+  }
+  return n - 1;
 }
 
 function headerMatchesAny(header: string, candidates: string[]): boolean {
@@ -273,8 +284,14 @@ function isDistanceMeterHeader(header: string): boolean {
   const norm = normalizeGpsKey(header);
   if (norm.includes("cnt")) return false;
   if (norm.includes("6001200") && norm.includes("m")) return true;
-  if (norm.includes("12001800") && norm.includes("m")) return true;
-  return headerMatchesAny(header, [...DISTANCE_M_HEADERS, ...LOW_INTENSITY_M_HEADERS, ...HIGH_INTENSITY_M_HEADERS]);
+  if (norm.includes("21002400") && (norm.includes("m") || norm.includes("cnt"))) return true;
+  if (norm.includes("24005000") && (norm.includes("m") || norm.includes("cnt"))) return true;
+  return headerMatchesAny(header, [
+    ...DISTANCE_M_HEADERS,
+    ...LOW_INTENSITY_M_HEADERS,
+    ...HIGH_INTENSITY_M_HEADERS,
+    ...SPRINT_DISTANCE_M_HEADERS,
+  ]);
 }
 
 function findColumnIndex(
@@ -288,7 +305,7 @@ function findColumnIndex(
     if (predicate?.(h)) return i;
     if (headerMatchesAny(h, names)) return i;
   }
-  if (fallbackLetter) return letterToIndex(fallbackLetter);
+  if (fallbackLetter) return excelColumnToIndex(fallbackLetter);
   return -1;
 }
 
@@ -433,7 +450,19 @@ function parseMetricSheet(
       headers,
       HIGH_INTENSITY_M_HEADERS,
       fallbacks.highIntensityDistanceM,
-      (h) => normalizeGpsKey(h).includes("12001800") && normalizeGpsKey(h).includes("m") && !normalizeGpsKey(h).includes("cnt"),
+      (h) => {
+        const norm = normalizeGpsKey(h);
+        return norm.includes("21002400") && (norm.includes("cnt") || norm.includes("m"));
+      },
+    ),
+    sprintDistanceM: findColumnIndex(
+      headers,
+      SPRINT_DISTANCE_M_HEADERS,
+      fallbacks.sprintDistanceM,
+      (h) => {
+        const norm = normalizeGpsKey(h);
+        return norm.includes("24005000") && (norm.includes("cnt") || norm.includes("m"));
+      },
     ),
     accelerations: findColumnIndex(headers, ACCELERATIONS_HEADERS, fallbacks.accelerations),
     decelerations: findColumnIndex(headers, DECELERATIONS_HEADERS, fallbacks.decelerations),
@@ -471,6 +500,9 @@ function parseMetricSheet(
 
     const high = parseNum(String(col.highIntensityDistanceM >= 0 ? row[col.highIntensityDistanceM] ?? "" : ""));
     if (high != null) existing.highIntensityDistanceM = high;
+
+    const sprintDist = parseNum(String(col.sprintDistanceM >= 0 ? row[col.sprintDistanceM] ?? "" : ""));
+    if (sprintDist != null) existing.sprintDistanceM = sprintDist;
 
     const acc = parseNum(String(col.accelerations >= 0 ? row[col.accelerations] ?? "" : ""));
     if (acc != null) existing.accelerations = Math.round(acc);
@@ -521,6 +553,7 @@ function metricsToPatch(
   if (metrics.maxDistanceM != null) patch.maxDistanceM = metrics.maxDistanceM as number;
   if (metrics.lowIntensityDistanceM != null) patch.lowIntensityDistanceM = metrics.lowIntensityDistanceM as number;
   if (metrics.highIntensityDistanceM != null) patch.highIntensityDistanceM = metrics.highIntensityDistanceM as number;
+  if (metrics.sprintDistanceM != null) patch.sprintDistanceM = metrics.sprintDistanceM as number;
   if (metrics.maxSpeedKmh != null) patch.maxSpeedKmh = metrics.maxSpeedKmh as number;
   if (metrics.sprintCount != null) patch.sprintCount = metrics.sprintCount as number;
 
@@ -552,6 +585,7 @@ function hasGpsMetrics(patch: GpsImportRowPatch): boolean {
     patch.maxSpeedKmh != null ||
     patch.sprintCount != null ||
     patch.highIntensityDistanceM != null ||
+    patch.sprintDistanceM != null ||
     patch.lowIntensityDistanceM != null ||
     patch.accelerations != null ||
     patch.decelerations != null ||
@@ -589,7 +623,11 @@ function applyFieldAliases(row: Record<string, string>, patch: GpsImportRowPatch
 
     const n = parseNum(val);
     if (n != null) {
-      if (field === "lowIntensityDistanceM" || field === "highIntensityDistanceM") {
+      if (
+        field === "lowIntensityDistanceM" ||
+        field === "highIntensityDistanceM" ||
+        field === "sprintDistanceM"
+      ) {
         patch[field] = n;
       } else if (field === "maxDistanceM" || field === "maxSpeedKmh") {
         patch[field] = n;
