@@ -2,16 +2,16 @@
 
 import { TreinadoresContextPanel } from "@/components/dashboard/futebol/treinadores/TreinadoresContextPanel";
 import { MelhoresTemporadaPanel } from "@/components/dashboard/futebol/treinadores/MelhoresTemporadaPanel";
-import { TreinadoresShell } from "@/components/dashboard/futebol/treinadores/TreinadoresShell";
+import { MelhoresTemporadaShell } from "@/components/dashboard/futebol/treinadores/MelhoresTemporadaShell";
 
 export default function MelhoresTemporadaPage() {
   return (
-    <TreinadoresShell title="Melhores da Temporada">
+    <MelhoresTemporadaShell>
       <TreinadoresContextPanel>
         {({ tenantId, category }) => (
           <MelhoresTemporadaPanel tenantId={tenantId} category={category} />
         )}
       </TreinadoresContextPanel>
-    </TreinadoresShell>
+    </MelhoresTemporadaShell>
   );
 }

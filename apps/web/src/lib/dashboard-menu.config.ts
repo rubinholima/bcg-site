@@ -89,6 +89,7 @@ import {
   ScanSearch,
   BookOpen,
 } from "lucide-react";
+import { canAccessMelhoresTemporada } from "@/components/dashboard/futebol/treinadores/treinadores-access";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
 import {
@@ -189,18 +190,17 @@ export function canAccessMenuLeaf(
   item: MenuItemConfig,
   pathPrefix: string,
   canAccessModule: (slug: string) => boolean,
+  role?: string | null,
+  modules?: readonly string[],
 ): boolean {
+  if (item.href?.includes("/melhores-temporada") && role != null && modules != null) {
+    return canAccessMelhoresTemporada(role, modules, canAccessModule);
+  }
+
   const accessSlug = resolveMenuAccessSlug(item, pathPrefix);
   if (canAccessModule(accessSlug) || canAccessModule(item.moduleSlug)) return true;
   // Relatórios Saúde: perfis clínicos (fisioterapia, enfermagem…) têm `saude`, não só `relatorios_saude`.
   if (item.moduleSlug === "relatorios_saude" && canAccessModule("saude")) return true;
-  // Treinadores: leitura sem módulo completo (diretoria / relatórios futebol) — API TeamReportReadAccess.
-  if (
-    item.moduleSlug === "futebol_treinadores" &&
-    (canAccessModule("diretoria") || canAccessModule("relatorios_futebol"))
-  ) {
-    return true;
-  }
   return false;
 }
 
@@ -211,16 +211,28 @@ export function hasAccessToMenuItem(
   canAccessModule: (slug: string) => boolean,
   canAccessDashboard?: boolean,
   isSuperAdmin?: boolean,
+  role?: string | null,
+  modules?: readonly string[],
 ): boolean {
   if (item.superAdminOnly && !isSuperAdmin) return false;
   if (item.moduleSlug === "emails" && canAccessDashboard) return true;
   if (item.children?.length) {
     const nestedPrefix = `${pathPrefix}/${item.slug}`;
     return item.children.some((c) =>
-      hasAccessToMenuItem(c, nestedPrefix, canAccessModule, canAccessDashboard, isSuperAdmin),
+      hasAccessToMenuItem(
+        c,
+        nestedPrefix,
+        canAccessModule,
+        canAccessDashboard,
+        isSuperAdmin,
+        role,
+        modules,
+      ),
     );
   }
-  if (item.href && !item.external) return canAccessMenuLeaf(item, pathPrefix, canAccessModule);
+  if (item.href && !item.external) {
+    return canAccessMenuLeaf(item, pathPrefix, canAccessModule, role, modules);
+  }
   return canAccessModule(item.moduleSlug);
 }
 
