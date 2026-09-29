@@ -36,6 +36,7 @@ type PlayerRatingDraft = {
   rating: string;
   assists: string;
   individualReport: string;
+  isStaffStandout: boolean;
 };
 
 type AttachmentDraft = {
@@ -112,6 +113,7 @@ function emptyDraft(players: CoachContextPlayer[]): PlayerRatingDraft[] {
     rating: "",
     assists: "",
     individualReport: "",
+    isStaffStandout: false,
   }));
 }
 
@@ -235,6 +237,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
             rating: row?.rating != null ? String(row.rating) : "",
             assists: row?.assists != null ? String(row.assists) : "",
             individualReport: row?.individualReport ?? "",
+            isStaffStandout: !!row?.isStaffStandout,
           };
         }),
       );
@@ -297,6 +300,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
           rating: p.rating === "" ? null : Number(p.rating),
           assists: p.assists === "" ? 0 : Number(p.assists),
           individualReport: p.individualReport || null,
+          isStaffStandout: p.isStaffStandout,
         })),
         attachments: attachments.filter((a) => a.fileUrl.trim()),
       };
@@ -548,6 +552,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
                     <TableHead>Atleta</TableHead>
                     <TableHead className="w-24 text-center">Nota</TableHead>
                     <TableHead className="w-24 text-center">Assist.</TableHead>
+                    <TableHead className="w-28 text-center">Destaque</TableHead>
                     <TableHead className="min-w-[180px]">Obs.</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -555,7 +560,11 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
                   {playerRatings.map((p, idx) => (
                     <TableRow
                       key={p.playerId}
-                      className={matchBestPlayerIds.includes(p.playerId) ? "bg-primary/5" : undefined}
+                      className={
+                        matchBestPlayerIds.includes(p.playerId) || p.isStaffStandout
+                          ? "bg-primary/5"
+                          : undefined
+                      }
                     >
                       <TableCell className="text-center font-medium tabular-nums">
                         {p.jerseyNumber ?? "—"}
@@ -564,7 +573,12 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
                         {p.name}
                         {matchBestPlayerIds.includes(p.playerId) ? (
                           <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                            Melhor
+                            Melhor nota
+                          </span>
+                        ) : null}
+                        {p.isStaffStandout ? (
+                          <span className="ml-2 rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-300">
+                            Destaque
                           </span>
                         ) : null}
                       </TableCell>
@@ -595,6 +609,19 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
                           onChange={(e) => {
                             const next = [...playerRatings];
                             next[idx] = { ...p, assists: e.target.value };
+                            setPlayerRatings(next);
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-violet-500"
+                          checked={p.isStaffStandout}
+                          aria-label={`Destaque comissão — ${p.name}`}
+                          onChange={(e) => {
+                            const next = [...playerRatings];
+                            next[idx] = { ...p, isStaffStandout: e.target.checked };
                             setPlayerRatings(next);
                           }}
                         />

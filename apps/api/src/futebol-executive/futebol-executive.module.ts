@@ -8,6 +8,7 @@ import { PlayerNegotiationsModule } from '../player-negotiations/player-negotiat
 import { TenantsModule } from '../tenants/tenants.module';
 import { FutebolExecutiveController } from './futebol-executive.controller';
 import { FutebolExecutiveService } from './futebol-executive.service';
+import { SeasonHighlightsModule } from '../season-highlights/season-highlights.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { FutebolExecutiveService } from './futebol-executive.service';
     TryoutWorkflowModule,
     PlayerNegotiationsModule,
     TenantsModule,
+    SeasonHighlightsModule,
   ],
   controllers: [FutebolExecutiveController],
   providers: [FutebolExecutiveService],

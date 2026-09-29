@@ -3,13 +3,14 @@ import { AuthModule } from '../auth/auth.module';
 import { ModulesModule } from '../modules/modules.module';
 import { FutebolRelatoriosModule } from '../futebol-relatorios/futebol-relatorios.module';
 import { CoachMatchStatsModule } from '../coach-match-stats/coach-match-stats.module';
+import { SeasonHighlightsModule } from '../season-highlights/season-highlights.module';
 import { FutebolTreinadoresController } from './futebol-treinadores.controller';
 import { FutebolTreinadoresService } from './futebol-treinadores.service';
 import { CoachPlayerEvaluationService } from './coach-player-evaluation.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 
 @Module({
-  imports: [AuthModule, ModulesModule, FutebolRelatoriosModule, CoachMatchStatsModule],
+  imports: [AuthModule, ModulesModule, FutebolRelatoriosModule, CoachMatchStatsModule, SeasonHighlightsModule],
   controllers: [FutebolTreinadoresController],
   providers: [FutebolTreinadoresService, CoachPlayerEvaluationService, ModuleAccessGuard],
 })

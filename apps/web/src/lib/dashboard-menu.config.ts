@@ -784,6 +784,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             moduleSlug: "futebol_treinadores",
           },
           {
+            slug: "futebol_treinadores_melhores_temporada",
+            label: "Melhores da Temporada",
+            href: "/dashboard/futebol/treinadores/melhores-temporada",
+            icon: Star,
+            moduleSlug: "futebol_treinadores",
+          },
+          {
             slug: "futebol_treinadores_avaliacao_jogador",
             label: "Avaliação individual",
             href: "/dashboard/futebol/treinadores/avaliacao-jogador",

@@ -141,12 +141,15 @@ export type CoachMatchReport = {
   status: string;
   teamRatingAverage?: number | null;
   matchBestPlayerIds?: string[];
+  staffStandoutPlayerIds?: string[];
+  seasonStandoutPlayerIds?: string[];
   playerRatings: Array<{
     playerId: string;
     rating: number | null;
     assists?: number | null;
     individualReport: string | null;
     isMatchBest?: boolean;
+    isStaffStandout?: boolean;
     player?: {
       id: string;
       name: string;

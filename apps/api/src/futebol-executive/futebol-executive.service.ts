@@ -27,6 +27,7 @@ import type {
   ExecutiveNegotiationsSummary,
   ExecutiveSeverity,
 } from './futebol-executive.types';
+import { SeasonHighlightsService } from '../season-highlights/season-highlights.service';
 
 type Ctx = {
   role: string;
@@ -46,6 +47,7 @@ export class FutebolExecutiveService {
     private readonly physioTryout: PhysioTryoutClearanceService,
     private readonly playerNegotiations: PlayerNegotiationsService,
     private readonly tenantsService: TenantsService,
+    private readonly seasonHighlights: SeasonHighlightsService,
   ) {}
 
   async getDashboard(
@@ -110,6 +112,7 @@ export class FutebolExecutiveService {
       agenda,
       health,
       negotiations,
+      performance,
     });
 
     return {
@@ -931,11 +934,29 @@ export class FutebolExecutiveService {
         })
       : 0;
 
+    let seasonHighlights = null;
+    if (hasModule(ctx.modules, 'futebol_treinadores') && ctx.tenantId) {
+      const indicators = await this.seasonHighlights.getExecutiveIndicators(
+        ctx.tenantId,
+        ctx.periodDays,
+        ctx.category,
+      );
+      seasonHighlights = {
+        season: indicators.season,
+        topBostonPlayer: indicators.topBostonPlayer,
+        topBostonSelections: indicators.topBostonCount,
+        recurrentOpponentProfiles: indicators.recurrentOpponents,
+        newRadarProfilesInPeriod: indicators.newRadarProfiles,
+        actionUrl: '/dashboard/futebol/treinadores/melhores-temporada',
+      };
+    }
+
     return {
       available,
       unavailable,
       pendingCoachEvaluations,
       activeTransitions,
+      seasonHighlights,
     };
   }
 
@@ -1172,6 +1193,7 @@ export class FutebolExecutiveService {
       agenda: ExecutiveAgendaItem[];
       health: Awaited<ReturnType<FutebolExecutiveService['buildHealth']>>;
       negotiations: ExecutiveNegotiationsSummary | null;
+      performance: Awaited<ReturnType<FutebolExecutiveService['buildPerformance']>>;
     },
   ): ExecutiveKpi[] {
     const kpis: ExecutiveKpi[] = [];
@@ -1249,6 +1271,20 @@ export class FutebolExecutiveService {
       value: data.agenda.length,
       href: '#agenda',
     });
+
+    if (data.performance?.seasonHighlights) {
+      const sh = data.performance.seasonHighlights;
+      kpis.push({
+        id: 'season-standouts',
+        label: 'Destaques temporada',
+        value: sh.topBostonSelections,
+        breakdown: {
+          adversarios_recorrentes: sh.recurrentOpponentProfiles,
+          novos_radar: sh.newRadarProfilesInPeriod,
+        },
+        href: sh.actionUrl,
+      });
+    }
 
     if (data.negotiations) {
       const n = data.negotiations;

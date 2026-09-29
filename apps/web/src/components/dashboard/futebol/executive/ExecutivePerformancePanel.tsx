@@ -45,6 +45,20 @@ export function ExecutivePerformancePanel({
             highlight={performance.pendingCoachEvaluations > 0 ? "warning" : undefined}
           />
           <ExecutiveCompactStat label="Transições ativas" value={performance.activeTransitions} />
+          {performance.seasonHighlights ? (
+            <ExecutiveCompactStat
+              label={`Destaques ${performance.seasonHighlights.season}`}
+              value={performance.seasonHighlights.topBostonSelections}
+              href={performance.seasonHighlights.actionUrl}
+            />
+          ) : null}
+          {performance.seasonHighlights ? (
+            <ExecutiveCompactStat
+              label="Radar adversário (2+)"
+              value={performance.seasonHighlights.recurrentOpponentProfiles}
+              href={performance.seasonHighlights.actionUrl}
+            />
+          ) : null}
         </div>
       </div>
     </section>

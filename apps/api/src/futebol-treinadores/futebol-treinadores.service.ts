@@ -51,6 +51,7 @@ import {
   enrichCoachMatchReport,
   normalizeOpponentBestPlayersInput,
 } from './coach-match-report.util';
+import { OpponentRadarService } from '../season-highlights/opponent-radar.service';
 import {
   buildCategoryResolutionContext,
   buildMonthlyPeriodStatuses,
@@ -86,6 +87,7 @@ function categoryMatches(
 export class FutebolTreinadoresService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly opponentRadar: OpponentRadarService,
     private readonly guiaPartida: GuiaPartidaService,
     private readonly matchStats: CoachMatchStatsService,
   ) {}
@@ -455,6 +457,7 @@ export class FutebolTreinadoresService {
       rating?: number | null;
       assists?: number | null;
       individualReport?: string | null;
+      isStaffStandout?: boolean;
     }>;
     attachments?: Array<{
       id?: string;
@@ -531,6 +534,7 @@ export class FutebolTreinadoresService {
           rating: clampRating(r.rating),
           assists: Math.max(0, Math.trunc(Number(r.assists ?? 0) || 0)),
           individualReport: r.individualReport?.trim() || null,
+          isStaffStandout: !!r.isStaffStandout,
         }));
         const bestFlags = computeMatchBestFlags(normalized);
         await this.prisma.coachMatchReportPlayerRating.createMany({
@@ -541,6 +545,7 @@ export class FutebolTreinadoresService {
             assists: r.assists,
             individualReport: r.individualReport,
             isMatchBest: bestFlags[i] ?? false,
+            isStaffStandout: r.isStaffStandout,
           })),
         });
       }
@@ -580,6 +585,10 @@ export class FutebolTreinadoresService {
           })),
         });
       }
+    }
+
+    if (status === 'finalizado') {
+      await this.opponentRadar.syncReport(report.id);
     }
 
     return this.getMatchReport(report.id);

@@ -56,6 +56,7 @@ import { RolesModule } from './roles/roles.module';
 import { ComunicacaoModule } from './comunicacao/comunicacao.module';
 import { FutebolRelatoriosModule } from './futebol-relatorios/futebol-relatorios.module';
 import { FutebolTreinadoresModule } from './futebol-treinadores/futebol-treinadores.module';
+import { SeasonHighlightsModule } from './season-highlights/season-highlights.module';
 import { AssistenciaSocialModule } from './assistencia-social/assistencia-social.module';
 import { FutebolJogosModule } from './futebol-jogos/futebol-jogos.module';
 import { AgendaConfigModule } from './agenda-config/agenda-config.module';
@@ -121,6 +122,7 @@ import { PlayerNegotiationsModule } from './player-negotiations/player-negotiati
     ComunicacaoModule,
     FutebolRelatoriosModule,
     FutebolTreinadoresModule,
+    SeasonHighlightsModule,
     AssistenciaSocialModule,
     FutebolJogosModule,
     AgendaConfigModule,

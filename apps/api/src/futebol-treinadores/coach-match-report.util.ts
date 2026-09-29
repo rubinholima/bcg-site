@@ -111,6 +111,13 @@ export function normalizeOpponentBestPlayersInput(input: {
     .filter((row) => row.jerseyNumber != null || row.position || row.notes);
 }
 
+export function isPlayerMatchStandoutRating(r: {
+  isMatchBest?: boolean;
+  isStaffStandout?: boolean;
+}): boolean {
+  return !!r.isMatchBest || !!r.isStaffStandout;
+}
+
 export function enrichCoachMatchReport<
   T extends {
     opponentBestJersey: number | null;
@@ -126,6 +133,7 @@ export function enrichCoachMatchReport<
     playerRatings: Array<{
       rating: number | null;
       isMatchBest?: boolean;
+      isStaffStandout?: boolean;
       player?: { id: string; name: string; jerseyNumber: number | null };
       playerId?: string;
     }>;
@@ -136,11 +144,21 @@ export function enrichCoachMatchReport<
     .filter((r) => r.isMatchBest)
     .map((r) => r.playerId ?? r.player?.id)
     .filter((id): id is string => !!id);
+  const staffStandoutPlayerIds = row.playerRatings
+    .filter((r) => r.isStaffStandout)
+    .map((r) => r.playerId ?? r.player?.id)
+    .filter((id): id is string => !!id);
+  const seasonStandoutPlayerIds = row.playerRatings
+    .filter((r) => isPlayerMatchStandoutRating(r))
+    .map((r) => r.playerId ?? r.player?.id)
+    .filter((id): id is string => !!id);
 
   return {
     ...row,
     opponentBestPlayers: resolveOpponentBestPlayers(row),
     teamRatingAverage,
     matchBestPlayerIds,
+    staffStandoutPlayerIds,
+    seasonStandoutPlayerIds,
   };
 }

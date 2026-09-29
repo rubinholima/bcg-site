@@ -182,6 +182,8 @@ model Tenant {
   communicationTags            CommunicationTag[]
   communicationTemplates       CommunicationTemplate[]
   coachMatchReports            CoachMatchReport[]
+  opponentHighlightProfiles    OpponentHighlightProfile[]
+  opponentHighlightEvents      OpponentHighlightEvent[]
   coachTeamReports             CoachTeamReport[]
   coachPlayerEvaluations       CoachPlayerEvaluation[]
   coachTrainingSessions        CoachTrainingSession[]
@@ -3065,6 +3067,7 @@ model ScoutingProspect {
   reports           ScoutingReport[]
   physioTryoutClearances PhysioTryoutClearance[]
   tryoutCoachEvaluations TryoutCoachEvaluation[]
+  opponentHighlightProfile OpponentHighlightProfile?
 
   @@index([tenantId])
   @@index([tenantId, stage])
@@ -3072,6 +3075,75 @@ model ScoutingProspect {
   @@index([tenantId, tryoutWorkflowStage])
   @@index([scoutId])
   @@index([playerId])
+}
+
+/** Perfil persistente de adversário destacado no pós-jogo (radar de talentos). */
+model OpponentHighlightProfile {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cbfRegistration      String?
+  displayName          String
+  normalizedNameKey    String
+  position             String?
+  lastKnownClub        String?
+  category             String?
+  /** cbf | fmf_resolved | name_club | isolated */
+  identitySource       String
+  /** high | medium | low */
+  identityConfidence   String
+  fallbackIdentityKey  String?
+  firstSeenAt          DateTime
+  lastSeenAt           DateTime
+  highlightCount       Int      @default(0)
+  managementNotes      String?  @db.Text
+  managementStatus     String?
+  scoutingProspectId   String?  @unique
+  scoutingProspect     ScoutingProspect? @relation(fields: [scoutingProspectId], references: [id], onDelete: SetNull)
+  events               OpponentHighlightEvent[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([tenantId, lastSeenAt])
+  @@index([tenantId, cbfRegistration])
+  @@index([tenantId, normalizedNameKey])
+  @@unique([tenantId, cbfRegistration])
+  @@unique([tenantId, fallbackIdentityKey])
+}
+
+/** Evento de destaque adversário (histórico imutável por partida). */
+model OpponentHighlightEvent {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  profileId           String
+  profile             OpponentHighlightProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  reportId            String
+  report              CoachMatchReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  opponentHighlightId String   @unique
+  opponentHighlight   CoachMatchReportOpponentPlayer @relation(fields: [opponentHighlightId], references: [id], onDelete: Cascade)
+  fmfMatchReportId    String?
+  season              Int
+  matchDate           DateTime?
+  opponentClub        String?
+  competition         String?
+  category            String?
+  jerseyNumber        Int?
+  position            String?
+  staffNotes          String?  @db.Text
+  homeScore           Int?
+  awayScore           Int?
+  scoreLabel          String?
+  clubWasHome         Boolean?
+  resolvedName        String?
+  cbfRegistration     String?
+  identitySource      String
+  officialStats       Json?
+  createdAt           DateTime @default(now())
+
+  @@index([profileId])
+  @@index([tenantId, season])
+  @@index([reportId])
 }
 
 /// Avaliação do treinador no Try Out (distinta da captação/scouting)
@@ -3992,6 +4064,7 @@ model CoachMatchReport {
   status             String   @default("rascunho") // rascunho | finalizado
   playerRatings      CoachMatchReportPlayerRating[]
   opponentHighlights CoachMatchReportOpponentPlayer[]
+  opponentHighlightEvents OpponentHighlightEvent[]
   attachments        CoachMatchReportAttachment[]
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -4010,6 +4083,8 @@ model CoachMatchReportPlayerRating {
   assists          Int      @default(0)
   individualReport String?  @db.Text
   isMatchBest      Boolean  @default(false)
+  /** Destaque explícito da comissão (além do isMatchBest automático por nota). */
+  isStaffStandout  Boolean  @default(false)
   @@unique([reportId, playerId])
   @@index([playerId])
 }
@@ -4022,6 +4097,7 @@ model CoachMatchReportOpponentPlayer {
   jerseyNumber Int?
   position     String?
   notes        String?          @db.Text
+  highlightEvent OpponentHighlightEvent?
   @@index([reportId])
 }
 

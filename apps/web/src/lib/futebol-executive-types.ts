@@ -57,11 +57,21 @@ export type ExecutiveHealthSummary = {
   tryoutClearanceRejected: number;
 };
 
+export type ExecutiveSeasonHighlightsSummary = {
+  season: number;
+  topBostonPlayer: string | null;
+  topBostonSelections: number;
+  recurrentOpponentProfiles: number;
+  newRadarProfilesInPeriod: number;
+  actionUrl: string;
+};
+
 export type ExecutivePerformanceSummary = {
   available: number;
   unavailable: number;
   pendingCoachEvaluations: number;
   activeTransitions: number;
+  seasonHighlights: ExecutiveSeasonHighlightsSummary | null;
 };
 
 export type ExecutiveContractsSummary = {
