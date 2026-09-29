@@ -26,6 +26,9 @@ import {
 } from './dto/scout-location.dto';
 import { ApproveProspectDto, PromoteProspectDto } from './dto/approve-prospect.dto';
 import { UpdateCtScheduleDto } from './dto/update-ct-schedule.dto';
+import { ManagerDecisionDto } from './dto/manager-decision.dto';
+import { ProposeCtDto } from './dto/propose-ct.dto';
+import { SupervisorCtDto } from './dto/supervisor-ct.dto';
 
 @Controller('captacao')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -223,5 +226,56 @@ export class CaptacaoController {
   @RequireModule('futebol_captacao')
   createReport(@Body() dto: CreateReportDto) {
     return this.service.createReport(dto);
+  }
+
+  @Get('manager-queue')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  managerQueue(@Query('tenantId') tenantId?: string) {
+    return this.service.findManagerQueue(tenantId);
+  }
+
+  @Post('prospects/:id/manager-decision')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  managerDecision(
+    @Param('id') id: string,
+    @Body() dto: ManagerDecisionDto,
+    @Req() req: { user: { name?: string; email?: string; role?: string } },
+  ) {
+    return this.service.recordManagerDecision(id, dto, {
+      name: req.user?.name,
+      email: req.user?.email,
+      role: req.user?.role,
+    });
+  }
+
+  @Get('supervisor-queue')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  supervisorQueue(@Query('tenantId') tenantId?: string) {
+    return this.service.findSupervisorQueue(tenantId);
+  }
+
+  @Patch('prospects/:id/propose-ct')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  proposeCt(@Param('id') id: string, @Body() dto: ProposeCtDto) {
+    return this.service.proposeCtSchedule(id, dto);
+  }
+
+  @Patch('prospects/:id/supervisor-ct')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  supervisorCt(
+    @Param('id') id: string,
+    @Body() dto: SupervisorCtDto,
+    @Req() req: { user: { name?: string; email?: string } },
+  ) {
+    const actorName =
+      (req.user?.name as string) ||
+      (req.user?.email as string) ||
+      'Supervisor';
+    return this.service.updateSupervisorCt(id, dto, actorName);
   }
 }

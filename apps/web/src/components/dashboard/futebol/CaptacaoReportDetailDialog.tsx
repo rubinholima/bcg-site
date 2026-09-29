@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPositionLabel } from "@/lib/football-positions";
-import { buildWhatsAppUrl } from "@/lib/whatsapp-url";
+import { buildCaptacaoSchedulerWhatsAppUrl } from "@/lib/captacao-scheduler";
 import {
   type ScoutingReportDetail,
   REPORT_DIMENSIONS,
@@ -71,7 +71,10 @@ export function CaptacaoReportDetailDialog({ reportId, tenantId, onClose }: Prop
         .join("\n")
     : "";
 
-  const waUrl = buildWhatsAppUrl(prospect?.agentPhone, waMessage);
+  const waUrl =
+    prospect?.evaluationOutcome === "para_teste" || prospect?.evaluationOutcome === "aprovado"
+      ? buildCaptacaoSchedulerWhatsAppUrl(waMessage)
+      : null;
 
   return (
     <Dialog open={!!reportId} onOpenChange={(open) => !open && onClose()}>

@@ -19,6 +19,7 @@ import {
   UserCheck,
   Scale,
   CalendarClock,
+  ShieldCheck,
 } from "lucide-react";
 import {
   DashboardDeptHeader,
@@ -90,6 +91,7 @@ import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-mo
 import { CaptacaoFieldMode } from "@/components/dashboard/futebol/CaptacaoFieldMode";
 import { CaptacaoReportDetailDialog } from "@/components/dashboard/futebol/CaptacaoReportDetailDialog";
 import { CaptacaoCtEvaluationPanel } from "@/components/dashboard/futebol/CaptacaoCtEvaluationPanel";
+import { CaptacaoGerenteQueue } from "@/components/dashboard/futebol/CaptacaoGerenteQueue";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/scout-geolocation";
 
 const CaptacaoScoutMap = dynamic(
@@ -135,6 +137,7 @@ const EMPTY_PROSPECT = {
 const CAPTACAO_MAIN_TABS = [
   { id: "pipeline", label: "Pipeline", icon: Eye },
   { id: "avaliacao-ct", label: "Avaliação CT", icon: CalendarClock },
+  { id: "decisao-gerente", label: "Decisão gerente", icon: ShieldCheck },
   { id: "mapa", label: "Mapa GPS", icon: Map },
   { id: "captadores", label: "Captadores", icon: Users },
   { id: "relatorios", label: "Relatórios", icon: ClipboardList },
@@ -142,8 +145,14 @@ const CAPTACAO_MAIN_TABS = [
 
 type CaptacaoMainTab = (typeof CAPTACAO_MAIN_TABS)[number]["id"];
 
+function canDecideCaptacaoAsGerente(role: string | null | undefined): boolean {
+  if (!role) return false;
+  const r = role.toLowerCase();
+  return r === "gerente" || r === "gestor" || r === "super_admin" || r === "company_admin";
+}
+
 export function CaptacaoHub() {
-  const { canAccessModule, loading: authLoading } = useAuth();
+  const { canAccessModule, loading: authLoading, role } = useAuth();
   const searchParams = useSearchParams();
   const tenantId = searchParams.get("tenantId") ?? "";
 
@@ -306,6 +315,14 @@ export function CaptacaoHub() {
     [prospects],
   );
 
+  const visibleMainTabs = useMemo(
+    () =>
+      canDecideCaptacaoAsGerente(role)
+        ? [...CAPTACAO_MAIN_TABS]
+        : CAPTACAO_MAIN_TABS.filter((t) => t.id !== "decisao-gerente"),
+    [role],
+  );
+
   const mainTabActive: CaptacaoMainTab =
     tab === "novo-prospect"
       ? "pipeline"
@@ -313,7 +330,7 @@ export function CaptacaoHub() {
         ? "relatorios"
         : tab === "novo-captador"
           ? "captadores"
-          : CAPTACAO_MAIN_TABS.some((t) => t.id === tab)
+          : visibleMainTabs.some((t) => t.id === tab)
             ? (tab as CaptacaoMainTab)
             : "pipeline";
 
@@ -686,7 +703,7 @@ export function CaptacaoHub() {
             <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center">
               <div className="min-w-0 flex-1">
                 <DashboardDeptTabs
-                  tabs={[...CAPTACAO_MAIN_TABS]}
+                  tabs={[...visibleMainTabs]}
                   active={mainTabActive}
                   onChange={handleMainTabChange}
                 />
@@ -973,6 +990,12 @@ export function CaptacaoHub() {
           {tab === "avaliacao-ct" && (
             <DashboardDeptSection title="Avaliação CT">
               <CaptacaoCtEvaluationPanel tenantId={effectiveTenantId} />
+            </DashboardDeptSection>
+          )}
+
+          {tab === "decisao-gerente" && canDecideCaptacaoAsGerente(role) && (
+            <DashboardDeptSection title="Decisão gerente">
+              <CaptacaoGerenteQueue tenantId={effectiveTenantId} />
             </DashboardDeptSection>
           )}
 

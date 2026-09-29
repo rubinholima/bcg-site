@@ -131,4 +131,47 @@ export class CreateProspectDto {
   @IsOptional()
   @IsString()
   descriptiveObservation?: string;
+
+  @IsOptional()
+  @IsString()
+  guardianName?: string;
+
+  @IsOptional()
+  @IsString()
+  guardianPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  guardianEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  guardianAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  flowPath?: string;
+
+  @IsOptional()
+  @IsString()
+  proposedCtAt?: string;
+
+  @IsOptional()
+  needsLodging?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  technicalRating?: number;
+
+  @IsOptional()
+  @IsNumber()
+  tacticalRating?: number;
+
+  @IsOptional()
+  @IsNumber()
+  physicalRating?: number;
+
+  @IsOptional()
+  @IsNumber()
+  cognitiveRating?: number;
 }

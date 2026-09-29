@@ -5,6 +5,7 @@ export interface SendMailInput {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 }
 
 export interface SendMailResult {
@@ -48,6 +49,7 @@ export class MailService {
         to,
         subject: input.subject,
         text: input.text,
+        ...(input.html?.trim() ? { html: input.html.trim() } : {}),
       });
       return { sent: true };
     } catch (err) {

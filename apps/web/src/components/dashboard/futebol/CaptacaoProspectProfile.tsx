@@ -10,7 +10,8 @@ import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-mo
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPositionLabel } from "@/lib/football-positions";
-import { buildWhatsAppUrl } from "@/lib/whatsapp-url";
+import { buildCaptacaoSchedulerWhatsAppUrl } from "@/lib/captacao-scheduler";
+import { CaptacaoManagerDecisionPanel } from "./CaptacaoManagerDecisionPanel";
 import {
   type ScoutingProspect,
   type Scout,
@@ -62,6 +63,11 @@ export function CaptacaoProspectProfile() {
   const searchParams = useSearchParams();
   const prospectId = typeof params.id === "string" ? params.id : "";
   const tenantId = searchParams.get("tenantId") ?? "";
+  const gerenteDecisaoParam = searchParams.get("gerenteDecisao");
+  const gerenteDecisaoInitial =
+    gerenteDecisaoParam === "aprovado" || gerenteDecisaoParam === "reprovado"
+      ? gerenteDecisaoParam
+      : null;
 
   const [prospect, setProspect] = useState<ScoutingProspect | null>(null);
   const [scouts, setScouts] = useState<Scout[]>([]);
@@ -224,13 +230,16 @@ export function CaptacaoProspectProfile() {
         prospect.targetCategory ? `Categoria: ${prospect.targetCategory}` : null,
         prospect.evaluationOutcome === "para_teste" ? "Encaminhamento: Para teste / try-out" : null,
         prospect.overallRating != null ? `Nota geral: ${formatScoutingRating(prospect.overallRating)}` : null,
+        prospect.agentPhone ? `Contato agente (referência): ${prospect.agentPhone}` : null,
       ]
         .filter(Boolean)
         .join("\n")
     : "";
 
-  const contactPhone = prospect?.contactPhone ?? prospect?.agentPhone ?? null;
-  const waUrl = contactPhone ? buildWhatsAppUrl(contactPhone, waMessage) : null;
+  const waUrl =
+    prospect && (prospect.evaluationOutcome === "para_teste" || prospect.inCtQueue)
+      ? buildCaptacaoSchedulerWhatsAppUrl(waMessage)
+      : null;
 
   if (loading) {
     return (
@@ -259,11 +268,17 @@ export function CaptacaoProspectProfile() {
           <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-600/90" asChild>
             <a href={waUrl} target="_blank" rel="noopener noreferrer">
               <MessageCircle className="mr-2 h-4 w-4" />
-              WhatsApp
+              WhatsApp agendamento
             </a>
           </Button>
         ) : null}
       </div>
+
+      <CaptacaoManagerDecisionPanel
+        prospect={prospect}
+        initialDecision={gerenteDecisaoInitial}
+        onUpdated={loadProspect}
+      />
 
       <Card>
         <CardHeader>

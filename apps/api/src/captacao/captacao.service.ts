@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -24,6 +25,7 @@ import {
   resolveCaptacaoManagerEmail,
 } from './captacao-notify.util';
 import {
+  buildManagerApprovalEmailHtml,
   buildManagerApprovalEmailText,
   captacaoProspectProfileUrl,
   computeReportDimensionRatings,
@@ -32,6 +34,13 @@ import {
   mergeDescriptiveObservation,
   resolveStageFromOutcome,
 } from './captacao-scouting.util';
+import { ManagerDecisionDto } from './dto/manager-decision.dto';
+import { ProposeCtDto } from './dto/propose-ct.dto';
+import { SupervisorCtDto } from './dto/supervisor-ct.dto';
+import {
+  CAPTACAO_MANAGER_DECISIONS,
+  type CaptacaoManagerDecision,
+} from './captacao.constants';
 import { MailService } from '../common/mail.service';
 import { PhysioTryoutClearanceService } from '../fisioterapia/physio-tryout-clearance.service';
 
@@ -132,7 +141,66 @@ export class CaptacaoService {
       presentationDate: input.presentationDate,
       profileUrl: captacaoProspectProfileUrl(input.prospect.id, input.prospect.tenantId),
     });
-    return this.mail.sendMail({ to, subject, text });
+    const profileUrl = captacaoProspectProfileUrl(input.prospect.id, input.prospect.tenantId);
+    const html = buildManagerApprovalEmailHtml({
+      prospectName: input.prospect.name,
+      profileUrl,
+      scoutName: input.scoutName,
+      overallRating: input.overallRating,
+    });
+    return this.mail.sendMail({ to, subject, text, html });
+  }
+
+  private async notifyManagerTryout(input: {
+    prospect: {
+      id: string;
+      tenantId: string;
+      name: string;
+      position?: string | null;
+      targetCategory?: string | null;
+    };
+    scoutName?: string | null;
+    matchName?: string | null;
+  }): Promise<{ sent: boolean; error?: string }> {
+    const to = resolveCaptacaoManagerEmail();
+    const profileUrl = captacaoProspectProfileUrl(input.prospect.id, input.prospect.tenantId);
+    const text = [
+      'Olá,',
+      '',
+      'Novo encaminhamento para teste / try-out na captação.',
+      '',
+      `Atleta: ${input.prospect.name}`,
+      input.prospect.position ? `Posição: ${input.prospect.position}` : null,
+      input.prospect.targetCategory ? `Categoria alvo: ${input.prospect.targetCategory}` : null,
+      input.scoutName ? `Captador: ${input.scoutName}` : null,
+      input.matchName ? `Jogo: ${input.matchName}` : null,
+      '',
+      `Ficha: ${profileUrl}`,
+      '',
+      'Agendamento operacional: WhatsApp (33) 98413-3636 — não use o telefone do agente.',
+      '',
+      'Boston City Group — Captação',
+    ]
+      .filter(Boolean)
+      .join('\n');
+    return this.mail.sendMail({
+      to,
+      subject: `Captação — try-out: ${input.prospect.name}`,
+      text,
+    });
+  }
+
+  private assertGerenteDecisor(role: string | undefined): void {
+    const r = role?.trim().toLowerCase() ?? '';
+    if (
+      r === 'gerente' ||
+      r === 'gestor' ||
+      r === 'super_admin' ||
+      r === 'company_admin'
+    ) {
+      return;
+    }
+    throw new ForbiddenException('Decisão exclusiva do gerente de futebol.');
   }
 
   private validateLodgingForOutcome(
@@ -721,6 +789,19 @@ export class CaptacaoService {
         notes: dto.notes || null,
         evaluationOutcome,
         descriptiveObservation: dto.descriptiveObservation?.trim() || null,
+        guardianName: dto.guardianName?.trim() || null,
+        guardianPhone: dto.guardianPhone?.trim() || null,
+        guardianEmail: dto.guardianEmail?.trim() || null,
+        guardianAddress: dto.guardianAddress?.trim() || null,
+        flowPath: dto.flowPath?.trim() || 'tryout',
+        proposedCtAt: dto.proposedCtAt ? new Date(dto.proposedCtAt) : null,
+        needsLodging: dto.needsLodging ?? null,
+        technicalRating: dto.technicalRating ?? null,
+        tacticalRating: dto.tacticalRating ?? null,
+        physicalRating: dto.physicalRating ?? null,
+        cognitiveRating: dto.cognitiveRating ?? null,
+        managerDecision:
+          evaluationOutcome === 'aprovado' ? 'pendente' : undefined,
       },
       include: {
         scout: { select: { id: true, name: true } },
@@ -979,6 +1060,14 @@ export class CaptacaoService {
         needsLodging: needsLodging ?? null,
         presentationDate: presentationDate ?? null,
         stage: nextStage,
+        ...(evaluationOutcome === 'aprovado'
+          ? {
+              managerDecision: 'pendente',
+              managerDecisionAt: null,
+              managerDecisionBy: null,
+              managerDecisionNotes: null,
+            }
+          : {}),
         ...(evaluationOutcome === 'para_teste' || evaluationOutcome === 'aprovado'
           ? {
               ctScheduleStatus:
@@ -1016,6 +1105,20 @@ export class CaptacaoService {
       });
       if (schedulerNotification.whatsappUrl) {
         notifyTimestamps.schedulerNotifiedAt = new Date();
+      }
+      managerEmail = await this.notifyManagerTryout({
+        prospect: {
+          id: prospect.id,
+          tenantId: prospect.tenantId,
+          name: prospect.name,
+          position: prospect.position,
+          targetCategory: prospect.targetCategory,
+        },
+        scoutName: report.scout?.name,
+        matchName: dto.matchName,
+      });
+      if (managerEmail.sent) {
+        notifyTimestamps.managerNotifiedAt = new Date();
       }
     } else if (evaluationOutcome === 'aprovado') {
       managerEmail = await this.notifyManagerForApproval({
@@ -1145,5 +1248,114 @@ export class CaptacaoService {
     await this.physioTryoutClearance.linkPlayerOnPromote(id, playerId!);
 
     return { prospect: updated, player, created: !dto.playerId };
+  }
+
+  // ─── Fluxo mobile: supervisor CT + fila gerente ───────────────────────────
+
+  async findSupervisorQueue(tenantId?: string) {
+    const where: Prisma.ScoutingProspectWhereInput = {
+      proposedCtAt: { not: null },
+      supervisorCtConfirmedAt: null,
+      stage: { in: ['tryout', 'prioridade', 'em_observacao'] },
+    };
+    if (tenantId?.trim()) where.tenantId = tenantId.trim();
+    const rows = await this.prisma.scoutingProspect.findMany({
+      where,
+      orderBy: { proposedCtAt: 'asc' },
+      include: {
+        scout: { select: { id: true, name: true, phone: true, email: true } },
+      },
+    });
+    return rows.map((p) => enrichProspectDisplay(p));
+  }
+
+  async proposeCtSchedule(id: string, dto: ProposeCtDto) {
+    await this.findProspect(id);
+    return this.prisma.scoutingProspect.update({
+      where: { id },
+      data: {
+        proposedCtAt: new Date(dto.proposedCtAt),
+        ctScheduleNotes: dto.notes?.trim() || null,
+      },
+    });
+  }
+
+  async updateSupervisorCt(id: string, dto: SupervisorCtDto, actorName: string) {
+    const prospect = await this.findProspect(id);
+    if (!prospect.proposedCtAt && dto.action === 'confirm' && !dto.ctScheduledAt) {
+      throw new BadRequestException('Informe data/hora do CT.');
+    }
+    const scheduled = dto.ctScheduledAt
+      ? new Date(dto.ctScheduledAt)
+      : prospect.proposedCtAt;
+    if (!scheduled) {
+      throw new BadRequestException('Data do CT não definida.');
+    }
+    return this.prisma.scoutingProspect.update({
+      where: { id },
+      data: {
+        ctScheduledAt: scheduled,
+        ctScheduleStatus: 'agendado',
+        ctRoom: dto.ctRoom?.trim() || prospect.ctRoom,
+        ctScheduleNotes: dto.notes?.trim() || prospect.ctScheduleNotes,
+        supervisorCtConfirmedAt: new Date(),
+        supervisorCtConfirmedBy: actorName,
+      },
+    });
+  }
+
+  async findManagerQueue(tenantId?: string) {
+    const where: Prisma.ScoutingProspectWhereInput = {
+      evaluationOutcome: 'aprovado',
+      OR: [{ managerDecision: 'pendente' }, { managerDecision: null }],
+    };
+    if (tenantId?.trim()) where.tenantId = tenantId.trim();
+    const rows = await this.prisma.scoutingProspect.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        scout: { select: { id: true, name: true, phone: true, email: true } },
+      },
+    });
+    return rows.map((p) => enrichProspectDisplay(p));
+  }
+
+  async recordManagerDecision(
+    id: string,
+    dto: ManagerDecisionDto,
+    actor: { name?: string; email?: string; role?: string },
+  ) {
+    this.assertGerenteDecisor(actor.role);
+    const prospect = await this.findProspect(id);
+    const decision = dto.decision as CaptacaoManagerDecision;
+    if (!CAPTACAO_MANAGER_DECISIONS.includes(decision) || decision === 'pendente') {
+      throw new BadRequestException('Decisão inválida.');
+    }
+    if (decision === 'aprovado' && !dto.presentationDate?.trim()) {
+      throw new BadRequestException('Informe a data de apresentação para aprovar.');
+    }
+    const actorName = actor.name?.trim() || actor.email?.trim() || 'Gerente';
+    const stage =
+      decision === 'aprovado'
+        ? 'prioridade'
+        : decision === 'reprovado'
+          ? 'recusado'
+          : prospect.stage;
+
+    return this.prisma.scoutingProspect.update({
+      where: { id },
+      data: {
+        managerDecision: decision,
+        managerDecisionAt: new Date(),
+        managerDecisionBy: actorName,
+        managerDecisionNotes: dto.notes?.trim() || null,
+        presentationDate:
+          decision === 'aprovado' ? dto.presentationDate!.trim() : prospect.presentationDate,
+        stage,
+      },
+      include: {
+        scout: { select: { id: true, name: true } },
+      },
+    });
   }
 }

@@ -166,6 +166,37 @@ export function buildManagerApprovalEmailText(input: {
   };
 }
 
+export function buildManagerApprovalEmailHtml(input: {
+  prospectName: string;
+  profileUrl: string;
+  scoutName?: string | null;
+  overallRating?: number | null;
+}): string {
+  const approveUrl = `${input.profileUrl}${input.profileUrl.includes('?') ? '&' : '?'}gerenteDecisao=aprovado`;
+  const rejectUrl = `${input.profileUrl}${input.profileUrl.includes('?') ? '&' : '?'}gerenteDecisao=reprovado`;
+  const esc = (s: string) =>
+    s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+  return `<!DOCTYPE html><html><body style="font-family:Segoe UI,Arial,sans-serif;background:#0f0f12;color:#e4e4e7;padding:24px">
+<div style="max-width:560px;margin:0 auto;background:#18181b;border:1px solid #3f3f46;border-radius:12px;padding:24px">
+<p style="margin:0 0 16px">Olá,</p>
+<p style="margin:0 0 16px;line-height:1.5">Atleta <strong>${esc(input.prospectName)}</strong> foi encaminhado na captação e aguarda sua decisão.</p>
+${input.scoutName ? `<p style="margin:0 0 8px;color:#a1a1aa">Captador: ${esc(input.scoutName)}</p>` : ''}
+${input.overallRating != null ? `<p style="margin:0 0 16px;color:#a1a1aa">Nota geral: ${input.overallRating}/10</p>` : ''}
+<p style="margin:0 0 20px;line-height:1.5">Use os botões abaixo (requer login no dashboard) ou abra a ficha completa.</p>
+<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+<a href="${esc(approveUrl)}" style="display:inline-block;padding:12px 20px;background:#16a34a;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">Aprovar continuidade</a>
+<a href="${esc(rejectUrl)}" style="display:inline-block;padding:12px 20px;background:#dc2626;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">Reprovar</a>
+</div>
+<p style="margin:0"><a href="${esc(input.profileUrl)}" style="color:#a78bfa">Abrir ficha no dashboard</a></p>
+<p style="margin:24px 0 0;font-size:12px;color:#71717a">Boston City Group — Captação</p>
+</div></body></html>`;
+}
+
 function publicAppOrigin(): string {
   return (
     process.env.PUBLIC_APP_URL?.trim() ||

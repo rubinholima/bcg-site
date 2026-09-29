@@ -1,6 +1,7 @@
 import {
   buildSchedulerNotificationMessage,
   buildWhatsAppNotifyUrl,
+  captacaoProspectProfileUrl,
 } from './captacao-scouting.util';
 import { CAPTACAO_SCHEDULER_PHONE } from './captacao.constants';
 
@@ -52,7 +53,7 @@ export function buildOperationalSchedulerNotification(input: {
     cognitiveRating: input.cognitiveRating,
     matchName: input.matchName,
     recommendation: input.recommendation,
-    dashboardUrl: `/dashboard/futebol/captacao/prospects/${input.prospectId}`,
+    dashboardUrl: captacaoProspectProfileUrl(input.prospectId),
   });
   const operationalPhone = resolveCaptacaoOperationalWhatsAppPhone();
   const agentPhone = input.prospect.agentPhone?.trim() || null;

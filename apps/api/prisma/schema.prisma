@@ -2912,6 +2912,22 @@ model ScoutingProspect {
   /** E-mail ao gerente enviado quando encaminhado como aprovado */
   managerNotifiedAt     DateTime?
   schedulerNotifiedAt DateTime?
+  guardianName          String?
+  guardianPhone         String?
+  guardianEmail         String?
+  guardianAddress       String?
+  /** tryout | integracao_direta */
+  flowPath              String?  @default("tryout")
+  proposedCtAt          DateTime?
+  ctRoom                String?
+  supervisorCtConfirmedAt DateTime?
+  supervisorCtConfirmedBy String?
+  /** pendente | aprovado | reprovado | ajuste — decisão do gerente (integração direta) */
+  managerDecision       String?  @default("pendente")
+  managerDecisionAt     DateTime?
+  managerDecisionBy     String?
+  managerDecisionNotes  String?  @db.Text
+  workflowLog           Json?
   /// nao_agendado | agendado | faltou | compareceu | em_avaliacao | concluido
   ctScheduleStatus      String?
   ctScheduledAt         DateTime?

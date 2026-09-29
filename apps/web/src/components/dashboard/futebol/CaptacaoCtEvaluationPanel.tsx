@@ -25,7 +25,7 @@ import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-mo
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPositionLabel } from "@/lib/football-positions";
-import { buildWhatsAppUrl } from "@/lib/whatsapp-url";
+import { buildCaptacaoSchedulerWhatsAppUrl } from "@/lib/captacao-scheduler";
 import {
   labelForPhysioClearanceStatus,
   physioClearanceBadgeClass,
@@ -66,6 +66,7 @@ function buildContactWhatsAppMessage(p: ScoutingProspect): string {
       ? `Agendado: ${new Date(p.ctScheduledAt).toLocaleString("pt-BR")}`
       : null,
     p.overallRating != null ? `Nota geral: ${formatScoutingRating(p.overallRating)}` : null,
+    p.agentPhone ? `Contato agente (referência): ${p.agentPhone}` : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -196,10 +197,7 @@ export function CaptacaoCtEvaluationPanel({ tenantId }: Props) {
             ) : (
               items.map((p) => {
                 const status = p.effectiveCtScheduleStatus ?? "nao_agendado";
-                const waUrl = buildWhatsAppUrl(
-                  p.contactPhone ?? p.agentPhone,
-                  buildContactWhatsAppMessage(p),
-                );
+                const waUrl = buildCaptacaoSchedulerWhatsAppUrl(buildContactWhatsAppMessage(p));
                 return (
                   <TableRow key={p.id}>
                     <TableCell>

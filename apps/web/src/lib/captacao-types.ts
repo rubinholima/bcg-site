@@ -287,6 +287,10 @@ export interface ScoutingProspect {
   legalStatus?: string | null;
   needsLodging?: boolean | null;
   presentationDate?: string | null;
+  managerDecision?: string | null;
+  managerDecisionAt?: string | null;
+  managerDecisionBy?: string | null;
+  managerDecisionNotes?: string | null;
   ctScheduleStatus?: CtScheduleStatus | null;
   ctScheduledAt?: string | null;
   proposedCtAt?: string | null;
