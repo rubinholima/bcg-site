@@ -66,12 +66,22 @@ export type ExecutiveSeasonHighlightsSummary = {
   actionUrl: string;
 };
 
+export type ExecutivePrepPhysiologySummary = {
+  prepSessionsFinalized: number;
+  pendingPse: number;
+  expectedPse: number;
+  avgPse: number | null;
+  avgAthleteRating: number | null;
+  actionUrl: string;
+};
+
 export type ExecutivePerformanceSummary = {
   available: number;
   unavailable: number;
   pendingCoachEvaluations: number;
   activeTransitions: number;
   seasonHighlights: ExecutiveSeasonHighlightsSummary | null;
+  prepPhysiology: ExecutivePrepPhysiologySummary | null;
 };
 
 export type ExecutiveContractsSummary = {

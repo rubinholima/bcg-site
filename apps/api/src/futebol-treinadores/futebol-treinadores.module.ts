@@ -8,9 +8,17 @@ import { FutebolTreinadoresController } from './futebol-treinadores.controller';
 import { FutebolTreinadoresService } from './futebol-treinadores.service';
 import { CoachPlayerEvaluationService } from './coach-player-evaluation.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
+import { PrepFisicaModule } from '../prep-fisica/prep-fisica.module';
 
 @Module({
-  imports: [AuthModule, ModulesModule, FutebolRelatoriosModule, CoachMatchStatsModule, SeasonHighlightsModule],
+  imports: [
+    AuthModule,
+    ModulesModule,
+    FutebolRelatoriosModule,
+    CoachMatchStatsModule,
+    SeasonHighlightsModule,
+    PrepFisicaModule,
+  ],
   controllers: [FutebolTreinadoresController],
   providers: [FutebolTreinadoresService, CoachPlayerEvaluationService, ModuleAccessGuard],
 })

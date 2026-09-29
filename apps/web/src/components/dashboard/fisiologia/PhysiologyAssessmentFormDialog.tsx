@@ -49,6 +49,7 @@ interface Props {
   edit?: PhysiologyAssessmentRow | null;
   onSuccess: () => void;
   defaultPlayerId?: string;
+  defaultEvaluatorRole?: string;
 }
 
 const SKINFOLD_FIELDS: Array<{ key: keyof SkinfoldSites; label: string }> = [
@@ -107,6 +108,7 @@ export function PhysiologyAssessmentFormDialog({
   edit,
   onSuccess,
   defaultPlayerId,
+  defaultEvaluatorRole = "fisiologista",
 }: Props) {
   const [saving, setSaving] = useState(false);
   const [playerId, setPlayerId] = useState("");
@@ -170,7 +172,7 @@ export function PhysiologyAssessmentFormDialog({
       setPlayerId(defaultPlayerId ?? "");
       setAssessmentType("rotina");
       setAssessedAt(new Date().toISOString().slice(0, 10));
-      setEvaluatorRole("fisiologista");
+      setEvaluatorRole(defaultEvaluatorRole);
       setEvaluatorName("");
       setWeight("");
       setHeight("");
@@ -188,7 +190,7 @@ export function PhysiologyAssessmentFormDialog({
       setMobilityNotes("");
       setNotes("");
     }
-  }, [open, edit, defaultPlayerId]);
+  }, [open, edit, defaultPlayerId, defaultEvaluatorRole]);
 
   const computed = useMemo(() => {
     const w = parseNum(weight);

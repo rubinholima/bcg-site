@@ -32,6 +32,7 @@ import { BostonCityHallService } from '../boston-city-hall/boston-city-hall.serv
 import { TenantPressService } from '../tenant-press/tenant-press.service';
 import { SubmitEmployeeRegistrationDto } from '../registration-invite/dto/submit-employee-registration.dto';
 import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-player-registration.dto';
+import { PrepPseService } from '../prep-fisica/prep-pse.service';
 
 @Controller('public')
 export class PublicController {
@@ -48,7 +49,20 @@ export class PublicController {
     private readonly registrationInviteService: RegistrationInviteService,
     private readonly bostonCityHallService: BostonCityHallService,
     private readonly tenantPressService: TenantPressService,
+    private readonly prepPse: PrepPseService,
   ) {}
+
+  /** PSE (RPE) do atleta — link público por token */
+  @Get('pse/:token')
+  getAthletePseForm(@Param('token') token: string) {
+    return this.prepPse.getPublicForm(token);
+  }
+
+  @Post('pse/:token')
+  submitAthletePse(@Param('token') token: string, @Body() body: { rpe?: number }) {
+    const rpe = typeof body?.rpe === 'number' ? body.rpe : Number(body?.rpe);
+    return this.prepPse.submitPublicPse(token, rpe);
+  }
 
   @Get('portfolio')
   getPortfolio() {

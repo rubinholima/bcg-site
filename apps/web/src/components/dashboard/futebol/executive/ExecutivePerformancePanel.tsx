@@ -59,6 +59,21 @@ export function ExecutivePerformancePanel({
               href={performance.seasonHighlights.actionUrl}
             />
           ) : null}
+          {performance.prepPhysiology ? (
+            <>
+              <ExecutiveCompactStat
+                label="Treinos prep. física"
+                value={performance.prepPhysiology.prepSessionsFinalized}
+                href="/dashboard/futebol/preparacao-fisica/treinos"
+              />
+              <ExecutiveCompactStat
+                label="PSE pendente"
+                value={performance.prepPhysiology.pendingPse}
+                href={performance.prepPhysiology.actionUrl}
+                highlight={performance.prepPhysiology.pendingPse > 0 ? "warning" : undefined}
+              />
+            </>
+          ) : null}
         </div>
       </div>
     </section>

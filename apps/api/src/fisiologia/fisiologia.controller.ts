@@ -29,6 +29,8 @@ import {
   UpdatePhysiologyLoadSessionDto,
 } from './dto/fisiologia.dto';
 
+const FISIO_OR_PREP = ['futebol_fisiologia', 'futebol_preparacao_fisica'] as const;
+
 @Controller('fisiologia')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class FisiologiaController {
@@ -56,7 +58,7 @@ export class FisiologiaController {
 
   @Get('assessments')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('futebol_fisiologia')
+  @RequireModule([...FISIO_OR_PREP])
   async listAssessments(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId?: string,
@@ -77,14 +79,14 @@ export class FisiologiaController {
 
   @Get('assessments/:id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('futebol_fisiologia')
+  @RequireModule([...FISIO_OR_PREP])
   async findAssessment(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     return this.service.findAssessment(id, await this.allowedTenants(req));
   }
 
   @Post('assessments')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('futebol_fisiologia')
+  @RequireModule([...FISIO_OR_PREP])
   async createAssessment(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Body() dto: CreatePhysiologyAssessmentDto,
@@ -94,7 +96,7 @@ export class FisiologiaController {
 
   @Patch('assessments/:id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('futebol_fisiologia')
+  @RequireModule([...FISIO_OR_PREP])
   async updateAssessment(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Param('id') id: string,
@@ -180,7 +182,7 @@ export class FisiologiaController {
 
   @Get('load-sessions/category-roster')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('futebol_fisiologia')
+  @RequireModule([...FISIO_OR_PREP])
   async categoryRoster(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId: string,
@@ -191,7 +193,7 @@ export class FisiologiaController {
 
   @Get('load-sessions')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('futebol_fisiologia')
+  @RequireModule([...FISIO_OR_PREP])
   async listLoadSessions(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId?: string,
@@ -212,7 +214,7 @@ export class FisiologiaController {
 
   @Get('load-sessions/:id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('futebol_fisiologia')
+  @RequireModule([...FISIO_OR_PREP])
   async findLoadSession(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     return this.service.findLoadSession(id, await this.allowedTenants(req));
   }
@@ -229,7 +231,7 @@ export class FisiologiaController {
 
   @Patch('load-sessions/:id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('futebol_fisiologia')
+  @RequireModule([...FISIO_OR_PREP])
   async updateLoadSession(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Param('id') id: string,

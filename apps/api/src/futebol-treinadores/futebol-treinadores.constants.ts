@@ -114,7 +114,10 @@ export const coachMatchReportInclude = {
 } as const;
 
 export const coachTrainingSessionInclude = {
-  activities: { orderBy: { sortOrder: 'asc' as const } },
+  activities: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: { objective: { select: { id: true, title: true } } },
+  },
   attachments: true,
   agendaEntry: {
     select: {

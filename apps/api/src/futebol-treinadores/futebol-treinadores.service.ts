@@ -31,6 +31,7 @@ import {
   buildTrainingSessionReport,
   defaultPeriodRange,
 } from './coach-training-reports.util';
+import { PrepLoadSyncService } from '../prep-fisica/prep-load-sync.service';
 import {
   COACH_REPORT_STATUS,
   COACH_TEAM_PLAYER_ACTION,
@@ -91,6 +92,7 @@ export class FutebolTreinadoresService {
     private readonly opponentRadar: OpponentRadarService,
     private readonly guiaPartida: GuiaPartidaService,
     private readonly matchStats: CoachMatchStatsService,
+    private readonly prepLoadSync: PrepLoadSyncService,
   ) {}
 
   private async tenantAliases(tenantId: string, name: string): Promise<string[]> {
@@ -604,7 +606,11 @@ export class FutebolTreinadoresService {
 
   async listTrainingSessions(tenantId: string, category?: string) {
     return this.prisma.coachTrainingSession.findMany({
-      where: { tenantId, ...(category ? { category } : {}) },
+      where: {
+        tenantId,
+        sessionDomain: 'comissao_tecnica',
+        ...(category ? { category } : {}),
+      },
       orderBy: [{ sessionDate: 'desc' }, { createdAt: 'desc' }],
       include: coachTrainingSessionInclude,
     });
@@ -692,6 +698,7 @@ export class FutebolTreinadoresService {
       objectives: input.objectives?.trim() || null,
       notes: input.notes?.trim() || null,
       status,
+      sessionDomain: 'comissao_tecnica',
       agendaEntryId: input.agendaEntryId ?? null,
       planTemplateId: input.planTemplateId ?? null,
     };
@@ -763,6 +770,10 @@ export class FutebolTreinadoresService {
       }
     }
 
+    if (status === 'finalizado' && session.category) {
+      await this.prepLoadSync.syncForTrainingDay(session.tenantId, session.category, session.sessionDate);
+    }
+
     return this.getTrainingSession(session.id);
   }
 
@@ -776,7 +787,8 @@ export class FutebolTreinadoresService {
     return this.prisma.coachTrainingPlanTemplate.findMany({
       where: {
         tenantId,
-        ...(category ? { OR: [{ category }, { category: null }] } : {}),
+        OR: [{ planDomain: 'comissao_tecnica' }, { planDomain: null }],
+        ...(category ? { AND: [{ OR: [{ category }, { category: null }] }] } : {}),
       },
       orderBy: [{ title: 'asc' }, { updatedAt: 'desc' }],
     });

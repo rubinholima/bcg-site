@@ -9,6 +9,7 @@ import { TenantsModule } from '../tenants/tenants.module';
 import { FutebolExecutiveController } from './futebol-executive.controller';
 import { FutebolExecutiveService } from './futebol-executive.service';
 import { SeasonHighlightsModule } from '../season-highlights/season-highlights.module';
+import { PrepFisicaModule } from '../prep-fisica/prep-fisica.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SeasonHighlightsModule } from '../season-highlights/season-highlights.m
     PlayerNegotiationsModule,
     TenantsModule,
     SeasonHighlightsModule,
+    PrepFisicaModule,
   ],
   controllers: [FutebolExecutiveController],
   providers: [FutebolExecutiveService],

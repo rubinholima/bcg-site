@@ -51,7 +51,11 @@ type Tenant = {
   kind?: { name?: string };
 };
 
-export function FisiologiaAvaliacoesPanel() {
+export function FisiologiaAvaliacoesPanel({
+  defaultEvaluatorRole = "fisiologista",
+}: {
+  defaultEvaluatorRole?: string;
+} = {}) {
   const { categories: allCats } = useFixtureCategories();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState("");
@@ -288,6 +292,7 @@ export function FisiologiaAvaliacoesPanel() {
         edit={editRow}
         onSuccess={load}
         defaultPlayerId={playerId || undefined}
+        defaultEvaluatorRole={defaultEvaluatorRole}
       />
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

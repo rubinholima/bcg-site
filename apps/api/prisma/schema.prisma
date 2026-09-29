@@ -188,6 +188,9 @@ model Tenant {
   coachPlayerEvaluations       CoachPlayerEvaluation[]
   coachTrainingSessions        CoachTrainingSession[]
   coachTrainingPlanTemplates   CoachTrainingPlanTemplate[]
+  trainingObjectives           TrainingObjective[]
+  physiologySessionRpeTokens   PhysiologySessionRpeToken[]
+  physiologySessionRpeSubmissions PhysiologySessionRpeSubmission[]
   coachMatchStatOverrides      CoachMatchStatOverride[]
   footballMatchIncidents       FootballMatchIncident[]
   footballMatchAttachments     FootballMatchAttachment[]
@@ -1154,6 +1157,8 @@ model Player {
   physiologyAssessments      PhysiologyAssessment[]
   physiologyHydrations       PhysiologyHydration[]
   physiologyLoadEntries      PhysiologyLoadEntry[]
+  physiologySessionRpeTokens PhysiologySessionRpeToken[]
+  physiologySessionRpeSubmissions PhysiologySessionRpeSubmission[]
   nursingSessions            NursingSession[]
   medicalDepartures          PlayerMedicalDeparture[]
   medicalEncounters          MedicalEncounter[]
@@ -4005,10 +4010,53 @@ model PhysiologyLoadSession {
   staffName    String?
   notes        String?  @db.Text
   entries      PhysiologyLoadEntry[]
+  coachTrainingSessions CoachTrainingSession[]
+  pseTokens    PhysiologySessionRpeToken[]
+  pseSubmissions PhysiologySessionRpeSubmission[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   @@index([tenantId, sessionDate])
   @@index([tenantId, category, sessionDate])
+}
+
+/// Token seguro para atleta informar PSE (sem login dashboard)
+model PhysiologySessionRpeToken {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId              String
+  player                Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  coachTrainingSessionId String
+  coachTrainingSession  CoachTrainingSession @relation(fields: [coachTrainingSessionId], references: [id], onDelete: Cascade)
+  physiologyLoadSessionId String?
+  physiologyLoadSession PhysiologyLoadSession? @relation(fields: [physiologyLoadSessionId], references: [id], onDelete: SetNull)
+  tokenHash             String   @unique
+  expiresAt             DateTime
+  revokedAt             DateTime?
+  createdAt             DateTime @default(now())
+  @@index([coachTrainingSessionId, playerId])
+  @@index([tenantId])
+}
+
+/// Registro auditável de PSE (canônico valor em PhysiologyLoadEntry.rpe)
+model PhysiologySessionRpeSubmission {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId              String
+  player                Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  coachTrainingSessionId String?
+  coachTrainingSession  CoachTrainingSession? @relation(fields: [coachTrainingSessionId], references: [id], onDelete: SetNull)
+  physiologyLoadSessionId String
+  physiologyLoadSession PhysiologyLoadSession @relation(fields: [physiologyLoadSessionId], references: [id], onDelete: Cascade)
+  physiologyLoadEntryId String?
+  rpe                   Int
+  source                String   @default("athlete") // athlete | csv_import | staff
+  submittedAt           DateTime @default(now())
+  importBatchId         String?
+  @@unique([physiologyLoadSessionId, playerId])
+  @@index([coachTrainingSessionId])
+  @@index([tenantId, submittedAt])
 }
 
 /// Carga individual por atleta na sessão (GPS, RPE, distâncias)
@@ -4294,20 +4342,34 @@ model CoachTrainingSession {
   objectives  String?  @db.Text
   notes       String?  @db.Text
   status      String   @default("rascunho") // rascunho | finalizado
+  /// comissao_tecnica | preparacao_fisica
+  sessionDomain String  @default("comissao_tecnica")
+  /// field | gym (preparação física)
+  location    String?
+  /// Blocos simultâneos (mesmo evento) compartilham blockGroupId ou agendaEntryId
+  blockGroupId String?
+  blockSequence Int    @default(0)
   agendaEntryId String?
   agendaEntry   FootballAgendaEntry? @relation(fields: [agendaEntryId], references: [id], onDelete: SetNull)
   planTemplateId String?
   planTemplate   CoachTrainingPlanTemplate? @relation(fields: [planTemplateId], references: [id], onDelete: SetNull)
+  physiologyLoadSessionId String?
+  physiologyLoadSession   PhysiologyLoadSession? @relation(fields: [physiologyLoadSessionId], references: [id], onDelete: SetNull)
   activities  CoachTrainingActivity[]
   playerEntries CoachTrainingPlayerEntry[]
   attachments CoachTrainingSessionAttachment[]
+  pseTokens   PhysiologySessionRpeToken[]
+  pseSubmissions PhysiologySessionRpeSubmission[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   @@index([tenantId, category])
   @@index([tenantId, sessionDate])
+  @@index([tenantId, sessionDomain, sessionDate])
   @@index([staffId])
   @@index([agendaEntryId])
   @@index([planTemplateId])
+  @@index([physiologyLoadSessionId])
+  @@index([blockGroupId])
 }
 
 model CoachTrainingPlanTemplate {
@@ -4315,6 +4377,8 @@ model CoachTrainingPlanTemplate {
   tenantId     String
   tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   category     String?
+  /// comissao_tecnica | preparacao_fisica | null = compartilhado
+  planDomain   String?
   title        String
   fileUrl      String
   notes        String?  @db.Text
@@ -4323,6 +4387,20 @@ model CoachTrainingPlanTemplate {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   @@index([tenantId, category])
+  @@index([tenantId, planDomain])
+}
+
+model TrainingObjective {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  title       String
+  description String?  @db.Text
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  activities  CoachTrainingActivity[]
+  @@index([tenantId, active])
 }
 
 model CoachTrainingSessionAttachment {
@@ -4341,11 +4419,15 @@ model CoachTrainingActivity {
   session         CoachTrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   kind            String // aquecimento | desenvolvimento | principal | encerramento
   title           String
+  objectiveId     String?
+  objective       TrainingObjective? @relation(fields: [objectiveId], references: [id], onDelete: SetNull)
+  objectiveText   String?
   description     String? @db.Text
   durationMinutes Int?
   sortOrder       Int    @default(0)
   mediaUrl        String?
   @@index([sessionId, sortOrder])
+  @@index([objectiveId])
 }
 
 model CoachTrainingPlayerEntry {

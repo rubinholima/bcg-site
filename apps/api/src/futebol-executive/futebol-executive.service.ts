@@ -26,9 +26,11 @@ import type {
   ExecutiveKpi,
   ExecutiveNegotiationsSummary,
   ExecutiveSeasonHighlightsSummary,
+  ExecutivePrepPhysiologySummary,
   ExecutiveSeverity,
 } from './futebol-executive.types';
 import { SeasonHighlightsService } from '../season-highlights/season-highlights.service';
+import { PrepFisicaService } from '../prep-fisica/prep-fisica.service';
 
 type Ctx = {
   role: string;
@@ -49,6 +51,7 @@ export class FutebolExecutiveService {
     private readonly playerNegotiations: PlayerNegotiationsService,
     private readonly tenantsService: TenantsService,
     private readonly seasonHighlights: SeasonHighlightsService,
+    private readonly prepFisica: PrepFisicaService,
   ) {}
 
   async getDashboard(
@@ -952,12 +955,22 @@ export class FutebolExecutiveService {
       };
     }
 
+    let prepPhysiology: ExecutivePrepPhysiologySummary | null = null;
+    if (hasModule(ctx.modules, 'futebol_preparacao_fisica') && ctx.tenantId) {
+      prepPhysiology = await this.prepFisica.getExecutivePrepSummary(
+        ctx.tenantId,
+        ctx.category,
+        ctx.periodDays,
+      );
+    }
+
     return {
       available,
       unavailable,
       pendingCoachEvaluations,
       activeTransitions,
       seasonHighlights,
+      prepPhysiology,
     };
   }
 

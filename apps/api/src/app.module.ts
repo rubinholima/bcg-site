@@ -64,6 +64,7 @@ import { DynamicReportsModule } from './dynamic-reports/dynamic-reports.module';
 import { MasterOpsModule } from './master-ops/master-ops.module';
 import { DesenvolvimentoModule } from './desenvolvimento/desenvolvimento.module';
 import { PlayerNegotiationsModule } from './player-negotiations/player-negotiations.module';
+import { PrepFisicaModule } from './prep-fisica/prep-fisica.module';
 
 @Module({
   imports: [
@@ -130,6 +131,7 @@ import { PlayerNegotiationsModule } from './player-negotiations/player-negotiati
     MasterOpsModule,
     DesenvolvimentoModule,
     PlayerNegotiationsModule,
+    PrepFisicaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
