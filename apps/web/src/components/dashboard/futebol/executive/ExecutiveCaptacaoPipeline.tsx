@@ -52,6 +52,8 @@ export function ExecutiveCaptacaoPipeline({
     captacao.physioPending > 0,
     captacao.physioRejected > 0,
     captacao.supervisorApprovalPending > 0,
+    captacao.tryoutAwaitingManagement > 0,
+    captacao.tryoutAwaitingCoach > 0,
   ].some(Boolean);
 
   return (
@@ -63,9 +65,14 @@ export function ExecutiveCaptacaoPipeline({
             Captação / Try-out
           </h2>
         </div>
-        <Link href="/dashboard/futebol/captacao" className="text-[11px] text-primary hover:underline">
-          Abrir
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/dashboard/futebol/try-outs" className="text-[11px] text-primary hover:underline">
+            Try Out
+          </Link>
+          <Link href="/dashboard/futebol/captacao" className="text-[11px] text-primary hover:underline">
+            Captação
+          </Link>
+        </div>
       </header>
 
       <div className="p-3">
@@ -116,6 +123,16 @@ export function ExecutiveCaptacaoPipeline({
             {(captacao.byCtStatus.faltou ?? 0) > 0 ? (
               <span className="rounded border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[10px] text-orange-300">
                 No-show: {captacao.byCtStatus.faltou}
+              </span>
+            ) : null}
+            {captacao.tryoutAwaitingManagement > 0 ? (
+              <span className="rounded border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-300">
+                Try Out gerência: {captacao.tryoutAwaitingManagement}
+              </span>
+            ) : null}
+            {captacao.tryoutAwaitingCoach > 0 ? (
+              <span className="rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
+                Try Out treinador: {captacao.tryoutAwaitingCoach}
               </span>
             ) : null}
           </div>

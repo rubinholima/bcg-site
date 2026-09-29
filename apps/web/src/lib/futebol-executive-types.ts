@@ -37,6 +37,12 @@ export type ExecutiveCaptacaoSummary = {
   physioRejected: number;
   supervisorApprovalPending: number;
   awaitingSchedule: number;
+  tryoutAwaitingSupervision: number;
+  tryoutAwaitingPhysio: number;
+  tryoutAwaitingCoach: number;
+  tryoutAwaitingManagement: number;
+  tryoutUnderEvaluation: number;
+  tryoutByStage: Record<string, number>;
   items: ExecutiveActionItem[];
 };
 

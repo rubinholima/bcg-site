@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
+import { TryoutWorkflowModule } from '../tryout-workflow/tryout-workflow.module';
 import { AuthModule } from '../auth/auth.module';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { ModulesModule } from '../modules/modules.module';
@@ -10,7 +11,7 @@ import { PhysioTryoutClearanceService } from './physio-tryout-clearance.service'
 import { PhysioPlayerAvailabilityService } from '../common/physio-player-availability.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule, ModulesModule],
+  imports: [PrismaModule, AuthModule, ModulesModule, forwardRef(() => TryoutWorkflowModule)],
   controllers: [FisioterapiaController],
   providers: [
     FisioterapiaService,

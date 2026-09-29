@@ -726,6 +726,38 @@ export class FutebolExecutiveService {
       }
     }
 
+    const tryoutStageRows = await this.prisma.scoutingProspect.groupBy({
+      by: ['tryoutWorkflowStage'],
+      where: {
+        ...base,
+        tryoutWorkflowStage: { not: null },
+      },
+      _count: true,
+    });
+    const tryoutByStage = Object.fromEntries(
+      tryoutStageRows.map((r) => [r.tryoutWorkflowStage ?? '—', r._count]),
+    );
+
+    const tryoutAwaitingSupervision = tryoutByStage.aguardando_supervisao ?? 0;
+    const tryoutAwaitingPhysio = tryoutByStage.aguardando_fisio ?? 0;
+    const tryoutAwaitingCoach = tryoutByStage.aguardando_treinador ?? 0;
+    const tryoutAwaitingManagement = tryoutByStage.aguardando_gerencia ?? 0;
+    const tryoutUnderEvaluation =
+      (tryoutByStage.em_avaliacao_campo ?? 0) +
+      (tryoutByStage.liberado_campo ?? 0) +
+      tryoutAwaitingCoach;
+
+    if (tryoutAwaitingManagement > 0) {
+      items.push({
+        id: 'tryout-mgmt-queue',
+        type: 'tryout_gerencia',
+        title: `${tryoutAwaitingManagement} Try Out(s) aguardando gerência`,
+        severity: 'attention',
+        actionUrl: '/dashboard/futebol/try-outs',
+        moduleRequired: 'futebol_tryouts',
+      });
+    }
+
     return {
       active,
       byCtStatus,
@@ -733,6 +765,12 @@ export class FutebolExecutiveService {
       physioRejected,
       supervisorApprovalPending,
       awaitingSchedule,
+      tryoutAwaitingSupervision,
+      tryoutAwaitingPhysio,
+      tryoutAwaitingCoach,
+      tryoutAwaitingManagement,
+      tryoutUnderEvaluation,
+      tryoutByStage,
       items,
     };
   }
@@ -1186,6 +1224,22 @@ export class FutebolExecutiveService {
           aprovacao_supervisor: data.captacao.supervisorApprovalPending,
         },
         href: '/dashboard/futebol/captacao',
+      });
+      kpis.push({
+        id: 'tryout-pipeline',
+        label: 'Try Out',
+        value:
+          data.captacao.tryoutAwaitingManagement +
+          data.captacao.tryoutAwaitingCoach +
+          data.captacao.tryoutAwaitingPhysio,
+        breakdown: {
+          supervisao: data.captacao.tryoutAwaitingSupervision,
+          fisio: data.captacao.tryoutAwaitingPhysio,
+          treinador: data.captacao.tryoutAwaitingCoach,
+          gerencia: data.captacao.tryoutAwaitingManagement,
+          em_avaliacao: data.captacao.tryoutUnderEvaluation,
+        },
+        href: '/dashboard/futebol/try-outs',
       });
     }
 

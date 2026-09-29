@@ -1,9 +1,25 @@
 import { BadRequestException } from '@nestjs/common';
 import { PhysioTryoutClearanceService } from './physio-tryout-clearance.service';
+import { emptyTryoutBilateralTests } from './physio-tryout-clearance.constants';
+
+function filledBilateralTests() {
+  const base = emptyTryoutBilateralTests();
+  for (const key of Object.keys(base)) {
+    base[key as keyof typeof base] = {
+      right: { response: 'ok', outcome: 'aprovado' },
+      left: { response: 'ok', outcome: 'aprovado' },
+    };
+  }
+  return base;
+}
 
 describe('PhysioTryoutClearanceService gate', () => {
   const envSnapshot = { ...process.env };
   const mail = { sendMail: jest.fn() };
+  const tryoutWorkflow = {
+    afterPhysioClearance: jest.fn().mockResolvedValue(undefined),
+    notifyFisiologiaOnPhysioComplete: jest.fn().mockResolvedValue(undefined),
+  };
 
   afterEach(() => {
     process.env = { ...envSnapshot };
@@ -16,7 +32,11 @@ describe('PhysioTryoutClearanceService gate', () => {
         findFirst: jest.fn().mockResolvedValue(null),
       },
     };
-    const service = new PhysioTryoutClearanceService(prisma as never, mail as never);
+    const service = new PhysioTryoutClearanceService(
+      prisma as never,
+      mail as never,
+      tryoutWorkflow as never,
+    );
     await expect(service.assertCanStartCtFieldEvaluation('prospect-1')).rejects.toThrow(
       BadRequestException,
     );
@@ -28,7 +48,11 @@ describe('PhysioTryoutClearanceService gate', () => {
         findFirst: jest.fn().mockResolvedValue({ outcome: 'aprovado' }),
       },
     };
-    const service = new PhysioTryoutClearanceService(prisma as never, mail as never);
+    const service = new PhysioTryoutClearanceService(
+      prisma as never,
+      mail as never,
+      tryoutWorkflow as never,
+    );
     await expect(service.assertCanStartCtFieldEvaluation('prospect-1')).resolves.toBeUndefined();
   });
 
@@ -45,6 +69,7 @@ describe('PhysioTryoutClearanceService gate', () => {
           name: 'João Teste',
           playerId: null,
           targetCategory: 'sub13',
+          supervisionDocsValidatedAt: new Date(),
         }),
       },
       physioTryoutClearance: {
@@ -54,19 +79,26 @@ describe('PhysioTryoutClearanceService gate', () => {
           prospectName: 'João Teste',
           targetCategory: 'sub13',
           outcome: 'aprovado',
-          staffName: null,
+          staffName: 'Fisio',
           evaluatedAt,
         }),
         update: jest.fn().mockResolvedValue({}),
       },
     };
-    const service = new PhysioTryoutClearanceService(prisma as never, mail as never);
+    const service = new PhysioTryoutClearanceService(
+      prisma as never,
+      mail as never,
+      tryoutWorkflow as never,
+    );
     await service.create(
       {
         tenantId: 'tenant-1',
         prospectId: 'prospect-1',
         outcome: 'aprovado',
-        bilateralTests: {},
+        staffName: 'Fisio',
+        injuryHistory: 'Nenhuma',
+        manualStrengthTest: '5/5',
+        bilateralTests: filledBilateralTests(),
       },
       ['tenant-1'],
     );
@@ -88,6 +120,7 @@ describe('PhysioTryoutClearanceService gate', () => {
           name: 'João Teste',
           playerId: null,
           targetCategory: 'sub13',
+          supervisionDocsValidatedAt: new Date(),
         }),
       },
       physioTryoutClearance: {
@@ -97,19 +130,26 @@ describe('PhysioTryoutClearanceService gate', () => {
           prospectName: 'João Teste',
           targetCategory: 'sub13',
           outcome: 'aprovado',
-          staffName: null,
+          staffName: 'Fisio',
           evaluatedAt,
         }),
         update: jest.fn().mockResolvedValue({}),
       },
     };
-    const service = new PhysioTryoutClearanceService(prisma as never, mail as never);
+    const service = new PhysioTryoutClearanceService(
+      prisma as never,
+      mail as never,
+      tryoutWorkflow as never,
+    );
     const result = await service.create(
       {
         tenantId: 'tenant-1',
         prospectId: 'prospect-1',
         outcome: 'aprovado',
-        bilateralTests: {},
+        staffName: 'Fisio',
+        injuryHistory: 'Nenhuma',
+        manualStrengthTest: '5/5',
+        bilateralTests: filledBilateralTests(),
       },
       ['tenant-1'],
     );
@@ -128,7 +168,11 @@ describe('PhysioTryoutClearanceService gate', () => {
         findFirst: jest.fn().mockResolvedValue({ outcome: 'reprovado' }),
       },
     };
-    const service = new PhysioTryoutClearanceService(prisma as never, mail as never);
+    const service = new PhysioTryoutClearanceService(
+      prisma as never,
+      mail as never,
+      tryoutWorkflow as never,
+    );
     await expect(service.assertCanStartCtFieldEvaluation('prospect-1')).rejects.toThrow(
       /reprovada/i,
     );

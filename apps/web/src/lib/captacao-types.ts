@@ -310,6 +310,17 @@ export interface ScoutingProspect {
   physioClearanceStatus?: "pendente" | "aprovado" | "reprovado" | null;
   canStartCtFieldEvaluation?: boolean;
   physioClearanceEvaluatedAt?: string | null;
+  tryoutWorkflowStage?: string | null;
+  tryoutEffectiveStage?: string | null;
+  tryoutBlockReason?: string | null;
+  arrivalReferralSource?: string | null;
+  tryoutPeriodStartedAt?: string | null;
+  tryoutPeriodEndsAt?: string | null;
+  tryoutRenewalCount?: number;
+  tryoutRegDocumentation?: string | null;
+  tryoutRegCbf?: string | null;
+  tryoutRegFederation?: string | null;
+  tryoutRegBid?: string | null;
   reports?: ScoutingReportDetail[];
   _count?: { reports: number };
 }

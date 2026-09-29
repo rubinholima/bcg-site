@@ -42,6 +42,7 @@ import { RegistrationInviteModule } from './registration-invite/registration-inv
 import { FmfScraperModule } from './fmf-scraper/fmf-scraper.module';
 import { BeatscodeImportModule } from './beatscode-import/beatscode-import.module';
 import { CaptacaoModule } from './captacao/captacao.module';
+import { TryoutWorkflowModule } from './tryout-workflow/tryout-workflow.module';
 import { PsychologySessionsModule } from './psychology-sessions/psychology-sessions.module';
 import { FisioterapiaModule } from './fisioterapia/fisioterapia.module';
 import { FutebolExecutiveModule } from './futebol-executive/futebol-executive.module';
@@ -107,6 +108,7 @@ import { PlayerNegotiationsModule } from './player-negotiations/player-negotiati
     FmfScraperModule,
     BeatscodeImportModule,
     CaptacaoModule,
+    TryoutWorkflowModule,
     PsychologySessionsModule,
     FisioterapiaModule,
     FutebolExecutiveModule,

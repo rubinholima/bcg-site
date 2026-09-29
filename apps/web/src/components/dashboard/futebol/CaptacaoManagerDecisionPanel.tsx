@@ -36,9 +36,11 @@ export function CaptacaoManagerDecisionPanel({ prospect, initialDecision, onUpda
   const { role } = useAuth();
   const allowed = canDecideAsGerente(role);
   const decision = prospect.managerDecision ?? "pendente";
+  const tryoutStage = (prospect as ScoutingProspect & { tryoutEffectiveStage?: string })
+    .tryoutEffectiveStage;
   const showForm =
     allowed &&
-    prospect.evaluationOutcome === "aprovado" &&
+    (tryoutStage === "aguardando_gerencia" || prospect.evaluationOutcome === "aprovado") &&
     (decision === "pendente" || decision === "ajuste");
 
   const [presentationDate, setPresentationDate] = useState(prospect.presentationDate ?? "");
@@ -57,7 +59,9 @@ export function CaptacaoManagerDecisionPanel({ prospect, initialDecision, onUpda
     }
   }, [initialDecision, prospect.id]);
 
-  if (prospect.evaluationOutcome !== "aprovado") return null;
+  const inTryoutManager =
+    tryoutStage === "aguardando_gerencia" || prospect.evaluationOutcome === "aprovado";
+  if (!inTryoutManager) return null;
 
   async function submit(decision: "aprovado" | "reprovado" | "ajuste") {
     if (decision === "aprovado" && !presentationDate.trim()) {

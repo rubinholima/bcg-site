@@ -174,6 +174,7 @@ model Tenant {
   registrationInvites   RegistrationInvite[]
   scouts                Scout[]
   scoutingProspects     ScoutingProspect[]
+  tryoutCoachEvaluations TryoutCoachEvaluation[]
   scoutingReports       ScoutingReport[]
   scoutLocationPings    ScoutLocationPing[]
   communicationChannelAccounts CommunicationChannelAccount[]
@@ -3037,16 +3038,64 @@ model ScoutingProspect {
   ctScheduleNotes       String?  @db.Text
   ctEvaluationStartedAt DateTime?
   ctEvaluationCompletedAt DateTime?
+  /// Pipeline operacional Try Out (ScoutingProspect canônico)
+  tryoutWorkflowStage       String?
+  /// agente | clube_parceiro | escola_parceira | boston_academy | captacao | indicacao_parceira | outro
+  arrivalReferralSource     String?
+  supervisionDocsValidatedAt DateTime?
+  supervisionDocsValidatedBy String?
+  supervisionDocsNotes       String?  @db.Text
+  tryoutPeriodStartedAt      DateTime?
+  tryoutPeriodEndsAt         DateTime?
+  tryoutRenewalCount         Int      @default(0)
+  tryoutRenewalHistory       Json?
+  tryoutEarlyApprovedAt      DateTime?
+  /// pendente | em_andamento | concluido
+  tryoutRegDocumentation     String?  @default("pendente")
+  tryoutRegCbf               String?  @default("pendente")
+  /// na | pendente | em_andamento | concluido
+  tryoutRegFederation        String?  @default("na")
+  tryoutRegBid               String?  @default("pendente")
+  tryoutRejectedAt           DateTime?
+  tryoutRejectedBy           String?
+  tryoutRejectedReason       String?  @db.Text
+  tryoutCompletedAt          DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   reports           ScoutingReport[]
   physioTryoutClearances PhysioTryoutClearance[]
+  tryoutCoachEvaluations TryoutCoachEvaluation[]
 
   @@index([tenantId])
   @@index([tenantId, stage])
   @@index([tenantId, priority])
+  @@index([tenantId, tryoutWorkflowStage])
   @@index([scoutId])
   @@index([playerId])
+}
+
+/// Avaliação do treinador no Try Out (distinta da captação/scouting)
+model TryoutCoachEvaluation {
+  id                     String   @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prospectId             String
+  prospect               ScoutingProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  staffId                String?
+  staffName              String?
+  technicalRating        Float
+  physicalRating         Float
+  tacticalRating         Float
+  cognitiveRating        Float
+  descriptiveObservation String   @db.Text
+  /// aprovado | reprovado
+  outcome                String
+  evaluatedAt            DateTime @default(now())
+  createdByUserId        String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  @@index([tenantId, prospectId])
+  @@index([prospectId, evaluatedAt])
 }
 
 /** Relatório de observação — padrão CBF / scout profissional */

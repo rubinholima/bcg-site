@@ -154,6 +154,10 @@ export class CreateProspectDto {
 
   @IsOptional()
   @IsString()
+  arrivalReferralSource?: string;
+
+  @IsOptional()
+  @IsString()
   proposedCtAt?: string;
 
   @IsOptional()

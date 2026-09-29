@@ -43,6 +43,8 @@ import {
 } from './captacao.constants';
 import { MailService } from '../common/mail.service';
 import { PhysioTryoutClearanceService } from '../fisioterapia/physio-tryout-clearance.service';
+import { TryoutWorkflowService } from '../tryout-workflow/tryout-workflow.service';
+import { isProspectInTryoutWorkflow } from '../tryout-workflow/tryout-workflow.constants';
 
 const ACTIVE_STAGES = [
   'identificado',
@@ -89,6 +91,7 @@ export class CaptacaoService {
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
     private readonly physioTryoutClearance: PhysioTryoutClearanceService,
+    private readonly tryoutWorkflow: TryoutWorkflowService,
   ) {}
 
   private normalizeEvaluationOutcome(value?: string | null): ScoutingEvaluationOutcome {
@@ -596,13 +599,7 @@ export class CaptacaoService {
   }
 
   private async attachPhysioClearanceStatus<T extends { id: string }>(row: T) {
-    const physio = await this.physioTryoutClearance.getOperationalStatusForProspect(row.id);
-    return {
-      ...row,
-      physioClearanceStatus: physio.status,
-      canStartCtFieldEvaluation: physio.canStartFieldEvaluation,
-      physioClearanceEvaluatedAt: physio.evaluatedAt ?? null,
-    };
+    return this.tryoutWorkflow.enrichProspectTryout(row);
   }
 
   async getPhysioClearanceOperationalStatus(prospectId: string) {
@@ -749,6 +746,8 @@ export class CaptacaoService {
       },
     });
 
+    await this.tryoutWorkflow.onCtScheduleChange(id, nextStatus);
+
     return this.attachPhysioClearanceStatus(enrichProspectDisplay(updated));
   }
 
@@ -794,19 +793,29 @@ export class CaptacaoService {
         guardianEmail: dto.guardianEmail?.trim() || null,
         guardianAddress: dto.guardianAddress?.trim() || null,
         flowPath: dto.flowPath?.trim() || 'tryout',
+        arrivalReferralSource: dto.arrivalReferralSource?.trim() || null,
         proposedCtAt: dto.proposedCtAt ? new Date(dto.proposedCtAt) : null,
         needsLodging: dto.needsLodging ?? null,
         technicalRating: dto.technicalRating ?? null,
         tacticalRating: dto.tacticalRating ?? null,
         physicalRating: dto.physicalRating ?? null,
         cognitiveRating: dto.cognitiveRating ?? null,
-        managerDecision:
-          evaluationOutcome === 'aprovado' ? 'pendente' : undefined,
       },
       include: {
         scout: { select: { id: true, name: true } },
       },
     });
+
+    if (
+      evaluationOutcome === 'para_teste' ||
+      evaluationOutcome === 'aprovado' ||
+      dto.flowPath === 'tryout'
+    ) {
+      await this.tryoutWorkflow.enterTryoutWorkflow(
+        prospect.id,
+        dto.arrivalReferralSource ?? dto.source ?? null,
+      );
+    }
 
     return prospect;
   }
@@ -1060,14 +1069,6 @@ export class CaptacaoService {
         needsLodging: needsLodging ?? null,
         presentationDate: presentationDate ?? null,
         stage: nextStage,
-        ...(evaluationOutcome === 'aprovado'
-          ? {
-              managerDecision: 'pendente',
-              managerDecisionAt: null,
-              managerDecisionBy: null,
-              managerDecisionNotes: null,
-            }
-          : {}),
         ...(evaluationOutcome === 'para_teste' || evaluationOutcome === 'aprovado'
           ? {
               ctScheduleStatus:
@@ -1120,25 +1121,13 @@ export class CaptacaoService {
       if (managerEmail.sent) {
         notifyTimestamps.managerNotifiedAt = new Date();
       }
-    } else if (evaluationOutcome === 'aprovado') {
-      managerEmail = await this.notifyManagerForApproval({
-        prospect: {
-          id: prospect.id,
-          tenantId: prospect.tenantId,
-          name: prospect.name,
-          position: prospect.position,
-          currentClub: prospect.currentClub,
-          targetCategory: prospect.targetCategory,
-        },
-        scoutName: report.scout?.name,
-        overallRating: dto.overallRating ?? dimensionRatings.technicalRating,
-        ...dimensionRatings,
-        needsLodging: needsLodging ?? null,
-        presentationDate: presentationDate ?? null,
-      });
-      if (managerEmail.sent) {
-        notifyTimestamps.managerNotifiedAt = new Date();
-      }
+    }
+
+    if (evaluationOutcome === 'para_teste' || evaluationOutcome === 'aprovado') {
+      await this.tryoutWorkflow.enterTryoutWorkflow(
+        dto.prospectId,
+        prospect.arrivalReferralSource ?? prospect.source,
+      );
     }
 
     if (Object.keys(notifyTimestamps).length > 0) {
@@ -1159,7 +1148,7 @@ export class CaptacaoService {
     actorName: string,
   ) {
     const prospect = await this.findProspect(id);
-    const allowed = ['tryout', 'negociacao', 'prioridade'];
+    const allowed = ['tryout', 'negociacao', 'prioridade', 'aprovado'];
     if (!allowed.includes(prospect.stage)) {
       throw new BadRequestException(
         'Só é possível aprovar prospects em try-out, negociação ou prioridade.',
@@ -1167,6 +1156,9 @@ export class CaptacaoService {
     }
     if (prospect.playerId) {
       throw new BadRequestException('Prospect já vinculado a um atleta cadastrado.');
+    }
+    if (isProspectInTryoutWorkflow(prospect) && prospect.managerDecision !== 'aprovado') {
+      throw new BadRequestException('Aguardando aprovação da gerência de futebol (Try Out).');
     }
 
     return this.prisma.scoutingProspect.update({
@@ -1191,6 +1183,9 @@ export class CaptacaoService {
       throw new BadRequestException(
         'O prospect precisa estar aprovado pelo supervisor antes do cadastro no clube.',
       );
+    }
+    if (isProspectInTryoutWorkflow(prospect)) {
+      this.tryoutWorkflow.assertCanPromoteToSquad(prospect);
     }
 
     if (prospect.playerId) {
@@ -1234,6 +1229,8 @@ export class CaptacaoService {
         playerId,
         stage: 'cadastrado',
         legalStatus: 'em_andamento',
+        tryoutWorkflowStage: 'concluido',
+        tryoutCompletedAt: new Date(),
       },
       include: {
         player: { select: { id: true, name: true, photoUrl: true } },
@@ -1306,7 +1303,7 @@ export class CaptacaoService {
 
   async findManagerQueue(tenantId?: string) {
     const where: Prisma.ScoutingProspectWhereInput = {
-      evaluationOutcome: 'aprovado',
+      tryoutWorkflowStage: 'aguardando_gerencia',
       OR: [{ managerDecision: 'pendente' }, { managerDecision: null }],
     };
     if (tenantId?.trim()) where.tenantId = tenantId.trim();
@@ -1325,8 +1322,11 @@ export class CaptacaoService {
     dto: ManagerDecisionDto,
     actor: { name?: string; email?: string; role?: string },
   ) {
-    this.assertGerenteDecisor(actor.role);
     const prospect = await this.findProspect(id);
+    if (prospect.tryoutWorkflowStage === 'aguardando_gerencia') {
+      return this.tryoutWorkflow.recordTryoutManagerDecision(id, dto, actor);
+    }
+    this.assertGerenteDecisor(actor.role);
     const decision = dto.decision as CaptacaoManagerDecision;
     if (!CAPTACAO_MANAGER_DECISIONS.includes(decision) || decision === 'pendente') {
       throw new BadRequestException('Decisão inválida.');

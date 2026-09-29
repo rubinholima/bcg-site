@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  forwardRef,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../common/mail.service';
@@ -11,6 +17,9 @@ import {
   canStartCtFieldEvaluation,
   resolvePhysioClearanceOperationalStatus,
 } from './physio-periodic-protocols.util';
+import { validateTryoutBilateralTestsComplete } from '../tryout-workflow/tryout-workflow.util';
+import { TryoutWorkflowService } from '../tryout-workflow/tryout-workflow.service';
+import { resolveTryoutSupervisionEmail } from '../tryout-workflow/tryout-workflow.notify.util';
 
 export type PhysioClearanceOperationalStatus = {
   status: 'pendente' | 'aprovado' | 'reprovado';
@@ -25,6 +34,8 @@ export class PhysioTryoutClearanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
+    @Inject(forwardRef(() => TryoutWorkflowService))
+    private readonly tryoutWorkflow: TryoutWorkflowService,
   ) {}
 
   async getLatestForProspect(prospectId: string) {
@@ -106,6 +117,22 @@ export class PhysioTryoutClearanceService {
     if (!prospect || prospect.tenantId !== dto.tenantId) {
       throw new BadRequestException('Prospect não encontrado neste clube.');
     }
+    if (!prospect.supervisionDocsValidatedAt) {
+      throw new BadRequestException(
+        'Supervisão deve validar chegada/documentação antes da liberação fisioterapêutica.',
+      );
+    }
+    if (!dto.injuryHistory?.trim()) {
+      throw new BadRequestException('Informe o histórico de lesões.');
+    }
+    if (!dto.manualStrengthTest?.trim()) {
+      throw new BadRequestException('Informe o teste de força muscular.');
+    }
+    if (!dto.staffId?.trim() && !dto.staffName?.trim()) {
+      throw new BadRequestException('Informe o avaliador (fisioterapeuta).');
+    }
+    const bilateralErr = validateTryoutBilateralTestsComplete(dto.bilateralTests);
+    if (bilateralErr) throw new BadRequestException(bilateralErr);
 
     const evaluatedAt = dto.evaluatedAt?.trim() ? new Date(dto.evaluatedAt) : new Date();
     const row = await this.prisma.physioTryoutClearance.create({
@@ -137,6 +164,13 @@ export class PhysioTryoutClearanceService {
         data: { emailNotifyError: emailResult.error },
       });
     }
+
+    await this.tryoutWorkflow.afterPhysioClearance(dto.prospectId, dto.outcome);
+    await this.tryoutWorkflow.notifyFisiologiaOnPhysioComplete(
+      prospect.name,
+      dto.outcome,
+      prospect.targetCategory,
+    );
 
     return {
       ...row,
@@ -183,6 +217,12 @@ export class PhysioTryoutClearanceService {
           data: { emailNotifyError: emailResult.error },
         });
       }
+      await this.tryoutWorkflow.afterPhysioClearance(existing.prospectId, dto.outcome);
+      await this.tryoutWorkflow.notifyFisiologiaOnPhysioComplete(
+        row.prospectName ?? 'Atleta',
+        dto.outcome,
+        row.targetCategory,
+      );
     }
 
     return {
@@ -238,13 +278,16 @@ export class PhysioTryoutClearanceService {
     const settings = await this.prisma.purchaseSetting.findUnique({
       where: { tenantId: row.tenantId },
     });
-    const operationalManagerEmail = resolveCaptacaoManagerEmail();
+    const operationalManagerEmail = resolveTryoutSupervisionEmail();
+    const footballManagementEmail = resolveCaptacaoManagerEmail();
     const gerenciaEmail =
-      settings?.diretoriaNotifyEmail?.trim() || operationalManagerEmail;
+      settings?.diretoriaNotifyEmail?.trim() || footballManagementEmail;
     const distinctGerenciaEmail =
       gerenciaEmail.toLowerCase() !== operationalManagerEmail.toLowerCase()
         ? gerenciaEmail
-        : null;
+        : footballManagementEmail.toLowerCase() !== operationalManagerEmail.toLowerCase()
+          ? footballManagementEmail
+          : null;
 
     const subject = `Fisioterapia — liberação try-out ${row.outcome === 'aprovado' ? 'APROVADA' : 'REPROVADA'}: ${row.prospectName ?? 'Atleta'}`;
     const text = [
