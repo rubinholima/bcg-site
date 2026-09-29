@@ -57,8 +57,13 @@ import {
   type PsychologyCarePerson,
 } from "@/lib/psychology-care-person";
 import type { Psychologist } from "@/types/psychologist";
-import type { PsychologySession } from "@/types/psychology-session";
+import type { PsychologyAttendanceRow, PsychologySession } from "@/types/psychology-session";
 import { PSYCH_SESSION_TYPE_LABEL } from "@/types/psychology-session";
+import {
+  formatPsychologyAbsentListText,
+  listPsychologyAbsentAttendance,
+} from "@/lib/psychology-attendance.util";
+import { getCategoryLabel } from "@/lib/fixture-categories";
 
 type ViewMode = "month" | "week" | "list";
 
@@ -82,6 +87,7 @@ type AgendaEvent = {
   link?: string;
   psychologist?: string;
   isPrivate: boolean;
+  attendance?: PsychologyAttendanceRow[];
 };
 
 interface TenantOption {
@@ -188,6 +194,7 @@ function sessionToEvent(session: PsychologySession, carePersons: PsychologyCareP
     notes: session.notes ?? session.groupSummary,
     psychologist: session.estagiarioName ?? session.psychologistName ?? undefined,
     isPrivate: session.isPrivate === true,
+    attendance: session.sessionType === "grupo" ? attendance : undefined,
   };
 }
 
@@ -220,6 +227,7 @@ export function PsicologiaAgendaOperacional() {
   const [newTime, setNewTime] = useState("09:00");
   const [newNotes, setNewNotes] = useState("");
   const [newPsychologist, setNewPsychologist] = useState("");
+  const [absentCopyOk, setAbsentCopyOk] = useState(false);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -889,6 +897,54 @@ export function PsicologiaAgendaOperacional() {
                 ) : null}
                 {detailEvent.notes ? (
                   <p className="whitespace-pre-wrap text-muted-foreground">{detailEvent.notes}</p>
+                ) : null}
+                {detailEvent.sessionType === "grupo" && detailEvent.attendance?.length ? (
+                  (() => {
+                    const absent = listPsychologyAbsentAttendance(detailEvent.attendance);
+                    const catLabel = getCategoryLabel(
+                      detailEvent.category ?? "",
+                      allFixtureCategories,
+                      "pt",
+                    );
+                    return (
+                      <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
+                        <p className="font-medium text-foreground">
+                          Ausentes na chamada ({absent.length})
+                        </p>
+                        {absent.length > 0 ? (
+                          <ol className="max-h-40 list-decimal space-y-1 overflow-y-auto pl-5 text-sm">
+                            {absent.map((row) => (
+                              <li key={row.playerId}>{row.playerName?.trim() || "Atleta"}</li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Nenhum ausente registrado.</p>
+                        )}
+                        {absent.length > 0 ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="min-h-[40px]"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(
+                                formatPsychologyAbsentListText({
+                                  date: detailEvent.date,
+                                  categoryLabel: catLabel,
+                                  tenantName: detailEvent.tenantName,
+                                  absent,
+                                }),
+                              );
+                              setAbsentCopyOk(true);
+                              window.setTimeout(() => setAbsentCopyOk(false), 2000);
+                            }}
+                          >
+                            {absentCopyOk ? "Copiado" : "Copiar lista de ausentes"}
+                          </Button>
+                        ) : null}
+                      </div>
+                    );
+                  })()
                 ) : null}
                 {detailEvent.link ? (
                   <Button variant="outline" size="sm" className="min-h-[36px] gap-2" asChild>

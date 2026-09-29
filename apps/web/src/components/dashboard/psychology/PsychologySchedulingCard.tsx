@@ -31,7 +31,9 @@ import {
 } from "@/components/ui/dialog";
 import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
 import { api } from "@/lib/api";
-import { filterCategoriesForTenant } from "@/lib/fixture-categories";
+import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
+import { listPsychologyAbsentAttendance } from "@/lib/psychology-attendance.util";
+import { PsychologyAbsentAfterRollCallDialog } from "@/components/dashboard/psychology/PsychologyAbsentAfterRollCallDialog";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import type { Psychologist } from "@/types/psychologist";
 import type { HealthIntern } from "@/types/health-intern";
@@ -123,6 +125,20 @@ export function PsychologySchedulingCard({
   const [noteDraft, setNoteDraft] = useState("");
   const [estagiarios, setEstagiarios] = useState<HealthIntern[]>([]);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [absentDialog, setAbsentDialog] = useState<{
+    open: boolean;
+    date: string;
+    categoryLabel: string;
+    tenantName?: string;
+    absent: PsychologyAttendanceRow[];
+    totalRoster: number;
+  }>({
+    open: false,
+    date: "",
+    categoryLabel: "",
+    absent: [],
+    totalRoster: 0,
+  });
 
   useEffect(() => {
     api
@@ -305,6 +321,9 @@ export function PsychologySchedulingCard({
       return;
     }
     setSaving(true);
+    const grupoAbsentSnapshot =
+      sessionType === "grupo" ? listPsychologyAbsentAttendance(attendance) : [];
+    const grupoRosterSize = sessionType === "grupo" ? attendance.length : 0;
     try {
       const parsed = filterAtleta ? parsePsychologyPersonKey(filterAtleta) : null;
       await api.post("/psychology-sessions", {
@@ -329,19 +348,29 @@ export function PsychologySchedulingCard({
         syncAgenda: !isPrivate,
         ...extra,
       });
-      showFeedback(
-        "Agendado",
-        sessionType === "grupo"
-          ? "Sessão em grupo registrada."
-          : isPrivate
+      if (sessionType === "grupo") {
+        setAbsentDialog({
+          open: true,
+          date: newDate.trim(),
+          categoryLabel: getCategoryLabel(effectiveCategory, allFixtureCategories, "pt"),
+          tenantName: selectedTenant?.name,
+          absent: grupoAbsentSnapshot,
+          totalRoster: grupoRosterSize,
+        });
+      } else {
+        showFeedback(
+          "Agendado",
+          isPrivate
             ? "Atendimento privado registrado na Agenda Psicologia."
             : "Atendimento registrado na agenda.",
-        "success",
-      );
+          "success",
+        );
+      }
       onScheduled();
       setGroupSummary("");
       setLocation("");
       setSpaceId("");
+      if (sessionType === "grupo") void loadRoster();
     } catch (e: unknown) {
       showFeedback("Erro", e instanceof Error ? e.message : "Erro ao salvar.", "error");
     } finally {
@@ -766,6 +795,16 @@ export function PsychologySchedulingCard({
           </p>
         </div>
       )}
+
+      <PsychologyAbsentAfterRollCallDialog
+        open={absentDialog.open}
+        onOpenChange={(open) => setAbsentDialog((prev) => ({ ...prev, open }))}
+        date={absentDialog.date}
+        categoryLabel={absentDialog.categoryLabel}
+        tenantName={absentDialog.tenantName}
+        absent={absentDialog.absent}
+        totalRoster={absentDialog.totalRoster}
+      />
 
       <Dialog open={noteDialogIdx != null} onOpenChange={(open) => !open && setNoteDialogIdx(null)}>
         <DialogContent className="sm:max-w-md">
