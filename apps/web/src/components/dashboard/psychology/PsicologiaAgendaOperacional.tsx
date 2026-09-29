@@ -10,6 +10,7 @@ import {
   Loader2,
   Lock,
   MapPin,
+  Printer,
   Users,
   Video,
 } from "lucide-react";
@@ -64,6 +65,7 @@ import {
   listPsychologyAbsentAttendance,
 } from "@/lib/psychology-attendance.util";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { printPsychologyGroupAbsentReport } from "@/lib/print-psychology-group-absent";
 
 type ViewMode = "month" | "week" | "list";
 
@@ -88,6 +90,9 @@ type AgendaEvent = {
   psychologist?: string;
   isPrivate: boolean;
   attendance?: PsychologyAttendanceRow[];
+  psychologistName?: string | null;
+  estagiarioName?: string | null;
+  groupSummary?: string | null;
 };
 
 interface TenantOption {
@@ -195,6 +200,9 @@ function sessionToEvent(session: PsychologySession, carePersons: PsychologyCareP
     psychologist: session.estagiarioName ?? session.psychologistName ?? undefined,
     isPrivate: session.isPrivate === true,
     attendance: session.sessionType === "grupo" ? attendance : undefined,
+    psychologistName: session.psychologistName,
+    estagiarioName: session.estagiarioName,
+    groupSummary: session.groupSummary,
   };
 }
 
@@ -920,28 +928,53 @@ export function PsicologiaAgendaOperacional() {
                         ) : (
                           <p className="text-sm text-muted-foreground">Nenhum ausente registrado.</p>
                         )}
-                        {absent.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             className="min-h-[40px]"
-                            onClick={() => {
-                              void navigator.clipboard.writeText(
-                                formatPsychologyAbsentListText({
-                                  date: detailEvent.date,
-                                  categoryLabel: catLabel,
-                                  tenantName: detailEvent.tenantName,
-                                  absent,
-                                }),
-                              );
-                              setAbsentCopyOk(true);
-                              window.setTimeout(() => setAbsentCopyOk(false), 2000);
-                            }}
+                            onClick={() =>
+                              printPsychologyGroupAbsentReport({
+                                date: detailEvent.date,
+                                time: detailEvent.time,
+                                categoryLabel: catLabel,
+                                tenantName: detailEvent.tenantName,
+                                psychologistName: detailEvent.psychologistName,
+                                estagiarioName: detailEvent.estagiarioName,
+                                location: detailEvent.location,
+                                groupSummary: detailEvent.groupSummary,
+                                absent,
+                                totalRoster: detailEvent.attendance?.length ?? 0,
+                              })
+                            }
                           >
-                            {absentCopyOk ? "Copiado" : "Copiar lista de ausentes"}
+                            <Printer className="mr-1.5 h-3.5 w-3.5" />
+                            Imprimir
                           </Button>
-                        ) : null}
+                          {absent.length > 0 ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="min-h-[40px]"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(
+                                  formatPsychologyAbsentListText({
+                                    date: detailEvent.date,
+                                    categoryLabel: catLabel,
+                                    tenantName: detailEvent.tenantName,
+                                    absent,
+                                  }),
+                                );
+                                setAbsentCopyOk(true);
+                                window.setTimeout(() => setAbsentCopyOk(false), 2000);
+                              }}
+                            >
+                              {absentCopyOk ? "Copiado" : "Copiar lista"}
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
                     );
                   })()

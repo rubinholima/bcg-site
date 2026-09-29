@@ -268,6 +268,12 @@ export default function PsicologiaRelatoriosPage() {
               Atualizar
             </Button>
             <Button variant="outline" size="sm" className="min-h-[44px]" asChild>
+              <Link href="/dashboard/psicologia/relatorios/ausentes-grupo">
+                <ClipboardList className="mr-2 h-4 w-4" />
+                Ausentes em grupo
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" className="min-h-[44px]" asChild>
               <Link href="/dashboard/psicologia/relatorios/lista-atletas">
                 <Users className="mr-2 h-4 w-4" />
                 Lista de atletas

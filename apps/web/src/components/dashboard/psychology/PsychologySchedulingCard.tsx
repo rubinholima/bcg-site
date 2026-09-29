@@ -128,8 +128,13 @@ export function PsychologySchedulingCard({
   const [absentDialog, setAbsentDialog] = useState<{
     open: boolean;
     date: string;
+    time?: string | null;
     categoryLabel: string;
     tenantName?: string;
+    psychologistName?: string | null;
+    estagiarioName?: string | null;
+    location?: string | null;
+    groupSummary?: string | null;
     absent: PsychologyAttendanceRow[];
     totalRoster: number;
   }>({
@@ -352,8 +357,13 @@ export function PsychologySchedulingCard({
         setAbsentDialog({
           open: true,
           date: newDate.trim(),
+          time: newTime.trim() || null,
           categoryLabel: getCategoryLabel(effectiveCategory, allFixtureCategories, "pt"),
           tenantName: selectedTenant?.name,
+          psychologistName: psychologos.find((p) => p.id === psychologistId)?.name ?? null,
+          estagiarioName: estagiarios.find((p) => p.id === estagiarioId)?.name ?? null,
+          location: location.trim() || null,
+          groupSummary: groupSummary.trim() || null,
           absent: grupoAbsentSnapshot,
           totalRoster: grupoRosterSize,
         });
@@ -802,6 +812,11 @@ export function PsychologySchedulingCard({
         date={absentDialog.date}
         categoryLabel={absentDialog.categoryLabel}
         tenantName={absentDialog.tenantName}
+        time={absentDialog.time}
+        psychologistName={absentDialog.psychologistName}
+        estagiarioName={absentDialog.estagiarioName}
+        location={absentDialog.location}
+        groupSummary={absentDialog.groupSummary}
         absent={absentDialog.absent}
         totalRoster={absentDialog.totalRoster}
       />

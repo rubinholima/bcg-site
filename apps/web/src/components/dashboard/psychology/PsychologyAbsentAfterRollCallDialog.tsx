@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Printer } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { PsychologyAttendanceRow } from "@/types/psychology-session";
 import { formatPsychologyAbsentListText } from "@/lib/psychology-attendance.util";
+import { printPsychologyGroupAbsentReport } from "@/lib/print-psychology-group-absent";
 
 type Props = {
   open: boolean;
@@ -19,6 +20,11 @@ type Props = {
   date: string;
   categoryLabel: string;
   tenantName?: string;
+  psychologistName?: string | null;
+  estagiarioName?: string | null;
+  location?: string | null;
+  groupSummary?: string | null;
+  time?: string | null;
   absent: PsychologyAttendanceRow[];
   totalRoster: number;
 };
@@ -29,6 +35,11 @@ export function PsychologyAbsentAfterRollCallDialog({
   date,
   categoryLabel,
   tenantName,
+  psychologistName,
+  estagiarioName,
+  location,
+  groupSummary,
+  time,
   absent,
   totalRoster,
 }: Props) {
@@ -81,6 +92,28 @@ export function PsychologyAbsentAfterRollCallDialog({
           )}
         </div>
         <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-[44px] w-full sm:w-auto"
+            onClick={() =>
+              printPsychologyGroupAbsentReport({
+                date,
+                time,
+                categoryLabel,
+                tenantName,
+                psychologistName,
+                estagiarioName,
+                location,
+                groupSummary,
+                absent,
+                totalRoster,
+              })
+            }
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            Imprimir
+          </Button>
           {absent.length > 0 ? (
             <Button
               type="button"
