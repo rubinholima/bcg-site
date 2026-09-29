@@ -22,6 +22,7 @@ import {
   buildCompletedGames,
   buildLastRoundFromStore,
   buildStandingsFromStore,
+  readTenantCategoryKeys,
   resolveStoreCategory,
 } from './coach-context.helper';
 import {
@@ -268,9 +269,30 @@ export class FutebolTreinadoresService {
         ].filter((c): c is string => !!c?.trim()),
       ),
     ];
-    const storeCategory = resolveStoreCategory(store, catFilter, fallbackCategories);
-    let standings = buildStandingsFromStore(store, storeCategory, clubName, aliases);
-    const lastRound = buildLastRoundFromStore(store, storeCategory, clubName, aliases);
+    const tenantCategoryKeys = readTenantCategoryKeys(tenant.categories);
+    const storeLookup = { tenantCategoryKeys, clubName, aliases };
+    const storeCategory = resolveStoreCategory(
+      store,
+      catFilter,
+      fallbackCategories,
+      tenantCategoryKeys,
+    );
+    let standings = buildStandingsFromStore(
+      store,
+      storeCategory,
+      clubName,
+      aliases,
+      storeLookup,
+    );
+    const lastRound = buildLastRoundFromStore(
+      store,
+      storeCategory,
+      clubName,
+      aliases,
+      storeLookup,
+    );
+    const standingsCompetitionLabel =
+      store?.categories?.[storeCategory]?.name?.trim() || null;
 
     let opponents: Array<{ name: string; nextMatchDate?: string; championship?: string | null }> = [];
     const nextGame = games.find((g) => g.matchDate >= now) ?? games[games.length - 1];
@@ -334,6 +356,7 @@ export class FutebolTreinadoresService {
       inTreatment,
       availableSquad,
       standings,
+      standingsCompetitionLabel,
       opponents,
       players: players.map((p) => ({
         id: p.id,

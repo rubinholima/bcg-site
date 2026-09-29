@@ -96,6 +96,8 @@ export type CoachContextResponse = {
     jerseyNumber: number | null;
     category: string | null;
   }>;
+  /** Nome da competição FMF usada na tabela (ex.: Mineiro Sub-20 2ª Divisão). */
+  standingsCompetitionLabel?: string | null;
   standings: Array<{
     position: number;
     team: string;

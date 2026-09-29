@@ -15,6 +15,17 @@ import {
   type FmfStandingsRow,
 } from '../fmf-scraper/fmf-scraper.service';
 import { softNormalizeTeamNameKey } from '../public/visiting-team-logo-merge.util';
+import { operationalCategoryMergeKey } from '../fmf-scraper/fmf-operational-category.util';
+import { readTenantCategoryKeys } from '../fmf-scraper/fmf-sync-tenants.config';
+import type { FmfCategorySnapshot } from '../fmf-scraper/fmf-scraper.service';
+
+export type FmfStoreSnapshotLookupOptions = {
+  tenantCategoryKeys?: string[];
+  clubName?: string;
+  aliases?: string[];
+};
+
+export { readTenantCategoryKeys };
 import {
   findGameMergeKeyInMap,
   gameOpponentDateCategoryKey,
@@ -69,23 +80,42 @@ export function resolveStoreCategory(
   store: FmfScraperStore | null,
   preferredCategory: string,
   fallbackCategories: string[],
+  tenantCategoryKeys: string[] = [],
 ): string {
-  if (preferredCategory?.trim()) return preferredCategory.trim();
+  if (preferredCategory?.trim()) {
+    const op = operationalCategoryMergeKey(preferredCategory);
+    const adminKeys = tenantCategoryKeys;
+    const competitionKey = adminKeys.find(
+      (k) => operationalCategoryMergeKey(k) === op && k.includes('_'),
+    );
+    if (competitionKey && store?.categories?.[competitionKey]) {
+      return competitionKey;
+    }
+    const adminHit = adminKeys.find((k) => operationalCategoryMergeKey(k) === op);
+    if (adminHit && store?.categories?.[adminHit]) return adminHit;
+    return preferredCategory.trim();
+  }
   if (!store?.categories) return '';
 
-  const snapshots = Object.values(store.categories).filter(
-    (s): s is NonNullable<typeof s> => !!s?.fixtureCategory,
+  const entries = Object.entries(store.categories).filter(
+    (entry): entry is [string, FmfCategorySnapshot] => !!entry[1]?.fixtureCategory,
   );
-  if (snapshots.length === 0) return '';
+  if (entries.length === 0) return '';
 
-  for (const cat of fallbackCategories) {
-    const key = categoryKey(cat);
-    if (!key) continue;
-    const hit = snapshots.find((s) => categoryKey(s.fixtureCategory) === key);
-    if (hit) return hit.fixtureCategory;
+  for (const cat of [...tenantCategoryKeys, ...fallbackCategories]) {
+    const hit = entries.find(([storeKey, snapshot]) => {
+      const op = operationalCategoryMergeKey(cat);
+      return (
+        storeKey === cat ||
+        operationalCategoryMergeKey(storeKey) === op ||
+        operationalCategoryMergeKey(snapshot.fixtureCategory) === op ||
+        categoryKey(snapshot.fixtureCategory) === categoryKey(cat)
+      );
+    });
+    if (hit) return hit[0];
   }
 
-  return snapshots[0]?.fixtureCategory ?? '';
+  return entries[0]?.[0] ?? '';
 }
 
 type TravelRow = {
@@ -523,16 +553,69 @@ function categoryMatchesTravel(travel: TravelRow, category: string): boolean {
   );
 }
 
-function findStoreSnapshot(store: FmfScraperStore | null, category: string) {
-  if (!store?.categories || !category?.trim()) return null;
+function snapshotMatchesCategoryFilter(
+  storeKey: string,
+  snapshot: FmfCategorySnapshot,
+  category: string,
+): boolean {
   const wanted = categoryKey(category);
-  if (!wanted) return null;
-  return (
-    Object.values(store.categories).find((s) => {
-      if (!s?.fixtureCategory) return false;
-      return categoryKey(s.fixtureCategory) === wanted;
-    }) ?? null
-  );
+  const op = operationalCategoryMergeKey(category);
+  if (!wanted && (!op || op === '_')) return false;
+  if (storeKey === category.trim()) return true;
+  if (categoryKey(storeKey) === wanted) return true;
+  if (operationalCategoryMergeKey(storeKey) === op) return true;
+  if (categoryKey(snapshot.fixtureCategory) === wanted) return true;
+  if (operationalCategoryMergeKey(snapshot.fixtureCategory) === op) return true;
+  return false;
+}
+
+function findStoreSnapshot(
+  store: FmfScraperStore | null,
+  category: string,
+  options?: FmfStoreSnapshotLookupOptions,
+): FmfCategorySnapshot | null {
+  if (!store?.categories || !category?.trim()) return null;
+
+  type Entry = { storeKey: string; snapshot: FmfCategorySnapshot };
+  const entries: Entry[] = [];
+  for (const [storeKey, snapshot] of Object.entries(store.categories)) {
+    if (!snapshot?.fixtureCategory) continue;
+    if (!snapshotMatchesCategoryFilter(storeKey, snapshot, category)) continue;
+    entries.push({ storeKey, snapshot });
+  }
+  if (entries.length === 0) return null;
+  if (entries.length === 1) return entries[0]!.snapshot;
+
+  const filterOp = operationalCategoryMergeKey(category);
+  const tenantKeys = options?.tenantCategoryKeys ?? [];
+  for (const adminKey of tenantKeys) {
+    if (operationalCategoryMergeKey(adminKey) !== filterOp) continue;
+    const exact = entries.find((e) => e.storeKey === adminKey);
+    if (exact) return exact.snapshot;
+  }
+
+  const clubName = options?.clubName?.trim();
+  const aliases = options?.aliases ?? [];
+  if (clubName) {
+    const withClub = entries.filter(({ snapshot }) =>
+      (snapshot.matches ?? []).some(
+        (m) =>
+          isFmfTeamMatch(m.homeName, clubName, aliases) ||
+          isFmfTeamMatch(m.awayName, clubName, aliases),
+      ),
+    );
+    if (withClub.length === 1) return withClub[0]!.snapshot;
+    if (withClub.length > 1) {
+      const secondDiv = withClub.filter((e) => e.storeKey.endsWith('_2div'));
+      if (secondDiv.length === 1) return secondDiv[0]!.snapshot;
+      return withClub[0]!.snapshot;
+    }
+  }
+
+  const secondDivOnly = entries.filter((e) => e.storeKey.endsWith('_2div'));
+  if (secondDivOnly.length === 1) return secondDivOnly[0]!.snapshot;
+
+  return entries[0]!.snapshot;
 }
 
 export type ChampionshipPhaseReportRow = {
@@ -548,8 +631,9 @@ export function resolveCurrentChampionshipPhaseForCategory(
   category: string,
   reportRows: ChampionshipPhaseReportRow[] = [],
   phaseHint?: string | null,
+  storeLookup?: FmfStoreSnapshotLookupOptions,
 ): string | null {
-  const snapshot = findStoreSnapshot(store, category);
+  const snapshot = findStoreSnapshot(store, category, storeLookup);
   if (snapshot?.matches?.length) {
     const fromStore = resolveCurrentFmfGroupPhase(snapshot.matches);
     if (fromStore) return fromStore;
@@ -575,6 +659,7 @@ export function collectChampionshipPhasesForCategory(
   store: FmfScraperStore | null,
   category: string,
   reportRows: ChampionshipPhaseReportRow[] = [],
+  storeLookup?: FmfStoreSnapshotLookupOptions,
 ): string[] {
   const byKey = new Map<string, { label: string; sortDate: string }>();
 
@@ -589,7 +674,7 @@ export function collectChampionshipPhasesForCategory(
     }
   };
 
-  const snapshot = findStoreSnapshot(store, category);
+  const snapshot = findStoreSnapshot(store, category, storeLookup);
   for (const match of snapshot?.matches ?? []) {
     add(match.phaseLabel, match.matchDate);
   }
@@ -618,9 +703,14 @@ export function buildStandingsFromStore(
   category: string,
   clubName: string,
   aliases: string[],
+  storeLookup?: FmfStoreSnapshotLookupOptions,
 ): CoachStandingRow[] {
   if (!store?.categories) return [];
-  const snapshot = findStoreSnapshot(store, category);
+  const snapshot = findStoreSnapshot(store, category, {
+    clubName,
+    aliases,
+    ...storeLookup,
+  });
   if (!snapshot) return [];
 
   const currentPhase = resolveCurrentFmfGroupPhase(snapshot.matches);
@@ -652,9 +742,14 @@ export function buildLastRoundFromStore(
   category: string,
   clubName: string,
   aliases: string[],
+  storeLookup?: FmfStoreSnapshotLookupOptions,
 ): { round: number | null; phase: string | null; matches: CoachLastRoundMatch[] } {
   if (!store?.categories) return { round: null, phase: null, matches: [] };
-  const snapshot = findStoreSnapshot(store, category);
+  const snapshot = findStoreSnapshot(store, category, {
+    clubName,
+    aliases,
+    ...storeLookup,
+  });
   if (!snapshot) return { round: null, phase: null, matches: [] };
 
   const currentPhase = resolveCurrentFmfGroupPhase(snapshot.matches);

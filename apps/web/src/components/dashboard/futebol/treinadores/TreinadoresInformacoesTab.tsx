@@ -358,7 +358,14 @@ export function TreinadoresInformacoesTab({
 
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle className="text-base">Tabela da competição</CardTitle>
+          <CardTitle className="text-base">
+            Tabela da competição
+            {context.standingsCompetitionLabel ? (
+              <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                {context.standingsCompetitionLabel}
+              </span>
+            ) : null}
+          </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {context.standings.length === 0 ? (
