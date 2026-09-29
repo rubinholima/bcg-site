@@ -3,6 +3,7 @@ import {
   ClipboardList,
   Dumbbell,
   LayoutDashboard,
+  Star,
   UserCheck,
   Users,
 } from "lucide-react";
@@ -15,6 +16,7 @@ export type TreinadoresSectionId =
   | "pos-jogo"
   | "avaliacao-jogador"
   | "relatorio-equipe"
+  | "melhores-temporada"
   | "treinos";
 
 export const TREINADORES_SECTIONS: Array<{
@@ -37,6 +39,14 @@ export const TREINADORES_SECTIONS: Array<{
     href: `${TREINADORES_BASE}/pos-jogo`,
     icon: ClipboardList,
     description: "Notas, resumo e melhor do jogo.",
+  },
+  {
+    id: "melhores-temporada",
+    label: "Melhores da Temporada",
+    href: `${TREINADORES_BASE}/melhores-temporada`,
+    icon: Star,
+    description:
+      "Atletas marcados como destaque no relatório pós-jogo (Boston City e adversários).",
   },
   {
     id: "avaliacao-jogador",
@@ -68,6 +78,7 @@ export function treinadoresSectionFromPath(pathname: string | null): Treinadores
   if (pathname.startsWith(`${TREINADORES_BASE}/pos-jogo`)) return "pos-jogo";
   if (pathname.startsWith(`${TREINADORES_BASE}/avaliacao-jogador`)) return "avaliacao-jogador";
   if (pathname.startsWith(`${TREINADORES_BASE}/relatorio-equipe`)) return "relatorio-equipe";
+  if (pathname.startsWith(`${TREINADORES_BASE}/melhores-temporada`)) return "melhores-temporada";
   if (pathname.startsWith(`${TREINADORES_BASE}/treinos`)) return "treinos";
   return "dash";
 }

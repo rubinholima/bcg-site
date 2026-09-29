@@ -9,6 +9,7 @@ import { TreinadoresContextPanel } from "./TreinadoresContextPanel";
 import { TreinadoresFilters } from "./TreinadoresFilters";
 import { TreinadoresHubInsights } from "./TreinadoresHubInsights";
 import { treinadoresLegacyTabRedirect, treinadoresSectionFromPath } from "./treinadores-nav";
+import { canAccessTreinadoresWorkspace } from "./treinadores-access";
 
 interface TreinadoresShellProps {
   title: string;
@@ -26,12 +27,13 @@ export function TreinadoresShell({
   const searchParams = useSearchParams();
   const { canAccessModule, loading } = useAuth();
   const section = treinadoresSectionFromPath(pathname);
+  const canEnter = canAccessTreinadoresWorkspace(canAccessModule);
 
   useEffect(() => {
-    if (!loading && !canAccessModule("futebol_treinadores")) {
+    if (!loading && !canEnter) {
       router.replace("/403");
     }
-  }, [canAccessModule, loading, router]);
+  }, [canEnter, loading, router]);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -44,7 +46,7 @@ export function TreinadoresShell({
     router.replace(qs ? `${target}?${qs}` : target);
   }, [router, searchParams]);
 
-  if (loading || !canAccessModule("futebol_treinadores")) {
+  if (loading || !canEnter) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

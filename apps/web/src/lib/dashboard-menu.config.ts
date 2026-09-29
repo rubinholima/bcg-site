@@ -194,6 +194,13 @@ export function canAccessMenuLeaf(
   if (canAccessModule(accessSlug) || canAccessModule(item.moduleSlug)) return true;
   // Relatórios Saúde: perfis clínicos (fisioterapia, enfermagem…) têm `saude`, não só `relatorios_saude`.
   if (item.moduleSlug === "relatorios_saude" && canAccessModule("saude")) return true;
+  // Treinadores: leitura sem módulo completo (diretoria / relatórios futebol) — API TeamReportReadAccess.
+  if (
+    item.moduleSlug === "futebol_treinadores" &&
+    (canAccessModule("diretoria") || canAccessModule("relatorios_futebol"))
+  ) {
+    return true;
+  }
   return false;
 }
 

@@ -96,6 +96,7 @@ export class SeasonHighlightsService {
       },
       include: {
         playerRatings: {
+          where: { OR: [{ isMatchBest: true }, { isStaffStandout: true }] },
           include: {
             player: {
               select: {

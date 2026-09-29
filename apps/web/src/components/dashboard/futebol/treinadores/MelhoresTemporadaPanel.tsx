@@ -201,6 +201,10 @@ export function MelhoresTemporadaPanel({ tenantId, category }: Props) {
         </div>
       }
     >
+      <p className="text-sm text-muted-foreground">
+        Atletas marcados como destaque no relatório pós-jogo (Boston City e adversários).
+      </p>
+
       <DashboardFilterBar>
         <FilterBarField label="Temporada">
           <Input
@@ -243,7 +247,7 @@ export function MelhoresTemporadaPanel({ tenantId, category }: Props) {
 
       {summary ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard label="Destaques elenco" value={summary.ourStandoutSelections} />
+          <KpiCard label="Seleções pós-jogo (Boston)" value={summary.ourStandoutSelections} />
           <KpiCard label="Perfis radar" value={summary.opponentProfiles} />
           <KpiCard label="Adversários 2+ jogos" value={summary.opponentRecurrent} />
           <KpiCard
@@ -261,7 +265,7 @@ export function MelhoresTemporadaPanel({ tenantId, category }: Props) {
           variant={tab === "boston" ? "default" : "outline"}
           onClick={() => setTab("boston")}
         >
-          Boston City
+          Destaques Boston City
         </Button>
         <Button
           type="button"
@@ -269,14 +273,16 @@ export function MelhoresTemporadaPanel({ tenantId, category }: Props) {
           variant={tab === "opponent" ? "default" : "outline"}
           onClick={() => setTab("opponent")}
         >
-          Adversários / Radar
+          Destaques adversários
         </Button>
       </div>
 
       {tab === "boston" ? (
-        <PageSection title="Elenco">
+        <PageSection title="Destaques pós-jogo — Boston City">
           {boston.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">Nenhum destaque nesta temporada.</p>
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              Nenhum atleta marcado como destaque no relatório pós-jogo nesta temporada.
+            </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-border/60">
               <Table>
@@ -309,9 +315,11 @@ export function MelhoresTemporadaPanel({ tenantId, category }: Props) {
           )}
         </PageSection>
       ) : (
-        <PageSection title="Radar adversário">
+        <PageSection title="Destaques pós-jogo — adversários">
           {opponents.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">Nenhum perfil de radar adversário.</p>
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              Nenhum adversário indicado como destaque no relatório pós-jogo.
+            </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-border/60">
               <Table>
@@ -371,18 +379,20 @@ export function MelhoresTemporadaPanel({ tenantId, category }: Props) {
           <div className="grid gap-3 sm:grid-cols-3">
             <KpiCard label="Seleções" value={selectedBoston.selectionCount} />
             <KpiCard label="Nota média" value={selectedBoston.averageRating ?? "—"} />
-            {selectedBoston.seasonStatsOfficial ? (
-              <KpiCard
-                label="Súmula (temporada)"
-                value={selectedBoston.seasonStatsOfficial.matches}
-                hint={`${selectedBoston.seasonStatsOfficial.goals}G · ${selectedBoston.seasonStatsOfficial.minutes} min`}
-              />
-            ) : null}
           </div>
+          {selectedBoston.seasonStatsOfficial ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Referência súmula (temporada): {selectedBoston.seasonStatsOfficial.matches} jogos ·{" "}
+              {selectedBoston.seasonStatsOfficial.goals} gols · {selectedBoston.seasonStatsOfficial.minutes} min
+            </p>
+          ) : null}
           <Button asChild variant="outline" size="sm" className="mt-2">
             <Link href={`/dashboard/cadastros/jogadores/${selectedBoston.playerId}`}>Abrir ficha do atleta</Link>
           </Button>
-          <ul className="mt-4 space-y-3">
+          <p className="mt-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Partidas em que foi selecionado destaque
+          </p>
+          <ul className="mt-2 space-y-3">
             {selectedBoston.matches.map((m) => (
               <li key={m.reportId} className="rounded-lg border border-border/60 p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2 font-medium">

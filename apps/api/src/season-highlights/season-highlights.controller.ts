@@ -14,7 +14,7 @@ import type { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
-import { RequireModule } from '../auth/require-module.decorator';
+import { RequireModule, TeamReportReadAccess } from '../auth/require-module.decorator';
 import { ModulesService } from '../modules/modules.service';
 import { SeasonHighlightsService } from './season-highlights.service';
 
@@ -37,6 +37,7 @@ export class SeasonHighlightsController {
   }
 
   @Get('summary')
+  @TeamReportReadAccess()
   getSummary(
     @Query('tenantId') tenantId: string,
     @Query('season') season?: string,
@@ -46,6 +47,7 @@ export class SeasonHighlightsController {
   }
 
   @Get('boston-city')
+  @TeamReportReadAccess()
   listBoston(
     @Query('tenantId') tenantId: string,
     @Query('season') season?: string,
@@ -64,6 +66,7 @@ export class SeasonHighlightsController {
   }
 
   @Get('boston-city/:playerId')
+  @TeamReportReadAccess()
   getBostonPlayer(
     @Param('playerId') playerId: string,
     @Query('tenantId') tenantId: string,
@@ -78,6 +81,7 @@ export class SeasonHighlightsController {
   }
 
   @Get('opponent-radar')
+  @TeamReportReadAccess()
   listOpponent(
     @Query('tenantId') tenantId: string,
     @Query('season') season?: string,
@@ -98,6 +102,7 @@ export class SeasonHighlightsController {
   }
 
   @Get('opponent-radar/:profileId')
+  @TeamReportReadAccess()
   getOpponentProfile(
     @Param('profileId') profileId: string,
     @Query('tenantId') tenantId: string,
@@ -137,6 +142,7 @@ export class SeasonHighlightsController {
   }
 
   @Get('export')
+  @TeamReportReadAccess()
   async exportData(
     @Query('tenantId') tenantId: string,
     @Query('season') season?: string,
