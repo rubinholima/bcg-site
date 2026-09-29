@@ -1,6 +1,7 @@
 import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
 import {
   buildStandingsFromStore,
+  findStoreCategoryEntry,
   resolveStoreCategory,
 } from './coach-context.helper';
 
@@ -43,6 +44,45 @@ function villaStoreFixture(): FmfScraperStore {
             golsMarcados: 10,
             golsSofridos: 2,
             saldoGols: 8,
+          },
+        ],
+        upcoming: [],
+        recentResults: [],
+      },
+      sub20: {
+        preset: 'sub20',
+        fmfD: 2,
+        slug: 'mineiro-sub20-1div',
+        name: 'Campeonato Mineiro Sub-20 1ª Divisão',
+        fixtureCategory: 'sub20',
+        sourceUrl: '',
+        fetchedAt: new Date().toISOString(),
+        parsed: 5,
+        scheduled: 0,
+        finished: 5,
+        matches: [
+          {
+            homeName: 'CRUZEIRO - SAF',
+            awayName: 'ATLÉTICO',
+            matchDate: '2026-08-01',
+            status: 'finished',
+            phaseLabel: '1ª FASE',
+            roundNumber: 1,
+            homeScore: 2,
+            awayScore: 1,
+          },
+        ],
+        standings: [
+          {
+            time: 'CRUZEIRO - SAF',
+            pontos: 12,
+            jogos: 4,
+            vitorias: 4,
+            empates: 0,
+            derrotas: 0,
+            golsMarcados: 8,
+            golsSofridos: 2,
+            saldoGols: 6,
           },
         ],
         upcoming: [],
@@ -105,7 +145,7 @@ describe('coach context — snapshot FMF por categoria operacional', () => {
 
   it('buildStandingsFromStore usa 2ª divisão sub-20, não Modulo II', () => {
     const storeCategory = resolveStoreCategory(store, 'sub20', ['sub20'], tenantKeys);
-    const rows = buildStandingsFromStore(store, storeCategory, clubName, aliases, {
+    const rows = buildStandingsFromStore(store, 'sub20', clubName, aliases, {
       tenantCategoryKeys: tenantKeys,
       clubName,
       aliases,
@@ -113,5 +153,15 @@ describe('coach context — snapshot FMF por categoria operacional', () => {
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.some((r) => /villa nova/i.test(r.team))).toBe(true);
     expect(rows.some((r) => /cruzeiro/i.test(r.team))).toBe(false);
+  });
+
+  it('findStoreCategoryEntry ignora chave sub20 (1ª div) quando o clube só joga na sub20_2div', () => {
+    const tenantKeysSub20Only = ['modulo_ii', 'sub20'];
+    const entry = findStoreCategoryEntry(store, 'sub20', {
+      tenantCategoryKeys: tenantKeysSub20Only,
+      clubName,
+      aliases,
+    });
+    expect(entry?.storeKey).toBe('sub20_2div');
   });
 });

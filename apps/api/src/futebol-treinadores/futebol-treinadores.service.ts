@@ -22,6 +22,7 @@ import {
   buildCompletedGames,
   buildLastRoundFromStore,
   buildStandingsFromStore,
+  findStoreCategoryEntry,
   readTenantCategoryKeys,
   resolveStoreCategory,
 } from './coach-context.helper';
@@ -300,28 +301,29 @@ export class FutebolTreinadoresService {
     ];
     const tenantCategoryKeys = readTenantCategoryKeys(tenant.categories);
     const storeLookup = { tenantCategoryKeys, clubName, aliases };
-    const storeCategory = resolveStoreCategory(
-      store,
-      catFilter,
-      fallbackCategories,
-      tenantCategoryKeys,
-    );
+    const storeCategoryEntry = findStoreCategoryEntry(store, catFilter, storeLookup);
+    const storeCategory =
+      storeCategoryEntry?.storeKey ??
+      resolveStoreCategory(store, catFilter, fallbackCategories, tenantCategoryKeys);
+    const standingsCategory = catFilter || storeCategory;
     let standings = buildStandingsFromStore(
       store,
-      storeCategory,
+      standingsCategory,
       clubName,
       aliases,
       storeLookup,
     );
     const lastRound = buildLastRoundFromStore(
       store,
-      storeCategory,
+      standingsCategory,
       clubName,
       aliases,
       storeLookup,
     );
     const standingsCompetitionLabel =
-      store?.categories?.[storeCategory]?.name?.trim() || null;
+      storeCategoryEntry?.snapshot.name?.trim() ||
+      store?.categories?.[storeCategory]?.name?.trim() ||
+      null;
 
     let opponents: Array<{ name: string; nextMatchDate?: string; championship?: string | null }> = [];
     const nextGame = games.find((g) => g.matchDate >= now) ?? games[games.length - 1];

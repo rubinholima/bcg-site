@@ -569,33 +569,36 @@ function snapshotMatchesCategoryFilter(
   return false;
 }
 
-function findStoreSnapshot(
+type FmfStoreCategoryEntry = { storeKey: string; snapshot: FmfCategorySnapshot };
+
+function listStoreCategoryEntries(
   store: FmfScraperStore | null,
   category: string,
-  options?: FmfStoreSnapshotLookupOptions,
-): FmfCategorySnapshot | null {
-  if (!store?.categories || !category?.trim()) return null;
-
-  type Entry = { storeKey: string; snapshot: FmfCategorySnapshot };
-  const entries: Entry[] = [];
+): FmfStoreCategoryEntry[] {
+  if (!store?.categories || !category?.trim()) return [];
+  const entries: FmfStoreCategoryEntry[] = [];
   for (const [storeKey, snapshot] of Object.entries(store.categories)) {
     if (!snapshot?.fixtureCategory) continue;
     if (!snapshotMatchesCategoryFilter(storeKey, snapshot, category)) continue;
     entries.push({ storeKey, snapshot });
   }
+  return entries;
+}
+
+/** Desambigua snapshot FMF quando várias competições colapsam na mesma categoria operacional (ex.: sub20 vs sub20_2div). */
+function pickStoreCategoryEntry(
+  entries: FmfStoreCategoryEntry[],
+  category: string,
+  options?: FmfStoreSnapshotLookupOptions,
+): FmfStoreCategoryEntry | null {
   if (entries.length === 0) return null;
-  if (entries.length === 1) return entries[0]!.snapshot;
+  if (entries.length === 1) return entries[0]!;
 
   const filterOp = operationalCategoryMergeKey(category);
   const tenantKeys = options?.tenantCategoryKeys ?? [];
-  for (const adminKey of tenantKeys) {
-    if (operationalCategoryMergeKey(adminKey) !== filterOp) continue;
-    const exact = entries.find((e) => e.storeKey === adminKey);
-    if (exact) return exact.snapshot;
-  }
-
   const clubName = options?.clubName?.trim();
   const aliases = options?.aliases ?? [];
+
   if (clubName) {
     const withClub = entries.filter(({ snapshot }) =>
       (snapshot.matches ?? []).some(
@@ -604,18 +607,51 @@ function findStoreSnapshot(
           isFmfTeamMatch(m.awayName, clubName, aliases),
       ),
     );
-    if (withClub.length === 1) return withClub[0]!.snapshot;
+    if (withClub.length === 1) return withClub[0]!;
     if (withClub.length > 1) {
       const secondDiv = withClub.filter((e) => e.storeKey.endsWith('_2div'));
-      if (secondDiv.length === 1) return secondDiv[0]!.snapshot;
-      return withClub[0]!.snapshot;
+      if (secondDiv.length === 1) return secondDiv[0]!;
+      for (const adminKey of tenantKeys) {
+        const exact = withClub.find((e) => e.storeKey === adminKey);
+        if (exact) return exact;
+      }
+      return withClub[0]!;
     }
   }
 
-  const secondDivOnly = entries.filter((e) => e.storeKey.endsWith('_2div'));
-  if (secondDivOnly.length === 1) return secondDivOnly[0]!.snapshot;
+  for (const adminKey of tenantKeys) {
+    if (operationalCategoryMergeKey(adminKey) !== filterOp) continue;
+    if (!adminKey.includes('_')) continue;
+    const exact = entries.find((e) => e.storeKey === adminKey);
+    if (exact) return exact;
+  }
+  for (const adminKey of tenantKeys) {
+    if (operationalCategoryMergeKey(adminKey) !== filterOp) continue;
+    const exact = entries.find((e) => e.storeKey === adminKey);
+    if (exact) return exact;
+  }
 
-  return entries[0]!.snapshot;
+  const secondDivOnly = entries.filter((e) => e.storeKey.endsWith('_2div'));
+  if (secondDivOnly.length === 1) return secondDivOnly[0]!;
+
+  return entries[0]!;
+}
+
+export function findStoreCategoryEntry(
+  store: FmfScraperStore | null,
+  category: string,
+  options?: FmfStoreSnapshotLookupOptions,
+): FmfStoreCategoryEntry | null {
+  const entries = listStoreCategoryEntries(store, category);
+  return pickStoreCategoryEntry(entries, category, options);
+}
+
+function findStoreSnapshot(
+  store: FmfScraperStore | null,
+  category: string,
+  options?: FmfStoreSnapshotLookupOptions,
+): FmfCategorySnapshot | null {
+  return findStoreCategoryEntry(store, category, options)?.snapshot ?? null;
 }
 
 export type ChampionshipPhaseReportRow = {
