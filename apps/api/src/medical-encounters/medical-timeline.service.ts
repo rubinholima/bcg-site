@@ -133,7 +133,7 @@ export class MedicalTimelineService {
         readOnly: false,
       });
       const evo = Array.isArray((e as { evolutionNotes?: unknown }).evolutionNotes)
-        ? ((e as { evolutionNotes: MedicalEvolutionNote[] }).evolutionNotes ?? [])
+        ? ((e as { evolutionNotes?: unknown }).evolutionNotes as unknown as MedicalEvolutionNote[])
         : [];
       for (const n of evo) {
         if (!n?.note?.trim()) continue;

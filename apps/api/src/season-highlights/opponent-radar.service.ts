@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { FMF_SYNC_TENANT_DEFAULTS } from '../fmf-scraper/fmf-sync-tenants.config';
+import {
+  FMF_SYNC_TENANT_DEFAULTS,
+  isFmfSyncTenantSlug,
+} from '../fmf-scraper/fmf-sync-tenants.config';
 import {
   buildDisplayName,
   buildFallbackIdentityKey,
@@ -45,9 +48,9 @@ export class OpponentRadarService {
     if (!report || report.status !== 'finalizado') return;
     if (report.opponentHighlights.length === 0) return;
 
-    const aliases =
-      FMF_SYNC_TENANT_DEFAULTS[report.tenant.slug as keyof typeof FMF_SYNC_TENANT_DEFAULTS]
-        ?.aliases ?? [];
+    const aliases = isFmfSyncTenantSlug(report.tenant.slug)
+      ? FMF_SYNC_TENANT_DEFAULTS[report.tenant.slug].fmfTeamNames
+      : [];
 
     for (const highlight of report.opponentHighlights) {
       await this.syncHighlight(report, highlight, aliases);

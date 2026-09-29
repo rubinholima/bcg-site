@@ -49,6 +49,13 @@ type TravelWithTenant = Prisma.TravelLogisticsGetPayload<{
   include: { tenant: { select: { id: true; name: true } } };
 }>;
 
+type AgendaEntryCalendarRow = Prisma.FootballAgendaEntryGetPayload<{
+  include: {
+    tenant: { select: { id: true; name: true } };
+    space: { select: { id: true; name: true } };
+  };
+}>;
+
 function resolveIsOurTeamHome(
   type: string,
   title: string,
@@ -341,7 +348,7 @@ export class FutebolAgendaService {
             },
             orderBy: { startAt: 'asc' },
           })
-        : Promise.resolve([]),
+        : Promise.resolve([] as AgendaEntryCalendarRow[]),
       includePalco
         ? this.prisma.venueBooking.findMany({
             where: {

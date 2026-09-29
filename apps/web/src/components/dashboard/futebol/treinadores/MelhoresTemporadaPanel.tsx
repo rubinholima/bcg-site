@@ -375,7 +375,7 @@ export function MelhoresTemporadaPanel({ tenantId, category }: Props) {
               <KpiCard
                 label="Súmula (temporada)"
                 value={selectedBoston.seasonStatsOfficial.matches}
-                hint={`${selectedBoston.seasonStatsOfficial.goals}G · ${selectedBoston.seasonStatsOfficial.assists}A`}
+                hint={`${selectedBoston.seasonStatsOfficial.goals}G · ${selectedBoston.seasonStatsOfficial.minutes} min`}
               />
             ) : null}
           </div>

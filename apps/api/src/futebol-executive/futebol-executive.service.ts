@@ -25,6 +25,7 @@ import type {
   ExecutiveDashboardDto,
   ExecutiveKpi,
   ExecutiveNegotiationsSummary,
+  ExecutiveSeasonHighlightsSummary,
   ExecutiveSeverity,
 } from './futebol-executive.types';
 import { SeasonHighlightsService } from '../season-highlights/season-highlights.service';
@@ -934,7 +935,7 @@ export class FutebolExecutiveService {
         })
       : 0;
 
-    let seasonHighlights = null;
+    let seasonHighlights: ExecutiveSeasonHighlightsSummary | null = null;
     if (hasModule(ctx.modules, 'futebol_treinadores') && ctx.tenantId) {
       const indicators = await this.seasonHighlights.getExecutiveIndicators(
         ctx.tenantId,

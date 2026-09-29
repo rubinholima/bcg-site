@@ -100,7 +100,7 @@ export default function MedicoProntuarioPlayerPage() {
         </Button>
       </div>
 
-      {(profile.bloodType || profile.allergies || profile.medications) && (
+      {Boolean(profile.bloodType || profile.allergies || profile.medications) && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Perfil médico (cadastro)</CardTitle>

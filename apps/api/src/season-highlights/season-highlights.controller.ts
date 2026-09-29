@@ -128,7 +128,10 @@ export class SeasonHighlightsController {
     @Req() req: AuthedRequest,
   ) {
     if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório.');
-    const slugs = await this.modulesService.getSlugsForActor(req.user.sub, req.user.role);
+    const slugs = await this.modulesService.getSlugsForActor(
+      req.user.sub,
+      req.user.role ?? 'user',
+    );
     const hasCaptacao = slugs.includes('futebol_captacao');
     return this.service.sendToCaptacao(tenantId.trim(), profileId, hasCaptacao);
   }

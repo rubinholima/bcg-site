@@ -911,8 +911,8 @@ export function PsicologiaAgendaOperacional() {
                     const absent = listPsychologyAbsentAttendance(detailEvent.attendance);
                     const catLabel = getCategoryLabel(
                       detailEvent.category ?? "",
-                      allFixtureCategories,
                       "pt",
+                      allFixtureCategories,
                     );
                     return (
                       <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">

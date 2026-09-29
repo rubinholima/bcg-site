@@ -227,7 +227,6 @@ export class SeasonHighlightsService {
             select: {
               playerId: true,
               goals: true,
-              assists: true,
               minutesPlayed: true,
               matchId: true,
             },
@@ -236,17 +235,15 @@ export class SeasonHighlightsService {
 
     const seasonStatsByPlayer = new Map<
       string,
-      { goals: number; assists: number; minutes: number; matches: number }
+      { goals: number; minutes: number; matches: number }
     >();
     for (const s of fmfStats) {
       const row = seasonStatsByPlayer.get(s.playerId) ?? {
         goals: 0,
-        assists: 0,
         minutes: 0,
         matches: 0,
       };
       row.goals += s.goals;
-      row.assists += s.assists;
       row.minutes += s.minutesPlayed;
       row.matches += 1;
       seasonStatsByPlayer.set(s.playerId, row);

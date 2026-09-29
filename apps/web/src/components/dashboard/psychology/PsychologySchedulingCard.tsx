@@ -358,7 +358,7 @@ export function PsychologySchedulingCard({
           open: true,
           date: newDate.trim(),
           time: newTime.trim() || null,
-          categoryLabel: getCategoryLabel(effectiveCategory, allFixtureCategories, "pt"),
+          categoryLabel: getCategoryLabel(effectiveCategory, "pt", allFixtureCategories),
           tenantName: selectedTenant?.name,
           psychologistName: psychologos.find((p) => p.id === psychologistId)?.name ?? null,
           estagiarioName: estagiarios.find((p) => p.id === estagiarioId)?.name ?? null,

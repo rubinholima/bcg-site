@@ -167,7 +167,7 @@ export function PsicologiaGrupoAusentesReport() {
             {rows.map((session) => {
               const attendance = Array.isArray(session.attendance) ? session.attendance : [];
               const absent = listPsychologyAbsentAttendance(attendance);
-              const catLabel = getCategoryLabel(session.category ?? "", allFixtureCategories, "pt");
+              const catLabel = getCategoryLabel(session.category ?? "", "pt", allFixtureCategories);
               const printInput = sessionToPrintInput(session, catLabel);
               return (
                 <li key={session.id}>
