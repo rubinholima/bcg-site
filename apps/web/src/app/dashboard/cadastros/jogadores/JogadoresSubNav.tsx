@@ -7,6 +7,7 @@ import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 const LINKS = [
   { href: "/dashboard/cadastros/jogadores", label: DASHBOARD_LABELS.atletas },
   { href: "/dashboard/cadastros/jogadores/arquivo", label: "Atletas desligados" },
+  { href: "/dashboard/cadastros/jogadores/negociados", label: "Atletas negociados" },
 ] as const;
 
 interface JogadoresSubNavProps {

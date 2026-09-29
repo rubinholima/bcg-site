@@ -344,6 +344,7 @@ function resolveLinkActive(
     if (!pathname?.startsWith("/dashboard/cadastros/jogadores")) return false;
     if (pathname.startsWith("/dashboard/cadastros/jogadores/arquivo")) return false;
     if (pathname.startsWith("/dashboard/cadastros/jogadores/emprestados")) return false;
+    if (pathname.startsWith("/dashboard/cadastros/jogadores/negociados")) return false;
     return true;
   }
   if (href === "/dashboard/cadastros/jogadores/arquivo") {
@@ -351,6 +352,9 @@ function resolveLinkActive(
   }
   if (href === "/dashboard/cadastros/jogadores/emprestados") {
     return !!pathname?.startsWith("/dashboard/cadastros/jogadores/emprestados");
+  }
+  if (href === "/dashboard/cadastros/jogadores/negociados") {
+    return !!pathname?.startsWith("/dashboard/cadastros/jogadores/negociados");
   }
   return inPathHelper(href, pathname);
 }

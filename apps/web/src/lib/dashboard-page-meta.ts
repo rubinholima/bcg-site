@@ -96,6 +96,10 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
     title: "Atletas emprestados",
     description: "Atletas em situação Emprestado — fora da lista por categoria do clube.",
   },
+  "/dashboard/cadastros/jogadores/negociados": {
+    title: "Atletas negociados",
+    description: "Negociações comerciais — transferência, empréstimo e direitos econômicos.",
+  },
   "/dashboard/adm/patrimonio": {
     title: "Patrimônio",
     description:

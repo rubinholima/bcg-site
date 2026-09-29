@@ -194,6 +194,7 @@ model Tenant {
   nursingSessions              NursingSession[]
   medicalDepartures            PlayerMedicalDeparture[]
   medicalEncounters            MedicalEncounter[]
+  playerNegotiations           PlayerNegotiation[]
   presenceSessions             UserPresenceSession[]
   learningCourses              LearningCourse[]
   learningAssignments          LearningAssignment[]
@@ -229,6 +230,7 @@ model FinanceiroLancamento {
   @@index([tenantId, dueDate])
   @@index([supplierId])
   @@index([customerId])
+  playerNegotiationInstallment PlayerNegotiationInstallment?
 }
 
 /// Cliente (contas a receber) — cadastro mestre por tenant
@@ -1030,6 +1032,7 @@ model VisitingTeam {
   logoUrl  String?  // pasta logos
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  playerNegotiations PlayerNegotiation[]
 }
 
 /** Categorias de futebol (Sub-17, Principal, etc.) — cadastro central do app */
@@ -1151,9 +1154,99 @@ model Player {
   nursingSessions            NursingSession[]
   medicalDepartures          PlayerMedicalDeparture[]
   medicalEncounters          MedicalEncounter[]
+  playerNegotiations         PlayerNegotiation[]
   @@index([tenantId])
   @@index([tenantId, category])
   @@index([tenantId, cbfRegistration])
+}
+
+/// Negociação comercial de atleta (transferência, empréstimo, direitos parciais)
+model PlayerNegotiation {
+  id                       String   @id @default(cuid())
+  tenantId                 String
+  tenant                   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId                 String
+  player                   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  /// transfer_permanent | loan | partial_rights | mixed
+  negotiationType          String
+  /// in_progress | agreed | effective | cancelled | expired
+  status                   String   @default("in_progress")
+  counterpartyName         String
+  visitingTeamId           String?
+  visitingTeam             VisitingTeam? @relation(fields: [visitingTeamId], references: [id], onDelete: SetNull)
+  negotiatedPercentage     Decimal? @db.Decimal(6, 2)
+  retainedPercentage       Decimal? @db.Decimal(6, 2)
+  totalValue               Decimal? @db.Decimal(14, 2)
+  currency                 String   @default("BRL")
+  negotiatedAt             DateTime?
+  effectiveFrom            DateTime?
+  effectiveUntil           DateTime?
+  loanEndDate              DateTime?
+  hasPurchaseOption        Boolean  @default(false)
+  purchaseOptionDeadline   DateTime?
+  purchaseOptionTerms      String?  @db.Text
+  futureAcquisitionRights  Json?
+  paymentTermsSummary      String?  @db.Text
+  clauses                  String?  @db.Text
+  notes                    String?  @db.Text
+  responsibleUserId        String?
+  responsibleName          String?
+  createdByUserId          String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  installments             PlayerNegotiationInstallment[]
+  documents                PlayerNegotiationDocument[]
+  auditLogs                PlayerNegotiationAuditLog[]
+  @@index([tenantId, status])
+  @@index([tenantId, negotiationType])
+  @@index([playerId, status])
+  @@index([tenantId, negotiatedAt])
+  @@index([counterpartyName])
+}
+
+model PlayerNegotiationInstallment {
+  id                     String   @id @default(cuid())
+  negotiationId          String
+  negotiation            PlayerNegotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  sequence               Int
+  amount                 Decimal  @db.Decimal(14, 2)
+  dueDate                DateTime
+  /// pending | paid | overdue | cancelled
+  status                 String   @default("pending")
+  settledAt              DateTime?
+  financeiroLancamentoId String?  @unique
+  financeiroLancamento   FinanceiroLancamento? @relation(fields: [financeiroLancamentoId], references: [id], onDelete: SetNull)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  @@unique([negotiationId, sequence])
+  @@index([negotiationId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+model PlayerNegotiationDocument {
+  id              String   @id @default(cuid())
+  negotiationId   String
+  negotiation     PlayerNegotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  name            String
+  fileUrl         String
+  fileKey         String?
+  legalDocumentId String?
+  uploadedAt      DateTime @default(now())
+  uploadedByUserId String?
+  @@index([negotiationId])
+}
+
+model PlayerNegotiationAuditLog {
+  id             String   @id @default(cuid())
+  negotiationId  String
+  negotiation    PlayerNegotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  at             DateTime @default(now())
+  userId         String?
+  userName       String?
+  action         String
+  details        Json?
+  @@index([negotiationId, at])
 }
 
 /** Súmula oficial de uma partida importada da FMF. */

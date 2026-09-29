@@ -27,7 +27,7 @@ export function resolveCadastroListBackHref(pathname: string): string | undefine
   const listHref = `/dashboard/cadastros/${entity}`;
 
   if (!rest) return undefined;
-  if (rest === "/arquivo" || rest === "/emprestados") return undefined;
+  if (rest === "/arquivo" || rest === "/emprestados" || rest === "/negociados") return undefined;
 
   return listHref;
 }

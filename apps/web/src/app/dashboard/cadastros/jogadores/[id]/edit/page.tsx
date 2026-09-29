@@ -39,6 +39,7 @@ import { resolvePlayerTabInGroups, buildPlayerTabGroups } from "@/lib/player-rec
 import { PlayerRecordGroupedNav } from "@/components/dashboard/players/PlayerRecordGroupedNav";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
 import { PlayerTrainingHistoryTab } from "@/components/dashboard/players/PlayerTrainingHistoryTab";
+import { PlayerNegotiationsPanel } from "@/components/dashboard/players/PlayerNegotiationsPanel";
 import {
   FIELD_POSITION_DEFAULTS,
   type FootballPositionCode,
@@ -633,6 +634,17 @@ export default function EditJogadorPage() {
           </CardHeader>
           <CardContent>
             <PlayerTrainingHistoryTab playerId={player.id} />
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === "negociacoes" && player && (
+        <Card className="rounded-2xl border-border/80">
+          <CardHeader>
+            <CardTitle>Negociações</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PlayerNegotiationsPanel playerId={player.id} />
           </CardContent>
         </Card>
       )}

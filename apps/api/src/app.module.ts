@@ -61,6 +61,7 @@ import { AgendaConfigModule } from './agenda-config/agenda-config.module';
 import { DynamicReportsModule } from './dynamic-reports/dynamic-reports.module';
 import { MasterOpsModule } from './master-ops/master-ops.module';
 import { DesenvolvimentoModule } from './desenvolvimento/desenvolvimento.module';
+import { PlayerNegotiationsModule } from './player-negotiations/player-negotiations.module';
 
 @Module({
   imports: [
@@ -124,6 +125,7 @@ import { DesenvolvimentoModule } from './desenvolvimento/desenvolvimento.module'
     DynamicReportsModule,
     MasterOpsModule,
     DesenvolvimentoModule,
+    PlayerNegotiationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

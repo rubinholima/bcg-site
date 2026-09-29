@@ -7,7 +7,7 @@ export const PLAYER_TAB_GROUPS: {
   tabIds: string[];
 }[] = [
   { id: "visao_geral", label: "Visão Geral", tabIds: ["mapa", "status"] },
-  { id: "cadastro", label: "Cadastro", tabIds: ["dados", "imagens"] },
+  { id: "cadastro", label: "Cadastro", tabIds: ["dados", "imagens", "negociacoes"] },
   {
     id: "saude",
     label: "Saúde",

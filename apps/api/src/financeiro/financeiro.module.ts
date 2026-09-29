@@ -13,6 +13,6 @@ import { CustomersService } from './customers.service';
   imports: [AuthModule, ModulesModule, IntegrationsModule],
   controllers: [FinanceiroOmieController, FinanceiroLancamentosController, CustomersController],
   providers: [ModuleAccessGuard, FinanceiroLancamentosService, CustomersService],
-  exports: [CustomersService],
+  exports: [CustomersService, FinanceiroLancamentosService],
 })
 export class FinanceiroModule {}
