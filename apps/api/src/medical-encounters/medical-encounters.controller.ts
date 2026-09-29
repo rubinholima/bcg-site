@@ -17,6 +17,7 @@ import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { MedicalEncountersService } from './medical-encounters.service';
 import {
+  AddMedicalEvolutionDto,
   CreateMedicalEncounterDto,
   UpdateMedicalEncounterDto,
 } from './dto/medical-encounter.dto';
@@ -33,6 +34,29 @@ export class MedicalEncountersController {
   private async allowedTenants(req: Request & { user: CognitoJwtPayload }) {
     const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
     return this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+  }
+
+  private editor(req: Request & { user: CognitoJwtPayload }) {
+    return {
+      sub: req.user.sub,
+      name: req.user.name ?? req.user.email ?? null,
+    };
+  }
+
+  @Get('prescriptions-history/:playerId')
+  async prescriptionsHistory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('playerId') playerId: string,
+  ) {
+    return this.service.getPrescriptionHistory(playerId, await this.allowedTenants(req));
+  }
+
+  @Get('clinical-context/:playerId')
+  async clinicalContext(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('playerId') playerId: string,
+  ) {
+    return this.service.getClinicalContext(playerId, await this.allowedTenants(req));
   }
 
   @Get('referral-options/:playerId')
@@ -63,20 +87,21 @@ export class MedicalEncountersController {
     );
   }
 
-  @Get(':id')
-  async findOne(
-    @Req() req: Request & { user: CognitoJwtPayload },
-    @Param('id') id: string,
-  ) {
-    return this.service.findOne(id, await this.allowedTenants(req));
-  }
-
   @Post()
   async create(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Body() dto: CreateMedicalEncounterDto,
   ) {
-    return this.service.create(dto, await this.allowedTenants(req), req.user.sub);
+    return this.service.create(dto, await this.allowedTenants(req), this.editor(req));
+  }
+
+  @Post(':id/evolution')
+  async addEvolution(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: AddMedicalEvolutionDto,
+  ) {
+    return this.service.addEvolution(id, dto, await this.allowedTenants(req), this.editor(req));
   }
 
   @Patch(':id')
@@ -85,6 +110,14 @@ export class MedicalEncountersController {
     @Param('id') id: string,
     @Body() dto: UpdateMedicalEncounterDto,
   ) {
-    return this.service.update(id, dto, await this.allowedTenants(req));
+    return this.service.update(id, dto, await this.allowedTenants(req), this.editor(req));
+  }
+
+  @Get(':id')
+  async findOne(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    return this.service.findOne(id, await this.allowedTenants(req));
   }
 }

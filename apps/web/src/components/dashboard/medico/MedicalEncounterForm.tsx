@@ -13,11 +13,19 @@ import { FeedbackModal } from "@/components/ui/feedback-modal";
 import type {
   MedicalEncounter,
   MedicalEncounterAttachment,
+  MedicalExamRecord,
   MedicalPrescriptionItem,
 } from "@/types/medical-encounter";
+import { MEDICAL_RTP_OPTIONS } from "@/lib/medical-encounter-labels";
 import type { MedicalStaffOption } from "@/components/dashboard/MedicalHistoryBlock";
 
 type PhysioSessionOpt = { id: string; diagnosisLabel?: string | null; status: string };
+type OriginOpt = {
+  id: string;
+  occurredAt: string;
+  diagnosis?: string | null;
+  physicianName?: string | null;
+};
 
 const emptyRx = (): MedicalPrescriptionItem => ({
   medication: "",
@@ -34,11 +42,13 @@ export function MedicalEncounterForm({
   playerId,
   playerName,
   encounterId,
+  defaultOriginEncounterId,
 }: {
   tenantId: string;
   playerId: string;
   playerName: string;
   encounterId?: string;
+  defaultOriginEncounterId?: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(!!encounterId);
@@ -46,6 +56,7 @@ export function MedicalEncounterForm({
   const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
   const [staff, setStaff] = useState<MedicalStaffOption[]>([]);
   const [physioSessions, setPhysioSessions] = useState<PhysioSessionOpt[]>([]);
+  const [originEncounters, setOriginEncounters] = useState<OriginOpt[]>([]);
 
   const [occurredAt, setOccurredAt] = useState("");
   const [physicianStaffId, setPhysicianStaffId] = useState("");
@@ -64,6 +75,13 @@ export function MedicalEncounterForm({
   const [referPhysioNotes, setReferPhysioNotes] = useState("");
   const [referPhysioSessionId, setReferPhysioSessionId] = useState("");
   const [prescriptions, setPrescriptions] = useState<MedicalPrescriptionItem[]>([emptyRx()]);
+  const [attachments, setAttachments] = useState<MedicalEncounterAttachment[]>([]);
+  const [examRecords, setExamRecords] = useState<MedicalExamRecord[]>([]);
+  const [originEncounterId, setOriginEncounterId] = useState(defaultOriginEncounterId ?? "");
+  const [rtpDecision, setRtpDecision] = useState("");
+  const [medicalRtpReleasedAt, setMedicalRtpReleasedAt] = useState("");
+  const [medicalRtpNotes, setMedicalRtpNotes] = useState("");
+  const [editComment, setEditComment] = useState("");
 
   useEffect(() => {
     const now = new Date();
@@ -77,14 +95,24 @@ export function MedicalEncounterForm({
       .then(({ data }) => setStaff(Array.isArray(data) ? data : []))
       .catch(() => setStaff([]));
     api
-      .get<{ physioSessions: PhysioSessionOpt[] }>(
+      .get<{ physioSessions: PhysioSessionOpt[]; originEncounters: OriginOpt[] }>(
         `/medical-encounters/referral-options/${playerId}`,
       )
-      .then(({ data }) =>
-        setPhysioSessions(Array.isArray(data.physioSessions) ? data.physioSessions : []),
-      )
-      .catch(() => setPhysioSessions([]));
+      .then(({ data }) => {
+        setPhysioSessions(Array.isArray(data.physioSessions) ? data.physioSessions : []);
+        setOriginEncounters(
+          Array.isArray(data.originEncounters) ? data.originEncounters : [],
+        );
+      })
+      .catch(() => {
+        setPhysioSessions([]);
+        setOriginEncounters([]);
+      });
   }, [tenantId, playerId]);
+
+  useEffect(() => {
+    if (defaultOriginEncounterId) setOriginEncounterId(defaultOriginEncounterId);
+  }, [defaultOriginEncounterId]);
 
   useEffect(() => {
     if (!encounterId) return;
@@ -113,6 +141,12 @@ export function MedicalEncounterForm({
         setPrescriptions(
           data.prescriptions?.length ? data.prescriptions : [emptyRx()],
         );
+        setAttachments(Array.isArray(data.attachments) ? data.attachments : []);
+        setExamRecords(Array.isArray(data.examRecords) ? data.examRecords : []);
+        setOriginEncounterId(data.originEncounterId ?? "");
+        setRtpDecision(data.rtpDecision ?? "");
+        setMedicalRtpReleasedAt(data.medicalRtpReleasedAt?.slice(0, 10) ?? "");
+        setMedicalRtpNotes(data.medicalRtpNotes ?? "");
       })
       .catch(() =>
         setFeedback({ title: "Erro", message: "Não foi possível carregar o atendimento." }),
@@ -148,8 +182,15 @@ export function MedicalEncounterForm({
       referPhysio,
       referPhysioNotes: referPhysio ? referPhysioNotes || undefined : undefined,
       referPhysioSessionId: referPhysioSessionId || undefined,
+      originEncounterId: originEncounterId || undefined,
+      examRecords: examRecords.filter((r) => r.title.trim()),
+      rtpDecision: rtpDecision || undefined,
+      medicalRtpReleasedAt: medicalRtpReleasedAt || undefined,
+      medicalRtpNotes: medicalRtpNotes || undefined,
       prescriptions: prescriptions.filter((p) => p.medication.trim()),
+      attachments: attachments.filter((a) => a.fileUrl.trim()),
       status: "finalized" as const,
+      ...(encounterId && editComment.trim() ? { editComment: editComment.trim() } : {}),
     };
     try {
       if (encounterId) {
@@ -181,6 +222,26 @@ export function MedicalEncounterForm({
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
         <p className="text-sm text-muted-foreground">Atleta: {playerName}</p>
+
+        {originEncounters.length > 0 ? (
+          <div className="space-y-2">
+            <Label htmlFor="originEncounter">Atendimento de origem (opcional)</Label>
+            <NativeSelect
+              id="originEncounter"
+              value={originEncounterId}
+              onChange={(e) => setOriginEncounterId(e.target.value)}
+            >
+              <option value="">Atendimento inicial</option>
+              {originEncounters
+                .filter((o) => o.id !== encounterId)
+                .map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.diagnosis ?? o.physicianName ?? o.id}
+                  </option>
+                ))}
+            </NativeSelect>
+          </div>
+        ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
@@ -264,6 +325,38 @@ export function MedicalEncounterForm({
               onChange={(e) => setReturnForecastAt(e.target.value)}
             />
           </div>
+          <div className="grid gap-3 sm:grid-cols-2 max-w-2xl">
+            <div className="space-y-2">
+              <Label htmlFor="rtpDecision">Liberação médica / RTP</Label>
+              <NativeSelect
+                id="rtpDecision"
+                value={rtpDecision}
+                onChange={(e) => setRtpDecision(e.target.value)}
+              >
+                {MEDICAL_RTP_OPTIONS.map((o) => (
+                  <option key={o.value || "none"} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="medicalRtpReleasedAt">Data da liberação</Label>
+              <Input
+                id="medicalRtpReleasedAt"
+                type="date"
+                className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                value={medicalRtpReleasedAt}
+                onChange={(e) => setMedicalRtpReleasedAt(e.target.value)}
+              />
+            </div>
+          </div>
+          <Textarea
+            rows={2}
+            placeholder="Notas de liberação / RTP (registro médico)"
+            value={medicalRtpNotes}
+            onChange={(e) => setMedicalRtpNotes(e.target.value)}
+          />
           <p className="text-xs text-muted-foreground">
             Registro clínico no prontuário. Não altera automaticamente o status operacional
             sincronizado pela fisioterapia.
@@ -302,6 +395,120 @@ export function MedicalEncounterForm({
               ) : null}
             </>
           ) : null}
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Exames (solicitação / resultado)</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setExamRecords((r) => [
+                  ...r,
+                  { type: "solicitado", title: "", notes: "", fileUrl: "" },
+                ])
+              }
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Exame
+            </Button>
+          </div>
+          {examRecords.map((r, idx) => (
+            <div key={idx} className="grid gap-2 rounded-lg border border-border/60 p-3 sm:grid-cols-2">
+              <NativeSelect
+                value={r.type}
+                onChange={(e) => {
+                  const next = [...examRecords];
+                  next[idx] = {
+                    ...next[idx],
+                    type: e.target.value as "solicitado" | "resultado",
+                  };
+                  setExamRecords(next);
+                }}
+              >
+                <option value="solicitado">Solicitado</option>
+                <option value="resultado">Resultado</option>
+              </NativeSelect>
+              <Input
+                placeholder="Nome do exame"
+                value={r.title}
+                onChange={(e) => {
+                  const next = [...examRecords];
+                  next[idx] = { ...next[idx], title: e.target.value };
+                  setExamRecords(next);
+                }}
+              />
+              <Input
+                className="sm:col-span-2"
+                placeholder="URL do laudo/documento (opcional)"
+                value={r.fileUrl ?? ""}
+                onChange={(e) => {
+                  const next = [...examRecords];
+                  next[idx] = { ...next[idx], fileUrl: e.target.value };
+                  setExamRecords(next);
+                }}
+              />
+              <Textarea
+                className="sm:col-span-2"
+                rows={2}
+                placeholder="Observações"
+                value={r.notes ?? ""}
+                onChange={(e) => {
+                  const next = [...examRecords];
+                  next[idx] = { ...next[idx], notes: e.target.value };
+                  setExamRecords(next);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Anexos (URL)</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setAttachments((a) => [...a, { label: "", fileUrl: "", kind: "exame" }])}
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Anexo
+            </Button>
+          </div>
+          {attachments.map((a, idx) => (
+            <div key={idx} className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                placeholder="Descrição"
+                value={a.label ?? ""}
+                onChange={(e) => {
+                  const next = [...attachments];
+                  next[idx] = { ...next[idx], label: e.target.value };
+                  setAttachments(next);
+                }}
+              />
+              <Input
+                className="sm:flex-1"
+                placeholder="URL do arquivo"
+                value={a.fileUrl}
+                onChange={(e) => {
+                  const next = [...attachments];
+                  next[idx] = { ...next[idx], fileUrl: e.target.value };
+                  setAttachments(next);
+                }}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setAttachments((list) => list.filter((_, i) => i !== idx))}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
 
         <div className="space-y-3">
@@ -403,6 +610,18 @@ export function MedicalEncounterForm({
             </div>
           ))}
         </div>
+
+        {encounterId ? (
+          <div className="space-y-2">
+            <Label htmlFor="editComment">Comentário da alteração (auditoria)</Label>
+            <Input
+              id="editComment"
+              placeholder="Opcional — motivo da edição"
+              value={editComment}
+              onChange={(e) => setEditComment(e.target.value)}
+            />
+          </div>
+        ) : null}
 
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={saving}>

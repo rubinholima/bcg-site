@@ -12,6 +12,7 @@ describe('MedicalEncountersService', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      update: jest.fn(),
     },
     nursingSession: { findMany: jest.fn() },
     physioTransitionProgram: { findMany: jest.fn() },
@@ -110,5 +111,32 @@ describe('MedicalEncountersService', () => {
     expect(result.player.id).toBe('p1');
     expect(result.medicalProfile).toEqual({ bloodType: 'O+' });
     expect(result.timeline.some((i) => i.sourceType === 'medical_encounter')).toBe(true);
+  });
+
+  it('registra evolução clínica com auditoria', async () => {
+    prisma.medicalEncounter.findUnique.mockResolvedValue({
+      id: 'enc1',
+      tenantId: 't1',
+      evolutionNotes: [],
+      editLog: [],
+    });
+    prisma.medicalEncounter.update.mockResolvedValue({ id: 'enc1' });
+
+    await service.addEvolution(
+      'enc1',
+      { note: 'Melhora da dor' },
+      ['t1'],
+      { sub: 'u1', name: 'Dr. Teste' },
+    );
+
+    expect(prisma.medicalEncounter.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          evolutionNotes: expect.arrayContaining([
+            expect.objectContaining({ note: 'Melhora da dor' }),
+          ]),
+        }),
+      }),
+    );
   });
 });

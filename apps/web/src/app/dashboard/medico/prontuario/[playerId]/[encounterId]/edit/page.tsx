@@ -2,25 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MedicalEncounterForm } from "@/components/dashboard/medico/MedicalEncounterForm";
 
-type PlayerRow = {
-  id: string;
-  name: string;
-  tenantId: string;
-};
+type PlayerRow = { id: string; name: string; tenantId: string };
 
-export default function NovoAtendimentoMedicoPage() {
+export default function EditarAtendimentoMedicoPage() {
   const params = useParams();
   const playerId = params.playerId as string;
+  const encounterId = params.encounterId as string;
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const originEncounterId = searchParams.get("origin") ?? undefined;
   const { canAccessModule, loading: authLoading } = useAuth();
   const [player, setPlayer] = useState<PlayerRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,13 +45,13 @@ export default function NovoAtendimentoMedicoPage() {
   return (
     <div className="space-y-4">
       <Link
-        href={`/dashboard/medico/prontuario/${playerId}`}
+        href={`/dashboard/medico/prontuario/${playerId}/${encounterId}`}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        Voltar ao prontuário
+        Voltar ao atendimento
       </Link>
-      <h1 className="text-2xl font-bold tracking-tight">Novo atendimento médico</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Editar atendimento médico</h1>
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Registro clínico</CardTitle>
@@ -71,7 +66,7 @@ export default function NovoAtendimentoMedicoPage() {
               tenantId={player.tenantId}
               playerId={player.id}
               playerName={player.name}
-              defaultOriginEncounterId={originEncounterId}
+              encounterId={encounterId}
             />
           )}
         </CardContent>

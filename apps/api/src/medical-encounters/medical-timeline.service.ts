@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import type { MedicalTimelineSourceType } from './medical-encounter.constants';
+import type {
+  MedicalEvolutionNote,
+  MedicalTimelineSourceType,
+} from './medical-encounter.constants';
 
 export type MedicalTimelineItem = {
   id: string;
@@ -49,6 +52,14 @@ export class MedicalTimelineService {
         where: { playerId, tenantId, status: { not: 'cancelled' } },
         orderBy: { occurredAt: 'desc' },
         take: limit,
+        select: {
+          id: true,
+          occurredAt: true,
+          diagnosis: true,
+          chiefComplaint: true,
+          anamnesis: true,
+          evolutionNotes: true,
+        },
       }),
       this.prisma.nursingSession.findMany({
         where: { playerId, tenantId },
@@ -121,6 +132,21 @@ export class MedicalTimelineService {
         summary: excerpt(e.chiefComplaint ?? e.anamnesis),
         readOnly: false,
       });
+      const evo = Array.isArray((e as { evolutionNotes?: unknown }).evolutionNotes)
+        ? ((e as { evolutionNotes: MedicalEvolutionNote[] }).evolutionNotes ?? [])
+        : [];
+      for (const n of evo) {
+        if (!n?.note?.trim()) continue;
+        items.push({
+          id: `enc-evo-${e.id}-${n.at}`,
+          sourceType: 'medical_evolution',
+          sourceId: e.id,
+          occurredAt: n.at || isoDateTime(e.occurredAt),
+          title: 'Evolução médica',
+          summary: excerpt(n.note),
+          readOnly: false,
+        });
+      }
     }
 
     for (const n of nursing) {

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 const SOURCE_LABEL: Record<MedicalTimelineItem["sourceType"], string> = {
   medical_encounter: "Atendimento médico",
+  medical_evolution: "Evolução médica",
   nursing_session: "Enfermaria",
   physio_session: "Fisioterapia",
   physio_transition: "Transição / RTP",
@@ -40,7 +41,7 @@ export function MedicalTimelineList({
     <ul className="space-y-3">
       {items.map((item) => {
         const href =
-          item.sourceType === "medical_encounter"
+          item.sourceType === "medical_encounter" || item.sourceType === "medical_evolution"
             ? `/dashboard/medico/prontuario/${playerId}/${item.sourceId}`
             : item.sourceType === "nursing_session"
               ? `/dashboard/saude/enfermaria/${item.sourceId}`

@@ -7,7 +7,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MEDICAL_ENCOUNTER_STATUSES } from '../medical-encounter.constants';
+import {
+  MEDICAL_ENCOUNTER_STATUSES,
+  MEDICAL_RTP_DECISIONS,
+} from '../medical-encounter.constants';
 
 export class MedicalPrescriptionItemDto {
   @IsString() medication!: string;
@@ -23,6 +26,18 @@ export class MedicalEncounterAttachmentDto {
   @IsOptional() @IsString() label?: string;
   @IsString() fileUrl!: string;
   @IsOptional() @IsString() kind?: string;
+}
+
+export class MedicalExamRecordDto {
+  @IsIn(['solicitado', 'resultado']) type!: 'solicitado' | 'resultado';
+  @IsString() title!: string;
+  @IsOptional() @IsString() notes?: string;
+  @IsOptional() @IsString() fileUrl?: string;
+  @IsOptional() @IsString() recordedAt?: string;
+}
+
+export class AddMedicalEvolutionDto {
+  @IsString() note!: string;
 }
 
 export class CreateMedicalEncounterDto {
@@ -45,6 +60,15 @@ export class CreateMedicalEncounterDto {
   @IsOptional() @IsBoolean() referPhysio?: boolean;
   @IsOptional() @IsString() referPhysioNotes?: string;
   @IsOptional() @IsString() referPhysioSessionId?: string;
+  @IsOptional() @IsString() originEncounterId?: string;
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MedicalExamRecordDto)
+  examRecords?: MedicalExamRecordDto[];
+  @IsOptional() @IsIn([...MEDICAL_RTP_DECISIONS]) rtpDecision?: string;
+  @IsOptional() @IsString() medicalRtpReleasedAt?: string;
+  @IsOptional() @IsString() medicalRtpNotes?: string;
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -58,4 +82,6 @@ export class CreateMedicalEncounterDto {
   @IsOptional() @IsIn([...MEDICAL_ENCOUNTER_STATUSES]) status?: string;
 }
 
-export class UpdateMedicalEncounterDto extends CreateMedicalEncounterDto {}
+export class UpdateMedicalEncounterDto extends CreateMedicalEncounterDto {
+  @IsOptional() @IsString() editComment?: string;
+}
