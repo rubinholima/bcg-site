@@ -22,6 +22,18 @@ export class UpdateMedicalStaffDto {
 
   @IsOptional()
   @IsString()
+  registryState?: string;
+
+  @IsOptional()
+  @IsString()
+  institution?: string;
+
+  @IsOptional()
+  @IsString()
+  signatureImageUrl?: string;
+
+  @IsOptional()
+  @IsString()
   photoUrl?: string;
 
   @IsOptional()

@@ -4,6 +4,8 @@ export type PlayerMatchAvailabilityInput = {
   status?: string | null;
   statusDetails?: string | null;
   statusUntil?: string | null;
+  medicalOperationalStatus?: string | null;
+  medicalOperationalSummary?: string | null;
   yellowCards?: number | null;
   redCards?: number | null;
   /** Registro CBF / BID no cadastro esportivo. */
@@ -98,6 +100,18 @@ export function getPlayerMatchAvailability(
   const cbf = input.cbfRegistration?.trim();
 
   if (status === "on_bench" || status === "available") {
+    const medOp = (input.medicalOperationalStatus?.trim() || "").toLowerCase();
+    const medSummary = input.medicalOperationalSummary?.trim() || null;
+    if (medOp === "unavailable" || medOp === "restricted") {
+      const shortReason = medSummary || "Restrição médica (operação)";
+      return {
+        apto: false,
+        label: "Não apto",
+        reason: shortReason,
+        shortReason,
+        warning: null,
+      };
+    }
     if (!docApproved) {
       return noBid("Documentação pendente", "Documentação pendente de confirmação pelo RH");
     }
@@ -127,6 +141,8 @@ export function buildPlayerMatchAvailabilityInput(player: {
   status?: string | null;
   statusDetails?: string | null;
   statusUntil?: string | null;
+  medicalOperationalStatus?: string | null;
+  medicalOperationalSummary?: string | null;
   yellowCards?: number | null;
   redCards?: number | null;
   registrationProfile?: unknown;
@@ -141,6 +157,8 @@ export function buildPlayerMatchAvailabilityInput(player: {
     status: player.status,
     statusDetails: player.statusDetails,
     statusUntil: player.statusUntil,
+    medicalOperationalStatus: player.medicalOperationalStatus,
+    medicalOperationalSummary: player.medicalOperationalSummary,
     yellowCards: player.yellowCards,
     redCards: player.redCards,
     cbfRegistration: profile?.sports?.cbf,

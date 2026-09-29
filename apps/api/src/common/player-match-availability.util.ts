@@ -3,6 +3,8 @@
 export type PlayerMatchAvailabilityInput = {
   status?: string | null;
   statusDetails?: string | null;
+  medicalOperationalStatus?: string | null;
+  medicalOperationalSummary?: string | null;
   yellowCards?: number | null;
   redCards?: number | null;
   cbfRegistration?: string | null;
@@ -59,6 +61,15 @@ export function getPlayerMatchAvailability(
   const cbf = input.cbfRegistration?.trim();
 
   if (status === 'available' || status === 'on_bench') {
+    const medOp = (input.medicalOperationalStatus?.trim() || '').toLowerCase();
+    const medSummary = input.medicalOperationalSummary?.trim() || null;
+    if (medOp === 'unavailable' || medOp === 'restricted') {
+      return {
+        apto: false,
+        label: 'Não apto',
+        shortReason: medSummary || 'Restrição médica (operação)',
+      };
+    }
     if (!docApproved) {
       return noBid('Documentação pendente');
     }
@@ -75,6 +86,8 @@ export function getPlayerMatchAvailability(
 export function buildPlayerMatchAvailabilityInput(player: {
   status?: string | null;
   statusDetails?: string | null;
+  medicalOperationalStatus?: string | null;
+  medicalOperationalSummary?: string | null;
   yellowCards?: number | null;
   redCards?: number | null;
   registrationProfile?: unknown;
@@ -88,6 +101,8 @@ export function buildPlayerMatchAvailabilityInput(player: {
   return {
     status: player.status,
     statusDetails: player.statusDetails,
+    medicalOperationalStatus: player.medicalOperationalStatus,
+    medicalOperationalSummary: player.medicalOperationalSummary,
     yellowCards: player.yellowCards,
     redCards: player.redCards,
     cbfRegistration: profile?.sports?.cbf,

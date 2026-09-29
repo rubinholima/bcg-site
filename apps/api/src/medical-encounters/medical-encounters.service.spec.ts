@@ -1,25 +1,31 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MedicalEncountersService } from './medical-encounters.service';
 import { MedicalTimelineService } from './medical-timeline.service';
+import { MedicalPlayerOperationalService } from './medical-player-operational.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
 
 describe('MedicalEncountersService', () => {
   let service: MedicalEncountersService;
   const prisma = {
-    player: { findFirst: jest.fn(), findUnique: jest.fn() },
+    player: { findFirst: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     physioSession: { findFirst: jest.fn(), findMany: jest.fn() },
     medicalEncounter: {
       create: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
+    medicalStaff: { findUnique: jest.fn() },
     nursingSession: { findMany: jest.fn() },
     physioTransitionProgram: { findMany: jest.fn() },
     playerMedicalDeparture: { findMany: jest.fn() },
     physiologyHydration: { findMany: jest.fn() },
     physiologyAssessment: { findMany: jest.fn() },
   };
+  const operational = { syncPlayerOperationalStatus: jest.fn().mockResolvedValue(undefined) };
+  const s3 = { uploadPlayerRegistrationDocument: jest.fn() };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -28,6 +34,8 @@ describe('MedicalEncountersService', () => {
         MedicalEncountersService,
         MedicalTimelineService,
         { provide: PrismaService, useValue: prisma },
+        { provide: MedicalPlayerOperationalService, useValue: operational },
+        { provide: S3Service, useValue: s3 },
       ],
     }).compile();
     service = module.get(MedicalEncountersService);
@@ -60,7 +68,7 @@ describe('MedicalEncountersService', () => {
         ],
       },
       ['t1'],
-      'user-1',
+      { sub: 'user-1', name: 'Dr. Teste' },
     );
 
     expect(prisma.medicalEncounter.create).toHaveBeenCalledWith(
@@ -75,6 +83,7 @@ describe('MedicalEncountersService', () => {
         }),
       }),
     );
+    expect(operational.syncPlayerOperationalStatus).toHaveBeenCalledWith('p1');
   });
 
   it('recarrega timeline agregada para o atleta', async () => {

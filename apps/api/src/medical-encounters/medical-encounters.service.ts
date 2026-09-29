@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
+import { MedicalPlayerOperationalService } from './medical-player-operational.service';
 import {
   AddMedicalEvolutionDto,
   CreateMedicalEncounterDto,
@@ -18,6 +20,7 @@ import {
   type MedicalExamRecord,
   type MedicalEvolutionNote,
   type MedicalPrescriptionItem,
+  type MedicalPrescriptionIssuanceEntry,
 } from './medical-encounter.constants';
 import { appendMedicalEditLog } from './medical-encounter-audit.util';
 
@@ -33,7 +36,7 @@ const encounterInclude = {
       birthDate: true,
     },
   },
-  tenant: { select: { id: true, name: true, slug: true } },
+  tenant: { select: { id: true, name: true, slug: true, logoUrl: true } },
   originEncounter: {
     select: {
       id: true,
@@ -61,6 +64,8 @@ export class MedicalEncountersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly timeline: MedicalTimelineService,
+    private readonly operational: MedicalPlayerOperationalService,
+    private readonly s3: S3Service,
   ) {}
 
   private assertTenant(allowed: string[] | null, tenantId: string) {
@@ -142,14 +147,143 @@ export class MedicalEncountersService {
     physicianStaffId: string | null;
     physicianName: string | null;
   }) {
-    if (!row.physicianStaffId) return { physicianCrm: null as string | null };
+    if (!row.physicianStaffId) {
+      return {
+        physicianCrm: null as string | null,
+        physicianProfile: null as null,
+      };
+    }
     const staff = await this.prisma.medicalStaff.findUnique({
       where: { id: row.physicianStaffId },
-      select: { crmCoren: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        crmCoren: true,
+        registryState: true,
+        specialty: true,
+        email: true,
+        phone: true,
+        institution: true,
+        signatureImageUrl: true,
+      },
     });
+    if (!staff) {
+      return { physicianCrm: null as string | null, physicianProfile: null as null };
+    }
     return {
-      physicianCrm: staff?.crmCoren ?? null,
-      physicianName: row.physicianName ?? staff?.name ?? null,
+      physicianCrm: staff.crmCoren ?? null,
+      physicianName: row.physicianName ?? staff.name ?? null,
+      physicianProfile: {
+        id: staff.id,
+        name: row.physicianName ?? staff.name,
+        crmCoren: staff.crmCoren,
+        registryState: staff.registryState,
+        specialty: staff.specialty,
+        email: staff.email,
+        phone: staff.phone,
+        institution: staff.institution,
+        signatureImageUrl: staff.signatureImageUrl,
+      },
+    };
+  }
+
+  async uploadClinicalAttachment(
+    playerId: string,
+    file: { buffer: Buffer; originalname: string; mimetype?: string },
+    name: string,
+    allowed: string[] | null,
+  ) {
+    const player = await this.prisma.player.findUnique({
+      where: { id: playerId },
+      select: { tenantId: true },
+    });
+    if (!player) throw new NotFoundException('Atleta não encontrado.');
+    this.assertTenant(allowed, player.tenantId);
+    if (!name?.trim()) throw new BadRequestException('Nome do documento é obrigatório.');
+
+    const lower = file.originalname?.toLowerCase() ?? '';
+    const ok =
+      lower.endsWith('.pdf') ||
+      lower.endsWith('.png') ||
+      lower.endsWith('.jpg') ||
+      lower.endsWith('.jpeg') ||
+      lower.endsWith('.webp') ||
+      file.mimetype === 'application/pdf' ||
+      file.mimetype?.startsWith('image/');
+    if (!ok) {
+      throw new BadRequestException('Envie PDF ou imagem (PNG, JPG, WEBP).');
+    }
+
+    const uploaded = await this.s3.uploadPlayerRegistrationDocument(
+      file.buffer,
+      playerId,
+      file.originalname || 'documento.pdf',
+      file.mimetype,
+    );
+
+    return {
+      name: name.trim(),
+      fileUrl: uploaded.url,
+      fileKey: uploaded.key,
+    };
+  }
+
+  async recordPrescriptionIssuance(
+    id: string,
+    allowed: string[] | null,
+    editor?: Editor,
+  ) {
+    const row = await this.prisma.medicalEncounter.findUnique({
+      where: { id },
+      include: encounterInclude,
+    });
+    if (!row) throw new NotFoundException('Atendimento não encontrado.');
+    this.assertTenant(allowed, row.tenantId);
+
+    const rx = Array.isArray(row.prescriptions) ? row.prescriptions : [];
+    if (!rx.length) {
+      throw new BadRequestException('Atendimento sem prescrição para emitir documento.');
+    }
+
+    const entry: MedicalPrescriptionIssuanceEntry = {
+      at: new Date().toISOString(),
+      kind: 'prescription_print',
+      userId: editor?.sub ?? null,
+      userName: editor?.name ?? null,
+      physicianStaffId: row.physicianStaffId,
+    };
+    const prev = Array.isArray(row.prescriptionIssuanceLog)
+      ? (row.prescriptionIssuanceLog as MedicalPrescriptionIssuanceEntry[])
+      : [];
+    const prescriptionIssuanceLog = [...prev, entry];
+
+    const editLog = editor
+      ? appendMedicalEditLog(row.editLog, {
+          at: entry.at,
+          userId: editor.sub,
+          userName: editor.name ?? null,
+          action: 'updated',
+          comment: 'Emissão de documento de prescrição (impressão)',
+        })
+      : undefined;
+
+    await this.prisma.medicalEncounter.update({
+      where: { id },
+      data: {
+        prescriptionIssuanceLog: prescriptionIssuanceLog as unknown as Prisma.InputJsonValue,
+        ...(editLog ? { editLog: editLog as Prisma.InputJsonValue } : {}),
+      },
+    });
+
+    const physician = await this.enrichWithPhysician(row);
+    return {
+      encounter: {
+        ...row,
+        physicianCrm: physician.physicianCrm,
+        physicianName: physician.physicianName ?? row.physicianName,
+        physicianProfile: physician.physicianProfile,
+        prescriptionIssuanceLog,
+      },
     };
   }
 
@@ -302,6 +436,9 @@ export class MedicalEncountersService {
         status: true,
         statusDetails: true,
         statusUntil: true,
+        medicalOperationalStatus: true,
+        medicalOperationalSummary: true,
+        medicalOperationalUntil: true,
       },
     });
     if (!player) throw new NotFoundException('Atleta não encontrado.');
@@ -323,6 +460,9 @@ export class MedicalEncountersService {
         status: player.status,
         statusDetails: player.statusDetails,
         statusUntil: player.statusUntil,
+        medicalOperationalStatus: player.medicalOperationalStatus,
+        medicalOperationalSummary: player.medicalOperationalSummary,
+        medicalOperationalUntil: player.medicalOperationalUntil,
       },
       medicalProfile: this.extractMedicalProfile(player.medicalHistory),
       timeline: items,
@@ -368,6 +508,7 @@ export class MedicalEncountersService {
       ...row,
       physicianCrm: physician.physicianCrm,
       physicianName: physician.physicianName ?? row.physicianName,
+      physicianProfile: physician.physicianProfile,
       referPhysioSession,
     };
   }
@@ -398,7 +539,7 @@ export class MedicalEncountersService {
         })
       : undefined;
 
-    return this.prisma.medicalEncounter.create({
+    const created = await this.prisma.medicalEncounter.create({
       data: {
         tenantId: dto.tenantId,
         playerId: dto.playerId,
@@ -432,6 +573,10 @@ export class MedicalEncountersService {
       },
       include: encounterInclude,
     });
+    if (status !== 'cancelled') {
+      await this.operational.syncPlayerOperationalStatus(dto.playerId);
+    }
+    return created;
   }
 
   async update(
@@ -481,7 +626,7 @@ export class MedicalEncountersService {
         comment: dto.editComment?.trim() || null,
       });
 
-    return this.prisma.medicalEncounter.update({
+    const updated = await this.prisma.medicalEncounter.update({
       where: { id },
       data: {
         occurredAt: dto.occurredAt ? this.parseOccurredAt(dto.occurredAt) : undefined,
@@ -539,6 +684,8 @@ export class MedicalEncountersService {
       },
       include: encounterInclude,
     });
+    await this.operational.syncPlayerOperationalStatus(existing.playerId);
+    return updated;
   }
 
   async addEvolution(

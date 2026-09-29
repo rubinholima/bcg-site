@@ -5,7 +5,10 @@ export interface MedicalStaff {
   name: string;
   role: string;
   crmCoren?: string | null;
+  registryState?: string | null;
   specialty?: string | null;
+  institution?: string | null;
+  signatureImageUrl?: string | null;
   photoUrl?: string | null;
   birthDate?: string | null;
   cpf?: string | null;

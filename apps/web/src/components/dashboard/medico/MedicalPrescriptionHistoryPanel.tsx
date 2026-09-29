@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import type { MedicalPrescriptionHistoryItem } from "@/types/medical-encounter";
-import { printMedicalPrescription } from "@/lib/medical-prescription-print";
+import { issueAndPrintMedicalPrescription } from "@/lib/medical-prescription-print";
 
 export function MedicalPrescriptionHistoryPanel({ playerId }: { playerId: string }) {
   const [items, setItems] = useState<MedicalPrescriptionHistoryItem[]>([]);
@@ -25,8 +25,7 @@ export function MedicalPrescriptionHistoryPanel({ playerId }: { playerId: string
   }, [playerId]);
 
   const handlePrint = async (encounterId: string) => {
-    const { data } = await api.get(`/medical-encounters/${encounterId}`);
-    printMedicalPrescription(data);
+    await issueAndPrintMedicalPrescription(encounterId);
   };
 
   if (loading) {

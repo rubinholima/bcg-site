@@ -209,6 +209,22 @@ export class FutebolTreinadoresService {
       },
     });
 
+    const medicalOperationalPlayers = await this.prisma.player.findMany({
+      where: {
+        tenantId,
+        medicalOperationalStatus: { in: ['restricted', 'unavailable'] },
+        ...(catFilter ? { category: catFilter } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        jerseyNumber: true,
+        registrationProfile: true,
+        medicalOperationalSummary: true,
+        medicalOperationalUntil: true,
+      },
+    });
+
     const inTreatment = [
       ...activePhysio.map((s) => ({
         playerId: s.playerId,
@@ -227,6 +243,17 @@ export class FutebolTreinadoresService {
     ];
 
     const treatmentIds = new Set(inTreatment.map((t) => t.playerId));
+    for (const p of medicalOperationalPlayers) {
+      if (treatmentIds.has(p.id)) continue;
+      inTreatment.push({
+        playerId: p.id,
+        name: getPlayerListDisplayName(p),
+        jerseyNumber: p.jerseyNumber,
+        reason: p.medicalOperationalSummary?.trim() || 'Restrição médica (operação)',
+        estimatedEndDate: p.medicalOperationalUntil?.toISOString() ?? null,
+      });
+      treatmentIds.add(p.id);
+    }
 
     const fmfReports = await this.prisma.fmfMatchReport.findMany({
       where: { tenantId },

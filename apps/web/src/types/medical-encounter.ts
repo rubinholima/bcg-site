@@ -12,6 +12,27 @@ export type MedicalEncounterAttachment = {
   label?: string;
   fileUrl: string;
   kind?: string;
+  fileKey?: string;
+};
+
+export type MedicalPhysicianProfile = {
+  id?: string;
+  name: string;
+  crmCoren?: string | null;
+  registryState?: string | null;
+  specialty?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  institution?: string | null;
+  signatureImageUrl?: string | null;
+};
+
+export type MedicalPrescriptionIssuanceEntry = {
+  at: string;
+  kind: "prescription_print";
+  userId?: string | null;
+  userName?: string | null;
+  physicianStaffId?: string | null;
 };
 
 export type MedicalExamRecord = {
@@ -68,6 +89,8 @@ export type MedicalEncounter = {
   physicianStaffId?: string | null;
   physicianName?: string | null;
   physicianCrm?: string | null;
+  physicianProfile?: MedicalPhysicianProfile | null;
+  prescriptionIssuanceLog?: MedicalPrescriptionIssuanceEntry[] | null;
   chiefComplaint?: string | null;
   anamnesis?: string | null;
   physicalExam?: string | null;
@@ -94,7 +117,7 @@ export type MedicalEncounter = {
   medicalRtpReleasedAt?: string | null;
   medicalRtpNotes?: string | null;
   status: string;
-  tenant?: { id: string; name: string; slug: string };
+  tenant?: { id: string; name: string; slug: string; logoUrl?: string | null };
   player?: {
     id: string;
     name: string;
@@ -131,6 +154,9 @@ export type MedicalProntuarioTimeline = {
     status?: string | null;
     statusDetails?: string | null;
     statusUntil?: string | null;
+    medicalOperationalStatus?: string | null;
+    medicalOperationalSummary?: string | null;
+    medicalOperationalUntil?: string | null;
   };
   medicalProfile: Record<string, unknown>;
   timeline: MedicalTimelineItem[];

@@ -40,7 +40,9 @@ export default function NovoMedicoEquipePage() {
   const [form, setForm] = useState({
     name: "",
     crmCoren: "",
+    registryState: "",
     specialty: "",
+    institution: "",
     birthDate: "",
     cpf: "",
     rg: "",
@@ -91,7 +93,9 @@ export default function NovoMedicoEquipePage() {
         name: form.name.trim(),
         role,
         crmCoren: form.crmCoren.trim() || undefined,
+        registryState: form.registryState.trim() || undefined,
         specialty: form.specialty.trim() || undefined,
+        institution: form.institution.trim() || undefined,
         photoUrl: finalPhotoUrl,
         birthDate: form.birthDate.trim() || undefined,
         cpf: form.cpf.trim() || undefined,
@@ -195,6 +199,28 @@ export default function NovoMedicoEquipePage() {
                   value={form.specialty}
                   onChange={(e) => setForm((p) => ({ ...p, specialty: e.target.value }))}
                   placeholder="Ex: ortopedia, enfermagem esportiva"
+                  disabled={loading}
+                  className="text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="registryState">UF (conselho)</Label>
+                <Input
+                  id="registryState"
+                  value={form.registryState}
+                  onChange={(e) => setForm((p) => ({ ...p, registryState: e.target.value }))}
+                  placeholder="Ex: SP"
+                  maxLength={2}
+                  disabled={loading}
+                  className="text-foreground uppercase"
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="institution">Instituição / clube de atendimento</Label>
+                <Input
+                  id="institution"
+                  value={form.institution}
+                  onChange={(e) => setForm((p) => ({ ...p, institution: e.target.value }))}
                   disabled={loading}
                   className="text-foreground"
                 />

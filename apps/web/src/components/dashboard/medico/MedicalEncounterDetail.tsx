@@ -15,7 +15,7 @@ import type {
   MedicalExamRecord,
   MedicalEditLogEntry,
 } from "@/types/medical-encounter";
-import { printMedicalPrescription } from "@/lib/medical-prescription-print";
+import { issueAndPrintMedicalPrescription } from "@/lib/medical-prescription-print";
 import { MEDICAL_RTP_LABELS } from "@/lib/medical-encounter-labels";
 
 function Field({ label, value }: { label: string; value?: string | null }) {
@@ -41,6 +41,7 @@ export function MedicalEncounterDetail({
   const [evoText, setEvoText] = useState("");
   const [savingEvo, setSavingEvo] = useState(false);
   const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
+  const [printing, setPrinting] = useState(false);
 
   const when = format(new Date(enc.occurredAt), "dd/MM/yyyy HH:mm", { locale: ptBR });
   const evolutions = (enc.evolutionNotes ?? []) as MedicalEvolutionNote[];
@@ -88,9 +89,24 @@ export function MedicalEncounterDetail({
               variant="outline"
               size="sm"
               className="min-h-9"
-              onClick={() => printMedicalPrescription(enc)}
+              disabled={printing}
+              onClick={() => {
+                setPrinting(true);
+                void issueAndPrintMedicalPrescription(enc.id)
+                  .catch(() =>
+                    setFeedback({
+                      title: "Erro",
+                      message: "Não foi possível emitir o documento de prescrição.",
+                    }),
+                  )
+                  .finally(() => setPrinting(false));
+              }}
             >
-              <Printer className="mr-1 h-4 w-4" />
+              {printing ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Printer className="mr-1 h-4 w-4" />
+              )}
               Imprimir prescrição
             </Button>
           ) : null}

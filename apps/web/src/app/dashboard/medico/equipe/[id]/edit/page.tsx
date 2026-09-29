@@ -35,6 +35,7 @@ export default function EditarMedicoEquipePage() {
   const [error, setError] = useState<string | null>(null);
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
+  const [pendingSignatureFile, setPendingSignatureFile] = useState<File | null>(null);
   useEffect(() => {
     if (!pendingPhotoFile) { setPendingPreviewUrl(null); return; }
     const url = URL.createObjectURL(pendingPhotoFile);
@@ -66,6 +67,7 @@ export default function EditarMedicoEquipePage() {
     setError(null);
     try {
       let photoUrl = staff.photoUrl ?? undefined;
+      let signatureImageUrl = staff.signatureImageUrl ?? undefined;
       if (pendingPhotoFile && staff.name?.trim()) {
         const formData = new FormData();
         formData.append("file", pendingPhotoFile);
@@ -84,11 +86,35 @@ export default function EditarMedicoEquipePage() {
           setStaff((p) => (p ? { ...p, photoUrl } : p));
         }
       }
+      if (pendingSignatureFile && staff.name?.trim()) {
+        const formData = new FormData();
+        formData.append("file", pendingSignatureFile);
+        formData.append("sizeKey", "medico");
+        formData.append(
+          "displayName",
+          `${getPhotoDisplayName(staff.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.medico)}-assinatura`,
+        );
+        const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
+        const data = (await res.json()) as { url?: string; message?: string; error?: string };
+        if (!res.ok) {
+          setError(data?.message ?? data?.error ?? "Erro ao enviar assinatura.");
+          setSaving(false);
+          return;
+        }
+        if (data?.url) {
+          signatureImageUrl = data.url;
+          setPendingSignatureFile(null);
+          setStaff((p) => (p ? { ...p, signatureImageUrl } : p));
+        }
+      }
       await api.patch(`/medical-staff/${staff.id}`, {
         name: staff.name,
         role: staff.role,
         crmCoren: staff.crmCoren ?? undefined,
+        registryState: staff.registryState ?? undefined,
         specialty: staff.specialty ?? undefined,
+        institution: staff.institution ?? undefined,
+        signatureImageUrl,
         photoUrl,
         birthDate: staff.birthDate ?? undefined,
         cpf: staff.cpf ?? undefined,
@@ -229,6 +255,57 @@ export default function EditarMedicoEquipePage() {
                   className="text-foreground"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="registryState">UF (conselho)</Label>
+                <Input
+                  id="registryState"
+                  value={staff.registryState ?? ""}
+                  onChange={(e) =>
+                    setStaff((p) => (p ? { ...p, registryState: e.target.value || null } : p))
+                  }
+                  placeholder="Ex: SP"
+                  maxLength={2}
+                  disabled={saving}
+                  className="text-foreground uppercase"
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="institution">Instituição / clube de atendimento</Label>
+                <Input
+                  id="institution"
+                  value={staff.institution ?? ""}
+                  onChange={(e) =>
+                    setStaff((p) => (p ? { ...p, institution: e.target.value || null } : p))
+                  }
+                  placeholder="Quando aplicável"
+                  disabled={saving}
+                  className="text-foreground"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Assinatura (imagem PNG/JPG)</Label>
+              {staff.signatureImageUrl || pendingSignatureFile ? (
+                <div className="rounded-md border border-border p-2">
+                  {pendingSignatureFile ? (
+                    <p className="text-xs text-muted-foreground mb-2">Nova assinatura selecionada — salve para aplicar.</p>
+                  ) : null}
+                  {staff.signatureImageUrl ? (
+                    <img
+                      src={getPublicImageUrl(staff.signatureImageUrl)}
+                      alt="Assinatura"
+                      className="max-h-20 object-contain"
+                    />
+                  ) : null}
+                </div>
+              ) : null}
+              <Input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="text-foreground file:mr-2 file:rounded file:border-0 file:bg-muted file:px-2 file:py-1"
+                disabled={saving}
+                onChange={(e) => setPendingSignatureFile(e.target.files?.[0] ?? null)}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

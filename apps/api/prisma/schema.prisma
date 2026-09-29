@@ -1104,6 +1104,11 @@ model Player {
   status          String?  @default("available") // available, injured, suspended, absent, on_bench, not_in_squad
   statusDetails   String?  @db.Text // detalhes lesão/suspensão
   statusUntil     DateTime? // até quando (lesão/suspensão)
+  /// Visão operacional mínima (médico) — sem diagnóstico clínico
+  medicalOperationalStatus String? // available | restricted | unavailable
+  medicalOperationalSummary String? @db.Text
+  medicalOperationalUntil DateTime?
+  medicalOperationalUpdatedAt DateTime?
   heatMapData     Json?    // dados do mapa de calor
   performanceAnalysis String? @db.Text // análise de desempenho (texto livre ou JSON string)
   analysisMetrics Json?    // métricas estruturadas de scout: gols, assistências, xG, xA, passes-chave, duelos, etc. (totais ou por 90)
@@ -1401,7 +1406,10 @@ model MedicalStaff {
   name            String
   role            String   // medico, enfermeiro, enfermeiro_tec, fisioterapeuta, nutricionista, fisiologista, massagista, outro
   crmCoren        String?  // CRM (médico), COREN (enfermeiro), CREF (fisio), CRN (nutri), etc.
+  registryState   String?  // UF do conselho (ex: SP)
   specialty       String?  // Especialidade (ex: ortopedia, cardiologia, enfermagem esportiva)
+  institution     String?  // Instituição / clube de atendimento quando configurado
+  signatureImageUrl String? // Assinatura gráfica (media) — não certificada ICP-Brasil
   photoUrl        String?
   birthDate       String?  // YYYY-MM-DD
   cpf             String?
@@ -3652,6 +3660,8 @@ model MedicalEncounter {
   medicalRtpNotes     String?  @db.Text
   /// Histórico de alterações clínicas
   editLog             Json?
+  /// [{ at, userId?, userName?, physicianStaffId?, kind: 'prescription_print' }]
+  prescriptionIssuanceLog Json?
   status              String   @default("finalized") // draft | finalized | cancelled
   createdByUserId     String?
   createdAt           DateTime @default(now())

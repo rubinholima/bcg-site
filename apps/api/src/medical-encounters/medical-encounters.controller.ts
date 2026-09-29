@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,8 +8,11 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
@@ -87,12 +91,46 @@ export class MedicalEncountersController {
     );
   }
 
+  @Post('clinical-upload')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  async uploadClinicalFile(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype?: string } | undefined,
+    @Body('playerId') playerId?: string,
+    @Body('name') name?: string,
+  ) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Envie um arquivo (campo "file").');
+    }
+    if (!playerId?.trim()) {
+      throw new BadRequestException('Informe o atleta (playerId).');
+    }
+    return this.service.uploadClinicalAttachment(
+      playerId.trim(),
+      file,
+      name ?? file.originalname ?? 'Documento',
+      await this.allowedTenants(req),
+    );
+  }
+
   @Post()
   async create(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Body() dto: CreateMedicalEncounterDto,
   ) {
     return this.service.create(dto, await this.allowedTenants(req), this.editor(req));
+  }
+
+  @Post(':id/prescription-issue')
+  async prescriptionIssue(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    return this.service.recordPrescriptionIssuance(
+      id,
+      await this.allowedTenants(req),
+      this.editor(req),
+    );
   }
 
   @Post(':id/evolution')

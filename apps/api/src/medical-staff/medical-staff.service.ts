@@ -42,7 +42,10 @@ export class MedicalStaffService {
     name: string;
     role: string;
     crmCoren?: string;
+    registryState?: string;
     specialty?: string;
+    institution?: string;
+    signatureImageUrl?: string;
     photoUrl?: string;
     birthDate?: string;
     cpf?: string;
@@ -59,7 +62,10 @@ export class MedicalStaffService {
         name: cadastroUpperRequired(data.name),
         role: cadastroUpperRequired(data.role),
         crmCoren: cadastroUpper(data.crmCoren),
+        registryState: cadastroUpper(data.registryState),
         specialty: cadastroUpper(data.specialty),
+        institution: cadastroUpper(data.institution),
+        signatureImageUrl: data.signatureImageUrl ?? null,
         photoUrl: data.photoUrl ?? null,
         birthDate: data.birthDate ?? null,
         cpf: cadastroUpper(data.cpf),
@@ -79,7 +85,10 @@ export class MedicalStaffService {
     name: string;
     role: string;
     crmCoren: string;
+    registryState: string;
     specialty: string;
+    institution: string;
+    signatureImageUrl: string;
     photoUrl: string;
     birthDate: string;
     cpf: string;
@@ -98,7 +107,14 @@ export class MedicalStaffService {
         ...(data.name !== undefined && { name: cadastroUpperRequired(data.name) }),
         ...(data.role !== undefined && { role: cadastroUpperRequired(data.role) }),
         ...(data.crmCoren !== undefined && { crmCoren: cadastroUpper(data.crmCoren) }),
+        ...(data.registryState !== undefined && {
+          registryState: cadastroUpper(data.registryState),
+        }),
         ...(data.specialty !== undefined && { specialty: cadastroUpper(data.specialty) }),
+        ...(data.institution !== undefined && { institution: cadastroUpper(data.institution) }),
+        ...(data.signatureImageUrl !== undefined && {
+          signatureImageUrl: data.signatureImageUrl ?? null,
+        }),
         ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl ?? null }),
         ...(data.birthDate !== undefined && { birthDate: data.birthDate ?? null }),
         ...(data.cpf !== undefined && { cpf: cadastroUpper(data.cpf) }),

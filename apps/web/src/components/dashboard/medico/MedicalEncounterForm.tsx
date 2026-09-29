@@ -18,6 +18,10 @@ import type {
 } from "@/types/medical-encounter";
 import { MEDICAL_RTP_OPTIONS } from "@/lib/medical-encounter-labels";
 import type { MedicalStaffOption } from "@/components/dashboard/MedicalHistoryBlock";
+import {
+  MedicalClinicalFileLink,
+  MedicalClinicalFileUpload,
+} from "@/components/dashboard/medico/MedicalClinicalFileUpload";
 
 type PhysioSessionOpt = { id: string; diagnosisLabel?: string | null; status: string };
 type OriginOpt = {
@@ -82,6 +86,11 @@ export function MedicalEncounterForm({
   const [medicalRtpReleasedAt, setMedicalRtpReleasedAt] = useState("");
   const [medicalRtpNotes, setMedicalRtpNotes] = useState("");
   const [editComment, setEditComment] = useState("");
+  const [attachmentKind, setAttachmentKind] = useState<"exame" | "laudo" | "relatorio" | "outro">(
+    "exame",
+  );
+  const [attachmentUrlLabel, setAttachmentUrlLabel] = useState("");
+  const [attachmentUrl, setAttachmentUrl] = useState("");
 
   useEffect(() => {
     const now = new Date();
@@ -442,7 +451,7 @@ export function MedicalEncounterForm({
               />
               <Input
                 className="sm:col-span-2"
-                placeholder="URL do laudo/documento (opcional)"
+                placeholder="URL do laudo (opcional se enviar arquivo)"
                 value={r.fileUrl ?? ""}
                 onChange={(e) => {
                   const next = [...examRecords];
@@ -450,6 +459,23 @@ export function MedicalEncounterForm({
                   setExamRecords(next);
                 }}
               />
+              <div className="sm:col-span-2">
+                <MedicalClinicalFileUpload
+                  playerId={playerId}
+                  defaultLabel={r.title || "Exame"}
+                  disabled={saving}
+                  onError={(msg) => setFeedback({ title: "Anexo", message: msg })}
+                  onUploaded={(file) => {
+                    const next = [...examRecords];
+                    next[idx] = {
+                      ...next[idx],
+                      fileUrl: file.fileUrl,
+                      recordedAt: new Date().toISOString(),
+                    };
+                    setExamRecords(next);
+                  }}
+                />
+              </div>
               <Textarea
                 className="sm:col-span-2"
                 rows={2}
@@ -465,50 +491,90 @@ export function MedicalEncounterForm({
           ))}
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">Anexos (URL)</p>
+        <div className="space-y-3 rounded-lg border border-border/70 p-3">
+          <p className="text-sm font-medium">Anexos clínicos</p>
+          <NativeSelect
+            value={attachmentKind}
+            onChange={(e) =>
+              setAttachmentKind(e.target.value as typeof attachmentKind)
+            }
+          >
+            <option value="exame">Exame / resultado</option>
+            <option value="laudo">Laudo</option>
+            <option value="relatorio">Relatório</option>
+            <option value="outro">Outro</option>
+          </NativeSelect>
+          <MedicalClinicalFileUpload
+            playerId={playerId}
+            disabled={saving}
+            onError={(msg) => setFeedback({ title: "Anexo", message: msg })}
+            onUploaded={(file) =>
+              setAttachments((prev) => [
+                ...prev,
+                {
+                  label: file.name,
+                  fileUrl: file.fileUrl,
+                  fileKey: file.fileKey,
+                  kind: attachmentKind,
+                },
+              ])
+            }
+          />
+          {attachments.length > 0 ? (
+            <ul className="space-y-2 text-sm">
+              {attachments.map((a, idx) => (
+                <li key={`${a.fileUrl}-${idx}`} className="flex items-center justify-between gap-2">
+                  <MedicalClinicalFileLink
+                    label={`${a.kind ?? "Anexo"} — ${a.label || a.fileUrl}`}
+                    fileUrl={a.fileUrl}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    aria-label="Remover anexo"
+                    onClick={() => setAttachments((list) => list.filter((_, i) => i !== idx))}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="grid gap-2 border-t border-border/60 pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <Input
+              placeholder="Descrição (URL externa)"
+              value={attachmentUrlLabel}
+              onChange={(e) => setAttachmentUrlLabel(e.target.value)}
+            />
+            <Input
+              placeholder="https://…"
+              value={attachmentUrl}
+              onChange={(e) => setAttachmentUrl(e.target.value)}
+            />
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              onClick={() => setAttachments((a) => [...a, { label: "", fileUrl: "", kind: "exame" }])}
+              className="min-h-[44px]"
+              disabled={!attachmentUrl.trim()}
+              onClick={() => {
+                const url = attachmentUrl.trim();
+                setAttachments((prev) => [
+                  ...prev,
+                  {
+                    label: attachmentUrlLabel.trim() || url,
+                    fileUrl: url,
+                    kind: attachmentKind,
+                  },
+                ]);
+                setAttachmentUrl("");
+                setAttachmentUrlLabel("");
+              }}
             >
-              <Plus className="mr-1 h-4 w-4" />
-              Anexo
+              Incluir URL
             </Button>
           </div>
-          {attachments.map((a, idx) => (
-            <div key={idx} className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                placeholder="Descrição"
-                value={a.label ?? ""}
-                onChange={(e) => {
-                  const next = [...attachments];
-                  next[idx] = { ...next[idx], label: e.target.value };
-                  setAttachments(next);
-                }}
-              />
-              <Input
-                className="sm:flex-1"
-                placeholder="URL do arquivo"
-                value={a.fileUrl}
-                onChange={(e) => {
-                  const next = [...attachments];
-                  next[idx] = { ...next[idx], fileUrl: e.target.value };
-                  setAttachments(next);
-                }}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setAttachments((list) => list.filter((_, i) => i !== idx))}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
         </div>
 
         <div className="space-y-3">

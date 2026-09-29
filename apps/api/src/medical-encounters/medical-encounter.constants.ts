@@ -38,6 +38,15 @@ export type MedicalEncounterAttachment = {
   label?: string;
   fileUrl: string;
   kind?: string;
+  fileKey?: string;
+};
+
+export type MedicalPrescriptionIssuanceEntry = {
+  at: string;
+  kind: 'prescription_print';
+  userId?: string | null;
+  userName?: string | null;
+  physicianStaffId?: string | null;
 };
 
 export const MEDICAL_TIMELINE_SOURCE_TYPES = [
