@@ -12,6 +12,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import type {
   MedicalEncounter,
+  MedicalEncounterAttachment,
   MedicalPrescriptionItem,
 } from "@/types/medical-encounter";
 import type { MedicalStaffOption } from "@/components/dashboard/MedicalHistoryBlock";
