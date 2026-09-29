@@ -17,8 +17,12 @@ import {
   TRYOUT_CLEARANCE_TESTS,
   TRYOUT_CLEARANCE_TEST_LABELS,
   emptyTryoutBilateralTests,
+  isPhysioTryoutClearanceFormComplete,
+  isTryoutBilateralSideInvalid,
+  validatePhysioTryoutClearanceForm,
   type TryoutBilateralTests,
 } from "@/lib/physio-tryout-labels";
+import { cn } from "@/lib/utils";
 
 type Tenant = { id: string; name: string; kind?: { name?: string } };
 type StaffOpt = { id: string; name: string };
@@ -46,6 +50,8 @@ export default function PhysioTryoutClearancePage() {
   const [evaluatedAt, setEvaluatedAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [loadingProspects, setLoadingProspects] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
+  const [validationBanner, setValidationBanner] = useState<string | null>(null);
   const [feedback, setFeedback] = useState({
     open: false,
     title: "",
@@ -55,6 +61,24 @@ export default function PhysioTryoutClearancePage() {
 
   const selectedStaff = staffList.find((s) => s.id === staffId);
   const selectedProspect = prospects.find((p) => p.id === prospectId);
+
+  const formPayload = {
+    tenantId,
+    prospectId,
+    staffId,
+    staffName: selectedStaff?.name,
+    injuryHistory,
+    manualStrengthTest,
+    outcome,
+    bilateralTests,
+  };
+
+  const formComplete = isPhysioTryoutClearanceFormComplete(formPayload);
+
+  const fieldHighlight = (invalid: boolean) =>
+    invalid && showValidationErrors
+      ? "border-red-500/70 ring-1 ring-red-500/40"
+      : "";
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
@@ -111,18 +135,44 @@ export default function PhysioTryoutClearancePage() {
         },
       },
     }));
+    setValidationBanner(null);
   };
 
-  const handleSave = async () => {
-    if (!tenantId || !prospectId || !outcome) {
-      setFeedback({
-        open: true,
-        title: "Campos obrigatórios",
-        message: "Informe clube, atleta try-out e resultado final.",
-        variant: "warning",
-      });
-      return;
+  function runClientValidation(): boolean {
+    const issues = validatePhysioTryoutClearanceForm(formPayload);
+    if (issues.length === 0) {
+      setShowValidationErrors(false);
+      setValidationBanner(null);
+      return true;
     }
+    setShowValidationErrors(true);
+    const bilateralCount = issues.filter((i) => i.focusId.startsWith("tryout-test-")).length;
+    const header =
+      bilateralCount > 0
+        ? `Complete os 10 testes bilaterais (resposta e resultado em D e E). ${issues.length} pendência(s).`
+        : `Corrija ${issues.length} campo(s) obrigatório(s) antes de salvar.`;
+    setValidationBanner(`${header} ${issues[0]?.message ?? ""}`);
+    const firstId = issues[0]?.focusId;
+    if (firstId) {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(firstId);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (el instanceof HTMLElement && "focus" in el) {
+          el.focus({ preventScroll: true });
+        }
+      });
+    }
+    setFeedback({
+      open: true,
+      title: "Formulário incompleto",
+      message: issues.slice(0, 5).map((i) => i.message).join("\n"),
+      variant: "warning",
+    });
+    return false;
+  }
+
+  const handleSave = async () => {
+    if (!runClientValidation()) return;
     setSaving(true);
     try {
       const { data } = await api.post<{ emailNotification?: { sent?: boolean; error?: string } }>(
@@ -145,6 +195,8 @@ export default function PhysioTryoutClearancePage() {
       setManualStrengthTest("");
       setObservations("");
       setOutcome("");
+      setShowValidationErrors(false);
+      setValidationBanner(null);
       await loadProspects();
       const emailNote = data?.emailNotification?.error
         ? ` E-mail: ${data.emailNotification.error}`
@@ -196,19 +248,36 @@ export default function PhysioTryoutClearancePage() {
           <CardTitle>Nova liberação fisioterapêutica</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {validationBanner ? (
+            <div
+              role="alert"
+              className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200"
+            >
+              {validationBanner}
+            </div>
+          ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-2">
+            <div id="tryout-field-clube" className="grid gap-2 scroll-mt-24">
               <Label>Clube *</Label>
-              <NativeSelect value={tenantId} onChange={(e) => { setTenantId(e.target.value); setProspectId(""); }}>
+              <NativeSelect
+                className={fieldHighlight(showValidationErrors && !tenantId.trim())}
+                value={tenantId}
+                onChange={(e) => { setTenantId(e.target.value); setProspectId(""); setValidationBanner(null); }}
+              >
                 <option value="">Selecione</option>
                 {tenants.map((t) => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
               </NativeSelect>
             </div>
-            <div className="grid gap-2">
+            <div id="tryout-field-atleta" className="grid gap-2 scroll-mt-24">
               <Label>Atleta try-out *</Label>
-              <NativeSelect value={prospectId} onChange={(e) => setProspectId(e.target.value)} disabled={!tenantId || loadingProspects}>
+              <NativeSelect
+                className={fieldHighlight(showValidationErrors && !prospectId.trim())}
+                value={prospectId}
+                onChange={(e) => { setProspectId(e.target.value); setValidationBanner(null); }}
+                disabled={!tenantId || loadingProspects}
+              >
                 <option value="">Selecione</option>
                 {tryoutProspects.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -227,9 +296,13 @@ export default function PhysioTryoutClearancePage() {
                 onChange={(e) => setEvaluatedAt(e.target.value)}
               />
             </div>
-            <div className="grid gap-2">
-              <Label>Fisioterapeuta</Label>
-              <NativeSelect value={staffId} onChange={(e) => setStaffId(e.target.value)}>
+            <div id="tryout-field-fisioterapeuta" className="grid gap-2 scroll-mt-24">
+              <Label>Fisioterapeuta *</Label>
+              <NativeSelect
+                className={fieldHighlight(showValidationErrors && !staffId.trim())}
+                value={staffId}
+                onChange={(e) => { setStaffId(e.target.value); setValidationBanner(null); }}
+              >
                 <option value="">—</option>
                 {staffList.map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -245,28 +318,68 @@ export default function PhysioTryoutClearancePage() {
             </p>
           ) : null}
 
-          <div className="grid gap-2">
-            <Label>Histórico de lesão</Label>
-            <Textarea className="text-foreground" value={injuryHistory} onChange={(e) => setInjuryHistory(e.target.value)} />
+          <div id="tryout-field-injury-history" className="grid gap-2 scroll-mt-24">
+            <Label>Histórico de lesão *</Label>
+            <Textarea
+              className={cn("text-foreground", fieldHighlight(showValidationErrors && !injuryHistory.trim()))}
+              value={injuryHistory}
+              onChange={(e) => { setInjuryHistory(e.target.value); setValidationBanner(null); }}
+            />
           </div>
 
           <div className="space-y-4 overflow-x-auto">
-            <Label>Testes bilaterais</Label>
-            {TRYOUT_CLEARANCE_TESTS.map((key) => (
-              <div key={key} className="min-w-[640px] rounded-lg border border-border/60 p-3">
+            <Label>Testes bilaterais *</Label>
+            <p className="text-xs text-muted-foreground">
+              Cada teste exige resposta e resultado (aprovado/reprovado) em direita e esquerda.
+            </p>
+            {TRYOUT_CLEARANCE_TESTS.map((key) => {
+              const testHasError =
+                showValidationErrors &&
+                (["right", "left"] as const).some((side) => {
+                  const inv = isTryoutBilateralSideInvalid(bilateralTests, key, side, true);
+                  return inv.response || inv.outcome;
+                });
+              return (
+              <div
+                key={key}
+                id={`tryout-test-${key}`}
+                className={cn(
+                  "min-w-[640px] scroll-mt-24 rounded-lg border p-3",
+                  testHasError ? "border-red-500/50 bg-red-500/5" : "border-border/60",
+                )}
+              >
                 <p className="mb-2 text-sm font-medium">{TRYOUT_CLEARANCE_TEST_LABELS[key]}</p>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {(["right", "left"] as const).map((side) => (
-                    <div key={side} className="space-y-2 rounded border border-border/40 p-2">
+                  {(["right", "left"] as const).map((side) => {
+                    const invalid = isTryoutBilateralSideInvalid(
+                      bilateralTests,
+                      key,
+                      side,
+                      showValidationErrors,
+                    );
+                    return (
+                    <div
+                      key={side}
+                      className={cn(
+                        "space-y-2 rounded border p-2",
+                        invalid.response || invalid.outcome
+                          ? "border-red-500/50 bg-red-500/5"
+                          : "border-border/40",
+                      )}
+                    >
                       <p className="text-xs font-medium uppercase text-muted-foreground">
                         {side === "right" ? "Direita" : "Esquerda"}
                       </p>
                       <Input
-                        placeholder="Resposta"
+                        id={`tryout-test-${key}-${side}-response`}
+                        placeholder="Resposta *"
+                        className={fieldHighlight(invalid.response)}
                         value={bilateralTests[key][side].response ?? ""}
                         onChange={(e) => updateSide(key, side, "response", e.target.value)}
                       />
                       <NativeSelect
+                        id={`tryout-test-${key}-${side}-outcome`}
+                        className={fieldHighlight(invalid.outcome)}
                         value={bilateralTests[key][side].outcome ?? ""}
                         onChange={(e) => updateSide(key, side, "outcome", e.target.value)}
                       >
@@ -275,33 +388,65 @@ export default function PhysioTryoutClearancePage() {
                         <option value="reprovado">Reprovado</option>
                       </NativeSelect>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
 
-          <div className="grid gap-2">
-            <Label>Teste de força manual</Label>
-            <Textarea className="text-foreground" value={manualStrengthTest} onChange={(e) => setManualStrengthTest(e.target.value)} />
+          <div id="tryout-field-manual-strength" className="grid gap-2 scroll-mt-24">
+            <Label>Teste de força manual *</Label>
+            <Textarea
+              className={cn(
+                "text-foreground",
+                fieldHighlight(showValidationErrors && !manualStrengthTest.trim()),
+              )}
+              value={manualStrengthTest}
+              onChange={(e) => { setManualStrengthTest(e.target.value); setValidationBanner(null); }}
+            />
           </div>
           <div className="grid gap-2">
             <Label>Observações</Label>
             <Textarea className="text-foreground" value={observations} onChange={(e) => setObservations(e.target.value)} />
           </div>
-          <div className="grid gap-2 sm:max-w-xs">
+          <div id="tryout-field-outcome" className="grid gap-2 scroll-mt-24 sm:max-w-xs">
             <Label>Resultado final *</Label>
-            <NativeSelect value={outcome} onChange={(e) => setOutcome(e.target.value as typeof outcome)}>
+            <NativeSelect
+              className={fieldHighlight(
+                showValidationErrors && outcome !== "aprovado" && outcome !== "reprovado",
+              )}
+              value={outcome}
+              onChange={(e) => { setOutcome(e.target.value as typeof outcome); setValidationBanner(null); }}
+            >
               <option value="">Selecione</option>
               <option value="aprovado">Aprovado</option>
               <option value="reprovado">Reprovado</option>
             </NativeSelect>
           </div>
 
-          <Button onClick={() => void handleSave()} disabled={saving} className="min-h-[44px]">
+          <Button
+            onClick={() => {
+              if (!formComplete) {
+                runClientValidation();
+                return;
+              }
+              void handleSave();
+            }}
+            disabled={saving}
+            className="min-h-[44px]"
+            aria-disabled={!formComplete && !saving}
+          >
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Salvar liberação
           </Button>
+          {!formComplete && !saving ? (
+            <p className="text-xs text-muted-foreground">
+              O envio só é concluído com clube, atleta, avaliador, histórico de lesões, força manual,
+              os 10 testes bilaterais (D/E) e resultado final. Toque em Salvar para ver o que falta.
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 
