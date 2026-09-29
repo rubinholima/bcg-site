@@ -644,7 +644,7 @@ export default function EditJogadorPage() {
             <CardTitle>Negociações</CardTitle>
           </CardHeader>
           <CardContent>
-            <PlayerNegotiationsPanel playerId={player.id} />
+            <PlayerNegotiationsPanel playerId={player.id} tenantId={player.tenantId} />
           </CardContent>
         </Card>
       )}

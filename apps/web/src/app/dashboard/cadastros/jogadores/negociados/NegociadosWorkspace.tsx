@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Download, Loader2, Plus } from "lucide-react";
+import { Download, Loader2, Pencil, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { KpiCard } from "@/components/dashboard/cup360/KpiCard";
@@ -11,13 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -27,11 +20,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
+import { PlayerNegotiationEditorDialog } from "@/components/dashboard/players/PlayerNegotiationEditorDialog";
 import { JogadoresSubNav } from "../JogadoresSubNav";
 import {
   formatNegotiationMoney,
   NEGOTIATION_STATUS_LABELS,
-  NEGOTIATION_STATUSES,
   NEGOTIATION_TYPE_LABELS,
   NEGOTIATION_TYPES,
 } from "@/lib/player-negotiation-labels";
@@ -43,7 +36,6 @@ import {
 import { cn } from "@/lib/utils";
 
 type Tenant = { id: string; name: string };
-type PlayerOption = { id: string; name: string; tenantId: string };
 
 type NegotiationRow = NegotiationExportRow & {
   id: string;
@@ -83,7 +75,7 @@ export function NegociadosWorkspace() {
   const [statusTab, setStatusTab] = useState(searchParams.get("status") ?? "in_progress");
   const [negotiationType, setNegotiationType] = useState(searchParams.get("type") ?? "");
   const [counterparty, setCounterparty] = useState(searchParams.get("counterparty") ?? "");
-  const [playerFilter, setPlayerFilter] = useState(searchParams.get("playerId") ?? "");
+  const [playerNameFilter, setPlayerNameFilter] = useState(searchParams.get("player") ?? "");
   const [from, setFrom] = useState(searchParams.get("from") ?? "");
   const [to, setTo] = useState(searchParams.get("to") ?? "");
 
@@ -95,19 +87,9 @@ export function NegociadosWorkspace() {
     message: "",
   });
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [players, setPlayers] = useState<PlayerOption[]>([]);
-  const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({
-    playerId: "",
-    negotiationType: "transfer_permanent",
-    status: "in_progress",
-    counterpartyName: "",
-    totalValue: "",
-    negotiatedPercentage: "",
-    retainedPercentage: "",
-    negotiatedAt: new Date().toISOString().slice(0, 10),
-  });
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
+  const [editorNegotiationId, setEditorNegotiationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !canAccessModule("cad_jogadores_negociados")) {
@@ -144,8 +126,9 @@ export function NegociadosWorkspace() {
       if (statusTab === "history") {
         rows = rows.filter((r) => r.status === "cancelled" || r.status === "expired");
       }
-      if (playerFilter) {
-        rows = rows.filter((r) => r.playerId === playerFilter);
+      const nameQ = playerNameFilter.trim().toLowerCase();
+      if (nameQ) {
+        rows = rows.filter((r) => r.player.name.toLowerCase().includes(nameQ));
       }
       setSummary({ ...(data as Summary), rows });
     } catch (e) {
@@ -158,18 +141,11 @@ export function NegociadosWorkspace() {
     } finally {
       setLoading(false);
     }
-  }, [tenantId, from, to, negotiationType, queryStatus, counterparty, statusTab, playerFilter]);
+  }, [tenantId, from, to, negotiationType, queryStatus, counterparty, statusTab, playerNameFilter]);
 
   useEffect(() => {
     void loadSummary();
   }, [loadSummary]);
-
-  useEffect(() => {
-    if (!tenantId || !createOpen) return;
-    api
-      .get<PlayerOption[]>(`/players?tenantId=${tenantId}`)
-      .then(({ data }) => setPlayers(Array.isArray(data) ? data : []));
-  }, [tenantId, createOpen]);
 
   const pushUrl = useCallback(() => {
     const p = new URLSearchParams();
@@ -177,43 +153,22 @@ export function NegociadosWorkspace() {
     if (statusTab) p.set("status", statusTab);
     if (negotiationType) p.set("type", negotiationType);
     if (counterparty.trim()) p.set("counterparty", counterparty.trim());
-    if (playerFilter) p.set("playerId", playerFilter);
+    if (playerNameFilter.trim()) p.set("player", playerNameFilter.trim());
     if (from) p.set("from", from);
     if (to) p.set("to", to);
     router.replace(`/dashboard/cadastros/jogadores/negociados?${p.toString()}`);
-  }, [tenantId, statusTab, negotiationType, counterparty, playerFilter, from, to, router]);
+  }, [tenantId, statusTab, negotiationType, counterparty, playerNameFilter, from, to, router]);
 
-  const handleCreate = async () => {
-    if (!tenantId || !form.playerId || !form.counterpartyName.trim()) {
-      setFeedback({ open: true, title: "Campos obrigatórios", message: "Atleta e contraparte." });
-      return;
-    }
-    setCreating(true);
-    try {
-      await api.post("/player-negotiations", {
-        tenantId,
-        playerId: form.playerId,
-        negotiationType: form.negotiationType,
-        status: form.status,
-        counterpartyName: form.counterpartyName.trim(),
-        totalValue: form.totalValue ? Number(form.totalValue) : undefined,
-        negotiatedPercentage: form.negotiatedPercentage
-          ? Number(form.negotiatedPercentage)
-          : undefined,
-        retainedPercentage: form.retainedPercentage ? Number(form.retainedPercentage) : undefined,
-        negotiatedAt: form.negotiatedAt,
-      });
-      setCreateOpen(false);
-      await loadSummary();
-    } catch (e) {
-      setFeedback({
-        open: true,
-        title: "Erro ao salvar",
-        message: e instanceof Error ? e.message : "Não foi possível criar a negociação.",
-      });
-    } finally {
-      setCreating(false);
-    }
+  const openCreate = () => {
+    setEditorMode("create");
+    setEditorNegotiationId(null);
+    setEditorOpen(true);
+  };
+
+  const openEdit = (id: string) => {
+    setEditorMode("edit");
+    setEditorNegotiationId(id);
+    setEditorOpen(true);
   };
 
   const exportCsv = async () => {
@@ -267,7 +222,19 @@ export function NegociadosWorkspace() {
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" className="min-h-[44px]" onClick={exportCsv}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-[44px]"
+            onClick={() => exportCsv().catch((e) =>
+              setFeedback({
+                open: true,
+                title: "Exportação",
+                message: e instanceof Error ? e.message : "Erro CSV.",
+              }),
+            )}
+          >
             <Download className="mr-2 h-4 w-4" />
             CSV
           </Button>
@@ -282,7 +249,7 @@ export function NegociadosWorkspace() {
             <Download className="mr-2 h-4 w-4" />
             XLSX
           </Button>
-          <Button type="button" className="min-h-[44px]" onClick={() => setCreateOpen(true)}>
+          <Button type="button" className="min-h-[44px]" onClick={openCreate} disabled={!tenantId}>
             <Plus className="mr-2 h-4 w-4" />
             Nova negociação
           </Button>
@@ -336,11 +303,11 @@ export function NegociadosWorkspace() {
           <Input value={counterparty} onChange={(e) => setCounterparty(e.target.value)} />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Atleta (ID)</Label>
+          <Label className="text-xs">Atleta (nome)</Label>
           <Input
-            value={playerFilter}
-            onChange={(e) => setPlayerFilter(e.target.value)}
-            placeholder="Filtrar por ID"
+            value={playerNameFilter}
+            onChange={(e) => setPlayerNameFilter(e.target.value)}
+            placeholder="Buscar por nome…"
           />
         </div>
         <div className="space-y-1">
@@ -393,12 +360,13 @@ export function NegociadosWorkspace() {
               <TableHead>Contraparte</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="hidden md:table-cell">%</TableHead>
+              <TableHead className="w-[100px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                   Nenhuma negociação neste filtro.
                 </TableCell>
               </TableRow>
@@ -428,6 +396,18 @@ export function NegociadosWorkspace() {
                   <TableCell className="hidden text-sm md:table-cell">
                     {n.negotiatedPercentage ?? "—"} / {n.retainedPercentage ?? "—"}
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="min-h-[44px] min-w-[44px] px-2"
+                      onClick={() => openEdit(n.id)}
+                      aria-label="Gerenciar negociação"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -435,112 +415,16 @@ export function NegociadosWorkspace() {
         </Table>
       </div>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Nova negociação</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-3 py-2">
-            <div className="space-y-1">
-              <Label>Atleta</Label>
-              <NativeSelect
-                value={form.playerId}
-                onChange={(e) => setForm((f) => ({ ...f, playerId: e.target.value }))}
-              >
-                <option value="">Selecione…</option>
-                {players.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="space-y-1">
-              <Label>Tipo</Label>
-              <NativeSelect
-                value={form.negotiationType}
-                onChange={(e) => setForm((f) => ({ ...f, negotiationType: e.target.value }))}
-              >
-                {NEGOTIATION_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {NEGOTIATION_TYPE_LABELS[t]}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="space-y-1">
-              <Label>Status</Label>
-              <NativeSelect
-                value={form.status}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
-              >
-                {NEGOTIATION_STATUSES.filter((s) => s !== "expired").map((s) => (
-                  <option key={s} value={s}>
-                    {NEGOTIATION_STATUS_LABELS[s]}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="space-y-1">
-              <Label>Contraparte (clube/entidade)</Label>
-              <Input
-                value={form.counterpartyName}
-                onChange={(e) => setForm((f) => ({ ...f, counterpartyName: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label>Valor total</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.totalValue}
-                  onChange={(e) => setForm((f) => ({ ...f, totalValue: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Data negociação</Label>
-                <Input
-                  type="date"
-                  className="text-foreground"
-                  value={form.negotiatedAt}
-                  onChange={(e) => setForm((f) => ({ ...f, negotiatedAt: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label>% negociada</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={form.negotiatedPercentage}
-                  onChange={(e) => setForm((f) => ({ ...f, negotiatedPercentage: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>% retida</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={form.retainedPercentage}
-                  onChange={(e) => setForm((f) => ({ ...f, retainedPercentage: e.target.value }))}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="button" disabled={creating} onClick={handleCreate}>
-              {creating ? "Salvando…" : "Salvar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {tenantId && (
+        <PlayerNegotiationEditorDialog
+          open={editorOpen}
+          onOpenChange={setEditorOpen}
+          tenantId={tenantId}
+          mode={editorMode}
+          negotiationId={editorNegotiationId}
+          onSaved={() => void loadSummary()}
+        />
+      )}
 
       <FeedbackModal
         open={feedback.open}
