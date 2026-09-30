@@ -8,6 +8,7 @@ import {
   type MenuAccessTreeNode,
 } from "@/lib/dashboard-menu.config";
 import { MODULE_DISPLAY_NAMES } from "@/lib/dashboard-labels";
+import { storageSlugFromTreeLeaf } from "@/lib/access-menu-permission.util";
 
 
 function nodeMatchesSearch(node: MenuAccessTreeNode, q: string): boolean {
@@ -52,6 +53,14 @@ function nodeHasEnabledAccess(
   return node.children.some((child) => nodeHasEnabledAccess(child, isEnabled));
 }
 
+export type UserExceptionTreeState = {
+  inherited: Set<string>;
+  allow: Set<string>;
+  deny: Set<string>;
+  onToggleAllow: (storageSlug: string, on: boolean) => void;
+  onToggleDeny: (storageSlug: string, on: boolean) => void;
+};
+
 interface AccessPermissionTreeProps {
   tree: MenuAccessTreeNode[];
   isEnabled: (accessSlug: string, moduleSlug?: string) => boolean;
@@ -63,6 +72,8 @@ interface AccessPermissionTreeProps {
   search?: string;
   readOnly?: boolean;
   expandWithAccess?: boolean;
+  showTechnicalHints?: boolean;
+  userExceptions?: UserExceptionTreeState;
 }
 
 function AccessTreeNodeRow({
@@ -75,6 +86,8 @@ function AccessTreeNodeRow({
   readOnly,
   searchActive,
   expandWithAccess,
+  showTechnicalHints,
+  userExceptions,
 }: {
   node: MenuAccessTreeNode;
   depth: number;
@@ -89,6 +102,8 @@ function AccessTreeNodeRow({
   readOnly?: boolean;
   searchActive: boolean;
   expandWithAccess?: boolean;
+  showTechnicalHints?: boolean;
+  userExceptions?: UserExceptionTreeState;
 }) {
   const isDepartment = depth === 0;
   const isSubSection = depth === 1 && node.kind === "group";
@@ -96,12 +111,61 @@ function AccessTreeNodeRow({
   const enabledCount = leaves.filter((leaf) => isEnabled(leaf.accessSlug, leaf.moduleSlug)).length;
 
   if (node.kind === "leaf" && node.accessSlug) {
-    const on = isEnabled(node.accessSlug, node.moduleSlug);
-    const modLabel = node.moduleSlug ? (MODULE_DISPLAY_NAMES[node.moduleSlug] ?? node.moduleSlug) : null;
+    const storageSlug = storageSlugFromTreeLeaf(node.accessSlug, node.moduleSlug);
     const groupLabel =
       node.accessGroup && ACCESS_GROUP_LABELS[node.accessGroup]
         ? ACCESS_GROUP_LABELS[node.accessGroup]
         : null;
+
+    if (userExceptions) {
+      const isInherited = userExceptions.inherited.has(storageSlug);
+      const isAllow = userExceptions.allow.has(storageSlug);
+      const isDeny = userExceptions.deny.has(storageSlug);
+      return (
+        <div
+          className={cn(
+            "flex flex-col gap-2 py-2.5 px-3 sm:flex-row sm:items-center sm:justify-between sm:px-4",
+            isSubSection && "bg-muted/5",
+          )}
+          style={{ paddingLeft: `${12 + depth * 16}px` }}
+        >
+          <div className="min-w-0 flex-1">
+            <span className="text-sm font-medium text-foreground block">{node.label}</span>
+            {isInherited && !isAllow && !isDeny ? (
+              <span className="text-xs text-muted-foreground">Herdado</span>
+            ) : null}
+            {groupLabel && showTechnicalHints !== false ? (
+              <span className="text-xs text-muted-foreground block mt-0.5">
+                Grupo: {groupLabel}
+              </span>
+            ) : null}
+          </div>
+          {!readOnly ? (
+            <div className="flex shrink-0 gap-4 text-xs">
+              <label className="flex min-h-[44px] items-center gap-1.5 sm:min-h-0">
+                <input
+                  type="checkbox"
+                  checked={isAllow}
+                  onChange={(e) => userExceptions.onToggleAllow(storageSlug, e.target.checked)}
+                />
+                Permitido
+              </label>
+              <label className="flex min-h-[44px] items-center gap-1.5 sm:min-h-0">
+                <input
+                  type="checkbox"
+                  checked={isDeny}
+                  onChange={(e) => userExceptions.onToggleDeny(storageSlug, e.target.checked)}
+                />
+                Negado
+              </label>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
+    const on = isEnabled(node.accessSlug, node.moduleSlug);
+    const modLabel = node.moduleSlug ? (MODULE_DISPLAY_NAMES[node.moduleSlug] ?? node.moduleSlug) : null;
     return (
       <label
         className={cn(
@@ -131,7 +195,7 @@ function AccessTreeNodeRow({
             <span className="text-xs text-muted-foreground block mt-0.5">
               Grupo: {groupLabel} (libera/bloqueia junto)
             </span>
-          ) : modLabel && modLabel !== node.label ? (
+          ) : modLabel && modLabel !== node.label && showTechnicalHints !== false ? (
             <span className="text-xs text-muted-foreground block mt-0.5">API: {modLabel}</span>
           ) : null}
         </span>
@@ -217,6 +281,8 @@ function AccessTreeNodeRow({
               readOnly={readOnly}
               searchActive={searchActive}
               expandWithAccess={expandWithAccess}
+              showTechnicalHints={showTechnicalHints}
+              userExceptions={userExceptions}
             />
           ))}
         </div>
@@ -233,6 +299,8 @@ function AccessTreeNode({
   readOnly,
   searchActive,
   expandWithAccess,
+  showTechnicalHints,
+  userExceptions,
 }: {
   node: MenuAccessTreeNode;
   depth: number;
@@ -245,6 +313,8 @@ function AccessTreeNode({
   readOnly?: boolean;
   searchActive: boolean;
   expandWithAccess?: boolean;
+  showTechnicalHints?: boolean;
+  userExceptions?: UserExceptionTreeState;
 }) {
   const [expanded, setExpanded] = useState(
     () => expandWithAccess === true && nodeHasEnabledAccess(node, isEnabled),
@@ -271,6 +341,8 @@ function AccessTreeNode({
       readOnly={readOnly}
       searchActive={searchActive}
       expandWithAccess={expandWithAccess}
+      showTechnicalHints={showTechnicalHints}
+      userExceptions={userExceptions}
     />
   );
 }
@@ -282,6 +354,8 @@ export function AccessPermissionTree({
   search = "",
   readOnly = false,
   expandWithAccess = false,
+  showTechnicalHints = true,
+  userExceptions,
 }: AccessPermissionTreeProps) {
   const q = search.trim().toLowerCase();
   const filtered = useMemo(() => filterTree(tree, q), [tree, q]);
@@ -307,6 +381,8 @@ export function AccessPermissionTree({
           readOnly={readOnly}
           searchActive={searchActive}
           expandWithAccess={expandWithAccess}
+          showTechnicalHints={showTechnicalHints}
+          userExceptions={userExceptions}
         />
       ))}
     </div>

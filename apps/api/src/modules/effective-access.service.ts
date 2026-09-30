@@ -15,6 +15,11 @@ export type EffectiveAccessBreakdown = {
   role: string;
   platformFunctionId: string | null;
   platformFunctionName: string | null;
+  /** Defaults da função (JobRoleModuleDefault). */
+  functionDefaultSlugs: string[];
+  /** Matriz legado ModuleRole (somente exibição). */
+  legacyProfileSlugs: string[];
+  /** União função + perfil legado — somente exibição HERDADO. */
   inheritedSlugs: string[];
   allowSlugs: string[];
   denySlugs: string[];
@@ -224,7 +229,11 @@ export class EffectiveAccessService {
     const role = user.role ?? 'editor';
     const functionId =
       user.platformFunctionId ?? (await this.resolvePlatformFunctionId(userId, role));
-    const inheritedSlugs = functionId ? await this.getBaseSlugsForFunction(functionId) : [];
+    const functionDefaultSlugs = functionId ? await this.getBaseSlugsForFunction(functionId) : [];
+    const catalog = await this.loadModuleCatalog();
+    const allModuleSlugs = catalog.map((m) => m.slug);
+    const legacyProfileSlugs = await this.getLegacyProfileSlugsForRole(role, catalog, allModuleSlugs);
+    const inheritedSlugs = [...new Set([...functionDefaultSlugs, ...legacyProfileSlugs])].sort();
     const allowSlugs = user.moduleOverrides.filter((o) => o.effect === 'allow').map((o) => o.module.slug);
     const denySlugs = user.moduleOverrides.filter((o) => o.effect === 'deny').map((o) => o.module.slug);
     const effectiveSlugs = await this.getEffectiveSlugsForUser(userId, role);
@@ -234,6 +243,8 @@ export class EffectiveAccessService {
       role,
       platformFunctionId: functionId,
       platformFunctionName: user.platformFunction?.name ?? null,
+      functionDefaultSlugs,
+      legacyProfileSlugs,
       inheritedSlugs,
       allowSlugs,
       denySlugs,

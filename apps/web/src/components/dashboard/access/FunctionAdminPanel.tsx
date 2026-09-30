@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectField } from "@/components/ui/native-select";
-import { AccessPermissionEditor, type AccessModuleRow } from "@/components/dashboard/access/AccessPermissionEditor";
+import { MenuBasedPermissionEditor } from "@/components/dashboard/access/MenuBasedPermissionEditor";
 import {
   CUP360_PLATFORM_FAMILIES,
   platformFamilyLabel,
@@ -27,7 +27,6 @@ export type PlatformFunctionRow = {
 
 type Props = {
   functions: PlatformFunctionRow[];
-  modules: AccessModuleRow[];
   onReload: () => Promise<void>;
   onFeedback: (title: string, message: string) => void;
   showTechnicalDetails?: boolean;
@@ -48,7 +47,6 @@ function slugifyCode(name: string): string {
 
 export function FunctionAdminPanel({
   functions,
-  modules,
   onReload,
   onFeedback,
   showTechnicalDetails,
@@ -317,21 +315,13 @@ export function FunctionAdminPanel({
 
           <div className="min-w-0 space-y-3">
             <p className="text-sm font-medium">Acessos padrão da função</p>
-            <AccessPermissionEditor
+            <p className="text-sm text-muted-foreground">
+              Define os acessos padrão recebidos pelos usuários desta função.
+            </p>
+            <MenuBasedPermissionEditor
               variant="function"
-              modules={modules}
-              inherited={new Set()}
-              allow={defaultSlugs}
-              deny={new Set()}
-              onToggleAllow={(slug, on) => {
-                setDefaultSlugs((prev) => {
-                  const next = new Set(prev);
-                  if (on) next.add(slug);
-                  else next.delete(slug);
-                  return next;
-                });
-              }}
-              onToggleDeny={() => {}}
+              selectedSlugs={[...defaultSlugs]}
+              onChange={(slugs) => setDefaultSlugs(new Set(slugs))}
             />
             {creating ? (
               <p className="text-xs text-muted-foreground">

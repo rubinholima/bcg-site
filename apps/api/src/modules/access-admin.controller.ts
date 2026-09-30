@@ -14,6 +14,7 @@ import { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { Cup360AccessAdminGuard } from '../auth/cup360-access-admin.guard';
 import { EffectiveAccessService } from './effective-access.service';
+import { AccessAdminUsersService } from './access-admin-users.service';
 import { ModulesService } from './modules.service';
 
 @Controller('settings/access')
@@ -22,7 +23,19 @@ export class AccessAdminController {
   constructor(
     private readonly effectiveAccess: EffectiveAccessService,
     private readonly modulesService: ModulesService,
+    private readonly accessAdminUsers: AccessAdminUsersService,
   ) {}
+
+  private actorRole(req: Request & { user?: CognitoJwtPayload }): string {
+    const u = req.user;
+    return (u?.role ?? u?.['cognito:groups']?.[0] ?? 'user').trim();
+  }
+
+  @Get('users')
+  listUsers(@Req() req: Request & { user?: CognitoJwtPayload }) {
+    const sub = req.user?.sub ?? '';
+    return this.accessAdminUsers.listManageableUsers(sub, this.actorRole(req));
+  }
 
   @Get('modules')
   listModules() {
@@ -80,7 +93,15 @@ export class AccessAdminController {
   }
 
   @Get('users/:userId')
-  async getUserAccess(@Param('userId') userId: string) {
+  async getUserAccess(
+    @Req() req: Request & { user?: CognitoJwtPayload },
+    @Param('userId') userId: string,
+  ) {
+    await this.accessAdminUsers.assertActorCanManageUser(
+      req.user?.sub ?? '',
+      this.actorRole(req),
+      userId,
+    );
     const breakdown = await this.effectiveAccess.getBreakdownForUser(userId);
     if (!breakdown) throw new NotFoundException('Usuário não encontrado');
     return breakdown;
@@ -91,6 +112,11 @@ export class AccessAdminController {
     @Req() req: Request & { user?: CognitoJwtPayload },
     @Param('userId') userId: string,
   ) {
+    await this.accessAdminUsers.assertActorCanManageUser(
+      req.user?.sub ?? '',
+      this.actorRole(req),
+      userId,
+    );
     await this.effectiveAccess.restoreUserToFunctionDefaults(userId, req.user);
     return this.effectiveAccess.getBreakdownForUser(userId);
   }
@@ -106,6 +132,11 @@ export class AccessAdminController {
       denySlugs?: string[];
     },
   ) {
+    await this.accessAdminUsers.assertActorCanManageUser(
+      req.user?.sub ?? '',
+      this.actorRole(req),
+      userId,
+    );
     await this.effectiveAccess.updateUserAccess(userId, body, req.user);
     return this.effectiveAccess.getBreakdownForUser(userId);
   }
