@@ -1324,7 +1324,7 @@ export class CaptacaoService {
   ) {
     const prospect = await this.findProspect(id);
     if (prospect.tryoutWorkflowStage === 'aguardando_gerencia') {
-      return this.tryoutWorkflow.recordTryoutManagerDecision(id, dto, actor);
+      return this.tryoutWorkflow.recordTryoutManagerDecision(id, dto, actor, null);
     }
     this.assertGerenteDecisor(actor.role);
     const decision = dto.decision as CaptacaoManagerDecision;

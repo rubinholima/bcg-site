@@ -179,6 +179,8 @@ model Tenant {
   scouts                Scout[]
   scoutingProspects     ScoutingProspect[]
   tryoutCoachEvaluations TryoutCoachEvaluation[]
+  scoutingProspectDocuments ScoutingProspectDocument[]
+  tryoutWorkflowEvents  TryoutWorkflowEvent[]
   scoutingReports       ScoutingReport[]
   scoutLocationPings    ScoutLocationPing[]
   communicationChannelAccounts CommunicationChannelAccount[]
@@ -3133,11 +3135,27 @@ model ScoutingProspect {
   tryoutRejectedBy           String?
   tryoutRejectedReason       String?  @db.Text
   tryoutCompletedAt          DateTime?
+  /// Chegada física no clube (distinta do início do ciclo semanal de campo)
+  arrivalAt                  DateTime?
+  /// Workflow operacional Try Out ativado (chegada confirmada ou entrada direta)
+  tryoutWorkflowActivatedAt  DateTime?
+  /// Ciclo semanal de avaliação em campo (1-based após iniciar avaliação)
+  tryoutCycleNumber          Int      @default(0)
+  /// Treinador responsável (TechnicalStaff)
+  responsibleCoachStaffId    String?
+  responsibleCoachHistory    Json?
+  athletePhone               String?
+  athleteEmail               String?
+  documentNumber             String?
+  duplicateCreationConfirmedAt DateTime?
+  duplicateLinkedProspectId  String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   reports           ScoutingReport[]
   physioTryoutClearances PhysioTryoutClearance[]
   tryoutCoachEvaluations TryoutCoachEvaluation[]
+  tryoutDocuments   ScoutingProspectDocument[]
+  tryoutWorkflowEvents TryoutWorkflowEvent[]
   opponentHighlightProfile OpponentHighlightProfile?
 
   @@index([tenantId])
@@ -3231,14 +3249,57 @@ model TryoutCoachEvaluation {
   tacticalRating         Float
   cognitiveRating        Float
   descriptiveObservation String   @db.Text
-  /// aprovado | reprovado
+  /// aprovado | reprovado | mais_uma_semana
   outcome                String
+  cycleNumber            Int      @default(1)
+  cycleStartedAt         DateTime?
+  cycleEndedAt           DateTime?
+  justification          String?  @db.Text
   evaluatedAt            DateTime @default(now())
   createdByUserId        String?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   @@index([tenantId, prospectId])
   @@index([prospectId, evaluatedAt])
+  @@index([prospectId, cycleNumber])
+}
+
+/// Documentos operacionais do candidato Try Out / captação (sem Player)
+model ScoutingProspectDocument {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prospectId            String
+  prospect              ScoutingProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  documentType          String
+  confidentialityCategory String @default("operacional")
+  storageKey            String
+  originalFilename      String
+  mimeType              String
+  uploadedByUserId      String?
+  uploadedAt            DateTime @default(now())
+  deletedAt             DateTime?
+  deletedByUserId       String?
+  @@index([tenantId, prospectId])
+  @@index([prospectId, documentType])
+}
+
+/// Histórico operacional append-only do Try Out (sem dados clínicos)
+model TryoutWorkflowEvent {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prospectId        String
+  prospect          ScoutingProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  eventType         String
+  previousStage     String?
+  newStage          String?
+  actorUserId       String?
+  staffId           String?
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  @@index([tenantId, prospectId, createdAt])
+  @@index([prospectId, createdAt])
 }
 
 /** Relatório de observação — padrão CBF / scout profissional */

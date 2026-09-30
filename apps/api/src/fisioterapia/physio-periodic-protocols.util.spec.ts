@@ -111,7 +111,12 @@ describe('physio-periodic-protocols.util', () => {
   it('resolvePhysioClearanceOperationalStatus', () => {
     expect(resolvePhysioClearanceOperationalStatus(null)).toBe('pendente');
     expect(resolvePhysioClearanceOperationalStatus({ outcome: 'aprovado' })).toBe('aprovado');
+    expect(resolvePhysioClearanceOperationalStatus({ outcome: 'nao_liberado_temporario' })).toBe(
+      'temporario_nao_liberado',
+    );
+    expect(resolvePhysioClearanceOperationalStatus({ outcome: 'reprovado' })).toBe('reprovado');
     expect(canStartCtFieldEvaluation('aprovado')).toBe(true);
+    expect(canStartCtFieldEvaluation('temporario_nao_liberado')).toBe(false);
     expect(canStartCtFieldEvaluation('pendente')).toBe(false);
   });
 });

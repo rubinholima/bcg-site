@@ -22,8 +22,9 @@ import { TryoutWorkflowService } from '../tryout-workflow/tryout-workflow.servic
 import { resolveTryoutSupervisionEmail } from '../tryout-workflow/tryout-workflow.notify.util';
 
 export type PhysioClearanceOperationalStatus = {
-  status: 'pendente' | 'aprovado' | 'reprovado';
+  status: 'pendente' | 'aprovado' | 'temporario_nao_liberado' | 'reprovado';
   canStartFieldEvaluation: boolean;
+  reassessmentPending: boolean;
   clearanceId?: string;
   evaluatedAt?: string;
   outcome?: string;
@@ -51,6 +52,7 @@ export class PhysioTryoutClearanceService {
     return {
       status,
       canStartFieldEvaluation: canStartCtFieldEvaluation(status),
+      reassessmentPending: status === 'temporario_nao_liberado',
       clearanceId: latest?.id,
       evaluatedAt: latest?.evaluatedAt?.toISOString(),
       outcome: latest?.outcome ?? undefined,
@@ -63,7 +65,9 @@ export class PhysioTryoutClearanceService {
       throw new BadRequestException(
         op.status === 'reprovado'
           ? 'Liberação fisioterapêutica reprovada — o atleta não pode iniciar avaliação em campo.'
-          : 'Liberação fisioterapêutica pendente — registre e aprove a avaliação da Fisioterapia antes de iniciar em campo.',
+          : op.status === 'temporario_nao_liberado'
+            ? 'Atleta não liberado temporariamente — aguarde reavaliação da Fisioterapia.'
+            : 'Liberação fisioterapêutica pendente — registre e aprove a avaliação da Fisioterapia antes de iniciar em campo.',
       );
     }
   }

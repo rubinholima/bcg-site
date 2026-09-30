@@ -1,5 +1,9 @@
 import { IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
-import { TRYOUT_COACH_RATING_MAX, TRYOUT_COACH_RATING_MIN } from '../tryout-workflow.constants';
+import {
+  TRYOUT_COACH_OUTCOMES,
+  TRYOUT_COACH_RATING_MAX,
+  TRYOUT_COACH_RATING_MIN,
+} from '../tryout-workflow.constants';
 
 export class CreateTryoutCoachEvaluationDto {
   @IsOptional()
@@ -33,6 +37,9 @@ export class CreateTryoutCoachEvaluationDto {
   @IsString()
   descriptiveObservation!: string;
 
-  @IsIn(['aprovado', 'reprovado'])
-  outcome!: 'aprovado' | 'reprovado';
+  @IsIn([...TRYOUT_COACH_OUTCOMES])
+  outcome!: (typeof TRYOUT_COACH_OUTCOMES)[number];
+
+  @IsString()
+  justification!: string;
 }

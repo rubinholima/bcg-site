@@ -5,7 +5,14 @@ export class TryoutArrivalDto {
   @IsIn([...TRYOUT_REFERRAL_SOURCES])
   arrivalReferralSource!: string;
 
+  @IsString()
+  arrivalAt!: string;
+
   @IsOptional()
   @IsString()
   sourceDetails?: string;
+
+  @IsOptional()
+  @IsString()
+  targetCategory?: string;
 }

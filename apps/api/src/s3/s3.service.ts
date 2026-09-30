@@ -651,6 +651,48 @@ export class S3Service {
   }
 
   /**
+   * Documento operacional de candidato Try Out (sem Player).
+   * legal/tryout-prospects/{prospectId}/{uuid}.{ext}
+   */
+  async uploadTryoutProspectDocument(
+    buffer: Buffer,
+    prospectId: string,
+    filename: string,
+    mimeType?: string,
+  ): Promise<{ key: string; url: string }> {
+    const safeId = prospectId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const lower = filename.toLowerCase();
+    let ext = 'pdf';
+    if (lower.endsWith('.png')) ext = 'png';
+    else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) ext = 'jpg';
+    else if (lower.endsWith('.webp')) ext = 'webp';
+    else if (mimeType?.includes('png')) ext = 'png';
+    else if (mimeType?.includes('jpeg') || mimeType?.includes('jpg')) ext = 'jpg';
+    const key = `${LEGAL_PREFIX}tryout-prospects/${safeId}/${randomUUID()}.${ext}`;
+    const contentType =
+      mimeType?.trim() ||
+      (ext === 'pdf' ? 'application/pdf' : ext === 'png' ? 'image/png' : 'image/jpeg');
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar documento para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /**
    * Upload de modelo de contrato base (PDF AcroForm).
    * Salva em legal/templates/{scope}/{uuid}.pdf
    */

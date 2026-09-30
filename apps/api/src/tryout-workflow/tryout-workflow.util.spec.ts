@@ -1,9 +1,18 @@
 import { emptyTryoutBilateralTests } from '../fisioterapia/physio-tryout-clearance.constants';
-import { validateTryoutBilateralTestsComplete } from './tryout-workflow.util';
+import { resolveTryoutBlockReason, validateTryoutBilateralTestsComplete } from './tryout-workflow.util';
 
 describe('validateTryoutBilateralTestsComplete', () => {
   it('rejeita testes incompletos', () => {
     expect(validateTryoutBilateralTestsComplete({})).toMatch(/squeeze_test/);
+  });
+
+  it('resolveTryoutBlockReason — fisio temporária', () => {
+    expect(
+      resolveTryoutBlockReason({
+        prospect: { supervisionDocsValidatedAt: new Date() },
+        physioStatus: 'temporario_nao_liberado',
+      }),
+    ).toMatch(/reavaliação/i);
   });
 
   it('aceita todos os lados preenchidos', () => {

@@ -5,7 +5,37 @@ export const TRYOUT_REFERRAL_SOURCES = [
   'boston_academy',
   'captacao',
   'indicacao_parceira',
+  'gestao_diretoria',
   'outro',
+] as const;
+
+export const TRYOUT_DIRECT_ENTRY_SOURCES = [
+  'indicacao_parceira',
+  'clube_parceiro',
+  'agente',
+  'gestao_diretoria',
+  'outro',
+] as const;
+
+export const TRYOUT_DOCUMENT_TYPES = [
+  'identidade',
+  'autorizacao_responsavel',
+  'outro',
+] as const;
+
+export type TryoutProspectDocumentType = (typeof TRYOUT_DOCUMENT_TYPES)[number];
+
+export const TRYOUT_BLOCKING_DOCUMENT_TYPES = ['identidade', 'autorizacao_responsavel'] as const;
+
+export const TRYOUT_COACH_OUTCOMES = ['aprovado', 'reprovado', 'mais_uma_semana'] as const;
+export type TryoutCoachOutcome = (typeof TRYOUT_COACH_OUTCOMES)[number];
+
+export const COACHING_STAFF_ROLES = [
+  'tecnico',
+  'auxiliar_tecnico',
+  'treinador_goleiros',
+  'preparador_fisico',
+  'analista_desempenho',
 ] as const;
 
 export type TryoutReferralSource = (typeof TRYOUT_REFERRAL_SOURCES)[number];
@@ -16,7 +46,8 @@ export const TRYOUT_REFERRAL_SOURCE_LABELS: Record<TryoutReferralSource, string>
   escola_parceira: 'Escola de futebol parceira',
   boston_academy: 'Boston Academy',
   captacao: 'Captação / scouting',
-  indicacao_parceira: 'Indicação parceira',
+  indicacao_parceira: 'Indicação',
+  gestao_diretoria: 'Gestão / Diretoria',
   outro: 'Outro',
 };
 
@@ -61,10 +92,34 @@ export function isProspectInTryoutWorkflow(prospect: {
   stage?: string;
   evaluationOutcome?: string | null;
   flowPath?: string | null;
+  tryoutWorkflowActivatedAt?: Date | null;
 }): boolean {
+  if (prospect.tryoutWorkflowActivatedAt) return true;
   if (prospect.tryoutWorkflowStage) return true;
-  if (prospect.stage === 'tryout') return true;
-  if (prospect.evaluationOutcome === 'para_teste') return true;
-  if (prospect.flowPath === 'tryout' && prospect.evaluationOutcome !== 'pendente') return true;
+  if (prospect.stage === 'tryout' && prospect.tryoutWorkflowStage) return true;
+  if (prospect.evaluationOutcome === 'para_teste' && prospect.tryoutWorkflowActivatedAt) return true;
   return false;
+}
+
+/** Registros antigos flowPath=tryout sem workflow real — revisão manual. */
+export function isLegacyTryoutReviewRecord(prospect: {
+  flowPath?: string | null;
+  tryoutWorkflowActivatedAt?: Date | null;
+  tryoutWorkflowStage?: string | null;
+  tryoutPeriodStartedAt?: Date | null;
+}): boolean {
+  return (
+    prospect.flowPath === 'tryout' &&
+    !prospect.tryoutWorkflowActivatedAt &&
+    !prospect.tryoutWorkflowStage &&
+    !prospect.tryoutPeriodStartedAt
+  );
+}
+
+export function isTryoutAwaitingArrival(prospect: {
+  flowPath?: string | null;
+  arrivalAt?: Date | null;
+  tryoutWorkflowActivatedAt?: Date | null;
+}): boolean {
+  return prospect.flowPath === 'tryout' && !prospect.arrivalAt && !prospect.tryoutWorkflowActivatedAt;
 }

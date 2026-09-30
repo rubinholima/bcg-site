@@ -24,11 +24,33 @@ import {
   resolveTryoutBlockReason,
   type TryoutRenewalHistoryEntry,
 } from './tryout-workflow.util';
+import { TenantAccessService } from '../auth/tenant-access.service';
 import { TryoutSupervisionValidateDto } from './dto/tryout-supervision.dto';
 import { TryoutRenewPeriodDto, TryoutEarlyApprovalDto } from './dto/tryout-renewal.dto';
 import { CreateTryoutCoachEvaluationDto } from './dto/tryout-coach-evaluation.dto';
 import { UpdateTryoutRegistrationDto } from './dto/tryout-registration.dto';
 import { TryoutArrivalDto } from './dto/tryout-arrival.dto';
+import {
+  TryoutActivateLegacyDto,
+  TryoutDirectEntryDto,
+  TryoutDuplicateSearchDto,
+} from './dto/tryout-direct-entry.dto';
+import { TryoutResponsibleCoachDto } from './dto/tryout-responsible-coach.dto';
+import { TryoutWorkflowEventsService } from './tryout-workflow-events.service';
+import { TryoutProspectDocumentsService } from './tryout-prospect-documents.service';
+import {
+  COACHING_STAFF_ROLES,
+  isLegacyTryoutReviewRecord,
+  isTryoutAwaitingArrival,
+} from './tryout-workflow.constants';
+import {
+  DuplicateMatch,
+  normalizeDocument,
+  normalizePersonKey,
+  normalizePhone,
+  scoreDuplicateStrength,
+} from './tryout-duplicate.util';
+import { isDefinitivePhysioTryoutFailure } from '../fisioterapia/physio-periodic-protocols.util';
 import {
   buildTryoutManagerDossierText,
   resolveTryoutFisiologiaEmail,
@@ -46,25 +68,27 @@ export class TryoutWorkflowService {
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
     private readonly physioTryout: PhysioTryoutClearanceService,
+    private readonly tenantAccess: TenantAccessService,
+    private readonly workflowEvents: TryoutWorkflowEventsService,
+    private readonly prospectDocuments: TryoutProspectDocumentsService,
   ) {}
 
+  /** Captação / encaminhamento — não inicia ciclo semanal nem ativa workflow até chegada. */
   async enterTryoutWorkflow(prospectId: string, referralSource?: string | null) {
     const prospect = await this.prisma.scoutingProspect.findUnique({ where: { id: prospectId } });
     if (!prospect) return;
-    const now = new Date();
-    const end = defaultTryoutPeriodEnd(now);
     await this.prisma.scoutingProspect.update({
       where: { id: prospectId },
       data: {
-        stage: prospect.stage === 'identificado' || prospect.stage === 'em_observacao' ? 'tryout' : prospect.stage,
-        tryoutWorkflowStage: 'aguardando_supervisao',
-        tryoutPeriodStartedAt: prospect.tryoutPeriodStartedAt ?? now,
-        tryoutPeriodEndsAt: prospect.tryoutPeriodEndsAt ?? end,
+        stage:
+          prospect.stage === 'identificado' || prospect.stage === 'em_observacao'
+            ? 'tryout'
+            : prospect.stage,
+        flowPath: 'tryout',
         arrivalReferralSource:
           referralSource?.trim() ||
           prospect.arrivalReferralSource ||
           this.mapLegacySource(prospect.source),
-        flowPath: 'tryout',
       },
     });
   }
@@ -78,25 +102,56 @@ export class TryoutWorkflowService {
     return 'captacao';
   }
 
-  async setArrival(prospectId: string, dto: TryoutArrivalDto) {
-    const prospect = await this.findProspectOrThrow(prospectId);
+  async setArrival(
+    prospectId: string,
+    dto: TryoutArrivalDto,
+    allowed: string[] | null,
+    actorUserId?: string,
+  ) {
+    const prospect = await this.findProspectForAccess(prospectId, allowed);
     if (!TRYOUT_REFERRAL_SOURCES.includes(dto.arrivalReferralSource as (typeof TRYOUT_REFERRAL_SOURCES)[number])) {
       throw new BadRequestException('Origem de chegada inválida.');
     }
-    await this.enterTryoutWorkflow(prospectId, dto.arrivalReferralSource);
-    return this.prisma.scoutingProspect.update({
+    const arrivalAt = this.parseDateInput(dto.arrivalAt, 'Data de chegada inválida.');
+    const prevStage = prospect.tryoutWorkflowStage;
+    const updated = await this.prisma.scoutingProspect.update({
       where: { id: prospectId },
       data: {
+        arrivalAt,
+        tryoutWorkflowActivatedAt: prospect.tryoutWorkflowActivatedAt ?? arrivalAt,
+        tryoutWorkflowStage: prospect.tryoutWorkflowStage ?? 'aguardando_supervisao',
         arrivalReferralSource: dto.arrivalReferralSource,
         sourceDetails: dto.sourceDetails?.trim() || prospect.sourceDetails,
         source: prospect.source ?? 'outro',
+        ...(dto.targetCategory?.trim() && { targetCategory: dto.targetCategory.trim() }),
+        stage: prospect.stage === 'identificado' ? 'tryout' : prospect.stage,
+        flowPath: 'tryout',
       },
     });
+    await this.workflowEvents.append({
+      tenantId: prospect.tenantId,
+      prospectId,
+      eventType: 'arrival',
+      previousStage: prevStage,
+      newStage: updated.tryoutWorkflowStage,
+      actorUserId,
+      metadata: { arrivalAt: arrivalAt.toISOString(), source: dto.arrivalReferralSource },
+    });
+    return updated;
   }
 
-  async validateSupervision(prospectId: string, dto: TryoutSupervisionValidateDto, actorName: string) {
-    const prospect = await this.findProspectOrThrow(prospectId);
+  async validateSupervision(
+    prospectId: string,
+    dto: TryoutSupervisionValidateDto,
+    actorName: string,
+    allowed: string[] | null,
+    actorUserId?: string,
+  ) {
+    const prospect = await this.findProspectForAccess(prospectId, allowed);
     this.assertInTryout(prospect);
+    if (!prospect.arrivalAt) {
+      throw new BadRequestException('Registre a chegada antes de validar documentação.');
+    }
     if (!prospect.name?.trim()) throw new BadRequestException('Nome obrigatório.');
     if (!prospect.birthDate?.trim()) throw new BadRequestException('Data de nascimento obrigatória.');
     if (!prospect.guardianName?.trim() || !prospect.guardianPhone?.trim()) {
@@ -105,8 +160,15 @@ export class TryoutWorkflowService {
     if (!prospect.targetCategory?.trim()) {
       throw new BadRequestException('Informe a categoria alvo.');
     }
+    const docs = await this.prospectDocuments.getBlockingStatus(prospectId, prospect.birthDate);
+    if (!docs.satisfied) {
+      throw new BadRequestException(
+        `Documentos obrigatórios pendentes: ${docs.missing.join(', ')}.`,
+      );
+    }
 
-    return this.prisma.scoutingProspect.update({
+    const prevStage = prospect.tryoutWorkflowStage;
+    const updated = await this.prisma.scoutingProspect.update({
       where: { id: prospectId },
       data: {
         supervisionDocsValidatedAt: new Date(),
@@ -115,32 +177,21 @@ export class TryoutWorkflowService {
         tryoutWorkflowStage: 'aguardando_fisio',
       },
     });
+    await this.workflowEvents.append({
+      tenantId: prospect.tenantId,
+      prospectId,
+      eventType: 'documentation_validated',
+      previousStage: prevStage,
+      newStage: 'aguardando_fisio',
+      actorUserId,
+    });
+    return updated;
   }
 
-  async renewPeriod(prospectId: string, dto: TryoutRenewPeriodDto, actorName: string) {
-    const prospect = await this.findProspectOrThrow(prospectId);
-    this.assertInTryout(prospect);
-    const now = new Date();
-    const prevEnd = prospect.tryoutPeriodEndsAt ?? now;
-    const newEnd = addDays(prevEnd > now ? prevEnd : now, 7);
-    const history = parseRenewalHistory(prospect.tryoutRenewalHistory);
-    const entry: TryoutRenewalHistoryEntry = {
-      periodStart: (prospect.tryoutPeriodStartedAt ?? now).toISOString(),
-      periodEnd: prevEnd.toISOString(),
-      renewedAt: now.toISOString(),
-      renewedBy: actorName,
-      notes: dto.notes?.trim(),
-    };
-    history.push(entry);
-
-    return this.prisma.scoutingProspect.update({
-      where: { id: prospectId },
-      data: {
-        tryoutPeriodEndsAt: newEnd,
-        tryoutRenewalCount: { increment: 1 },
-        tryoutRenewalHistory: history as Prisma.InputJsonValue,
-      },
-    });
+  async renewPeriod(_prospectId: string, _dto: TryoutRenewPeriodDto, _actorName: string) {
+    throw new BadRequestException(
+      'Renovação avulsa desativada. Use a avaliação semanal com decisão "Mais uma semana".',
+    );
   }
 
   async earlyApproval(prospectId: string, dto: TryoutEarlyApprovalDto, actorName: string) {
@@ -171,15 +222,40 @@ export class TryoutWorkflowService {
     const prospect = await this.findProspectOrThrow(prospectId);
     if (!isProspectInTryoutWorkflow(prospect)) return;
 
-    if (outcome === 'reprovado') {
+    const prevStage = prospect.tryoutWorkflowStage;
+    if (isDefinitivePhysioTryoutFailure(outcome)) {
       await this.prisma.scoutingProspect.update({
         where: { id: prospectId },
         data: {
           tryoutWorkflowStage: 'reprovado',
           tryoutRejectedAt: new Date(),
-          tryoutRejectedReason: 'Liberação fisioterapêutica reprovada.',
+          tryoutRejectedReason: 'Try-out encerrado — liberação fisioterapêutica não concedida.',
           stage: 'recusado',
         },
+      });
+      await this.workflowEvents.append({
+        tenantId: prospect.tenantId,
+        prospectId,
+        eventType: 'physio_clearance',
+        previousStage: prevStage,
+        newStage: 'reprovado',
+        metadata: { outcome, operationalOnly: true },
+      });
+      return;
+    }
+
+    if (outcome === 'nao_liberado_temporario') {
+      await this.prisma.scoutingProspect.update({
+        where: { id: prospectId },
+        data: { tryoutWorkflowStage: 'aguardando_fisio' },
+      });
+      await this.workflowEvents.append({
+        tenantId: prospect.tenantId,
+        prospectId,
+        eventType: 'physio_reassessment',
+        previousStage: prevStage,
+        newStage: 'aguardando_fisio',
+        metadata: { outcome, operationalOnly: true },
       });
       return;
     }
@@ -188,6 +264,14 @@ export class TryoutWorkflowService {
       await this.prisma.scoutingProspect.update({
         where: { id: prospectId },
         data: { tryoutWorkflowStage: 'liberado_campo' },
+      });
+      await this.workflowEvents.append({
+        tenantId: prospect.tenantId,
+        prospectId,
+        eventType: 'physio_clearance',
+        previousStage: prevStage,
+        newStage: 'liberado_campo',
+        metadata: { outcome, operationalOnly: true },
       });
     }
   }
@@ -213,97 +297,418 @@ export class TryoutWorkflowService {
   async createCoachEvaluation(
     prospectId: string,
     dto: CreateTryoutCoachEvaluationDto,
+    allowed: string[] | null,
     userId?: string,
   ) {
-    const prospect = await this.findProspectOrThrow(prospectId);
+    const prospect = await this.findProspectForAccess(prospectId, allowed);
     this.assertInTryout(prospect);
     if (!dto.descriptiveObservation?.trim()) {
       throw new BadRequestException('Observação descritiva é obrigatória.');
     }
+    if (!dto.justification?.trim()) {
+      throw new BadRequestException('Justificativa obrigatória para a decisão semanal.');
+    }
+    if (!dto.staffId?.trim()) {
+      throw new BadRequestException('Informe o treinador responsável (staffId).');
+    }
+    const staffId = dto.staffId.trim();
+    await this.assertValidCoachStaff(prospect.tenantId, staffId);
 
     const physio = await this.physioTryout.getOperationalStatusForProspect(prospectId);
     if (!physio.canStartFieldEvaluation) {
       throw new BadRequestException('Liberação fisioterapêutica aprovada é obrigatória.');
     }
-    if (prospect.ctScheduleStatus !== 'concluido' && prospect.tryoutWorkflowStage !== 'aguardando_treinador') {
-      throw new BadRequestException('Conclua a avaliação em campo antes da avaliação do treinador.');
+    if (
+      prospect.tryoutWorkflowStage !== 'em_avaliacao_campo' &&
+      prospect.tryoutWorkflowStage !== 'aguardando_treinador'
+    ) {
+      throw new BadRequestException('Avaliação semanal só durante o período em campo.');
+    }
+    const cycleNumber = prospect.tryoutCycleNumber > 0 ? prospect.tryoutCycleNumber : 1;
+    const existingCycle = await this.prisma.tryoutCoachEvaluation.findFirst({
+      where: { prospectId, cycleNumber },
+    });
+    if (existingCycle) {
+      throw new BadRequestException('Já existe avaliação registrada para esta semana.');
     }
 
-    const row = await this.prisma.tryoutCoachEvaluation.create({
-      data: {
-        tenantId: prospect.tenantId,
-        prospectId,
-        staffId: dto.staffId?.trim() || null,
-        staffName: dto.staffName?.trim() || null,
-        technicalRating: dto.technicalRating,
-        physicalRating: dto.physicalRating,
-        tacticalRating: dto.tacticalRating,
-        cognitiveRating: dto.cognitiveRating,
-        descriptiveObservation: dto.descriptiveObservation.trim(),
-        outcome: dto.outcome,
-        createdByUserId: userId ?? null,
-      },
+    const cycleStartedAt = prospect.tryoutPeriodStartedAt ?? new Date();
+    const cycleEndedAt = prospect.tryoutPeriodEndsAt ?? defaultTryoutPeriodEnd(cycleStartedAt);
+    const prevStage = prospect.tryoutWorkflowStage;
+    const staff = await this.prisma.technicalStaff.findFirst({
+      where: { id: staffId, tenantId: prospect.tenantId },
+      select: { name: true },
     });
 
-    if (dto.outcome === 'reprovado') {
-      await this.prisma.scoutingProspect.update({
-        where: { id: prospectId },
+    return this.prisma.$transaction(async (tx) => {
+      const row = await tx.tryoutCoachEvaluation.create({
         data: {
-          tryoutWorkflowStage: 'reprovado',
-          tryoutRejectedAt: new Date(),
-          tryoutRejectedBy: dto.staffName?.trim() || 'Treinador',
-          tryoutRejectedReason: dto.descriptiveObservation.trim(),
-          stage: 'recusado',
+          tenantId: prospect.tenantId,
+          prospectId,
+          staffId,
+          staffName: staff?.name ?? dto.staffName?.trim() ?? null,
+          technicalRating: dto.technicalRating,
+          physicalRating: dto.physicalRating,
+          tacticalRating: dto.tacticalRating,
+          cognitiveRating: dto.cognitiveRating,
+          descriptiveObservation: dto.descriptiveObservation.trim(),
+          outcome: dto.outcome,
+          justification: dto.justification.trim(),
+          cycleNumber,
+          cycleStartedAt,
+          cycleEndedAt,
+          createdByUserId: userId ?? null,
         },
       });
+
+      if (dto.outcome === 'reprovado') {
+        await tx.scoutingProspect.update({
+          where: { id: prospectId },
+          data: {
+            tryoutWorkflowStage: 'reprovado',
+            tryoutRejectedAt: new Date(),
+            tryoutRejectedBy: staff?.name ?? dto.staffName?.trim() ?? 'Treinador',
+            tryoutRejectedReason: dto.justification.trim(),
+            stage: 'recusado',
+          },
+        });
+        await this.workflowEvents.append({
+          tenantId: prospect.tenantId,
+          prospectId,
+          eventType: 'coach_rejection',
+          previousStage: prevStage,
+          newStage: 'reprovado',
+          actorUserId: userId,
+          staffId,
+          metadata: { cycleNumber, operationalOnly: true },
+          tx,
+        });
+        return row;
+      }
+
+      if (dto.outcome === 'mais_uma_semana') {
+        const now = new Date();
+        const nextCycle = cycleNumber + 1;
+        const nextEnd = defaultTryoutPeriodEnd(now);
+        await tx.scoutingProspect.update({
+          where: { id: prospectId },
+          data: {
+            tryoutCycleNumber: nextCycle,
+            tryoutPeriodStartedAt: now,
+            tryoutPeriodEndsAt: nextEnd,
+            tryoutRenewalCount: { increment: 1 },
+            tryoutWorkflowStage: 'em_avaliacao_campo',
+          },
+        });
+        await this.workflowEvents.append({
+          tenantId: prospect.tenantId,
+          prospectId,
+          eventType: 'one_more_week',
+          previousStage: prevStage,
+          newStage: 'em_avaliacao_campo',
+          actorUserId: userId,
+          staffId,
+          metadata: { cycleNumber, nextCycle, operationalOnly: true },
+          tx,
+        });
+        return row;
+      }
+
+      await tx.scoutingProspect.update({
+        where: { id: prospectId },
+        data: {
+          tryoutWorkflowStage: 'aguardando_gerencia',
+          managerDecision: 'pendente',
+          managerDecisionAt: null,
+          managerDecisionBy: null,
+          managerDecisionNotes: null,
+        },
+      });
+      await this.workflowEvents.append({
+        tenantId: prospect.tenantId,
+        prospectId,
+        eventType: 'coach_approval',
+        previousStage: prevStage,
+        newStage: 'aguardando_gerencia',
+        actorUserId: userId,
+        staffId,
+        metadata: { cycleNumber, operationalOnly: true },
+        tx,
+      });
+
+      const latestPhysio = await this.physioTryout.getLatestForProspect(prospectId);
+      const { subject, text } = buildTryoutManagerDossierText({
+        prospectId,
+        tenantId: prospect.tenantId,
+        name: prospect.name,
+        targetCategory: prospect.targetCategory,
+        arrivalReferralSource: prospect.arrivalReferralSource,
+        sourceDetails: prospect.sourceDetails,
+        physioOutcome: latestPhysio?.outcome ?? null,
+        physioStaff: latestPhysio?.staffName ?? null,
+        periodStart: cycleStartedAt.toISOString(),
+        periodEnd: cycleEndedAt.toISOString(),
+        renewalCount: prospect.tryoutRenewalCount,
+        coachTechnical: dto.technicalRating,
+        coachPhysical: dto.physicalRating,
+        coachTactical: dto.tacticalRating,
+        coachCognitive: dto.cognitiveRating,
+        coachObservation: dto.descriptiveObservation.trim(),
+        coachOutcome: dto.outcome,
+      });
+      const gerencia = resolveCaptacaoManagerEmail();
+      await this.mail.sendMail({ to: gerencia, subject, text });
+
       return row;
+    });
+  }
+
+  async startFieldEvaluation(
+    prospectId: string,
+    allowed: string[] | null,
+    actorUserId?: string,
+  ) {
+    const prospect = await this.findProspectForAccess(prospectId, allowed);
+    this.assertInTryout(prospect);
+    if (!prospect.arrivalAt) {
+      throw new BadRequestException('Registre a chegada antes de iniciar avaliação em campo.');
+    }
+    const docs = await this.prospectDocuments.getBlockingStatus(prospectId, prospect.birthDate);
+    if (!docs.satisfied) {
+      throw new BadRequestException('Documentos obrigatórios pendentes.');
+    }
+    if (!prospect.supervisionDocsValidatedAt) {
+      throw new BadRequestException('Supervisão deve validar a documentação.');
+    }
+    await this.physioTryout.assertCanStartCtFieldEvaluation(prospectId);
+    if (prospect.tryoutWorkflowStage === 'em_avaliacao_campo' && prospect.tryoutPeriodStartedAt) {
+      throw new BadRequestException('Avaliação em campo já iniciada.');
     }
 
-    await this.prisma.scoutingProspect.update({
+    const now = new Date();
+    const end = defaultTryoutPeriodEnd(now);
+    const prevStage = prospect.tryoutWorkflowStage;
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const row = await tx.scoutingProspect.update({
+        where: { id: prospectId },
+        data: {
+          tryoutWorkflowStage: 'em_avaliacao_campo',
+          tryoutCycleNumber: 1,
+          tryoutPeriodStartedAt: now,
+          tryoutPeriodEndsAt: end,
+          ctScheduleStatus: 'em_avaliacao',
+          ctEvaluationStartedAt: now,
+        },
+      });
+      await this.workflowEvents.append({
+        tenantId: prospect.tenantId,
+        prospectId,
+        eventType: 'field_evaluation_start',
+        previousStage: prevStage,
+        newStage: 'em_avaliacao_campo',
+        actorUserId,
+        metadata: { cycleNumber: 1, periodEnd: end.toISOString() },
+        tx,
+      });
+      return row;
+    });
+    return updated;
+  }
+
+  async searchDuplicates(dto: TryoutDuplicateSearchDto, allowed: string[] | null) {
+    this.tenantAccess.assertCanAccessTenant(allowed, dto.tenantId);
+    return this.findDuplicateMatches(dto);
+  }
+
+  async createDirectEntry(
+    dto: TryoutDirectEntryDto,
+    allowed: string[] | null,
+    actorUserId?: string,
+  ) {
+    this.tenantAccess.assertCanAccessTenant(allowed, dto.tenantId);
+    if (dto.reuseProspectId?.trim()) {
+      const existing = await this.findProspectForAccess(dto.reuseProspectId.trim(), allowed);
+      if (existing.tenantId !== dto.tenantId) {
+        throw new BadRequestException('Prospect de outro clube.');
+      }
+      return this.setArrival(
+        existing.id,
+        {
+          arrivalReferralSource: dto.arrivalReferralSource,
+          arrivalAt: dto.arrivalAt,
+          sourceDetails: dto.sourceDetails,
+          targetCategory: dto.targetCategory,
+        },
+        allowed,
+        actorUserId,
+      );
+    }
+
+    const duplicates = await this.findDuplicateMatches({
+      tenantId: dto.tenantId,
+      documentNumber: dto.documentNumber,
+      name: dto.name,
+      birthDate: dto.birthDate,
+      athletePhone: dto.athletePhone,
+      athleteEmail: dto.athleteEmail,
+      guardianPhone: dto.guardianPhone,
+    });
+    const strong = duplicates.filter((d) => scoreDuplicateStrength(d.reasons) === 'strong');
+    if (strong.length > 0 && !dto.confirmNewDespiteDuplicates) {
+      throw new BadRequestException({
+        message:
+          'Possível duplicidade encontrada — confirme reutilização ou criação excepcional.',
+        duplicates: strong,
+      });
+    }
+
+    const arrivalAt = this.parseDateInput(dto.arrivalAt, 'Data de chegada inválida.');
+    const coachStaffId = await this.resolveDefaultCoachStaffId(dto.tenantId, dto.targetCategory);
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const prospect = await tx.scoutingProspect.create({
+        data: {
+          tenantId: dto.tenantId,
+          name: dto.name.trim(),
+          birthDate: dto.birthDate.trim(),
+          nationality: dto.nationality?.trim() || null,
+          position: dto.position?.trim() || null,
+          secondaryPositions: dto.secondaryPositions?.length
+            ? (dto.secondaryPositions as Prisma.InputJsonValue)
+            : undefined,
+          athletePhone: dto.athletePhone?.trim() || null,
+          athleteEmail: dto.athleteEmail?.trim() || null,
+          documentNumber:
+            normalizeDocument(dto.documentNumber) ?? (dto.documentNumber?.trim() || null),
+          guardianName: dto.guardianName?.trim() || null,
+          guardianPhone: dto.guardianPhone?.trim() || null,
+          guardianEmail: dto.guardianEmail?.trim() || null,
+          targetCategory: dto.targetCategory.trim(),
+          notes: dto.notes?.trim() || null,
+          stage: 'tryout',
+          flowPath: 'tryout',
+          evaluationOutcome: 'para_teste',
+          arrivalReferralSource: dto.arrivalReferralSource,
+          sourceDetails: dto.sourceDetails?.trim() || null,
+          source: 'outro',
+          arrivalAt,
+          tryoutWorkflowActivatedAt: arrivalAt,
+          tryoutWorkflowStage: 'aguardando_supervisao',
+          responsibleCoachStaffId: coachStaffId,
+          duplicateCreationConfirmedAt: dto.confirmNewDespiteDuplicates ? new Date() : null,
+        },
+      });
+      await this.workflowEvents.append({
+        tenantId: dto.tenantId,
+        prospectId: prospect.id,
+        eventType: 'direct_creation',
+        newStage: 'aguardando_supervisao',
+        actorUserId,
+        metadata: {
+          source: dto.arrivalReferralSource,
+          duplicateConfirmed: Boolean(dto.confirmNewDespiteDuplicates),
+        },
+        tx,
+      });
+      if (dto.confirmNewDespiteDuplicates && strong.length) {
+        await this.workflowEvents.append({
+          tenantId: dto.tenantId,
+          prospectId: prospect.id,
+          eventType: 'duplicate_decision',
+          actorUserId,
+          metadata: { decision: 'create_new', matches: strong.map((m) => m.id) },
+          tx,
+        });
+      }
+      return prospect;
+    });
+
+    return created;
+  }
+
+  async activateLegacyWorkflow(
+    prospectId: string,
+    dto: TryoutActivateLegacyDto,
+    allowed: string[] | null,
+    actorUserId?: string,
+  ) {
+    const prospect = await this.findProspectForAccess(prospectId, allowed);
+    if (!isLegacyTryoutReviewRecord(prospect)) {
+      throw new BadRequestException('Registro não está na fila de revisão anterior.');
+    }
+    const arrivalAt = this.parseDateInput(dto.arrivalAt, 'Data de chegada inválida.');
+    const updated = await this.prisma.scoutingProspect.update({
       where: { id: prospectId },
       data: {
-        tryoutWorkflowStage: 'aguardando_gerencia',
-        managerDecision: 'pendente',
-        managerDecisionAt: null,
-        managerDecisionBy: null,
-        managerDecisionNotes: null,
+        arrivalAt,
+        tryoutWorkflowActivatedAt: arrivalAt,
+        tryoutWorkflowStage: 'aguardando_supervisao',
+        arrivalReferralSource: dto.arrivalReferralSource,
+        sourceDetails: dto.sourceDetails?.trim() || prospect.sourceDetails,
       },
     });
-
-    const latestPhysio = await this.physioTryout.getLatestForProspect(prospectId);
-    const { subject, text } = buildTryoutManagerDossierText({
-      prospectId,
+    await this.workflowEvents.append({
       tenantId: prospect.tenantId,
-      name: prospect.name,
-      targetCategory: prospect.targetCategory,
-      arrivalReferralSource: prospect.arrivalReferralSource,
-      sourceDetails: prospect.sourceDetails,
-      physioOutcome: latestPhysio?.outcome ?? null,
-      physioStaff: latestPhysio?.staffName ?? null,
-      periodStart: prospect.tryoutPeriodStartedAt?.toISOString() ?? null,
-      periodEnd: prospect.tryoutPeriodEndsAt?.toISOString() ?? null,
-      renewalCount: prospect.tryoutRenewalCount,
-      coachTechnical: dto.technicalRating,
-      coachPhysical: dto.physicalRating,
-      coachTactical: dto.tacticalRating,
-      coachCognitive: dto.cognitiveRating,
-      coachObservation: dto.descriptiveObservation.trim(),
-      coachOutcome: dto.outcome,
+      prospectId,
+      eventType: 'legacy_activation',
+      newStage: 'aguardando_supervisao',
+      actorUserId,
+      metadata: { arrivalAt: arrivalAt.toISOString() },
+    });
+    return updated;
+  }
+
+  async setResponsibleCoach(
+    prospectId: string,
+    dto: TryoutResponsibleCoachDto,
+    allowed: string[] | null,
+    actorUserId?: string,
+  ) {
+    const prospect = await this.findProspectForAccess(prospectId, allowed);
+    this.assertInTryout(prospect);
+    await this.assertValidCoachStaff(prospect.tenantId, dto.staffId.trim());
+    const staff = await this.prisma.technicalStaff.findFirst({
+      where: { id: dto.staffId.trim(), tenantId: prospect.tenantId },
+      select: { id: true, name: true },
+    });
+    const history = Array.isArray(prospect.responsibleCoachHistory)
+      ? [...(prospect.responsibleCoachHistory as object[])]
+      : [];
+    history.push({
+      at: new Date().toISOString(),
+      fromStaffId: prospect.responsibleCoachStaffId,
+      toStaffId: dto.staffId.trim(),
+      actorUserId,
+      reason: dto.reason?.trim() || null,
     });
 
-    const gerencia = resolveCaptacaoManagerEmail();
-    await this.mail.sendMail({ to: gerencia, subject, text });
-
-    return row;
+    const updated = await this.prisma.scoutingProspect.update({
+      where: { id: prospectId },
+      data: {
+        responsibleCoachStaffId: dto.staffId.trim(),
+        responsibleCoachHistory: history as Prisma.InputJsonValue,
+      },
+    });
+    await this.workflowEvents.append({
+      tenantId: prospect.tenantId,
+      prospectId,
+      eventType: 'coach_change',
+      actorUserId,
+      staffId: dto.staffId.trim(),
+      metadata: { staffName: staff?.name, reason: dto.reason?.trim() || null },
+    });
+    return updated;
   }
 
   async recordTryoutManagerDecision(
     prospectId: string,
     dto: ManagerDecisionDto,
     actor: { name?: string; email?: string; role?: string },
+    allowed: string[] | null,
+    actorUserId?: string,
   ) {
     this.assertGerenteDecisor(actor.role);
-    const prospect = await this.findProspectOrThrow(prospectId);
+    const prospect = await this.findProspectForAccess(prospectId, allowed);
     if (prospect.tryoutWorkflowStage !== 'aguardando_gerencia') {
       throw new BadRequestException('Prospect não está aguardando decisão da gerência (Try Out).');
     }
@@ -333,7 +738,7 @@ export class TryoutWorkflowService {
           ? 'reprovado'
           : 'aguardando_gerencia';
 
-    return this.prisma.scoutingProspect.update({
+    const updated = await this.prisma.scoutingProspect.update({
       where: { id: prospectId },
       data: {
         managerDecision: decision,
@@ -353,10 +758,24 @@ export class TryoutWorkflowService {
         tryoutRegBid: decision === 'aprovado' ? 'pendente' : prospect.tryoutRegBid,
       },
     });
+    await this.workflowEvents.append({
+      tenantId: prospect.tenantId,
+      prospectId,
+      eventType: 'management_decision',
+      previousStage: prospect.tryoutWorkflowStage,
+      newStage: tryoutStage,
+      actorUserId,
+      metadata: { decision, operationalOnly: true },
+    });
+    return updated;
   }
 
-  async updateRegistration(prospectId: string, dto: UpdateTryoutRegistrationDto) {
-    const prospect = await this.findProspectOrThrow(prospectId);
+  async updateRegistration(
+    prospectId: string,
+    dto: UpdateTryoutRegistrationDto,
+    allowed: string[] | null,
+  ) {
+    const prospect = await this.findProspectForAccess(prospectId, allowed);
     if (prospect.tryoutWorkflowStage !== 'aprovado_documentacao') {
       throw new BadRequestException('Registro só após aprovação da gerência.');
     }
@@ -434,8 +853,13 @@ export class TryoutWorkflowService {
       tryoutPeriodStartedAt?: Date | null;
       tryoutPeriodEndsAt?: Date | null;
       tryoutRenewalCount?: number;
+      tryoutCycleNumber?: number;
       managerDecision?: string | null;
       ctScheduleStatus?: string | null;
+      birthDate?: string | null;
+      arrivalAt?: Date | null;
+      flowPath?: string | null;
+      tryoutWorkflowActivatedAt?: Date | null;
     };
     const stage =
       inferTryoutWorkflowStage(prospect) ?? prospect.tryoutWorkflowStage ?? null;
@@ -449,26 +873,41 @@ export class TryoutWorkflowService {
       prospect.tryoutPeriodStartedAt,
       prospect.tryoutPeriodEndsAt,
     );
+    const docs = await this.prospectDocuments.getBlockingStatus(row.id, prospect.birthDate);
+    const progressBanner = this.resolveProgressBanner({
+      prospect,
+      physioStatus: physio.status,
+      docsSatisfied: docs.satisfied,
+      stage: stage ?? null,
+    });
     return {
       ...row,
       tryoutEffectiveStage: stage,
       physioClearanceStatus: physio.status,
       canStartCtFieldEvaluation: physio.canStartFieldEvaluation,
+      physioReassessmentPending: physio.reassessmentPending,
       latestCoachEvaluation: coach,
-      tryoutBlockReason: blockReason,
+      tryoutBlockReason: blockReason ?? progressBanner,
+      tryoutProgressBanner: progressBanner,
       tryoutEvaluationDurationDays: durationDays,
+      tryoutCycleNumber: prospect.tryoutCycleNumber ?? 0,
+      arrivalAt: prospect.arrivalAt,
+      isLegacyReview: isLegacyTryoutReviewRecord(prospect),
+      awaitingArrival: isTryoutAwaitingArrival(prospect),
+      documentsBlockingMissing: docs.missing,
     };
   }
 
-  async getHub(tenantId: string, stageFilter?: string) {
+  async getHub(tenantId: string, allowed: string[] | null, stageFilter?: string) {
+    this.tenantAccess.assertCanAccessTenant(allowed, tenantId);
     const where: Prisma.ScoutingProspectWhereInput = {
       tenantId,
       stage: { notIn: ['arquivado'] },
       OR: [
         { tryoutWorkflowStage: { not: null } },
-        { stage: 'tryout' },
-        { evaluationOutcome: 'para_teste' },
+        { tryoutWorkflowActivatedAt: { not: null } },
         { flowPath: 'tryout' },
+        { evaluationOutcome: 'para_teste' },
       ],
     };
     if (stageFilter?.trim() && TRYOUT_WORKFLOW_STAGES.includes(stageFilter as TryoutWorkflowStage)) {
@@ -484,18 +923,42 @@ export class TryoutWorkflowService {
       },
     });
 
-    const enriched = await Promise.all(rows.map((p) => this.enrichProspectTryout(p)));
+    const legacyReview: typeof rows = [];
+    const awaitingArrival: typeof rows = [];
+    const activeRows: typeof rows = [];
+    for (const p of rows) {
+      if (isLegacyTryoutReviewRecord(p)) {
+        legacyReview.push(p);
+        continue;
+      }
+      if (isTryoutAwaitingArrival(p)) {
+        awaitingArrival.push(p);
+        continue;
+      }
+      activeRows.push(p);
+    }
+
+    const enriched = await Promise.all(activeRows.map((p) => this.enrichProspectTryout(p)));
+    const legacyEnriched = await Promise.all(legacyReview.map((p) => this.enrichProspectTryout(p)));
+    const awaitingEnriched = await Promise.all(awaitingArrival.map((p) => this.enrichProspectTryout(p)));
     const byStage: Record<string, number> = {};
     for (const s of TRYOUT_WORKFLOW_STAGES) byStage[s] = 0;
     for (const p of enriched) {
       const key = p.tryoutEffectiveStage ?? 'aguardando_supervisao';
       byStage[key] = (byStage[key] ?? 0) + 1;
     }
-    return { items: enriched, byStage, total: enriched.length };
+    return {
+      items: enriched,
+      legacyReview: legacyEnriched,
+      awaitingArrival: awaitingEnriched,
+      byStage,
+      total: enriched.length,
+    };
   }
 
   async getReporting(
     tenantId: string,
+    allowed: string[] | null,
     filters: {
       from?: string;
       to?: string;
@@ -504,6 +967,7 @@ export class TryoutWorkflowService {
       stage?: string;
     },
   ) {
+    this.tenantAccess.assertCanAccessTenant(allowed, tenantId);
     const where: Prisma.ScoutingProspectWhereInput = {
       tenantId,
       tryoutPeriodStartedAt: { not: null },
@@ -590,16 +1054,25 @@ export class TryoutWorkflowService {
     };
   }
 
-  async getDossier(prospectId: string) {
-    const prospect = await this.findProspectOrThrow(prospectId);
-    const [physioRows, coach] = await Promise.all([
-      this.physioTryout.findByProspect(prospectId, null),
+  async getDossier(prospectId: string, allowed: string[] | null) {
+    const prospect = await this.findProspectForAccess(prospectId, allowed);
+    const [physioOp, coach, documents, events, weeklyEvaluations] = await Promise.all([
+      this.physioTryout.getOperationalStatusForProspect(prospectId),
       this.getLatestCoachEvaluation(prospectId),
+      this.prospectDocuments.listActive(prospectId),
+      this.workflowEvents.listForProspect(prospectId, 50),
+      this.prisma.tryoutCoachEvaluation.findMany({
+        where: { prospectId },
+        orderBy: { cycleNumber: 'asc' },
+      }),
     ]);
     return {
       prospect,
-      physioClearances: physioRows,
+      physioOperational: physioOp,
       coachEvaluation: coach,
+      weeklyEvaluations,
+      documents,
+      workflowEvents: events,
       renewalHistory: parseRenewalHistory(prospect.tryoutRenewalHistory),
     };
   }
@@ -642,6 +1115,182 @@ export class TryoutWorkflowService {
     const p = await this.prisma.scoutingProspect.findUnique({ where: { id } });
     if (!p) throw new NotFoundException('Prospect não encontrado.');
     return p;
+  }
+
+  private async findProspectForAccess(id: string, allowed: string[] | null) {
+    const p = await this.findProspectOrThrow(id);
+    this.tenantAccess.assertCanAccessTenant(allowed, p.tenantId);
+    return p;
+  }
+
+  private parseDateInput(raw: string, message: string): Date {
+    const d = new Date(raw.length <= 10 ? `${raw.trim()}T12:00:00` : raw.trim());
+    if (Number.isNaN(d.getTime())) throw new BadRequestException(message);
+    return d;
+  }
+
+  private async assertValidCoachStaff(tenantId: string, staffId: string) {
+    const staff = await this.prisma.technicalStaff.findFirst({
+      where: { id: staffId, tenantId },
+      select: { id: true, role: true },
+    });
+    if (!staff) throw new BadRequestException('Treinador/comissão não encontrado neste clube.');
+    if (!COACHING_STAFF_ROLES.includes(staff.role as (typeof COACHING_STAFF_ROLES)[number])) {
+      throw new BadRequestException('Staff informado não possui função de treinador técnico.');
+    }
+  }
+
+  private async resolveDefaultCoachStaffId(tenantId: string, category: string) {
+    const coaches = await this.prisma.technicalStaff.findMany({
+      where: {
+        tenantId,
+        role: { in: [...COACHING_STAFF_ROLES] },
+      },
+      select: { id: true, categories: true },
+      take: 50,
+    });
+    const cat = category.trim().toLowerCase();
+    const match = coaches.find((c) => {
+      if (!c.categories || !Array.isArray(c.categories)) return false;
+      return (c.categories as string[]).some((x) => x.toLowerCase() === cat);
+    });
+    return match?.id ?? coaches[0]?.id ?? null;
+  }
+
+  private async findDuplicateMatches(input: TryoutDuplicateSearchDto): Promise<DuplicateMatch[]> {
+    const matches = new Map<string, DuplicateMatch>();
+    const add = (key: string, entry: DuplicateMatch) => {
+      const prev = matches.get(key);
+      if (!prev) {
+        matches.set(key, entry);
+        return;
+      }
+      prev.reasons = [...new Set([...prev.reasons, ...entry.reasons])];
+    };
+
+    if (input.prospectId?.trim()) {
+      const p = await this.prisma.scoutingProspect.findFirst({
+        where: { id: input.prospectId.trim(), tenantId: input.tenantId },
+      });
+      if (p) {
+        add(`prospect:${p.id}`, {
+          kind: 'prospect',
+          id: p.id,
+          name: p.name,
+          reasons: ['prospect_id'],
+          birthDate: p.birthDate,
+          targetCategory: p.targetCategory,
+        });
+      }
+    }
+
+    const doc = normalizeDocument(input.documentNumber);
+    if (doc) {
+      const prospects = await this.prisma.scoutingProspect.findMany({
+        where: { tenantId: input.tenantId, documentNumber: doc },
+        take: 10,
+      });
+      for (const p of prospects) {
+        add(`prospect:${p.id}`, {
+          kind: 'prospect',
+          id: p.id,
+          name: p.name,
+          reasons: ['document'],
+          birthDate: p.birthDate,
+          targetCategory: p.targetCategory,
+        });
+      }
+    }
+
+    const nameKey = input.name?.trim() ? normalizePersonKey(input.name) : null;
+    const birth = input.birthDate?.trim() || null;
+    if (nameKey && birth) {
+      const prospects = await this.prisma.scoutingProspect.findMany({
+        where: { tenantId: input.tenantId, birthDate: birth },
+        take: 40,
+      });
+      for (const p of prospects) {
+        if (normalizePersonKey(p.name) === nameKey) {
+          add(`prospect:${p.id}`, {
+            kind: 'prospect',
+            id: p.id,
+            name: p.name,
+            reasons: ['name_birth'],
+            birthDate: p.birthDate,
+            targetCategory: p.targetCategory,
+          });
+        }
+      }
+    }
+
+    const phone = normalizePhone(input.athletePhone) ?? normalizePhone(input.guardianPhone);
+    if (phone) {
+      const prospects = await this.prisma.scoutingProspect.findMany({
+        where: {
+          tenantId: input.tenantId,
+          OR: [{ athletePhone: { contains: phone.slice(-8) } }, { guardianPhone: { contains: phone.slice(-8) } }],
+        },
+        take: 20,
+      });
+      for (const p of prospects) {
+        add(`prospect:${p.id}`, {
+          kind: 'prospect',
+          id: p.id,
+          name: p.name,
+          reasons: ['phone'],
+          birthDate: p.birthDate,
+          targetCategory: p.targetCategory,
+        });
+      }
+    }
+
+    if (input.athleteEmail?.trim()) {
+      const email = input.athleteEmail.trim().toLowerCase();
+      const prospects = await this.prisma.scoutingProspect.findMany({
+        where: { tenantId: input.tenantId, athleteEmail: { equals: email, mode: 'insensitive' } },
+        take: 10,
+      });
+      for (const p of prospects) {
+        add(`prospect:${p.id}`, {
+          kind: 'prospect',
+          id: p.id,
+          name: p.name,
+          reasons: ['email'],
+          birthDate: p.birthDate,
+          targetCategory: p.targetCategory,
+        });
+      }
+    }
+
+    return [...matches.values()];
+  }
+
+  private resolveProgressBanner(input: {
+    prospect: {
+      arrivalAt?: Date | null;
+      supervisionDocsValidatedAt?: Date | null;
+      tryoutWorkflowStage?: string | null;
+      tryoutCycleNumber?: number;
+    };
+    physioStatus: string;
+    docsSatisfied: boolean;
+    stage: string | null;
+  }): string | null {
+    if (!input.prospect.arrivalAt) return 'Aguardando registro de chegada.';
+    if (!input.docsSatisfied) return 'Aguardando documentos.';
+    if (!input.prospect.supervisionDocsValidatedAt) return 'Aguardando validação da supervisão.';
+    if (input.physioStatus === 'pendente') return 'Aguardando liberação da fisioterapia.';
+    if (input.physioStatus === 'temporario_nao_liberado') {
+      return 'Não liberado — aguardando reavaliação.';
+    }
+    if (input.stage === 'liberado_campo') return 'Liberado — iniciar avaliação em campo.';
+    if (input.stage === 'em_avaliacao_campo') {
+      const n = input.prospect.tryoutCycleNumber ?? 1;
+      return `Em avaliação — semana ${n}`;
+    }
+    if (input.stage === 'aguardando_treinador') return 'Avaliação do treinador pendente.';
+    if (input.stage === 'aguardando_gerencia') return 'Aguardando decisão da gerência.';
+    return null;
   }
 
   private assertGerenteDecisor(role: string | undefined): void {

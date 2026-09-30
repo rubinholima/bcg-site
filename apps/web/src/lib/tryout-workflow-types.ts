@@ -3,8 +3,17 @@ export const TRYOUT_REFERRAL_SOURCES = [
   { value: 'clube_parceiro', label: 'Clube parceiro' },
   { value: 'escola_parceira', label: 'Escola de futebol parceira' },
   { value: 'boston_academy', label: 'Boston Academy' },
-  { value: 'captacao', label: 'Captação / scouting' },
-  { value: 'indicacao_parceira', label: 'Indicação parceira' },
+  { value: 'captacao', label: 'Captação' },
+  { value: 'indicacao_parceira', label: 'Indicação' },
+  { value: 'gestao_diretoria', label: 'Gestão / Diretoria' },
+  { value: 'outro', label: 'Outro' },
+] as const;
+
+export const TRYOUT_DIRECT_ENTRY_SOURCES = [
+  { value: 'indicacao_parceira', label: 'Indicação' },
+  { value: 'clube_parceiro', label: 'Clube parceiro' },
+  { value: 'agente', label: 'Agente' },
+  { value: 'gestao_diretoria', label: 'Gestão / Diretoria' },
   { value: 'outro', label: 'Outro' },
 ] as const;
 
@@ -40,18 +49,27 @@ export type TryoutHubItem = {
   arrivalReferralSource?: string | null;
   tryoutEffectiveStage?: string | null;
   tryoutBlockReason?: string | null;
+  tryoutProgressBanner?: string | null;
   tryoutPeriodStartedAt?: string | null;
   tryoutPeriodEndsAt?: string | null;
   tryoutRenewalCount?: number;
+  tryoutCycleNumber?: number;
+  arrivalAt?: string | null;
   physioClearanceStatus?: string;
+  physioReassessmentPending?: boolean;
   canStartCtFieldEvaluation?: boolean;
   ctScheduleStatus?: string | null;
   managerDecision?: string | null;
+  isLegacyReview?: boolean;
+  awaitingArrival?: boolean;
+  documentsBlockingMissing?: string[];
   scout?: { id: string; name: string } | null;
 };
 
 export type TryoutHubResponse = {
   items: TryoutHubItem[];
+  legacyReview?: TryoutHubItem[];
+  awaitingArrival?: TryoutHubItem[];
   byStage: Record<string, number>;
   total: number;
 };

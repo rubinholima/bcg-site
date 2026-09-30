@@ -228,17 +228,28 @@ export function buildProtocolResult(
   }
 }
 
+export type PhysioTryoutOperationalStatus =
+  | 'pendente'
+  | 'aprovado'
+  | 'temporario_nao_liberado'
+  | 'reprovado';
+
 export function resolvePhysioClearanceOperationalStatus(
   latest: { outcome: string } | null | undefined,
-): 'pendente' | 'aprovado' | 'reprovado' {
+): PhysioTryoutOperationalStatus {
   if (!latest) return 'pendente';
   if (latest.outcome === 'aprovado') return 'aprovado';
-  if (latest.outcome === 'reprovado') return 'reprovado';
+  if (latest.outcome === 'nao_liberado_temporario') return 'temporario_nao_liberado';
+  if (latest.outcome === 'reprovado' || latest.outcome === 'nao_liberado_definitivo') {
+    return 'reprovado';
+  }
   return 'pendente';
 }
 
-export function canStartCtFieldEvaluation(
-  status: 'pendente' | 'aprovado' | 'reprovado',
-): boolean {
+export function canStartCtFieldEvaluation(status: PhysioTryoutOperationalStatus): boolean {
   return status === 'aprovado';
+}
+
+export function isDefinitivePhysioTryoutFailure(outcome: string): boolean {
+  return outcome === 'reprovado' || outcome === 'nao_liberado_definitivo';
 }

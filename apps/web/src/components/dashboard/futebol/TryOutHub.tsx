@@ -30,6 +30,7 @@ import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import {
   TRYOUT_REFERRAL_SOURCES,
+  TRYOUT_DIRECT_ENTRY_SOURCES,
   TRYOUT_WORKFLOW_STAGES,
   TRYOUT_REG_STATUSES,
   TRYOUT_FEDERATION_STATUSES,
@@ -59,14 +60,35 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
   const [active, setActive] = useState<TryoutHubItem | null>(null);
   const [supervisionNotes, setSupervisionNotes] = useState("");
   const [arrivalSource, setArrivalSource] = useState("");
+  const [arrivalDate, setArrivalDate] = useState("");
   const [coachForm, setCoachForm] = useState({
+    staffId: "",
     staffName: "",
     technicalRating: "3",
     physicalRating: "3",
     tacticalRating: "3",
     cognitiveRating: "3",
     descriptiveObservation: "",
-    outcome: "aprovado" as "aprovado" | "reprovado",
+    justification: "",
+    outcome: "aprovado" as "aprovado" | "reprovado" | "mais_uma_semana",
+  });
+  const [newAthleteOpen, setNewAthleteOpen] = useState(false);
+  const [newAthlete, setNewAthlete] = useState({
+    arrivalReferralSource: "indicacao_parceira",
+    sourceDetails: "",
+    name: "",
+    birthDate: "",
+    nationality: "",
+    athletePhone: "",
+    athleteEmail: "",
+    documentNumber: "",
+    guardianName: "",
+    guardianPhone: "",
+    position: "",
+    arrivalAt: "",
+    targetCategory: "",
+    notes: "",
+    confirmDuplicate: false,
   });
   const [regForm, setRegForm] = useState({
     tryoutRegDocumentation: "pendente",
@@ -76,7 +98,7 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
   });
   const [detailProspect, setDetailProspect] = useState<ScoutingProspect | null>(null);
   const [dialog, setDialog] = useState<
-    "supervision" | "arrival" | "coach" | "registration" | "manager" | null
+    "supervision" | "arrival" | "coach" | "registration" | "manager" | "legacy" | null
   >(null);
   const [feedback, setFeedback] = useState<{
     open: boolean;
@@ -156,10 +178,19 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
           />
         </FilterBarField>
         <FilterBarField label=" ">
-          <Button type="button" variant="outline" className="h-10 w-full sm:w-auto" onClick={() => void load()}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Atualizar
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="h-10 w-full sm:w-auto"
+              onClick={() => setNewAthleteOpen(true)}
+            >
+              + Novo atleta
+            </Button>
+            <Button type="button" variant="outline" className="h-10 w-full sm:w-auto" onClick={() => void load()}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Atualizar
+            </Button>
+          </div>
         </FilterBarField>
       </DashboardFilterBar>
 
@@ -252,7 +283,7 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                       ) : null}
                     </TableCell>
                     <TableCell className="max-w-[200px] text-xs text-amber-300/90">
-                      {p.tryoutBlockReason ?? "—"}
+                      {p.tryoutProgressBanner ?? p.tryoutBlockReason ?? "—"}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap justify-end gap-1">
@@ -287,13 +318,34 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                             <Link href="/dashboard/saude/fisioterapia/liberacao-tryout">Fisioterapia</Link>
                           </Button>
                         ) : null}
-                        {(p.tryoutEffectiveStage === "liberado_campo" ||
-                          p.tryoutEffectiveStage === "em_avaliacao_campo") && (
+                        {p.tryoutEffectiveStage === "liberado_campo" && p.canStartCtFieldEvaluation ? (
+                          <Button
+                            size="sm"
+                            className="h-8"
+                            onClick={() =>
+                              void api
+                                .post(`/tryout-workflow/prospects/${p.id}/start-field-evaluation`)
+                                .then(() => load())
+                                .catch(() =>
+                                  setFeedback({
+                                    open: true,
+                                    title: "Não foi possível iniciar",
+                                    message: "Verifique documentos e liberação da fisioterapia.",
+                                    variant: "error",
+                                  }),
+                                )
+                            }
+                          >
+                            Iniciar avaliação
+                          </Button>
+                        ) : null}
+                        {p.tryoutEffectiveStage === "em_avaliacao_campo" ? (
                           <Button size="sm" variant="outline" className="h-8" asChild>
                             <Link href={`/dashboard/futebol/captacao?tenantId=${tenantId}`}>Fila CT</Link>
                           </Button>
-                        )}
-                        {p.tryoutEffectiveStage === "aguardando_treinador" ? (
+                        ) : null}
+                        {p.tryoutEffectiveStage === "aguardando_treinador" ||
+                        p.tryoutEffectiveStage === "em_avaliacao_campo" ? (
                           <Button
                             size="sm"
                             className="h-8"
@@ -302,7 +354,7 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                               setDialog("coach");
                             }}
                           >
-                            Avaliar
+                            Avaliar semana
                           </Button>
                         ) : null}
                         {p.tryoutEffectiveStage === "aguardando_gerencia" ? (
@@ -322,26 +374,6 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                             CBF / BID
                           </Button>
                         ) : null}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8"
-                          onClick={() =>
-                            void api
-                              .post(`/tryout-workflow/prospects/${p.id}/renew-period`, {})
-                              .then(() => load())
-                              .catch(() =>
-                                setFeedback({
-                                  open: true,
-                                  title: "Erro",
-                                  message: "Não foi possível renovar o período.",
-                                  variant: "error",
-                                }),
-                              )
-                          }
-                        >
-                          +1 sem.
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -351,6 +383,173 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
           </Table>
         </div>
       )}
+
+      {(hub?.legacyReview?.length ?? 0) > 0 ? (
+        <div className="space-y-2 rounded-lg border border-amber-500/30 bg-zinc-950/60 p-3">
+          <div className="text-sm font-medium text-amber-200">Revisar registros anteriores</div>
+          <div className="space-y-1">
+            {hub?.legacyReview?.map((p) => (
+              <div
+                key={p.id}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+              >
+                <span>{p.name}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8"
+                  onClick={() => {
+                    setActive(p);
+                    setArrivalSource(p.arrivalReferralSource ?? "captacao");
+                    setArrivalDate("");
+                    setDialog("legacy");
+                  }}
+                >
+                  Ativar workflow
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <Dialog open={newAthleteOpen} onOpenChange={setNewAthleteOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Novo atleta — Try Out</DialogTitle>
+          </DialogHeader>
+          <form
+            className="grid gap-3 sm:grid-cols-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void api
+                .post("/tryout-workflow/direct-entry", {
+                  tenantId,
+                  ...newAthlete,
+                  confirmNewDespiteDuplicates: newAthlete.confirmDuplicate,
+                })
+                .then(() => {
+                  setNewAthleteOpen(false);
+                  void load();
+                })
+                .catch((err: { response?: { data?: { message?: string; duplicates?: unknown } } }) => {
+                  const dup = err.response?.data?.duplicates;
+                  if (dup) {
+                    setFeedback({
+                      open: true,
+                      title: "Possível duplicidade",
+                      message:
+                        "Encontramos cadastro similar. Marque confirmação para criar novo registro ou reutilize o existente.",
+                      variant: "warning",
+                    });
+                    setNewAthlete((f) => ({ ...f, confirmDuplicate: true }));
+                    return;
+                  }
+                  setFeedback({
+                    open: true,
+                    title: "Erro",
+                    message: err.response?.data?.message ?? "Não foi possível cadastrar.",
+                    variant: "error",
+                  });
+                });
+            }}
+          >
+            <div className="sm:col-span-2">
+              <Label>Origem</Label>
+              <NativeSelectField
+                value={newAthlete.arrivalReferralSource}
+                onChange={(e) =>
+                  setNewAthlete((f) => ({ ...f, arrivalReferralSource: e.target.value }))
+                }
+                options={TRYOUT_DIRECT_ENTRY_SOURCES.map((s) => ({ value: s.value, label: s.label }))}
+              />
+            </div>
+            <div>
+              <Label>Nome completo</Label>
+              <Input
+                required
+                className="text-foreground"
+                value={newAthlete.name}
+                onChange={(e) => setNewAthlete((f) => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Nascimento</Label>
+              <Input
+                required
+                type="date"
+                className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                value={newAthlete.birthDate}
+                onChange={(e) => setNewAthlete((f) => ({ ...f, birthDate: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Categoria Try Out</Label>
+              <Input
+                required
+                className="text-foreground"
+                value={newAthlete.targetCategory}
+                onChange={(e) => setNewAthlete((f) => ({ ...f, targetCategory: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Chegada</Label>
+              <Input
+                required
+                type="date"
+                className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                value={newAthlete.arrivalAt}
+                onChange={(e) => setNewAthlete((f) => ({ ...f, arrivalAt: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Posição principal</Label>
+              <Input
+                className="text-foreground"
+                value={newAthlete.position}
+                onChange={(e) => setNewAthlete((f) => ({ ...f, position: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Celular atleta</Label>
+              <Input
+                className="text-foreground"
+                value={newAthlete.athletePhone}
+                onChange={(e) => setNewAthlete((f) => ({ ...f, athletePhone: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Responsável</Label>
+              <Input
+                className="text-foreground"
+                value={newAthlete.guardianName}
+                onChange={(e) => setNewAthlete((f) => ({ ...f, guardianName: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Celular responsável</Label>
+              <Input
+                className="text-foreground"
+                value={newAthlete.guardianPhone}
+                onChange={(e) => setNewAthlete((f) => ({ ...f, guardianPhone: e.target.value }))}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Observações</Label>
+              <Textarea
+                className="text-foreground"
+                value={newAthlete.notes}
+                onChange={(e) => setNewAthlete((f) => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Button type="submit" className="w-full sm:w-auto">
+                Cadastrar candidato
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={dialog === "arrival"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent>
@@ -362,8 +561,18 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
               className="space-y-3"
               onSubmit={(e) => {
                 e.preventDefault();
+                if (!arrivalDate) {
+                  setFeedback({
+                    open: true,
+                    title: "Data obrigatória",
+                    message: "Informe a data de chegada.",
+                    variant: "warning",
+                  });
+                  return;
+                }
                 void post(`/tryout-workflow/prospects/${active.id}/arrival`, {
                   arrivalReferralSource: arrivalSource,
+                  arrivalAt: arrivalDate,
                 });
               }}
             >
@@ -373,7 +582,60 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                 onChange={(e) => setArrivalSource(e.target.value)}
                 options={TRYOUT_REFERRAL_SOURCES.map((s) => ({ value: s.value, label: s.label }))}
               />
+              <Label>Data de chegada</Label>
+              <Input
+                required
+                type="date"
+                className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                value={arrivalDate}
+                onChange={(e) => setArrivalDate(e.target.value)}
+              />
               <Button type="submit">Salvar</Button>
+            </form>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialog === "legacy"} onOpenChange={(o) => !o && setDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ativar registro anterior</DialogTitle>
+          </DialogHeader>
+          {active ? (
+            <form
+              className="space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!arrivalDate) {
+                  setFeedback({
+                    open: true,
+                    title: "Data obrigatória",
+                    message: "Informe a data de chegada para ativar o workflow.",
+                    variant: "warning",
+                  });
+                  return;
+                }
+                void post(`/tryout-workflow/prospects/${active.id}/activate-legacy`, {
+                  arrivalReferralSource: arrivalSource,
+                  arrivalAt: arrivalDate,
+                });
+              }}
+            >
+              <Label>Origem</Label>
+              <NativeSelectField
+                value={arrivalSource}
+                onChange={(e) => setArrivalSource(e.target.value)}
+                options={TRYOUT_REFERRAL_SOURCES.map((s) => ({ value: s.value, label: s.label }))}
+              />
+              <Label>Data de chegada</Label>
+              <Input
+                required
+                type="date"
+                className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                value={arrivalDate}
+                onChange={(e) => setArrivalDate(e.target.value)}
+              />
+              <Button type="submit">Confirmar ativação</Button>
             </form>
           ) : null}
         </DialogContent>
@@ -425,20 +687,50 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                   });
                   return;
                 }
+                if (!coachForm.justification.trim()) {
+                  setFeedback({
+                    open: true,
+                    title: "Justificativa obrigatória",
+                    message: "Informe a justificativa da decisão semanal.",
+                    variant: "warning",
+                  });
+                  return;
+                }
+                if (!coachForm.staffId.trim()) {
+                  setFeedback({
+                    open: true,
+                    title: "Treinador",
+                    message: "Informe o ID do treinador responsável (staffId).",
+                    variant: "warning",
+                  });
+                  return;
+                }
                 void post(`/tryout-workflow/prospects/${active.id}/coach-evaluation`, {
+                  staffId: coachForm.staffId.trim(),
                   staffName: coachForm.staffName.trim() || undefined,
                   technicalRating: Number(coachForm.technicalRating),
                   physicalRating: Number(coachForm.physicalRating),
                   tacticalRating: Number(coachForm.tacticalRating),
                   cognitiveRating: Number(coachForm.cognitiveRating),
                   descriptiveObservation: coachForm.descriptiveObservation.trim(),
+                  justification: coachForm.justification.trim(),
                   outcome: coachForm.outcome,
                 });
               }}
             >
               <div>
-                <Label>Treinador</Label>
+                <Label>Staff ID (treinador)</Label>
                 <Input
+                  required
+                  className="text-foreground"
+                  value={coachForm.staffId}
+                  onChange={(e) => setCoachForm((f) => ({ ...f, staffId: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>Nome (opcional)</Label>
+                <Input
+                  className="text-foreground"
                   value={coachForm.staffName}
                   onChange={(e) => setCoachForm((f) => ({ ...f, staffName: e.target.value }))}
                 />
@@ -479,18 +771,28 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                 />
               </div>
               <div>
-                <Label>Decisão</Label>
+                <Label>Justificativa *</Label>
+                <Textarea
+                  required
+                  className="text-foreground"
+                  value={coachForm.justification}
+                  onChange={(e) => setCoachForm((f) => ({ ...f, justification: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>Decisão semanal</Label>
                 <NativeSelect
                   value={coachForm.outcome}
                   onChange={(e) =>
                     setCoachForm((f) => ({
                       ...f,
-                      outcome: e.target.value as "aprovado" | "reprovado",
+                      outcome: e.target.value as "aprovado" | "reprovado" | "mais_uma_semana",
                     }))
                   }
                 >
                   <option value="aprovado">Aprovado</option>
                   <option value="reprovado">Reprovado</option>
+                  <option value="mais_uma_semana">Mais uma semana</option>
                 </NativeSelect>
               </div>
               <Button type="submit">Registrar avaliação</Button>

@@ -30,8 +30,8 @@ export class CreatePhysioTryoutClearanceDto {
   @IsString()
   observations?: string;
 
-  @IsIn(['aprovado', 'reprovado'])
-  outcome!: 'aprovado' | 'reprovado';
+  @IsIn(['aprovado', 'reprovado', 'nao_liberado_temporario', 'nao_liberado_definitivo'])
+  outcome!: 'aprovado' | 'reprovado' | 'nao_liberado_temporario' | 'nao_liberado_definitivo';
 
   @IsOptional()
   @IsString()
@@ -64,8 +64,8 @@ export class UpdatePhysioTryoutClearanceDto {
   observations?: string;
 
   @IsOptional()
-  @IsIn(['aprovado', 'reprovado'])
-  outcome?: 'aprovado' | 'reprovado';
+  @IsIn(['aprovado', 'reprovado', 'nao_liberado_temporario', 'nao_liberado_definitivo'])
+  outcome?: 'aprovado' | 'reprovado' | 'nao_liberado_temporario' | 'nao_liberado_definitivo';
 
   @IsOptional()
   @IsString()

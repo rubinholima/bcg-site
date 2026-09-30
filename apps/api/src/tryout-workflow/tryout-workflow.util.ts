@@ -66,7 +66,7 @@ export function resolveTryoutBlockReason(input: {
     tryoutPeriodEndsAt?: Date | null;
     ctScheduleStatus?: string | null;
   };
-  physioStatus: 'pendente' | 'aprovado' | 'reprovado';
+  physioStatus: 'pendente' | 'aprovado' | 'temporario_nao_liberado' | 'reprovado';
   coachOutcome?: string | null;
   managerDecision?: string | null;
 }): string | null {
@@ -76,7 +76,10 @@ export function resolveTryoutBlockReason(input: {
     return 'Supervisão ainda não validou chegada/documentação.';
   }
   if (input.physioStatus === 'pendente') {
-    return 'Liberação fisioterapêutica pendente.';
+    return 'Aguardando liberação da fisioterapia.';
+  }
+  if (input.physioStatus === 'temporario_nao_liberado') {
+    return 'Não liberado — aguardando reavaliação da fisioterapia.';
   }
   if (input.physioStatus === 'reprovado') {
     return 'Liberação fisioterapêutica reprovada.';
