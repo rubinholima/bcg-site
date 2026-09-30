@@ -18,7 +18,7 @@ export default function ConfiguracoesPage() {
   useEffect(() => {
     if (loading) return;
     if (isSuperAdmin) {
-      router.replace("/dashboard/configuracoes/modulos");
+      router.replace("/dashboard/configuracoes/pessoas-acessos");
       return;
     }
     if (canViewComprasSettings) {

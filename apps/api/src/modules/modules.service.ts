@@ -7,6 +7,7 @@ import {
   isFootballOperationalModuleSlug,
 } from './football-domain-access.util';
 import { moduleMatrixRoleSlug } from './module-matrix-role.util';
+import { EffectiveAccessService } from './effective-access.service';
 
 export interface ModuleWithPermissions {
   slug: string;
@@ -85,6 +86,7 @@ export class ModulesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly rolesService: RolesService,
+    private readonly effectiveAccess: EffectiveAccessService,
   ) {}
 
   private async managedRoles(): Promise<string[]> {
@@ -151,23 +153,11 @@ export class ModulesService {
   }
 
   async getSlugsForUser(userId: string, role: string): Promise<string[]> {
-    if (role === 'super_admin') {
-      return this.getAllModuleSlugs();
+    try {
+      return await this.effectiveAccess.getEffectiveSlugsForUser(userId, role);
+    } catch {
+      return [];
     }
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { customModuleAccess: true },
-    });
-    if (user?.customModuleAccess) {
-      const rows = await this.prisma.userModuleAccess.findMany({
-        where: { userId, canAccess: true },
-        include: { module: true },
-        orderBy: { module: { sortOrder: 'asc' } },
-      });
-      const raw = rows.map((r) => r.module.slug);
-      return this.expandModuleSlugs(raw);
-    }
-    return this.getSlugsForRole(role);
   }
 
   async getSlugsForActor(actorSub: string, role: string): Promise<string[]> {
@@ -176,7 +166,11 @@ export class ModulesService {
     }
     const userId = await this.findUserIdByActorSub(actorSub);
     if (!userId) {
-      return this.getSlugsForRole(role);
+      try {
+        return await this.getSlugsForRole(role);
+      } catch {
+        return [];
+      }
     }
     return this.getSlugsForUser(userId, role);
   }

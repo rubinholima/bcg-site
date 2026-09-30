@@ -22,7 +22,10 @@ model User {
   /// Incrementado a cada login (exceto super_admin) — invalida JWTs anteriores.
   tokenVersion Int      @default(0)
   role         String?  @default("editor") // super_admin | company_admin | editor | gerente | administrativo | …
-  /// Quando true, módulos vêm de UserModuleAccess (não da matriz do perfil).
+  /// Função CUP360 (defaults de acesso). Substitui exposição de PlatformRole na UI.
+  platformFunctionId String?
+  platformFunction   JobRole? @relation("UserPlatformFunction", fields: [platformFunctionId], references: [id], onDelete: SetNull)
+  /// Quando true, módulos vêm de UserModuleAccess (legado — migrar para overrides).
   customModuleAccess Boolean @default(false)
   /// Atalhos personalizados do dashboard (array JSON de 5 hrefs ou null).
   dashboardShortcuts Json?
@@ -31,6 +34,7 @@ model User {
   /** Escopo de empresas/clubes: vazio = sem restrição (vê todas, exceto super_admin que ignora tabela). Com linhas = só esses tenants. */
   userTenants  UserTenant[]
   moduleAccess UserModuleAccess[]
+  moduleOverrides UserModuleOverride[]
   presenceSessions       UserPresenceSession[]
   announcementsCreated   PlatformAnnouncement[] @relation("AnnouncementCreatedBy")
   announcementsTargeted  PlatformAnnouncement[] @relation("AnnouncementTargetUser")
@@ -939,7 +943,22 @@ model Module {
   impliesSlug     String?
   roles           ModuleRole[]
   userAccess      UserModuleAccess[]
+  jobRoleDefaults JobRoleModuleDefault[]
+  userOverrides   UserModuleOverride[]
   @@index([functionalArea])
+}
+
+/// Exceção individual: ALLOW ou DENY sobre os defaults da função.
+model UserModuleOverride {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId  String
+  module    Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  effect    String  // allow | deny
+  @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
 }
 
 /// Permissões individuais por usuário (quando User.customModuleAccess = true).
@@ -1932,22 +1951,42 @@ model Department {
 
 model JobRole {
   id           String   @id @default(cuid())
-  tenantId     String
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// Null = função global CUP360 (Configurações → Funções).
+  tenantId     String?
+  tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   name         String
   code         String?
   type         String   // staff | athlete
+  /** tenant = RH/clube; platform = função de acesso CUP360 */
+  scope        String   @default("tenant")
+  /** Mapeia User.role legado (ex.: gerente) para defaults da função plataforma */
+  platformLegacyRole String? @unique
   /** Aparece em Cadastros do Futebol → Funções e no dropdown da comissão */
   forFootball  Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   employments  Employment[]
   technicalStaff TechnicalStaff[]
+  moduleDefaults JobRoleModuleDefault[]
+  platformUsers  User[] @relation("UserPlatformFunction")
   @@index([tenantId])
   @@index([departmentId])
   @@index([forFootball])
+  @@index([scope])
+}
+
+/// Defaults de módulo por função (administrador configura).
+model JobRoleModuleDefault {
+  id        String  @id @default(cuid())
+  jobRoleId String
+  jobRole   JobRole @relation(fields: [jobRoleId], references: [id], onDelete: Cascade)
+  moduleId  String
+  module    Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  @@unique([jobRoleId, moduleId])
+  @@index([jobRoleId])
+  @@index([moduleId])
 }
 
 model Employee {

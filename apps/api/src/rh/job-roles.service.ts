@@ -16,7 +16,7 @@ export class JobRolesService {
     if (forFootball === false) where.forFootball = false;
     return this.prisma.jobRole.findMany({
       where,
-      orderBy: [{ tenant: { name: 'asc' } }, { name: 'asc' }],
+      orderBy: [{ name: 'asc' }],
       include: {
         tenant: { select: { id: true, name: true, slug: true } },
         department: { select: { id: true, name: true, code: true } },

@@ -15,6 +15,7 @@ import {
   canAccessMenuLeaf,
   hasAccessToMenuItem,
 } from "@/lib/dashboard-menu.config";
+import { workspaceForDept } from "@/lib/dashboard-nav-workspaces";
 import { getDashboardHomeMenuItem, getHomeDashboardRoute } from "@/lib/dashboard-home";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
@@ -529,6 +530,10 @@ function SidebarNav() {
   const [nestedOpen, setNestedOpen] = useState<Record<string, boolean>>({});
 
   const applyOpenGroup = (slug: string | null) => {
+    if (slug?.startsWith("ws_")) {
+      setNestedOpen({ [slug]: true });
+      return;
+    }
     setGrupoMasterOpen(slug === "grupo_master");
     setSaudeOpen(slug === "saude");
     setFutebolOpen(slug === "futebol");
@@ -585,7 +590,12 @@ function SidebarNav() {
   };
 
   useEffect(() => {
-    applyOpenGroup(getActiveGroupSlug(pathname, relHub));
+    const dept = getActiveGroupSlug(pathname, relHub);
+    applyOpenGroup(dept);
+    const ws = workspaceForDept(dept);
+    if (ws) {
+      setNestedOpen((prev) => ({ ...prev, [ws]: true }));
+    }
     syncNestedFromPath();
   }, [pathname, relHub]);
 
@@ -758,7 +768,9 @@ function SidebarNav() {
             if (!showGroup) return null;
 
             const isOpen =
-              item.slug === "grupo_master"
+              item.slug.startsWith("ws_")
+                ? nestedOpen[item.slug] === true
+                : item.slug === "grupo_master"
                 ? grupoMasterOpen
                 : item.slug === "adm"
                     ? admOpen

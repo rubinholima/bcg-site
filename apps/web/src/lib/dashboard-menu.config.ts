@@ -12,6 +12,7 @@
  * Sync automático via buildModuleCatalog() ao abrir Configurações → Acessos.
  */
 
+import { buildCup360WorkspaceMenu } from "@/lib/dashboard-nav-workspaces";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
@@ -156,6 +157,8 @@ export interface MenuItemConfig {
   href?: string;
   icon?: LucideIcon;
   moduleSlug: string;
+  /** Identificador canônico de autorização (Module.slug). Independente da posição no menu. */
+  permission?: string;
   children?: MenuItemConfig[];
   external?: boolean;
   /** Agrupa visualmente com itens consecutivos (menos espaço entre eles) */
@@ -170,7 +173,15 @@ export interface MenuItemConfig {
   superAdminOnly?: boolean;
 }
 
-/** Slug de permissão usado no Acessos e na sidebar. */
+/** Permissão canônica — mesma decisão para menu, /me/modules e API. */
+export function resolveCanonicalMenuPermission(item: MenuItemConfig): string {
+  if (item.permission) return item.permission;
+  if (item.accessGroup) return `group_${item.accessGroup}`;
+  if (item.accessSlug) return item.accessSlug;
+  return item.moduleSlug;
+}
+
+/** Slug legado na árvore Configurações → Acessos (não usar para autorização). */
 export function resolveMenuAccessSlug(item: MenuItemConfig, pathPrefix: string): string {
   if (item.accessSlug) return item.accessSlug;
   if (item.accessGroup) return `group_${item.accessGroup}`;
@@ -197,8 +208,8 @@ export function canAccessMenuLeaf(
     return canAccessMelhoresTemporada(role, modules, canAccessModule);
   }
 
-  const accessSlug = resolveMenuAccessSlug(item, pathPrefix);
-  if (canAccessModule(accessSlug) || canAccessModule(item.moduleSlug)) return true;
+  const perm = resolveCanonicalMenuPermission(item);
+  if (canAccessModule(perm)) return true;
   // Relatórios Saúde: perfis clínicos (fisioterapia, enfermagem…) têm `saude`, não só `relatorios_saude`.
   if (item.moduleSlug === "relatorios_saude" && canAccessModule("saude")) return true;
   return false;
@@ -275,8 +286,8 @@ export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "desempenho", label: "Desempenho", icon: BarChart3, moduleSlug: "futebol_analise" },
 ];
 
-/** Estrutura completa do menu do dashboard. */
-export const DASHBOARD_MENU: MenuItemConfig[] = [
+/** Top-level legado (antes do agrupamento por workspace). */
+const DASHBOARD_MENU_LEGACY: MenuItemConfig[] = [
   {
     slug: "dashboard",
     label: "Dashboard",
@@ -1581,11 +1592,19 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     moduleSlug: "configuracoes",
     children: [
       {
-        slug: "config_acessos",
-        label: "Acessos",
+        slug: "config_pessoas_acessos",
+        label: "Pessoas e acessos",
+        href: "/dashboard/configuracoes/pessoas-acessos",
+        icon: Sliders,
+        moduleSlug: "configuracoes",
+      },
+      {
+        slug: "config_acessos_legado",
+        label: "Acessos (legado)",
         href: "/dashboard/configuracoes/modulos",
         icon: Sliders,
         moduleSlug: "configuracoes",
+        superAdminOnly: true,
       },
       {
         slug: "config_perfis",
@@ -1626,6 +1645,9 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     ],
   },
 ];
+
+/** Menu do dashboard agrupado por workspace (apresentação). */
+export const DASHBOARD_MENU: MenuItemConfig[] = buildCup360WorkspaceMenu(DASHBOARD_MENU_LEGACY);
 
 /** Catálogo de permissões por item de menu (+ módulos só de API). */
 export function getMenuAccessCatalog(): MenuAccessCatalogEntry[] {
