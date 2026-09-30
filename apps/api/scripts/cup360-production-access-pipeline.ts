@@ -11,6 +11,7 @@ import {
   expandImplications,
   resolveEffectiveModuleSlugs,
 } from '../src/modules/effective-access.util';
+import { computeLegacyProfileSlugs } from '../src/modules/legacy-profile-access.util';
 import {
   isFootballManagementRole,
   isFootballOperationalModuleSlug,
@@ -130,7 +131,9 @@ async function backfillPlatformFunctionDefaults(): Promise<void> {
 }
 
 async function newEffectiveSlugs(userId: string, role: string): Promise<string[]> {
-  const catalog = await prisma.module.findMany({ select: { slug: true, impliesSlug: true } });
+  const catalog = await prisma.module.findMany({
+    select: { slug: true, impliesSlug: true, functionalArea: true },
+  });
   const allModuleSlugs = catalog.map((m) => m.slug);
   const implications = catalog.map((m) => ({ slug: m.slug, impliesSlug: m.impliesSlug }));
 
@@ -167,11 +170,24 @@ async function newEffectiveSlugs(userId: string, role: string): Promise<string[]
     effect: o.effect as 'allow' | 'deny',
   }));
 
+  const matrixRole = moduleMatrixRoleSlug(role);
+  const matrixRows = await prisma.moduleRole.findMany({
+    where: { role: matrixRole, canAccess: true },
+    include: { module: true },
+  });
+  const legacyProfileSlugs = computeLegacyProfileSlugs(
+    role,
+    matrixRows.map((r) => r.module.slug),
+    catalog,
+    allModuleSlugs,
+  );
+
   return resolveEffectiveModuleSlugs({
     role,
     allModuleSlugs,
     implications,
     baseSlugs,
+    legacyProfileSlugs,
     overrides,
   });
 }

@@ -6,18 +6,31 @@ export type EffectiveAccessInput = {
   role: string | null;
   allModuleSlugs: string[];
   implications: ModuleImplication[];
+  /** Defaults da função CUP360 (JobRoleModuleDefault). */
   baseSlugs: string[];
+  /**
+   * Transição: permissões ainda ativas na matriz ModuleRole / perfil legado (PlatformRole).
+   * União com baseSlugs — nunca reduz acesso só porque a função existe.
+   */
+  legacyProfileSlugs?: string[];
   overrides: Array<{ slug: string; effect: ModuleOverrideEffect }>;
   isSuperAdmin?: boolean;
 };
 
-/** Defaults da função + ALLOW − DENY. Fail-closed. */
+/**
+ * Composição efetiva (transição):
+ *   expand(baseSlugs ∪ legacyProfileSlugs) − DENY + ALLOW
+ * super_admin: todos os módulos.
+ */
 export function resolveEffectiveModuleSlugs(input: EffectiveAccessInput): string[] {
   if (input.isSuperAdmin || input.role === 'super_admin') {
     return [...input.allModuleSlugs];
   }
 
-  const implied = expandImplications(input.baseSlugs, input.implications);
+  const mergedBase = [
+    ...new Set([...input.baseSlugs, ...(input.legacyProfileSlugs ?? [])]),
+  ];
+  const implied = expandImplications(mergedBase, input.implications);
   const set = new Set(implied);
 
   const allows = input.overrides.filter((o) => o.effect === 'allow' && o.slug);

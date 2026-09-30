@@ -8,6 +8,7 @@ import {
   resolveEffectiveModuleSlugs,
   type ModuleOverrideEffect,
 } from './effective-access.util';
+import { computeLegacyProfileSlugs } from './legacy-profile-access.util';
 
 export type EffectiveAccessBreakdown = {
   userId: string;
@@ -55,7 +56,24 @@ export class EffectiveAccessService {
     return rows.map((r) => r.module.slug);
   }
 
-  /** Perfil legado sem usuário autenticado — só defaults da função plataforma (fail-closed). */
+  /**
+   * Slugs concedidos pela matriz ModuleRole + auto-grant Futebol (gestão), espelhando runtime legado.
+   */
+  async getLegacyProfileSlugsForRole(
+    role: string,
+    catalog: Array<{ slug: string; impliesSlug: string | null; functionalArea: string | null }>,
+    allModuleSlugs: string[],
+  ): Promise<string[]> {
+    const matrixRole = moduleMatrixRoleSlug(role);
+    const rows = await this.prisma.moduleRole.findMany({
+      where: { role: matrixRole, canAccess: true },
+      include: { module: { select: { slug: true } } },
+    });
+    const matrixGrantSlugs = rows.map((r) => r.module.slug);
+    return computeLegacyProfileSlugs(role, matrixGrantSlugs, catalog, allModuleSlugs);
+  }
+
+  /** Perfil legado sem usuário autenticado — função plataforma ∪ matriz ModuleRole. */
   async getEffectiveSlugsForRole(role: string): Promise<string[]> {
     if (role === 'super_admin') {
       const all = await this.prisma.module.findMany({ select: { slug: true } });
@@ -64,6 +82,7 @@ export class EffectiveAccessService {
     const catalog = await this.loadModuleCatalog();
     const allModuleSlugs = catalog.map((m) => m.slug);
     const implications = catalog.map((m) => ({ slug: m.slug, impliesSlug: m.impliesSlug }));
+    const legacyProfileSlugs = await this.getLegacyProfileSlugsForRole(role, catalog, allModuleSlugs);
     const legacy = moduleMatrixRoleSlug(role);
     const fn = await this.prisma.jobRole.findFirst({
       where: { scope: 'platform', platformLegacyRole: legacy, isActive: true },
@@ -74,6 +93,7 @@ export class EffectiveAccessService {
       allModuleSlugs,
       implications,
       baseSlugs,
+      legacyProfileSlugs,
       overrides: [],
     });
   }
@@ -99,24 +119,25 @@ export class EffectiveAccessService {
     });
     if (!user) return [];
 
+    const legacyProfileSlugs = await this.getLegacyProfileSlugsForRole(role, catalog, allModuleSlugs);
+
     const functionId =
       user.platformFunctionId ?? (await this.resolvePlatformFunctionId(userId, role));
 
-    let baseSlugs: string[] = [];
-    if (functionId) {
-      baseSlugs = await this.getBaseSlugsForFunction(functionId);
-    } else if (user.customModuleAccess) {
-      baseSlugs = user.moduleAccess.filter((a) => a.canAccess).map((a) => a.module.slug);
-      baseSlugs = expandImplications(baseSlugs, implications);
-      return baseSlugs.filter((s) => allModuleSlugs.includes(s)).sort();
-    } else {
-      const matrixRole = moduleMatrixRoleSlug(role);
-      const rows = await this.prisma.moduleRole.findMany({
-        where: { role: matrixRole, canAccess: true },
-        include: { module: true },
+    if (user.customModuleAccess && user.moduleOverrides.length === 0) {
+      let customBase = user.moduleAccess.filter((a) => a.canAccess).map((a) => a.module.slug);
+      customBase = expandImplications(customBase, implications);
+      return resolveEffectiveModuleSlugs({
+        role,
+        allModuleSlugs,
+        implications,
+        baseSlugs: [],
+        legacyProfileSlugs: [...new Set([...legacyProfileSlugs, ...customBase])],
+        overrides: [],
       });
-      baseSlugs = rows.map((r) => r.module.slug);
     }
+
+    const baseSlugs = functionId ? await this.getBaseSlugsForFunction(functionId) : [];
 
     const overrides =
       user.moduleOverrides.length > 0
@@ -124,13 +145,19 @@ export class EffectiveAccessService {
             slug: o.module.slug,
             effect: o.effect as ModuleOverrideEffect,
           }))
-        : await this.legacyOverridesFromCustomSnapshot(userId, user.customModuleAccess, functionId, baseSlugs);
+        : await this.legacyOverridesFromCustomSnapshot(
+            userId,
+            user.customModuleAccess,
+            functionId,
+            [...new Set([...baseSlugs, ...legacyProfileSlugs])],
+          );
 
     return resolveEffectiveModuleSlugs({
       role,
       allModuleSlugs,
       implications,
       baseSlugs,
+      legacyProfileSlugs,
       overrides,
     });
   }

@@ -65,15 +65,69 @@ describe('effective-access', () => {
     expect(slugs.length).toBe(all.length);
   });
 
-  it('base vazia sem super_admin = deny (fail-closed)', () => {
+  it('base vazia sem legado = deny (fail-closed)', () => {
     const slugs = resolveEffectiveModuleSlugs({
       role: 'user',
       allModuleSlugs: all,
       implications,
       baseSlugs: [],
+      legacyProfileSlugs: [],
       overrides: [],
     });
     expect(slugs).toEqual([]);
+  });
+
+  it('usuário sem função mantém slugs do perfil legado', () => {
+    const slugs = resolveEffectiveModuleSlugs({
+      role: 'editor',
+      allModuleSlugs: all,
+      implications,
+      baseSlugs: [],
+      legacyProfileSlugs: ['medico', 'adm_rh'],
+      overrides: [],
+    });
+    expect(slugs).toEqual(['adm_rh', 'medico']);
+  });
+
+  it('função adiciona módulo sem remover legado', () => {
+    const slugs = resolveEffectiveModuleSlugs({
+      role: 'gerente',
+      allModuleSlugs: all,
+      implications,
+      baseSlugs: ['dashboard'],
+      legacyProfileSlugs: ['medico'],
+      overrides: [],
+    });
+    expect(slugs).toContain('dashboard');
+    expect(slugs).toContain('medico');
+  });
+
+  it('ALLOW individual adiciona além de função e legado', () => {
+    const slugs = resolveEffectiveModuleSlugs({
+      role: 'editor',
+      allModuleSlugs: all,
+      implications,
+      baseSlugs: ['dashboard'],
+      legacyProfileSlugs: ['medico'],
+      overrides: [{ slug: 'futebol_treinadores', effect: 'allow' }],
+    });
+    expect(slugs).toContain('futebol_treinadores');
+    expect(slugs).toContain('relatorios_futebol');
+  });
+
+  it('ALLOW após DENY no mesmo slug prevalece', () => {
+    const slugs = resolveEffectiveModuleSlugs({
+      role: 'gerente',
+      allModuleSlugs: all,
+      implications,
+      baseSlugs: ['adm_rh'],
+      legacyProfileSlugs: [],
+      overrides: [
+        { slug: 'adm_rh', effect: 'deny' },
+        { slug: 'adm_rh', effect: 'allow' },
+      ],
+    });
+    expect(slugs).toContain('adm_rh');
   });
 
   it('hasModuleAccess', () => {
