@@ -20,6 +20,8 @@ type Props = {
   onToggleAllow: (slug: string, on: boolean) => void;
   onToggleDeny: (slug: string, on: boolean) => void;
   readOnly?: boolean;
+  /** user = herança + liberar/negar; function = só padrão da função */
+  variant?: "user" | "function";
 };
 
 function label(slug: string, name: string) {
@@ -34,7 +36,9 @@ export function AccessPermissionEditor({
   onToggleAllow,
   onToggleDeny,
   readOnly,
+  variant = "user",
 }: Props) {
+  const isFunction = variant === "function";
   const [q, setQ] = useState("");
   const [openAreas, setOpenAreas] = useState<Record<string, boolean>>({});
 
@@ -52,6 +56,7 @@ export function AccessPermissionEditor({
   }, [modules, q]);
 
   const effective = (slug: string) => {
+    if (isFunction) return allow.has(slug) ? "allow" : "none";
     if (deny.has(slug)) return "deny";
     if (allow.has(slug)) return "allow";
     if (inherited.has(slug)) return "inherit";
@@ -71,22 +76,37 @@ export function AccessPermissionEditor({
           />
         </div>
         <ul className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-          <li>
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-zinc-500" />
-            Herdado
-          </li>
-          <li>
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-500" />
-            Liberação extra
-          </li>
-          <li>
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-500" />
-            Bloqueio
-          </li>
-          <li>
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-zinc-800" />
-            Sem acesso
-          </li>
+          {isFunction ? (
+            <>
+              <li>
+                <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                Incluído no padrão
+              </li>
+              <li>
+                <span className="mr-1 inline-block h-2 w-2 rounded-full bg-zinc-800" />
+                Fora do padrão
+              </li>
+            </>
+          ) : (
+            <>
+              <li>
+                <span className="mr-1 inline-block h-2 w-2 rounded-full bg-zinc-500" />
+                Herdado
+              </li>
+              <li>
+                <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                Liberação extra
+              </li>
+              <li>
+                <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-500" />
+                Bloqueio
+              </li>
+              <li>
+                <span className="mr-1 inline-block h-2 w-2 rounded-full bg-zinc-800" />
+                Sem acesso
+              </li>
+            </>
+          )}
         </ul>
       </div>
 
@@ -132,16 +152,18 @@ export function AccessPermissionEditor({
                                 checked={allow.has(m.slug)}
                                 onChange={(e) => onToggleAllow(m.slug, e.target.checked)}
                               />
-                              Liberar
+                              {isFunction ? "Padrão" : "Liberar"}
                             </label>
-                            <label className="flex min-h-[44px] items-center gap-1.5 sm:min-h-0">
-                              <input
-                                type="checkbox"
-                                checked={deny.has(m.slug)}
-                                onChange={(e) => onToggleDeny(m.slug, e.target.checked)}
-                              />
-                              Negar
-                            </label>
+                            {!isFunction ? (
+                              <label className="flex min-h-[44px] items-center gap-1.5 sm:min-h-0">
+                                <input
+                                  type="checkbox"
+                                  checked={deny.has(m.slug)}
+                                  onChange={(e) => onToggleDeny(m.slug, e.target.checked)}
+                                />
+                                Negar
+                              </label>
+                            ) : null}
                           </div>
                         ) : null}
                       </li>

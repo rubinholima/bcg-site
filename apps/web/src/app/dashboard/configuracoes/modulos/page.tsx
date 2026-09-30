@@ -385,7 +385,7 @@ export default function ModulosPage() {
 
   useEffect(() => {
     if (!authLoading && !isSuperAdmin) {
-      router.replace("/403");
+      router.replace("/dashboard/configuracoes/pessoas-acessos");
     }
   }, [authLoading, isSuperAdmin, router]);
 
@@ -951,14 +951,24 @@ export default function ModulosPage() {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+        <p className="font-medium text-amber-200">Ferramenta técnica — matriz legado</p>
+        <p className="mt-1 text-muted-foreground">
+          A administração normal de usuários, funções e acessos é em{" "}
+          <Link href="/dashboard/configuracoes/pessoas-acessos" className="text-primary hover:underline">
+            Configurações → Pessoas e acessos
+          </Link>
+          . Use esta tela só para compatibilidade de emergência.
+        </p>
+      </div>
       <div className="flex items-start gap-4">
-        <Link href="/dashboard">
+        <Link href="/dashboard/configuracoes/pessoas-acessos">
           <Button variant="ghost" size="icon" className="shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div className="min-w-0 flex-1 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Acessos ao sistema</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Matriz legado (técnico)</h1>
           <Link
             href="/dashboard/manual#permissoes-modulos"
             className="text-sm text-primary hover:underline"

@@ -36,6 +36,20 @@ describe('effective-access.util', () => {
     ).toEqual([]);
   });
 
+  it('ALLOW aplicado depois de DENY prevalece no mesmo slug', () => {
+    const slugs = resolveEffectiveModuleSlugs({
+      role: 'gerente',
+      allModuleSlugs: all,
+      implications,
+      baseSlugs: ['dashboard', 'adm_rh'],
+      overrides: [
+        { slug: 'adm_rh', effect: 'deny' },
+        { slug: 'adm_rh', effect: 'allow' },
+      ],
+    });
+    expect(slugs).toContain('adm_rh');
+  });
+
   it('ALLOW e DENY individual', () => {
     const slugs = resolveEffectiveModuleSlugs({
       role: 'editor',

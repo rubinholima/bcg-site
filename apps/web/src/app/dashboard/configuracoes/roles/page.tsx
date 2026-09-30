@@ -188,7 +188,7 @@ export default function ConfiguracoesPerfisPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <Button type="button" variant="ghost" size="icon" className="shrink-0 mt-0.5" asChild>
-            <Link href="/dashboard/configuracoes/modulos" aria-label="Voltar aos acessos">
+            <Link href="/dashboard/configuracoes/pessoas-acessos" aria-label="Voltar aos acessos">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -201,9 +201,9 @@ export default function ConfiguracoesPerfisPage() {
               Perfis de acesso
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Cadastre os perfis (roles) dos clubes e empresas. Depois configure os módulos em{" "}
-              <Link href="/dashboard/configuracoes/modulos" className="text-primary hover:underline">
-                Acessos
+              Cadastro técnico de perfis legados. Permissões operacionais em{" "}
+              <Link href="/dashboard/configuracoes/pessoas-acessos" className="text-primary hover:underline">
+                Pessoas e acessos
               </Link>
               .
             </p>

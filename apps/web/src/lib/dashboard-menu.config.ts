@@ -1600,7 +1600,7 @@ const DASHBOARD_MENU_LEGACY: MenuItemConfig[] = [
       },
       {
         slug: "config_acessos_legado",
-        label: "Acessos (legado)",
+        label: "Matriz legado (técnico)",
         href: "/dashboard/configuracoes/modulos",
         icon: Sliders,
         moduleSlug: "configuracoes",
@@ -1620,13 +1620,6 @@ const DASHBOARD_MENU_LEGACY: MenuItemConfig[] = [
         href: "/dashboard/empresas",
         icon: Building2,
         moduleSlug: "empresas",
-      },
-      {
-        slug: "config_usuarios",
-        label: "Pessoas e acessos",
-        href: "/dashboard/configuracoes/pessoas-acessos",
-        icon: Users,
-        moduleSlug: "configuracoes",
       },
       {
         slug: "config_compras",

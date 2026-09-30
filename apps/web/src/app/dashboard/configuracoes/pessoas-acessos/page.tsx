@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelectField } from "@/components/ui/native-select";
 import { Cup360PageShell } from "@/components/dashboard/cup360/Cup360PageShell";
@@ -14,16 +14,11 @@ import { useAuth } from "@/context/AuthContext";
 import { MODULE_DISPLAY_NAMES } from "@/lib/dashboard-labels";
 import { buildModuleCatalog } from "@/lib/dashboard-menu.config";
 import { AccessPermissionEditor } from "@/components/dashboard/access/AccessPermissionEditor";
-
+import {
+  FunctionAdminPanel,
+  type PlatformFunctionRow,
+} from "@/components/dashboard/access/FunctionAdminPanel";
 type TabId = "usuarios" | "funcoes" | "acessos" | "auditoria";
-
-interface PlatformFunction {
-  id: string;
-  name: string;
-  platformLegacyRole: string | null;
-  moduleDefaults: Array<{ module: { slug: string; name: string; functionalArea: string } }>;
-  _count: { platformUsers: number };
-}
 
 interface ModuleRow {
   slug: string;
@@ -61,17 +56,18 @@ function moduleLabel(slug: string): string {
 }
 
 export default function PessoasAcessosPage() {
+  const searchParams = useSearchParams();
   const { isSuperAdmin, isCompanyAdmin, loading: authLoading } = useAuth();
   const canManageAccess = isSuperAdmin || isCompanyAdmin;
-  const [tab, setTab] = useState<TabId>("usuarios");
+  const initialTab = (searchParams.get("tab") as TabId | null) ?? "usuarios";
+  const [tab, setTab] = useState<TabId>(
+    TABS.some((t) => t.id === initialTab) ? initialTab : "usuarios",
+  );
   const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
 
-  const [functions, setFunctions] = useState<PlatformFunction[]>([]);
+  const [functions, setFunctions] = useState<PlatformFunctionRow[]>([]);
   const [modules, setModules] = useState<ModuleRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [selectedFunctionId, setSelectedFunctionId] = useState("");
-  const [functionModuleSlugs, setFunctionModuleSlugs] = useState<Set<string>>(new Set());
-  const [moduleSearch, setModuleSearch] = useState("");
 
   const [selectedUserId, setSelectedUserId] = useState("");
   const [userBreakdown, setUserBreakdown] = useState<AccessBreakdown | null>(null);
@@ -84,23 +80,7 @@ export default function PessoasAcessosPage() {
     matrix: Array<{ id: string; createdAt: string; actorEmail: string | null; changeCount: number }>;
   }>({ cup360: [], matrix: [] });
 
-  const groupedModules = useMemo(() => {
-    const q = moduleSearch.trim().toLowerCase();
-    const filtered = modules.filter(
-      (m) =>
-        !q ||
-        m.name.toLowerCase().includes(q) ||
-        m.slug.toLowerCase().includes(q) ||
-        m.functionalArea.toLowerCase().includes(q),
-    );
-    const map = new Map<string, ModuleRow[]>();
-    for (const m of filtered) {
-      const area = m.functionalArea || "outros";
-      if (!map.has(area)) map.set(area, []);
-      map.get(area)!.push(m);
-    }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [modules, moduleSearch]);
+  const showFeedback = (title: string, message: string) => setFeedback({ title, message });
 
   const loadBase = useCallback(async () => {
     await fetch("/api/settings/modules/sync", {
@@ -125,16 +105,9 @@ export default function PessoasAcessosPage() {
   useEffect(() => {
     if (authLoading || !canManageAccess) return;
     loadBase().catch(() =>
-      setFeedback({ title: "Erro", message: "Não foi possível carregar pessoas e acessos." }),
+      showFeedback("Erro", "Não foi possível carregar pessoas e acessos."),
     );
   }, [authLoading, canManageAccess, loadBase]);
-
-  useEffect(() => {
-    if (!selectedFunctionId) return;
-    const fn = functions.find((f) => f.id === selectedFunctionId);
-    if (!fn) return;
-    setFunctionModuleSlugs(new Set(fn.moduleDefaults.map((d) => d.module.slug)));
-  }, [selectedFunctionId, functions]);
 
   useEffect(() => {
     if (!selectedUserId) {
@@ -155,25 +128,11 @@ export default function PessoasAcessosPage() {
   useEffect(() => {
     if (tab !== "auditoria") return;
     fetch("/api/settings/access/audit", { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : []))
+      .then((r) => (r.ok ? r.json() : { cup360: [], matrix: [] }))
       .then(setAudit);
   }, [tab]);
 
-  const saveFunction = async () => {
-    if (!selectedFunctionId) return;
-    const res = await fetch(`/api/settings/access/functions/${encodeURIComponent(selectedFunctionId)}/defaults`, {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ moduleSlugs: [...functionModuleSlugs] }),
-    });
-    if (!res.ok) {
-      setFeedback({ title: "Erro", message: "Não foi possível salvar a função." });
-      return;
-    }
-    await loadBase();
-    setFeedback({ title: "Salvo", message: "Defaults da função atualizados." });
-  };
+  const activeFunctions = functions.filter((f) => f.isActive);
 
   const restoreUserDefaults = async () => {
     if (!selectedUserId) return;
@@ -182,14 +141,14 @@ export default function PessoasAcessosPage() {
       { method: "POST", credentials: "include" },
     );
     if (!res.ok) {
-      setFeedback({ title: "Erro", message: "Não foi possível restaurar os padrões da função." });
+      showFeedback("Erro", "Não foi possível restaurar os padrões da função.");
       return;
     }
     const data = await res.json();
     setUserBreakdown(data);
     setUserAllow(new Set());
     setUserDeny(new Set());
-    setFeedback({ title: "Restaurado", message: "Exceções removidas — só permanece o padrão da função." });
+    showFeedback("Restaurado", "Exceções removidas — só permanece o padrão da função.");
   };
 
   const saveUser = async () => {
@@ -205,21 +164,12 @@ export default function PessoasAcessosPage() {
       }),
     });
     if (!res.ok) {
-      setFeedback({ title: "Erro", message: "Não foi possível salvar o usuário." });
+      showFeedback("Erro", "Não foi possível salvar o usuário.");
       return;
     }
     const data = await res.json();
     setUserBreakdown(data);
-    setFeedback({ title: "Salvo", message: "Acesso do usuário atualizado." });
-  };
-
-  const toggleFunctionModule = (slug: string) => {
-    setFunctionModuleSlugs((prev) => {
-      const next = new Set(prev);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return next;
-    });
+    showFeedback("Salvo", "Acesso do usuário atualizado.");
   };
 
   if (!authLoading && !canManageAccess) {
@@ -231,24 +181,27 @@ export default function PessoasAcessosPage() {
   }
 
   return (
-    <Cup360PageShell>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" asChild>
+    <Cup360PageShell className="mx-auto w-full max-w-[1600px]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <Button variant="ghost" size="sm" className="w-fit shrink-0" asChild>
           <Link href="/dashboard/configuracoes">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Link>
         </Button>
-        {TABS.map((t) => (
-          <Button
-            key={t.id}
-            size="sm"
-            variant={tab === t.id ? "default" : "outline"}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-          </Button>
-        ))}
+        <div className="-mx-1 flex gap-1 overflow-x-auto pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:pb-0">
+          {TABS.map((t) => (
+            <Button
+              key={t.id}
+              size="sm"
+              className="min-h-[44px] shrink-0 sm:min-h-9"
+              variant={tab === t.id ? "default" : "outline"}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </Button>
+          ))}
+        </div>
       </div>
 
       {tab === "funcoes" && (
@@ -257,37 +210,13 @@ export default function PessoasAcessosPage() {
             <CardTitle>Funções</CardTitle>
           </CardHeader>
           <CardContent>
-          <Label className="text-sm">Função</Label>
-          <NativeSelectField
-            className="mt-1 max-w-lg"
-            value={selectedFunctionId}
-            onChange={(e) => setSelectedFunctionId(e.target.value)}
-            placeholder="Selecione…"
-            options={functions.map((f) => ({
-              value: f.id,
-              label: `${f.name} (${f._count.platformUsers} usuários)`,
-            }))}
-          />
-          <div className="mt-4">
-            <AccessPermissionEditor
+            <FunctionAdminPanel
+              functions={functions}
               modules={modules}
-              inherited={new Set()}
-              allow={functionModuleSlugs}
-              deny={new Set()}
-              onToggleAllow={(slug, on) => {
-                setFunctionModuleSlugs((prev) => {
-                  const next = new Set(prev);
-                  if (on) next.add(slug);
-                  else next.delete(slug);
-                  return next;
-                });
-              }}
-              onToggleDeny={() => {}}
+              onReload={loadBase}
+              onFeedback={showFeedback}
+              showTechnicalDetails={isSuperAdmin}
             />
-          </div>
-          <Button className="mt-4" disabled={!selectedFunctionId} onClick={saveFunction}>
-            Salvar função
-          </Button>
           </CardContent>
         </Card>
       )}
@@ -297,101 +226,108 @@ export default function PessoasAcessosPage() {
           <CardHeader>
             <CardTitle>Usuários</CardTitle>
           </CardHeader>
-          <CardContent>
-          <Label className="text-sm">Usuário</Label>
-          <NativeSelectField
-            className="mt-1 max-w-lg"
-            value={selectedUserId}
-            onChange={(e) => setSelectedUserId(e.target.value)}
-            placeholder="Selecione…"
-            options={users.map((u) => ({
-              value: u.id,
-              label: u.name ? `${u.name} (${u.email})` : u.email,
-            }))}
-          />
-          {userBreakdown && (
-            <>
-              <Label className="mt-3 block text-sm">Função</Label>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-sm">Usuário</Label>
               <NativeSelectField
-                className="mt-1 max-w-lg"
-                value={userFunctionId}
-                onChange={(e) => setUserFunctionId(e.target.value)}
+                className="mt-1 w-full max-w-none lg:max-w-xl"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
                 placeholder="Selecione…"
-                options={functions.map((f) => ({ value: f.id, label: f.name }))}
+                options={users.map((u) => ({
+                  value: u.id,
+                  label: u.name ? `${u.name} (${u.email})` : u.email,
+                }))}
               />
-              <div className="mt-4 grid gap-4 md:grid-cols-3">
+            </div>
+            {userBreakdown && (
+              <>
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Herdado</p>
-                  <ul className="max-h-40 space-y-1 overflow-y-auto text-sm">
-                    {userBreakdown.inheritedSlugs.map((s) => (
-                      <li key={s}>{moduleLabel(s)}</li>
-                    ))}
-                  </ul>
+                  <Label className="text-sm">Função</Label>
+                  <NativeSelectField
+                    className="mt-1 w-full max-w-none lg:max-w-xl"
+                    value={userFunctionId}
+                    onChange={(e) => setUserFunctionId(e.target.value)}
+                    placeholder="Selecione…"
+                    options={activeFunctions.map((f) => ({ value: f.id, label: f.name }))}
+                  />
                 </div>
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase text-emerald-500">Adições</p>
-                  <ul className="max-h-40 space-y-1 overflow-y-auto text-sm">
-                    {[...userAllow].map((s) => (
-                      <li key={s}>{moduleLabel(s)}</li>
-                    ))}
-                  </ul>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="rounded-md border border-border p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Herdado</p>
+                    <ul className="max-h-36 space-y-1 overflow-y-auto text-sm">
+                      {userBreakdown.inheritedSlugs.map((s) => (
+                        <li key={s}>{moduleLabel(s)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-md border border-border p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase text-emerald-500">Adições</p>
+                    <ul className="max-h-36 space-y-1 overflow-y-auto text-sm">
+                      {[...userAllow].map((s) => (
+                        <li key={s}>{moduleLabel(s)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-md border border-border p-3 sm:col-span-2 xl:col-span-1">
+                    <p className="mb-2 text-xs font-semibold uppercase text-red-400">Remoções</p>
+                    <ul className="max-h-36 space-y-1 overflow-y-auto text-sm">
+                      {[...userDeny].map((s) => (
+                        <li key={s}>{moduleLabel(s)}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase text-red-400">Remoções</p>
-                  <ul className="max-h-40 space-y-1 overflow-y-auto text-sm">
-                    {[...userDeny].map((s) => (
-                      <li key={s}>{moduleLabel(s)}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Efetivo: {userBreakdown.effectiveSlugs.length} área(s)
-              </p>
-              <AccessPermissionEditor
-                modules={modules}
-                inherited={new Set(userBreakdown.inheritedSlugs)}
-                allow={userAllow}
-                deny={userDeny}
-                onToggleAllow={(slug, on) => {
-                  setUserAllow((p) => {
-                    const n = new Set(p);
-                    if (on) n.add(slug);
-                    else n.delete(slug);
-                    return n;
-                  });
-                  if (on) {
-                    setUserDeny((p) => {
-                      const n = new Set(p);
-                      n.delete(slug);
-                      return n;
-                    });
-                  }
-                }}
-                onToggleDeny={(slug, on) => {
-                  setUserDeny((p) => {
-                    const n = new Set(p);
-                    if (on) n.add(slug);
-                    else n.delete(slug);
-                    return n;
-                  });
-                  if (on) {
+                <p className="text-sm text-muted-foreground">
+                  Efetivo: {userBreakdown.effectiveSlugs.length} área(s)
+                </p>
+                <AccessPermissionEditor
+                  variant="user"
+                  modules={modules}
+                  inherited={new Set(userBreakdown.inheritedSlugs)}
+                  allow={userAllow}
+                  deny={userDeny}
+                  onToggleAllow={(slug, on) => {
                     setUserAllow((p) => {
                       const n = new Set(p);
-                      n.delete(slug);
+                      if (on) n.add(slug);
+                      else n.delete(slug);
                       return n;
                     });
-                  }
-                }}
-              />
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button variant="outline" onClick={restoreUserDefaults}>
-                  Restaurar padrões da função
-                </Button>
-                <Button onClick={saveUser}>Salvar usuário</Button>
-              </div>
-            </>
-          )}
+                    if (on) {
+                      setUserDeny((p) => {
+                        const n = new Set(p);
+                        n.delete(slug);
+                        return n;
+                      });
+                    }
+                  }}
+                  onToggleDeny={(slug, on) => {
+                    setUserDeny((p) => {
+                      const n = new Set(p);
+                      if (on) n.add(slug);
+                      else n.delete(slug);
+                      return n;
+                    });
+                    if (on) {
+                      setUserAllow((p) => {
+                        const n = new Set(p);
+                        n.delete(slug);
+                        return n;
+                      });
+                    }
+                  }}
+                />
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <Button variant="outline" className="min-h-[44px]" onClick={restoreUserDefaults}>
+                    Restaurar padrões da função
+                  </Button>
+                  <Button className="min-h-[44px]" onClick={saveUser}>
+                    Salvar usuário
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
@@ -402,18 +338,17 @@ export default function PessoasAcessosPage() {
             <CardTitle>Acessos</CardTitle>
           </CardHeader>
           <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Catálogo sincronizado com os módulos da plataforma ({modules.length} áreas). Novos módulos entram
-            negados até configurar na aba Funções.
-          </p>
-          <ul className="mt-3 max-h-[60vh] space-y-1 overflow-y-auto text-sm">
-            {modules.map((m) => (
-              <li key={m.slug}>
-                {moduleLabel(m.slug)}{" "}
-                <span className="text-xs text-muted-foreground">· {m.functionalArea}</span>
-              </li>
-            ))}
-          </ul>
+            <p className="text-sm text-muted-foreground">
+              Catálogo da plataforma ({modules.length} áreas). Novos módulos entram negados até marcar na função.
+            </p>
+            <ul className="mt-3 max-h-[60vh] columns-1 gap-x-8 text-sm md:columns-2 xl:columns-3">
+              {modules.map((m) => (
+                <li key={m.slug} className="break-inside-avoid py-0.5">
+                  {moduleLabel(m.slug)}{" "}
+                  <span className="text-xs text-muted-foreground">· {m.functionalArea}</span>
+                </li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       )}
@@ -424,20 +359,20 @@ export default function PessoasAcessosPage() {
             <CardTitle>Auditoria</CardTitle>
           </CardHeader>
           <CardContent>
-          <ul className="space-y-2 text-sm">
-            {audit.cup360.map((e) => (
-              <li key={e.id} className="rounded-md border border-border px-3 py-2">
-                {new Date(e.createdAt).toLocaleString("pt-BR")} · {e.actorEmail ?? "—"} · {e.changeType}{" "}
-                {e.targetLabel ? `· ${e.targetLabel}` : ""}
-              </li>
-            ))}
-            {audit.matrix.map((e) => (
-              <li key={e.id} className="rounded-md border border-border px-3 py-2 opacity-80">
-                Legado matriz · {new Date(e.createdAt).toLocaleString("pt-BR")} · {e.actorEmail ?? "—"} ·{" "}
-                {e.changeCount} célula(s)
-              </li>
-            ))}
-          </ul>
+            <ul className="space-y-2 text-sm">
+              {audit.cup360.map((e) => (
+                <li key={e.id} className="rounded-md border border-border px-3 py-2">
+                  {new Date(e.createdAt).toLocaleString("pt-BR")} · {e.actorEmail ?? "—"} · {e.changeType}{" "}
+                  {e.targetLabel ? `· ${e.targetLabel}` : ""}
+                </li>
+              ))}
+              {audit.matrix.map((e) => (
+                <li key={e.id} className="rounded-md border border-border px-3 py-2 opacity-80">
+                  Legado matriz · {new Date(e.createdAt).toLocaleString("pt-BR")} · {e.actorEmail ?? "—"} ·{" "}
+                  {e.changeCount} célula(s)
+                </li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       )}

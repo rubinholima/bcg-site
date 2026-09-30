@@ -96,6 +96,7 @@ export default function UsuariosPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isSuperAdmin, isCompanyAdmin, user: currentUser } = useAuth();
+  const canOpenPessoasAcessos = isSuperAdmin || isCompanyAdmin;
   const { roles: roleCatalog } = usePlatformRoles();
   const roleOptionsForSelect = selectableRolesForActor(isSuperAdmin, roleCatalog);
   const [users, setUsers] = useState<UserListItem[]>([]);
@@ -224,6 +225,13 @@ export default function UsuariosPage() {
                   ))}
                 </SelectContent>
               </Select>
+              {canOpenPessoasAcessos ? (
+                <Link href="/dashboard/configuracoes/pessoas-acessos">
+                  <Button variant="outline" className="min-h-[44px]">
+                    Pessoas e acessos
+                  </Button>
+                </Link>
+              ) : null}
               <Link href="/dashboard/usuarios/new">
                 <Button className="min-h-[44px]">
                   <Plus className="mr-2 h-4 w-4" />
