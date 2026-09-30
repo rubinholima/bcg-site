@@ -24,15 +24,11 @@ import { FeedbackModal } from "@/components/ui/feedback-modal";
 
 import { useAuth } from "@/context/AuthContext";
 
-import { MODULE_DISPLAY_NAMES } from "@/lib/dashboard-labels";
-
-import { getMenuAccessTree } from "@/lib/dashboard-menu.config";
-
 import {
 
-  buildStorageSlugLabelMap,
+  buildAuthorizationSlugLabelMap,
 
-  labelForStorageSlug,
+  humanLabelForAuthorizationSlug,
 
 } from "@/lib/access-menu-permission.util";
 
@@ -160,7 +156,7 @@ function SlugSummaryList({
 
       {slugs.map((s) => (
 
-        <li key={s}>{labelForStorageSlug(s, labelMap) || MODULE_DISPLAY_NAMES[s] || s}</li>
+        <li key={s}>{humanLabelForAuthorizationSlug(s, labelMap)}</li>
 
       ))}
 
@@ -192,7 +188,7 @@ export default function PessoasAcessosPage() {
 
 
 
-  const slugLabelMap = useMemo(() => buildStorageSlugLabelMap(getMenuAccessTree()), []);
+  const slugLabelMap = useMemo(() => buildAuthorizationSlugLabelMap(), []);
 
 
 
