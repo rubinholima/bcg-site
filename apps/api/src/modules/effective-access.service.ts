@@ -53,6 +53,29 @@ export class EffectiveAccessService {
     return rows.map((r) => r.module.slug);
   }
 
+  /** Perfil legado sem usuário autenticado — só defaults da função plataforma (fail-closed). */
+  async getEffectiveSlugsForRole(role: string): Promise<string[]> {
+    if (role === 'super_admin') {
+      const all = await this.prisma.module.findMany({ select: { slug: true } });
+      return all.map((m) => m.slug);
+    }
+    const catalog = await this.loadModuleCatalog();
+    const allModuleSlugs = catalog.map((m) => m.slug);
+    const implications = catalog.map((m) => ({ slug: m.slug, impliesSlug: m.impliesSlug }));
+    const legacy = moduleMatrixRoleSlug(role);
+    const fn = await this.prisma.jobRole.findFirst({
+      where: { scope: 'platform', platformLegacyRole: legacy, isActive: true },
+    });
+    const baseSlugs = fn ? await this.getBaseSlugsForFunction(fn.id) : [];
+    return resolveEffectiveModuleSlugs({
+      role,
+      allModuleSlugs,
+      implications,
+      baseSlugs,
+      overrides: [],
+    });
+  }
+
   async getEffectiveSlugsForUser(userId: string, role: string): Promise<string[]> {
     if (role === 'super_admin') {
       const all = await this.prisma.module.findMany({ select: { slug: true } });
@@ -187,6 +210,67 @@ export class EffectiveAccessService {
       denySlugs,
       effectiveSlugs,
     };
+  }
+
+  async restoreUserToFunctionDefaults(userId: string): Promise<void> {
+    await this.prisma.userModuleOverride.deleteMany({ where: { userId } });
+    await this.prisma.userModuleAccess.deleteMany({ where: { userId } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { customModuleAccess: false },
+    });
+  }
+
+  async createPlatformFunction(data: {
+    name: string;
+    code?: string | null;
+    description?: string | null;
+    platformFamily?: string | null;
+    platformLegacyRole?: string | null;
+  }) {
+    return this.prisma.jobRole.create({
+      data: {
+        tenantId: null,
+        scope: 'platform',
+        type: 'staff',
+        forFootball: false,
+        name: data.name.trim(),
+        code: data.code?.trim() || null,
+        description: data.description ?? null,
+        platformFamily: data.platformFamily ?? null,
+        platformLegacyRole: data.platformLegacyRole ?? null,
+        isActive: true,
+      },
+    });
+  }
+
+  async updatePlatformFunction(
+    id: string,
+    data: {
+      name?: string;
+      code?: string | null;
+      description?: string | null;
+      platformFamily?: string | null;
+      isActive?: boolean;
+    },
+  ) {
+    return this.prisma.jobRole.update({
+      where: { id },
+      data: {
+        ...(data.name != null && { name: data.name.trim() }),
+        ...(data.code !== undefined && { code: data.code?.trim() || null }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.platformFamily !== undefined && { platformFamily: data.platformFamily }),
+        ...(data.isActive !== undefined && { isActive: data.isActive }),
+      },
+    });
+  }
+
+  async listCup360AccessAudit(limit = 50) {
+    return this.prisma.cup360AccessAudit.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limit, 100),
+    });
   }
 
   async listPlatformFunctions() {

@@ -108,6 +108,10 @@ log "API: prisma migrate + generate + build..."
 cd "$WORK_TREE/apps/api"
 pnpm exec prisma migrate deploy
 pnpm exec prisma generate
+if [ -f scripts/cup360-production-access-pipeline.ts ]; then
+  log "CUP360: pipeline de acesso (backfill + conversão custom)..."
+  pnpm exec ts-node -r tsconfig-paths/register scripts/cup360-production-access-pipeline.ts || exit 1
+fi
 if command -v pm2 >/dev/null 2>&1; then
   pm2 stop bcg-api bcg-web 2>/dev/null || true
 fi

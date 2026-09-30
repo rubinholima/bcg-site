@@ -22,3 +22,8 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
   const params = await ctx.params;
   return forwardRequest(request, await targetPath(params), { requireAuth: true });
 }
+
+export async function POST(request: NextRequest, ctx: Ctx) {
+  const params = await ctx.params;
+  return forwardRequest(request, await targetPath(params), { requireAuth: true });
+}

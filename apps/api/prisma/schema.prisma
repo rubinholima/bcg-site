@@ -974,6 +974,23 @@ model UserModuleAccess {
   @@index([moduleId])
 }
 
+/// Auditoria CUP360 — função, usuário e overrides.
+model Cup360AccessAudit {
+  id          String   @id @default(cuid())
+  actorSub    String
+  actorEmail  String?
+  targetType  String   // user | function
+  targetId    String
+  targetLabel String?
+  moduleSlug  String?
+  changeType  String   // function_default | user_allow | user_deny | user_function | restore_defaults
+  before      Json?
+  after       Json?
+  createdAt   DateTime @default(now())
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}
+
 /// Auditoria de alterações na matriz de permissões (super admin). Não altera o modelo de autorização em runtime.
 model PermissionMatrixAudit {
   id          String   @id @default(cuid())
@@ -1963,6 +1980,10 @@ model JobRole {
   scope        String   @default("tenant")
   /** Mapeia User.role legado (ex.: gerente) para defaults da função plataforma */
   platformLegacyRole String? @unique
+  /** Família de negócio na UI (futebol, saude, gestao, …) */
+  platformFamily String?
+  description  String?  @db.Text
+  isActive     Boolean  @default(true)
   /** Aparece em Cadastros do Futebol → Funções e no dropdown da comissão */
   forFootball  Boolean  @default(false)
   createdAt    DateTime @default(now())

@@ -5,6 +5,7 @@ import {
   NotFoundException,
   Param,
   Patch,
+  Post,
   Put,
   UseGuards,
 } from '@nestjs/common';
@@ -31,6 +32,35 @@ export class AccessAdminController {
     return this.effectiveAccess.listPlatformFunctions();
   }
 
+  @Post('functions')
+  createFunction(
+    @Body()
+    body: {
+      name: string;
+      code?: string;
+      description?: string;
+      platformFamily?: string;
+      platformLegacyRole?: string;
+    },
+  ) {
+    return this.effectiveAccess.createPlatformFunction(body);
+  }
+
+  @Patch('functions/:id')
+  updateFunction(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      name?: string;
+      code?: string;
+      description?: string;
+      platformFamily?: string;
+      isActive?: boolean;
+    },
+  ) {
+    return this.effectiveAccess.updatePlatformFunction(id, body);
+  }
+
   @Put('functions/:id/defaults')
   async updateFunctionDefaults(
     @Param('id') id: string,
@@ -45,6 +75,12 @@ export class AccessAdminController {
     const breakdown = await this.effectiveAccess.getBreakdownForUser(userId);
     if (!breakdown) throw new NotFoundException('Usuário não encontrado');
     return breakdown;
+  }
+
+  @Post('users/:userId/restore-function-defaults')
+  async restoreUserDefaults(@Param('userId') userId: string) {
+    await this.effectiveAccess.restoreUserToFunctionDefaults(userId);
+    return this.effectiveAccess.getBreakdownForUser(userId);
   }
 
   @Patch('users/:userId')
@@ -63,10 +99,13 @@ export class AccessAdminController {
 
   @Get('audit')
   async getAudit() {
-    const entries = await this.modulesService.getRecentAuditEntries(40);
-    return entries.map((e) => ({
-      ...e,
-      createdAt: e.createdAt.toISOString(),
-    }));
+    const [cup360, matrix] = await Promise.all([
+      this.effectiveAccess.listCup360AccessAudit(40),
+      this.modulesService.getRecentAuditEntries(20),
+    ]);
+    return {
+      cup360: cup360.map((e) => ({ ...e, createdAt: e.createdAt.toISOString() })),
+      matrix: matrix.map((e) => ({ ...e, createdAt: e.createdAt.toISOString() })),
+    };
   }
 }

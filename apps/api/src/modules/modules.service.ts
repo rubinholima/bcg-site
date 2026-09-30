@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RolesService } from '../roles/roles.service';
-import {
-  isFootballManagementRole,
-  isFootballOperationalModuleSlug,
-} from './football-domain-access.util';
-import { moduleMatrixRoleSlug } from './module-matrix-role.util';
+import { isFootballOperationalModuleSlug } from './football-domain-access.util';
 import { EffectiveAccessService } from './effective-access.service';
 
 export interface ModuleWithPermissions {
@@ -118,22 +114,13 @@ export class ModulesService {
       .map((m) => m.slug);
   }
 
-  private async mergeFootballManagementAccess(role: string, slugs: string[]): Promise<string[]> {
-    if (!isFootballManagementRole(role)) return slugs;
-    const footballSlugs = await this.getFootballOperationalModuleSlugs();
-    return this.expandModuleSlugs([...new Set([...slugs, ...footballSlugs])]);
-  }
-
+  /** @deprecated Matriz legada — runtime usa EffectiveAccessService.getEffectiveSlugsForRole. */
   async getSlugsForRole(role: string): Promise<string[]> {
-    const matrixRole = moduleMatrixRoleSlug(role);
-    const rows = await this.prisma.moduleRole.findMany({
-      where: { role: matrixRole, canAccess: true },
-      include: { module: true },
-      orderBy: { module: { sortOrder: 'asc' } },
-    });
-    const raw = rows.map((r) => r.module.slug);
-    const expanded = await this.expandModuleSlugs(raw);
-    return this.mergeFootballManagementAccess(role, expanded);
+    try {
+      return await this.effectiveAccess.getEffectiveSlugsForRole(role);
+    } catch {
+      return [];
+    }
   }
 
   async getAllModuleSlugs(): Promise<string[]> {

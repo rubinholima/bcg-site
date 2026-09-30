@@ -1623,10 +1623,10 @@ const DASHBOARD_MENU_LEGACY: MenuItemConfig[] = [
       },
       {
         slug: "config_usuarios",
-        label: DASHBOARD_LABELS.usuarios,
-        href: "/dashboard/usuarios",
+        label: "Pessoas e acessos",
+        href: "/dashboard/configuracoes/pessoas-acessos",
         icon: Users,
-        moduleSlug: "usuarios",
+        moduleSlug: "configuracoes",
       },
       {
         slug: "config_compras",

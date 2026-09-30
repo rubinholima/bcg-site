@@ -13,6 +13,7 @@ import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { useAuth } from "@/context/AuthContext";
 import { MODULE_DISPLAY_NAMES } from "@/lib/dashboard-labels";
 import { buildModuleCatalog } from "@/lib/dashboard-menu.config";
+import { AccessPermissionEditor } from "@/components/dashboard/access/AccessPermissionEditor";
 
 type TabId = "usuarios" | "funcoes" | "acessos" | "auditoria";
 
@@ -77,9 +78,10 @@ export default function PessoasAcessosPage() {
   const [userAllow, setUserAllow] = useState<Set<string>>(new Set());
   const [userDeny, setUserDeny] = useState<Set<string>>(new Set());
 
-  const [audit, setAudit] = useState<
-    Array<{ id: string; createdAt: string; actorEmail: string | null; changeCount: number }>
-  >([]);
+  const [audit, setAudit] = useState<{
+    cup360: Array<{ id: string; createdAt: string; actorEmail: string | null; changeType: string; targetLabel: string | null }>;
+    matrix: Array<{ id: string; createdAt: string; actorEmail: string | null; changeCount: number }>;
+  }>({ cup360: [], matrix: [] });
 
   const groupedModules = useMemo(() => {
     const q = moduleSearch.trim().toLowerCase();
@@ -172,6 +174,23 @@ export default function PessoasAcessosPage() {
     setFeedback({ title: "Salvo", message: "Defaults da função atualizados." });
   };
 
+  const restoreUserDefaults = async () => {
+    if (!selectedUserId) return;
+    const res = await fetch(
+      `/api/settings/access/users/${encodeURIComponent(selectedUserId)}/restore-function-defaults`,
+      { method: "POST", credentials: "include" },
+    );
+    if (!res.ok) {
+      setFeedback({ title: "Erro", message: "Não foi possível restaurar os padrões da função." });
+      return;
+    }
+    const data = await res.json();
+    setUserBreakdown(data);
+    setUserAllow(new Set());
+    setUserDeny(new Set());
+    setFeedback({ title: "Restaurado", message: "Exceções removidas — só permanece o padrão da função." });
+  };
+
   const saveUser = async () => {
     if (!selectedUserId) return;
     const res = await fetch(`/api/settings/access/users/${encodeURIComponent(selectedUserId)}`, {
@@ -248,32 +267,22 @@ export default function PessoasAcessosPage() {
               label: `${f.name} (${f._count.platformUsers} usuários)`,
             }))}
           />
-          <Input
-            className="mt-3 max-w-md text-foreground"
-            placeholder="Buscar área…"
-            value={moduleSearch}
-            onChange={(e) => setModuleSearch(e.target.value)}
-          />
-          <div className="mt-4 max-h-[55vh] space-y-4 overflow-y-auto">
-            {groupedModules.map(([area, rows]) => (
-              <div key={area}>
-                <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{area}</p>
-                <ul className="space-y-1">
-                  {rows.map((m) => (
-                    <li key={m.slug}>
-                      <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40">
-                        <input
-                          type="checkbox"
-                          checked={functionModuleSlugs.has(m.slug)}
-                          onChange={() => toggleFunctionModule(m.slug)}
-                        />
-                        <span className="text-sm">{moduleLabel(m.slug)}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          <div className="mt-4">
+            <AccessPermissionEditor
+              modules={modules}
+              inherited={new Set()}
+              allow={functionModuleSlugs}
+              deny={new Set()}
+              onToggleAllow={(slug, on) => {
+                setFunctionModuleSlugs((prev) => {
+                  const next = new Set(prev);
+                  if (on) next.add(slug);
+                  else next.delete(slug);
+                  return next;
+                });
+              }}
+              onToggleDeny={() => {}}
+            />
           </div>
           <Button className="mt-4" disabled={!selectedFunctionId} onClick={saveFunction}>
             Salvar função
@@ -338,77 +347,48 @@ export default function PessoasAcessosPage() {
               <p className="mt-3 text-sm text-muted-foreground">
                 Efetivo: {userBreakdown.effectiveSlugs.length} área(s)
               </p>
-              <Input
-                className="mt-3 max-w-md text-foreground"
-                placeholder="Buscar para exceções…"
-                value={moduleSearch}
-                onChange={(e) => setModuleSearch(e.target.value)}
+              <AccessPermissionEditor
+                modules={modules}
+                inherited={new Set(userBreakdown.inheritedSlugs)}
+                allow={userAllow}
+                deny={userDeny}
+                onToggleAllow={(slug, on) => {
+                  setUserAllow((p) => {
+                    const n = new Set(p);
+                    if (on) n.add(slug);
+                    else n.delete(slug);
+                    return n;
+                  });
+                  if (on) {
+                    setUserDeny((p) => {
+                      const n = new Set(p);
+                      n.delete(slug);
+                      return n;
+                    });
+                  }
+                }}
+                onToggleDeny={(slug, on) => {
+                  setUserDeny((p) => {
+                    const n = new Set(p);
+                    if (on) n.add(slug);
+                    else n.delete(slug);
+                    return n;
+                  });
+                  if (on) {
+                    setUserAllow((p) => {
+                      const n = new Set(p);
+                      n.delete(slug);
+                      return n;
+                    });
+                  }
+                }}
               />
-              <div className="mt-3 max-h-[40vh] space-y-4 overflow-y-auto">
-                {groupedModules.map(([area, rows]) => (
-                  <div key={area}>
-                    <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{area}</p>
-                    <ul className="space-y-1">
-                      {rows.map((m) => {
-                        const inherited = userBreakdown.inheritedSlugs.includes(m.slug);
-                        return (
-                          <li key={m.slug} className="flex flex-wrap items-center gap-3 rounded-md px-2 py-1">
-                            <span className="min-w-0 flex-1 text-sm">
-                              {moduleLabel(m.slug)}
-                              {inherited ? (
-                                <span className="ml-2 text-xs text-muted-foreground">(herdado)</span>
-                              ) : null}
-                            </span>
-                            <label className="flex items-center gap-1 text-xs">
-                              <input
-                                type="checkbox"
-                                checked={userAllow.has(m.slug)}
-                                onChange={() => {
-                                  setUserAllow((p) => {
-                                    const n = new Set(p);
-                                    if (n.has(m.slug)) n.delete(m.slug);
-                                    else n.add(m.slug);
-                                    return n;
-                                  });
-                                  setUserDeny((p) => {
-                                    const n = new Set(p);
-                                    n.delete(m.slug);
-                                    return n;
-                                  });
-                                }}
-                              />
-                              Liberar
-                            </label>
-                            <label className="flex items-center gap-1 text-xs">
-                              <input
-                                type="checkbox"
-                                checked={userDeny.has(m.slug)}
-                                onChange={() => {
-                                  setUserDeny((p) => {
-                                    const n = new Set(p);
-                                    if (n.has(m.slug)) n.delete(m.slug);
-                                    else n.add(m.slug);
-                                    return n;
-                                  });
-                                  setUserAllow((p) => {
-                                    const n = new Set(p);
-                                    n.delete(m.slug);
-                                    return n;
-                                  });
-                                }}
-                              />
-                              Negar
-                            </label>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button variant="outline" onClick={restoreUserDefaults}>
+                  Restaurar padrões da função
+                </Button>
+                <Button onClick={saveUser}>Salvar usuário</Button>
               </div>
-              <Button className="mt-4" onClick={saveUser}>
-                Salvar usuário
-              </Button>
             </>
           )}
           </CardContent>
@@ -444,10 +424,16 @@ export default function PessoasAcessosPage() {
           </CardHeader>
           <CardContent>
           <ul className="space-y-2 text-sm">
-            {audit.map((e) => (
+            {audit.cup360.map((e) => (
               <li key={e.id} className="rounded-md border border-border px-3 py-2">
-                {new Date(e.createdAt).toLocaleString("pt-BR")} · {e.actorEmail ?? "—"} · {e.changeCount}{" "}
-                alteração(ões)
+                {new Date(e.createdAt).toLocaleString("pt-BR")} · {e.actorEmail ?? "—"} · {e.changeType}{" "}
+                {e.targetLabel ? `· ${e.targetLabel}` : ""}
+              </li>
+            ))}
+            {audit.matrix.map((e) => (
+              <li key={e.id} className="rounded-md border border-border px-3 py-2 opacity-80">
+                Legado matriz · {new Date(e.createdAt).toLocaleString("pt-BR")} · {e.actorEmail ?? "—"} ·{" "}
+                {e.changeCount} célula(s)
               </li>
             ))}
           </ul>

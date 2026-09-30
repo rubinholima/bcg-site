@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ import {
   canAccessMenuLeaf,
   hasAccessToMenuItem,
 } from "@/lib/dashboard-menu.config";
-import { workspaceForDept } from "@/lib/dashboard-nav-workspaces";
+import { filterAccessibleWorkspaceMenu, workspaceForDept } from "@/lib/dashboard-nav-workspaces";
 import { getDashboardHomeMenuItem, getHomeDashboardRoute } from "@/lib/dashboard-home";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
@@ -469,6 +469,19 @@ function SidebarNav() {
   const collapsed = sidebarDesktopMode === "icons";
   const [flyoutSlug, setFlyoutSlug] = useState<string | null>(null);
 
+  const visibleMenu = useMemo(
+    () =>
+      filterAccessibleWorkspaceMenu(
+        DASHBOARD_MENU,
+        canAccessModule,
+        canAccessDashboard,
+        isSuperAdmin,
+        role,
+        modules,
+      ),
+    [canAccessModule, canAccessDashboard, isSuperAdmin, role, modules],
+  );
+
   const inPath = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname?.startsWith(href + "/"));
 
@@ -685,7 +698,7 @@ function SidebarNav() {
       ) : null}
 
       <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-4 uppercase tracking-wide">
-        {DASHBOARD_MENU.map((item) => {
+        {visibleMenu.map((item) => {
           const Icon = item.icon!;
 
           if (item.slug === "dashboard") {
