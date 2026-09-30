@@ -25,6 +25,7 @@ import {
   type TryoutRenewalHistoryEntry,
 } from './tryout-workflow.util';
 import { TenantAccessService } from '../auth/tenant-access.service';
+import { S3Service } from '../s3/s3.service';
 import { TryoutSupervisionValidateDto } from './dto/tryout-supervision.dto';
 import { TryoutRenewPeriodDto, TryoutEarlyApprovalDto } from './dto/tryout-renewal.dto';
 import { CreateTryoutCoachEvaluationDto } from './dto/tryout-coach-evaluation.dto';
@@ -71,7 +72,12 @@ export class TryoutWorkflowService {
     private readonly tenantAccess: TenantAccessService,
     private readonly workflowEvents: TryoutWorkflowEventsService,
     private readonly prospectDocuments: TryoutProspectDocumentsService,
+    private readonly s3: S3Service,
   ) {}
+
+  async getDocumentBuffer(storageKey: string): Promise<Buffer> {
+    return this.s3.getObjectBuffer(storageKey);
+  }
 
   /** Captação / encaminhamento — não inicia ciclo semanal nem ativa workflow até chegada. */
   async enterTryoutWorkflow(prospectId: string, referralSource?: string | null) {
@@ -1054,9 +1060,43 @@ export class TryoutWorkflowService {
     };
   }
 
+  async listCoachesForTryout(tenantId: string, allowed: string[] | null, category?: string) {
+    this.tenantAccess.assertCanAccessTenant(allowed, tenantId);
+    const cat = category?.trim().toLowerCase() || null;
+    const rows = await this.prisma.technicalStaff.findMany({
+      where: {
+        tenantId,
+        role: { in: [...COACHING_STAFF_ROLES] },
+      },
+      select: { id: true, name: true, role: true, categories: true },
+      orderBy: { name: 'asc' },
+      take: 200,
+    });
+    return rows
+      .map((r) => {
+        const categories = Array.isArray(r.categories) ? (r.categories as string[]) : [];
+        const matchesCategory =
+          !cat ||
+          categories.length === 0 ||
+          categories.some((c) => c.toLowerCase() === cat);
+        return {
+          id: r.id,
+          name: r.name,
+          role: r.role,
+          categories,
+          matchesCategory,
+        };
+      })
+      .sort((a, b) => {
+        if (a.matchesCategory !== b.matchesCategory) return a.matchesCategory ? -1 : 1;
+        return a.name.localeCompare(b.name, 'pt-BR');
+      });
+  }
+
   async getDossier(prospectId: string, allowed: string[] | null) {
     const prospect = await this.findProspectForAccess(prospectId, allowed);
-    const [physioOp, coach, documents, events, weeklyEvaluations] = await Promise.all([
+    const [physioOp, coach, documents, events, weeklyEvaluations, documentBlocking] =
+      await Promise.all([
       this.physioTryout.getOperationalStatusForProspect(prospectId),
       this.getLatestCoachEvaluation(prospectId),
       this.prospectDocuments.listActive(prospectId),
@@ -1065,13 +1105,15 @@ export class TryoutWorkflowService {
         where: { prospectId },
         orderBy: { cycleNumber: 'asc' },
       }),
+      this.prospectDocuments.getBlockingStatus(prospectId, prospect.birthDate),
     ]);
     return {
       prospect,
       physioOperational: physioOp,
       coachEvaluation: coach,
       weeklyEvaluations,
-      documents,
+      documents: documents.map((d) => this.prospectDocuments.toPublicRow(d)),
+      documentBlocking,
       workflowEvents: events,
       renewalHistory: parseRenewalHistory(prospect.tryoutRenewalHistory),
     };

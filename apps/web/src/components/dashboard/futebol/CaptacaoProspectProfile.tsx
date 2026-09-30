@@ -36,6 +36,7 @@ import {
   type CaptacaoEvaluationFormValues,
 } from "./CaptacaoEvaluationFields";
 import { CaptacaoProspectCtSchedule } from "./CaptacaoProspectCtSchedule";
+import { TryoutProspectWorkflowPanel } from "./TryoutProspectWorkflowPanel";
 
 function InfoBlock({ label, value }: { label: string; value?: string | null }) {
   if (!value?.trim()) return null;
@@ -279,6 +280,23 @@ export function CaptacaoProspectProfile() {
         initialDecision={gerenteDecisaoInitial}
         onUpdated={loadProspect}
       />
+
+      {prospect.tryoutWorkflowStage ||
+      prospect.evaluationOutcome === "para_teste" ||
+      prospect.stage === "tryout" ? (
+        <Card className="border-violet-500/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Try Out — fluxo operacional</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TryoutProspectWorkflowPanel
+              prospectId={prospect.id}
+              tenantId={tenantId || prospect.tenantId}
+              onUpdated={loadProspect}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

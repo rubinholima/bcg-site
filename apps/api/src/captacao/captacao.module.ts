@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { PrismaModule } from '../prisma/prisma.module';
 import { ModulesModule } from '../modules/modules.module';
 import { FisioterapiaModule } from '../fisioterapia/fisioterapia.module';
 import { TryoutWorkflowModule } from '../tryout-workflow/tryout-workflow.module';
@@ -9,7 +10,7 @@ import { CaptacaoService } from './captacao.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 
 @Module({
-  imports: [AuthModule, ModulesModule, FisioterapiaModule, TryoutWorkflowModule],
+  imports: [PrismaModule, AuthModule, ModulesModule, FisioterapiaModule, TryoutWorkflowModule],
   controllers: [CaptacaoController],
   providers: [CaptacaoService, ModuleAccessGuard, MailService],
   exports: [CaptacaoService],

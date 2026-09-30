@@ -15,6 +15,9 @@ import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { CaptacaoService } from './captacao.service';
+import { TenantAccessService } from '../auth/tenant-access.service';
+import { CognitoJwtPayload } from '../auth/jwt-auth.guard';
+import type { Request } from 'express';
 import { CreateScoutDto } from './dto/create-scout.dto';
 import { UpdateScoutDto } from './dto/update-scout.dto';
 import { CreateProspectDto } from './dto/create-prospect.dto';
@@ -33,7 +36,10 @@ import { SupervisorCtDto } from './dto/supervisor-ct.dto';
 @Controller('captacao')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class CaptacaoController {
-  constructor(private readonly service: CaptacaoService) {}
+  constructor(
+    private readonly service: CaptacaoService,
+    private readonly tenantAccess: TenantAccessService,
+  ) {}
 
   @Get('stats')
   @UseGuards(ModuleAccessGuard)
@@ -238,16 +244,24 @@ export class CaptacaoController {
   @Post('prospects/:id/manager-decision')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('futebol_captacao')
-  managerDecision(
+  async managerDecision(
     @Param('id') id: string,
     @Body() dto: ManagerDecisionDto,
-    @Req() req: { user: { name?: string; email?: string; role?: string } },
+    @Req() req: Request & { user: CognitoJwtPayload },
   ) {
-    return this.service.recordManagerDecision(id, dto, {
-      name: req.user?.name,
-      email: req.user?.email,
-      role: req.user?.role,
-    });
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+    return this.service.recordManagerDecision(
+      id,
+      dto,
+      {
+        name: req.user?.name,
+        email: req.user?.email,
+        role: req.user?.role,
+      },
+      allowed,
+      req.user.sub,
+    );
   }
 
   @Get('supervisor-queue')

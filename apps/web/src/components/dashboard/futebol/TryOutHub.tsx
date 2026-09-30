@@ -42,9 +42,27 @@ import {
   tryoutStageBadgeClass,
 } from "@/lib/tryout-workflow-types";
 import { CaptacaoManagerDecisionPanel } from "./CaptacaoManagerDecisionPanel";
+import { TryoutProspectWorkflowPanel } from "./TryoutProspectWorkflowPanel";
 import type { ScoutingProspect } from "@/lib/captacao-types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Tenant = { id: string; name: string };
+
+function toDateInputValue(iso?: string | null): string {
+  if (!iso?.trim()) return new Date().toISOString().slice(0, 10);
+  const d = new Date(iso.length <= 10 ? `${iso}T12:00:00` : iso);
+  if (Number.isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+  return d.toISOString().slice(0, 10);
+}
 
 type Props = {
   tenants: Tenant[];
@@ -61,17 +79,6 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
   const [supervisionNotes, setSupervisionNotes] = useState("");
   const [arrivalSource, setArrivalSource] = useState("");
   const [arrivalDate, setArrivalDate] = useState("");
-  const [coachForm, setCoachForm] = useState({
-    staffId: "",
-    staffName: "",
-    technicalRating: "3",
-    physicalRating: "3",
-    tacticalRating: "3",
-    cognitiveRating: "3",
-    descriptiveObservation: "",
-    justification: "",
-    outcome: "aprovado" as "aprovado" | "reprovado" | "mais_uma_semana",
-  });
   const [newAthleteOpen, setNewAthleteOpen] = useState(false);
   const [newAthlete, setNewAthlete] = useState({
     arrivalReferralSource: "indicacao_parceira",
@@ -98,8 +105,9 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
   });
   const [detailProspect, setDetailProspect] = useState<ScoutingProspect | null>(null);
   const [dialog, setDialog] = useState<
-    "supervision" | "arrival" | "coach" | "registration" | "manager" | "legacy" | null
+    "supervision" | "arrival" | "registration" | "manager" | "legacy" | "workflow" | null
   >(null);
+  const [legacyConfirmOpen, setLegacyConfirmOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -153,6 +161,18 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
     await load();
     setDialog(null);
     setActive(null);
+  }
+
+  async function confirmLegacyActivation() {
+    if (!active || !arrivalDate) return;
+    await api.post(`/tryout-workflow/prospects/${active.id}/activate-legacy`, {
+      arrivalReferralSource: arrivalSource,
+      arrivalAt: arrivalDate,
+    });
+    setLegacyConfirmOpen(false);
+    setDialog(null);
+    setActive(null);
+    await load();
   }
 
   return (
@@ -287,6 +307,17 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap justify-end gap-1">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-8"
+                          onClick={() => {
+                            setActive(p);
+                            setDialog("workflow");
+                          }}
+                        >
+                          Fluxo
+                        </Button>
                         {p.tryoutEffectiveStage === "aguardando_supervisao" ? (
                           <>
                             <Button
@@ -296,6 +327,7 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                               onClick={() => {
                                 setActive(p);
                                 setArrivalSource(p.arrivalReferralSource ?? "captacao");
+                                setArrivalDate(toDateInputValue(p.arrivalAt));
                                 setDialog("arrival");
                               }}
                             >
@@ -344,19 +376,6 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                             <Link href={`/dashboard/futebol/captacao?tenantId=${tenantId}`}>Fila CT</Link>
                           </Button>
                         ) : null}
-                        {p.tryoutEffectiveStage === "aguardando_treinador" ||
-                        p.tryoutEffectiveStage === "em_avaliacao_campo" ? (
-                          <Button
-                            size="sm"
-                            className="h-8"
-                            onClick={() => {
-                              setActive(p);
-                              setDialog("coach");
-                            }}
-                          >
-                            Avaliar semana
-                          </Button>
-                        ) : null}
                         {p.tryoutEffectiveStage === "aguardando_gerencia" ? (
                           <Button size="sm" className="h-8" onClick={() => void openManager(p)}>
                             Gerência
@@ -385,19 +404,25 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
       )}
 
       {(hub?.legacyReview?.length ?? 0) > 0 ? (
-        <div className="space-y-2 rounded-lg border border-amber-500/30 bg-zinc-950/60 p-3">
-          <div className="text-sm font-medium text-amber-200">Revisar registros anteriores</div>
+        <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-950/20 p-4">
+          <div className="text-sm font-semibold text-amber-200">Revisar registros anteriores</div>
+          <p className="text-xs text-amber-200/70">
+            Cadastros antigos sem workflow iniciado. Não entram no fluxo ativo até confirmação explícita.
+          </p>
           <div className="space-y-1">
             {hub?.legacyReview?.map((p) => (
               <div
                 key={p.id}
-                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                className="flex flex-wrap items-center justify-between gap-2 rounded border border-amber-500/20 bg-zinc-950/40 px-3 py-2 text-sm"
               >
-                <span>{p.name}</span>
+                <span>
+                  {p.name}
+                  <span className="ml-2 text-xs text-muted-foreground">(legado — sem etapas)</span>
+                </span>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8"
+                  className="h-8 border-amber-500/40"
                   onClick={() => {
                     setActive(p);
                     setArrivalSource(p.arrivalReferralSource ?? "captacao");
@@ -615,10 +640,7 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                   });
                   return;
                 }
-                void post(`/tryout-workflow/prospects/${active.id}/activate-legacy`, {
-                  arrivalReferralSource: arrivalSource,
-                  arrivalAt: arrivalDate,
-                });
+                setLegacyConfirmOpen(true);
               }}
             >
               <Label>Origem</Label>
@@ -635,11 +657,30 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                 value={arrivalDate}
                 onChange={(e) => setArrivalDate(e.target.value)}
               />
-              <Button type="submit">Confirmar ativação</Button>
+              <Button type="submit">Continuar</Button>
             </form>
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={legacyConfirmOpen} onOpenChange={setLegacyConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ativar workflow Try Out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O registro legado de <strong>{active?.name}</strong> passará a integrar o fluxo ativo
+              (chegada em {arrivalDate ? formatDateDayMonYear(new Date(`${arrivalDate}T12:00:00`)) : "—"}).
+              Esta ação não é automática e não pode ser desfeita pelo hub.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmLegacyActivation()}>
+              Confirmar ativação
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={dialog === "supervision"} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent>
@@ -668,135 +709,17 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={dialog === "coach"} onOpenChange={(o) => !o && setDialog(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <Dialog open={dialog === "workflow"} onOpenChange={(o) => !o && setDialog(null)}>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Avaliação do treinador (campo)</DialogTitle>
+            <DialogTitle>{active ? `Try Out — ${active.name}` : "Try Out"}</DialogTitle>
           </DialogHeader>
           {active ? (
-            <form
-              className="space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!coachForm.descriptiveObservation.trim()) {
-                  setFeedback({
-                    open: true,
-                    title: "Observação obrigatória",
-                    message: "Descreva a avaliação do atleta.",
-                    variant: "warning",
-                  });
-                  return;
-                }
-                if (!coachForm.justification.trim()) {
-                  setFeedback({
-                    open: true,
-                    title: "Justificativa obrigatória",
-                    message: "Informe a justificativa da decisão semanal.",
-                    variant: "warning",
-                  });
-                  return;
-                }
-                if (!coachForm.staffId.trim()) {
-                  setFeedback({
-                    open: true,
-                    title: "Treinador",
-                    message: "Informe o ID do treinador responsável (staffId).",
-                    variant: "warning",
-                  });
-                  return;
-                }
-                void post(`/tryout-workflow/prospects/${active.id}/coach-evaluation`, {
-                  staffId: coachForm.staffId.trim(),
-                  staffName: coachForm.staffName.trim() || undefined,
-                  technicalRating: Number(coachForm.technicalRating),
-                  physicalRating: Number(coachForm.physicalRating),
-                  tacticalRating: Number(coachForm.tacticalRating),
-                  cognitiveRating: Number(coachForm.cognitiveRating),
-                  descriptiveObservation: coachForm.descriptiveObservation.trim(),
-                  justification: coachForm.justification.trim(),
-                  outcome: coachForm.outcome,
-                });
-              }}
-            >
-              <div>
-                <Label>Staff ID (treinador)</Label>
-                <Input
-                  required
-                  className="text-foreground"
-                  value={coachForm.staffId}
-                  onChange={(e) => setCoachForm((f) => ({ ...f, staffId: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label>Nome (opcional)</Label>
-                <Input
-                  className="text-foreground"
-                  value={coachForm.staffName}
-                  onChange={(e) => setCoachForm((f) => ({ ...f, staffName: e.target.value }))}
-                />
-              </div>
-              {(["technicalRating", "physicalRating", "tacticalRating", "cognitiveRating"] as const).map(
-                (key) => (
-                  <div key={key}>
-                    <Label>
-                      {key === "technicalRating"
-                        ? "Técnico (0–5)"
-                        : key === "physicalRating"
-                          ? "Físico (0–5)"
-                          : key === "tacticalRating"
-                            ? "Tático (0–5)"
-                            : "Cognitivo (0–5)"}
-                    </Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={5}
-                      step={0.5}
-                      className="text-foreground"
-                      value={coachForm[key]}
-                      onChange={(e) => setCoachForm((f) => ({ ...f, [key]: e.target.value }))}
-                    />
-                  </div>
-                ),
-              )}
-              <div>
-                <Label>Observação descritiva *</Label>
-                <Textarea
-                  required
-                  className="text-foreground"
-                  value={coachForm.descriptiveObservation}
-                  onChange={(e) =>
-                    setCoachForm((f) => ({ ...f, descriptiveObservation: e.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <Label>Justificativa *</Label>
-                <Textarea
-                  required
-                  className="text-foreground"
-                  value={coachForm.justification}
-                  onChange={(e) => setCoachForm((f) => ({ ...f, justification: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label>Decisão semanal</Label>
-                <NativeSelect
-                  value={coachForm.outcome}
-                  onChange={(e) =>
-                    setCoachForm((f) => ({
-                      ...f,
-                      outcome: e.target.value as "aprovado" | "reprovado" | "mais_uma_semana",
-                    }))
-                  }
-                >
-                  <option value="aprovado">Aprovado</option>
-                  <option value="reprovado">Reprovado</option>
-                  <option value="mais_uma_semana">Mais uma semana</option>
-                </NativeSelect>
-              </div>
-              <Button type="submit">Registrar avaliação</Button>
-            </form>
+            <TryoutProspectWorkflowPanel
+              prospectId={active.id}
+              tenantId={tenantId}
+              onUpdated={() => void load()}
+            />
           ) : null}
         </DialogContent>
       </Dialog>

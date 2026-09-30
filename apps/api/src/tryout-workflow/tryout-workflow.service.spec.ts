@@ -63,6 +63,7 @@ describe('TryoutWorkflowService — tenant isolation', () => {
     tenantAccess as never,
     {} as never,
     {} as never,
+    {} as never,
   );
 
   beforeEach(() => {
@@ -88,9 +89,149 @@ describe('TryoutWorkflowService — renewPeriod desativado', () => {
     { assertCanAccessTenant: jest.fn() } as never,
     {} as never,
     {} as never,
+    {} as never,
   );
 
   it('renewPeriod lança BadRequestException', async () => {
     await expect(service.renewPeriod('x', {}, 'a')).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('TryoutWorkflowService — avaliação semanal e gerência', () => {
+  const tenantAccess = {
+    assertCanAccessTenant: jest.fn(),
+  };
+
+  const prisma = {
+    scoutingProspect: {
+      findUnique: jest.fn(),
+    },
+    technicalStaff: {
+      findFirst: jest.fn(),
+    },
+    tryoutCoachEvaluation: {
+      findFirst: jest.fn(),
+    },
+  };
+
+  const physioTryout = {
+    getOperationalStatusForProspect: jest.fn(),
+  };
+
+  const service = new TryoutWorkflowService(
+    prisma as never,
+    {} as never,
+    physioTryout as never,
+    tenantAccess as never,
+    {} as never,
+    {} as never,
+    {} as never,
+  );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('createCoachEvaluation exige justificativa', async () => {
+    prisma.scoutingProspect.findUnique.mockResolvedValue({
+      id: 'p1',
+      tenantId: 't1',
+      flowPath: 'tryout',
+      tryoutWorkflowActivatedAt: new Date(),
+      tryoutWorkflowStage: 'em_avaliacao_campo',
+      tryoutCycleNumber: 1,
+      birthDate: '2000-01-01',
+    });
+    await expect(
+      service.createCoachEvaluation(
+        'p1',
+        {
+          staffId: 's1',
+          technicalRating: 3,
+          physicalRating: 3,
+          tacticalRating: 3,
+          cognitiveRating: 3,
+          descriptiveObservation: 'Ok',
+          justification: '   ',
+          outcome: 'aprovado',
+        },
+        ['t1'],
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('createCoachEvaluation impede segunda avaliação no mesmo ciclo', async () => {
+    prisma.scoutingProspect.findUnique.mockResolvedValue({
+      id: 'p1',
+      tenantId: 't1',
+      flowPath: 'tryout',
+      tryoutWorkflowActivatedAt: new Date(),
+      tryoutWorkflowStage: 'em_avaliacao_campo',
+      tryoutCycleNumber: 1,
+      tryoutPeriodStartedAt: new Date(),
+      tryoutPeriodEndsAt: new Date(),
+      birthDate: '2000-01-01',
+    });
+    prisma.technicalStaff.findFirst.mockResolvedValue({ id: 's1', role: 'tecnico', name: 'Coach' });
+    physioTryout.getOperationalStatusForProspect.mockResolvedValue({ canStartFieldEvaluation: true });
+    prisma.tryoutCoachEvaluation.findFirst.mockResolvedValue({ id: 'ev1', cycleNumber: 1 });
+
+    await expect(
+      service.createCoachEvaluation(
+        'p1',
+        {
+          staffId: 's1',
+          technicalRating: 3,
+          physicalRating: 3,
+          tacticalRating: 3,
+          cognitiveRating: 3,
+          descriptiveObservation: 'Ok',
+          justification: 'Motivo',
+          outcome: 'aprovado',
+        },
+        ['t1'],
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('recordTryoutManagerDecision nega role não autorizada', async () => {
+    await expect(
+      service.recordTryoutManagerDecision(
+        'p1',
+        { decision: 'aprovado', presentationDate: '2026-10-01' },
+        { role: 'editor' },
+        ['t1'],
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('assertValidCoachStaff via createCoachEvaluation — staff de outro tenant', async () => {
+    prisma.scoutingProspect.findUnique.mockResolvedValue({
+      id: 'p1',
+      tenantId: 't1',
+      flowPath: 'tryout',
+      tryoutWorkflowActivatedAt: new Date(),
+      tryoutWorkflowStage: 'em_avaliacao_campo',
+      tryoutCycleNumber: 1,
+      birthDate: '2000-01-01',
+    });
+    prisma.technicalStaff.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.createCoachEvaluation(
+        'p1',
+        {
+          staffId: 's-other',
+          technicalRating: 3,
+          physicalRating: 3,
+          tacticalRating: 3,
+          cognitiveRating: 3,
+          descriptiveObservation: 'Ok',
+          justification: 'Motivo',
+          outcome: 'aprovado',
+        },
+        ['t1'],
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

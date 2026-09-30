@@ -16,9 +16,51 @@ export class TryoutProspectDocumentsService {
 
   async listActive(prospectId: string) {
     return this.prisma.scoutingProspectDocument.findMany({
-      where: { prospectId, deletedAt: null },
+      where: {
+        prospectId,
+        deletedAt: null,
+        confidentialityCategory: 'operacional',
+      },
       orderBy: { uploadedAt: 'desc' },
     });
+  }
+
+  toPublicRow(row: {
+    id: string;
+    tenantId: string;
+    prospectId: string;
+    documentType: string;
+    confidentialityCategory: string;
+    originalFilename: string;
+    mimeType: string;
+    uploadedByUserId: string | null;
+    uploadedAt: Date;
+  }) {
+    return {
+      id: row.id,
+      tenantId: row.tenantId,
+      prospectId: row.prospectId,
+      documentType: row.documentType,
+      confidentialityCategory: row.confidentialityCategory,
+      originalFilename: row.originalFilename,
+      mimeType: row.mimeType,
+      uploadedByUserId: row.uploadedByUserId,
+      uploadedAt: row.uploadedAt.toISOString(),
+    };
+  }
+
+  async findForDownload(documentId: string, prospectId: string, tenantId: string) {
+    const row = await this.prisma.scoutingProspectDocument.findFirst({
+      where: {
+        id: documentId,
+        prospectId,
+        tenantId,
+        deletedAt: null,
+        confidentialityCategory: 'operacional',
+      },
+    });
+    if (!row) throw new NotFoundException('Documento não encontrado.');
+    return row;
   }
 
   async upload(

@@ -45,6 +45,7 @@ import { MailService } from '../common/mail.service';
 import { PhysioTryoutClearanceService } from '../fisioterapia/physio-tryout-clearance.service';
 import { TryoutWorkflowService } from '../tryout-workflow/tryout-workflow.service';
 import { isProspectInTryoutWorkflow } from '../tryout-workflow/tryout-workflow.constants';
+import { TenantAccessService } from '../auth/tenant-access.service';
 
 const ACTIVE_STAGES = [
   'identificado',
@@ -92,6 +93,7 @@ export class CaptacaoService {
     private readonly mail: MailService,
     private readonly physioTryoutClearance: PhysioTryoutClearanceService,
     private readonly tryoutWorkflow: TryoutWorkflowService,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
 
   private normalizeEvaluationOutcome(value?: string | null): ScoutingEvaluationOutcome {
@@ -581,7 +583,7 @@ export class CaptacaoService {
     });
   }
 
-  async findProspect(id: string) {
+  async findProspect(id: string, allowed?: string[] | null) {
     const prospect = await this.prisma.scoutingProspect.findUnique({
       where: { id },
       include: {
@@ -595,6 +597,9 @@ export class CaptacaoService {
       },
     });
     if (!prospect) throw new NotFoundException('Prospect não encontrado');
+    if (allowed !== undefined) {
+      this.tenantAccess.assertCanAccessTenant(allowed, prospect.tenantId);
+    }
     return this.attachPhysioClearanceStatus(enrichProspectDisplay(prospect));
   }
 
@@ -1321,10 +1326,18 @@ export class CaptacaoService {
     id: string,
     dto: ManagerDecisionDto,
     actor: { name?: string; email?: string; role?: string },
+    allowed: string[] | null,
+    actorUserId?: string,
   ) {
-    const prospect = await this.findProspect(id);
+    const prospect = await this.findProspect(id, allowed);
     if (prospect.tryoutWorkflowStage === 'aguardando_gerencia') {
-      return this.tryoutWorkflow.recordTryoutManagerDecision(id, dto, actor, null);
+      return this.tryoutWorkflow.recordTryoutManagerDecision(
+        id,
+        dto,
+        actor,
+        allowed,
+        actorUserId,
+      );
     }
     this.assertGerenteDecisor(actor.role);
     const decision = dto.decision as CaptacaoManagerDecision;

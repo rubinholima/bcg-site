@@ -2,12 +2,14 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
   Query,
   Req,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -89,6 +91,19 @@ export class TryoutWorkflowController {
     });
   }
 
+  @Get('coaches')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule(['futebol_tryouts', 'futebol_captacao', 'futebol_treinadores'])
+  async coaches(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+    @Query('category') category?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    const allowed = await this.allowedTenants(req);
+    return this.service.listCoachesForTryout(tenantId.trim(), allowed, category);
+  }
+
   @Post('duplicate-search')
   @UseGuards(ModuleAccessGuard)
   @RequireModule(['futebol_tryouts', 'futebol_captacao'])
@@ -131,7 +146,8 @@ export class TryoutWorkflowController {
   ) {
     const allowed = await this.allowedTenants(req);
     await this.service.getDossier(id, allowed);
-    return this.documents.listActive(id);
+    const rows = await this.documents.listActive(id);
+    return rows.map((r) => this.documents.toPublicRow(r));
   }
 
   @Post('prospects/:id/documents')
@@ -157,7 +173,45 @@ export class TryoutWorkflowController {
       documentType as TryoutProspectDocumentType,
       this.userId(req),
     );
-    return row;
+    return this.documents.toPublicRow(row);
+  }
+
+  @Get('prospects/:id/documents/:documentId/download')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule(['futebol_tryouts', 'futebol_captacao'])
+  async downloadDocument(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Param('documentId') documentId: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    const dossier = await this.service.getDossier(id, allowed);
+    const row = await this.documents.findForDownload(
+      documentId,
+      id,
+      dossier.prospect.tenantId,
+    );
+    const buffer = await this.service.getDocumentBuffer(row.storageKey);
+    const safeFilename = row.originalFilename.replace(/[^a-zA-Z0-9\u00C0-\u024F\s._-]/g, '_');
+    return new StreamableFile(buffer, {
+      type: row.mimeType || 'application/octet-stream',
+      disposition: `attachment; filename="${safeFilename}"`,
+    });
+  }
+
+  @Delete('prospects/:id/documents/:documentId')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule(['futebol_tryouts', 'futebol_captacao'])
+  async removeDocument(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Param('documentId') documentId: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    const dossier = await this.service.getDossier(id, allowed);
+    await this.documents.findForDownload(documentId, id, dossier.prospect.tenantId);
+    await this.documents.softDelete(documentId, id, this.userId(req));
+    return { ok: true };
   }
 
   @Patch('prospects/:id/arrival')

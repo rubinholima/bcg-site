@@ -17,6 +17,12 @@ export const TRYOUT_DIRECT_ENTRY_SOURCES = [
   { value: 'outro', label: 'Outro' },
 ] as const;
 
+export const TRYOUT_DOCUMENT_TYPE_OPTIONS = [
+  { value: 'identidade', label: 'Documento de identificação' },
+  { value: 'autorizacao_responsavel', label: 'Documento / autorização do responsável' },
+  { value: 'outro', label: 'Outro (não bloqueia)' },
+] as const;
+
 export const TRYOUT_WORKFLOW_STAGES = [
   { value: 'aguardando_supervisao', label: 'Aguardando supervisão' },
   { value: 'aguardando_fisio', label: 'Aguardando fisioterapia' },
@@ -55,6 +61,7 @@ export type TryoutHubItem = {
   tryoutRenewalCount?: number;
   tryoutCycleNumber?: number;
   arrivalAt?: string | null;
+  birthDate?: string | null;
   physioClearanceStatus?: string;
   physioReassessmentPending?: boolean;
   canStartCtFieldEvaluation?: boolean;
@@ -85,6 +92,69 @@ export type TryoutReporting = {
   byWorkflowStage: Record<string, number>;
 };
 
+export type TryoutProspectDocumentRow = {
+  id: string;
+  documentType: string;
+  originalFilename: string;
+  mimeType: string;
+  uploadedAt: string;
+};
+
+export type TryoutCoachOption = {
+  id: string;
+  name: string;
+  role: string;
+  categories: string[];
+  matchesCategory: boolean;
+};
+
+export type TryoutWeeklyEvaluationRow = {
+  id: string;
+  cycleNumber: number;
+  cycleStartedAt?: string | null;
+  cycleEndedAt?: string | null;
+  staffId?: string | null;
+  staffName?: string | null;
+  technicalRating: number;
+  physicalRating: number;
+  tacticalRating: number;
+  cognitiveRating: number;
+  descriptiveObservation: string;
+  justification?: string | null;
+  outcome: string;
+  evaluatedAt: string;
+};
+
+export type TryoutDossier = {
+  prospect: {
+    id: string;
+    tenantId: string;
+    name: string;
+    birthDate?: string | null;
+    targetCategory?: string | null;
+    tryoutWorkflowStage?: string | null;
+    tryoutCycleNumber?: number;
+    arrivalAt?: string | null;
+    responsibleCoachStaffId?: string | null;
+    supervisionDocsValidatedAt?: string | null;
+  };
+  physioOperational: {
+    status: string;
+    canStartFieldEvaluation: boolean;
+    reassessmentPending?: boolean;
+    evaluatedAt?: string;
+  };
+  documents: TryoutProspectDocumentRow[];
+  documentBlocking: { satisfied: boolean; missing: string[] };
+  weeklyEvaluations: TryoutWeeklyEvaluationRow[];
+  tryoutProgressBanner?: string | null;
+};
+
+export function labelTryoutDocumentType(type: string): string {
+  const hit = TRYOUT_DOCUMENT_TYPE_OPTIONS.find((d) => d.value === type);
+  return hit?.label ?? type;
+}
+
 export function labelTryoutStage(stage?: string | null): string {
   const hit = TRYOUT_WORKFLOW_STAGES.find((s) => s.value === stage);
   return hit?.label ?? stage ?? '—';
@@ -93,6 +163,13 @@ export function labelTryoutStage(stage?: string | null): string {
 export function labelTryoutSource(source?: string | null): string {
   const hit = TRYOUT_REFERRAL_SOURCES.find((s) => s.value === source);
   return hit?.label ?? source ?? '—';
+}
+
+export function labelTryoutCoachOutcome(outcome: string): string {
+  if (outcome === 'aprovado') return 'Aprovado';
+  if (outcome === 'reprovado') return 'Reprovado';
+  if (outcome === 'mais_uma_semana') return 'Mais uma semana';
+  return outcome;
 }
 
 export function tryoutStageBadgeClass(stage?: string | null): string {
