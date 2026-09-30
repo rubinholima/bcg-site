@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { moduleMatrixRoleSlug } from './module-matrix-role.util';
 import {
   expandImplications,
@@ -212,23 +214,75 @@ export class EffectiveAccessService {
     };
   }
 
-  async restoreUserToFunctionDefaults(userId: string): Promise<void> {
+  private actorFromRequest(user?: CognitoJwtPayload) {
+    const sub = user?.sub ?? user?.['cognito:username'] ?? 'system';
+    const email = user?.email ?? user?.['cognito:username'] ?? null;
+    return { actorSub: String(sub), actorEmail: email ? String(email) : null };
+  }
+
+  private async writeAudit(entry: {
+    actorSub: string;
+    actorEmail: string | null;
+    targetType: string;
+    targetId: string;
+    targetLabel?: string | null;
+    moduleSlug?: string | null;
+    changeType: string;
+    before?: unknown;
+    after?: unknown;
+  }) {
+    await this.prisma.cup360AccessAudit.create({
+      data: {
+        id: randomUUID(),
+        actorSub: entry.actorSub,
+        actorEmail: entry.actorEmail,
+        targetType: entry.targetType,
+        targetId: entry.targetId,
+        targetLabel: entry.targetLabel ?? null,
+        moduleSlug: entry.moduleSlug ?? null,
+        changeType: entry.changeType,
+        before: entry.before ?? undefined,
+        after: entry.after ?? undefined,
+      },
+    });
+  }
+
+  async restoreUserToFunctionDefaults(userId: string, actor?: CognitoJwtPayload): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    });
+    const before = await this.getBreakdownForUser(userId);
     await this.prisma.userModuleOverride.deleteMany({ where: { userId } });
     await this.prisma.userModuleAccess.deleteMany({ where: { userId } });
     await this.prisma.user.update({
       where: { id: userId },
       data: { customModuleAccess: false },
     });
+    const { actorSub, actorEmail } = this.actorFromRequest(actor);
+    await this.writeAudit({
+      actorSub,
+      actorEmail,
+      targetType: 'user',
+      targetId: userId,
+      targetLabel: user?.name ?? user?.email ?? userId,
+      changeType: 'restore_function_defaults',
+      before,
+      after: await this.getBreakdownForUser(userId),
+    });
   }
 
-  async createPlatformFunction(data: {
-    name: string;
-    code?: string | null;
-    description?: string | null;
-    platformFamily?: string | null;
-    platformLegacyRole?: string | null;
-  }) {
-    return this.prisma.jobRole.create({
+  async createPlatformFunction(
+    data: {
+      name: string;
+      code?: string | null;
+      description?: string | null;
+      platformFamily?: string | null;
+      platformLegacyRole?: string | null;
+    },
+    actor?: CognitoJwtPayload,
+  ) {
+    const fn = await this.prisma.jobRole.create({
       data: {
         tenantId: null,
         scope: 'platform',
@@ -242,6 +296,17 @@ export class EffectiveAccessService {
         isActive: true,
       },
     });
+    const { actorSub, actorEmail } = this.actorFromRequest(actor);
+    await this.writeAudit({
+      actorSub,
+      actorEmail,
+      targetType: 'function',
+      targetId: fn.id,
+      targetLabel: fn.name,
+      changeType: 'function_create',
+      after: { name: fn.name, code: fn.code, platformFamily: fn.platformFamily },
+    });
+    return fn;
   }
 
   async updatePlatformFunction(
@@ -253,8 +318,10 @@ export class EffectiveAccessService {
       platformFamily?: string | null;
       isActive?: boolean;
     },
+    actor?: CognitoJwtPayload,
   ) {
-    return this.prisma.jobRole.update({
+    const before = await this.prisma.jobRole.findUnique({ where: { id } });
+    const fn = await this.prisma.jobRole.update({
       where: { id },
       data: {
         ...(data.name != null && { name: data.name.trim() }),
@@ -264,6 +331,18 @@ export class EffectiveAccessService {
         ...(data.isActive !== undefined && { isActive: data.isActive }),
       },
     });
+    const { actorSub, actorEmail } = this.actorFromRequest(actor);
+    await this.writeAudit({
+      actorSub,
+      actorEmail,
+      targetType: 'function',
+      targetId: id,
+      targetLabel: fn.name,
+      changeType: 'function_update',
+      before,
+      after: fn,
+    });
+    return fn;
   }
 
   async listCup360AccessAudit(limit = 50) {
@@ -284,11 +363,21 @@ export class EffectiveAccessService {
     });
   }
 
-  async updatePlatformFunctionDefaults(functionId: string, moduleSlugs: string[]): Promise<void> {
+  async updatePlatformFunctionDefaults(
+    functionId: string,
+    moduleSlugs: string[],
+    actor?: CognitoJwtPayload,
+  ): Promise<void> {
     const fn = await this.prisma.jobRole.findFirst({
       where: { id: functionId, scope: 'platform' },
     });
     if (!fn) return;
+
+    const beforeRows = await this.prisma.jobRoleModuleDefault.findMany({
+      where: { jobRoleId: functionId },
+      include: { module: { select: { slug: true } } },
+    });
+    const beforeSlugs = beforeRows.map((r) => r.module.slug).sort();
 
     const modules = await this.prisma.module.findMany({
       where: { slug: { in: moduleSlugs } },
@@ -313,12 +402,28 @@ export class EffectiveAccessService {
         update: {},
       });
     }
+
+    const afterSlugs = [...moduleSlugs].sort();
+    const { actorSub, actorEmail } = this.actorFromRequest(actor);
+    await this.writeAudit({
+      actorSub,
+      actorEmail,
+      targetType: 'function',
+      targetId: functionId,
+      targetLabel: fn.name,
+      changeType: 'function_defaults',
+      before: { moduleSlugs: beforeSlugs },
+      after: { moduleSlugs: afterSlugs },
+    });
   }
 
   async updateUserAccess(
     userId: string,
     data: { platformFunctionId?: string | null; allowSlugs?: string[]; denySlugs?: string[] },
+    actor?: CognitoJwtPayload,
   ): Promise<void> {
+    const before = await this.getBreakdownForUser(userId);
+
     if (data.platformFunctionId !== undefined) {
       await this.prisma.user.update({
         where: { id: userId },
@@ -351,6 +456,23 @@ export class EffectiveAccessService {
         data: { customModuleAccess: false },
       });
     }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    });
+    const after = await this.getBreakdownForUser(userId);
+    const { actorSub, actorEmail } = this.actorFromRequest(actor);
+    await this.writeAudit({
+      actorSub,
+      actorEmail,
+      targetType: 'user',
+      targetId: userId,
+      targetLabel: user?.name ?? user?.email ?? userId,
+      changeType: 'user_access',
+      before,
+      after,
+    });
   }
 
   async listModulesForAdmin() {

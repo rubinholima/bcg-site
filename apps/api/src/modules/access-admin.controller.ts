@@ -7,15 +7,17 @@ import {
   Patch,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { SuperAdminGuard } from '../auth/super-admin.guard';
+import { Request } from 'express';
+import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
+import { Cup360AccessAdminGuard } from '../auth/cup360-access-admin.guard';
 import { EffectiveAccessService } from './effective-access.service';
 import { ModulesService } from './modules.service';
 
 @Controller('settings/access')
-@UseGuards(JwtAuthGuard, SuperAdminGuard)
+@UseGuards(JwtAuthGuard, Cup360AccessAdminGuard)
 export class AccessAdminController {
   constructor(
     private readonly effectiveAccess: EffectiveAccessService,
@@ -34,6 +36,7 @@ export class AccessAdminController {
 
   @Post('functions')
   createFunction(
+    @Req() req: Request & { user?: CognitoJwtPayload },
     @Body()
     body: {
       name: string;
@@ -43,11 +46,12 @@ export class AccessAdminController {
       platformLegacyRole?: string;
     },
   ) {
-    return this.effectiveAccess.createPlatformFunction(body);
+    return this.effectiveAccess.createPlatformFunction(body, req.user);
   }
 
   @Patch('functions/:id')
   updateFunction(
+    @Req() req: Request & { user?: CognitoJwtPayload },
     @Param('id') id: string,
     @Body()
     body: {
@@ -58,15 +62,20 @@ export class AccessAdminController {
       isActive?: boolean;
     },
   ) {
-    return this.effectiveAccess.updatePlatformFunction(id, body);
+    return this.effectiveAccess.updatePlatformFunction(id, body, req.user);
   }
 
   @Put('functions/:id/defaults')
   async updateFunctionDefaults(
+    @Req() req: Request & { user?: CognitoJwtPayload },
     @Param('id') id: string,
     @Body() body: { moduleSlugs?: string[] },
   ) {
-    await this.effectiveAccess.updatePlatformFunctionDefaults(id, body.moduleSlugs ?? []);
+    await this.effectiveAccess.updatePlatformFunctionDefaults(
+      id,
+      body.moduleSlugs ?? [],
+      req.user,
+    );
     return { ok: true };
   }
 
@@ -78,13 +87,17 @@ export class AccessAdminController {
   }
 
   @Post('users/:userId/restore-function-defaults')
-  async restoreUserDefaults(@Param('userId') userId: string) {
-    await this.effectiveAccess.restoreUserToFunctionDefaults(userId);
+  async restoreUserDefaults(
+    @Req() req: Request & { user?: CognitoJwtPayload },
+    @Param('userId') userId: string,
+  ) {
+    await this.effectiveAccess.restoreUserToFunctionDefaults(userId, req.user);
     return this.effectiveAccess.getBreakdownForUser(userId);
   }
 
   @Patch('users/:userId')
   async patchUserAccess(
+    @Req() req: Request & { user?: CognitoJwtPayload },
     @Param('userId') userId: string,
     @Body()
     body: {
@@ -93,7 +106,7 @@ export class AccessAdminController {
       denySlugs?: string[];
     },
   ) {
-    await this.effectiveAccess.updateUserAccess(userId, body);
+    await this.effectiveAccess.updateUserAccess(userId, body, req.user);
     return this.effectiveAccess.getBreakdownForUser(userId);
   }
 

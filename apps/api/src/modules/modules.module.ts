@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { Cup360AccessAdminGuard } from '../auth/cup360-access-admin.guard';
 import { AccessAdminController } from './access-admin.controller';
 import { ModulesController } from './modules.controller';
 import { EffectiveAccessService } from './effective-access.service';
@@ -9,7 +10,12 @@ import { ModulesService } from './modules.service';
 @Module({
   imports: [forwardRef(() => AuthModule)],
   controllers: [ModulesController, AccessAdminController],
-  providers: [ModulesService, EffectiveAccessService, ModuleCatalogBootstrapService],
+  providers: [
+    ModulesService,
+    EffectiveAccessService,
+    ModuleCatalogBootstrapService,
+    Cup360AccessAdminGuard,
+  ],
   exports: [ModulesService, EffectiveAccessService],
 })
 export class ModulesModule {}

@@ -67,6 +67,40 @@ async function legacyEffectiveSlugs(userId: string, role: string, custom: boolea
   return slugs.filter((s) => all.includes(s)).sort();
 }
 
+async function ensurePlatformFunctionForRole(role: string) {
+  const legacy = moduleMatrixRoleSlug(role);
+  let fn = await prisma.jobRole.findFirst({
+    where: { scope: 'platform', platformLegacyRole: legacy },
+  });
+  if (fn) return fn;
+
+  const label =
+    legacy === 'user'
+      ? 'USUÁRIO BÁSICO'
+      : `Perfil legado (${legacy})`;
+
+  fn = await prisma.jobRole.create({
+    data: {
+      ...(legacy === 'user' ? { id: 'cup360_fn_user_basic' } : {}),
+      tenantId: null,
+      scope: 'platform',
+      type: 'staff',
+      forFootball: false,
+      isActive: true,
+      name: label,
+      code: legacy.toUpperCase().replace(/[^A-Z0-9_]/g, '_').slice(0, 32) || 'LEGACY',
+      platformLegacyRole: legacy,
+      platformFamily: legacy === 'user' ? 'sistema' : 'legado',
+      description:
+        legacy === 'user'
+          ? 'Perfil legado sem defaults de matriz — acesso via exceções.'
+          : `Função criada automaticamente para role legado "${legacy}".`,
+    },
+  });
+  console.log(`Criada função plataforma para role ${legacy}: ${fn.name}`);
+  return fn;
+}
+
 async function backfillPlatformFunctionDefaults(): Promise<void> {
   const platformFns = await prisma.jobRole.findMany({
     where: { scope: 'platform', platformLegacyRole: { not: null } },
@@ -144,31 +178,32 @@ async function newEffectiveSlugs(userId: string, role: string): Promise<string[]
 
 async function convertCustomUser(userId: string, role: string): Promise<void> {
   const before = await legacyEffectiveSlugs(userId, role, true);
-  const legacy = moduleMatrixRoleSlug(role);
-  const fn = await prisma.jobRole.findFirst({
-    where: { scope: 'platform', platformLegacyRole: legacy },
-  });
-  if (!fn) throw new Error(`Função plataforma ausente para role ${role}`);
+  const beforeSet = new Set(before);
+  const fn = await ensurePlatformFunctionForRole(role);
 
-  const catalog = await prisma.module.findMany({ select: { id: true, slug: true } });
+  const catalog = await prisma.module.findMany({
+    select: { id: true, slug: true, impliesSlug: true },
+  });
+  const allSlugs = catalog.map((m) => m.slug);
+  const implications = catalog.map((m) => ({ slug: m.slug, impliesSlug: m.impliesSlug }));
+
   const baseRows = await prisma.jobRoleModuleDefault.findMany({
     where: { jobRoleId: fn.id },
     include: { module: true },
   });
-  const base = new Set(baseRows.map((r) => r.module.slug));
-
-  const grants = await prisma.userModuleAccess.findMany({
-    where: { userId, canAccess: true },
-    include: { module: true },
-  });
-  const granted = new Set(grants.map((g) => g.module.slug));
+  const baseExpanded = new Set(
+    expandImplications(
+      baseRows.map((r) => r.module.slug),
+      implications,
+    ).filter((s) => allSlugs.includes(s)),
+  );
 
   const overrides: Array<{ moduleId: string; effect: 'allow' | 'deny' }> = [];
   for (const mod of catalog) {
-    const has = granted.has(mod.slug);
-    const inBase = base.has(mod.slug);
-    if (has && !inBase) overrides.push({ moduleId: mod.id, effect: 'allow' });
-    if (!has && inBase) overrides.push({ moduleId: mod.id, effect: 'deny' });
+    const inBefore = beforeSet.has(mod.slug);
+    const inBase = baseExpanded.has(mod.slug);
+    if (inBefore && !inBase) overrides.push({ moduleId: mod.id, effect: 'allow' });
+    if (!inBefore && inBase) overrides.push({ moduleId: mod.id, effect: 'deny' });
   }
 
   await prisma.userModuleOverride.deleteMany({ where: { userId } });

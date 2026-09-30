@@ -61,7 +61,8 @@ function moduleLabel(slug: string): string {
 }
 
 export default function PessoasAcessosPage() {
-  const { isSuperAdmin, loading: authLoading } = useAuth();
+  const { isSuperAdmin, isCompanyAdmin, loading: authLoading } = useAuth();
+  const canManageAccess = isSuperAdmin || isCompanyAdmin;
   const [tab, setTab] = useState<TabId>("usuarios");
   const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
 
@@ -122,11 +123,11 @@ export default function PessoasAcessosPage() {
   }, []);
 
   useEffect(() => {
-    if (authLoading || !isSuperAdmin) return;
+    if (authLoading || !canManageAccess) return;
     loadBase().catch(() =>
       setFeedback({ title: "Erro", message: "Não foi possível carregar pessoas e acessos." }),
     );
-  }, [authLoading, isSuperAdmin, loadBase]);
+  }, [authLoading, canManageAccess, loadBase]);
 
   useEffect(() => {
     if (!selectedFunctionId) return;
@@ -221,7 +222,7 @@ export default function PessoasAcessosPage() {
     });
   };
 
-  if (!authLoading && !isSuperAdmin) {
+  if (!authLoading && !canManageAccess) {
     return (
       <Cup360PageShell>
         <p className="text-muted-foreground">Acesso restrito.</p>
