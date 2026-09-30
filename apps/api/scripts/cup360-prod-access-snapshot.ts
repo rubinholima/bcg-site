@@ -9,6 +9,7 @@ import {
   isFootballManagementRole,
   isFootballOperationalModuleSlug,
 } from '../src/modules/football-domain-access.util';
+import { resolveEffectiveModuleSlugs } from '../src/modules/effective-access.util';
 
 function expandImplications(
   slugs: string[],
@@ -91,6 +92,8 @@ async function main() {
     include: {
       userTenants: { include: { tenant: { select: { name: true, slug: true } } } },
       moduleAccess: { include: { module: { select: { slug: true } } } },
+      moduleOverrides: { include: { module: { select: { slug: true } } } },
+      platformFunction: { select: { id: true, name: true } },
     },
     orderBy: { email: 'asc' },
   })) as SnapUser[];
@@ -99,9 +102,38 @@ async function main() {
   const moduleRoleRows = await prisma.moduleRole.count({ where: { canAccess: true } });
 
   const userReports: Array<Record<string, unknown>> = [];
+  const catalog = await prisma.module.findMany({
+    select: { slug: true, impliesSlug: true },
+  });
+  const allModuleSlugs = catalog.map((m) => m.slug);
+  const implications = catalog.map((m) => ({ slug: m.slug, impliesSlug: m.impliesSlug }));
+
   for (const u of users) {
     const role = u.role ?? 'editor';
     const legacySlugs = await legacyEffectiveSlugs(u.id, role, u.customModuleAccess);
+    let canonicalSlugs = legacySlugs;
+    if (!u.customModuleAccess && role !== 'super_admin') {
+      const fnId = (u as { platformFunctionId?: string | null }).platformFunctionId;
+      let baseSlugs: string[] = [];
+      if (fnId) {
+        const defs = await prisma.jobRoleModuleDefault.findMany({
+          where: { jobRoleId: fnId },
+          include: { module: { select: { slug: true } } },
+        });
+        baseSlugs = defs.map((d) => d.module.slug);
+      }
+      const overrides =
+        (u as { moduleOverrides?: Array<{ effect: string; module: { slug: string } }> }).moduleOverrides?.map(
+          (o) => ({ slug: o.module.slug, effect: o.effect as 'allow' | 'deny' }),
+        ) ?? [];
+      canonicalSlugs = resolveEffectiveModuleSlugs({
+        role,
+        allModuleSlugs,
+        implications,
+        baseSlugs,
+        overrides,
+      });
+    }
     userReports.push({
       id: u.id,
       email: u.email,
@@ -113,6 +145,8 @@ async function main() {
       tenants: u.userTenants.map((t) => ({ id: t.tenantId, name: t.tenant.name, slug: t.tenant.slug })),
       legacyEffectiveSlugs: legacySlugs,
       legacyModuleCount: legacySlugs.length,
+      canonicalEffectiveSlugs: canonicalSlugs,
+      canonicalModuleCount: canonicalSlugs.length,
       customGrants: u.customModuleAccess
         ? u.moduleAccess.filter((a) => a.canAccess).map((a) => a.module.slug)
         : [],
