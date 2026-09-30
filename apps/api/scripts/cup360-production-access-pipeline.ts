@@ -202,8 +202,12 @@ async function convertCustomUser(userId: string, role: string): Promise<void> {
   for (const mod of catalog) {
     const inBefore = beforeSet.has(mod.slug);
     const inBase = baseExpanded.has(mod.slug);
-    if (inBefore && !inBase) overrides.push({ moduleId: mod.id, effect: 'allow' });
     if (!inBefore && inBase) overrides.push({ moduleId: mod.id, effect: 'deny' });
+  }
+  for (const mod of catalog) {
+    if (beforeSet.has(mod.slug)) {
+      overrides.push({ moduleId: mod.id, effect: 'allow' });
+    }
   }
 
   await prisma.userModuleOverride.deleteMany({ where: { userId } });

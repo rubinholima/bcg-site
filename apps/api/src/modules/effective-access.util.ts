@@ -20,17 +20,19 @@ export function resolveEffectiveModuleSlugs(input: EffectiveAccessInput): string
   const implied = expandImplications(input.baseSlugs, input.implications);
   const set = new Set(implied);
 
-  for (const o of input.overrides) {
-    if (!o.slug) continue;
-    if (o.effect === 'allow') {
-      set.add(o.slug);
-      for (const extra of expandImplications([o.slug], input.implications)) {
-        set.add(extra);
-      }
-    } else if (o.effect === 'deny') {
-      set.delete(o.slug);
-      const impliedSlug = input.implications.find((m) => m.slug === o.slug)?.impliesSlug;
-      if (impliedSlug) set.delete(impliedSlug);
+  const allows = input.overrides.filter((o) => o.effect === 'allow' && o.slug);
+  const denies = input.overrides.filter((o) => o.effect === 'deny' && o.slug);
+
+  for (const o of denies) {
+    set.delete(o.slug!);
+    const impliedSlug = input.implications.find((m) => m.slug === o.slug)?.impliesSlug;
+    if (impliedSlug) set.delete(impliedSlug);
+  }
+
+  for (const o of allows) {
+    set.add(o.slug!);
+    for (const extra of expandImplications([o.slug!], input.implications)) {
+      set.add(extra);
     }
   }
 
