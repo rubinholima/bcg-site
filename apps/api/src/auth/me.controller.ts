@@ -118,9 +118,7 @@ export class MeController {
     const user =
       (await this.meService.findUserByCognitoSub(req.user.sub)) ??
       (await this.meService.findUserById(req.user.sub));
-    const modules = user
-      ? await this.modulesService.getSlugsForUser(user.id, role)
-      : await this.modulesService.getSlugsForRole(role);
+    const modules = await this.modulesService.getSlugsForActor(req.user.sub, role);
     return { modules };
   }
 

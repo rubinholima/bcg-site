@@ -13,9 +13,9 @@ import type { MenuItemConfig } from "@/lib/dashboard-menu.config";
 import {
   DASHBOARD_MENU,
   canAccessMenuLeaf,
+  filterAccessibleDashboardMenu,
   hasAccessToMenuItem,
 } from "@/lib/dashboard-menu.config";
-import { filterAccessibleWorkspaceMenu, workspaceForDept } from "@/lib/dashboard-nav-workspaces";
 import { getDashboardHomeMenuItem, getHomeDashboardRoute } from "@/lib/dashboard-home";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
@@ -471,7 +471,7 @@ function SidebarNav() {
 
   const visibleMenu = useMemo(
     () =>
-      filterAccessibleWorkspaceMenu(
+      filterAccessibleDashboardMenu(
         DASHBOARD_MENU,
         canAccessModule,
         canAccessDashboard,
@@ -543,10 +543,6 @@ function SidebarNav() {
   const [nestedOpen, setNestedOpen] = useState<Record<string, boolean>>({});
 
   const applyOpenGroup = (slug: string | null) => {
-    if (slug?.startsWith("ws_")) {
-      setNestedOpen({ [slug]: true });
-      return;
-    }
     setGrupoMasterOpen(slug === "grupo_master");
     setSaudeOpen(slug === "saude");
     setFutebolOpen(slug === "futebol");
@@ -605,10 +601,6 @@ function SidebarNav() {
   useEffect(() => {
     const dept = getActiveGroupSlug(pathname, relHub);
     applyOpenGroup(dept);
-    const ws = workspaceForDept(dept);
-    if (ws) {
-      setNestedOpen((prev) => ({ ...prev, [ws]: true }));
-    }
     syncNestedFromPath();
   }, [pathname, relHub]);
 
@@ -735,7 +727,7 @@ function SidebarNav() {
 
           if (item.href && !item.children?.length) {
             if (
-              !canAccessMenuLeaf(item, item.slug, canAccessModule, role, modules) &&
+              !canAccessMenuLeaf(item, item.slug, canAccessModule, role, modules, isSuperAdmin) &&
               !(item.moduleSlug === "emails" && canAccessDashboard)
             ) {
               return null;
@@ -781,9 +773,7 @@ function SidebarNav() {
             if (!showGroup) return null;
 
             const isOpen =
-              item.slug.startsWith("ws_")
-                ? nestedOpen[item.slug] === true
-                : item.slug === "grupo_master"
+              item.slug === "grupo_master"
                 ? grupoMasterOpen
                 : item.slug === "adm"
                     ? admOpen
@@ -924,6 +914,7 @@ function SidebarNav() {
                                               canAccessModule,
                                               role,
                                               modules,
+                                              isSuperAdmin,
                                             ) ||
                                             (cc.moduleSlug === "emails" && canAccessDashboard) ||
                                             (cc.children?.length &&
@@ -1003,6 +994,7 @@ function SidebarNav() {
                                                           canAccessModule,
                                                           role,
                                                           modules,
+                                                          isSuperAdmin,
                                                         ) ||
                                                         (ccc.moduleSlug === "emails" && canAccessDashboard),
                                                     )
@@ -1149,6 +1141,7 @@ function SidebarNav() {
                                             canAccessModule,
                                             role,
                                             modules,
+                                            isSuperAdmin,
                                           ) ||
                                           (cc.moduleSlug === "emails" && canAccessDashboard),
                                       )
@@ -1226,6 +1219,7 @@ function SidebarNav() {
                                                           canAccessModule,
                                                           role,
                                                           modules,
+                                                          isSuperAdmin,
                                                         ) ||
                                                         (ccc.moduleSlug === "emails" && canAccessDashboard),
                                                     )

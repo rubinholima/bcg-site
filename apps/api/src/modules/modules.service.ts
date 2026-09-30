@@ -140,6 +140,9 @@ export class ModulesService {
   }
 
   async getSlugsForUser(userId: string, role: string): Promise<string[]> {
+    if (role === 'super_admin') {
+      return this.getAllModuleSlugs();
+    }
     try {
       return await this.effectiveAccess.getEffectiveSlugsForUser(userId, role);
     } catch {

@@ -101,6 +101,22 @@ describe('effective-access.util', () => {
     expect(slugs.sort()).toEqual([...all].sort());
   });
 
+  it('super_admin: DENY explícito não reduz catálogo', () => {
+    const slugs = resolveEffectiveModuleSlugs({
+      role: 'super_admin',
+      allModuleSlugs: all,
+      implications,
+      baseSlugs: ['dashboard'],
+      legacyProfileSlugs: ['medico'],
+      overrides: [
+        { slug: 'medico', effect: 'deny' },
+        { slug: 'adm_rh', effect: 'deny' },
+      ],
+      isSuperAdmin: true,
+    });
+    expect(slugs.length).toBe(all.length);
+  });
+
   it('ALLOW aplicado depois de DENY prevalece no mesmo slug', () => {
     const slugs = resolveEffectiveModuleSlugs({
       role: 'gerente',

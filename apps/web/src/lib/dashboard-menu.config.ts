@@ -12,7 +12,6 @@
  * Sync automático via buildModuleCatalog() ao abrir Configurações → Acessos.
  */
 
-import { buildCup360WorkspaceMenu } from "@/lib/dashboard-nav-workspaces";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
@@ -203,7 +202,9 @@ export function canAccessMenuLeaf(
   canAccessModule: (slug: string) => boolean,
   role?: string | null,
   modules?: readonly string[],
+  isSuperAdmin?: boolean,
 ): boolean {
+  if (isSuperAdmin) return true;
   if (item.href?.includes("/melhores-temporada") && role != null && modules != null) {
     return canAccessMelhoresTemporada(role, modules, canAccessModule);
   }
@@ -226,6 +227,7 @@ export function hasAccessToMenuItem(
   modules?: readonly string[],
 ): boolean {
   if (item.superAdminOnly && !isSuperAdmin) return false;
+  if (isSuperAdmin) return true;
   if (item.moduleSlug === "emails" && canAccessDashboard) return true;
   if (item.children?.length) {
     const nestedPrefix = `${pathPrefix}/${item.slug}`;
@@ -242,9 +244,40 @@ export function hasAccessToMenuItem(
     );
   }
   if (item.href && !item.external) {
-    return canAccessMenuLeaf(item, pathPrefix, canAccessModule, role, modules);
+    return canAccessMenuLeaf(item, pathPrefix, canAccessModule, role, modules, isSuperAdmin);
   }
   return canAccessModule(item.moduleSlug);
+}
+
+/** Filtra itens inacessíveis sem reorganizar a árvore (top-level legado). */
+export function filterAccessibleDashboardMenu(
+  menu: MenuItemConfig[],
+  canAccessModule: (slug: string) => boolean,
+  canAccessDashboard?: boolean,
+  isSuperAdmin?: boolean,
+  role?: string | null,
+  modules?: readonly string[],
+): MenuItemConfig[] {
+  const result: MenuItemConfig[] = [];
+  for (const item of menu) {
+    if (item.slug === "dashboard") {
+      if (canAccessDashboard) result.push(item);
+      continue;
+    }
+    if (!hasAccessToMenuItem(item, item.slug, canAccessModule, canAccessDashboard, isSuperAdmin, role, modules)) {
+      continue;
+    }
+    if (item.children?.length) {
+      const children = item.children.filter((c) =>
+        hasAccessToMenuItem(c, item.slug, canAccessModule, canAccessDashboard, isSuperAdmin, role, modules),
+      );
+      if (children.length === 0) continue;
+      result.push({ ...item, children });
+    } else {
+      result.push(item);
+    }
+  }
+  return result;
 }
 
 /** Relatórios de um departamento (hub). */
@@ -1639,8 +1672,8 @@ const DASHBOARD_MENU_LEGACY: MenuItemConfig[] = [
   },
 ];
 
-/** Menu do dashboard agrupado por workspace (apresentação). */
-export const DASHBOARD_MENU: MenuItemConfig[] = buildCup360WorkspaceMenu(DASHBOARD_MENU_LEGACY);
+/** Menu principal — hierarquia legado (departamentos top-level). */
+export const DASHBOARD_MENU: MenuItemConfig[] = DASHBOARD_MENU_LEGACY;
 
 /** Catálogo de permissões por item de menu (+ módulos só de API). */
 export function getMenuAccessCatalog(): MenuAccessCatalogEntry[] {
