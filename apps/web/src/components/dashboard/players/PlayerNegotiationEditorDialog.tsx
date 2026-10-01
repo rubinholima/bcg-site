@@ -54,7 +54,12 @@ import type { PlayerRegistrationProfile } from "@/lib/player-registration-profil
 import { cn } from "@/lib/utils";
 
 type VisitingTeam = { id: string; name: string };
-type PlayerOption = { id: string; name: string; jerseyNumber?: number | null };
+type PlayerOption = {
+  id: string;
+  name: string;
+  jerseyNumber?: number | null;
+  category?: string | null;
+};
 type LegalDocOption = { id: string; name: string; type: string };
 
 type SectionId = "comercial" | "parcelas" | "documentos" | "auditoria" | "efeitos";
@@ -120,6 +125,7 @@ export function PlayerNegotiationEditorDialog({
 
   const [playerSearch, setPlayerSearch] = useState("");
   const [players, setPlayers] = useState<PlayerOption[]>([]);
+  const [playersLoading, setPlayersLoading] = useState(false);
   const [visitingTeams, setVisitingTeams] = useState<VisitingTeam[]>([]);
   const [legalDocs, setLegalDocs] = useState<LegalDocOption[]>([]);
   const [playerProfile, setPlayerProfile] = useState<PlayerRegistrationProfile | null>(null);
@@ -145,11 +151,22 @@ export function PlayerNegotiationEditorDialog({
 
   const loadPlayers = useCallback(async () => {
     if (!tenantId) return;
-    const params = new URLSearchParams({ tenantId });
-    if (playerSearch.trim()) params.set("search", playerSearch.trim());
-    const { data } = await api.get<PlayerOption[]>(`/players?${params}`);
-    setPlayers(Array.isArray(data) ? data : []);
-  }, [tenantId, playerSearch]);
+    setPlayersLoading(true);
+    try {
+      const params = new URLSearchParams({ tenantId });
+      const { data } = await api.get<PlayerOption[]>(`/players?${params}`);
+      setPlayers(Array.isArray(data) ? data : []);
+    } catch {
+      setPlayers([]);
+      setFeedback({
+        open: true,
+        title: "Elenco",
+        message: "Não foi possível carregar a lista de atletas deste clube.",
+      });
+    } finally {
+      setPlayersLoading(false);
+    }
+  }, [tenantId]);
 
   const reloadNegotiation = useCallback(async () => {
     if (!activeNegotiationId) return;
@@ -174,6 +191,7 @@ export function PlayerNegotiationEditorDialog({
   useEffect(() => {
     if (!open) return;
     setSection("comercial");
+    setPlayerSearch("");
     setPersistedId(null);
     if (isEdit) void reloadNegotiation();
     else {
@@ -220,8 +238,13 @@ export function PlayerNegotiationEditorDialog({
 
   const filteredPlayers = useMemo(() => {
     const q = playerSearch.trim().toLowerCase();
-    if (!q) return players.slice(0, 80);
-    return players.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 80);
+    const base = !q
+      ? players
+      : players.filter((p) => {
+          const hay = `${p.name} ${p.category ?? ""} ${p.jerseyNumber ?? ""}`.toLowerCase();
+          return hay.includes(q);
+        });
+    return base.slice(0, 150);
   }, [players, playerSearch]);
 
   const handleTeamPick = (teamId: string) => {
@@ -393,7 +416,7 @@ export function PlayerNegotiationEditorDialog({
   };
 
   const sections: { id: SectionId; label: string; show: boolean }[] = [
-    { id: "comercial", label: "Comercial", show: true },
+    { id: "comercial", label: "Dados da negociação", show: true },
     { id: "parcelas", label: "Parcelas", show: isPersisted },
     { id: "documentos", label: "Documentos", show: isPersisted },
     { id: "auditoria", label: "Auditoria", show: isPersisted },
@@ -475,23 +498,59 @@ export function PlayerNegotiationEditorDialog({
                               className="text-foreground"
                             />
                           </div>
-                          <div className="space-y-1 sm:col-span-2">
-                            <Label>Atleta *</Label>
-                            <NativeSelect
-                              value={form.playerId}
-                              onChange={(e) =>
-                                setForm((f) => ({ ...f, playerId: e.target.value }))
-                              }
-                              className="w-full"
-                            >
-                              <option value="">Selecione o atleta…</option>
-                              {filteredPlayers.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.jerseyNumber != null ? `${p.jerseyNumber} — ` : ""}
-                                  {p.name}
-                                </option>
-                              ))}
-                            </NativeSelect>
+                          <div className="space-y-2 sm:col-span-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <Label>Selecione o atleta *</Label>
+                              <span className="text-xs text-muted-foreground">
+                                {playersLoading
+                                  ? "Carregando…"
+                                  : `${filteredPlayers.length} de ${players.length} no elenco`}
+                              </span>
+                            </div>
+                            <div className="max-h-52 overflow-y-auto rounded-lg border border-border/80 bg-zinc-950/40">
+                              {playersLoading ? (
+                                <div className="flex justify-center py-8">
+                                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                </div>
+                              ) : filteredPlayers.length === 0 ? (
+                                <p className="p-4 text-sm text-muted-foreground">
+                                  Nenhum atleta encontrado. Confira o clube selecionado na tela
+                                  anterior ou ajuste o filtro.
+                                </p>
+                              ) : (
+                                <ul className="divide-y divide-border/50">
+                                  {filteredPlayers.map((p) => {
+                                    const selected = form.playerId === p.id;
+                                    return (
+                                      <li key={p.id}>
+                                        <button
+                                          type="button"
+                                          className={cn(
+                                            "flex w-full min-h-[44px] flex-col items-start gap-0.5 px-3 py-2 text-left text-sm transition-colors sm:flex-row sm:items-center sm:justify-between",
+                                            selected
+                                              ? "bg-primary/15 text-foreground"
+                                              : "hover:bg-muted/30",
+                                          )}
+                                          onClick={() =>
+                                            setForm((f) => ({ ...f, playerId: p.id }))
+                                          }
+                                        >
+                                          <span className="font-medium">
+                                            {p.jerseyNumber != null ? `${p.jerseyNumber} · ` : ""}
+                                            {p.name}
+                                          </span>
+                                          {p.category ? (
+                                            <span className="text-xs text-muted-foreground">
+                                              {p.category}
+                                            </span>
+                                          ) : null}
+                                        </button>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              )}
+                            </div>
                           </div>
                         </>
                       ) : (
