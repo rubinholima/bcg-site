@@ -20,7 +20,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
-import { PlayerNegotiationEditorDialog } from "@/components/dashboard/players/PlayerNegotiationEditorDialog";
+import {
+  negociadosEditarHref,
+  negociadosNovaHref,
+} from "@/lib/player-negotiation-navigation";
 import { JogadoresSubNav } from "../JogadoresSubNav";
 import {
   formatNegotiationMoney,
@@ -86,10 +89,6 @@ export function NegociadosWorkspace() {
     title: "",
     message: "",
   });
-
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
-  const [editorNegotiationId, setEditorNegotiationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !canAccessModule("cad_jogadores_negociados")) {
@@ -158,18 +157,6 @@ export function NegociadosWorkspace() {
     if (to) p.set("to", to);
     router.replace(`/dashboard/cadastros/jogadores/negociados?${p.toString()}`);
   }, [tenantId, statusTab, negotiationType, counterparty, playerNameFilter, from, to, router]);
-
-  const openCreate = () => {
-    setEditorMode("create");
-    setEditorNegotiationId(null);
-    setEditorOpen(true);
-  };
-
-  const openEdit = (id: string) => {
-    setEditorMode("edit");
-    setEditorNegotiationId(id);
-    setEditorOpen(true);
-  };
 
   const exportCsv = async () => {
     if (!tenantId) return;
@@ -249,9 +236,11 @@ export function NegociadosWorkspace() {
             <Download className="mr-2 h-4 w-4" />
             XLSX
           </Button>
-          <Button type="button" className="min-h-[44px]" onClick={openCreate} disabled={!tenantId}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova negociação
+          <Button type="button" className="min-h-[44px]" asChild>
+            <Link href={negociadosNovaHref({ tenantId: tenantId || undefined })}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova negociação
+            </Link>
           </Button>
         </div>
       </div>
@@ -402,10 +391,14 @@ export function NegociadosWorkspace() {
                       size="sm"
                       variant="outline"
                       className="min-h-[44px] min-w-[44px] px-2"
-                      onClick={() => openEdit(n.id)}
-                      aria-label="Gerenciar negociação"
+                      asChild
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Link
+                        href={negociadosEditarHref(n.id)}
+                        aria-label="Gerenciar negociação"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -414,17 +407,6 @@ export function NegociadosWorkspace() {
           </TableBody>
         </Table>
       </div>
-
-      {tenantId && (
-        <PlayerNegotiationEditorDialog
-          open={editorOpen}
-          onOpenChange={setEditorOpen}
-          tenantId={tenantId}
-          mode={editorMode}
-          negotiationId={editorNegotiationId}
-          onSaved={() => void loadSummary()}
-        />
-      )}
 
       <FeedbackModal
         open={feedback.open}

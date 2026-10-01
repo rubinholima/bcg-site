@@ -14,7 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlayerNegotiationEditorDialog } from "@/components/dashboard/players/PlayerNegotiationEditorDialog";
+import {
+  negociadosEditarHref,
+  negociadosNovaHref,
+} from "@/lib/player-negotiation-navigation";
 import {
   formatNegotiationMoney,
   NEGOTIATION_STATUS_LABELS,
@@ -31,10 +34,6 @@ export function PlayerNegotiationsPanel({ playerId, tenantId }: PlayerNegotiatio
   const [rows, setRows] = useState<PlayerNegotiationFull[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
-  const [editorId, setEditorId] = useState<string | null>(null);
-
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -81,18 +80,11 @@ export function PlayerNegotiationsPanel({ playerId, tenantId }: PlayerNegotiatio
             : `${rows.length} negociação(ões) — histórico completo preservado.`}
         </p>
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            size="sm"
-            className="min-h-[44px]"
-            onClick={() => {
-              setEditorMode("create");
-              setEditorId(null);
-              setEditorOpen(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nova
+          <Button type="button" size="sm" className="min-h-[44px]" asChild>
+            <Link href={negociadosNovaHref({ tenantId, playerId })}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova
+            </Link>
           </Button>
           <Link href="/dashboard/cadastros/jogadores/negociados">
             <Button variant="outline" size="sm" className="min-h-[44px]">
@@ -145,13 +137,11 @@ export function PlayerNegotiationsPanel({ playerId, tenantId }: PlayerNegotiatio
                         size="icon"
                         className="min-h-[44px] min-w-[44px]"
                         aria-label="Gerenciar"
-                        onClick={() => {
-                          setEditorMode("edit");
-                          setEditorId(n.id);
-                          setEditorOpen(true);
-                        }}
+                        asChild
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Link href={negociadosEditarHref(n.id)}>
+                          <Pencil className="h-4 w-4" />
+                        </Link>
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -162,15 +152,6 @@ export function PlayerNegotiationsPanel({ playerId, tenantId }: PlayerNegotiatio
         </Card>
       )}
 
-      <PlayerNegotiationEditorDialog
-        open={editorOpen}
-        onOpenChange={setEditorOpen}
-        tenantId={tenantId}
-        mode={editorMode}
-        negotiationId={editorId}
-        initialPlayerId={playerId}
-        onSaved={() => void load()}
-      />
     </div>
   );
 }

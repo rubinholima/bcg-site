@@ -15,6 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { NativeSelectField } from "@/components/ui/native-select";
+import { PageSection } from "@/components/dashboard/cup360/Cup360PageShell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,24 +56,29 @@ import type { PlayerRegistrationProfile } from "@/lib/player-registration-profil
 import { cn } from "@/lib/utils";
 
 type VisitingTeam = { id: string; name: string };
+type TenantOption = { id: string; name: string };
+
 type PlayerOption = {
   id: string;
   name: string;
   jerseyNumber?: number | null;
   category?: string | null;
+  position?: string | null;
+  tenantId?: string;
 };
 type LegalDocOption = { id: string; name: string; type: string };
 
 type SectionId = "comercial" | "parcelas" | "documentos" | "auditoria" | "efeitos";
 
-interface PlayerNegotiationEditorDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  tenantId: string;
+export interface NegotiationFormProps {
   mode: "create" | "edit";
+  /** Apenas default inicial — editável no formulário (create). */
+  defaultTenantId?: string;
   negotiationId?: string | null;
   initialPlayerId?: string;
-  onSaved: () => void;
+  onCancel: () => void;
+  /** Após salvar; em create recebe id da negociação criada. */
+  onSaved: (negotiationId?: string) => void;
 }
 
 function dateInput(v: string | null | undefined) {
@@ -105,15 +112,20 @@ function NegotiationFormBlock({
   );
 }
 
-export function PlayerNegotiationEditorDialog({
-  open,
-  onOpenChange,
-  tenantId,
+export function NegotiationForm({
   mode,
+  defaultTenantId = "",
   negotiationId,
   initialPlayerId,
+  onCancel,
   onSaved,
-}: PlayerNegotiationEditorDialogProps) {
+}: NegotiationFormProps) {
+  const [formTenantId, setFormTenantId] = useState(defaultTenantId);
+  const [tenants, setTenants] = useState<TenantOption[]>([]);
+  const [tenantsLoading, setTenantsLoading] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<{ playerId?: string; counterparty?: string; tenant?: string }>(
+    {},
+  );
   const [section, setSection] = useState<SectionId>("comercial");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -150,10 +162,13 @@ export function PlayerNegotiationEditorDialog({
   const playerId = form.playerId || negotiation?.playerId || initialPlayerId || "";
 
   const loadPlayers = useCallback(async () => {
-    if (!tenantId) return;
+    if (!formTenantId) {
+      setPlayers([]);
+      return;
+    }
     setPlayersLoading(true);
     try {
-      const params = new URLSearchParams({ tenantId });
+      const params = new URLSearchParams({ tenantId: formTenantId });
       const { data } = await api.get<PlayerOption[]>(`/players?${params}`);
       setPlayers(Array.isArray(data) ? data : []);
     } catch {
@@ -166,7 +181,7 @@ export function PlayerNegotiationEditorDialog({
     } finally {
       setPlayersLoading(false);
     }
-  }, [tenantId]);
+  }, [formTenantId]);
 
   const reloadNegotiation = useCallback(async () => {
     if (!activeNegotiationId) return;
@@ -189,42 +204,65 @@ export function PlayerNegotiationEditorDialog({
   }, [activeNegotiationId]);
 
   useEffect(() => {
-    if (!open) return;
+    setTenantsLoading(true);
+    api
+      .get<TenantOption[]>("/tenants?clubsOnly=1")
+      .then(({ data }) => setTenants(Array.isArray(data) ? data : []))
+      .finally(() => setTenantsLoading(false));
+  }, []);
+
+  useEffect(() => {
     setSection("comercial");
     setPlayerSearch("");
     setPersistedId(null);
+    setFormTenantId(defaultTenantId);
     if (isEdit) void reloadNegotiation();
     else {
       setNegotiation(null);
       setForm(emptyNegotiationForm(initialPlayerId ?? ""));
     }
-  }, [open, isEdit, initialPlayerId, reloadNegotiation]);
+  }, [isEdit, initialPlayerId, defaultTenantId, negotiationId, reloadNegotiation]);
 
   useEffect(() => {
-    if (!open || !persistedId || isEdit) return;
+    if (!persistedId || isEdit) return;
     void reloadNegotiation();
-  }, [open, persistedId, isEdit, reloadNegotiation]);
+  }, [persistedId, isEdit, reloadNegotiation]);
 
   useEffect(() => {
-    if (!open || !tenantId) return;
+    if (negotiation?.tenantId && isEdit) {
+      setFormTenantId(negotiation.tenantId);
+    }
+  }, [negotiation?.tenantId, isEdit]);
+
+  useEffect(() => {
     void loadPlayers();
+  }, [loadPlayers]);
+
+  useEffect(() => {
     api.get<VisitingTeam[]>("/visiting-teams").then(({ data }) => {
       setVisitingTeams(Array.isArray(data) ? data : []);
     });
-  }, [open, tenantId, loadPlayers]);
+  }, []);
 
   useEffect(() => {
-    if (!open || !playerId) {
+    if (!formTenantId || !form.playerId || playersLoading) return;
+    if (players.length > 0 && !players.some((p) => p.id === form.playerId)) {
+      setForm((f) => ({ ...f, playerId: "" }));
+    }
+  }, [formTenantId, players, form.playerId, playersLoading]);
+
+  useEffect(() => {
+    if (!playerId) {
       setLegalDocs([]);
       return;
     }
     api.get<LegalDocOption[]>(`/players/${playerId}/legal-documents`).then(({ data }) => {
       setLegalDocs(Array.isArray(data) ? data : []);
     });
-  }, [open, playerId]);
+  }, [playerId]);
 
   useEffect(() => {
-    if (!open || form.status !== "effective" || !playerId) {
+    if (form.status !== "effective" || !playerId) {
       setPlayerProfile(null);
       return;
     }
@@ -234,14 +272,15 @@ export function PlayerNegotiationEditorDialog({
         setPlayerProfile((data?.registrationProfile as PlayerRegistrationProfile) ?? null);
       })
       .catch(() => setPlayerProfile(null));
-  }, [open, form.status, playerId]);
+  }, [form.status, playerId]);
 
   const filteredPlayers = useMemo(() => {
     const q = playerSearch.trim().toLowerCase();
     const base = !q
       ? players
       : players.filter((p) => {
-          const hay = `${p.name} ${p.category ?? ""} ${p.jerseyNumber ?? ""}`.toLowerCase();
+          const hay =
+            `${p.name} ${p.category ?? ""} ${p.position ?? ""} ${p.jerseyNumber ?? ""}`.toLowerCase();
           return hay.includes(q);
         });
     return base.slice(0, 150);
@@ -258,32 +297,31 @@ export function PlayerNegotiationEditorDialog({
   };
 
   const handleSave = async () => {
-    if (!tenantId) return;
-    if (!form.playerId) {
-      setFeedback({ open: true, title: "Atleta", message: "Selecione o atleta." });
-      return;
-    }
-    if (!form.counterpartyName.trim()) {
-      setFeedback({ open: true, title: "Contraparte", message: "Informe clube ou entidade." });
-      return;
-    }
+    const errors: typeof fieldErrors = {};
+    if (!formTenantId) errors.tenant = "Selecione o clube.";
+    if (!form.playerId) errors.playerId = "Selecione o atleta.";
+    if (!form.counterpartyName.trim()) errors.counterparty = "Informe clube ou entidade (contraparte).";
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setSaving(true);
     try {
       if (form.futureAcquisitionRightsJson.trim()) {
         JSON.parse(form.futureAcquisitionRightsJson);
       }
       if (isPersisted && activeNegotiationId) {
-        const payload = buildNegotiationPayload(tenantId, form, false);
+        const payload = buildNegotiationPayload(formTenantId, form, false);
         await api.patch(`/player-negotiations/${activeNegotiationId}`, payload);
         await reloadNegotiation();
+        onSaved(activeNegotiationId);
       } else {
-        const payload = buildNegotiationPayload(tenantId, form, true);
+        const payload = buildNegotiationPayload(formTenantId, form, true);
         const { data } = await api.post<PlayerNegotiationFull>("/player-negotiations", payload);
         setPersistedId(data.id);
         setNegotiation(data);
         setForm(negotiationToForm(data));
+        onSaved(data.id);
       }
-      onSaved();
     } catch (e) {
       setFeedback({
         open: true,
@@ -444,80 +482,102 @@ export function PlayerNegotiationEditorDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
-          <DialogHeader className="border-b border-border/80 px-6 py-4">
-            <DialogTitle className="text-lg">
-              {isPersisted
-                ? `Negociação — ${negotiation?.player.name ?? "…"}`
-                : "Nova negociação"}
-            </DialogTitle>
-          </DialogHeader>
-
-          {loading ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <>
-              {visibleSections.length > 1 ? (
-                <nav
-                  className="flex flex-wrap gap-0 border-b border-border/80 px-6"
-                  aria-label="Seções da negociação"
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {visibleSections.length > 1 ? (
+            <nav
+              className="flex flex-wrap gap-0 border-b border-border/80"
+              aria-label="Seções da negociação"
+            >
+              {visibleSections.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={cn(
+                    "min-h-[44px] border-b-2 px-3 text-sm font-medium transition-colors -mb-px",
+                    section === s.id
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                  onClick={() => setSection(s.id)}
                 >
-                  {visibleSections.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className={cn(
-                        "min-h-[44px] border-b-2 px-3 text-sm font-medium transition-colors -mb-px",
-                        section === s.id
-                          ? "border-primary text-foreground"
-                          : "border-transparent text-muted-foreground hover:text-foreground",
-                      )}
-                      onClick={() => setSection(s.id)}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </nav>
-              ) : null}
+                  {s.label}
+                </button>
+              ))}
+            </nav>
+          ) : null}
 
-              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
-                {section === "comercial" && (
-                  <div className="space-y-4">
-                    <NegotiationFormBlock title="Atleta">
-                      {!isPersisted ? (
-                        <>
-                          <div className="space-y-1 sm:col-span-2">
-                            <Label>Filtrar por nome</Label>
-                            <Input
-                              value={playerSearch}
-                              onChange={(e) => setPlayerSearch(e.target.value)}
-                              placeholder="Digite para filtrar…"
-                              className="text-foreground"
-                            />
+          <div className="space-y-6">
+            {section === "comercial" && (
+              <div className="space-y-6">
+                <PageSection title="Dados da negociação">
+                  <NegotiationFormBlock title="Clube e atleta">
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label>Clube *</Label>
+                      {isEdit ? (
+                        <p className="text-sm text-foreground">
+                          {tenants.find((t) => t.id === formTenantId)?.name ?? formTenantId}
+                        </p>
+                      ) : (
+                        <NativeSelectField
+                          value={formTenantId}
+                          onChange={(e) => {
+                            setFormTenantId(e.target.value);
+                            setFieldErrors((err) => ({ ...err, tenant: undefined }));
+                          }}
+                          placeholder="Selecione o clube…"
+                          disabled={tenantsLoading}
+                          options={tenants.map((t) => ({ value: t.id, label: t.name }))}
+                        />
+                      )}
+                      {fieldErrors.tenant ? (
+                        <p className="text-sm text-destructive">{fieldErrors.tenant}</p>
+                      ) : null}
+                    </div>
+                    {!isPersisted ? (
+                      <>
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label>Buscar atleta</Label>
+                          <Input
+                            value={playerSearch}
+                            onChange={(e) => setPlayerSearch(e.target.value)}
+                            placeholder="Nome, categoria ou posição…"
+                            className="text-foreground"
+                            disabled={!formTenantId}
+                          />
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label>Atleta *</Label>
+                            <span className="text-xs text-muted-foreground">
+                              {!formTenantId
+                                ? "Selecione o clube acima"
+                                : playersLoading
+                                  ? "Carregando elenco…"
+                                  : `${filteredPlayers.length} atleta(s)`}
+                            </span>
                           </div>
-                          <div className="space-y-2 sm:col-span-2">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <Label>Selecione o atleta *</Label>
-                              <span className="text-xs text-muted-foreground">
-                                {playersLoading
-                                  ? "Carregando…"
-                                  : `${filteredPlayers.length} de ${players.length} no elenco`}
-                              </span>
-                            </div>
-                            <div className="max-h-52 overflow-y-auto rounded-lg border border-border/80 bg-zinc-950/40">
-                              {playersLoading ? (
-                                <div className="flex justify-center py-8">
-                                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                                </div>
-                              ) : filteredPlayers.length === 0 ? (
-                                <p className="p-4 text-sm text-muted-foreground">
-                                  Nenhum atleta encontrado. Confira o clube selecionado na tela
-                                  anterior ou ajuste o filtro.
-                                </p>
-                              ) : (
+                          {fieldErrors.playerId ? (
+                            <p className="text-sm text-destructive">{fieldErrors.playerId}</p>
+                          ) : null}
+                          <div className="max-h-64 overflow-y-auto rounded-lg border border-border/80 bg-zinc-950/40 lg:max-h-80">
+                            {!formTenantId ? (
+                              <p className="p-4 text-sm text-muted-foreground">
+                                Escolha o clube para carregar o elenco.
+                              </p>
+                            ) : playersLoading ? (
+                              <div className="flex justify-center py-8">
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                              </div>
+                            ) : filteredPlayers.length === 0 ? (
+                              <p className="p-4 text-sm text-muted-foreground">
+                                Nenhum atleta neste clube com o filtro informado.
+                              </p>
+                            ) : (
                                 <ul className="divide-y divide-border/50">
                                   {filteredPlayers.map((p) => {
                                     const selected = form.playerId === p.id;
@@ -531,19 +591,19 @@ export function PlayerNegotiationEditorDialog({
                                               ? "bg-primary/15 text-foreground"
                                               : "hover:bg-muted/30",
                                           )}
-                                          onClick={() =>
-                                            setForm((f) => ({ ...f, playerId: p.id }))
-                                          }
+                                          onClick={() => {
+                                            setForm((f) => ({ ...f, playerId: p.id }));
+                                            setFieldErrors((err) => ({ ...err, playerId: undefined }));
+                                          }}
                                         >
                                           <span className="font-medium">
                                             {p.jerseyNumber != null ? `${p.jerseyNumber} · ` : ""}
                                             {p.name}
                                           </span>
-                                          {p.category ? (
-                                            <span className="text-xs text-muted-foreground">
-                                              {p.category}
-                                            </span>
-                                          ) : null}
+                                          <span className="text-xs text-muted-foreground">
+                                            {[p.category, p.position].filter(Boolean).join(" · ") ||
+                                              "—"}
+                                          </span>
                                         </button>
                                       </li>
                                     );
@@ -561,9 +621,11 @@ export function PlayerNegotiationEditorDialog({
                           </span>
                         </div>
                       )}
-                    </NegotiationFormBlock>
+                  </NegotiationFormBlock>
+                </PageSection>
 
-                    <NegotiationFormBlock title="Operação">
+                <PageSection title="Operação">
+                  <NegotiationFormBlock title="Tipo e status">
                     <div className="space-y-1">
                       <Label>Tipo</Label>
                       <NativeSelect
@@ -592,9 +654,11 @@ export function PlayerNegotiationEditorDialog({
                         ))}
                       </NativeSelect>
                     </div>
-                    </NegotiationFormBlock>
+                  </NegotiationFormBlock>
+                </PageSection>
 
-                    <NegotiationFormBlock title="Contraparte">
+                <PageSection title="Contraparte">
+                  <NegotiationFormBlock title="Destino e entidade">
                     <div className="space-y-1 sm:col-span-2">
                       <Label>Destino (time adversário cadastrado)</Label>
                       <NativeSelect
@@ -618,21 +682,28 @@ export function PlayerNegotiationEditorDialog({
                       </NativeSelect>
                     </div>
                     <div className="space-y-1 sm:col-span-2">
-                      <Label>Clube / entidade (contraparte)</Label>
+                      <Label>Clube / entidade (contraparte) *</Label>
                       <Input
+                        className="text-foreground"
                         value={form.counterpartyName}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setForm((f) => ({
                             ...f,
                             counterpartyName: e.target.value,
                             counterpartyMode: "free",
-                          }))
-                        }
+                          }));
+                          setFieldErrors((err) => ({ ...err, counterparty: undefined }));
+                        }}
                       />
+                      {fieldErrors.counterparty ? (
+                        <p className="text-sm text-destructive">{fieldErrors.counterparty}</p>
+                      ) : null}
                     </div>
-                    </NegotiationFormBlock>
+                  </NegotiationFormBlock>
+                </PageSection>
 
-                    <NegotiationFormBlock title="Valores e prazos">
+                <PageSection title="Valores e prazos">
+                  <NegotiationFormBlock title="Valores, datas e responsável">
                     <div className="space-y-1">
                       <Label>Valor total</Label>
                       <Input
@@ -719,9 +790,11 @@ export function PlayerNegotiationEditorDialog({
                         }
                       />
                     </div>
-                    </NegotiationFormBlock>
+                  </NegotiationFormBlock>
+                </PageSection>
 
-                    <NegotiationFormBlock title="Opções e condições">
+                <PageSection title="Documentos e observações">
+                  <NegotiationFormBlock title="Condições, cláusulas e notas">
                     <div className="flex min-h-[44px] items-center gap-2 sm:col-span-2">
                       <input
                         id="hasPurchaseOption"
@@ -799,11 +872,12 @@ export function PlayerNegotiationEditorDialog({
                         rows={2}
                       />
                     </div>
-                    </NegotiationFormBlock>
-                  </div>
-                )}
+                  </NegotiationFormBlock>
+                </PageSection>
+              </div>
+            )}
 
-                {section === "parcelas" && negotiation && (
+            {section === "parcelas" && negotiation && (
                   <div className="space-y-4">
                     <Table>
                       <TableHeader>
@@ -1061,44 +1135,43 @@ export function PlayerNegotiationEditorDialog({
                     </div>
                   </div>
                 )}
-              </div>
+          </div>
 
-              <DialogFooter className="flex-col gap-3 border-t border-border/80 bg-muted/5 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap gap-2">
-                  {canEffective && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="min-h-[44px]"
-                      onClick={() => setEffectiveConfirm(true)}
-                    >
-                      Efetivar negociação
-                    </Button>
-                  )}
-                </div>
-                <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="min-h-[44px] flex-1 sm:flex-none"
-                    onClick={() => onOpenChange(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    type="button"
-                    className="min-h-[44px] flex-1 sm:flex-none"
-                    disabled={saving}
-                    onClick={handleSave}
-                  >
-                    {saving ? "Salvando…" : "Salvar"}
-                  </Button>
-                </div>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+          <div className="flex flex-col gap-3 border-t border-border/80 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {canEffective && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="min-h-[44px]"
+                  onClick={() => setEffectiveConfirm(true)}
+                >
+                  Efetivar negociação
+                </Button>
+              )}
+            </div>
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-[44px] flex-1 sm:w-auto sm:min-w-[120px]"
+                disabled={saving}
+                onClick={onCancel}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                className="min-h-[44px] flex-1 sm:w-auto sm:min-w-[160px]"
+                disabled={saving}
+                onClick={handleSave}
+              >
+                {saving ? "Salvando…" : "Salvar negociação"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Dialog open={!!financeiroTarget} onOpenChange={(o) => !o && setFinanceiroTarget(null)}>
         <DialogContent className="sm:max-w-md">

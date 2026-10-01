@@ -100,6 +100,12 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
     title: "Atletas negociados",
     description: "Negociações comerciais — transferência, empréstimo e direitos econômicos.",
   },
+  "/dashboard/cadastros/jogadores/negociados/nova": {
+    title: "Nova negociação",
+    description: "Cadastro de negociação comercial do atleta.",
+    backHref: "/dashboard/cadastros/jogadores/negociados",
+    backLabel: "Atletas negociados",
+  },
   "/dashboard/adm/patrimonio": {
     title: "Patrimônio",
     description:
