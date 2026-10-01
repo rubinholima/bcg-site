@@ -73,6 +73,33 @@ function dateInput(v: string | null | undefined) {
   return v ? v.slice(0, 10) : "";
 }
 
+const dateInputClass =
+  "text-foreground [&::-webkit-datetime-edit]:text-foreground";
+
+function NegotiationFormBlock({
+  title,
+  children,
+  className,
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={cn(
+        "space-y-3 rounded-lg border border-border/80 bg-muted/10 p-4",
+        className,
+      )}
+    >
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h3>
+      <div className="grid gap-3 sm:grid-cols-2">{children}</div>
+    </section>
+  );
+}
+
 export function PlayerNegotiationEditorDialog({
   open,
   onOpenChange,
@@ -390,12 +417,14 @@ export function PlayerNegotiationEditorDialog({
     playerProfile?.sports as { situation?: string } | undefined
   )?.situation;
 
+  const visibleSections = sections.filter((s) => s.show);
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[92vh] flex-col overflow-hidden sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
+          <DialogHeader className="border-b border-border/80 px-6 py-4">
+            <DialogTitle className="text-lg">
               {isPersisted
                 ? `Negociação — ${negotiation?.player.name ?? "…"}`
                 : "Nova negociação"}
@@ -408,58 +437,74 @@ export function PlayerNegotiationEditorDialog({
             </div>
           ) : (
             <>
-              <div className="flex flex-wrap gap-2 border-b border-border pb-2">
-                {sections
-                  .filter((s) => s.show)
-                  .map((s) => (
-                    <Button
+              {visibleSections.length > 1 ? (
+                <nav
+                  className="flex flex-wrap gap-0 border-b border-border/80 px-6"
+                  aria-label="Seções da negociação"
+                >
+                  {visibleSections.map((s) => (
+                    <button
                       key={s.id}
                       type="button"
-                      size="sm"
-                      variant={section === s.id ? "default" : "outline"}
-                      className="min-h-[40px]"
+                      className={cn(
+                        "min-h-[44px] border-b-2 px-3 text-sm font-medium transition-colors -mb-px",
+                        section === s.id
+                          ? "border-primary text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
                       onClick={() => setSection(s.id)}
                     >
                       {s.label}
-                    </Button>
+                    </button>
                   ))}
-              </div>
+                </nav>
+              ) : null}
 
-              <div className="min-h-0 flex-1 overflow-y-auto py-3 pr-1">
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
                 {section === "comercial" && (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {!isPersisted && (
-                      <div className="space-y-1 sm:col-span-2">
-                        <Label>Buscar atleta</Label>
-                        <Input
-                          value={playerSearch}
-                          onChange={(e) => setPlayerSearch(e.target.value)}
-                          placeholder="Nome do atleta…"
-                          className="mb-1"
-                        />
-                        <NativeSelect
-                          value={form.playerId}
-                          onChange={(e) => setForm((f) => ({ ...f, playerId: e.target.value }))}
-                        >
-                          <option value="">Selecione o atleta…</option>
-                          {filteredPlayers.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.jerseyNumber != null ? `${p.jerseyNumber} — ` : ""}
-                              {p.name}
-                            </option>
-                          ))}
-                        </NativeSelect>
-                      </div>
-                    )}
-                    {isPersisted && (
-                      <div className="sm:col-span-2 text-sm text-muted-foreground">
-                        Atleta:{" "}
-                        <span className="font-medium text-foreground">
-                          {negotiation?.player.name}
-                        </span>
-                      </div>
-                    )}
+                  <div className="space-y-4">
+                    <NegotiationFormBlock title="Atleta">
+                      {!isPersisted ? (
+                        <>
+                          <div className="space-y-1 sm:col-span-2">
+                            <Label>Filtrar por nome</Label>
+                            <Input
+                              value={playerSearch}
+                              onChange={(e) => setPlayerSearch(e.target.value)}
+                              placeholder="Digite para filtrar…"
+                              className="text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1 sm:col-span-2">
+                            <Label>Atleta *</Label>
+                            <NativeSelect
+                              value={form.playerId}
+                              onChange={(e) =>
+                                setForm((f) => ({ ...f, playerId: e.target.value }))
+                              }
+                              className="w-full"
+                            >
+                              <option value="">Selecione o atleta…</option>
+                              {filteredPlayers.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.jerseyNumber != null ? `${p.jerseyNumber} — ` : ""}
+                                  {p.name}
+                                </option>
+                              ))}
+                            </NativeSelect>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="sm:col-span-2 text-sm">
+                          <span className="text-muted-foreground">Atleta: </span>
+                          <span className="font-medium text-foreground">
+                            {negotiation?.player.name}
+                          </span>
+                        </div>
+                      )}
+                    </NegotiationFormBlock>
 
+                    <NegotiationFormBlock title="Operação">
                     <div className="space-y-1">
                       <Label>Tipo</Label>
                       <NativeSelect
@@ -488,7 +533,9 @@ export function PlayerNegotiationEditorDialog({
                         ))}
                       </NativeSelect>
                     </div>
+                    </NegotiationFormBlock>
 
+                    <NegotiationFormBlock title="Contraparte">
                     <div className="space-y-1 sm:col-span-2">
                       <Label>Destino (time adversário cadastrado)</Label>
                       <NativeSelect
@@ -524,7 +571,9 @@ export function PlayerNegotiationEditorDialog({
                         }
                       />
                     </div>
+                    </NegotiationFormBlock>
 
+                    <NegotiationFormBlock title="Valores e prazos">
                     <div className="space-y-1">
                       <Label>Valor total</Label>
                       <Input
@@ -569,7 +618,7 @@ export function PlayerNegotiationEditorDialog({
                       <Label>Data negociação</Label>
                       <Input
                         type="date"
-                        className="text-foreground"
+                        className={dateInputClass}
                         value={form.negotiatedAt}
                         onChange={(e) => setForm((f) => ({ ...f, negotiatedAt: e.target.value }))}
                       />
@@ -578,7 +627,7 @@ export function PlayerNegotiationEditorDialog({
                       <Label>Efetiva de</Label>
                       <Input
                         type="date"
-                        className="text-foreground"
+                        className={dateInputClass}
                         value={form.effectiveFrom}
                         onChange={(e) => setForm((f) => ({ ...f, effectiveFrom: e.target.value }))}
                       />
@@ -587,7 +636,7 @@ export function PlayerNegotiationEditorDialog({
                       <Label>Efetiva até</Label>
                       <Input
                         type="date"
-                        className="text-foreground"
+                        className={dateInputClass}
                         value={form.effectiveUntil}
                         onChange={(e) => setForm((f) => ({ ...f, effectiveUntil: e.target.value }))}
                       />
@@ -596,22 +645,25 @@ export function PlayerNegotiationEditorDialog({
                       <Label>Fim empréstimo</Label>
                       <Input
                         type="date"
-                        className="text-foreground"
+                        className={dateInputClass}
                         value={form.loanEndDate}
                         onChange={(e) => setForm((f) => ({ ...f, loanEndDate: e.target.value }))}
                       />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 sm:col-span-2">
                       <Label>Responsável</Label>
                       <Input
+                        className="text-foreground"
                         value={form.responsibleName}
                         onChange={(e) =>
                           setForm((f) => ({ ...f, responsibleName: e.target.value }))
                         }
                       />
                     </div>
+                    </NegotiationFormBlock>
 
-                    <div className="flex items-center gap-2 sm:col-span-2">
+                    <NegotiationFormBlock title="Opções e condições">
+                    <div className="flex min-h-[44px] items-center gap-2 sm:col-span-2">
                       <input
                         id="hasPurchaseOption"
                         type="checkbox"
@@ -629,7 +681,7 @@ export function PlayerNegotiationEditorDialog({
                           <Label>Prazo opção de compra</Label>
                           <Input
                             type="date"
-                            className="text-foreground"
+                            className={dateInputClass}
                             value={form.purchaseOptionDeadline}
                             onChange={(e) =>
                               setForm((f) => ({ ...f, purchaseOptionDeadline: e.target.value }))
@@ -668,25 +720,27 @@ export function PlayerNegotiationEditorDialog({
                       />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
-                      <Label>Direitos futuros de aquisição (JSON)</Label>
+                      <Label>Direitos futuros (JSON técnico)</Label>
                       <Textarea
                         value={form.futureAcquisitionRightsJson}
                         onChange={(e) =>
                           setForm((f) => ({ ...f, futureAcquisitionRightsJson: e.target.value }))
                         }
-                        rows={4}
+                        rows={3}
                         placeholder='{"percentualAdicional": 20, "prazo": "2027-12-31"}'
-                        className="font-mono text-xs"
+                        className="font-mono text-xs text-foreground"
                       />
                     </div>
                     <div className="space-y-1 sm:col-span-2">
                       <Label>Observações</Label>
                       <Textarea
+                        className="text-foreground"
                         value={form.notes}
                         onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                         rows={2}
                       />
                     </div>
+                    </NegotiationFormBlock>
                   </div>
                 )}
 
@@ -950,7 +1004,7 @@ export function PlayerNegotiationEditorDialog({
                 )}
               </div>
 
-              <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+              <DialogFooter className="flex-col gap-3 border-t border-border/80 bg-muted/5 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap gap-2">
                   {canEffective && (
                     <Button
@@ -963,11 +1017,21 @@ export function PlayerNegotiationEditorDialog({
                     </Button>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                    Fechar
+                <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-[44px] flex-1 sm:flex-none"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Cancelar
                   </Button>
-                  <Button type="button" className="min-h-[44px]" disabled={saving} onClick={handleSave}>
+                  <Button
+                    type="button"
+                    className="min-h-[44px] flex-1 sm:flex-none"
+                    disabled={saving}
+                    onClick={handleSave}
+                  >
                     {saving ? "Salvando…" : "Salvar"}
                   </Button>
                 </div>
