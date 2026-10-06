@@ -213,6 +213,8 @@ model Tenant {
   presenceSessions             UserPresenceSession[]
   learningCourses              LearningCourse[]
   learningAssignments          LearningAssignment[]
+  analysisSessions             AnalysisSession[]
+  analysisTagDefinitions       AnalysisTagDefinition[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -330,6 +332,7 @@ model TravelLogistics {
   goalkeeperMatchAnalyses GoalkeeperMatchAnalysis[]
   matchIncidents        FootballMatchIncident[]
   matchAttachments      FootballMatchAttachment[]
+  analysisSessions      AnalysisSession[]
 }
 
 /**
@@ -1212,6 +1215,9 @@ model Player {
   medicalDepartures          PlayerMedicalDeparture[]
   medicalEncounters          MedicalEncounter[]
   playerNegotiations         PlayerNegotiation[]
+  analysisEvents             AnalysisEvent[] @relation("AnalysisEventPlayer")
+  analysisEventsRelated      AnalysisEvent[] @relation("AnalysisEventRelatedPlayer")
+  analysisClipPlayers        AnalysisClipPlayer[]
   @@index([tenantId])
   @@index([tenantId, category])
   @@index([tenantId, cbfRegistration])
@@ -1344,6 +1350,7 @@ model FmfMatchReport {
   coachStatOverride   CoachMatchStatOverride?
   matchIncidents      FootballMatchIncident[]
   matchAttachments    FootballMatchAttachment[]
+  analysisSessions    AnalysisSession[]
 
   @@unique([tenantId, externalMatchId])
   @@index([tenantId, season, category])
@@ -4499,6 +4506,7 @@ model CoachTrainingSession {
   attachments CoachTrainingSessionAttachment[]
   pseTokens   PhysiologySessionRpeToken[]
   pseSubmissions PhysiologySessionRpeSubmission[]
+  analysisSessions AnalysisSession[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   @@index([tenantId, category])
@@ -4903,4 +4911,145 @@ model LearningQuizAttempt {
   submittedAt  DateTime @default(now())
   @@index([enrollmentId, quizId])
   @@index([userId])
+}
+
+// ─── Análise de desempenho (vídeo / tagging) ─────────────────────────────────
+
+model AnalysisSession {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  kind               String   // MATCH | TRAINING | OPPONENT | OTHER
+  title              String
+  status             String   @default("draft") // draft | active | archived
+  category           String?
+  season             Int?
+  authorUserId       String?
+  fmfMatchReportId   String?
+  fmfMatchReport     FmfMatchReport? @relation(fields: [fmfMatchReportId], references: [id], onDelete: SetNull)
+  travelLogisticsId  String?
+  travelLogistics    TravelLogistics? @relation(fields: [travelLogisticsId], references: [id], onDelete: SetNull)
+  trainingSessionId  String?
+  trainingSession    CoachTrainingSession? @relation(fields: [trainingSessionId], references: [id], onDelete: SetNull)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  videoSources       AnalysisVideoSource[]
+  events             AnalysisEvent[]
+  clips              AnalysisClip[]
+  @@index([tenantId, kind])
+  @@index([tenantId, status])
+  @@index([tenantId, category])
+  @@index([fmfMatchReportId])
+  @@index([travelLogisticsId])
+  @@index([trainingSessionId])
+}
+
+model AnalysisVideoSource {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  analysisSessionId  String
+  analysisSession    AnalysisSession @relation(fields: [analysisSessionId], references: [id], onDelete: Cascade)
+  sourceType         String   // UPLOAD | YOUTUBE | EXTERNAL_URL
+  title              String
+  cameraLabel        String?
+  storageKey         String?
+  externalUrl        String?
+  durationMs         Int?
+  mimeType           String?
+  width              Int?
+  height             Int?
+  processingStatus   String   @default("pending") // pending | ready | failed
+  authorUserId       String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  events             AnalysisEvent[]
+  clips              AnalysisClip[]
+  @@index([tenantId, analysisSessionId])
+}
+
+model AnalysisTagDefinition {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  key        String
+  label      String
+  category   String?
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  outcomes   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  events     AnalysisEvent[]
+  @@unique([tenantId, key])
+  @@index([tenantId, active])
+}
+
+model AnalysisEvent {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  analysisSessionId  String
+  analysisSession    AnalysisSession @relation(fields: [analysisSessionId], references: [id], onDelete: Cascade)
+  videoSourceId      String?
+  videoSource        AnalysisVideoSource? @relation(fields: [videoSourceId], references: [id], onDelete: SetNull)
+  tagDefinitionId    String
+  tagDefinition      AnalysisTagDefinition @relation(fields: [tagDefinitionId], references: [id], onDelete: Restrict)
+  playerId           String?
+  player             Player?  @relation("AnalysisEventPlayer", fields: [playerId], references: [id], onDelete: SetNull)
+  relatedPlayerId    String?
+  relatedPlayer      Player?  @relation("AnalysisEventRelatedPlayer", fields: [relatedPlayerId], references: [id], onDelete: SetNull)
+  teamSide           String?
+  outcome            String?
+  startMs            Int
+  endMs              Int?
+  matchPeriod        String?
+  matchClockSeconds  Int?
+  fieldX             Float?
+  fieldY             Float?
+  notes              String?  @db.Text
+  authorUserId       String?
+  source             String   @default("MANUAL") // MANUAL | LIVE | IMPORTED
+  reviewStatus       String   @default("confirmed")
+  clientEventKey     String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  clipLinks          AnalysisClipEvent[]
+  @@unique([analysisSessionId, clientEventKey])
+  @@index([tenantId, analysisSessionId])
+  @@index([tagDefinitionId])
+  @@index([playerId])
+}
+
+model AnalysisClip {
+  id                String   @id @default(cuid())
+  tenantId          String
+  analysisSessionId String
+  analysisSession   AnalysisSession @relation(fields: [analysisSessionId], references: [id], onDelete: Cascade)
+  videoSourceId     String
+  videoSource       AnalysisVideoSource @relation(fields: [videoSourceId], references: [id], onDelete: Cascade)
+  title             String
+  startMs           Int
+  endMs             Int
+  notes             String?  @db.Text
+  authorUserId      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  events            AnalysisClipEvent[]
+  players           AnalysisClipPlayer[]
+  @@index([tenantId, analysisSessionId])
+}
+
+model AnalysisClipEvent {
+  clipId  String
+  eventId String
+  clip    AnalysisClip  @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  event   AnalysisEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  @@id([clipId, eventId])
+}
+
+model AnalysisClipPlayer {
+  clipId   String
+  playerId String
+  clip     AnalysisClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  player   Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  @@id([clipId, playerId])
 }

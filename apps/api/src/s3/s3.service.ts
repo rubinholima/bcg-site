@@ -70,6 +70,8 @@ const LOGOS_PREFIX = 'logos/';
 /** Logos de adversários (Clubes Adv) — pasta dedicada no bucket */
 const LOGOS_CLUBES_ADV_PREFIX = 'logos/clubes-adv/';
 const LEGAL_PREFIX = 'legal/';
+/** Vídeos táticos privados — nunca expor URL pública nem tratar como media/ */
+export const ANALYSIS_PRIVATE_PREFIX = 'private/analysis/';
 /** Staging interno (import Beatscode — manifest + PDFs antes de copiar para legal/). */
 const BEATSCODE_STAGING_PREFIX = 'beatscode-staging/';
 
@@ -98,8 +100,49 @@ export class S3Service {
       safeKey.startsWith(MEDIA_PREFIX) ||
       safeKey.startsWith(LOGOS_PREFIX) ||
       safeKey.startsWith(LEGAL_PREFIX) ||
-      safeKey.startsWith(BEATSCODE_STAGING_PREFIX)
+      safeKey.startsWith(BEATSCODE_STAGING_PREFIX) ||
+      safeKey.startsWith(ANALYSIS_PRIVATE_PREFIX)
     );
+  }
+
+  /**
+   * Upload de vídeo de análise (privado). Retorna apenas a storage key — sem URL pública.
+   */
+  async uploadAnalysisVideo(
+    buffer: Buffer,
+    tenantId: string,
+    sessionId: string,
+    filename: string,
+    mimeType?: string,
+  ): Promise<{ key: string; mimeType: string }> {
+    const safeTenant = tenantId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeSession = sessionId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const lower = filename.toLowerCase();
+    let ext = 'mp4';
+    if (lower.endsWith('.webm')) ext = 'webm';
+    else if (lower.endsWith('.mov')) ext = 'mov';
+    else if (lower.endsWith('.mkv')) ext = 'mkv';
+    const contentType =
+      mimeType?.trim() ||
+      (ext === 'webm' ? 'video/webm' : ext === 'mov' ? 'video/quicktime' : 'video/mp4');
+    const key = `${ANALYSIS_PRIVATE_PREFIX}${safeTenant}/${safeSession}/${randomUUID()}.${ext}`;
+    if (buffer.length > 512 * 1024 * 1024) {
+      throw new InternalServerErrorException('Vídeo acima de 512 MB.');
+    }
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(`Falha ao enviar vídeo de análise: ${message}`);
+    }
+    return { key, mimeType: contentType };
   }
 
   /** URL pública do objeto: domínio oficial se configurado, senão S3 direto. */
