@@ -18,6 +18,15 @@ import {
 } from './performance-analysis-workflows.constants';
 import { buildPreMatchPrintHtml } from './performance-analysis-prematch-print.util';
 import { mapPublicVideoSource } from './performance-analysis-video-public.util';
+import {
+  mapObservedMatchAnalysisState,
+  OBSERVED_MATCH_ACTION_LABEL,
+  OBSERVED_MATCH_STATUS_LABEL,
+} from './performance-analysis-observed-match.util';
+import {
+  orderedSelectedClipIds,
+  presentationSectionKeys,
+} from './performance-analysis-prematch-presentation.util';
 
 @Injectable()
 export class PerformanceAnalysisWorkflowsService {
@@ -179,7 +188,10 @@ export class PerformanceAnalysisWorkflowsService {
         this.prisma.analysisOpponentObservedMatch.findMany({
           where: { opponentProfileId: profile.id },
           orderBy: [{ sortOrder: 'asc' }, { matchDate: 'desc' }],
-          include: { videoLinks: { include: { videoSource: { select: { id: true, title: true } } } } },
+          include: {
+            videoLinks: { include: { videoSource: { select: { id: true, title: true } } } },
+            _count: { select: { events: true } },
+          },
         }),
         this.prisma.analysisOpponentPlayer.findMany({
           where: { opponentProfileId: profile.id },
@@ -249,9 +261,28 @@ export class PerformanceAnalysisWorkflowsService {
         ])
       : [[], [], []];
 
+    const opponentSession = primarySession;
+    const observedMatchesWithAnalysis = observedMatches.map((m) => {
+      const taggedEventCount = m._count?.events ?? 0;
+      const analysis = mapObservedMatchAnalysisState({
+        taggedEventCount,
+        sessionStatus: opponentSession?.status ?? null,
+        sessionId: opponentSession?.id ?? null,
+      });
+      return {
+        ...m,
+        taggedEventCount,
+        analysisStatus: analysis.status,
+        analysisStatusLabel: OBSERVED_MATCH_STATUS_LABEL[analysis.status],
+        analysisAction: analysis.action,
+        analysisActionLabel: OBSERVED_MATCH_ACTION_LABEL[analysis.action],
+        analysisSessionId: analysis.sessionId,
+      };
+    });
+
     return {
       profile,
-      observedMatches,
+      observedMatches: observedMatchesWithAnalysis,
       players,
       lineups,
       setPieces,
@@ -953,6 +984,9 @@ export class PerformanceAnalysisWorkflowsService {
         where: { id: item.id, collectionId },
       });
       if (!existing) throw new BadRequestException('Item de coleção inválido.');
+      if (existing.collectionId !== collectionId) {
+        throw new BadRequestException('Item de coleção inválido.');
+      }
       await this.prisma.analysisClipCollectionItem.update({
         where: { id: item.id },
         data: { groupKey: item.groupKey, sortOrder: item.sortOrder },
@@ -1067,27 +1101,31 @@ export class PerformanceAnalysisWorkflowsService {
   async getPreMatchPresentationPayload(versionId: string, allowedTenantIds: string[] | null) {
     const version = await this.access.loadPreMatchVersion(versionId, allowedTenantIds);
     const prep = await this.getPreMatchBundle(version.preparationId, allowedTenantIds);
-    let opponentBundle: Awaited<ReturnType<PerformanceAnalysisWorkflowsService['getOpponentProfileBundle']>> | null =
-      null;
-    if (prep.opponentProfileId) {
-      opponentBundle = await this.getOpponentProfileBundle(prep.opponentProfileId, allowedTenantIds);
-    }
-    const clipIds = Array.isArray(version.selectedClipIds) ? (version.selectedClipIds as string[]) : [];
+    const clipIds = orderedSelectedClipIds(version.selectedClipIds);
     const clips: Array<Awaited<ReturnType<PerformanceAnalysisWorkflowsService['getClipPlaybackSafe']>>> = [];
     for (const clipId of clipIds.slice(0, 24)) {
       const pb = await this.getClipPlaybackSafe(clipId, allowedTenantIds);
       if (pb) clips.push(pb);
     }
-    const hidden = new Set(
-      Array.isArray(version.hiddenSections) ? (version.hiddenSections as string[]) : [],
-    );
     return {
-      preparation: prep,
-      version,
-      opponentBundle,
+      preparation: {
+        id: prep.id,
+        title: prep.title,
+        opponentProfileId: prep.opponentProfileId,
+        travelLogisticsId: prep.travelLogisticsId,
+      },
+      version: {
+        id: version.id,
+        lifecycle: version.lifecycle,
+        versionNumber: version.versionNumber,
+        sections: version.sections,
+        tacticalBoard: version.tacticalBoard,
+        hiddenSections: version.hiddenSections,
+        selectedClipIds: clipIds,
+      },
       clips,
       sectionLabels: PRE_MATCH_SECTION_LABELS,
-      sectionKeys: PRE_MATCH_SECTION_KEYS.filter((k) => !hidden.has(k)),
+      sectionKeys: presentationSectionKeys(version.hiddenSections),
     };
   }
 

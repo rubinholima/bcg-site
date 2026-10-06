@@ -109,13 +109,30 @@ describe('PerformanceAnalysisWorkflowsService', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
+  it('reorder de coleção rejeita tenant inválido', async () => {
+    (prisma.analysisClipCollection.findUnique as jest.Mock).mockResolvedValue({
+      id: 'c1',
+      tenantId: 'ten1',
+    });
+    (access.assertTenant as jest.Mock).mockImplementation(() => {
+      throw new ForbiddenException('Tenant inválido.');
+    });
+
+    await expect(
+      service.reorderClipCollectionItems('c1', [{ id: 'i1', groupKey: 'PRESSAO', sortOrder: 0 }], ['ten2']),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
   it('reordena itens de coleção de clips', async () => {
     (prisma.analysisClipCollection.findUnique as jest.Mock).mockResolvedValue({
       id: 'c1',
       tenantId: 'ten1',
     });
     (access.assertTenant as jest.Mock).mockImplementation(() => undefined);
-    (prisma.analysisClipCollectionItem.findFirst as jest.Mock).mockResolvedValue({ id: 'i1' });
+    (prisma.analysisClipCollectionItem.findFirst as jest.Mock).mockResolvedValue({
+      id: 'i1',
+      collectionId: 'c1',
+    });
 
     const result = await service.reorderClipCollectionItems(
       'c1',

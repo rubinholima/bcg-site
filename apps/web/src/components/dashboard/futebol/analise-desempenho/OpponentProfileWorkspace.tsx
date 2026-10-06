@@ -40,6 +40,15 @@ import {
   writeProfileJsonText,
   writeTransitionsSplit,
 } from "@/lib/performance-analysis-workflows-ui";
+import {
+  observedMatchSessionHref,
+  OBSERVED_MATCH_STATUS_LABEL,
+  type ObservedMatchAnalysisAction,
+} from "@/lib/performance-analysis-observed-match-ui";
+import {
+  ClipCollectionReorderList,
+  type ClipCollectionItemRow,
+} from "./ClipCollectionReorderList";
 
 type ObservedMatch = {
   id: string;
@@ -51,6 +60,12 @@ type ObservedMatch = {
   awayScore: number | null;
   notes: string | null;
   videoLinks: Array<{ videoSource: { id: string; title: string } }>;
+  taggedEventCount?: number;
+  analysisStatus?: string;
+  analysisStatusLabel?: string;
+  analysisAction?: ObservedMatchAnalysisAction;
+  analysisActionLabel?: string;
+  analysisSessionId?: string | null;
 };
 
 type OpponentPlayer = {
@@ -394,7 +409,8 @@ export function OpponentProfileWorkspace({ profileId, querySuffix }: Props) {
                 <TableHead>Competição</TableHead>
                 <TableHead>Placar</TableHead>
                 <TableHead>Vídeos</TableHead>
-                <TableHead className="w-[120px]" />
+                <TableHead>Análise</TableHead>
+                <TableHead className="w-[200px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -411,8 +427,34 @@ export function OpponentProfileWorkspace({ profileId, querySuffix }: Props) {
                   <TableCell className="text-xs text-muted-foreground">
                     {m.videoLinks.map((v) => v.videoSource.title).join(", ") || "—"}
                   </TableCell>
+                  <TableCell className="text-xs">
+                    {m.analysisStatusLabel ??
+                      (m.analysisStatus
+                        ? OBSERVED_MATCH_STATUS_LABEL[m.analysisStatus as keyof typeof OBSERVED_MATCH_STATUS_LABEL]
+                        : "—")}
+                  </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap items-center gap-1">
+                      {m.analysisAction && m.analysisActionLabel ? (
+                        m.analysisSessionId ? (
+                          <Button type="button" size="sm" variant="secondary" asChild>
+                            <Link
+                              href={observedMatchSessionHref(
+                                m.analysisAction,
+                                m.analysisSessionId,
+                                m.id,
+                                querySuffix,
+                              )}
+                            >
+                              {m.analysisActionLabel}
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button type="button" size="sm" variant="secondary" onClick={() => void openAnalysis()}>
+                            {m.analysisActionLabel}
+                          </Button>
+                        )
+                      ) : null}
                       <Button type="button" size="icon" variant="ghost" onClick={() => setMatchDialog(m)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -683,28 +725,22 @@ export function OpponentProfileWorkspace({ profileId, querySuffix }: Props) {
                   }
                 />
                 {OPPONENT_CLIP_GROUPS.map((g) => {
-                  const items = bundle.clipCollection!.items.filter((i) => i.groupKey === g.key);
+                  const items = bundle.clipCollection!.items.filter(
+                    (i) => i.groupKey === g.key,
+                  ) as ClipCollectionItemRow[];
                   return (
-                    <div key={g.key}>
-                      <p className="text-xs font-medium text-muted-foreground">{g.label}</p>
-                      <ul className="text-sm">
-                        {items.map((it) => (
-                          <li key={it.id} className="flex items-center justify-between gap-2 py-0.5">
-                            <span>{it.clip.title}</span>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              onClick={() =>
-                                void api.delete(`/performance-analysis/clip-collection-items/${it.id}`).then(load)
-                              }
-                            >
-                              Remover
-                            </Button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    <ClipCollectionReorderList
+                      key={g.key}
+                      collectionId={bundle.clipCollection!.id}
+                      groupKey={g.key}
+                      groupLabel={g.label}
+                      items={items}
+                      onChanged={load}
+                      onPreview={(clipId) => setPreviewClipId(clipId)}
+                      onRemove={(itemId) =>
+                        void api.delete(`/performance-analysis/clip-collection-items/${itemId}`).then(load)
+                      }
+                    />
                   );
                 })}
               </div>

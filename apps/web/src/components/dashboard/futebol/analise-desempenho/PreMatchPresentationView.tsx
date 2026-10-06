@@ -37,7 +37,12 @@ export function PreMatchPresentationView({
     try {
       const { data } = await api.get<{
         preparation: { title: string };
-        version: { sections?: Record<string, { text?: string }>; tacticalBoard?: TacticalBoardState };
+        version: {
+          lifecycle: string;
+          sections?: Record<string, { text?: string }>;
+          tacticalBoard?: TacticalBoardState;
+          selectedClipIds?: string[];
+        };
         sectionKeys: string[];
         sectionLabels: Record<string, string>;
         clips: Array<{ clip: { id: string } }>;
@@ -46,11 +51,15 @@ export function PreMatchPresentationView({
       const built: Slide[] = [];
       for (const key of data.sectionKeys) {
         if (key === "clips_selecionados") {
+          const ordered =
+            data.version.selectedClipIds?.length
+              ? data.version.selectedClipIds
+              : data.clips.map((c) => c.clip.id);
           built.push({
             kind: "clips",
             key: "clips",
             label: data.sectionLabels[key] ?? key,
-            clipIds: data.clips.map((c) => c.clip.id),
+            clipIds: ordered,
           });
           continue;
         }

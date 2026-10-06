@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { PreMatchPresentationView } from "@/components/dashboard/futebol/analise-desempenho/PreMatchPresentationView";
 import { useAnaliseDesempenhoQuery } from "@/components/dashboard/futebol/analise-desempenho/AnaliseDesempenhoFilters";
 import { api } from "@/lib/api";
+import { selectPreMatchPresentationVersion } from "@/lib/performance-analysis-workflows-ui";
 
 export default function PreJogoApresentacaoPage() {
   const preparationId = String(useParams().preparationId ?? "");
@@ -16,12 +17,13 @@ export default function PreJogoApresentacaoPage() {
 
   useEffect(() => {
     api
-      .get<{ title: string; versions: Array<{ id: string }> }>(
-        `/performance-analysis/pre-match/${preparationId}`,
-      )
+      .get<{
+        title: string;
+        versions: Array<{ id: string; lifecycle: string; versionNumber: number }>;
+      }>(`/performance-analysis/pre-match/${preparationId}`)
       .then(({ data }) => {
         setTitle(data.title);
-        setVersionId(data.versions[0]?.id ?? null);
+        setVersionId(selectPreMatchPresentationVersion(data.versions)?.id ?? null);
       });
   }, [preparationId]);
 

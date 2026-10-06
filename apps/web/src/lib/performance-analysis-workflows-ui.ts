@@ -78,6 +78,18 @@ export function readTransitionsSplit(transitions: unknown): { off: string; def: 
   return { off: all, def: "" };
 }
 
+export function selectPreMatchPresentationVersion<
+  T extends { id: string; lifecycle: string; versionNumber: number },
+>(versions: T[]): T | null {
+  if (!versions.length) return null;
+  const sorted = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
+  return (
+    sorted.find((v) => v.lifecycle === "PRESENTED") ??
+    sorted.find((v) => v.lifecycle === "APPROVED") ??
+    sorted[0]
+  );
+}
+
 export function writeTransitionsSplit(off: string, def: string): { offensive: { text: string }; defensive: { text: string } } {
   return {
     offensive: writeProfileJsonText(off),
