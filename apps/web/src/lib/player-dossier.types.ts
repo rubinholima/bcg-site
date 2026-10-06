@@ -102,6 +102,28 @@ export interface DossierFormalCoachReportBlock {
   teamReportContext: string | null;
 }
 
+export interface DossierEligibleAnalysisMaterialMeta {
+  materialItemId: string;
+  sessionId: string;
+  sessionTitle: string;
+  sessionKind: string;
+  category: string | null;
+  sessionDate: string | null;
+  tagLabel: string | null;
+  outcome: string | null;
+  matchPeriod: string | null;
+  matchClockDisplay: string | null;
+  analystNote: string | null;
+  hasClip: boolean;
+  clipInterval: string | null;
+}
+
+export interface DossierAnalysisMaterialBlock extends DossierEligibleAnalysisMaterialMeta {
+  eventNotes: string | null;
+  clipTitle: string | null;
+  quantitativeContext: string | null;
+}
+
 export interface DossierEligibleCoachReportMeta {
   kind: DossierCoachReportKind;
   id: string;
@@ -220,6 +242,7 @@ export interface PlayerDossierDto {
       averagePercentage: number | null;
     };
     formalCoachReports: DossierFormalCoachReportBlock[];
+    analysisMaterial: DossierAnalysisMaterialBlock[];
   };
   timeline: Array<{
     date: string;

@@ -11,6 +11,17 @@ export function canAccessCoachReportsInDossier(
   return moduleSlugs.includes("futebol_treinadores");
 }
 
+/** Material curado de análise de desempenho — exige módulo dedicado (não basta dossiê base). */
+export function canAccessAnalysisMaterialInDossier(
+  role: string | null | undefined,
+  moduleSlugs: readonly string[],
+): boolean {
+  if (!role) return false;
+  const normalized = role.trim().toLowerCase();
+  if (normalized === "super_admin" || normalized === "company_admin") return true;
+  return moduleSlugs.includes("futebol_analise_desempenho");
+}
+
 export const PLAYER_DOSSIER_OPTIONAL_LABELS: Record<PlayerDossierOptionalSection, string> = {
   psychology: "Psicologia e consultas",
   physio: "Fisioterapia",

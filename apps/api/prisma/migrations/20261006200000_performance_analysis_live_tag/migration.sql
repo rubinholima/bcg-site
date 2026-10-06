@@ -1,4 +1,6 @@
 -- Live Tag operational layer (apply on authorized release only)
+-- Valores operacionais das tags canônicas (shortcutKey, outcomes, autoClip*) são
+-- normalizados de forma idempotente na API ao listar tags (ensureDefaultTags).
 
 ALTER TABLE "AnalysisSession" ADD COLUMN IF NOT EXISTS "liveClock" JSONB;
 ALTER TABLE "AnalysisSession" ADD COLUMN IF NOT EXISTS "collectiveNotes" TEXT;

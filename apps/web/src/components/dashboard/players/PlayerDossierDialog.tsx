@@ -18,6 +18,7 @@ import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/authFetch";
 import {
+  canAccessAnalysisMaterialInDossier,
   canAccessCoachReportsInDossier,
   canChooseSensitiveDossierSections,
   listSelectableOptionalSections,
@@ -29,6 +30,7 @@ import {
 } from "@/lib/player-dossier-print";
 import type {
   DossierCoachReportKind,
+  DossierEligibleAnalysisMaterialMeta,
   DossierEligibleCoachReportMeta,
   PlayerDossierDto,
   PlayerDossierOptionalSection,
@@ -67,6 +69,7 @@ export function PlayerDossierDialog({
 
   const canChooseOptional = canChooseSensitiveDossierSections(role);
   const canCoachReports = canAccessCoachReportsInDossier(role, modules);
+  const canAnalysisMaterial = canAccessAnalysisMaterialInDossier(role, modules);
   const selectableSections = useMemo(
     () => listSelectableOptionalSections(role, modules),
     [role, modules],
@@ -78,6 +81,11 @@ export function PlayerDossierDialog({
   );
   const [coachReportsLoading, setCoachReportsLoading] = useState(false);
   const [selectedCoachReports, setSelectedCoachReports] = useState<CoachSelectionKey[]>([]);
+  const [eligibleAnalysisMaterial, setEligibleAnalysisMaterial] = useState<
+    DossierEligibleAnalysisMaterialMeta[]
+  >([]);
+  const [analysisMaterialLoading, setAnalysisMaterialLoading] = useState(false);
+  const [selectedAnalysisMaterial, setSelectedAnalysisMaterial] = useState<string[]>([]);
 
   const [paperSize, setPaperSize] = useState<ReportPaperSize>(
     DEFAULT_REPORT_PRINT_CONFIG.paperSize,
@@ -131,6 +139,33 @@ export function PlayerDossierDialog({
     };
   }, [canCoachReports, open, playerId]);
 
+  useEffect(() => {
+    if (!open || !canAnalysisMaterial) {
+      setEligibleAnalysisMaterial([]);
+      setSelectedAnalysisMaterial([]);
+      return;
+    }
+    let cancelled = false;
+    setAnalysisMaterialLoading(true);
+    authFetch(`/api/players/${encodeURIComponent(playerId)}/dossier/analysis-material`)
+      .then((res) => {
+        if (!res.ok) throw new Error("fetch");
+        return res.json() as Promise<{ items: DossierEligibleAnalysisMaterialMeta[] }>;
+      })
+      .then((data) => {
+        if (!cancelled) setEligibleAnalysisMaterial(data.items ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setEligibleAnalysisMaterial([]);
+      })
+      .finally(() => {
+        if (!cancelled) setAnalysisMaterialLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [canAnalysisMaterial, open, playerId]);
+
   const toggleOptional = useCallback((section: PlayerDossierOptionalSection) => {
     setSelectedOptional((prev) =>
       prev.includes(section) ? prev.filter((s) => s !== section) : [...prev, section],
@@ -159,6 +194,27 @@ export function PlayerDossierDialog({
     return selectedCoachReports.join(",");
   }, [selectedCoachReports]);
 
+  const toggleAnalysisMaterial = useCallback((materialItemId: string) => {
+    setSelectedAnalysisMaterial((prev) =>
+      prev.includes(materialItemId)
+        ? prev.filter((id) => id !== materialItemId)
+        : [...prev, materialItemId],
+    );
+  }, []);
+
+  const selectAllAnalysisMaterial = useCallback(() => {
+    setSelectedAnalysisMaterial(eligibleAnalysisMaterial.map((m) => m.materialItemId));
+  }, [eligibleAnalysisMaterial]);
+
+  const clearAnalysisMaterial = useCallback(() => {
+    setSelectedAnalysisMaterial([]);
+  }, []);
+
+  const analysisMaterialQuery = useMemo(() => {
+    if (selectedAnalysisMaterial.length === 0) return "";
+    return selectedAnalysisMaterial.join(",");
+  }, [selectedAnalysisMaterial]);
+
   const fetchDossier = useCallback(async (): Promise<PlayerDossierDto | null> => {
     const params = new URLSearchParams();
     if (canChooseOptional && selectedOptional.length > 0) {
@@ -166,6 +222,9 @@ export function PlayerDossierDialog({
     }
     if (coachReportsQuery) {
       params.set("coachReports", coachReportsQuery);
+    }
+    if (analysisMaterialQuery) {
+      params.set("analysisMaterial", analysisMaterialQuery);
     }
     const qs = params.toString();
     const url = `/api/players/${encodeURIComponent(playerId)}/dossier${qs ? `?${qs}` : ""}`;
@@ -179,7 +238,7 @@ export function PlayerDossierDialog({
       );
     }
     return res.json();
-  }, [canChooseOptional, coachReportsQuery, playerId, selectedOptional]);
+  }, [analysisMaterialQuery, canChooseOptional, coachReportsQuery, playerId, selectedOptional]);
 
   const buildPdfFilename = useCallback((data: PlayerDossierDto) => {
     const safeName =
@@ -206,6 +265,8 @@ export function PlayerDossierDialog({
               ? selectedOptional.join(",")
               : undefined,
           coachReports,
+          analysisMaterial:
+            selectedAnalysisMaterial.length > 0 ? selectedAnalysisMaterial : undefined,
           paperSize,
           orientation,
         }),
@@ -231,6 +292,7 @@ export function PlayerDossierDialog({
       orientation,
       paperSize,
       playerId,
+      selectedAnalysisMaterial,
       selectedCoachReports,
       selectedOptional,
     ],
@@ -254,6 +316,8 @@ export function PlayerDossierDialog({
               ? selectedOptional.join(",")
               : undefined,
           coachReports,
+          analysisMaterial:
+            selectedAnalysisMaterial.length > 0 ? selectedAnalysisMaterial : undefined,
           paperSize,
           orientation,
         }),
@@ -285,6 +349,7 @@ export function PlayerDossierDialog({
       paperSize,
       playerId,
       playerName,
+      selectedAnalysisMaterial,
       selectedCoachReports,
       selectedOptional,
     ],
@@ -460,6 +525,83 @@ export function PlayerDossierDialog({
                         })}
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {canAnalysisMaterial ? (
+              <div className="space-y-3 rounded-lg border border-border/80 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-foreground/90">
+                    Material da análise de desempenho
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="min-h-[36px]"
+                      onClick={selectAllAnalysisMaterial}
+                      disabled={eligibleAnalysisMaterial.length === 0 || loading}
+                    >
+                      Selecionar todos
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="min-h-[36px]"
+                      onClick={clearAnalysisMaterial}
+                      disabled={selectedAnalysisMaterial.length === 0 || loading}
+                    >
+                      Limpar
+                    </Button>
+                  </div>
+                </div>
+                {analysisMaterialLoading ? (
+                  <p className="text-xs text-muted-foreground">Carregando material…</p>
+                ) : eligibleAnalysisMaterial.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum material curado na análise individual deste atleta.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {eligibleAnalysisMaterial.map((item) => {
+                      const subtitle = [
+                        item.sessionDate,
+                        item.category,
+                        item.tagLabel,
+                        item.outcome,
+                        item.matchClockDisplay,
+                        item.hasClip ? "Com clip" : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ");
+                      return (
+                        <label
+                          key={item.materialItemId}
+                          className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-md border border-border/60 px-3 py-2"
+                        >
+                          <Checkbox
+                            className="mt-1"
+                            checked={selectedAnalysisMaterial.includes(item.materialItemId)}
+                            onCheckedChange={() => toggleAnalysisMaterial(item.materialItemId)}
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium">{item.sessionTitle}</span>
+                            {subtitle ? (
+                              <span className="block text-xs text-muted-foreground">{subtitle}</span>
+                            ) : null}
+                            {item.analystNote ? (
+                              <span className="mt-1 block line-clamp-2 text-xs text-muted-foreground">
+                                {item.analystNote}
+                              </span>
+                            ) : null}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 )}
               </div>

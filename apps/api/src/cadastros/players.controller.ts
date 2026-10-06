@@ -31,6 +31,10 @@ import {
   parseCoachReportSelectionsBody,
   encodeCoachReportSelections,
 } from './player-dossier-coach-reports.util';
+import {
+  parseAnalysisMaterialIdsBody,
+  dedupeMaterialIds,
+} from './player-dossier-analysis-material.util';
 import type { PlayerDossierPdfRequestDto } from './dto/player-dossier-pdf.dto';
 import { buildPlayerDossierPrintHtml, DEFAULT_REPORT_PRINT_CONFIG } from '@bcg/player-dossier-print';
 
@@ -239,6 +243,21 @@ export class PlayersController {
     return this.service.getDeleteImpact(id, allowed);
   }
 
+  @Get(':id/dossier/analysis-material')
+  async listDossierAnalysisMaterial(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    return this.playerDossier.listEligibleAnalysisMaterial({
+      playerId: id,
+      allowedTenantIds: allowed,
+      actorSub: req.user.sub,
+      role,
+    });
+  }
+
   @Get(':id/dossier/coach-reports')
   async listDossierCoachReports(
     @Req() req: Request & { user: CognitoJwtPayload },
@@ -260,6 +279,7 @@ export class PlayersController {
     @Param('id') id: string,
     @Query('sections') sections?: string,
     @Query('coachReports') coachReports?: string,
+    @Query('analysisMaterial') analysisMaterial?: string,
     @Query('season') seasonRaw?: string,
   ) {
     const allowed = await this.allowedTenants(req);
@@ -272,6 +292,7 @@ export class PlayersController {
       role,
       optionalSectionsRaw: sections,
       coachReportsRaw: coachReports,
+      analysisMaterialRaw: analysisMaterial,
       season: Number.isFinite(season) ? season : undefined,
     });
   }
@@ -288,6 +309,8 @@ export class PlayersController {
     const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
     const coachTokens = parseCoachReportSelectionsBody(body?.coachReports);
     const coachReportsRaw = encodeCoachReportSelections(coachTokens);
+    const materialIds = dedupeMaterialIds(parseAnalysisMaterialIdsBody(body?.analysisMaterial));
+    const analysisMaterialRaw = materialIds.length > 0 ? materialIds.join(',') : undefined;
     const dossier = await this.playerDossier.buildDossier({
       playerId: id,
       allowedTenantIds: allowed,
@@ -295,6 +318,7 @@ export class PlayersController {
       role,
       optionalSectionsRaw: body?.sections,
       coachReportsRaw,
+      analysisMaterialRaw,
       season: body?.season,
     });
     const printConfig = {

@@ -9,6 +9,7 @@ import { PlayersController } from './players.controller';
 import { PlayersService } from './players.service';
 import { PlayerDossierService } from './player-dossier.service';
 import { PlayerDossierCoachReportsService } from './player-dossier-coach-reports.service';
+import { PlayerDossierAnalysisMaterialService } from './player-dossier-analysis-material.service';
 import { PlayerDossierPdfService } from './player-dossier-pdf.service';
 import { LegalDocumentsController } from './legal-documents.controller';
 import { AllLegalDocumentsController } from './all-legal-documents.controller';
@@ -51,6 +52,7 @@ import { FutebolRelatoriosModule } from '../futebol-relatorios/futebol-relatorio
     PlayersService,
     PlayerDossierService,
     PlayerDossierCoachReportsService,
+    PlayerDossierAnalysisMaterialService,
     PlayerDossierPdfService,
     LegalDocumentsService,
     TechnicalStaffService,

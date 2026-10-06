@@ -4,6 +4,7 @@ import { getCategoryLabel, getPositionLabel } from "./print-label-maps";
 import { reportLogoUrlForPrint, resolveLogoUrlForPrint } from "./print-media";
 import { PLAYER_DOSSIER_OPTIONAL_LABELS } from "./print-labels";
 import type {
+  DossierAnalysisMaterialBlock,
   DossierCoachEvaluationRow,
   DossierFmfMatchRow,
   DossierHighlightItem,
@@ -758,6 +759,52 @@ function renderFormalCoachReports(d: PlayerDossierDto): string {
   return sectionBlock("Relatórios / avaliações dos treinadores", blocks);
 }
 
+function renderAnalysisMaterialBlock(item: DossierAnalysisMaterialBlock): string {
+  const meta = [
+    item.sessionTitle,
+    item.sessionDate ? fmtDate(item.sessionDate) : null,
+    item.category,
+    item.sessionKind,
+  ]
+    .filter(Boolean)
+    .map((x) => escapeHtml(String(x)));
+  const actionLine = [item.tagLabel, item.outcome].filter(Boolean).join(" · ");
+  const clock = [item.matchPeriod, item.matchClockDisplay].filter(Boolean).join(" · ");
+  const parts = [
+    actionLine ? `<p><strong>Ação:</strong> ${escapeHtml(actionLine)}</p>` : "",
+    clock ? `<p><strong>Relógio:</strong> ${escapeHtml(clock)}</p>` : "",
+    item.quantitativeContext?.trim()
+      ? `<p><strong>Contexto:</strong> ${escapeHtml(item.quantitativeContext.trim())}</p>`
+      : "",
+    item.analystNote?.trim()
+      ? `<p><strong>Observação do analista:</strong></p><div class="prose">${escapeHtml(item.analystNote.trim())}</div>`
+      : "",
+    item.eventNotes?.trim()
+      ? `<p><strong>Notas do evento:</strong></p><div class="prose">${escapeHtml(item.eventNotes.trim())}</div>`
+      : "",
+    item.hasClip
+      ? `<p><strong>Clip:</strong> ${escapeHtml(item.clipTitle ?? "Intervalo registrado")}${item.clipInterval ? ` · ${escapeHtml(item.clipInterval)}` : ""} <span style="color:#64748b">(referência interna — sem link público)</span></p>`
+      : "",
+  ].join("");
+  return `<div class="eval-card" style="break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px;">
+    <div class="eval-card-hdr"><div class="eval-card-title">${escapeHtml(item.sessionTitle)}</div></div>
+    <div style="font-size:9px;color:#64748b;margin-bottom:8px">${meta.join(" · ")}</div>
+    ${parts}
+  </div>`;
+}
+
+function renderAnalysisMaterialSection(d: PlayerDossierDto): string {
+  const items = d.performance.analysisMaterial ?? [];
+  if (items.length === 0) return "";
+  const blocks = items
+    .map(
+      (item, index) =>
+        `${index > 0 ? `<div style="break-before: page; page-break-before: always;"></div>` : ""}${renderAnalysisMaterialBlock(item)}`,
+    )
+    .join("");
+  return sectionBlock("Análise de desempenho", blocks);
+}
+
 function renderPerformance(d: PlayerDossierDto): string {
   const perf = d.performance;
   const parts: string[] = [];
@@ -1184,12 +1231,14 @@ export function buildPlayerDossierPrintHtml(
     content.trim() ? ReportPage(`<div class="page-inner">${content}</div>`) : "";
 
   const formalCoach = renderFormalCoachReports(d);
+  const analysisMaterial = renderAnalysisMaterialSection(d);
 
   const bodyHtml = [
     page([renderExecutiveSnapshot(d), renderSportingStory(d)].join("")),
     page([renderMatchStatistics(d), renderHighlights(d)].join("")),
     page([renderPerformance(d), renderTimeline(d)].join("")),
     formalCoach ? page(formalCoach) : "",
+    analysisMaterial ? page(analysisMaterial) : "",
     page(renderOptionalSections(d)),
   ].join("");
 

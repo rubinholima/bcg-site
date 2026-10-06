@@ -81,6 +81,25 @@ export type DossierCoachReportKind =
   | "coach_team_report_player"
   | "coach_match_rating";
 
+export interface DossierAnalysisMaterialBlock {
+  materialItemId: string;
+  sessionId: string;
+  sessionTitle: string;
+  sessionKind: string;
+  category: string | null;
+  sessionDate: string | null;
+  tagLabel: string | null;
+  outcome: string | null;
+  matchPeriod: string | null;
+  matchClockDisplay: string | null;
+  analystNote: string | null;
+  hasClip: boolean;
+  clipInterval: string | null;
+  eventNotes: string | null;
+  clipTitle: string | null;
+  quantitativeContext: string | null;
+}
+
 export interface DossierFormalCoachReportBlock {
   kind: DossierCoachReportKind;
   id: string;
@@ -207,6 +226,7 @@ export interface PlayerDossierDto {
       averagePercentage: number | null;
     };
     formalCoachReports: DossierFormalCoachReportBlock[];
+    analysisMaterial: DossierAnalysisMaterialBlock[];
   };
   timeline: Array<{
     date: string;

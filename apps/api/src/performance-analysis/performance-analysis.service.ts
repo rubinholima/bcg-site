@@ -22,6 +22,7 @@ import {
   parseLiveClock,
   type LiveClockState,
 } from './performance-analysis-live-clock.util';
+import { normalizeTenantAnalysisTags } from './performance-analysis-tag-normalization.util';
 
 function publicVideoDto(row: {
   id: string;
@@ -64,23 +65,25 @@ export class PerformanceAnalysisService {
 
   async ensureDefaultTags(tenantId: string) {
     const count = await this.prisma.analysisTagDefinition.count({ where: { tenantId } });
-    if (count > 0) return;
-    await this.prisma.analysisTagDefinition.createMany({
-      data: DEFAULT_ANALYSIS_TAGS.map((t) => ({
-        tenantId,
-        key: t.key,
-        label: t.label,
-        category: t.category,
-        sortOrder: t.sortOrder,
-        outcomes: t.outcomes,
-        active: true,
-        shortcutKey: t.shortcutKey ?? null,
-        requiresPlayer: t.requiresPlayer ?? false,
-        autoClipEnabled: t.autoClipEnabled ?? false,
-        autoClipPreMs: t.autoClipPreMs ?? 8000,
-        autoClipPostMs: t.autoClipPostMs ?? 4000,
-      })),
-    });
+    if (count === 0) {
+      await this.prisma.analysisTagDefinition.createMany({
+        data: DEFAULT_ANALYSIS_TAGS.map((t) => ({
+          tenantId,
+          key: t.key,
+          label: t.label,
+          category: t.category,
+          sortOrder: t.sortOrder,
+          outcomes: t.outcomes,
+          active: true,
+          shortcutKey: t.shortcutKey ?? null,
+          requiresPlayer: t.requiresPlayer ?? false,
+          autoClipEnabled: t.autoClipEnabled ?? false,
+          autoClipPreMs: t.autoClipPreMs ?? 8000,
+          autoClipPostMs: t.autoClipPostMs ?? 4000,
+        })),
+      });
+    }
+    await normalizeTenantAnalysisTags(this.prisma, tenantId);
   }
 
   private assertSessionMutable(status: string, forLiveTag = false) {
@@ -729,6 +732,18 @@ export class PerformanceAnalysisService {
       });
       if (!cl) throw new BadRequestException('Clip inválido.');
     }
+    const duplicate = await this.prisma.analysisPlayerMaterialItem.findFirst({
+      where: {
+        analysisSessionId: session.id,
+        playerId: dto.playerId,
+        tenantId: session.tenantId,
+        OR: [
+          ...(dto.eventId ? [{ eventId: dto.eventId }] : []),
+          ...(dto.clipId ? [{ clipId: dto.clipId }] : []),
+        ],
+      },
+    });
+    if (duplicate) return duplicate;
     return this.prisma.analysisPlayerMaterialItem.create({
       data: {
         tenantId: session.tenantId,

@@ -24,6 +24,11 @@ import {
   parseCoachReportSelectionsRaw,
 } from './player-dossier-coach-reports.util';
 import { PlayerDossierCoachReportsService } from './player-dossier-coach-reports.service';
+import { PlayerDossierAnalysisMaterialService } from './player-dossier-analysis-material.service';
+import {
+  assertAnalysisMaterialAccess,
+  parseAnalysisMaterialIdsRaw,
+} from './player-dossier-analysis-material.util';
 
 type JsonArray = unknown[];
 
@@ -98,7 +103,25 @@ export class PlayerDossierService {
     private readonly fmfMatchReports: FmfMatchReportService,
     private readonly modulesService: ModulesService,
     private readonly coachReports: PlayerDossierCoachReportsService,
+    private readonly analysisMaterial: PlayerDossierAnalysisMaterialService,
   ) {}
+
+  async listEligibleAnalysisMaterial(input: {
+    playerId: string;
+    allowedTenantIds: string[] | null;
+    actorSub: string;
+    role: string;
+  }) {
+    const player = await this.players.findOne(input.playerId, input.allowedTenantIds);
+    const moduleSlugs = await this.modulesService.getSlugsForActor(input.actorSub, input.role);
+    assertAnalysisMaterialAccess(moduleSlugs, input.role, true);
+    const items = await this.analysisMaterial.listEligible({
+      playerId: player.id,
+      tenantId: player.tenantId,
+      allowedTenantIds: input.allowedTenantIds,
+    });
+    return { items };
+  }
 
   async listEligibleCoachReports(input: {
     playerId: string;
@@ -124,6 +147,7 @@ export class PlayerDossierService {
     role: string;
     optionalSectionsRaw?: string | null;
     coachReportsRaw?: string | null;
+    analysisMaterialRaw?: string | null;
     season?: number;
   }) {
     const player = await this.players.findOne(input.playerId, input.allowedTenantIds);
@@ -138,6 +162,9 @@ export class PlayerDossierService {
     const coachSelections = parseCoachReportSelectionsRaw(input.coachReportsRaw);
     assertCoachReportAccess(moduleSlugs, input.role, coachSelections.length > 0);
 
+    const analysisMaterialIds = parseAnalysisMaterialIdsRaw(input.analysisMaterialRaw);
+    assertAnalysisMaterialAccess(moduleSlugs, input.role, analysisMaterialIds.length > 0);
+
     const season =
       input.season && Number.isFinite(input.season)
         ? input.season
@@ -145,13 +172,20 @@ export class PlayerDossierService {
 
     const reg = pickRegistration(player.registrationProfile);
 
-    const [fmfStats, formalCoachReports, subidaHistory, optionalData] = await Promise.all([
+    const [fmfStats, formalCoachReports, analysisMaterialItems, subidaHistory, optionalData] =
+      await Promise.all([
       this.fmfMatchReports.getPlayerStats(player.id).catch(() => null),
       this.coachReports.resolveSelected({
         playerId: player.id,
         tenantId: player.tenantId,
         allowedTenantIds: input.allowedTenantIds,
         selections: coachSelections,
+      }),
+      this.analysisMaterial.resolveSelected({
+        playerId: player.id,
+        tenantId: player.tenantId,
+        allowedTenantIds: input.allowedTenantIds,
+        materialIds: analysisMaterialIds,
       }),
       this.players.findSubidaHistory(player.id, input.allowedTenantIds).catch(() => []),
       this.loadOptionalSections(player.id, player.tenantId, includedOptional, input.allowedTenantIds),
@@ -397,6 +431,7 @@ export class PlayerDossierService {
           averagePercentage: coachAvg,
         },
         formalCoachReports: formalCoachReports.map(({ coachEvaluationRow: _c, ...rest }) => rest),
+        analysisMaterial: analysisMaterialItems,
       },
       timeline,
       charts: {
