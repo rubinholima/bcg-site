@@ -32,6 +32,9 @@ export interface LogisticsLookupRow {
   season?: string | null;
   imageUrl?: string | null;
   description?: string | null;
+  tenantId?: string | null;
+  teamCategory?: string | null;
+  tenant?: { id: string; name: string } | null;
   code?: string | null;
   guestType?: string | null;
   contactName?: string | null;

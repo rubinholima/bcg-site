@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { LogisticaCadastroListClient } from "../LogisticaCadastroListClient";
-import { LogisticaCadastroTenantFilter } from "../LogisticaCadastroTenantFilter";
+import { UniformKitListClient } from "../UniformKitListClient";
 import { fetchLogisticaCadastroList } from "@/lib/logistica-cadastros";
+import type { UniformKitRow } from "../UniformKitListClient";
+import { LogisticaCadastroTenantFilter } from "../LogisticaCadastroTenantFilter";
 import { assertLogisticaCadastroResource, toLogisticaCadastroResourceClient } from "@/lib/logistica-cadastros.config";
 
 export default async function LogisticaCadastroListPage({
@@ -25,7 +27,19 @@ export default async function LogisticaCadastroListPage({
   let rows: Awaited<ReturnType<typeof fetchLogisticaCadastroList>> = [];
   let loadError: string | null = null;
 
-  if (!(resource.requiresTenant && !tenantId)) {
+  let uniformKitRows: UniformKitRow[] = [];
+
+  if (slug === "kits-uniforme") {
+    if (tenantId) {
+      try {
+        uniformKitRows = await fetchLogisticaCadastroList(resource.apiPath, {
+          tenantId,
+        });
+      } catch (err) {
+        loadError = err instanceof Error ? err.message : "Erro ao carregar registros";
+      }
+    }
+  } else if (!(resource.requiresTenant && !tenantId)) {
     try {
       rows = await fetchLogisticaCadastroList(resource.apiPath, {
         tenantId: resource.requiresTenant ? tenantId : undefined,
@@ -44,7 +58,17 @@ export default async function LogisticaCadastroListPage({
           <LogisticaCadastroTenantFilter />
         </Suspense>
       )}
-      {resource.requiresTenant && !tenantId ? (
+      {slug === "kits-uniforme" ? (
+        !tenantId ? (
+          <p className="text-muted-foreground text-sm">Selecione um clube para listar os kits.</p>
+        ) : (
+          <UniformKitListClient
+            initialRows={uniformKitRows}
+            tenantId={tenantId}
+            loadError={loadError}
+          />
+        )
+      ) : resource.requiresTenant && !tenantId ? (
         <p className="text-muted-foreground text-sm">
           Selecione um clube para listar as pessoas autorizadas cadastradas.
         </p>

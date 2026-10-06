@@ -43,10 +43,6 @@ import {
   CreateLogisticsClothingItemDto,
   UpdateLogisticsClothingItemDto,
 } from './dto/create-logistics-clothing-item.dto';
-import {
-  CreateLogisticsUniformKitDto,
-  UpdateLogisticsUniformKitDto,
-} from './dto/create-logistics-uniform-kit.dto';
 import { UpdateLogisticsGuestDto } from './dto/update-logistics-guest.dto';
 import { UpdateLogisticsHotelDto } from './dto/update-logistics-hotel.dto';
 import { UpdateLogisticsLookupDto } from './dto/update-logistics-lookup.dto';
@@ -564,36 +560,4 @@ export class LogisticaCadastrosController {
     return this.service.removeClothingItem(id);
   }
 
-  // ——— Vestuário/uniformes — kits ———
-  @Get('uniform-kits')
-  findUniformKits(
-    @Query('activeOnly') activeOnly?: string,
-    @Query('search') search?: string,
-    @Query('uniformTypeId') uniformTypeId?: string,
-  ) {
-    return this.service.findUniformKits(activeOnly, search, uniformTypeId);
-  }
-
-  @Post('uniform-kits')
-  createUniformKit(@Body() dto: CreateLogisticsUniformKitDto) {
-    return this.service.createUniformKit(dto);
-  }
-
-  @Get('uniform-kits/:id')
-  findUniformKit(@Param('id') id: string) {
-    return this.service.findUniformKit(id);
-  }
-
-  @Patch('uniform-kits/:id')
-  updateUniformKit(
-    @Param('id') id: string,
-    @Body() dto: UpdateLogisticsUniformKitDto,
-  ) {
-    return this.service.updateUniformKit(id, dto);
-  }
-
-  @Delete('uniform-kits/:id')
-  removeUniformKit(@Param('id') id: string) {
-    return this.service.removeUniformKit(id);
-  }
 }

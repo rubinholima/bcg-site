@@ -658,6 +658,7 @@ export default function NewLogisticaPage() {
               onHotelStayChange={setHotelStay}
               onUniformsChange={setUniforms}
               disabled={loading}
+              tenantId={tenantId}
             />
           </CardContent>
         </Card>

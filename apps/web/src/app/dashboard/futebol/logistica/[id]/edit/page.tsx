@@ -750,6 +750,7 @@ export default function EditLogisticaPage() {
               onHotelStayChange={setHotelStay}
               onUniformsChange={setUniforms}
               disabled={saving}
+              tenantId={item.tenantId}
             />
           </CardContent>
         </Card>

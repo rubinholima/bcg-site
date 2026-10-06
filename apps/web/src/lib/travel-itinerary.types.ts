@@ -41,6 +41,10 @@ export type TravelUniforms = {
   athletesTravel?: string | null;
   staffGame?: string | null;
   staffTravel?: string | null;
+  athletesGameKitId?: string | null;
+  athletesTravelKitId?: string | null;
+  staffGameKitId?: string | null;
+  staffTravelKitId?: string | null;
 };
 
 export const AGENDA_DAY_PERIODS = ["manha", "tarde", "noite"] as const;
@@ -102,6 +106,20 @@ export const EMPTY_TRAVEL_UNIFORMS: TravelUniforms = {
   athletesTravel: "",
   staffGame: "",
   staffTravel: "",
+  athletesGameKitId: "",
+  athletesTravelKitId: "",
+  staffGameKitId: "",
+  staffTravelKitId: "",
+};
+
+const UNIFORM_ID_BY_NAME: Record<
+  "athletesGame" | "athletesTravel" | "staffGame" | "staffTravel",
+  keyof TravelUniforms
+> = {
+  athletesGame: "athletesGameKitId",
+  athletesTravel: "athletesTravelKitId",
+  staffGame: "staffGameKitId",
+  staffTravel: "staffTravelKitId",
 };
 
 function normalizeStoredDateTime(value: string | null | undefined): string {
@@ -168,6 +186,13 @@ export function parseTravelUniforms(raw: unknown): TravelUniforms {
     athletesTravel: typeof o.athletesTravel === "string" ? o.athletesTravel : "",
     staffGame: typeof o.staffGame === "string" ? o.staffGame : "",
     staffTravel: typeof o.staffTravel === "string" ? o.staffTravel : "",
+    athletesGameKitId:
+      typeof o.athletesGameKitId === "string" ? o.athletesGameKitId : "",
+    athletesTravelKitId:
+      typeof o.athletesTravelKitId === "string" ? o.athletesTravelKitId : "",
+    staffGameKitId: typeof o.staffGameKitId === "string" ? o.staffGameKitId : "",
+    staffTravelKitId:
+      typeof o.staffTravelKitId === "string" ? o.staffTravelKitId : "",
   };
 }
 
@@ -199,5 +224,11 @@ export function serializeTravelUniforms(u: TravelUniforms): TravelUniforms {
     athletesTravel: u.athletesTravel?.trim() || null,
     staffGame: u.staffGame?.trim() || null,
     staffTravel: u.staffTravel?.trim() || null,
+    athletesGameKitId: u.athletesGameKitId?.trim() || null,
+    athletesTravelKitId: u.athletesTravelKitId?.trim() || null,
+    staffGameKitId: u.staffGameKitId?.trim() || null,
+    staffTravelKitId: u.staffTravelKitId?.trim() || null,
   };
 }
+
+export { UNIFORM_ID_BY_NAME };

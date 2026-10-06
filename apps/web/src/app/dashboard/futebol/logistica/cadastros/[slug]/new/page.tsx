@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { LogisticaCadastroFormClient } from "../../LogisticaCadastroFormClient";
+import { UniformKitFormClient } from "../../UniformKitFormClient";
 import { LogisticaCadastroTenantFilter } from "../../LogisticaCadastroTenantFilter";
 import { assertLogisticaCadastroResource, toLogisticaCadastroResourceClient } from "@/lib/logistica-cadastros.config";
 
@@ -29,11 +30,15 @@ export default async function LogisticaCadastroNewPage({
           <LogisticaCadastroTenantFilter />
         </Suspense>
       )}
-      <LogisticaCadastroFormClient
-        resource={toLogisticaCadastroResourceClient(resource)}
-        mode="create"
-        tenantId={tenantId || undefined}
-      />
+      {slug === "kits-uniforme" ? (
+        <UniformKitFormClient mode="create" tenantIdFromQuery={tenantId || undefined} />
+      ) : (
+        <LogisticaCadastroFormClient
+          resource={toLogisticaCadastroResourceClient(resource)}
+          mode="create"
+          tenantId={tenantId || undefined}
+        />
+      )}
     </div>
   );
 }

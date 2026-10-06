@@ -492,9 +492,16 @@ export class FutebolRelatoriosService {
       travel.uniforms && typeof travel.uniforms === 'object'
         ? (travel.uniforms as Record<string, unknown>)
         : {};
+    const gameKitId =
+      typeof uniforms.athletesGameKitId === 'string'
+        ? uniforms.athletesGameKitId.trim()
+        : '';
     const gameKitName =
       typeof uniforms.athletesGame === 'string' ? uniforms.athletesGame.trim() : '';
-    const uniformKit = await this.resolveUniformKitByName(gameKitName);
+    const uniformKit = await this.resolveUniformKitRef({
+      kitId: gameKitId || null,
+      kitName: gameKitName,
+    });
 
     const athletesWithJersey = this.applyJerseyOverrides(athletes, config.jerseyOverrides);
     const startersWithJersey = this.applyJerseyOverrides(starters, config.jerseyOverrides);
@@ -611,14 +618,42 @@ export class FutebolRelatoriosService {
         typeof uniformsRaw.staffTravel === 'string'
           ? uniformsRaw.staffTravel
           : null,
+      athletesGameKitId:
+        typeof uniformsRaw.athletesGameKitId === 'string'
+          ? uniformsRaw.athletesGameKitId
+          : null,
+      athletesTravelKitId:
+        typeof uniformsRaw.athletesTravelKitId === 'string'
+          ? uniformsRaw.athletesTravelKitId
+          : null,
+      staffGameKitId:
+        typeof uniformsRaw.staffGameKitId === 'string'
+          ? uniformsRaw.staffGameKitId
+          : null,
+      staffTravelKitId:
+        typeof uniformsRaw.staffTravelKitId === 'string'
+          ? uniformsRaw.staffTravelKitId
+          : null,
     };
 
     const [athletesGame, athletesTravel, staffGame, staffTravel] =
       await Promise.all([
-        this.resolveUniformKitByName(uniforms.athletesGame),
-        this.resolveUniformKitByName(uniforms.athletesTravel),
-        this.resolveUniformKitByName(uniforms.staffGame),
-        this.resolveUniformKitByName(uniforms.staffTravel),
+        this.resolveUniformKitRef({
+          kitId: uniforms.athletesGameKitId,
+          kitName: uniforms.athletesGame,
+        }),
+        this.resolveUniformKitRef({
+          kitId: uniforms.athletesTravelKitId,
+          kitName: uniforms.athletesTravel,
+        }),
+        this.resolveUniformKitRef({
+          kitId: uniforms.staffGameKitId,
+          kitName: uniforms.staffGame,
+        }),
+        this.resolveUniformKitRef({
+          kitId: uniforms.staffTravelKitId,
+          kitName: uniforms.staffTravel,
+        }),
       ]);
 
     return {
@@ -1517,10 +1552,34 @@ export class FutebolRelatoriosService {
     });
   }
 
-  private async resolveUniformKitByName(
-    name: string | null | undefined,
-  ): Promise<PressKitUniformKitDto | null> {
-    const kitName = name?.trim();
+  private async resolveUniformKitRef(opts: {
+    kitId?: string | null;
+    kitName?: string | null;
+  }): Promise<PressKitUniformKitDto | null> {
+    const id = opts.kitId?.trim();
+    if (id) {
+      const byId = await this.prisma.logisticsUniformKit.findUnique({
+        where: { id },
+        select: {
+          name: true,
+          imageUrl: true,
+          items: {
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              clothingItem: { select: { name: true, imageUrl: true } },
+            },
+          },
+        },
+      });
+      if (byId) {
+        return {
+          name: byId.name,
+          imageUrl: byId.imageUrl,
+          items: byId.items.map(({ clothingItem }) => clothingItem),
+        };
+      }
+    }
+    const kitName = opts.kitName?.trim();
     if (!kitName) return null;
     const kit = await this.prisma.logisticsUniformKit.findFirst({
       where: { name: kitName },

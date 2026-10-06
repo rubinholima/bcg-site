@@ -10,6 +10,7 @@ import {
   TravelParticipantItemDto,
 } from './dto/set-travel-participants.dto';
 import { dedupeTravelLogisticsList } from './travel-logistics-dedup.util';
+import { enrichTravelUniformsFromKitIds } from './travel-uniforms.util';
 
 const PARTICIPANT_INCLUDE = {
   player: {
@@ -460,6 +461,10 @@ export class LogisticaService {
     const logisticsCadastros = normalizeLogisticsCadastros(dto.logisticsCadastros);
     const expenseLines = normalizeExpenseLines(dto.expenseLines);
     const pointOfInterestIds = normalizePointOfInterestIds(dto.pointOfInterestIds);
+    const uniformsEnriched =
+      dto.uniforms !== undefined
+        ? await enrichTravelUniformsFromKitIds(this.prisma, dto.uniforms)
+        : undefined;
     const data: Parameters<typeof this.prisma.travelLogistics.create>[0]['data'] =
       {
         tenantId: dto.tenantId,
@@ -491,7 +496,9 @@ export class LogisticaService {
         notes: dto.notes ?? null,
         itinerary: dto.itinerary ?? undefined,
         hotelStay: dto.hotelStay ?? undefined,
-        uniforms: dto.uniforms ?? undefined,
+        uniforms: (uniformsEnriched ?? undefined) as Parameters<
+          typeof this.prisma.travelLogistics.create
+        >[0]['data']['uniforms'],
         beatscodeMeta: mergeBeatscodeMeta(undefined, {
           logisticsCadastros,
           expenseLines,
@@ -558,7 +565,12 @@ export class LogisticaService {
     if (dto.notes !== undefined) data.notes = dto.notes ?? null;
     if (dto.itinerary !== undefined) data.itinerary = dto.itinerary ?? undefined;
     if (dto.hotelStay !== undefined) data.hotelStay = dto.hotelStay ?? undefined;
-    if (dto.uniforms !== undefined) data.uniforms = dto.uniforms ?? undefined;
+    if (dto.uniforms !== undefined) {
+      data.uniforms = (await enrichTravelUniformsFromKitIds(
+        this.prisma,
+        dto.uniforms,
+      )) as Parameters<typeof this.prisma.travelLogistics.update>[0]['data']['uniforms'];
+    }
 
     const logisticsCadastros =
       dto.logisticsCadastros !== undefined

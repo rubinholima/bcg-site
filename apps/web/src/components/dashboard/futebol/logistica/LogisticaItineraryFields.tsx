@@ -16,6 +16,7 @@ import {
   type TravelItinerary,
   type TravelItineraryStop,
   type TravelUniforms,
+  UNIFORM_ID_BY_NAME,
 } from "@/lib/travel-itinerary.types";
 
 type UniformKitOption = {
@@ -37,6 +38,8 @@ type Props = {
   onHotelStayChange: (next: TravelHotelStay) => void;
   onUniformsChange: (next: TravelUniforms) => void;
   disabled?: boolean;
+  /** Clube da viagem — filtra kits do tenant + legado global */
+  tenantId?: string;
 };
 
 function StopRows({
@@ -261,6 +264,7 @@ export function LogisticaItineraryFields({
   onHotelStayChange,
   onUniformsChange,
   disabled,
+  tenantId,
 }: Props) {
   if (isHomeMatch) {
     const items = itinerary.homeMatchAgenda ?? [];
@@ -278,6 +282,7 @@ export function LogisticaItineraryFields({
           onChange={onUniformsChange}
           disabled={disabled}
           isHomeMatch
+          tenantId={tenantId}
         />
       </div>
     );
@@ -350,7 +355,12 @@ export function LogisticaItineraryFields({
         title="Agenda do jogo / concentração"
       />
 
-      <UniformsBlock uniforms={uniforms} onChange={onUniformsChange} disabled={disabled} />
+      <UniformsBlock
+        uniforms={uniforms}
+        onChange={onUniformsChange}
+        disabled={disabled}
+        tenantId={tenantId}
+      />
     </div>
   );
 }
@@ -360,18 +370,22 @@ function UniformsBlock({
   onChange,
   disabled,
   isHomeMatch,
+  tenantId,
 }: {
   uniforms: TravelUniforms;
   onChange: (u: TravelUniforms) => void;
   disabled?: boolean;
   isHomeMatch?: boolean;
+  tenantId?: string;
 }) {
   const [kits, setKits] = useState<UniformKitOption[]>([]);
 
   useEffect(() => {
     let cancelled = false;
+    const qs = new URLSearchParams({ activeOnly: "true" });
+    if (tenantId?.trim()) qs.set("tenantId", tenantId.trim());
     void api
-      .get<UniformKitOption[]>("/logistica-cadastros/uniform-kits?activeOnly=true")
+      .get<UniformKitOption[]>(`/logistica-cadastros/uniform-kits?${qs.toString()}`)
       .then(({ data }) => {
         if (!cancelled) setKits(Array.isArray(data) ? data : []);
       })
@@ -381,7 +395,7 @@ function UniformsBlock({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [tenantId]);
 
   const fields = (
     isHomeMatch
@@ -397,15 +411,25 @@ function UniformsBlock({
         ] as const)
   );
 
-  const findKit = (name: string | null | undefined) =>
-    kits.find((k) => k.name === name) ?? null;
+  const findKitByField = (key: (typeof fields)[number][0]) => {
+    const idKey = UNIFORM_ID_BY_NAME[key];
+    const kitId = uniforms[idKey]?.trim();
+    if (kitId) {
+      const byId = kits.find((k) => k.id === kitId);
+      if (byId) return byId;
+    }
+    const name = uniforms[key];
+    return kits.find((k) => k.name === name) ?? null;
+  };
 
   return (
     <div className="space-y-3">
       <p className="text-sm font-semibold uppercase tracking-wide">Uniformes / kits</p>
       <div className="grid gap-3 sm:grid-cols-2">
         {fields.map(([key, label]) => {
-          const selected = findKit(uniforms[key]);
+          const idKey = UNIFORM_ID_BY_NAME[key];
+          const selected = findKitByField(key);
+          const selectValue = uniforms[idKey]?.trim() || selected?.id || "";
           const img = selected?.imageUrl
             ? getPublicImageUrl(selected.imageUrl) || selected.imageUrl
             : null;
@@ -424,22 +448,29 @@ function UniformsBlock({
                 <div className="min-w-0 flex-1 space-y-1">
                   <NativeSelect
                     disabled={disabled}
-                    value={uniforms[key] ?? ""}
-                    onChange={(e) => onChange({ ...uniforms, [key]: e.target.value || null })}
+                    value={selectValue}
+                    onChange={(e) => {
+                      const kit = kits.find((k) => k.id === e.target.value);
+                      onChange({
+                        ...uniforms,
+                        [idKey]: kit?.id ?? null,
+                        [key]: kit?.name ?? null,
+                      });
+                    }}
                   >
                     <option value="">—</option>
                     {kits.map((k) => (
-                      <option key={k.id} value={k.name}>
+                      <option key={k.id} value={k.id}>
                         {k.name}
                         {k.uniformType?.name ? ` · ${k.uniformType.name}` : ""}
                         {k.season ? ` · ${k.season}` : ""}
                       </option>
                     ))}
-                    {/* legado KIT 1/2/3 se ainda existir em viagens antigas */}
                     {uniforms[key] &&
-                      !kits.some((k) => k.name === uniforms[key]) &&
-                      ["KIT 1", "KIT 2", "KIT 3"].includes(uniforms[key]!) && (
-                        <option value={uniforms[key]!}>{uniforms[key]}</option>
+                      !kits.some((k) => k.id === uniforms[idKey] || k.name === uniforms[key]) && (
+                        <option value="" disabled>
+                          Legado: {uniforms[key]}
+                        </option>
                       )}
                   </NativeSelect>
                 </div>

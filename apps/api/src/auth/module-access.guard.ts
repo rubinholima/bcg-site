@@ -11,6 +11,8 @@ import {
   REQUIRED_MODULE_KEY,
   SEASON_HIGHLIGHTS_ACCESS_KEY,
   TEAM_REPORT_READ_KEY,
+  UNIFORM_KIT_ACCESS_KEY,
+  type UniformKitAccessMode,
 } from './require-module.decorator';
 import { ModulesService } from '../modules/modules.service';
 import { canAccessSeasonHighlights } from '../season-highlights/season-highlights-access.util';
@@ -37,8 +39,12 @@ export class ModuleAccessGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+    const uniformKitAccess = this.reflector.getAllAndOverride<UniformKitAccessMode | undefined>(
+      UNIFORM_KIT_ACCESS_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
-    if (!required && !seasonHighlightsAccess && !teamReportRead) return true;
+    if (!required && !seasonHighlightsAccess && !teamReportRead && !uniformKitAccess) return true;
 
     const request = context.switchToHttp().getRequest<Request>();
     const user = (request as Request & { user?: CognitoJwtPayload }).user;
@@ -64,6 +70,24 @@ export class ModuleAccessGuard implements CanActivate {
       if (TEAM_REPORT_READ_MODULES.some((s) => slugsRead.includes(s))) return true;
       throw new ForbiddenException(
         `Acesso negado: um dos módulos requeridos: ${TEAM_REPORT_READ_MODULES.join(', ')}`,
+      );
+    }
+
+    if (uniformKitAccess) {
+      if (uniformKitAccess === 'manage') {
+        if (role === 'company_admin') return true;
+        const slugsManage = await this.modulesService.getSlugsForActor(user.sub, role);
+        if (slugsManage.includes('futebol_logistica_uniformes')) return true;
+        throw new ForbiddenException(
+          'Acesso negado: gestão de uniformes requer permissão específica ou perfil company admin.',
+        );
+      }
+      if (role === 'company_admin') return true;
+      const slugsRead = await this.modulesService.getSlugsForActor(user.sub, role);
+      const readModules = ['futebol_logistica', 'futebol_logistica_uniformes'];
+      if (readModules.some((s) => slugsRead.includes(s))) return true;
+      throw new ForbiddenException(
+        'Acesso negado: leitura de kits requer logística ou gestão de uniformes.',
       );
     }
 

@@ -11,6 +11,12 @@ export const CUP360_MODULE_CATALOG_BOOTSTRAP: ModuleCatalogEntry[] = [
   { slug: 'futebol_treinador_goleiros', name: 'Treinador de goleiros', sortOrder: 38, functionalArea: 'futebol_tecnico' },
   { slug: 'futebol_treinadores', name: 'Treinadores', sortOrder: 34, functionalArea: 'futebol_tecnico', impliesSlug: 'relatorios_futebol' },
   { slug: 'relatorios_futebol', name: 'Relatórios futebol', sortOrder: 200, functionalArea: 'futebol_tecnico' },
+  {
+    slug: 'futebol_logistica_uniformes',
+    name: 'Gestão de uniformes',
+    sortOrder: 201,
+    functionalArea: 'futebol_tecnico',
+  },
   { slug: 'configuracoes', name: 'Configurações', sortOrder: 9990, functionalArea: 'empresa_usuarios' },
   { slug: 'usuarios', name: 'Usuários', sortOrder: 9991, functionalArea: 'empresa_usuarios' },
 ];

@@ -402,6 +402,7 @@ const LOGISTICA_CADASTRO_RESOURCES_RAW: LogisticaCadastroResource[] = [
     apiPath: "uniform-kits",
     icon: Package,
     menuOrder: 200,
+    requiresTenant: true,
     columns: [
       { key: "imageUrl", label: "Imagem", format: "image" },
       { key: "name", label: "Nome" },

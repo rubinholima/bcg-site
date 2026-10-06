@@ -211,6 +211,12 @@ export function canAccessMenuLeaf(
 
   const perm = resolveCanonicalMenuPermission(item);
   if (canAccessModule(perm)) return true;
+  if (
+    (item.href?.includes("/kits-uniforme") || perm === "futebol_logistica_uniformes") &&
+    role === "company_admin"
+  ) {
+    return true;
+  }
   // Relatórios Saúde: perfis clínicos (fisioterapia, enfermagem…) têm `saude`, não só `relatorios_saude`.
   if (item.moduleSlug === "relatorios_saude" && canAccessModule("saude")) return true;
   return false;
@@ -633,13 +639,23 @@ const DASHBOARD_MENU_LEGACY: MenuItemConfig[] = [
                 /** Mesma permissão do item em Adm → Cadastros → Fornecedores */
                 accessGroup: "fornecedores",
               },
-              ...LOGISTICA_CADASTRO_RESOURCES.map((resource) => ({
-                slug: `futebol_logistica_cad_${resource.slug.replace(/-/g, "_")}`,
-                label: resource.labelPlural,
-                href: `${LOGISTICA_CADASTROS_BASE}/${resource.slug}`,
-                icon: resource.icon,
-                moduleSlug: "futebol_logistica" as const,
-              })),
+              ...LOGISTICA_CADASTRO_RESOURCES.filter((r) => r.slug !== "kits-uniforme").map(
+                (resource) => ({
+                  slug: `futebol_logistica_cad_${resource.slug.replace(/-/g, "_")}`,
+                  label: resource.labelPlural,
+                  href: `${LOGISTICA_CADASTROS_BASE}/${resource.slug}`,
+                  icon: resource.icon,
+                  moduleSlug: "futebol_logistica" as const,
+                }),
+              ),
+              {
+                slug: "futebol_logistica_cad_kits_uniforme",
+                label: "Kits / uniformes",
+                href: `${LOGISTICA_CADASTROS_BASE}/kits-uniforme`,
+                icon: Package,
+                moduleSlug: "futebol_logistica_uniformes",
+                permission: "futebol_logistica_uniformes",
+              },
             ],
           },
           {

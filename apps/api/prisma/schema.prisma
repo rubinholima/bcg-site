@@ -152,6 +152,7 @@ model Tenant {
   bostonTvVmixChannels  BostonTvVmixChannel[]
   bostonTvHallChannel   BostonTvHallChannel?
   travelLogistics       TravelLogistics[]
+  logisticsUniformKits  LogisticsUniformKit[]
   logisticsGuests       LogisticsGuest[]
   footballAgendaEntries FootballAgendaEntry[]
   fmfMatchReports       FmfMatchReport[]
@@ -608,6 +609,10 @@ model LogisticsClothingItem {
 
 model LogisticsUniformKit {
   id            String                @id @default(cuid())
+  tenantId      String?
+  tenant        Tenant?               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// Chave de categoria do clube (Tenant.categories), ex.: principal, sub20
+  teamCategory  String?
   name          String
   uniformTypeId String?
   uniformType   LogisticsUniformType? @relation(fields: [uniformTypeId], references: [id], onDelete: SetNull)
@@ -624,6 +629,8 @@ model LogisticsUniformKit {
   items LogisticsUniformKitItem[]
 
   @@index([uniformTypeId])
+  @@index([tenantId])
+  @@index([tenantId, active])
 }
 
 model LogisticsUniformKitItem {

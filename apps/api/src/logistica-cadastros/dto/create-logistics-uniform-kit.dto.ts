@@ -21,6 +21,14 @@ export class LogisticsUniformKitItemInputDto {
 }
 
 export class CreateLogisticsUniformKitDto {
+  @IsOptional()
+  @IsString()
+  tenantId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  teamCategory?: string | null;
+
   @IsString()
   name!: string;
 
@@ -62,6 +70,14 @@ export class CreateLogisticsUniformKitDto {
 }
 
 export class UpdateLogisticsUniformKitDto {
+  @IsOptional()
+  @IsString()
+  tenantId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  teamCategory?: string | null;
+
   @IsOptional()
   @IsString()
   name?: string;

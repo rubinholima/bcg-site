@@ -36,6 +36,10 @@ export type TravelUniforms = {
   athletesTravel?: string | null;
   staffGame?: string | null;
   staffTravel?: string | null;
+  athletesGameKitId?: string | null;
+  athletesTravelKitId?: string | null;
+  staffGameKitId?: string | null;
+  staffTravelKitId?: string | null;
 };
 
 export const AGENDA_DAY_PERIODS = ["manha", "tarde", "noite"] as const;
