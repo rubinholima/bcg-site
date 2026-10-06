@@ -8,6 +8,8 @@ import { VisitingTeamsService } from './visiting-teams.service';
 import { PlayersController } from './players.controller';
 import { PlayersService } from './players.service';
 import { PlayerDossierService } from './player-dossier.service';
+import { PlayerDossierCoachReportsService } from './player-dossier-coach-reports.service';
+import { PlayerDossierPdfService } from './player-dossier-pdf.service';
 import { LegalDocumentsController } from './legal-documents.controller';
 import { AllLegalDocumentsController } from './all-legal-documents.controller';
 import { LegalDocumentsService } from './legal-documents.service';
@@ -48,6 +50,8 @@ import { FutebolRelatoriosModule } from '../futebol-relatorios/futebol-relatorio
     VisitingTeamsService,
     PlayersService,
     PlayerDossierService,
+    PlayerDossierCoachReportsService,
+    PlayerDossierPdfService,
     LegalDocumentsService,
     TechnicalStaffService,
     FixtureCategoriesService,

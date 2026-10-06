@@ -1,5 +1,16 @@
 import type { PlayerDossierOptionalSection } from "@/lib/player-dossier.types";
 
+/** Relatórios formais de treinadores no dossiê — separado do acesso básico ao atleta. */
+export function canAccessCoachReportsInDossier(
+  role: string | null | undefined,
+  moduleSlugs: readonly string[],
+): boolean {
+  if (!role) return false;
+  const normalized = role.trim().toLowerCase();
+  if (normalized === "super_admin" || normalized === "company_admin") return true;
+  return moduleSlugs.includes("futebol_treinadores");
+}
+
 export const PLAYER_DOSSIER_OPTIONAL_LABELS: Record<PlayerDossierOptionalSection, string> = {
   psychology: "Psicologia e consultas",
   physio: "Fisioterapia",

@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Header,
   Query,
   Req,
   StreamableFile,
@@ -25,6 +26,13 @@ import { UpdatePlayerDto } from './dto/update-player.dto';
 import { FmfMatchReportService } from '../fmf-scraper/fmf-match-report.service';
 import { PersonalDisciplineHistoryService } from '../futebol-relatorios/personal-discipline-history.service';
 import { PlayerDossierService } from './player-dossier.service';
+import { PlayerDossierPdfService } from './player-dossier-pdf.service';
+import {
+  parseCoachReportSelectionsBody,
+  encodeCoachReportSelections,
+} from './player-dossier-coach-reports.util';
+import type { PlayerDossierPdfRequestDto } from './dto/player-dossier-pdf.dto';
+import { buildPlayerDossierPrintHtml, DEFAULT_REPORT_PRINT_CONFIG } from '@bcg/player-dossier-print';
 
 @Controller('players')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -35,6 +43,7 @@ export class PlayersController {
     private readonly fmfMatchReports: FmfMatchReportService,
     private readonly disciplineHistory: PersonalDisciplineHistoryService,
     private readonly playerDossier: PlayerDossierService,
+    private readonly playerDossierPdf: PlayerDossierPdfService,
   ) {}
 
   private async allowedTenants(req: Request & { user: CognitoJwtPayload }) {
@@ -230,11 +239,27 @@ export class PlayersController {
     return this.service.getDeleteImpact(id, allowed);
   }
 
+  @Get(':id/dossier/coach-reports')
+  async listDossierCoachReports(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    return this.playerDossier.listEligibleCoachReports({
+      playerId: id,
+      allowedTenantIds: allowed,
+      actorSub: req.user.sub,
+      role,
+    });
+  }
+
   @Get(':id/dossier')
   async findDossier(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Param('id') id: string,
     @Query('sections') sections?: string,
+    @Query('coachReports') coachReports?: string,
     @Query('season') seasonRaw?: string,
   ) {
     const allowed = await this.allowedTenants(req);
@@ -246,7 +271,45 @@ export class PlayersController {
       actorSub: req.user.sub,
       role,
       optionalSectionsRaw: sections,
+      coachReportsRaw: coachReports,
       season: Number.isFinite(season) ? season : undefined,
+    });
+  }
+
+  @Post(':id/dossier/pdf')
+  @Header('Cache-Control', 'private, no-store, max-age=0')
+  @Header('Pragma', 'no-cache')
+  async dossierPdf(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: PlayerDossierPdfRequestDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const coachTokens = parseCoachReportSelectionsBody(body?.coachReports);
+    const coachReportsRaw = encodeCoachReportSelections(coachTokens);
+    const dossier = await this.playerDossier.buildDossier({
+      playerId: id,
+      allowedTenantIds: allowed,
+      actorSub: req.user.sub,
+      role,
+      optionalSectionsRaw: body?.sections,
+      coachReportsRaw,
+      season: body?.season,
+    });
+    const printConfig = {
+      ...DEFAULT_REPORT_PRINT_CONFIG,
+      paperSize: body?.paperSize ?? DEFAULT_REPORT_PRINT_CONFIG.paperSize,
+      orientation: body?.orientation ?? DEFAULT_REPORT_PRINT_CONFIG.orientation,
+    };
+    const html = buildPlayerDossierPrintHtml(dossier as Parameters<typeof buildPlayerDossierPrintHtml>[0], printConfig);
+    const pdf = await this.playerDossierPdf.renderHtmlToPdf(html);
+    const safeName = dossier.cover.name.replace(/[^\w\s-áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ]/gi, '').trim() || 'atleta';
+    const date = dossier.meta.generatedAt.slice(0, 10);
+    const filename = `dossie-${safeName.replace(/\s+/g, '-')}-${date}.pdf`;
+    return new StreamableFile(pdf, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${filename}"`,
     });
   }
 

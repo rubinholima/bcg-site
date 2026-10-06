@@ -102,19 +102,6 @@ export interface DossierFormalCoachReportBlock {
   teamReportContext: string | null;
 }
 
-export interface DossierEligibleCoachReportMeta {
-  kind: DossierCoachReportKind;
-  id: string;
-  label: string;
-  date: string | null;
-  periodLabel: string | null;
-  coachName: string | null;
-  category: string | null;
-  opponent: string | null;
-  summary: string | null;
-  classification: string | null;
-}
-
 export interface DossierCoachEvaluationRow {
   season: number;
   periodKey: string;

@@ -19,6 +19,11 @@ import {
   normalizePsychologyRecords,
   resolveAssists,
 } from './player-dossier-content.util';
+import {
+  assertCoachReportAccess,
+  parseCoachReportSelectionsRaw,
+} from './player-dossier-coach-reports.util';
+import { PlayerDossierCoachReportsService } from './player-dossier-coach-reports.service';
 
 type JsonArray = unknown[];
 
@@ -92,7 +97,25 @@ export class PlayerDossierService {
     private readonly players: PlayersService,
     private readonly fmfMatchReports: FmfMatchReportService,
     private readonly modulesService: ModulesService,
+    private readonly coachReports: PlayerDossierCoachReportsService,
   ) {}
+
+  async listEligibleCoachReports(input: {
+    playerId: string;
+    allowedTenantIds: string[] | null;
+    actorSub: string;
+    role: string;
+  }) {
+    const player = await this.players.findOne(input.playerId, input.allowedTenantIds);
+    const moduleSlugs = await this.modulesService.getSlugsForActor(input.actorSub, input.role);
+    assertCoachReportAccess(moduleSlugs, input.role, true);
+    const items = await this.coachReports.listEligible({
+      playerId: player.id,
+      tenantId: player.tenantId,
+      allowedTenantIds: input.allowedTenantIds,
+    });
+    return { items };
+  }
 
   async buildDossier(input: {
     playerId: string;
@@ -100,6 +123,7 @@ export class PlayerDossierService {
     actorSub: string;
     role: string;
     optionalSectionsRaw?: string | null;
+    coachReportsRaw?: string | null;
     season?: number;
   }) {
     const player = await this.players.findOne(input.playerId, input.allowedTenantIds);
@@ -111,6 +135,9 @@ export class PlayerDossierService {
       requested,
     });
 
+    const coachSelections = parseCoachReportSelectionsRaw(input.coachReportsRaw);
+    assertCoachReportAccess(moduleSlugs, input.role, coachSelections.length > 0);
+
     const season =
       input.season && Number.isFinite(input.season)
         ? input.season
@@ -118,36 +145,21 @@ export class PlayerDossierService {
 
     const reg = pickRegistration(player.registrationProfile);
 
-    const [fmfStats, coachEvaluations, subidaHistory, optionalData] = await Promise.all([
+    const [fmfStats, formalCoachReports, subidaHistory, optionalData] = await Promise.all([
       this.fmfMatchReports.getPlayerStats(player.id).catch(() => null),
-      this.prisma.coachPlayerEvaluation.findMany({
-        where: { playerId: player.id },
-        orderBy: [{ season: 'desc' }, { periodKey: 'asc' }],
-        select: {
-          season: true,
-          periodKey: true,
-          status: true,
-          overallAverage: true,
-          percentage: true,
-          classification: true,
-          submittedAt: true,
-          matchMinutes: true,
-          trainingMinutes: true,
-          goals: true,
-          assists: true,
-          technicalAssessment: true,
-          finalResult: true,
-          techAverage: true,
-          tacAverage: true,
-          physAverage: true,
-          behAverage: true,
-        },
+      this.coachReports.resolveSelected({
+        playerId: player.id,
+        tenantId: player.tenantId,
+        allowedTenantIds: input.allowedTenantIds,
+        selections: coachSelections,
       }),
       this.players.findSubidaHistory(player.id, input.allowedTenantIds).catch(() => []),
       this.loadOptionalSections(player.id, player.tenantId, includedOptional, input.allowedTenantIds),
     ]);
 
-    const submittedCoach = coachEvaluations.filter((r) => r.status === 'concluido' && r.submittedAt);
+    const submittedCoach = formalCoachReports
+      .filter((r) => r.kind === 'coach_player_evaluation' && r.coachEvaluationRow)
+      .map((r) => r.coachEvaluationRow!);
     const coachPercentages = submittedCoach
       .map((r) => r.percentage)
       .filter((p): p is number => typeof p === 'number' && Number.isFinite(p));
@@ -263,7 +275,12 @@ export class PlayerDossierService {
       evaluations: includedOptional.includes('performance') ? asArray(player.evaluations) : [],
       fmfMatches,
       highlights: asArray(player.highlights).filter((h): h is string => typeof h === 'string'),
-      coachEvaluations: submittedCoach,
+      coachEvaluations: submittedCoach.map((r) => ({
+        season: r.season,
+        periodKey: r.periodKey,
+        submittedAt: r.submittedAt ? new Date(r.submittedAt) : null,
+        percentage: r.percentage,
+      })),
       optional: optionalData,
       includedOptional,
     });
@@ -367,7 +384,7 @@ export class PlayerDossierService {
           trainingMinutes: r.trainingMinutes,
           goals: r.goals,
           assists: r.assists,
-          submittedAt: r.submittedAt?.toISOString() ?? null,
+          submittedAt: r.submittedAt,
           technicalAssessment: r.technicalAssessment,
           finalResult: r.finalResult,
           techAverage: r.techAverage,
@@ -379,6 +396,7 @@ export class PlayerDossierService {
           count: submittedCoach.length,
           averagePercentage: coachAvg,
         },
+        formalCoachReports: formalCoachReports.map(({ coachEvaluationRow: _c, ...rest }) => rest),
       },
       timeline,
       charts: {

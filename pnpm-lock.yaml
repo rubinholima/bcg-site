@@ -19,6 +19,9 @@ importers:
       '@aws-sdk/client-workmail':
         specifier: ^3.980.0
         version: 3.980.0
+      '@bcg/player-dossier-print':
+        specifier: workspace:*
+        version: link:../../packages/player-dossier-print
       '@nestjs/common':
         specifier: ^11.0.1
         version: 11.1.12(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -76,6 +79,9 @@ importers:
       pdf-parse:
         specifier: ^2.4.5
         version: 2.4.5
+      playwright:
+        specifier: ^1.61.0
+        version: 1.61.0
       prisma:
         specifier: 6.8.2
         version: 6.8.2(typescript@5.9.3)
@@ -140,9 +146,6 @@ importers:
       jest:
         specifier: ^30.0.0
         version: 30.2.0(@types/node@22.19.7)(ts-node@10.9.2(@swc/core@1.15.41(@swc/helpers@0.5.15))(@types/node@22.19.7)(typescript@5.9.3))
-      playwright:
-        specifier: ^1.61.0
-        version: 1.61.0
       prettier:
         specifier: ^3.4.2
         version: 3.8.1
@@ -173,6 +176,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@bcg/player-dossier-print':
+        specifier: workspace:*
+        version: link:../../packages/player-dossier-print
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -291,6 +297,10 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
+
+  packages/cup360-access: {}
+
+  packages/player-dossier-print: {}
 
 packages:
 
