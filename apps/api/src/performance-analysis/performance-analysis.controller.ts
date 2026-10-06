@@ -464,6 +464,88 @@ export class PerformanceAnalysisController {
     );
   }
 
+  @Patch('observed-matches/:observedMatchId')
+  async patchObservedMatch(
+    @Req() req: AuthedRequest,
+    @Param('observedMatchId') observedMatchId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.workflows.updateObservedMatch(
+      observedMatchId,
+      body as Parameters<PerformanceAnalysisWorkflowsService['addObservedMatch']>[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Delete('observed-matches/:observedMatchId')
+  async deleteObservedMatch(
+    @Req() req: AuthedRequest,
+    @Param('observedMatchId') observedMatchId: string,
+  ) {
+    return this.workflows.deleteObservedMatch(observedMatchId, await this.allowed(req));
+  }
+
+  @Delete('opponent-players/:playerId')
+  async deleteOpponentPlayer(@Req() req: AuthedRequest, @Param('playerId') playerId: string) {
+    return this.workflows.deleteOpponentPlayer(playerId, await this.allowed(req));
+  }
+
+  @Delete('opponent-set-pieces/:setPieceId')
+  async deleteSetPiece(@Req() req: AuthedRequest, @Param('setPieceId') setPieceId: string) {
+    return this.workflows.deleteSetPiece(setPieceId, await this.allowed(req));
+  }
+
+  @Patch('clip-collections/:collectionId')
+  async patchClipCollection(
+    @Req() req: AuthedRequest,
+    @Param('collectionId') collectionId: string,
+    @Body() body: { title?: string },
+  ) {
+    return this.workflows.updateClipCollection(collectionId, body, await this.allowed(req));
+  }
+
+  @Post('clip-collections/:collectionId/reorder')
+  async reorderClipCollection(
+    @Req() req: AuthedRequest,
+    @Param('collectionId') collectionId: string,
+    @Body() body: { items: Array<{ id: string; groupKey: string; sortOrder: number }> },
+  ) {
+    return this.workflows.reorderClipCollectionItems(
+      collectionId,
+      body.items ?? [],
+      await this.allowed(req),
+    );
+  }
+
+  @Post('pre-match/versions/:versionId/import-opponent')
+  async importOpponentIntoPreMatch(
+    @Req() req: AuthedRequest,
+    @Param('versionId') versionId: string,
+    @Body()
+    body: {
+      profileId: string;
+      includeLineup?: boolean;
+      includeKeyPlayers?: boolean;
+      includeStrengths?: boolean;
+      includeWeaknesses?: boolean;
+      includeSetPieces?: boolean;
+      includeClipGroupKeys?: string[];
+      includeTacticalSections?: boolean;
+    },
+  ) {
+    return this.workflows.importOpponentMaterialIntoVersion(versionId, body, await this.allowed(req));
+  }
+
+  @Get('pre-match/versions/:versionId/presentation')
+  async preMatchPresentation(@Req() req: AuthedRequest, @Param('versionId') versionId: string) {
+    return this.workflows.getPreMatchPresentationPayload(versionId, await this.allowed(req));
+  }
+
+  @Get('clips/:clipId/playback')
+  async clipPlayback(@Req() req: AuthedRequest, @Param('clipId') clipId: string) {
+    return this.service.getClipPlayback(clipId, await this.allowed(req));
+  }
+
   @Post('opponent-profiles/:profileId/players')
   async upsertOpponentPlayer(
     @Req() req: AuthedRequest,

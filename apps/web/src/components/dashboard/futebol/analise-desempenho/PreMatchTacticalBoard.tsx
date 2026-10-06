@@ -2,6 +2,16 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export type TacticalBoardElement =
   | { id: string; type: "player"; x: number; y: number; label: string; number?: string }
@@ -22,8 +32,11 @@ function uid() {
 }
 
 export function PreMatchTacticalBoard({ value, onChange, readOnly = false }: Props) {
-  const [tool, setTool] = useState<"player" | "arrow" | "zone" | "text">("player");
+  const [tool, setTool] = useState<"player" | "arrow" | "zone" | "text" | "select">("player");
   const [pendingArrow, setPendingArrow] = useState<{ x: number; y: number } | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [clearOpen, setClearOpen] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const toNorm = useCallback((clientX: number, clientY: number) => {
@@ -47,8 +60,27 @@ export function PreMatchTacticalBoard({ value, onChange, readOnly = false }: Pro
     onChange({ elements: value.elements.slice(0, -1) });
   };
 
+  const removeSelected = () => {
+    if (!selectedId) return;
+    onChange({ elements: value.elements.filter((el) => el.id !== selectedId) });
+    setSelectedId(null);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!dragId || readOnly) return;
+    const { x, y } = toNorm(e.clientX, e.clientY);
+    onChange({
+      elements: value.elements.map((el) => {
+        if (el.id !== dragId) return el;
+        if (el.type === "player" || el.type === "text") return { ...el, x, y };
+        if (el.type === "zone") return { ...el, x: x - el.w / 2, y: y - el.h / 2 };
+        return el;
+      }),
+    });
+  };
+
   const onPitchClick = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (readOnly) return;
+    if (readOnly || dragId) return;
     const { x, y } = toNorm(e.clientX, e.clientY);
     if (tool === "player") {
       push({ id: uid(), type: "player", x, y, label: "?", number: "" });
@@ -86,7 +118,7 @@ export function PreMatchTacticalBoard({ value, onChange, readOnly = false }: Pro
     <div className="space-y-2">
       {!readOnly ? (
         <div className="flex flex-wrap gap-2">
-          {(["player", "arrow", "zone", "text"] as const).map((t) => (
+          {(["player", "arrow", "zone", "text", "select"] as const).map((t) => (
             <Button
               key={t}
               type="button"
@@ -97,11 +129,25 @@ export function PreMatchTacticalBoard({ value, onChange, readOnly = false }: Pro
                 setPendingArrow(null);
               }}
             >
-              {t === "player" ? "Jogador" : t === "arrow" ? "Seta" : t === "zone" ? "Zona" : "Texto"}
+              {t === "player"
+                ? "Jogador"
+                : t === "arrow"
+                  ? "Seta"
+                  : t === "zone"
+                    ? "Zona"
+                    : t === "text"
+                      ? "Texto"
+                      : "Selecionar"}
             </Button>
           ))}
           <Button type="button" size="sm" variant="ghost" onClick={undo} disabled={value.elements.length === 0}>
             Desfazer
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={removeSelected} disabled={!selectedId}>
+            Apagar seleção
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setClearOpen(true)}>
+            Limpar
           </Button>
         </div>
       ) : null}
@@ -110,6 +156,8 @@ export function PreMatchTacticalBoard({ value, onChange, readOnly = false }: Pro
         viewBox={`0 0 ${w} ${h}`}
         className="w-full max-w-lg touch-none rounded-md border border-emerald-800/50 bg-emerald-950/40"
         onClick={onPitchClick}
+        onPointerMove={onPointerMove}
+        onPointerUp={() => setDragId(null)}
         role="img"
         aria-label="Campo tático"
       >
@@ -119,8 +167,24 @@ export function PreMatchTacticalBoard({ value, onChange, readOnly = false }: Pro
         {value.elements.map((el) => {
           if (el.type === "player") {
             return (
-              <g key={el.id}>
-                <circle cx={el.x * w} cy={el.y * h} r={4} fill="#a78bfa" />
+              <g
+                key={el.id}
+                onPointerDown={(ev) => {
+                  if (readOnly) return;
+                  ev.stopPropagation();
+                  if (tool === "select") setSelectedId(el.id);
+                  setDragId(el.id);
+                }}
+                style={{ cursor: readOnly ? undefined : "grab" }}
+              >
+                <circle
+                  cx={el.x * w}
+                  cy={el.y * h}
+                  r={4}
+                  fill={selectedId === el.id ? "#c4b5fd" : "#a78bfa"}
+                  stroke={selectedId === el.id ? "#fff" : "none"}
+                  strokeWidth={0.4}
+                />
                 <text x={el.x * w} y={el.y * h - 5} textAnchor="middle" fontSize={4} fill="#fff">
                   {el.number || el.label}
                 </text>
@@ -168,6 +232,25 @@ export function PreMatchTacticalBoard({ value, onChange, readOnly = false }: Pro
           </marker>
         </defs>
       </svg>
+      <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpar quadro tático?</AlertDialogTitle>
+            <AlertDialogDescription>Todos os elementos serão removidos.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onChange({ elements: [] });
+                setSelectedId(null);
+              }}
+            >
+              Limpar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

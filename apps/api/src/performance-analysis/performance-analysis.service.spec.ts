@@ -13,7 +13,7 @@ describe('PerformanceAnalysisService', () => {
       update: jest.fn(),
       delete: jest.fn(),
     },
-    analysisClip: { findMany: jest.fn(), create: jest.fn() },
+    analysisClip: { findMany: jest.fn(), create: jest.fn(), findUnique: jest.fn() },
     analysisClipEvent: { createMany: jest.fn() },
     analysisClipPlayer: { createMany: jest.fn() },
   };
@@ -90,5 +90,32 @@ describe('PerformanceAnalysisService', () => {
     const data = await svc.getSession('s1', ['t1']);
     expect(data.videoSources[0]).not.toHaveProperty('storageKey');
     expect(data.videoSources[0].streamUrl).toContain('/performance-analysis/video-sources/v1/stream');
+  });
+
+  it('getClipPlayback não expõe storageKey', async () => {
+    prisma.analysisClip.findUnique.mockResolvedValue({
+      id: 'cl1',
+      tenantId: 't1',
+      title: 'Clip',
+      startMs: 1000,
+      endMs: 5000,
+      notes: null,
+      analysisSessionId: 's1',
+      videoSource: {
+        id: 'v1',
+        sourceType: 'UPLOAD',
+        title: 'V',
+        cameraLabel: null,
+        externalUrl: null,
+        durationMs: 60000,
+        mimeType: 'video/mp4',
+        processingStatus: 'ready',
+        storageKey: 'secret/key.mp4',
+      },
+    });
+
+    const data = await svc.getClipPlayback('cl1', ['t1']);
+    expect(data.videoSource).not.toHaveProperty('storageKey');
+    expect(data.videoSource.streamUrl).toContain('v1/stream');
   });
 });

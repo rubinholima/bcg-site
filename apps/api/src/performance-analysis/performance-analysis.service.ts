@@ -24,6 +24,8 @@ import {
 } from './performance-analysis-live-clock.util';
 import { normalizeTenantAnalysisTags } from './performance-analysis-tag-normalization.util';
 
+import { mapPublicVideoSource } from './performance-analysis-video-public.util';
+
 function publicVideoDto(row: {
   id: string;
   sourceType: string;
@@ -37,22 +39,9 @@ function publicVideoDto(row: {
   processingStatus: string;
   createdAt: Date;
   hasPrivateUpload: boolean;
+  storageKey?: string | null;
 }) {
-  return {
-    id: row.id,
-    sourceType: row.sourceType,
-    title: row.title,
-    cameraLabel: row.cameraLabel,
-    externalUrl: row.externalUrl,
-    durationMs: row.durationMs,
-    mimeType: row.mimeType,
-    width: row.width,
-    height: row.height,
-    processingStatus: row.processingStatus,
-    createdAt: row.createdAt.toISOString(),
-    hasPrivateUpload: row.hasPrivateUpload,
-    streamUrl: row.hasPrivateUpload ? `/performance-analysis/video-sources/${row.id}/stream` : null,
-  };
+  return mapPublicVideoSource({ ...row, storageKey: row.hasPrivateUpload ? 'private' : null });
 }
 
 @Injectable()
@@ -942,6 +931,26 @@ export class PerformanceAnalysisService {
       metrics: computePlayerMetrics(tagged)[0] ?? null,
       recentEvents: events.slice(0, 30),
       clips,
+    };
+  }
+
+  async getClipPlayback(clipId: string, allowedTenantIds: string[] | null) {
+    const clip = await this.prisma.analysisClip.findUnique({
+      where: { id: clipId },
+      include: { videoSource: true },
+    });
+    if (!clip) throw new NotFoundException('Clip não encontrado.');
+    this.access.assertTenant(allowedTenantIds, clip.tenantId);
+    return {
+      clip: {
+        id: clip.id,
+        title: clip.title,
+        startMs: clip.startMs,
+        endMs: clip.endMs,
+        notes: clip.notes,
+        analysisSessionId: clip.analysisSessionId,
+      },
+      videoSource: mapPublicVideoSource(clip.videoSource),
     };
   }
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, Loader2, Plus, Printer, Save, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, Film, Loader2, Plus, Printer, Save, Trash2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -97,6 +99,9 @@ function defaultPeriodRange() {
 }
 
 export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
+  const router = useRouter();
+  const { canAccessModule } = useAuth();
+  const canAnalyseTraining = canAccessModule("futebol_analise_desempenho");
   const [sessions, setSessions] = useState<CoachTrainingSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -413,6 +418,29 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
               <Button type="button" size="sm" variant="outline" onClick={handlePrintSession} disabled={printing}>
                 {printing ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Printer className="mr-1 h-4 w-4" />}
                 Imprimir treino
+              </Button>
+            ) : null}
+            {selectedId && canAnalyseTraining ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  void api
+                    .post<{ session: { id: string } }>(
+                      `/performance-analysis/training-sessions/${selectedId}/open-analysis`,
+                    )
+                    .then(({ data }) => {
+                      const q = new URLSearchParams({ tenantId });
+                      if (category) q.set("category", category);
+                      router.push(
+                        `/dashboard/futebol/analise-desempenho/sessoes/${data.session.id}?${q.toString()}`,
+                      );
+                    });
+                }}
+              >
+                <Film className="mr-1 h-4 w-4" />
+                Analisar treino
               </Button>
             ) : null}
           </div>

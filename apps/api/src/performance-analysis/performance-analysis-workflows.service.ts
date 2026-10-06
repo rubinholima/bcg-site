@@ -12,9 +12,12 @@ import {
   defaultPreMatchSections,
   OPPONENT_CLIP_CURATION_GROUPS,
   PRE_MATCH_LIFECYCLES,
+  PRE_MATCH_SECTION_KEYS,
+  PRE_MATCH_SECTION_LABELS,
   type PreMatchLifecycle,
 } from './performance-analysis-workflows.constants';
 import { buildPreMatchPrintHtml } from './performance-analysis-prematch-print.util';
+import { mapPublicVideoSource } from './performance-analysis-video-public.util';
 
 @Injectable()
 export class PerformanceAnalysisWorkflowsService {
@@ -207,6 +210,7 @@ export class PerformanceAnalysisWorkflowsService {
                     startMs: true,
                     endMs: true,
                     analysisSessionId: true,
+                    videoSourceId: true,
                   },
                 },
               },
@@ -214,6 +218,37 @@ export class PerformanceAnalysisWorkflowsService {
           },
         }),
       ]);
+    const primarySession = sessions[0] ?? null;
+    const [sessionVideoSources, sessionClips, sessionEvents] = primarySession
+      ? await Promise.all([
+          this.prisma.analysisVideoSource.findMany({
+            where: { analysisSessionId: primarySession.id, tenantId: profile.tenantId },
+            orderBy: { createdAt: 'asc' },
+          }),
+          this.prisma.analysisClip.findMany({
+            where: { analysisSessionId: primarySession.id, tenantId: profile.tenantId },
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true,
+              title: true,
+              startMs: true,
+              endMs: true,
+              videoSourceId: true,
+              notes: true,
+            },
+          }),
+          this.prisma.analysisEvent.findMany({
+            where: { analysisSessionId: primarySession.id, tenantId: profile.tenantId },
+            orderBy: { startMs: 'asc' },
+            take: 200,
+            include: {
+              tagDefinition: { select: { label: true, key: true } },
+              opponentPlayer: { select: { id: true, name: true } },
+            },
+          }),
+        ])
+      : [[], [], []];
+
     return {
       profile,
       observedMatches,
@@ -221,6 +256,10 @@ export class PerformanceAnalysisWorkflowsService {
       lineups,
       setPieces,
       sessions,
+      primarySession,
+      sessionVideoSources: sessionVideoSources.map((v) => mapPublicVideoSource(v)),
+      sessionClips,
+      sessionEvents,
       clipCollection,
       clipGroups: OPPONENT_CLIP_CURATION_GROUPS,
     };
@@ -233,6 +272,7 @@ export class PerformanceAnalysisWorkflowsService {
   ) {
     await this.access.loadOpponentProfile(profileId, allowedTenantIds);
     const allowed = [
+      'opponentName',
       'notes',
       'preferredFormations',
       'alternativeFormations',
@@ -833,6 +873,245 @@ export class PerformanceAnalysisWorkflowsService {
       where: { id: session.id },
       data: { preMatchVersionId: version.id },
     });
+  }
+
+  async updateObservedMatch(
+    observedMatchId: string,
+    dto: Parameters<PerformanceAnalysisWorkflowsService['addObservedMatch']>[1],
+    allowedTenantIds: string[] | null,
+  ) {
+    const row = await this.prisma.analysisOpponentObservedMatch.findUnique({
+      where: { id: observedMatchId },
+    });
+    if (!row) throw new NotFoundException('Jogo observado não encontrado.');
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    return this.prisma.analysisOpponentObservedMatch.update({
+      where: { id: observedMatchId },
+      data: {
+        facedOpponentName: dto.facedOpponentName?.trim() || null,
+        matchDate: dto.matchDate?.trim() || null,
+        competition: dto.competition?.trim() || null,
+        homeAway: dto.homeAway?.trim() || null,
+        homeScore: dto.homeScore ?? null,
+        awayScore: dto.awayScore ?? null,
+        sourceReference: dto.sourceReference?.trim() || null,
+        notes: dto.notes?.trim() || null,
+      },
+    });
+  }
+
+  async deleteObservedMatch(observedMatchId: string, allowedTenantIds: string[] | null) {
+    const row = await this.prisma.analysisOpponentObservedMatch.findUnique({
+      where: { id: observedMatchId },
+    });
+    if (!row) throw new NotFoundException('Jogo observado não encontrado.');
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    await this.prisma.analysisOpponentObservedMatch.delete({ where: { id: observedMatchId } });
+    return { ok: true };
+  }
+
+  async deleteOpponentPlayer(playerId: string, allowedTenantIds: string[] | null) {
+    const row = await this.prisma.analysisOpponentPlayer.findUnique({ where: { id: playerId } });
+    if (!row) throw new NotFoundException('Jogador não encontrado.');
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    await this.prisma.analysisOpponentPlayer.delete({ where: { id: playerId } });
+    return { ok: true };
+  }
+
+  async deleteSetPiece(setPieceId: string, allowedTenantIds: string[] | null) {
+    const row = await this.prisma.analysisOpponentSetPiece.findUnique({ where: { id: setPieceId } });
+    if (!row) throw new NotFoundException('Bola parada não encontrada.');
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    await this.prisma.analysisOpponentSetPiece.delete({ where: { id: setPieceId } });
+    return { ok: true };
+  }
+
+  async updateClipCollection(
+    collectionId: string,
+    patch: { title?: string },
+    allowedTenantIds: string[] | null,
+  ) {
+    const row = await this.prisma.analysisClipCollection.findUnique({ where: { id: collectionId } });
+    if (!row) throw new NotFoundException('Coleção não encontrada.');
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    return this.prisma.analysisClipCollection.update({
+      where: { id: collectionId },
+      data: { title: patch.title?.trim() || row.title },
+    });
+  }
+
+  async reorderClipCollectionItems(
+    collectionId: string,
+    items: Array<{ id: string; groupKey: string; sortOrder: number }>,
+    allowedTenantIds: string[] | null,
+  ) {
+    const row = await this.prisma.analysisClipCollection.findUnique({ where: { id: collectionId } });
+    if (!row) throw new NotFoundException('Coleção não encontrada.');
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    for (const item of items) {
+      const existing = await this.prisma.analysisClipCollectionItem.findFirst({
+        where: { id: item.id, collectionId },
+      });
+      if (!existing) throw new BadRequestException('Item de coleção inválido.');
+      await this.prisma.analysisClipCollectionItem.update({
+        where: { id: item.id },
+        data: { groupKey: item.groupKey, sortOrder: item.sortOrder },
+      });
+    }
+    return { ok: true };
+  }
+
+  async importOpponentMaterialIntoVersion(
+    versionId: string,
+    input: {
+      profileId: string;
+      includeLineup?: boolean;
+      includeKeyPlayers?: boolean;
+      includeStrengths?: boolean;
+      includeWeaknesses?: boolean;
+      includeSetPieces?: boolean;
+      includeClipGroupKeys?: string[];
+      includeTacticalSections?: boolean;
+    },
+    allowedTenantIds: string[] | null,
+  ) {
+    const version = await this.access.loadPreMatchVersion(versionId, allowedTenantIds);
+    if (version.lifecycle === 'APPROVED' || version.lifecycle === 'PRESENTED') {
+      throw new ForbiddenException('Versão aprovada não pode ser alterada.');
+    }
+    const bundle = await this.getOpponentProfileBundle(input.profileId, allowedTenantIds);
+    if (bundle.profile.tenantId !== version.preparation.tenantId) {
+      throw new ForbiddenException('Perfil de adversário de outro clube.');
+    }
+
+    const sections =
+      version.sections && typeof version.sections === 'object'
+        ? { ...(version.sections as Record<string, { text?: string }>) }
+        : defaultPreMatchSections();
+
+    const p = bundle.profile;
+    const textBlock = (v: unknown) => {
+      if (typeof v === 'string') return v;
+      if (v && typeof v === 'object' && 'text' in v) return String((v as { text: string }).text ?? '');
+      if (Array.isArray(v)) return v.map(String).join('\n');
+      return '';
+    };
+
+    if (input.includeTacticalSections) {
+      sections.adversario = {
+        text: [p.opponentName, p.notes, p.keyObservations].filter(Boolean).join('\n\n'),
+      };
+      sections.organizacao_ofensiva = { text: textBlock(p.attackingPatterns) };
+      sections.organizacao_defensiva = { text: textBlock(p.defensiveOrganization) };
+      sections.transicoes = { text: textBlock(p.transitions) };
+      sections.pressao = { text: textBlock(p.pressingBehavior) };
+      sections.bolas_paradas = { text: textBlock(p.setPiecesSummary) };
+    }
+    if (input.includeStrengths) {
+      sections.pontos_fortes = { text: textBlock(p.strengths) };
+    }
+    if (input.includeWeaknesses) {
+      sections.pontos_fracos = { text: textBlock(p.weaknesses) };
+    }
+    if (input.includeLineup && bundle.lineups[0]) {
+      const lu = bundle.lineups[0];
+      const lines = lu.entries.map(
+        (e) =>
+          `${e.shirtNumber ?? '—'} ${e.name}${e.position ? ` (${e.position})` : ''}${e.confidence ? ` · ${e.confidence}` : ''}`,
+      );
+      sections.formacao_provavel = {
+        text: [`Formação: ${lu.formation ?? '—'}`, ...lines].join('\n'),
+      };
+    }
+    if (input.includeKeyPlayers) {
+      const keys = bundle.players.filter((pl) => pl.likelyStarter || pl.tacticalRole);
+      sections.jogadores_chave = {
+        text: keys
+          .map(
+            (pl) =>
+              `${pl.shirtNumber ?? '—'} ${pl.name} · ${pl.tacticalRole ?? pl.position ?? '—'}${pl.observations ? `\n${pl.observations}` : ''}`,
+          )
+          .join('\n\n'),
+      };
+    }
+    if (input.includeSetPieces && bundle.setPieces.length > 0) {
+      const extra = bundle.setPieces
+        .map((sp) => `${sp.kind}: ${sp.title ?? '—'}\n${sp.notes ?? ''}`)
+        .join('\n\n');
+      sections.bolas_paradas = {
+        text: [sections.bolas_paradas?.text ?? '', extra].filter(Boolean).join('\n\n'),
+      };
+    }
+
+    let selectedClipIds = Array.isArray(version.selectedClipIds)
+      ? [...(version.selectedClipIds as string[])]
+      : [];
+    const groupKeys = input.includeClipGroupKeys ?? [];
+    if (groupKeys.length > 0 && bundle.clipCollection?.items) {
+      for (const item of bundle.clipCollection.items) {
+        if (groupKeys.includes(item.groupKey) && !selectedClipIds.includes(item.clipId)) {
+          selectedClipIds.push(item.clipId);
+        }
+      }
+    }
+
+    return this.prisma.analysisPreMatchVersion.update({
+      where: { id: versionId },
+      data: {
+        sections,
+        selectedClipIds,
+      },
+    });
+  }
+
+  async getPreMatchPresentationPayload(versionId: string, allowedTenantIds: string[] | null) {
+    const version = await this.access.loadPreMatchVersion(versionId, allowedTenantIds);
+    const prep = await this.getPreMatchBundle(version.preparationId, allowedTenantIds);
+    let opponentBundle: Awaited<ReturnType<PerformanceAnalysisWorkflowsService['getOpponentProfileBundle']>> | null =
+      null;
+    if (prep.opponentProfileId) {
+      opponentBundle = await this.getOpponentProfileBundle(prep.opponentProfileId, allowedTenantIds);
+    }
+    const clipIds = Array.isArray(version.selectedClipIds) ? (version.selectedClipIds as string[]) : [];
+    const clips: Array<Awaited<ReturnType<PerformanceAnalysisWorkflowsService['getClipPlaybackSafe']>>> = [];
+    for (const clipId of clipIds.slice(0, 24)) {
+      const pb = await this.getClipPlaybackSafe(clipId, allowedTenantIds);
+      if (pb) clips.push(pb);
+    }
+    const hidden = new Set(
+      Array.isArray(version.hiddenSections) ? (version.hiddenSections as string[]) : [],
+    );
+    return {
+      preparation: prep,
+      version,
+      opponentBundle,
+      clips,
+      sectionLabels: PRE_MATCH_SECTION_LABELS,
+      sectionKeys: PRE_MATCH_SECTION_KEYS.filter((k) => !hidden.has(k)),
+    };
+  }
+
+  async getClipPlaybackSafe(clipId: string, allowedTenantIds: string[] | null) {
+    try {
+      const clip = await this.prisma.analysisClip.findUnique({
+        where: { id: clipId },
+        include: { videoSource: true },
+      });
+      if (!clip) return null;
+      this.access.assertTenant(allowedTenantIds, clip.tenantId);
+      return {
+        clip: {
+          id: clip.id,
+          title: clip.title,
+          startMs: clip.startMs,
+          endMs: clip.endMs,
+          notes: clip.notes,
+        },
+        videoSource: mapPublicVideoSource(clip.videoSource),
+      };
+    } catch {
+      return null;
+    }
   }
 
   async listSessionsFiltered(

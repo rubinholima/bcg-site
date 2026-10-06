@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ const KIND_LABEL: Record<string, string> = {
 
 export default function AnaliseDesempenhoSessoesPage() {
   const { tenantId, qs } = useAnaliseDesempenhoQuery();
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get("status");
   const [sessions, setSessions] = useState<AnalysisSessionListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const suffix = qs ? `?${qs}` : "";
@@ -30,12 +33,14 @@ export default function AnaliseDesempenhoSessoesPage() {
   useEffect(() => {
     if (!tenantId) return;
     setLoading(true);
+    const params = new URLSearchParams({ tenantId, limit: "80" });
+    if (statusFilter?.trim()) params.set("status", statusFilter.trim());
     api
-      .get<AnalysisSessionListItem[]>(`/performance-analysis/sessions?tenantId=${tenantId}&limit=80`)
+      .get<AnalysisSessionListItem[]>(`/performance-analysis/sessions?${params}`)
       .then(({ data }) => setSessions(Array.isArray(data) ? data : []))
       .catch(() => setSessions([]))
       .finally(() => setLoading(false));
-  }, [tenantId]);
+  }, [tenantId, statusFilter]);
 
   return (
     <AnaliseDesempenhoShell title="Sessões de análise">
