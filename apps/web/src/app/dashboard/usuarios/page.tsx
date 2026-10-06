@@ -96,7 +96,8 @@ export default function UsuariosPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isSuperAdmin, isCompanyAdmin, user: currentUser } = useAuth();
-  const canOpenPessoasAcessos = isSuperAdmin || isCompanyAdmin;
+  const canManageIdentities = isSuperAdmin || isCompanyAdmin;
+  const canOpenPessoasAcessos = canManageIdentities;
   const { roles: roleCatalog } = usePlatformRoles();
   const roleOptionsForSelect = selectableRolesForActor(isSuperAdmin, roleCatalog);
   const [users, setUsers] = useState<UserListItem[]>([]);
@@ -181,6 +182,16 @@ export default function UsuariosPage() {
 
   return (
     <>
+      {isCompanyAdmin && !isSuperAdmin ? (
+        <div className="rounded-lg border border-border/80 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+          Cadastro e onboarding de usuários: use{" "}
+          <Link href="/dashboard/configuracoes/pessoas-acessos?tab=usuarios" className="text-primary hover:underline">
+            Configurações → Pessoas e acessos
+          </Link>
+          .
+        </div>
+      ) : null}
+
       {showSuccess && (
         <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4 flex items-center gap-2 text-green-500">
           <span>Usuário cadastrado com sucesso!</span>
@@ -232,12 +243,23 @@ export default function UsuariosPage() {
                   </Button>
                 </Link>
               ) : null}
-              <Link href="/dashboard/usuarios/new">
-                <Button className="min-h-[44px]">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo
-                </Button>
-              </Link>
+              {canManageIdentities ? (
+                isCompanyAdmin && !isSuperAdmin ? (
+                  <Link href="/dashboard/configuracoes/pessoas-acessos?tab=usuarios">
+                    <Button className="min-h-[44px]">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Novo usuário
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/dashboard/usuarios/new">
+                    <Button className="min-h-[44px]">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Novo
+                    </Button>
+                  </Link>
+                )
+              ) : null}
             </DashboardDeptToolbarAside>
           </>
         }

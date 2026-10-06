@@ -42,6 +42,11 @@ import {
 
 } from "@/components/dashboard/access/FunctionAdminPanel";
 
+import {
+  AccessNewUserForm,
+  type AccessNewUserSuccess,
+} from "@/components/dashboard/access/AccessNewUserForm";
+
 
 
 type TabId = "usuarios" | "funcoes" | "auditoria";
@@ -183,6 +188,11 @@ export default function PessoasAcessosPage() {
     TABS.some((t) => t.id === initialTab) ? initialTab : "usuarios",
 
   );
+
+  useEffect(() => {
+    const q = searchParams.get("tab") as TabId | null;
+    if (q && TABS.some((t) => t.id === q)) setTab(q);
+  }, [searchParams]);
 
   const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
 
@@ -663,6 +673,8 @@ export default function PessoasAcessosPage() {
 
                 showTechnicalDetails={isSuperAdmin}
 
+                readOnly={!isSuperAdmin}
+
               />
 
             )}
@@ -679,9 +691,19 @@ export default function PessoasAcessosPage() {
 
         <Card>
 
-          <CardHeader>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
             <CardTitle>Usuários</CardTitle>
+
+            <AccessNewUserForm
+              isSuperAdmin={isSuperAdmin}
+              onFeedback={showFeedback}
+              onCreated={(user: AccessNewUserSuccess) => {
+                void loadUsers();
+                setSelectedUserId(user.id);
+                setUserDetailTick((t) => t + 1);
+              }}
+            />
 
           </CardHeader>
 

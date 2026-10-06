@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
 import { Cup360AccessAdminGuard } from '../auth/cup360-access-admin.guard';
 import { AccessAdminController } from './access-admin.controller';
 import { ModulesController } from './modules.controller';
@@ -9,7 +10,7 @@ import { ModuleCatalogBootstrapService } from './module-catalog.bootstrap.servic
 import { ModulesService } from './modules.service';
 
 @Module({
-  imports: [forwardRef(() => AuthModule)],
+  imports: [forwardRef(() => AuthModule), forwardRef(() => UsersModule)],
   controllers: [ModulesController, AccessAdminController],
   providers: [
     ModulesService,
@@ -18,6 +19,6 @@ import { ModulesService } from './modules.service';
     ModuleCatalogBootstrapService,
     Cup360AccessAdminGuard,
   ],
-  exports: [ModulesService, EffectiveAccessService],
+  exports: [ModulesService, EffectiveAccessService, AccessAdminUsersService],
 })
 export class ModulesModule {}

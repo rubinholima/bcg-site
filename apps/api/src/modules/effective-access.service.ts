@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
@@ -283,6 +283,50 @@ export class EffectiveAccessService {
         after: entry.after ?? undefined,
       },
     });
+  }
+
+  async auditUserIdentityCreated(
+    userId: string,
+    actor: CognitoJwtPayload | undefined,
+    after: {
+      email: string;
+      name: string | null;
+      legacyRole: string;
+      tenantIds: string[];
+      platformFunctionId?: string | null;
+    },
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    });
+    const { actorSub, actorEmail } = this.actorFromRequest(actor);
+    await this.writeAudit({
+      actorSub,
+      actorEmail,
+      targetType: 'user',
+      targetId: userId,
+      targetLabel: user?.name ?? user?.email ?? userId,
+      changeType: 'user_created',
+      after: {
+        email: after.email,
+        name: after.name,
+        legacyRole: after.legacyRole,
+        tenantIds: after.tenantIds,
+        platformFunctionId: after.platformFunctionId ?? null,
+      },
+    });
+  }
+
+  async assertActivePlatformFunction(functionId: string | null | undefined): Promise<void> {
+    if (!functionId?.trim()) return;
+    const fn = await this.prisma.jobRole.findFirst({
+      where: { id: functionId.trim(), scope: 'platform', isActive: true },
+      select: { id: true },
+    });
+    if (!fn) {
+      throw new BadRequestException('Função plataforma inválida ou inativa.');
+    }
   }
 
   async restoreUserToFunctionDefaults(userId: string, actor?: CognitoJwtPayload): Promise<void> {

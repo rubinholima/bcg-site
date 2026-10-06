@@ -111,7 +111,7 @@ export class UsersService {
 
   async create(
     dto: CreateUserDto,
-  ): Promise<{ username: string; sub: string; temporaryPassword: string }> {
+  ): Promise<{ username: string; sub: string; temporaryPassword: string; userId: string }> {
     const role = dto.role?.trim() || 'editor';
     await this.assertAssignableRole(role);
     const email = dto.email.trim().toLowerCase();
@@ -137,9 +137,9 @@ export class UsersService {
       },
     });
     if (dto.tenantIds !== undefined) {
-      await this.replaceUserTenants(user.id, dto.tenantIds);
+      await this.replaceUserTenants(user.id, dto.tenantIds, undefined);
     }
-    return { username: user.username, sub: user.id, temporaryPassword };
+    return { username: user.username, sub: user.id, temporaryPassword, userId: user.id };
   }
 
   async updateRole(username: string, role: UserRole): Promise<void> {
@@ -161,6 +161,7 @@ export class UsersService {
       password?: string;
       tenantIds?: string[];
     },
+    tenantUpdate?: { preserveOutsideActorScope?: string[] },
   ): Promise<void> {
     const user = await this.findByUsername(username);
     const data: {
@@ -204,12 +205,23 @@ export class UsersService {
       data,
     });
     if (dto.tenantIds !== undefined) {
-      await this.replaceUserTenants(user.id, dto.tenantIds);
+      await this.replaceUserTenants(
+        user.id,
+        dto.tenantIds,
+        tenantUpdate?.preserveOutsideActorScope,
+      );
     }
   }
 
-  private async replaceUserTenants(userId: string, tenantIds: string[]): Promise<void> {
-    const unique = [...new Set(tenantIds.map((id) => id.trim()).filter(Boolean))];
+  async replaceUserTenants(
+    userId: string,
+    tenantIds: string[],
+    preserveOutsideActorScope?: string[],
+  ): Promise<void> {
+    let unique = [...new Set(tenantIds.map((id) => id.trim()).filter(Boolean))];
+    if (preserveOutsideActorScope?.length) {
+      unique = [...new Set([...preserveOutsideActorScope, ...unique])];
+    }
     if (unique.length > 0) {
       const count = await this.prisma.tenant.count({
         where: { id: { in: unique }, slug: { not: 'bcg' } },

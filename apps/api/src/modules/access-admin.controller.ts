@@ -13,8 +13,12 @@ import {
 import { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { Cup360AccessAdminGuard } from '../auth/cup360-access-admin.guard';
+import { SuperAdminGuard } from '../auth/super-admin.guard';
+import { TenantAccessService } from '../auth/tenant-access.service';
+import { UsersService } from '../users/users.service';
 import { EffectiveAccessService } from './effective-access.service';
 import { AccessAdminUsersService } from './access-admin-users.service';
+import { CreateAccessUserDto } from './dto/create-access-user.dto';
 import { ModulesService } from './modules.service';
 
 @Controller('settings/access')
@@ -24,6 +28,8 @@ export class AccessAdminController {
     private readonly effectiveAccess: EffectiveAccessService,
     private readonly modulesService: ModulesService,
     private readonly accessAdminUsers: AccessAdminUsersService,
+    private readonly usersService: UsersService,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
 
   private actorRole(req: Request & { user?: CognitoJwtPayload }): string {
@@ -37,6 +43,61 @@ export class AccessAdminController {
     return this.accessAdminUsers.listManageableUsers(sub, this.actorRole(req));
   }
 
+  @Post('users')
+  async createUser(
+    @Req() req: Request & { user?: CognitoJwtPayload },
+    @Body() body: CreateAccessUserDto,
+  ) {
+    const actorRole = this.actorRole(req);
+    this.accessAdminUsers.assertCanCreateOrManageIdentities(actorRole);
+    const tenantIds = body.tenantIds ?? [];
+    if (actorRole === 'company_admin') {
+      this.accessAdminUsers.assertCompanyAdminCreatePayload(tenantIds, undefined);
+    }
+    if (tenantIds.length > 0) {
+      await this.tenantAccess.assertActorCanAssignTenants(
+        req.user?.sub ?? '',
+        actorRole,
+        tenantIds,
+      );
+    }
+    await this.effectiveAccess.assertActivePlatformFunction(body.platformFunctionId);
+
+    const legacyRole = this.accessAdminUsers.resolveCreateRoleForActor(actorRole, undefined);
+    const created = await this.usersService.create({
+      email: body.email,
+      username: body.username,
+      name: body.name,
+      role: legacyRole,
+      tenantIds,
+    });
+
+    const platformFunctionId = body.platformFunctionId?.trim() || null;
+    await this.effectiveAccess.auditUserIdentityCreated(created.userId, req.user, {
+      email: body.email.trim().toLowerCase(),
+      name: body.name ?? null,
+      legacyRole,
+      tenantIds,
+      platformFunctionId,
+    });
+    if (platformFunctionId) {
+      await this.effectiveAccess.updateUserAccess(
+        created.userId,
+        { platformFunctionId },
+        req.user,
+      );
+    }
+
+    return {
+      id: created.userId,
+      username: created.username,
+      sub: created.sub,
+      temporaryPassword: created.temporaryPassword,
+      name: body.name ?? null,
+      email: body.email.trim().toLowerCase(),
+    };
+  }
+
   @Get('modules')
   listModules() {
     return this.effectiveAccess.listModulesForAdmin();
@@ -48,6 +109,7 @@ export class AccessAdminController {
   }
 
   @Post('functions')
+  @UseGuards(SuperAdminGuard)
   createFunction(
     @Req() req: Request & { user?: CognitoJwtPayload },
     @Body()
@@ -63,6 +125,7 @@ export class AccessAdminController {
   }
 
   @Patch('functions/:id')
+  @UseGuards(SuperAdminGuard)
   updateFunction(
     @Req() req: Request & { user?: CognitoJwtPayload },
     @Param('id') id: string,
@@ -79,6 +142,7 @@ export class AccessAdminController {
   }
 
   @Put('functions/:id/defaults')
+  @UseGuards(SuperAdminGuard)
   async updateFunctionDefaults(
     @Req() req: Request & { user?: CognitoJwtPayload },
     @Param('id') id: string,
@@ -137,6 +201,9 @@ export class AccessAdminController {
       this.actorRole(req),
       userId,
     );
+    if (body.platformFunctionId !== undefined) {
+      await this.effectiveAccess.assertActivePlatformFunction(body.platformFunctionId);
+    }
     await this.effectiveAccess.updateUserAccess(userId, body, req.user);
     return this.effectiveAccess.getBreakdownForUser(userId);
   }

@@ -29,6 +29,12 @@ export default function NovoUsuarioPage() {
   const { roles: roleCatalog } = usePlatformRoles();
   const roleSelectOptions = selectableRolesForActor(isSuperAdmin, roleCatalog);
   const canManageTenantScope = isSuperAdmin || isCompanyAdmin;
+
+  useEffect(() => {
+    if (isCompanyAdmin && !isSuperAdmin) {
+      router.replace("/dashboard/configuracoes/pessoas-acessos?tab=usuarios");
+    }
+  }, [isCompanyAdmin, isSuperAdmin, router]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);

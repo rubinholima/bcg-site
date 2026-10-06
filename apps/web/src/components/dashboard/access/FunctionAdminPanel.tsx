@@ -30,6 +30,8 @@ type Props = {
   onReload: () => Promise<void>;
   onFeedback: (title: string, message: string) => void;
   showTechnicalDetails?: boolean;
+  /** Company admin: só consulta funções para atribuição em usuários. */
+  readOnly?: boolean;
 };
 
 const NEW_ID = "__new__";
@@ -50,6 +52,7 @@ export function FunctionAdminPanel({
   onReload,
   onFeedback,
   showTechnicalDetails,
+  readOnly = false,
 }: Props) {
   const [selectedId, setSelectedId] = useState("");
   const [creating, setCreating] = useState(false);
@@ -211,13 +214,22 @@ export function FunctionAdminPanel({
             disabled={creating}
           />
         </div>
-        <Button type="button" variant="outline" className="min-h-[44px] shrink-0" onClick={startCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova função
-        </Button>
+        {!readOnly ? (
+          <Button type="button" variant="outline" className="min-h-[44px] shrink-0" onClick={startCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova função
+          </Button>
+        ) : null}
       </div>
 
-      {editorVisible ? (
+      {readOnly && selected ? (
+        <p className="text-sm text-muted-foreground">
+          Consulta das funções ativas — atribua na aba Usuários. Alteração de funções é restrita ao
+          super admin.
+        </p>
+      ) : null}
+
+      {!readOnly && editorVisible ? (
         <div className="grid gap-6 xl:grid-cols-[minmax(280px,360px)_1fr]">
           <div className="space-y-4 rounded-lg border border-border p-4">
             <p className="text-sm font-medium">{creating ? "Nova função" : "Dados da função"}</p>
