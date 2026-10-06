@@ -2,6 +2,7 @@ export {
   buildPlayerDossierPrintHtml,
   printPlayerDossierDocument,
 } from "./player-dossier-print";
+export { wrapPrintRootDocument } from "./report-print-layout";
 export type { ReportPrintConfig, ReportPaperSize, ReportOrientation } from "./report-print-engine";
 export { DEFAULT_REPORT_PRINT_CONFIG } from "./report-print-engine";
 export type {

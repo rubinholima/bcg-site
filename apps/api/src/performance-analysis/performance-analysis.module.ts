@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PerformanceAnalysisController } from './performance-analysis.controller';
 import { PerformanceAnalysisService } from './performance-analysis.service';
+import { PerformanceAnalysisWorkflowsService } from './performance-analysis-workflows.service';
 import { PerformanceAnalysisAccessService } from './performance-analysis-access.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { AuthModule } from '../auth/auth.module';
@@ -11,7 +12,12 @@ import { ModulesModule } from '../modules/modules.module';
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule, S3Module],
   controllers: [PerformanceAnalysisController],
-  providers: [PerformanceAnalysisService, PerformanceAnalysisAccessService, ModuleAccessGuard],
+  providers: [
+    PerformanceAnalysisService,
+    PerformanceAnalysisWorkflowsService,
+    PerformanceAnalysisAccessService,
+    ModuleAccessGuard,
+  ],
   exports: [PerformanceAnalysisService],
 })
 export class PerformanceAnalysisModule {}

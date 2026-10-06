@@ -215,6 +215,9 @@ model Tenant {
   learningAssignments          LearningAssignment[]
   analysisSessions             AnalysisSession[]
   analysisTagDefinitions       AnalysisTagDefinition[]
+  analysisOpponentProfiles     AnalysisOpponentProfile[]
+  analysisPreMatchPreparations AnalysisPreMatchPreparation[]
+  analysisClipCollections      AnalysisClipCollection[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -333,6 +336,7 @@ model TravelLogistics {
   matchIncidents        FootballMatchIncident[]
   matchAttachments      FootballMatchAttachment[]
   analysisSessions      AnalysisSession[]
+  analysisPreMatchPreparations AnalysisPreMatchPreparation[]
 }
 
 /**
@@ -1090,6 +1094,7 @@ model VisitingTeam {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   playerNegotiations PlayerNegotiation[]
+  analysisOpponentProfiles AnalysisOpponentProfile[]
 }
 
 /** Categorias de futebol (Sub-17, Principal, etc.) — cadastro central do app */
@@ -4934,18 +4939,25 @@ model AnalysisSession {
   travelLogistics    TravelLogistics? @relation(fields: [travelLogisticsId], references: [id], onDelete: SetNull)
   trainingSessionId  String?
   trainingSession    CoachTrainingSession? @relation(fields: [trainingSessionId], references: [id], onDelete: SetNull)
+  opponentProfileId  String?
+  opponentProfile    AnalysisOpponentProfile? @relation(fields: [opponentProfileId], references: [id], onDelete: SetNull)
+  preMatchVersionId  String?
+  preMatchVersion    AnalysisPreMatchVersion? @relation("MatchAnalysisPreMatch", fields: [preMatchVersionId], references: [id], onDelete: SetNull)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   videoSources       AnalysisVideoSource[]
   events             AnalysisEvent[]
   clips              AnalysisClip[]
   playerMaterial     AnalysisPlayerMaterialItem[]
+  clipCollections    AnalysisClipCollection[]
   @@index([tenantId, kind])
   @@index([tenantId, status])
   @@index([tenantId, category])
   @@index([fmfMatchReportId])
   @@index([travelLogisticsId])
   @@index([trainingSessionId])
+  @@index([opponentProfileId])
+  @@index([preMatchVersionId])
 }
 
 model AnalysisVideoSource {
@@ -4968,6 +4980,7 @@ model AnalysisVideoSource {
   updatedAt          DateTime @updatedAt
   events             AnalysisEvent[]
   clips              AnalysisClip[]
+  observedMatchLinks AnalysisOpponentObservedMatchVideo[]
   @@index([tenantId, analysisSessionId])
 }
 
@@ -5020,6 +5033,10 @@ model AnalysisEvent {
   reviewStatus       String   @default("confirmed")
   analysisClass      String?
   clientEventKey     String?
+  observedMatchId    String?
+  observedMatch      AnalysisOpponentObservedMatch? @relation(fields: [observedMatchId], references: [id], onDelete: SetNull)
+  opponentPlayerId   String?
+  opponentPlayer     AnalysisOpponentPlayer? @relation(fields: [opponentPlayerId], references: [id], onDelete: SetNull)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   clipLinks          AnalysisClipEvent[]
@@ -5029,6 +5046,8 @@ model AnalysisEvent {
   @@index([tenantId, analysisSessionId])
   @@index([tagDefinitionId])
   @@index([playerId])
+  @@index([observedMatchId])
+  @@index([opponentPlayerId])
 }
 
 model AnalysisClip {
@@ -5051,6 +5070,7 @@ model AnalysisClip {
   events            AnalysisClipEvent[]
   players           AnalysisClipPlayer[]
   materialItems     AnalysisPlayerMaterialItem[]
+  collectionItems   AnalysisClipCollectionItem[]
   @@index([tenantId, analysisSessionId])
   @@index([sourceEventId])
 }
@@ -5090,4 +5110,217 @@ model AnalysisClipPlayer {
   clip     AnalysisClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
   player   Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
   @@id([clipId, playerId])
+}
+
+// ─── Análise adversário / pré-jogo ───────────────────────────────────────────
+
+model AnalysisOpponentProfile {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  opponentName          String
+  visitingTeamId        String?
+  visitingTeam          VisitingTeam? @relation(fields: [visitingTeamId], references: [id], onDelete: SetNull)
+  category              String?
+  season                Int?
+  notes                 String?  @db.Text
+  preferredFormations   Json?
+  alternativeFormations Json?
+  buildUpPatterns       Json?
+  attackingPatterns     Json?
+  defensiveOrganization Json?
+  pressingBehavior      Json?
+  transitions           Json?
+  setPiecesSummary      Json?
+  strengths             Json?
+  weaknesses            Json?
+  keyObservations       String?  @db.Text
+  extraProfile          Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  analysisSessions      AnalysisSession[]
+  observedMatches       AnalysisOpponentObservedMatch[]
+  players               AnalysisOpponentPlayer[]
+  lineups               AnalysisOpponentLineup[]
+  setPieces             AnalysisOpponentSetPiece[]
+  clipCollections       AnalysisClipCollection[]
+  preMatchPreparations  AnalysisPreMatchPreparation[]
+  @@index([tenantId, opponentName])
+  @@index([tenantId, category])
+}
+
+model AnalysisOpponentObservedMatch {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  opponentProfileId   String
+  opponentProfile     AnalysisOpponentProfile @relation(fields: [opponentProfileId], references: [id], onDelete: Cascade)
+  facedOpponentName   String?
+  matchDate           String?
+  competition         String?
+  homeAway            String?
+  homeScore           Int?
+  awayScore           Int?
+  sourceReference     String?
+  notes               String?  @db.Text
+  fmfMatchReportId    String?
+  travelLogisticsId   String?
+  sortOrder           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  videoLinks          AnalysisOpponentObservedMatchVideo[]
+  events              AnalysisEvent[]
+  @@index([tenantId, opponentProfileId])
+  @@index([tenantId, matchDate])
+}
+
+model AnalysisOpponentObservedMatchVideo {
+  observedMatchId String
+  videoSourceId   String
+  observedMatch   AnalysisOpponentObservedMatch @relation(fields: [observedMatchId], references: [id], onDelete: Cascade)
+  videoSource     AnalysisVideoSource @relation(fields: [videoSourceId], references: [id], onDelete: Cascade)
+  @@id([observedMatchId, videoSourceId])
+}
+
+model AnalysisOpponentPlayer {
+  id                String   @id @default(cuid())
+  tenantId          String
+  opponentProfileId String
+  opponentProfile   AnalysisOpponentProfile @relation(fields: [opponentProfileId], references: [id], onDelete: Cascade)
+  name              String
+  shirtNumber       Int?
+  position          String?
+  likelyStarter     Boolean  @default(false)
+  tacticalRole      String?
+  strengths         String?  @db.Text
+  weaknesses        String?  @db.Text
+  observations      String?  @db.Text
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lineupEntries     AnalysisOpponentLineupEntry[]
+  events            AnalysisEvent[]
+  @@index([tenantId, opponentProfileId])
+  @@index([opponentProfileId, name])
+}
+
+model AnalysisOpponentLineup {
+  id                String   @id @default(cuid())
+  tenantId          String
+  opponentProfileId String
+  opponentProfile   AnalysisOpponentProfile @relation(fields: [opponentProfileId], references: [id], onDelete: Cascade)
+  label             String   @default("Provável")
+  formation         String?
+  notes             String?  @db.Text
+  isPrimary         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  entries           AnalysisOpponentLineupEntry[]
+  @@index([tenantId, opponentProfileId])
+}
+
+model AnalysisOpponentLineupEntry {
+  id               String   @id @default(cuid())
+  lineupId         String
+  lineup           AnalysisOpponentLineup @relation(fields: [lineupId], references: [id], onDelete: Cascade)
+  opponentPlayerId String?
+  opponentPlayer   AnalysisOpponentPlayer? @relation(fields: [opponentPlayerId], references: [id], onDelete: SetNull)
+  name             String
+  shirtNumber      Int?
+  position         String?
+  fieldX           Float?
+  fieldY           Float?
+  isStarter        Boolean  @default(true)
+  confidence       String?
+  notes            String?  @db.Text
+  sortOrder        Int      @default(0)
+  @@index([lineupId, sortOrder])
+}
+
+model AnalysisOpponentSetPiece {
+  id                String   @id @default(cuid())
+  tenantId          String
+  opponentProfileId String
+  opponentProfile   AnalysisOpponentProfile @relation(fields: [opponentProfileId], references: [id], onDelete: Cascade)
+  kind              String
+  title             String?
+  notes             String?  @db.Text
+  fieldX            Float?
+  fieldY            Float?
+  eventId           String?
+  clipId            String?
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@index([tenantId, opponentProfileId, kind])
+}
+
+model AnalysisClipCollection {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  analysisSessionId String?
+  analysisSession   AnalysisSession? @relation(fields: [analysisSessionId], references: [id], onDelete: Cascade)
+  opponentProfileId String?
+  opponentProfile   AnalysisOpponentProfile? @relation(fields: [opponentProfileId], references: [id], onDelete: Cascade)
+  title             String   @default("Clips curados")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  items             AnalysisClipCollectionItem[]
+  @@index([tenantId, analysisSessionId])
+  @@index([tenantId, opponentProfileId])
+}
+
+model AnalysisClipCollectionItem {
+  id           String   @id @default(cuid())
+  collectionId String
+  collection   AnalysisClipCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  clipId       String
+  clip         AnalysisClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  groupKey     String
+  sortOrder    Int      @default(0)
+  @@unique([collectionId, clipId])
+  @@index([collectionId, groupKey, sortOrder])
+}
+
+model AnalysisPreMatchPreparation {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  title              String
+  opponentName       String?
+  category           String?
+  matchDate          String?
+  travelLogisticsId  String?
+  travelLogistics    TravelLogistics? @relation(fields: [travelLogisticsId], references: [id], onDelete: SetNull)
+  fmfMatchReportId   String?
+  opponentProfileId  String?
+  opponentProfile    AnalysisOpponentProfile? @relation(fields: [opponentProfileId], references: [id], onDelete: SetNull)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  versions           AnalysisPreMatchVersion[]
+  @@index([tenantId, matchDate])
+  @@index([travelLogisticsId])
+}
+
+model AnalysisPreMatchVersion {
+  id              String   @id @default(cuid())
+  preparationId   String
+  preparation     AnalysisPreMatchPreparation @relation(fields: [preparationId], references: [id], onDelete: Cascade)
+  versionNumber   Int
+  lifecycle       String   @default("DRAFT")
+  hiddenSections  Json?
+  sections        Json?
+  tacticalBoard   Json?
+  selectedClipIds Json?
+  analystNotes    String?  @db.Text
+  staffNotes      String?  @db.Text
+  approvedAt      DateTime?
+  approvedBy      String?
+  presentedAt     DateTime?
+  presentedBy     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  matchSessions   AnalysisSession[] @relation("MatchAnalysisPreMatch")
+  @@unique([preparationId, versionNumber])
+  @@index([preparationId, lifecycle])
 }

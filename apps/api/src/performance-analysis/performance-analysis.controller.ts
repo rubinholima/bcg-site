@@ -23,6 +23,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { PerformanceAnalysisService } from './performance-analysis.service';
+import { PerformanceAnalysisWorkflowsService } from './performance-analysis-workflows.service';
 
 type AuthedRequest = Request & { user: CognitoJwtPayload };
 
@@ -32,6 +33,7 @@ type AuthedRequest = Request & { user: CognitoJwtPayload };
 export class PerformanceAnalysisController {
   constructor(
     private readonly service: PerformanceAnalysisService,
+    private readonly workflows: PerformanceAnalysisWorkflowsService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
@@ -55,9 +57,25 @@ export class PerformanceAnalysisController {
     @Req() req: AuthedRequest,
     @Query('tenantId') tenantId: string,
     @Query('limit') limitRaw?: string,
+    @Query('kind') kind?: string,
+    @Query('status') status?: string,
+    @Query('category') category?: string,
+    @Query('season') seasonRaw?: string,
+    @Query('opponentProfileId') opponentProfileId?: string,
   ) {
     if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório.');
     const limit = limitRaw?.trim() ? Number(limitRaw) : 40;
+    const season = seasonRaw?.trim() ? Number(seasonRaw) : undefined;
+    if (kind || status || category || seasonRaw || opponentProfileId) {
+      return this.workflows.listSessionsFiltered(tenantId.trim(), await this.allowed(req), {
+        kind,
+        status,
+        category,
+        season: Number.isFinite(season) ? season : undefined,
+        opponentProfileId,
+        limit,
+      });
+    }
     return this.service.listSessions(tenantId.trim(), await this.allowed(req), limit);
   }
 
@@ -330,6 +348,261 @@ export class PerformanceAnalysisController {
     return this.service.updateClip(
       clipId,
       body as Parameters<PerformanceAnalysisService['updateClip']>[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Get('training-sessions')
+  async listTrainingSessions(
+    @Req() req: AuthedRequest,
+    @Query('tenantId') tenantId: string,
+    @Query('category') category?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório.');
+    return this.workflows.listTrainingForAnalysis(tenantId.trim(), await this.allowed(req), {
+      category,
+      from,
+      to,
+    });
+  }
+
+  @Post('training-sessions/:trainingSessionId/open-analysis')
+  async openTrainingAnalysis(
+    @Req() req: AuthedRequest,
+    @Param('trainingSessionId') trainingSessionId: string,
+  ) {
+    return this.workflows.openTrainingAnalysis(
+      trainingSessionId,
+      await this.allowed(req),
+      this.userId(req),
+    );
+  }
+
+  @Get('opponent-profiles')
+  async listOpponentProfiles(
+    @Req() req: AuthedRequest,
+    @Query('tenantId') tenantId: string,
+    @Query('opponent') opponent?: string,
+    @Query('category') category?: string,
+    @Query('season') seasonRaw?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório.');
+    const season = seasonRaw?.trim() ? Number(seasonRaw) : undefined;
+    return this.workflows.listOpponentProfiles(tenantId.trim(), await this.allowed(req), {
+      opponent,
+      category,
+      season: Number.isFinite(season) ? season : undefined,
+    });
+  }
+
+  @Post('opponent-profiles')
+  async createOpponentProfile(
+    @Req() req: AuthedRequest,
+    @Body()
+    body: {
+      tenantId: string;
+      opponentName: string;
+      visitingTeamId?: string;
+      category?: string;
+      season?: number;
+    },
+  ) {
+    return this.workflows.createOpponentProfile(body, await this.allowed(req));
+  }
+
+  @Get('opponent-profiles/:profileId')
+  async getOpponentProfile(@Req() req: AuthedRequest, @Param('profileId') profileId: string) {
+    return this.workflows.getOpponentProfileBundle(profileId, await this.allowed(req));
+  }
+
+  @Patch('opponent-profiles/:profileId')
+  async patchOpponentProfile(
+    @Req() req: AuthedRequest,
+    @Param('profileId') profileId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.workflows.updateOpponentProfile(profileId, body, await this.allowed(req));
+  }
+
+  @Post('opponent-profiles/:profileId/open-analysis')
+  async openOpponentAnalysis(
+    @Req() req: AuthedRequest,
+    @Param('profileId') profileId: string,
+  ) {
+    return this.workflows.openOpponentAnalysisSession(
+      profileId,
+      await this.allowed(req),
+      this.userId(req),
+    );
+  }
+
+  @Post('opponent-profiles/:profileId/observed-matches')
+  async addObservedMatch(
+    @Req() req: AuthedRequest,
+    @Param('profileId') profileId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.workflows.addObservedMatch(
+      profileId,
+      body as Parameters<PerformanceAnalysisWorkflowsService['addObservedMatch']>[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Post('observed-matches/:observedMatchId/link-video')
+  async linkObservedVideo(
+    @Req() req: AuthedRequest,
+    @Param('observedMatchId') observedMatchId: string,
+    @Body() body: { videoSourceId: string },
+  ) {
+    return this.workflows.linkObservedMatchVideo(
+      observedMatchId,
+      body.videoSourceId,
+      await this.allowed(req),
+    );
+  }
+
+  @Post('opponent-profiles/:profileId/players')
+  async upsertOpponentPlayer(
+    @Req() req: AuthedRequest,
+    @Param('profileId') profileId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.workflows.upsertOpponentPlayer(
+      profileId,
+      body as Parameters<PerformanceAnalysisWorkflowsService['upsertOpponentPlayer']>[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Post('opponent-profiles/:profileId/lineup')
+  async saveLineup(
+    @Req() req: AuthedRequest,
+    @Param('profileId') profileId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.workflows.saveProbableLineup(
+      profileId,
+      body as Parameters<PerformanceAnalysisWorkflowsService['saveProbableLineup']>[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Post('opponent-profiles/:profileId/set-pieces')
+  async upsertSetPiece(
+    @Req() req: AuthedRequest,
+    @Param('profileId') profileId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.workflows.upsertSetPiece(
+      profileId,
+      body as Parameters<PerformanceAnalysisWorkflowsService['upsertSetPiece']>[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Post('opponent-profiles/:profileId/curate-clip')
+  async curateClip(
+    @Req() req: AuthedRequest,
+    @Param('profileId') profileId: string,
+    @Body() body: { clipId: string; groupKey: string; sortOrder?: number },
+  ) {
+    return this.workflows.curateClip(profileId, body, await this.allowed(req));
+  }
+
+  @Delete('clip-collection-items/:itemId')
+  async removeCuratedClip(@Req() req: AuthedRequest, @Param('itemId') itemId: string) {
+    return this.workflows.removeCuratedClip(itemId, await this.allowed(req));
+  }
+
+  @Get('pre-match')
+  async listPreMatch(
+    @Req() req: AuthedRequest,
+    @Query('tenantId') tenantId: string,
+    @Query('opponent') opponent?: string,
+    @Query('category') category?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório.');
+    return this.workflows.listPreMatchPreparations(tenantId.trim(), await this.allowed(req), {
+      opponent,
+      category,
+      from,
+      to,
+    });
+  }
+
+  @Post('pre-match/from-travel/:travelLogisticsId')
+  async createPreMatchFromTravel(
+    @Req() req: AuthedRequest,
+    @Param('travelLogisticsId') travelLogisticsId: string,
+  ) {
+    return this.workflows.createPreMatchFromTravel(
+      travelLogisticsId,
+      await this.allowed(req),
+      this.userId(req),
+    );
+  }
+
+  @Get('pre-match/:preparationId')
+  async getPreMatch(@Req() req: AuthedRequest, @Param('preparationId') preparationId: string) {
+    return this.workflows.getPreMatchBundle(preparationId, await this.allowed(req));
+  }
+
+  @Post('pre-match/:preparationId/versions')
+  async newPreMatchVersion(
+    @Req() req: AuthedRequest,
+    @Param('preparationId') preparationId: string,
+  ) {
+    return this.workflows.createPreMatchVersionDraft(
+      preparationId,
+      await this.allowed(req),
+      this.userId(req),
+    );
+  }
+
+  @Patch('pre-match/versions/:versionId')
+  async patchPreMatchVersion(
+    @Req() req: AuthedRequest,
+    @Param('versionId') versionId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.workflows.updatePreMatchVersion(versionId, body, await this.allowed(req));
+  }
+
+  @Post('pre-match/versions/:versionId/lifecycle')
+  async transitionPreMatch(
+    @Req() req: AuthedRequest,
+    @Param('versionId') versionId: string,
+    @Body() body: { lifecycle: string },
+  ) {
+    return this.workflows.transitionPreMatchVersion(
+      versionId,
+      body.lifecycle,
+      await this.allowed(req),
+      this.userId(req),
+    );
+  }
+
+  @Get('pre-match/versions/:versionId/export-html')
+  @Header('Cache-Control', 'private, no-store')
+  async exportPreMatchHtml(@Req() req: AuthedRequest, @Param('versionId') versionId: string) {
+    const html = await this.workflows.exportPreMatchHtml(versionId, await this.allowed(req));
+    return { html };
+  }
+
+  @Post('sessions/:sessionId/link-pre-match')
+  async linkPreMatchToSession(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Body() body: { preMatchVersionId: string },
+  ) {
+    return this.workflows.linkMatchSessionToPreMatch(
+      sessionId,
+      body.preMatchVersionId,
       await this.allowed(req),
     );
   }

@@ -7,6 +7,7 @@ import { Cup360PageShell } from "@/components/dashboard/cup360/Cup360PageShell";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { useAuth } from "@/context/AuthContext";
 import { AnaliseDesempenhoFilters, useAnaliseDesempenhoQuery } from "./AnaliseDesempenhoFilters";
+import { AnaliseDesempenhoHubNav } from "./AnaliseDesempenhoHubNav";
 
 interface Props {
   title: string;
@@ -37,6 +38,7 @@ export function AnaliseDesempenhoShell({ title, children, showFilters = true }: 
     <Cup360PageShell className="mx-auto w-full max-w-[1600px]">
       <DashboardDeptHeader section="Depto Futebol" sectionIcon={Video} title={title} />
       {showFilters ? <AnaliseDesempenhoFilters /> : null}
+      {showFilters && tenantId ? <AnaliseDesempenhoHubNav /> : null}
       {!tenantId && showFilters ? (
         <p className="mt-4 text-sm text-muted-foreground">Selecione um clube para continuar.</p>
       ) : (

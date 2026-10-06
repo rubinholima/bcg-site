@@ -184,6 +184,8 @@ export class PerformanceAnalysisService {
       fmfMatchReportId?: string | null;
       travelLogisticsId?: string | null;
       trainingSessionId?: string | null;
+      opponentProfileId?: string | null;
+      preMatchVersionId?: string | null;
       authorUserId?: string | null;
     },
     allowedTenantIds: string[] | null,
@@ -195,7 +197,11 @@ export class PerformanceAnalysisService {
       fmfMatchReportId: input.fmfMatchReportId,
       travelLogisticsId: input.travelLogisticsId,
       trainingSessionId: input.trainingSessionId,
+      opponentProfileId: input.opponentProfileId,
     });
+    if (input.preMatchVersionId?.trim()) {
+      await this.access.loadPreMatchVersion(input.preMatchVersionId.trim(), allowedTenantIds);
+    }
     return this.prisma.analysisSession.create({
       data: {
         tenantId: input.tenantId,
@@ -207,6 +213,8 @@ export class PerformanceAnalysisService {
         fmfMatchReportId: input.fmfMatchReportId?.trim() || null,
         travelLogisticsId: input.travelLogisticsId?.trim() || null,
         trainingSessionId: input.trainingSessionId?.trim() || null,
+        opponentProfileId: input.opponentProfileId?.trim() || null,
+        preMatchVersionId: input.preMatchVersionId?.trim() || null,
         authorUserId: input.authorUserId ?? null,
       },
     });

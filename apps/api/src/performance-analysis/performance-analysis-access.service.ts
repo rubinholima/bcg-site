@@ -44,14 +44,18 @@ export class PerformanceAnalysisAccessService {
     fmfMatchReportId?: string | null;
     travelLogisticsId?: string | null;
     trainingSessionId?: string | null;
+    opponentProfileId?: string | null;
   }): Promise<void> {
     const ids = [
       input.fmfMatchReportId?.trim() || null,
       input.travelLogisticsId?.trim() || null,
       input.trainingSessionId?.trim() || null,
+      input.opponentProfileId?.trim() || null,
     ].filter(Boolean);
     if (ids.length > 1) {
-      throw new BadRequestException('Informe apenas uma fonte canônica (jogo, viagem ou treino).');
+      throw new BadRequestException(
+        'Informe apenas uma fonte canônica (jogo, viagem, treino ou perfil adversário).',
+      );
     }
     if (input.fmfMatchReportId?.trim()) {
       const row = await this.prisma.fmfMatchReport.findFirst({
@@ -74,6 +78,38 @@ export class PerformanceAnalysisAccessService {
       });
       if (!row) throw new BadRequestException('Treino inválido para esta empresa.');
     }
+    if (input.opponentProfileId?.trim()) {
+      const row = await this.prisma.analysisOpponentProfile.findFirst({
+        where: { id: input.opponentProfileId.trim(), tenantId: input.tenantId },
+        select: { id: true },
+      });
+      if (!row) throw new BadRequestException('Perfil de adversário inválido para esta empresa.');
+    }
+  }
+
+  async loadOpponentProfile(profileId: string, allowedTenantIds: string[] | null) {
+    const row = await this.prisma.analysisOpponentProfile.findUnique({ where: { id: profileId } });
+    if (!row) throw new NotFoundException('Perfil de adversário não encontrado.');
+    this.assertTenant(allowedTenantIds, row.tenantId);
+    return row;
+  }
+
+  async loadPreMatchVersion(versionId: string, allowedTenantIds: string[] | null) {
+    const row = await this.prisma.analysisPreMatchVersion.findUnique({
+      where: { id: versionId },
+      include: { preparation: true },
+    });
+    if (!row) throw new NotFoundException('Versão de pré-jogo não encontrada.');
+    this.assertTenant(allowedTenantIds, row.preparation.tenantId);
+    return row;
+  }
+
+  async assertClipInTenant(clipId: string, tenantId: string) {
+    const clip = await this.prisma.analysisClip.findFirst({
+      where: { id: clipId, tenantId },
+    });
+    if (!clip) throw new BadRequestException('Clip inválido.');
+    return clip;
   }
 
   async assertPlayerInTenant(playerId: string, tenantId: string): Promise<void> {
