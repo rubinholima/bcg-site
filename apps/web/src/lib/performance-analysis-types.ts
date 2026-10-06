@@ -25,6 +25,9 @@ export type AnalysisTagDefinition = {
   outcomes: string[] | unknown;
   sortOrder: number;
   active: boolean;
+  shortcutKey?: string | null;
+  requiresPlayer?: boolean;
+  autoClipEnabled?: boolean;
 };
 
 export type AnalysisVideoSourcePublic = {
@@ -52,6 +55,8 @@ export type AnalysisSessionDetail = {
     fmfMatchReportId: string | null;
     travelLogisticsId: string | null;
     trainingSessionId: string | null;
+    liveClock?: unknown;
+    collectiveNotes?: string | null;
     createdAt: string;
     updatedAt: string;
   };
@@ -70,6 +75,9 @@ export type AnalysisEventRow = {
   matchClockSeconds: number | null;
   notes: string | null;
   source: string;
+  analysisClass?: string | null;
+  fieldX?: number | null;
+  fieldY?: number | null;
   tagDefinition?: { key: string; label: string };
   player?: { id: string; name: string } | null;
 };
@@ -77,6 +85,7 @@ export type AnalysisEventRow = {
 export type TeamMetrics = {
   totalTagged: number;
   byTag: Record<string, number>;
+  byOutcome?: Record<string, number>;
   passAttempts: number;
   passSuccess: number;
   passFailure: number;
@@ -85,6 +94,10 @@ export type TeamMetrics = {
   shotsOnGoal: number;
   recoveries: number;
   losses: number;
+  duels?: number;
+  duelsWon?: number;
+  crosses?: number;
+  crossesSuccess?: number;
 };
 
 export type PlayerMetrics = TeamMetrics & {

@@ -24,7 +24,15 @@ describe('PerformanceAnalysisService', () => {
     validateSessionKind: jest.fn().mockReturnValue('MATCH'),
     validateSessionSources: jest.fn(),
     assertPlayerInTenant: jest.fn(),
-    assertTagInTenant: jest.fn().mockResolvedValue({ id: 'tag1', key: 'passe' }),
+    assertTagInTenant: jest.fn().mockResolvedValue({
+      id: 'tag1',
+      key: 'passe',
+      label: 'Passe',
+      requiresPlayer: false,
+      autoClipEnabled: false,
+      autoClipPreMs: 8000,
+      autoClipPostMs: 4000,
+    }),
     assertVideoSourceInSession: jest.fn(),
   };
 

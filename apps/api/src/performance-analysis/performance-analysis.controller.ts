@@ -228,6 +228,112 @@ export class PerformanceAnalysisController {
     );
   }
 
+  @Patch('sessions/:sessionId/live-clock')
+  async updateLiveClock(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.updateLiveClock(
+      sessionId,
+      body as Parameters<PerformanceAnalysisService['updateLiveClock']>[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Patch('sessions/:sessionId/status')
+  async transitionStatus(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Body() body: { status: string },
+  ) {
+    return this.service.transitionSessionStatus(
+      sessionId,
+      body.status,
+      await this.allowed(req),
+    );
+  }
+
+  @Patch('sessions/:sessionId/notes')
+  async sessionNotes(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Body() body: { collectiveNotes?: string | null },
+  ) {
+    return this.service.updateSessionNotes(
+      sessionId,
+      body.collectiveNotes ?? null,
+      await this.allowed(req),
+    );
+  }
+
+  @Get('sessions/:sessionId/roster')
+  async roster(@Req() req: AuthedRequest, @Param('sessionId') sessionId: string) {
+    return this.service.getSessionRoster(sessionId, await this.allowed(req));
+  }
+
+  @Post('sessions/:sessionId/events/undo')
+  async undoEvent(@Req() req: AuthedRequest, @Param('sessionId') sessionId: string) {
+    return this.service.undoLastEvent(sessionId, await this.allowed(req));
+  }
+
+  @Get('sessions/:sessionId/collective')
+  async collective(@Req() req: AuthedRequest, @Param('sessionId') sessionId: string) {
+    return this.service.getCollectiveAnalysis(sessionId, await this.allowed(req));
+  }
+
+  @Get('sessions/:sessionId/individual/:playerId')
+  async individual(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Param('playerId') playerId: string,
+  ) {
+    return this.service.getIndividualAnalysis(sessionId, playerId, await this.allowed(req));
+  }
+
+  @Get('sessions/:sessionId/players/:playerId/material')
+  async listMaterial(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Param('playerId') playerId: string,
+  ) {
+    return this.service.listPlayerMaterial(sessionId, playerId, await this.allowed(req));
+  }
+
+  @Post('sessions/:sessionId/players/:playerId/material')
+  async addMaterial(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Param('playerId') playerId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.addPlayerMaterial(
+      sessionId,
+      { ...(body as object), playerId, authorUserId: this.userId(req) } as Parameters<
+        PerformanceAnalysisService['addPlayerMaterial']
+      >[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Delete('player-material/:itemId')
+  async removeMaterial(@Req() req: AuthedRequest, @Param('itemId') itemId: string) {
+    return this.service.removePlayerMaterial(itemId, await this.allowed(req));
+  }
+
+  @Patch('clips/:clipId')
+  async patchClip(
+    @Req() req: AuthedRequest,
+    @Param('clipId') clipId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.updateClip(
+      clipId,
+      body as Parameters<PerformanceAnalysisService['updateClip']>[1],
+      await this.allowed(req),
+    );
+  }
+
   @Get('players/:playerId/summary')
   async playerSummary(
     @Req() req: AuthedRequest,

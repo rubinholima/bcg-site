@@ -22,7 +22,7 @@ import type {
 import { formatMs } from "@/lib/performance-analysis-types";
 import { cn } from "@/lib/utils";
 
-type Tab = "visao" | "tagging" | "metricas" | "clips";
+type Tab = "visao" | "tagging" | "metricas" | "clips" | "live";
 
 export default function AnaliseDesempenhoSessionPage() {
   const params = useParams();
@@ -121,6 +121,7 @@ export default function AnaliseDesempenhoSessionPage() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "visao", label: "Visão geral" },
+    { id: "live", label: "Live Tag" },
     { id: "tagging", label: "Marcação" },
     { id: "metricas", label: "Quantitativo" },
     { id: "clips", label: "Clips" },
@@ -152,10 +153,35 @@ export default function AnaliseDesempenhoSessionPage() {
             {t.label}
           </Link>
         ))}
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`${ANALISE_DESEMPENHO_BASE}/sessoes/${sessionId}/revisao${suffix}`}>
+            Revisão
+          </Link>
+        </Button>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`${ANALISE_DESEMPENHO_BASE}/sessoes/${sessionId}/coletivo${suffix}`}>
+            Coletivo
+          </Link>
+        </Button>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`${ANALISE_DESEMPENHO_BASE}/sessoes/${sessionId}/individual${suffix}`}>
+            Individual
+          </Link>
+        </Button>
         <Button variant="ghost" size="sm" className="ml-auto" asChild>
           <Link href={`${ANALISE_DESEMPENHO_BASE}/sessoes${suffix}`}>Voltar</Link>
         </Button>
       </div>
+
+      {tab === "live" && tenantId ? (
+        <div className="mt-4">
+          <Button asChild className="mb-3">
+            <Link href={`${ANALISE_DESEMPENHO_BASE}/sessoes/${sessionId}/live${suffix}`}>
+              Abrir console Live Tag
+            </Link>
+          </Button>
+        </div>
+      ) : null}
 
       {tab === "visao" && detail ? (
         <div className="mt-4 space-y-4">

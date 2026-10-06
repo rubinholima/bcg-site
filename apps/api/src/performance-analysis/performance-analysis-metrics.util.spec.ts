@@ -17,6 +17,8 @@ describe('performance-analysis-metrics.util', () => {
     expect(team.shots).toBe(1);
     expect(team.recoveries).toBe(1);
     expect(team.losses).toBe(1);
+    expect(team.duels).toBe(0);
+    expect(team.crosses).toBe(0);
   });
 
   it('agrega métricas por atleta incluindo duelos', () => {

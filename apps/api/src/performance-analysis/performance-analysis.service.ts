@@ -6,11 +6,22 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { PerformanceAnalysisAccessService } from './performance-analysis-access.service';
-import { DEFAULT_ANALYSIS_TAGS } from './performance-analysis.constants';
+import {
+  ANALYSIS_EVENT_CLASSES,
+  ANALYSIS_SESSION_STATUSES,
+  DEFAULT_ANALYSIS_TAGS,
+} from './performance-analysis.constants';
 import {
   computePlayerMetrics,
   computeTeamMetrics,
 } from './performance-analysis-metrics.util';
+import {
+  applyClockCommand,
+  effectiveClockSeconds,
+  formatClock,
+  parseLiveClock,
+  type LiveClockState,
+} from './performance-analysis-live-clock.util';
 
 function publicVideoDto(row: {
   id: string;
@@ -63,8 +74,30 @@ export class PerformanceAnalysisService {
         sortOrder: t.sortOrder,
         outcomes: t.outcomes,
         active: true,
+        shortcutKey: t.shortcutKey ?? null,
+        requiresPlayer: t.requiresPlayer ?? false,
+        autoClipEnabled: t.autoClipEnabled ?? false,
+        autoClipPreMs: t.autoClipPreMs ?? 8000,
+        autoClipPostMs: t.autoClipPostMs ?? 4000,
       })),
     });
+  }
+
+  private assertSessionMutable(status: string, forLiveTag = false) {
+    if (status === 'completed') {
+      throw new BadRequestException(
+        'Sessão concluída. Reabra para revisão antes de alterar eventos.',
+      );
+    }
+    if (!forLiveTag && status === 'live') {
+      // review/post edits allowed in live/review/preparation
+    }
+  }
+
+  private normalizeStatus(status: string): string {
+    if (status === 'active' || status === 'draft') return 'preparation';
+    if (status === 'archived') return 'completed';
+    return status;
   }
 
   async listTags(tenantId: string, allowedTenantIds: string[] | null) {
@@ -115,9 +148,16 @@ export class PerformanceAnalysisService {
       }),
       this.listTags(session.tenantId, allowedTenantIds),
     ]);
+    const clock = parseLiveClock(session.liveClock);
     return {
       session: {
         ...session,
+        status: this.normalizeStatus(session.status),
+        liveClock: {
+          ...clock,
+          effectiveClockSeconds: effectiveClockSeconds(clock),
+          display: formatClock(effectiveClockSeconds(clock)),
+        },
         createdAt: session.createdAt.toISOString(),
         updatedAt: session.updatedAt.toISOString(),
       },
@@ -158,7 +198,7 @@ export class PerformanceAnalysisService {
         tenantId: input.tenantId,
         kind,
         title: input.title.trim(),
-        status: 'active',
+        status: 'preparation',
         category: input.category?.trim() || null,
         season: input.season ?? null,
         fmfMatchReportId: input.fmfMatchReportId?.trim() || null,
@@ -287,11 +327,16 @@ export class PerformanceAnalysisService {
       source?: string | null;
       clientEventKey?: string | null;
       authorUserId?: string | null;
+      analysisClass?: string | null;
     },
     allowedTenantIds: string[] | null,
   ) {
     const session = await this.access.loadSession(sessionId, allowedTenantIds);
-    await this.access.assertTagInTenant(dto.tagDefinitionId, session.tenantId);
+    this.assertSessionMutable(this.normalizeStatus(session.status));
+    const tag = await this.access.assertTagInTenant(dto.tagDefinitionId, session.tenantId);
+    if (tag.requiresPlayer && !dto.playerId?.trim()) {
+      throw new BadRequestException('Selecione o atleta para esta ação.');
+    }
     if (dto.playerId) await this.access.assertPlayerInTenant(dto.playerId, session.tenantId);
     if (dto.relatedPlayerId) {
       await this.access.assertPlayerInTenant(dto.relatedPlayerId, session.tenantId);
@@ -303,16 +348,29 @@ export class PerformanceAnalysisService {
         session.tenantId,
       );
     }
+    if (dto.analysisClass?.trim()) {
+      const c = dto.analysisClass.trim().toLowerCase();
+      if (!(ANALYSIS_EVENT_CLASSES as readonly string[]).includes(c)) {
+        throw new BadRequestException('Classificação de análise inválida.');
+      }
+    }
+    if (dto.fieldX != null && (dto.fieldX < 0 || dto.fieldX > 1)) {
+      throw new BadRequestException('fieldX deve estar entre 0 e 1.');
+    }
+    if (dto.fieldY != null && (dto.fieldY < 0 || dto.fieldY > 1)) {
+      throw new BadRequestException('fieldY deve estar entre 0 e 1.');
+    }
     if (dto.clientEventKey?.trim()) {
       const existing = await this.prisma.analysisEvent.findFirst({
         where: {
           analysisSessionId: session.id,
           clientEventKey: dto.clientEventKey.trim(),
         },
+        include: { tagDefinition: { select: { key: true, label: true } } },
       });
       if (existing) return existing;
     }
-    return this.prisma.analysisEvent.create({
+    const event = await this.prisma.analysisEvent.create({
       data: {
         tenantId: session.tenantId,
         analysisSessionId: session.id,
@@ -332,9 +390,58 @@ export class PerformanceAnalysisService {
         source: dto.source?.trim() || 'MANUAL',
         clientEventKey: dto.clientEventKey?.trim() || null,
         authorUserId: dto.authorUserId ?? null,
+        analysisClass: dto.analysisClass?.trim().toLowerCase() || null,
       },
       include: { tagDefinition: { select: { key: true, label: true } } },
     });
+    await this.maybeCreateAutoClip(session, tag, event, dto.authorUserId ?? null);
+    return event;
+  }
+
+  private async maybeCreateAutoClip(
+    session: { id: string; tenantId: string },
+    tag: {
+      autoClipEnabled: boolean;
+      autoClipPreMs: number;
+      autoClipPostMs: number;
+      label: string;
+    },
+    event: { id: string; startMs: number; videoSourceId: string | null; playerId: string | null },
+    authorUserId: string | null,
+  ) {
+    if (!tag.autoClipEnabled) return;
+    let videoSourceId = event.videoSourceId;
+    if (!videoSourceId) {
+      const first = await this.prisma.analysisVideoSource.findFirst({
+        where: { analysisSessionId: session.id, tenantId: session.tenantId },
+        orderBy: { createdAt: 'asc' },
+      });
+      videoSourceId = first?.id ?? null;
+    }
+    if (!videoSourceId) return;
+    const startMs = Math.max(0, event.startMs - tag.autoClipPreMs);
+    const endMs = event.startMs + tag.autoClipPostMs;
+    const clip = await this.prisma.analysisClip.create({
+      data: {
+        tenantId: session.tenantId,
+        analysisSessionId: session.id,
+        videoSourceId,
+        title: `${tag.label} · ${formatClock(Math.floor(event.startMs / 1000))}`,
+        startMs,
+        endMs,
+        autoGenerated: true,
+        sourceEventId: event.id,
+        authorUserId,
+      },
+    });
+    await this.prisma.analysisClipEvent.create({
+      data: { clipId: clip.id, eventId: event.id },
+    });
+    if (event.playerId) {
+      await this.prisma.analysisClipPlayer.create({
+        data: { clipId: clip.id, playerId: event.playerId },
+      });
+    }
   }
 
   async createEventsBatch(
@@ -354,12 +461,22 @@ export class PerformanceAnalysisService {
     dto: Partial<Parameters<PerformanceAnalysisService['createEvent']>[1]>,
     allowedTenantIds: string[] | null,
   ) {
-    const row = await this.prisma.analysisEvent.findUnique({ where: { id: eventId } });
+    const row = await this.prisma.analysisEvent.findUnique({
+      where: { id: eventId },
+      include: { analysisSession: { select: { status: true } } },
+    });
     if (!row) throw new NotFoundException('Evento não encontrado.');
     this.access.assertTenant(allowedTenantIds, row.tenantId);
+    this.assertSessionMutable(this.normalizeStatus(row.analysisSession.status));
     if (dto.playerId) await this.access.assertPlayerInTenant(dto.playerId, row.tenantId);
     if (dto.tagDefinitionId) {
       await this.access.assertTagInTenant(dto.tagDefinitionId, row.tenantId);
+    }
+    if (dto.analysisClass !== undefined && dto.analysisClass?.trim()) {
+      const c = dto.analysisClass.trim().toLowerCase();
+      if (!(ANALYSIS_EVENT_CLASSES as readonly string[]).includes(c)) {
+        throw new BadRequestException('Classificação de análise inválida.');
+      }
     }
     return this.prisma.analysisEvent.update({
       where: { id: eventId },
@@ -370,16 +487,267 @@ export class PerformanceAnalysisService {
         ...(dto.startMs !== undefined ? { startMs: dto.startMs } : {}),
         ...(dto.endMs !== undefined ? { endMs: dto.endMs ?? null } : {}),
         ...(dto.notes !== undefined ? { notes: dto.notes?.trim() || null } : {}),
+        ...(dto.matchPeriod !== undefined ? { matchPeriod: dto.matchPeriod?.trim() || null } : {}),
+        ...(dto.matchClockSeconds !== undefined
+          ? { matchClockSeconds: dto.matchClockSeconds ?? null }
+          : {}),
+        ...(dto.fieldX !== undefined ? { fieldX: dto.fieldX ?? null } : {}),
+        ...(dto.fieldY !== undefined ? { fieldY: dto.fieldY ?? null } : {}),
+        ...(dto.analysisClass !== undefined
+          ? { analysisClass: dto.analysisClass?.trim().toLowerCase() || null }
+          : {}),
       },
       include: { tagDefinition: { select: { key: true, label: true } } },
     });
   }
 
   async deleteEvent(eventId: string, allowedTenantIds: string[] | null) {
-    const row = await this.prisma.analysisEvent.findUnique({ where: { id: eventId } });
+    const row = await this.prisma.analysisEvent.findUnique({
+      where: { id: eventId },
+      include: { analysisSession: { select: { status: true } } },
+    });
     if (!row) throw new NotFoundException('Evento não encontrado.');
     this.access.assertTenant(allowedTenantIds, row.tenantId);
+    this.assertSessionMutable(this.normalizeStatus(row.analysisSession.status));
     await this.prisma.analysisEvent.delete({ where: { id: eventId } });
+    return { ok: true };
+  }
+
+  async undoLastEvent(sessionId: string, allowedTenantIds: string[] | null) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    this.assertSessionMutable(this.normalizeStatus(session.status));
+    const last = await this.prisma.analysisEvent.findFirst({
+      where: { analysisSessionId: session.id, tenantId: session.tenantId },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!last) throw new NotFoundException('Nenhum evento para desfazer.');
+    await this.prisma.analysisEvent.delete({ where: { id: last.id } });
+    return { ok: true, deletedEventId: last.id };
+  }
+
+  async updateLiveClock(
+    sessionId: string,
+    body: {
+      action: 'start' | 'pause' | 'resume' | 'reset' | 'set_period' | 'set_clock' | 'set_score';
+      period?: string;
+      clockSeconds?: number;
+      scoreHome?: number | null;
+      scoreAway?: number | null;
+      videoSyncOffsetMs?: number;
+    },
+    allowedTenantIds: string[] | null,
+  ) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    const current = parseLiveClock(session.liveClock);
+    let next = applyClockCommand(current, body);
+    if (body.videoSyncOffsetMs !== undefined) {
+      next = { ...next, videoSyncOffsetMs: body.videoSyncOffsetMs };
+    }
+    const updated = await this.prisma.analysisSession.update({
+      where: { id: session.id },
+      data: { liveClock: JSON.parse(JSON.stringify(next)) },
+    });
+    const clock = parseLiveClock(updated.liveClock);
+    return {
+      liveClock: {
+        ...clock,
+        effectiveClockSeconds: effectiveClockSeconds(clock),
+        display: formatClock(effectiveClockSeconds(clock)),
+      },
+    };
+  }
+
+  async transitionSessionStatus(
+    sessionId: string,
+    status: string,
+    allowedTenantIds: string[] | null,
+  ) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    const next = status.trim().toLowerCase();
+    if (!(ANALYSIS_SESSION_STATUSES as readonly string[]).includes(next)) {
+      throw new BadRequestException('Status de sessão inválido.');
+    }
+    const current = this.normalizeStatus(session.status);
+    const allowed: Record<string, string[]> = {
+      preparation: ['live', 'review', 'completed'],
+      live: ['review', 'preparation', 'completed'],
+      review: ['live', 'completed', 'preparation'],
+      completed: ['review'],
+    };
+    if (!allowed[current]?.includes(next)) {
+      throw new BadRequestException(`Transição ${current} → ${next} não permitida.`);
+    }
+    return this.prisma.analysisSession.update({
+      where: { id: session.id },
+      data: { status: next },
+    });
+  }
+
+  async updateSessionNotes(
+    sessionId: string,
+    collectiveNotes: string | null,
+    allowedTenantIds: string[] | null,
+  ) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    return this.prisma.analysisSession.update({
+      where: { id: session.id },
+      data: { collectiveNotes: collectiveNotes?.trim() || null },
+    });
+  }
+
+  async getSessionRoster(sessionId: string, allowedTenantIds: string[] | null) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    const players = await this.prisma.player.findMany({
+      where: {
+        tenantId: session.tenantId,
+        ...(session.category ? { category: session.category } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        jerseyNumber: true,
+        position: true,
+        category: true,
+      },
+      orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
+      take: 80,
+    });
+    return { players, category: session.category };
+  }
+
+  async getCollectiveAnalysis(sessionId: string, allowedTenantIds: string[] | null) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    const [events, clips, metrics] = await Promise.all([
+      this.listEvents(sessionId, allowedTenantIds),
+      this.listClips(sessionId, allowedTenantIds),
+      this.getMetrics(sessionId, allowedTenantIds),
+    ]);
+    const withField = events.filter((e) => e.fieldX != null && e.fieldY != null);
+    return {
+      session: {
+        id: session.id,
+        title: session.title,
+        status: this.normalizeStatus(session.status),
+        collectiveNotes: session.collectiveNotes,
+      },
+      metrics,
+      events,
+      clips,
+      fieldPoints: withField.map((e) => ({
+        eventId: e.id,
+        x: e.fieldX,
+        y: e.fieldY,
+        tagKey: e.tagDefinition?.key,
+        playerId: e.playerId,
+      })),
+    };
+  }
+
+  async getIndividualAnalysis(
+    sessionId: string,
+    playerId: string,
+    allowedTenantIds: string[] | null,
+  ) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    await this.access.assertPlayerInTenant(playerId, session.tenantId);
+    const events = await this.listEvents(sessionId, allowedTenantIds, { playerId });
+    const clips = await this.prisma.analysisClip.findMany({
+      where: {
+        analysisSessionId: session.id,
+        players: { some: { playerId } },
+      },
+      include: {
+        videoSource: { select: { id: true, title: true } },
+        events: { include: { event: { select: { id: true } } } },
+      },
+    });
+    const tagged = events.map((e) => ({
+      tagKey: e.tagDefinition?.key ?? '',
+      tagLabel: e.tagDefinition?.label ?? '',
+      outcome: e.outcome,
+      playerId: e.playerId,
+    }));
+    const player = await this.prisma.player.findFirst({
+      where: { id: playerId, tenantId: session.tenantId },
+      select: { id: true, name: true, jerseyNumber: true, position: true },
+    });
+    const material = await this.prisma.analysisPlayerMaterialItem.findMany({
+      where: { analysisSessionId: session.id, playerId },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return {
+      player,
+      metrics: computePlayerMetrics(tagged)[0] ?? null,
+      events,
+      clips,
+      material,
+      fieldPoints: events
+        .filter((e) => e.fieldX != null && e.fieldY != null)
+        .map((e) => ({ eventId: e.id, x: e.fieldX, y: e.fieldY, tagKey: e.tagDefinition?.key })),
+    };
+  }
+
+  async listPlayerMaterial(
+    sessionId: string,
+    playerId: string,
+    allowedTenantIds: string[] | null,
+  ) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    await this.access.assertPlayerInTenant(playerId, session.tenantId);
+    return this.prisma.analysisPlayerMaterialItem.findMany({
+      where: { analysisSessionId: session.id, playerId, tenantId: session.tenantId },
+      orderBy: { sortOrder: 'asc' },
+    });
+  }
+
+  async addPlayerMaterial(
+    sessionId: string,
+    dto: {
+      playerId: string;
+      eventId?: string | null;
+      clipId?: string | null;
+      notes?: string | null;
+      sortOrder?: number;
+      authorUserId?: string | null;
+    },
+    allowedTenantIds: string[] | null,
+  ) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    await this.access.assertPlayerInTenant(dto.playerId, session.tenantId);
+    if (!dto.eventId && !dto.clipId) {
+      throw new BadRequestException('Informe evento ou clip.');
+    }
+    if (dto.eventId) {
+      const ev = await this.prisma.analysisEvent.findFirst({
+        where: { id: dto.eventId, analysisSessionId: session.id, tenantId: session.tenantId },
+      });
+      if (!ev) throw new BadRequestException('Evento inválido.');
+    }
+    if (dto.clipId) {
+      const cl = await this.prisma.analysisClip.findFirst({
+        where: { id: dto.clipId, analysisSessionId: session.id, tenantId: session.tenantId },
+      });
+      if (!cl) throw new BadRequestException('Clip inválido.');
+    }
+    return this.prisma.analysisPlayerMaterialItem.create({
+      data: {
+        tenantId: session.tenantId,
+        analysisSessionId: session.id,
+        playerId: dto.playerId,
+        eventId: dto.eventId ?? null,
+        clipId: dto.clipId ?? null,
+        notes: dto.notes?.trim() || null,
+        sortOrder: dto.sortOrder ?? 0,
+        authorUserId: dto.authorUserId ?? null,
+      },
+    });
+  }
+
+  async removePlayerMaterial(itemId: string, allowedTenantIds: string[] | null) {
+    const row = await this.prisma.analysisPlayerMaterialItem.findUnique({ where: { id: itemId } });
+    if (!row) throw new NotFoundException('Item não encontrado.');
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    await this.prisma.analysisPlayerMaterialItem.delete({ where: { id: itemId } });
     return { ok: true };
   }
 
@@ -486,6 +854,28 @@ export class PerformanceAnalysisService {
       });
     }
     return clip;
+  }
+
+  async updateClip(
+    clipId: string,
+    dto: { title?: string; startMs?: number; endMs?: number; notes?: string | null },
+    allowedTenantIds: string[] | null,
+  ) {
+    const clip = await this.prisma.analysisClip.findUnique({ where: { id: clipId } });
+    if (!clip) throw new NotFoundException('Clip não encontrado.');
+    this.access.assertTenant(allowedTenantIds, clip.tenantId);
+    if (dto.startMs != null && dto.endMs != null && dto.endMs <= dto.startMs) {
+      throw new BadRequestException('Intervalo do clip inválido.');
+    }
+    return this.prisma.analysisClip.update({
+      where: { id: clipId },
+      data: {
+        ...(dto.title !== undefined ? { title: dto.title.trim() } : {}),
+        ...(dto.startMs !== undefined ? { startMs: dto.startMs } : {}),
+        ...(dto.endMs !== undefined ? { endMs: dto.endMs } : {}),
+        ...(dto.notes !== undefined ? { notes: dto.notes?.trim() || null } : {}),
+      },
+    });
   }
 
   async getPlayerAnalysisSummary(
