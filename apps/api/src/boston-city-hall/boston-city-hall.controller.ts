@@ -25,6 +25,7 @@ import { BostonCityHallProposalPdfService } from './boston-city-hall-proposal-pd
 import { BostonCityHallProposalsService } from './boston-city-hall-proposals.service';
 import { BostonCityHallService } from './boston-city-hall.service';
 import { BostonCityHallTicketingService } from './boston-city-hall-ticketing.service';
+import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-orders.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -40,6 +41,7 @@ export class BostonCityHallController {
     private readonly operations: BostonCityHallOperationsService,
     private readonly bookingEvent: BostonCityHallBookingEventService,
     private readonly ticketing: BostonCityHallTicketingService,
+    private readonly ticketOrders: BostonCityHallTicketOrdersService,
   ) {}
 
   @Get('overview')
@@ -673,6 +675,37 @@ export class BostonCityHallController {
     },
   ) {
     return this.ticketing.createLot(id, body);
+  }
+
+  @Get('ticketing/orders')
+  listTicketOrders(
+    @Query('eventId') eventId?: string,
+    @Query('status') status?: string,
+    @Query('q') q?: string,
+  ) {
+    return this.ticketOrders.listOrders({ eventId, status, q });
+  }
+
+  @Get('ticketing/orders/:id')
+  getTicketOrder(@Param('id') id: string) {
+    return this.ticketOrders.getOrder(id);
+  }
+
+  @Post('ticketing/orders')
+  createTicketOrder(
+    @Body()
+    body: {
+      eventId: string;
+      customer: { name: string; email: string; phone?: string; document?: string };
+      items: Array<{ ticketTypeId: string; quantity: number | string }>;
+    },
+  ) {
+    return this.ticketOrders.createOrder(body);
+  }
+
+  @Post('ticketing/orders/:id/cancel')
+  cancelTicketOrder(@Param('id') id: string) {
+    return this.ticketOrders.cancelOrder(id);
   }
 
   @Patch('ticketing/lots/:id')

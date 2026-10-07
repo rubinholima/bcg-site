@@ -8,13 +8,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BCH_VENUE_SLUG } from './boston-city-hall.constants';
 import {
   deriveSalesStatus,
-  heldForLot,
   pickCurrentLot,
   resolveTypeAvailability,
-  soldForLot,
+  type InventoryCounters,
   type LotRow,
   type TypeRow,
 } from './boston-city-hall-ticketing.availability';
+import {
+  BostonCityHallTicketInventoryService,
+  type TicketInventoryMaps,
+} from './boston-city-hall-ticket-inventory.service';
 import type {
   EventTicketLotDto,
   EventTicketTypeDto,
@@ -71,9 +74,29 @@ const typeInclude = {
 
 type TypeWithLots = Prisma.EventTicketTypeGetPayload<{ include: typeof typeInclude }>;
 
+function countersFromMaps(
+  maps: TicketInventoryMaps,
+  inv: BostonCityHallTicketInventoryService,
+): InventoryCounters {
+  return {
+    soldForType: (id) => inv.soldForType(maps, id),
+    heldForType: (id) => inv.heldForType(maps, id),
+    soldForLot: (id) => inv.soldForLot(maps, id),
+    heldForLot: (id) => inv.heldForLot(maps, id),
+  };
+}
+
 @Injectable()
 export class BostonCityHallTicketingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly inventory: BostonCityHallTicketInventoryService,
+  ) {}
+
+  private async countersForEvent(tenantId: string, eventId: string): Promise<InventoryCounters> {
+    const maps = await this.inventory.loadForEvent(tenantId, eventId);
+    return countersFromMaps(maps, this.inventory);
+  }
 
   private async resolveTenantId(venueSlug = BCH_VENUE_SLUG): Promise<string> {
     const tenant = await this.prisma.tenant.findUnique({
@@ -110,9 +133,10 @@ export class BostonCityHallTicketingService {
     lot: TypeWithLots['lots'][number],
     ticketTypeActive: boolean,
     currentLotId: string | null,
+    counters: InventoryCounters,
   ): EventTicketLotDto {
-    const sold = soldForLot(lot.id);
-    const held = heldForLot(lot.id);
+    const sold = counters.soldForLot(lot.id);
+    const held = counters.heldForLot(lot.id);
     const available = Math.max(0, lot.quantity - sold - held);
     const now = new Date();
     return {
@@ -141,7 +165,7 @@ export class BostonCityHallTicketingService {
     };
   }
 
-  private toTypeDto(row: TypeWithLots): EventTicketTypeDto {
+  private toTypeDto(row: TypeWithLots, counters: InventoryCounters): EventTicketTypeDto {
     const typeRow: TypeRow = {
       active: row.active,
       price: row.price,
@@ -150,8 +174,8 @@ export class BostonCityHallTicketingService {
       salesEndAt: row.salesEndAt,
       lots: row.lots.map((l) => ({ ...l, ticketTypeId: row.id })),
     };
-    const avail = resolveTypeAvailability(typeRow, row.id);
-    const lots = row.lots.map((l) => this.toLotDto(l, row.active, avail.currentLotId));
+    const avail = resolveTypeAvailability(typeRow, row.id, new Date(), counters);
+    const lots = row.lots.map((l) => this.toLotDto(l, row.active, avail.currentLotId, counters));
 
     return {
       id: row.id,
@@ -251,7 +275,9 @@ export class BostonCityHallTicketingService {
       orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
     });
 
-    const typeDtos = types.map((t) => this.toTypeDto(t));
+    const maps = await this.inventory.loadForEvent(tenantId, eventId);
+    const counters = countersFromMaps(maps, this.inventory);
+    const typeDtos = types.map((t) => this.toTypeDto(t, counters));
     const space = event.venueBooking?.space;
     const capacityHint = this.computeCapacityHint(
       typeDtos,
@@ -321,7 +347,8 @@ export class BostonCityHallTicketingService {
       },
       include: typeInclude,
     });
-    return this.toTypeDto(row);
+    const counters = await this.countersForEvent(tenantId, eventId);
+    return this.toTypeDto(row, counters);
   }
 
   async updateTicketType(
@@ -383,7 +410,8 @@ export class BostonCityHallTicketingService {
       data,
       include: typeInclude,
     });
-    return this.toTypeDto(row);
+    const counters = await this.countersForEvent(tenantId, row.eventId);
+    return this.toTypeDto(row, counters);
   }
 
   async createLot(
@@ -424,7 +452,8 @@ export class BostonCityHallTicketingService {
       where: { id: ticketTypeId },
       include: typeInclude,
     });
-    return this.toTypeDto(row);
+    const counters = await this.countersForEvent(tenantId, row.eventId);
+    return this.toTypeDto(row, counters);
   }
 
   async updateLot(
@@ -465,7 +494,8 @@ export class BostonCityHallTicketingService {
       where: { id: lot.ticketTypeId },
       include: typeInclude,
     });
-    return this.toTypeDto(row);
+    const counters = await this.countersForEvent(tenantId, row.eventId);
+    return this.toTypeDto(row, counters);
   }
 
   /** Uso futuro: vitrine/checkout — não exposto publicamente na Fase 2.1. */
@@ -519,6 +549,8 @@ export class BostonCityHallTicketingService {
             description: t.description,
             purchaseLimit: t.purchaseLimit,
             currentPrice: t.currentPrice,
+            sold: t.sold,
+            held: t.held,
             available: t.available,
             salesStatus: t.salesStatus,
             currentLot,

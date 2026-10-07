@@ -111,6 +111,8 @@ export type EventTicketingPublicSnapshotDto = {
     description: string | null;
     purchaseLimit: number | null;
     currentPrice: string | null;
+    sold: number;
+    held: number;
     available: number;
     salesStatus: EventTicketingSalesStatus;
     currentLot: { id: string; name: string; price: string } | null;

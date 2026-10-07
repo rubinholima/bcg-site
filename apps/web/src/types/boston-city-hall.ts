@@ -677,6 +677,64 @@ export type EventTicketingDetail = {
   capacityHint: EventTicketingCapacityHint | null;
 };
 
+export type EventTicketOrderStatus = "pending" | "confirmed" | "cancelled" | "expired";
+
+export const EVENT_TICKET_ORDER_STATUS_LABEL: Record<EventTicketOrderStatus, string> = {
+  pending: "Pendente",
+  confirmed: "Confirmado",
+  cancelled: "Cancelado",
+  expired: "Expirado",
+};
+
+export type EventTicketOrderListItem = {
+  id: string;
+  orderNumber: string;
+  eventId: string;
+  eventName: string;
+  customerName: string;
+  customerEmail: string;
+  total: string;
+  status: EventTicketOrderStatus;
+  holdExpiresAt: string | null;
+  itemsCount: number;
+  createdAt: string;
+};
+
+export type EventTicketOrderItem = {
+  id: string;
+  ticketTypeId: string;
+  ticketLotId: string | null;
+  ticketTypeName: string;
+  lotName: string | null;
+  quantity: number;
+  unitPrice: string;
+  totalPrice: string;
+};
+
+export type EventTicketOrderDetail = {
+  id: string;
+  orderNumber: string;
+  eventId: string;
+  eventName: string;
+  eventSlug: string;
+  status: EventTicketOrderStatus;
+  customerId: string | null;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string | null;
+  customerDocument: string | null;
+  subtotal: string;
+  discount: string;
+  fees: string;
+  total: string;
+  holdExpiresAt: string | null;
+  confirmedAt: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: EventTicketOrderItem[];
+};
+
 export function formatTicketingMoney(value: string | null | undefined): string {
   if (value == null || value === "") return "—";
   const n = Number.parseFloat(value);

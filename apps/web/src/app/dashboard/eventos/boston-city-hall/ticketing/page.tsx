@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
-import { BostonCityHallTicketing } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketing";
+import { BostonCityHallTicketingHub } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketingHub";
 import { useAuth } from "@/context/AuthContext";
 
 export default function BostonCityHallTicketingPage() {
@@ -26,7 +26,7 @@ export default function BostonCityHallTicketingPage() {
 
   return (
     <BostonCityHallShell title="Ingressos">
-      <BostonCityHallTicketing />
+      <BostonCityHallTicketingHub />
     </BostonCityHallShell>
   );
 }

@@ -21,22 +21,19 @@ export type TypeRow = {
   lots: LotRow[];
 };
 
-/** Reservado para Fase 2.2 — contadores transacionais ou agregação por Order. */
-export function soldForType(_typeId: string): number {
-  return 0;
-}
+export type InventoryCounters = {
+  soldForType: (typeId: string) => number;
+  heldForType: (typeId: string) => number;
+  soldForLot: (lotId: string) => number;
+  heldForLot: (lotId: string) => number;
+};
 
-export function heldForType(_typeId: string): number {
-  return 0;
-}
-
-export function soldForLot(_lotId: string): number {
-  return 0;
-}
-
-export function heldForLot(_lotId: string): number {
-  return 0;
-}
+const ZERO_COUNTERS: InventoryCounters = {
+  soldForType: () => 0,
+  heldForType: () => 0,
+  soldForLot: () => 0,
+  heldForLot: () => 0,
+};
 
 function inSalesWindow(now: Date, start: Date | null, end: Date | null): boolean {
   if (start && now < start) return false;
@@ -47,9 +44,10 @@ function inSalesWindow(now: Date, start: Date | null, end: Date | null): boolean
 export function pickCurrentLot(
   lots: LotRow[],
   now: Date = new Date(),
-  soldFn: (lotId: string) => number = soldForLot,
-  heldFn: (lotId: string) => number = heldForLot,
+  counters: InventoryCounters = ZERO_COUNTERS,
 ): { lot: LotRow; available: number } | null {
+  const soldFn = counters.soldForLot;
+  const heldFn = counters.heldForLot;
   const sorted = [...lots].sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id));
   for (const lot of sorted) {
     if (!lot.active) continue;
@@ -81,6 +79,7 @@ export function resolveTypeAvailability(
   type: TypeRow,
   typeId: string,
   now: Date = new Date(),
+  counters: InventoryCounters = ZERO_COUNTERS,
 ): {
   usesLots: boolean;
   currentPrice: Prisma.Decimal | null;
@@ -94,11 +93,11 @@ export function resolveTypeAvailability(
   const usesLots = type.lots.length > 0;
 
   if (usesLots) {
-    const current = pickCurrentLot(type.lots, now);
+    const current = pickCurrentLot(type.lots, now, counters);
     if (!current) {
       const capacity = type.lots.reduce((s, l) => s + l.quantity, 0);
-      const sold = type.lots.reduce((s, l) => s + soldForLot(l.id), 0);
-      const held = type.lots.reduce((s, l) => s + heldForLot(l.id), 0);
+      const sold = type.lots.reduce((s, l) => s + counters.soldForLot(l.id), 0);
+      const held = type.lots.reduce((s, l) => s + counters.heldForLot(l.id), 0);
       return {
         usesLots: true,
         currentPrice: null,
@@ -116,8 +115,8 @@ export function resolveTypeAvailability(
         currentLotId: null,
       };
     }
-    const sold = soldForLot(current.lot.id);
-    const held = heldForLot(current.lot.id);
+    const sold = counters.soldForLot(current.lot.id);
+    const held = counters.heldForLot(current.lot.id);
     return {
       usesLots: true,
       currentPrice: current.lot.price,
@@ -137,8 +136,8 @@ export function resolveTypeAvailability(
   }
 
   const qty = type.quantity ?? 0;
-  const sold = soldForType(typeId);
-  const held = heldForType(typeId);
+  const sold = counters.soldForType(typeId);
+  const held = counters.heldForType(typeId);
   const available = Math.max(0, qty - sold - held);
   return {
     usesLots: false,
