@@ -56,6 +56,19 @@ export type EventTicketOrderFinanceProjectionDto = {
   status: string;
 };
 
+export type EventTicketOrderIssuedTicketDto = {
+  id: string;
+  ticketCode: string;
+  qrPayload: string;
+  status: string;
+  ticketTypeName: string;
+  lotName: string | null;
+  holderName: string;
+  unitPrice: string;
+  currency: string;
+  issuedAt: string;
+};
+
 export type EventTicketOrderDetailDto = {
   id: string;
   orderNumber: string;
@@ -76,6 +89,7 @@ export type EventTicketOrderDetailDto = {
   holdExpiresAt: string | null;
   payment: EventTicketOrderPaymentSummaryDto | null;
   financeProjection: EventTicketOrderFinanceProjectionDto | null;
+  tickets: EventTicketOrderIssuedTicketDto[];
   confirmedAt: string | null;
   cancelledAt: string | null;
   createdAt: string;

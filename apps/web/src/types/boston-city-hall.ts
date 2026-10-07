@@ -725,6 +725,25 @@ export type EventTicketOrderItem = {
   totalPrice: string;
 };
 
+export type EventTicketIssued = {
+  id: string;
+  ticketCode: string;
+  qrPayload: string;
+  status: string;
+  ticketTypeName: string;
+  lotName: string | null;
+  holderName: string;
+  unitPrice: string;
+  currency: string;
+  issuedAt: string;
+};
+
+export const EVENT_TICKET_STATUS_LABEL: Record<string, string> = {
+  valid: "Válido",
+  used: "Utilizado",
+  cancelled: "Cancelado",
+};
+
 export type EventTicketOrderDetail = {
   id: string;
   orderNumber: string;
@@ -749,6 +768,7 @@ export type EventTicketOrderDetail = {
   updatedAt: string;
   payment: EventTicketOrderPaymentSummary | null;
   financeProjection: { id: string; status: string } | null;
+  tickets: EventTicketIssued[];
   items: EventTicketOrderItem[];
 };
 

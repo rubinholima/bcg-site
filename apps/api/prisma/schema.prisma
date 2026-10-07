@@ -233,6 +233,7 @@ model Tenant {
   eventTicketTypes             EventTicketType[]
   eventTicketOrders            EventTicketOrder[]
   eventTicketOrderNumberSeqs   EventTicketOrderNumberSeq[]
+  eventTickets                 EventTicket[]
   paymentProviderAccounts      PaymentProviderAccount[]
   payments                     Payment[]
   paymentAttempts              PaymentAttempt[]
@@ -963,6 +964,7 @@ model Event {
   ticketing    EventTicketing?
   ticketTypes  EventTicketType[]
   ticketOrders EventTicketOrder[]
+  eventTickets EventTicket[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -3177,6 +3179,7 @@ model EventTicketType {
   updatedAt     DateTime         @updatedAt
   lots          EventTicketLot[]
   orderItems    EventTicketOrderItem[]
+  eventTickets  EventTicket[]
 
   @@index([tenantId, eventId])
   @@index([eventId, sortOrder])
@@ -3196,6 +3199,7 @@ model EventTicketLot {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   orderItems   EventTicketOrderItem[]
+  eventTickets EventTicket[]
 
   @@index([ticketTypeId, sortOrder])
 }
@@ -3239,6 +3243,7 @@ model EventTicketOrder {
   updatedAt        DateTime  @updatedAt
   items            EventTicketOrderItem[]
   payment          Payment?
+  tickets          EventTicket[]
 
   @@unique([tenantId, orderNumber])
   @@index([tenantId, eventId])
@@ -3260,10 +3265,55 @@ model EventTicketOrderItem {
   quantity       Int
   unitPrice      Decimal          @db.Decimal(12, 2)
   totalPrice     Decimal          @db.Decimal(12, 2)
+  eventTickets   EventTicket[]
 
   @@index([orderId])
   @@index([ticketTypeId])
   @@index([ticketLotId])
+}
+
+/// Ingresso individual (credencial de admissão) — emitido após pedido confirmado.
+model EventTicket {
+  id             String               @id @default(cuid())
+  tenantId       String
+  tenant         Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  eventId        String
+  event          Event                @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  orderId        String
+  order          EventTicketOrder     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  orderItemId    String
+  orderItem      EventTicketOrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  ticketTypeId   String
+  ticketType     EventTicketType      @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
+  ticketLotId    String?
+  ticketLot      EventTicketLot?      @relation(fields: [ticketLotId], references: [id], onDelete: SetNull)
+
+  /// Posição 0..quantity-1 dentro do item (idempotência de emissão).
+  lineIndex      Int
+  /// Código operacional legível (ex.: BCH-26-XXXXXX).
+  ticketCode     String
+  /// Token opaco — payload QR = CUP360-T1:<qrToken>
+  qrToken        String               @unique
+
+  status         String               @default("valid")
+  orderNumber    String
+  ticketTypeName String
+  lotName        String?
+  unitPrice      Decimal              @db.Decimal(12, 2)
+  currency       String
+  eventName      String
+  holderName     String
+  holderEmail    String?
+
+  issuedAt       DateTime             @default(now())
+  cancelledAt    DateTime?
+  usedAt         DateTime?
+
+  @@unique([orderItemId, lineIndex])
+  @@unique([tenantId, ticketCode])
+  @@index([tenantId, orderId])
+  @@index([tenantId, eventId])
+  @@index([tenantId, status])
 }
 
 model VenueBooking {

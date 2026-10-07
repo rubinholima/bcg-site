@@ -32,8 +32,10 @@ import type {
 } from "@/types/boston-city-hall";
 import {
   EVENT_TICKET_ORDER_STATUS_LABEL,
+  EVENT_TICKET_STATUS_LABEL,
   PAYMENT_STATUS_LABEL,
   formatTicketingMoney,
+  type EventTicketIssued,
 } from "@/types/boston-city-hall";
 
 const MANUAL_PAYMENT_METHODS = [
@@ -66,6 +68,10 @@ export function BostonCityHallTicketOrders() {
     message: string;
     variant: "success" | "error";
   }>({ open: false, title: "", message: "", variant: "success" });
+  const [qrTicket, setQrTicket] = useState<EventTicketIssued | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const t = window.setTimeout(() => setSearchDebounced(search.trim()), 300);
@@ -101,6 +107,34 @@ export function BostonCityHallTicketOrders() {
   useEffect(() => {
     void loadOrders();
   }, [loadOrders]);
+
+  const openTicketQr = async (ticket: EventTicketIssued) => {
+    setQrTicket(ticket);
+    setQrOpen(true);
+    setQrLoading(true);
+    if (qrImageUrl) {
+      URL.revokeObjectURL(qrImageUrl);
+      setQrImageUrl(null);
+    }
+    try {
+      const res = await fetch(`/api/boston-city-hall/ticketing/tickets/${ticket.id}/qr`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Não foi possível carregar o QR.");
+      const blob = await res.blob();
+      setQrImageUrl(URL.createObjectURL(blob));
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Falha ao carregar QR.",
+        variant: "error",
+      });
+      setQrOpen(false);
+    } finally {
+      setQrLoading(false);
+    }
+  };
 
   const openDetail = async (id: string) => {
     setDetailOpen(true);
@@ -349,6 +383,42 @@ export function BostonCityHallTicketOrders() {
                   )}
                 </div>
               ) : null}
+              {detail.tickets.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="font-medium">Ingressos emitidos ({detail.tickets.length})</p>
+                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border border-border p-2">
+                    {detail.tickets.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex flex-col gap-1 border-b border-border/60 pb-2 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="min-w-0 text-xs sm:text-sm">
+                          <p className="font-mono font-medium">{t.ticketCode}</p>
+                          <p className="text-muted-foreground">
+                            {t.ticketTypeName}
+                            {t.lotName ? ` · ${t.lotName}` : ""}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {EVENT_TICKET_STATUS_LABEL[t.status] ?? t.status} · {t.holderName} ·{" "}
+                            {new Date(t.issuedAt).toLocaleString("pt-BR")}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => void openTicketQr(t)}
+                        >
+                          Ver QR
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : detail.status === "confirmed" ? (
+                <p className="text-sm text-muted-foreground">Nenhum ingresso emitido ainda.</p>
+              ) : null}
               {detail.payment ? (
                 <div className="rounded-md border border-border p-3 space-y-1">
                   <p className="font-medium">Pagamento (CUP360)</p>
@@ -388,6 +458,40 @@ export function BostonCityHallTicketOrders() {
               </Button>
             ) : null}
             <Button variant="outline" onClick={() => setDetailOpen(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={qrOpen}
+        onOpenChange={(open) => {
+          setQrOpen(open);
+          if (!open) {
+            setQrTicket(null);
+            if (qrImageUrl) URL.revokeObjectURL(qrImageUrl);
+            setQrImageUrl(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{qrTicket?.ticketCode ?? "QR do ingresso"}</DialogTitle>
+          </DialogHeader>
+          {qrLoading ? (
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+          ) : qrImageUrl ? (
+            <div className="flex flex-col items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qrImageUrl} alt="QR do ingresso" className="h-64 w-64 rounded-md bg-white p-2" />
+              <p className="break-all text-center font-mono text-xs text-muted-foreground">
+                {qrTicket?.qrPayload}
+              </p>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setQrOpen(false)}>
               Fechar
             </Button>
           </DialogFooter>

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -27,6 +28,7 @@ import { BostonCityHallService } from './boston-city-hall.service';
 import { BostonCityHallTicketingService } from './boston-city-hall-ticketing.service';
 import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-orders.service';
 import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
+import { BostonCityHallTicketIssuanceService } from './boston-city-hall-ticket-issuance.service';
 import type { PaymentMethod } from '../payments/payment-core.constants';
 
 @Controller('boston-city-hall')
@@ -45,6 +47,7 @@ export class BostonCityHallController {
     private readonly ticketing: BostonCityHallTicketingService,
     private readonly ticketOrders: BostonCityHallTicketOrdersService,
     private readonly ticketPayment: BostonCityHallTicketPaymentService,
+    private readonly ticketIssuance: BostonCityHallTicketIssuanceService,
   ) {}
 
   @Get('overview')
@@ -732,6 +735,26 @@ export class BostonCityHallController {
     });
     const order = await this.ticketOrders.getOrder(id);
     return { ...result, order };
+  }
+
+  @Get('ticketing/tickets/lookup')
+  lookupTicket(
+    @Query('code') code?: string,
+    @Query('credential') credential?: string,
+  ) {
+    const c = code?.trim();
+    const cred = credential?.trim();
+    if (c) return this.ticketIssuance.lookupByCodeForVenue(c);
+    if (cred) return this.ticketIssuance.lookupByCredentialForVenue(cred);
+    throw new BadRequestException('Informe code ou credential.');
+  }
+
+  @Get('ticketing/tickets/:id/qr')
+  @Header('Content-Type', 'image/png')
+  @Header('Cache-Control', 'private, no-store')
+  async getTicketQrPng(@Param('id') id: string) {
+    const buffer = await this.ticketIssuance.renderQrPngForVenue(id);
+    return new StreamableFile(buffer);
   }
 
   @Patch('ticketing/lots/:id')

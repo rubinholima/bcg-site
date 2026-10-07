@@ -27,8 +27,12 @@ import {
 } from './boston-city-hall-ticket-orders.constants';
 import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
 import { BostonCityHallTicketFinanceProjectionService } from './boston-city-hall-ticket-finance-projection.service';
+import { BostonCityHallTicketIssuanceService } from './boston-city-hall-ticket-issuance.service';
 import { normalizeTicketingCurrency } from './boston-city-hall-ticketing-currency.constants';
-import type { EventTicketOrderFinanceProjectionDto } from './boston-city-hall-ticket-orders.constants';
+import type {
+  EventTicketOrderFinanceProjectionDto,
+  EventTicketOrderIssuedTicketDto,
+} from './boston-city-hall-ticket-orders.constants';
 
 function moneyToString(value: Prisma.Decimal | number | string): string {
   if (value instanceof Prisma.Decimal) return value.toFixed(2);
@@ -64,6 +68,7 @@ export class BostonCityHallTicketOrdersService {
     private readonly inventory: BostonCityHallTicketInventoryService,
     private readonly ticketPayment: BostonCityHallTicketPaymentService,
     private readonly ticketFinanceProjection: BostonCityHallTicketFinanceProjectionService,
+    private readonly ticketIssuance: BostonCityHallTicketIssuanceService,
   ) {}
 
   private async resolveTenantId(venueSlug = BCH_VENUE_SLUG): Promise<string> {
@@ -129,6 +134,7 @@ export class BostonCityHallTicketOrdersService {
     now: Date,
     payment?: EventTicketOrderPaymentSummaryDto | null,
     financeProjection?: EventTicketOrderFinanceProjectionDto | null,
+    tickets?: EventTicketOrderIssuedTicketDto[],
   ): EventTicketOrderDetailDto {
     const status = this.normalizeStatus(row, now);
     const paymentSummary = payment ?? this.ticketPayment.serializePaymentRow(row.payment);
@@ -152,6 +158,7 @@ export class BostonCityHallTicketOrdersService {
       holdExpiresAt: row.holdExpiresAt?.toISOString() ?? null,
       payment: paymentSummary,
       financeProjection: financeProjection ?? null,
+      tickets: tickets ?? [],
       confirmedAt: row.confirmedAt?.toISOString() ?? null,
       cancelledAt: row.cancelledAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
@@ -266,7 +273,15 @@ export class BostonCityHallTicketOrdersService {
       }
     }
 
-    return this.toDetail(row, now, paymentSummary, financeProjection);
+    let tickets: EventTicketOrderIssuedTicketDto[] = [];
+    if (status === 'confirmed' && paymentSummary?.status === 'paid') {
+      const issued = await this.ticketIssuance.ensureTicketsForOrder(id, tenantId);
+      tickets = issued.tickets;
+    } else {
+      tickets = await this.ticketIssuance.listTicketsForOrder(tenantId, id);
+    }
+
+    return this.toDetail(row, now, paymentSummary, financeProjection, tickets);
   }
 
   async cancelOrder(id: string): Promise<EventTicketOrderDetailDto> {
