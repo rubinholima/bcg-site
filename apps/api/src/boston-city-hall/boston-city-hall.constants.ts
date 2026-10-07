@@ -95,8 +95,27 @@ export type VenueOverviewSourcePoint = {
   count: number;
 };
 
+export type VenueOverviewUpcomingBooking = Pick<
+  VenueBookingDto,
+  | 'id'
+  | 'title'
+  | 'startAt'
+  | 'endAt'
+  | 'status'
+  | 'eventType'
+  | 'guestCount'
+  | 'contactName'
+> & { spaceName?: string };
+
+export type VenueOverviewAttentionLead = Pick<
+  VenuePipelineLeadDto,
+  'id' | 'contactName' | 'companyName' | 'stage' | 'source' | 'updatedAt'
+>;
+
 export type VenueOverviewDto = {
   spacesCount: number;
+  bookingsToday: number;
+  upcomingBookingsTotal: number;
   bookingsThisMonth: number;
   confirmedUpcoming: number;
   pipelineByStage: Record<string, number>;
@@ -107,6 +126,8 @@ export type VenueOverviewDto = {
   bookingsByStatus: Record<string, number>;
   leadsLast30Days: VenueOverviewChartPoint[];
   leadsBySource: VenueOverviewSourcePoint[];
+  upcomingBookings: VenueOverviewUpcomingBooking[];
+  leadsNeedingAttention: VenueOverviewAttentionLead[];
 };
 
 export const DEFAULT_VENUE_SPACES: Array<{

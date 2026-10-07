@@ -58,8 +58,31 @@ export type VenueOverviewSourcePoint = {
   count: number;
 };
 
+export type VenueOverviewUpcomingBooking = {
+  id: string;
+  title: string;
+  startAt: string;
+  endAt: string;
+  status: string;
+  eventType: string | null;
+  guestCount: number | null;
+  contactName: string | null;
+  spaceName?: string;
+};
+
+export type VenueOverviewAttentionLead = {
+  id: string;
+  contactName: string;
+  companyName: string | null;
+  stage: string;
+  source: string;
+  updatedAt: string;
+};
+
 export type VenueOverview = {
   spacesCount: number;
+  bookingsToday: number;
+  upcomingBookingsTotal: number;
   bookingsThisMonth: number;
   confirmedUpcoming: number;
   pipelineByStage: Record<string, number>;
@@ -70,6 +93,8 @@ export type VenueOverview = {
   bookingsByStatus: Record<string, number>;
   leadsLast30Days: VenueOverviewChartPoint[];
   leadsBySource: VenueOverviewSourcePoint[];
+  upcomingBookings: VenueOverviewUpcomingBooking[];
+  leadsNeedingAttention: VenueOverviewAttentionLead[];
 };
 
 export const LEAD_SOURCE_LABEL: Record<string, string> = {

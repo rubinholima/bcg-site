@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { VenueOverview } from "@/types/boston-city-hall";
 import {
   BOOKING_STATUS_LABEL,
@@ -84,15 +84,14 @@ export function BostonCityHallOverviewCharts({ overview }: Props) {
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-foreground">Gráficos</h2>
+    <div className="space-y-3">
+      <h2 className="text-base font-semibold text-foreground">Indicadores gráficos</h2>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Leads — últimos 30 dias</CardTitle>
-            <CardDescription>Novos contatos por dia</CardDescription>
+            <CardTitle className="text-sm font-medium">Leads — últimos 30 dias</CardTitle>
           </CardHeader>
-          <CardContent className="h-[260px] min-w-0">
+          <CardContent className="h-[200px] min-w-0">
             {leadsTrend.some((p) => p.count > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={leadsTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -115,7 +114,7 @@ export function BostonCityHallOverviewCharts({ overview }: Props) {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <p className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Sem leads no período
               </p>
             )}
@@ -124,10 +123,9 @@ export function BostonCityHallOverviewCharts({ overview }: Props) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Pipeline por estágio</CardTitle>
-            <CardDescription>Distribuição comercial atual</CardDescription>
+            <CardTitle className="text-sm font-medium">Pipeline por estágio</CardTitle>
           </CardHeader>
-          <CardContent className="h-[260px] min-w-0">
+          <CardContent className="h-[200px] min-w-0">
             {pipelineChart.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={pipelineChart} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
@@ -148,7 +146,7 @@ export function BostonCityHallOverviewCharts({ overview }: Props) {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <p className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Nenhum lead no pipeline
               </p>
             )}
@@ -157,10 +155,9 @@ export function BostonCityHallOverviewCharts({ overview }: Props) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Origem dos leads</CardTitle>
-            <CardDescription>Site vs cadastro manual</CardDescription>
+            <CardTitle className="text-sm font-medium">Origem dos leads</CardTitle>
           </CardHeader>
-          <CardContent className="h-[220px] min-w-0">
+          <CardContent className="h-[180px] min-w-0">
             {sourceChart.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={sourceChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -172,7 +169,7 @@ export function BostonCityHallOverviewCharts({ overview }: Props) {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <p className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Sem dados de origem
               </p>
             )}
@@ -181,10 +178,9 @@ export function BostonCityHallOverviewCharts({ overview }: Props) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Reservas por status</CardTitle>
-            <CardDescription>Todas as reservas cadastradas</CardDescription>
+            <CardTitle className="text-sm font-medium">Reservas por status</CardTitle>
           </CardHeader>
-          <CardContent className="h-[220px] min-w-0">
+          <CardContent className="h-[180px] min-w-0">
             {bookingsChart.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={bookingsChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -196,7 +192,7 @@ export function BostonCityHallOverviewCharts({ overview }: Props) {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <p className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Nenhuma reserva cadastrada
               </p>
             )}

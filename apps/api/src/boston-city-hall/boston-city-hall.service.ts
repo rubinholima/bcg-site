@@ -182,6 +182,13 @@ export class BostonCityHallService {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const activeBookingWhere = {
+      tenantId,
+      venueSlug: slug,
+      status: { not: 'cancelled' as const },
+    };
 
     const [spacesCount, bookingsThisMonth, confirmedUpcoming, pipelineGroups] =
       await Promise.all([
@@ -223,6 +230,10 @@ export class BostonCityHallService {
       bookingGroups,
       sourceGroups,
       recentLeads,
+      bookingsToday,
+      upcomingBookingsTotal,
+      upcomingBookingRows,
+      attentionLeadRows,
     ] = await Promise.all([
       this.prisma.venuePipelineLead.count({
         where: {
@@ -258,6 +269,45 @@ export class BostonCityHallService {
         },
         select: { createdAt: true },
       }),
+      this.prisma.venueBooking.count({
+        where: {
+          ...activeBookingWhere,
+          startAt: { lte: endOfToday },
+          endAt: { gte: startOfToday },
+        },
+      }),
+      this.prisma.venueBooking.count({
+        where: {
+          ...activeBookingWhere,
+          endAt: { gte: now },
+        },
+      }),
+      this.prisma.venueBooking.findMany({
+        where: {
+          ...activeBookingWhere,
+          endAt: { gte: now },
+        },
+        include: { space: { select: { name: true } } },
+        orderBy: { startAt: 'asc' },
+        take: 12,
+      }),
+      this.prisma.venuePipelineLead.findMany({
+        where: {
+          tenantId,
+          venueSlug: slug,
+          stage: { notIn: ['confirmado', 'perdido'] },
+        },
+        select: {
+          id: true,
+          contactName: true,
+          companyName: true,
+          stage: true,
+          source: true,
+          updatedAt: true,
+        },
+        orderBy: [{ updatedAt: 'asc' }, { createdAt: 'asc' }],
+        take: 8,
+      }),
     ]);
 
     const bookingsByStatus: Record<string, number> = {};
@@ -285,8 +335,31 @@ export class BostonCityHallService {
       count,
     }));
 
+    const upcomingBookings = upcomingBookingRows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      startAt: row.startAt.toISOString(),
+      endAt: row.endAt.toISOString(),
+      status: row.status,
+      eventType: row.eventType,
+      guestCount: row.guestCount,
+      contactName: row.contactName,
+      spaceName: row.space?.name,
+    }));
+
+    const leadsNeedingAttention = attentionLeadRows.map((row) => ({
+      id: row.id,
+      contactName: row.contactName,
+      companyName: row.companyName,
+      stage: row.stage,
+      source: row.source,
+      updatedAt: row.updatedAt.toISOString(),
+    }));
+
     return {
       spacesCount,
+      bookingsToday,
+      upcomingBookingsTotal,
       bookingsThisMonth,
       confirmedUpcoming,
       pipelineByStage,
@@ -297,6 +370,8 @@ export class BostonCityHallService {
       bookingsByStatus,
       leadsLast30Days,
       leadsBySource,
+      upcomingBookings,
+      leadsNeedingAttention,
     };
   }
 
