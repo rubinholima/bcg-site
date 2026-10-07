@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ClipboardList,
   ContactRound,
+  FileSignature,
   FileText,
   Kanban,
   LayoutDashboard,
@@ -27,6 +28,7 @@ const NAV = [
   { href: `${BCH_BASE}/espacos`, label: "Espaços", icon: Building2 },
   { href: `${BCH_BASE}/servicos`, label: "Serviços", icon: Tags },
   { href: `${BCH_BASE}/propostas`, label: "Propostas", icon: FileText },
+  { href: `${BCH_BASE}/contratos`, label: "Contratos", icon: FileSignature },
   { href: `${BCH_BASE}/pipeline`, label: "Pipeline", icon: Kanban },
 ] as const;
 

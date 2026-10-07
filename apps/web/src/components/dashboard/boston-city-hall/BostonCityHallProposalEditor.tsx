@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Copy, FileDown, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, FileDown, FileSignature, Loader2, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { authFetch } from "@/lib/authFetch";
 import { Button } from "@/components/ui/button";
@@ -296,6 +296,26 @@ export function BostonCityHallProposalEditor({ proposalId }: { proposalId: strin
     }
   };
 
+  const generateContract = async () => {
+    if (isNew || !proposal || proposal.status !== "accepted" || proposal.contractId) return;
+    setSaving(true);
+    try {
+      const res = await api.post<{ id: string }>("/boston-city-hall/contracts", {
+        proposalId: proposal.id,
+      });
+      router.push(`${BCH_BASE}/contratos/${res.data.id}`);
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Contrato",
+        message: e instanceof Error ? e.message : "Não foi possível gerar o contrato.",
+        variant: "error",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const downloadPdf = async () => {
     if (isNew || !proposal) return;
     try {
@@ -378,6 +398,26 @@ export function BostonCityHallProposalEditor({ proposalId }: { proposalId: strin
         <div className="flex flex-wrap gap-2">
           {!isNew ? (
             <>
+              {proposal?.status === "accepted" && proposal.contractId ? (
+                <Button type="button" variant="secondary" asChild>
+                  <Link href={`${BCH_BASE}/contratos/${proposal.contractId}`}>
+                    <FileSignature className="mr-2 h-4 w-4" />
+                    Abrir contrato
+                    {proposal.contractNumber ? ` (${proposal.contractNumber})` : ""}
+                  </Link>
+                </Button>
+              ) : null}
+              {proposal?.status === "accepted" && !proposal.contractId ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void generateContract()}
+                  disabled={saving}
+                >
+                  <FileSignature className="mr-2 h-4 w-4" />
+                  Gerar contrato
+                </Button>
+              ) : null}
               <Button type="button" variant="outline" onClick={() => void downloadPdf()}>
                 <FileDown className="mr-2 h-4 w-4" />
                 PDF

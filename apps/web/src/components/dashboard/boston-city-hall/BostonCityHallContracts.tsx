@@ -1,0 +1,214 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, Search } from "lucide-react";
+import { api } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import type { VenueContract } from "@/types/boston-city-hall";
+import {
+  formatCatalogMoney,
+  formatProposalDate,
+  VENUE_CONTRACT_STATUSES,
+  VENUE_CONTRACT_STATUS_COLOR,
+  VENUE_CONTRACT_STATUS_LABEL,
+} from "@/types/boston-city-hall";
+import { cn } from "@/lib/utils";
+import { BCH_BASE } from "./boston-city-hall-lead-shared";
+
+export function BostonCityHallContracts() {
+  const [rows, setRows] = useState<VenueContract[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [searchDebounced, setSearchDebounced] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [period, setPeriod] = useState("all");
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setSearchDebounced(search.trim()), 300);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  const periodRange = useMemo(() => {
+    const now = new Date();
+    if (period === "30d") {
+      const from = new Date(now);
+      from.setDate(from.getDate() - 30);
+      return { updatedFrom: from.toISOString() };
+    }
+    if (period === "90d") {
+      const from = new Date(now);
+      from.setDate(from.getDate() - 90);
+      return { updatedFrom: from.toISOString() };
+    }
+    return {};
+  }, [period]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (searchDebounced) params.set("q", searchDebounced);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (periodRange.updatedFrom) params.set("updatedFrom", periodRange.updatedFrom);
+      const qs = params.toString();
+      const res = await api.get<VenueContract[]>(
+        `/boston-city-hall/contracts${qs ? `?${qs}` : ""}`,
+      );
+      setRows(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao carregar contratos.");
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchDebounced, statusFilter, periodRange.updatedFrom]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Contratos</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="relative min-w-0 flex-1 sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Buscar número, cliente, proposta…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              {VENUE_CONTRACT_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {VENUE_CONTRACT_STATUS_LABEL[s] ?? s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Qualquer data</SelectItem>
+              <SelectItem value="30d">Últimos 30 dias</SelectItem>
+              <SelectItem value="90d">Últimos 90 dias</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : rows.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Nenhum contrato encontrado.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="hidden md:table-cell">Evento</TableHead>
+                  <TableHead className="hidden lg:table-cell">Data</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="hidden sm:table-cell">Proposta</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden xl:table-cell">Enviado</TableHead>
+                  <TableHead className="hidden xl:table-cell">Assinado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((c) => (
+                  <TableRow key={c.id} className="hover:bg-muted/40">
+                    <TableCell>
+                      <Link
+                        href={`${BCH_BASE}/contratos/${c.id}`}
+                        className="font-medium text-violet-300 hover:underline"
+                      >
+                        {c.contractNumber}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">{c.contactName}</div>
+                      {c.companyName ? (
+                        <div className="text-xs text-muted-foreground">{c.companyName}</div>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="hidden max-w-[180px] truncate md:table-cell">
+                      {c.title}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {formatProposalDate(c.eventDate)}
+                    </TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
+                      {formatCatalogMoney(c.total)}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Link
+                        href={`${BCH_BASE}/propostas/${c.proposalId}`}
+                        className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+                      >
+                        {c.proposalNumber}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "inline-flex rounded-md border px-2 py-0.5 text-xs font-medium",
+                          VENUE_CONTRACT_STATUS_COLOR[c.status] ??
+                            "bg-zinc-500/20 text-zinc-300 border-zinc-500/30",
+                        )}
+                      >
+                        {VENUE_CONTRACT_STATUS_LABEL[c.status] ?? c.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="hidden text-xs text-muted-foreground xl:table-cell">
+                      {formatProposalDate(c.sentAt)}
+                    </TableCell>
+                    <TableCell className="hidden text-xs text-muted-foreground xl:table-cell">
+                      {formatProposalDate(c.signedAt)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

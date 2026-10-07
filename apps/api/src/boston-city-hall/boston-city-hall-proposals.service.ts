@@ -171,6 +171,7 @@ function toDetailDto(
     notes: string | null;
     terms: string | null;
     items: Array<Parameters<typeof toItemDto>[0]>;
+    venueContract?: { id: string; contractNumber: string } | null;
   },
 ): VenueProposalDto {
   const base = toListDto(row);
@@ -181,6 +182,8 @@ function toDetailDto(
     terms: row.terms,
     items: row.items.map(toItemDto),
     itemsCount: row.items.length,
+    contractId: row.venueContract?.id ?? null,
+    contractNumber: row.venueContract?.contractNumber ?? null,
   };
 }
 
@@ -458,7 +461,10 @@ export class BostonCityHallProposalsService {
     const tenantId = await this.resolveTenantId();
     const row = await this.prisma.venueProposal.findFirst({
       where: { id, tenantId },
-      include: { items: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] } },
+      include: {
+        items: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] },
+        venueContract: { select: { id: true, contractNumber: true } },
+      },
     });
     if (!row) throw new NotFoundException('Proposta não encontrada');
     return toDetailDto({ ...row, _count: { items: row.items.length } });

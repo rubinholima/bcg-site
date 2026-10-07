@@ -16,6 +16,8 @@ import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { BostonCityHallCatalogService } from './boston-city-hall-catalog.service';
+import { buildVenueContractPrintHtml } from './boston-city-hall-contract-print.util';
+import { BostonCityHallContractsService } from './boston-city-hall-contracts.service';
 import { BostonCityHallProposalPdfService } from './boston-city-hall-proposal-pdf.service';
 import { BostonCityHallProposalsService } from './boston-city-hall-proposals.service';
 import { BostonCityHallService } from './boston-city-hall.service';
@@ -29,6 +31,7 @@ export class BostonCityHallController {
     private readonly catalog: BostonCityHallCatalogService,
     private readonly proposals: BostonCityHallProposalsService,
     private readonly proposalPdf: BostonCityHallProposalPdfService,
+    private readonly contracts: BostonCityHallContractsService,
   ) {}
 
   @Get('overview')
@@ -406,6 +409,55 @@ export class BostonCityHallController {
     return new StreamableFile(pdf, {
       type: 'application/pdf',
       disposition: `attachment; filename="proposta-${safe}.pdf"`,
+    });
+  }
+
+  @Get('contracts')
+  listContracts(
+    @Query('q') q?: string,
+    @Query('status') status?: string,
+    @Query('updatedFrom') updatedFrom?: string,
+    @Query('updatedTo') updatedTo?: string,
+  ) {
+    return this.contracts.listContracts({ q, status, updatedFrom, updatedTo });
+  }
+
+  @Get('contracts/:id')
+  getContract(@Param('id') id: string) {
+    return this.contracts.getContract(id);
+  }
+
+  @Post('contracts')
+  createContract(@Body() body: { proposalId: string }) {
+    return this.contracts.createContractFromProposal(body);
+  }
+
+  @Patch('contracts/:id')
+  updateContract(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      status: string;
+      notes: string | null;
+      terms: string | null;
+      validFrom: string | null;
+      validUntil: string | null;
+    }>,
+  ) {
+    return this.contracts.updateContract(id, body);
+  }
+
+  @Get('contracts/:id/pdf')
+  @Header('Cache-Control', 'private, no-store, max-age=0')
+  @Header('Pragma', 'no-cache')
+  async downloadContractPdf(@Param('id') id: string) {
+    const contract = await this.contracts.getContract(id);
+    const html = buildVenueContractPrintHtml(contract);
+    const pdf = await this.proposalPdf.renderHtmlToPdf(html);
+    const safe = contract.contractNumber.replace(/[^\w-]/g, '');
+    return new StreamableFile(pdf, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="contrato-${safe}.pdf"`,
     });
   }
 }

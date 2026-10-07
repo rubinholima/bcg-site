@@ -297,4 +297,74 @@ export type VenueProposalDto = VenueProposalListDto & {
   notes: string | null;
   terms: string | null;
   items: VenueProposalItemDto[];
+  contractId: string | null;
+  contractNumber: string | null;
+};
+
+export const VENUE_CONTRACT_STATUSES = [
+  'draft',
+  'sent',
+  'signed',
+  'cancelled',
+  'expired',
+] as const;
+
+export type VenueContractStatus = (typeof VENUE_CONTRACT_STATUSES)[number];
+
+export const VENUE_CONTRACT_STATUS_LABEL: Record<VenueContractStatus, string> = {
+  draft: 'Rascunho',
+  sent: 'Enviado',
+  signed: 'Assinado',
+  cancelled: 'Cancelado',
+  expired: 'Expirado',
+};
+
+export const BCH_CONTRACT_NUMBER_PREFIX = 'BCH-C';
+
+export type VenueContractItemDto = {
+  id: string;
+  sourceProposalItemId: string | null;
+  name: string;
+  description: string | null;
+  quantity: string;
+  unitPrice: string;
+  totalPrice: string;
+  sortOrder: number;
+};
+
+export type VenueContractListDto = {
+  id: string;
+  tenantId: string;
+  contractNumber: string;
+  proposalId: string;
+  proposalNumber: string;
+  pipelineLeadId: string | null;
+  bookingId: string | null;
+  status: string;
+  title: string;
+  contactName: string;
+  contactEmail: string;
+  companyName: string | null;
+  eventType: string | null;
+  eventDate: string | null;
+  guestCount: number | null;
+  subtotal: string;
+  discount: string;
+  tax: string;
+  total: string;
+  sentAt: string | null;
+  signedAt: string | null;
+  updatedAt: string;
+  itemsCount: number;
+};
+
+export type VenueContractDto = VenueContractListDto & {
+  contactPhone: string | null;
+  notes: string | null;
+  terms: string | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  items: VenueContractItemDto[];
 };

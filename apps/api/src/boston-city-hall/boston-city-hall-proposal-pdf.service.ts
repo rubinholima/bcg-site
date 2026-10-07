@@ -17,8 +17,7 @@ export class BostonCityHallProposalPdfService implements OnModuleDestroy {
     return this.browserPromise;
   }
 
-  async renderProposalPdf(proposal: VenueProposalDto): Promise<Buffer> {
-    const html = buildVenueProposalPrintHtml(proposal);
+  async renderHtmlToPdf(html: string): Promise<Buffer> {
     let page: Awaited<ReturnType<Browser['newPage']>> | null = null;
     try {
       const browser = await this.getBrowser();
@@ -37,6 +36,11 @@ export class BostonCityHallProposalPdfService implements OnModuleDestroy {
     } finally {
       await page?.close().catch(() => undefined);
     }
+  }
+
+  async renderProposalPdf(proposal: VenueProposalDto): Promise<Buffer> {
+    const html = buildVenueProposalPrintHtml(proposal);
+    return this.renderHtmlToPdf(html);
   }
 
   async onModuleDestroy(): Promise<void> {

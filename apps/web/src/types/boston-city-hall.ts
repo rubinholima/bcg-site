@@ -269,6 +269,8 @@ export type VenueProposal = {
   id: string;
   tenantId: string;
   proposalNumber: string;
+  contractId?: string | null;
+  contractNumber?: string | null;
   pipelineLeadId: string | null;
   bookingId: string | null;
   status: string;
@@ -299,6 +301,75 @@ export function formatProposalDate(iso: string | null): string {
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 }
+
+export const VENUE_CONTRACT_STATUSES = [
+  "draft",
+  "sent",
+  "signed",
+  "cancelled",
+  "expired",
+] as const;
+
+export const VENUE_CONTRACT_STATUS_LABEL: Record<string, string> = {
+  draft: "Rascunho",
+  sent: "Enviado",
+  signed: "Assinado",
+  cancelled: "Cancelado",
+  expired: "Expirado",
+};
+
+export const VENUE_CONTRACT_STATUS_COLOR: Record<string, string> = {
+  draft: "bg-zinc-500/20 text-zinc-300 border-zinc-500/30",
+  sent: "bg-sky-500/20 text-sky-300 border-sky-500/30",
+  signed: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+  cancelled: "bg-zinc-500/15 text-zinc-400 border-zinc-500/25",
+  expired: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+};
+
+export type VenueContractItem = {
+  id: string;
+  sourceProposalItemId: string | null;
+  name: string;
+  description: string | null;
+  quantity: string;
+  unitPrice: string;
+  totalPrice: string;
+  sortOrder: number;
+};
+
+export type VenueContract = {
+  id: string;
+  tenantId: string;
+  contractNumber: string;
+  proposalId: string;
+  proposalNumber: string;
+  pipelineLeadId: string | null;
+  bookingId: string | null;
+  status: string;
+  title: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string | null;
+  companyName: string | null;
+  eventType: string | null;
+  eventDate: string | null;
+  guestCount: number | null;
+  subtotal: string;
+  discount: string;
+  tax: string;
+  total: string;
+  notes: string | null;
+  terms: string | null;
+  validFrom: string | null;
+  validUntil: string | null;
+  sentAt: string | null;
+  signedAt: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  itemsCount: number;
+  items: VenueContractItem[];
+};
 
 export function parseProposalDateInput(iso: string | null): string {
   if (!iso) return "";
