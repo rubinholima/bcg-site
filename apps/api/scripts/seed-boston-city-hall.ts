@@ -156,6 +156,7 @@ async function main() {
     await prisma.venueSpace.upsert({
       where: { venueSlug_slug: { venueSlug: TENANT_SLUG, slug: s.slug } },
       create: {
+        tenantId: tenant.id,
         venueSlug: TENANT_SLUG,
         name: s.name,
         slug: s.slug,
@@ -164,6 +165,7 @@ async function main() {
         sortOrder: s.sortOrder,
       },
       update: {
+        tenantId: tenant.id,
         name: s.name,
         capacityStanding: s.capacityStanding ?? null,
         capacitySeated: s.capacitySeated ?? null,

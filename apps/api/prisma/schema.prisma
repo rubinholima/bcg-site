@@ -218,6 +218,9 @@ model Tenant {
   analysisOpponentProfiles     AnalysisOpponentProfile[]
   analysisPreMatchPreparations AnalysisPreMatchPreparation[]
   analysisClipCollections      AnalysisClipCollection[]
+  venueSpaces                  VenueSpace[]
+  venueBookings                VenueBooking[]
+  venuePipelineLeads           VenuePipelineLead[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -2942,6 +2945,8 @@ model MarketingPost {
 // Boston City Hall — venue: espaços, reservas e pipeline comercial
 model VenueSpace {
   id               String         @id @default(cuid())
+  tenantId         String
+  tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   venueSlug        String         @default("boston-city-hall")
   name             String
   slug             String
@@ -2954,11 +2959,14 @@ model VenueSpace {
   bookings         VenueBooking[]
 
   @@unique([venueSlug, slug])
+  @@index([tenantId])
   @@index([venueSlug])
 }
 
 model VenueBooking {
   id             String              @id @default(cuid())
+  tenantId       String
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   venueSlug      String              @default("boston-city-hall")
   spaceId        String
   space          VenueSpace          @relation(fields: [spaceId], references: [id], onDelete: Restrict)
@@ -2977,6 +2985,7 @@ model VenueBooking {
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
 
+  @@index([tenantId])
   @@index([venueSlug, startAt])
   @@index([spaceId])
   @@index([status])
@@ -2984,6 +2993,8 @@ model VenueBooking {
 
 model VenuePipelineLead {
   id            String        @id @default(cuid())
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   venueSlug     String        @default("boston-city-hall")
   contactName   String
   contactEmail  String
@@ -3001,6 +3012,7 @@ model VenuePipelineLead {
   booking       VenueBooking?
   communicationConversations CommunicationConversation[]
 
+  @@index([tenantId])
   @@index([venueSlug, stage])
   @@index([createdAt])
 }

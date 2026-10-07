@@ -136,12 +136,29 @@ function assertPipelineStage(stage: string) {
 export class BostonCityHallService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Venue operacional usa o mesmo slug do Tenant (ex.: boston-city-hall). */
+  private async resolveVenueContext(venueSlug = BCH_VENUE_SLUG): Promise<{
+    tenantId: string;
+    venueSlug: string;
+  }> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { slug: venueSlug },
+      select: { id: true },
+    });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant do venue "${venueSlug}" não encontrado.`);
+    }
+    return { tenantId: tenant.id, venueSlug };
+  }
+
   async ensureDefaultSpaces(venueSlug = BCH_VENUE_SLUG) {
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
     for (const s of DEFAULT_VENUE_SPACES) {
       await this.prisma.venueSpace.upsert({
-        where: { venueSlug_slug: { venueSlug, slug: s.slug } },
+        where: { venueSlug_slug: { venueSlug: slug, slug: s.slug } },
         create: {
-          venueSlug,
+          tenantId,
+          venueSlug: slug,
           name: s.name,
           slug: s.slug,
           capacityStanding: s.capacityStanding ?? null,
@@ -149,6 +166,7 @@ export class BostonCityHallService {
           sortOrder: s.sortOrder,
         },
         update: {
+          tenantId,
           name: s.name,
           capacityStanding: s.capacityStanding ?? null,
           capacitySeated: s.capacitySeated ?? null,
@@ -160,30 +178,33 @@ export class BostonCityHallService {
 
   async getOverview(venueSlug = BCH_VENUE_SLUG): Promise<VenueOverviewDto> {
     await this.ensureDefaultSpaces(venueSlug);
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
     const [spacesCount, bookingsThisMonth, confirmedUpcoming, pipelineGroups] =
       await Promise.all([
-        this.prisma.venueSpace.count({ where: { venueSlug, active: true } }),
+        this.prisma.venueSpace.count({ where: { tenantId, venueSlug: slug, active: true } }),
         this.prisma.venueBooking.count({
           where: {
-            venueSlug,
+            tenantId,
+            venueSlug: slug,
             status: { not: 'cancelled' },
             startAt: { gte: monthStart, lte: monthEnd },
           },
         }),
         this.prisma.venueBooking.count({
           where: {
-            venueSlug,
+            tenantId,
+            venueSlug: slug,
             status: 'confirmed',
             startAt: { gte: now },
           },
         }),
         this.prisma.venuePipelineLead.groupBy({
           by: ['stage'],
-          where: { venueSlug },
+          where: { tenantId, venueSlug: slug },
           _count: { id: true },
         }),
       ]);
@@ -205,30 +226,32 @@ export class BostonCityHallService {
     ] = await Promise.all([
       this.prisma.venuePipelineLead.count({
         where: {
-          venueSlug,
+          tenantId,
+          venueSlug: slug,
           stage: { notIn: ['confirmado', 'perdido'] },
         },
       }),
-      this.prisma.venuePipelineLead.count({ where: { venueSlug } }),
+      this.prisma.venuePipelineLead.count({ where: { tenantId, venueSlug: slug } }),
       this.prisma.venuePipelineLead.count({
-        where: { venueSlug, createdAt: { gte: monthStart, lte: monthEnd } },
+        where: { tenantId, venueSlug: slug, createdAt: { gte: monthStart, lte: monthEnd } },
       }),
       this.prisma.venuePipelineLead.count({
-        where: { venueSlug, stage: 'confirmado' },
+        where: { tenantId, venueSlug: slug, stage: 'confirmado' },
       }),
       this.prisma.venueBooking.groupBy({
         by: ['status'],
-        where: { venueSlug },
+        where: { tenantId, venueSlug: slug },
         _count: { id: true },
       }),
       this.prisma.venuePipelineLead.groupBy({
         by: ['source'],
-        where: { venueSlug },
+        where: { tenantId, venueSlug: slug },
         _count: { id: true },
       }),
       this.prisma.venuePipelineLead.findMany({
         where: {
-          venueSlug,
+          tenantId,
+          venueSlug: slug,
           createdAt: {
             gte: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29),
           },
@@ -279,8 +302,9 @@ export class BostonCityHallService {
 
   async listSpaces(venueSlug = BCH_VENUE_SLUG): Promise<VenueSpaceDto[]> {
     await this.ensureDefaultSpaces(venueSlug);
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
     const rows = await this.prisma.venueSpace.findMany({
-      where: { venueSlug, active: true },
+      where: { tenantId, venueSlug: slug, active: true },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
     return rows.map(toSpaceDto);
@@ -294,7 +318,8 @@ export class BostonCityHallService {
     status?: string;
   }): Promise<VenueBookingDto[]> {
     const venueSlug = filters.venueSlug ?? BCH_VENUE_SLUG;
-    const where: Record<string, unknown> = { venueSlug };
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
+    const where: Record<string, unknown> = { tenantId, venueSlug: slug };
     if (filters.spaceId) where.spaceId = filters.spaceId;
     if (filters.status) where.status = filters.status;
     if (filters.from || filters.to) {
@@ -327,6 +352,7 @@ export class BostonCityHallService {
     venueSlug?: string;
   }): Promise<VenueBookingDto> {
     const venueSlug = dto.venueSlug ?? BCH_VENUE_SLUG;
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
     const status = dto.status ?? 'hold';
     assertBookingStatus(status);
     const startAt = parseDateTimeBrazil(dto.startAt);
@@ -336,13 +362,14 @@ export class BostonCityHallService {
     }
 
     const space = await this.prisma.venueSpace.findFirst({
-      where: { id: dto.spaceId, venueSlug, active: true },
+      where: { id: dto.spaceId, tenantId, venueSlug: slug, active: true },
     });
     if (!space) throw new NotFoundException('Espaço não encontrado');
 
     const row = await this.prisma.venueBooking.create({
       data: {
-        venueSlug,
+        tenantId,
+        venueSlug: slug,
         spaceId: dto.spaceId,
         title: dto.title.trim(),
         eventType: dto.eventType?.trim() || null,
@@ -377,12 +404,21 @@ export class BostonCityHallService {
       notes: string;
     }>,
   ): Promise<VenueBookingDto> {
-    const existing = await this.prisma.venueBooking.findUnique({ where: { id } });
+    const { tenantId } = await this.resolveVenueContext(BCH_VENUE_SLUG);
+    const existing = await this.prisma.venueBooking.findFirst({
+      where: { id, tenantId },
+    });
     if (!existing) throw new NotFoundException('Reserva não encontrada');
 
     if (dto.status) assertBookingStatus(dto.status);
     const data: Record<string, unknown> = {};
-    if (dto.spaceId !== undefined) data.spaceId = dto.spaceId;
+    if (dto.spaceId !== undefined) {
+      const space = await this.prisma.venueSpace.findFirst({
+        where: { id: dto.spaceId, tenantId, active: true },
+      });
+      if (!space) throw new NotFoundException('Espaço não encontrado');
+      data.spaceId = dto.spaceId;
+    }
     if (dto.title !== undefined) data.title = dto.title.trim();
     if (dto.eventType !== undefined) data.eventType = dto.eventType.trim() || null;
     if (dto.startAt !== undefined) data.startAt = parseDateTimeBrazil(dto.startAt);
@@ -403,14 +439,18 @@ export class BostonCityHallService {
   }
 
   async deleteBooking(id: string): Promise<void> {
-    const existing = await this.prisma.venueBooking.findUnique({ where: { id } });
+    const { tenantId } = await this.resolveVenueContext(BCH_VENUE_SLUG);
+    const existing = await this.prisma.venueBooking.findFirst({
+      where: { id, tenantId },
+    });
     if (!existing) throw new NotFoundException('Reserva não encontrada');
     await this.prisma.venueBooking.delete({ where: { id } });
   }
 
   async listPipeline(venueSlug = BCH_VENUE_SLUG): Promise<VenuePipelineLeadDto[]> {
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
     const rows = await this.prisma.venuePipelineLead.findMany({
-      where: { venueSlug },
+      where: { tenantId, venueSlug: slug },
       include: {
         booking: { include: { space: { select: { name: true } } } },
       },
@@ -434,12 +474,14 @@ export class BostonCityHallService {
     venueSlug?: string;
   }): Promise<VenuePipelineLeadDto> {
     const venueSlug = dto.venueSlug ?? BCH_VENUE_SLUG;
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
     const stage = dto.stage ?? 'lead';
     assertPipelineStage(stage);
 
     const row = await this.prisma.venuePipelineLead.create({
       data: {
-        venueSlug,
+        tenantId,
+        venueSlug: slug,
         contactName: dto.contactName.trim(),
         contactEmail: dto.contactEmail.trim(),
         contactPhone: dto.contactPhone?.trim() || null,
@@ -493,8 +535,9 @@ export class BostonCityHallService {
       notes: string;
     }>,
   ): Promise<VenuePipelineLeadDto> {
-    const existing = await this.prisma.venuePipelineLead.findUnique({
-      where: { id },
+    const { tenantId } = await this.resolveVenueContext(BCH_VENUE_SLUG);
+    const existing = await this.prisma.venuePipelineLead.findFirst({
+      where: { id, tenantId },
       include: { booking: true },
     });
     if (!existing) throw new NotFoundException('Lead não encontrado');
