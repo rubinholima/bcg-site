@@ -45,6 +45,7 @@ model User {
   learningEnrollments        LearningEnrollment[]
   learningQuizAttempts       LearningQuizAttempt[]
   eventTicketCheckins        EventTicketCheckin[]
+  eventComplimentaryAdmissionsCreated EventComplimentaryAdmission[] @relation("ComplimentaryCreatedBy")
 }
 
 model UserTenant {
@@ -236,6 +237,9 @@ model Tenant {
   eventTicketOrderNumberSeqs   EventTicketOrderNumberSeq[]
   eventTickets                 EventTicket[]
   eventTicketCheckins          EventTicketCheckin[]
+  eventComplimentaryAdmissions EventComplimentaryAdmission[]
+  eventTicketTables            EventTicketTable[]
+  eventTicketSeats             EventTicketSeat[]
   paymentProviderAccounts      PaymentProviderAccount[]
   payments                     Payment[]
   paymentAttempts              PaymentAttempt[]
@@ -968,6 +972,9 @@ model Event {
   ticketOrders EventTicketOrder[]
   eventTickets EventTicket[]
   eventTicketCheckins EventTicketCheckin[]
+  eventComplimentaryAdmissions EventComplimentaryAdmission[]
+  eventTicketTables   EventTicketTable[]
+  eventTicketSeats    EventTicketSeat[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -3156,6 +3163,7 @@ model EventTicketing {
   enabled   Boolean  @default(false)
   /// ISO 4217 — moeda comercial do evento (snapshot copiada no pedido).
   currency  String   @default("USD")
+  seatingEnabled Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -3183,6 +3191,7 @@ model EventTicketType {
   lots          EventTicketLot[]
   orderItems    EventTicketOrderItem[]
   eventTickets  EventTicket[]
+  complimentaryAdmissions EventComplimentaryAdmission[]
 
   @@index([tenantId, eventId])
   @@index([eventId, sortOrder])
@@ -3203,6 +3212,7 @@ model EventTicketLot {
   updatedAt    DateTime        @updatedAt
   orderItems   EventTicketOrderItem[]
   eventTickets EventTicket[]
+  complimentaryAdmissions EventComplimentaryAdmission[]
 
   @@index([ticketTypeId, sortOrder])
 }
@@ -3275,6 +3285,78 @@ model EventTicketOrderItem {
   @@index([ticketLotId])
 }
 
+/// Cortesia / guest list — admissão sem pedido pago.
+model EventComplimentaryAdmission {
+  id               String           @id @default(cuid())
+  tenantId         String
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  eventId          String
+  event            Event            @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  ticketTypeId     String
+  ticketType       EventTicketType  @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
+  ticketLotId      String?
+  ticketLot        EventTicketLot?  @relation(fields: [ticketLotId], references: [id], onDelete: SetNull)
+  guestName        String
+  guestEmail       String?
+  guestPhone       String?
+  quantity         Int
+  reason           String
+  notes            String?          @db.Text
+  status           String           @default("active")
+  createdByUserId  String?
+  createdBy        User?            @relation("ComplimentaryCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  cancelledAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  tickets          EventTicket[]
+
+  @@index([tenantId, eventId])
+  @@index([tenantId, status])
+}
+
+model EventTicketTable {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  name      String
+  capacity  Int
+  section   String?
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  seats     EventTicketSeat[]
+  tickets   EventTicket[]
+
+  @@unique([eventId, name])
+  @@index([tenantId, eventId])
+}
+
+model EventTicketSeat {
+  id         String            @id @default(cuid())
+  tenantId   String
+  tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  eventId    String
+  event      Event             @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  tableId    String?
+  table      EventTicketTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  section    String?
+  rowLabel   String?
+  seatLabel  String
+  active     Boolean           @default(true)
+  sortOrder  Int               @default(0)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  tickets    EventTicket[]
+
+  @@unique([eventId, seatLabel])
+  @@index([tenantId, eventId])
+  @@index([tableId])
+}
+
 /// Ingresso individual (credencial de admissão) — emitido após pedido confirmado.
 model EventTicket {
   id             String               @id @default(cuid())
@@ -3282,15 +3364,24 @@ model EventTicket {
   tenant         Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   eventId        String
   event          Event                @relation(fields: [eventId], references: [id], onDelete: Restrict)
-  orderId        String
-  order          EventTicketOrder     @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  orderItemId    String
-  orderItem      EventTicketOrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  orderId        String?
+  order          EventTicketOrder?    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  orderItemId    String?
+  orderItem      EventTicketOrderItem? @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
   ticketTypeId   String
   ticketType     EventTicketType      @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
   ticketLotId    String?
   ticketLot      EventTicketLot?      @relation(fields: [ticketLotId], references: [id], onDelete: SetNull)
+  admissionSource String              @default("paid_order")
+  complimentaryAdmissionId String?
+  complimentaryAdmission EventComplimentaryAdmission? @relation(fields: [complimentaryAdmissionId], references: [id], onDelete: Restrict)
+  tableId        String?
+  table          EventTicketTable?    @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  seatId         String?
+  seat           EventTicketSeat?     @relation(fields: [seatId], references: [id], onDelete: SetNull)
 
+  /// Chave idempotente global (pedido ou cortesia).
+  issuanceKey    String               @unique
   /// Posição 0..quantity-1 dentro do item (idempotência de emissão).
   lineIndex      Int
   /// Código operacional legível (ex.: BCH-26-XXXXXX).
@@ -3313,11 +3404,13 @@ model EventTicket {
   usedAt         DateTime?
   checkins       EventTicketCheckin[]
 
-  @@unique([orderItemId, lineIndex])
   @@unique([tenantId, ticketCode])
   @@index([tenantId, orderId])
   @@index([tenantId, eventId])
   @@index([tenantId, status])
+  @@index([complimentaryAdmissionId])
+  @@index([tableId])
+  @@index([seatId])
 }
 
 /// Auditoria de tentativas de check-in (aceitas e rejeitadas).

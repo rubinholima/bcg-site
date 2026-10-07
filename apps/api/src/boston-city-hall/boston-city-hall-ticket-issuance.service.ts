@@ -12,8 +12,6 @@ import {
 } from './boston-city-hall-event-ticket.constants';
 import {
   buildCup360TicketQrPayload,
-  generateHumanTicketCode,
-  generateQrToken,
   parseCup360TicketQrCredential,
 } from './boston-city-hall-ticket-credential.util';
 import {
@@ -21,6 +19,10 @@ import {
   lineIndexesToIssue,
   shouldIssueTicketsForOrder,
 } from './boston-city-hall-ticket-issuance';
+import {
+  createEventTicketInTx,
+  orderItemIssuanceKey,
+} from './boston-city-hall-event-ticket-issue.util';
 
 function moneyToString(value: Prisma.Decimal | number): string {
   if (value instanceof Prisma.Decimal) return value.toFixed(2);
@@ -124,9 +126,11 @@ export class BostonCityHallTicketIssuanceService {
           });
           const indexes = lineIndexesToIssue(item.quantity, existingCount);
           for (const lineIndex of indexes) {
-            const inserted = await this.createTicketWithRetry(tx, {
+            const outcome = await createEventTicketInTx(tx, {
               tenantId,
               eventId: order.eventId,
+              issuanceKey: orderItemIssuanceKey(item.id, lineIndex),
+              admissionSource: 'paid_order',
               orderId: order.id,
               orderItemId: item.id,
               ticketTypeId: item.ticketTypeId,
@@ -142,7 +146,7 @@ export class BostonCityHallTicketIssuanceService {
               holderEmail: order.customerEmail,
               issuedAt,
             });
-            if (inserted) created += 1;
+            if (outcome === 'created') created += 1;
           }
         }
       });
@@ -161,84 +165,6 @@ export class BostonCityHallTicketIssuanceService {
       );
     }
     return { tickets, created };
-  }
-
-  private async createTicketWithRetry(
-    tx: Prisma.TransactionClient,
-    data: {
-      tenantId: string;
-      eventId: string;
-      orderId: string;
-      orderItemId: string;
-      ticketTypeId: string;
-      ticketLotId: string | null;
-      lineIndex: number;
-      orderNumber: string;
-      ticketTypeName: string;
-      lotName: string | null;
-      unitPrice: Prisma.Decimal;
-      currency: string;
-      eventName: string;
-      holderName: string;
-      holderEmail: string;
-      issuedAt: Date;
-    },
-  ): Promise<boolean> {
-    const existing = await tx.eventTicket.findUnique({
-      where: {
-        orderItemId_lineIndex: {
-          orderItemId: data.orderItemId,
-          lineIndex: data.lineIndex,
-        },
-      },
-    });
-    if (existing) return false;
-
-    for (let attempt = 0; attempt < 8; attempt++) {
-      try {
-        await tx.eventTicket.create({
-          data: {
-            tenantId: data.tenantId,
-            eventId: data.eventId,
-            orderId: data.orderId,
-            orderItemId: data.orderItemId,
-            ticketTypeId: data.ticketTypeId,
-            ticketLotId: data.ticketLotId,
-            lineIndex: data.lineIndex,
-            ticketCode: generateHumanTicketCode(data.issuedAt),
-            qrToken: generateQrToken(),
-            status: 'valid',
-            orderNumber: data.orderNumber,
-            ticketTypeName: data.ticketTypeName,
-            lotName: data.lotName,
-            unitPrice: data.unitPrice,
-            currency: data.currency,
-            eventName: data.eventName,
-            holderName: data.holderName,
-            holderEmail: data.holderEmail,
-            issuedAt: data.issuedAt,
-          },
-        });
-        return true;
-      } catch (e) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError) {
-          if (e.code === 'P2002') {
-            const again = await tx.eventTicket.findUnique({
-              where: {
-                orderItemId_lineIndex: {
-                  orderItemId: data.orderItemId,
-                  lineIndex: data.lineIndex,
-                },
-              },
-            });
-            if (again) return false;
-            continue;
-          }
-        }
-        throw e;
-      }
-    }
-    return false;
   }
 
   async afterOrderConfirmation(

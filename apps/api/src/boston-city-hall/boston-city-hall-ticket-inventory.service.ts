@@ -48,13 +48,17 @@ export class BostonCityHallTicketInventoryService {
   ): Promise<TicketInventoryMaps> {
     const maps = this.emptyMaps();
 
-    const soldItems = await db.eventTicketOrderItem.findMany({
-      where: { order: { tenantId, eventId, status: 'confirmed' } },
-      select: { ticketTypeId: true, ticketLotId: true, quantity: true },
+    const consumedTickets = await db.eventTicket.findMany({
+      where: {
+        tenantId,
+        eventId,
+        status: { in: ['valid', 'used'] },
+      },
+      select: { ticketTypeId: true, ticketLotId: true },
     });
-    for (const row of soldItems) {
-      if (row.ticketLotId) add(maps.soldByLot, row.ticketLotId, row.quantity);
-      else add(maps.soldByType, row.ticketTypeId, row.quantity);
+    for (const row of consumedTickets) {
+      if (row.ticketLotId) add(maps.soldByLot, row.ticketLotId, 1);
+      else add(maps.soldByType, row.ticketTypeId, 1);
     }
 
     const heldItems = await db.eventTicketOrderItem.findMany({

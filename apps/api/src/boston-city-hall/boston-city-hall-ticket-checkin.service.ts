@@ -13,7 +13,12 @@ import {
   resolveCheckinResultForTicket,
 } from './boston-city-hall-ticket-checkin.util';
 
-type TicketRow = EventTicket;
+type TicketRow = EventTicket & {
+  table?: { name: string; section: string | null } | null;
+  seat?: { seatLabel: string; section: string | null } | null;
+};
+
+const TICKET_SEATING_INCLUDE = { table: true, seat: true } as const;
 
 @Injectable()
 export class BostonCityHallTicketCheckinService {
@@ -38,6 +43,10 @@ export class BostonCityHallTicketCheckinService {
       holderName: ticket.holderName,
       status: ticket.status,
       usedAt: ticket.usedAt?.toISOString() ?? null,
+      admissionSource: ticket.admissionSource,
+      tableName: ticket.table?.name ?? null,
+      seatLabel: ticket.seat?.seatLabel ?? null,
+      section: ticket.seat?.section ?? ticket.table?.section ?? null,
     };
   }
 
@@ -114,6 +123,7 @@ export class BostonCityHallTicketCheckinService {
     if (classified.kind === 'token') {
       ticket = await this.prisma.eventTicket.findFirst({
         where: { tenantId: input.tenantId, qrToken: classified.token },
+        include: TICKET_SEATING_INCLUDE,
       });
     } else {
       ticket = await this.prisma.eventTicket.findFirst({
@@ -121,6 +131,7 @@ export class BostonCityHallTicketCheckinService {
           tenantId: input.tenantId,
           ticketCode: { equals: classified.code, mode: 'insensitive' },
         },
+        include: TICKET_SEATING_INCLUDE,
       });
     }
 
@@ -205,7 +216,10 @@ export class BostonCityHallTicketCheckinService {
       });
 
       if (updated.count === 0) {
-        const fresh = await tx.eventTicket.findUnique({ where: { id: ticket!.id } });
+        const fresh = await tx.eventTicket.findUnique({
+          where: { id: ticket!.id },
+          include: TICKET_SEATING_INCLUDE,
+        });
         const result: EventTicketCheckinResult =
           fresh?.status === 'used'
             ? 'already_used'
@@ -238,7 +252,10 @@ export class BostonCityHallTicketCheckinService {
         };
       }
 
-      const usedTicket = await tx.eventTicket.findUnique({ where: { id: ticket!.id } });
+      const usedTicket = await tx.eventTicket.findUnique({
+        where: { id: ticket!.id },
+        include: TICKET_SEATING_INCLUDE,
+      });
       const row = await tx.eventTicketCheckin.create({
         data: {
           tenantId: input.tenantId,

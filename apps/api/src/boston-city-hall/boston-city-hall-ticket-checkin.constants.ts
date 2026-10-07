@@ -28,6 +28,10 @@ export type EventTicketCheckinResponseDto = {
     holderName: string;
     status: string;
     usedAt: string | null;
+    admissionSource?: string;
+    tableName?: string | null;
+    seatLabel?: string | null;
+    section?: string | null;
   } | null;
 };
 

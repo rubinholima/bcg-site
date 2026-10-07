@@ -32,6 +32,8 @@ import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-ord
 import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
 import { BostonCityHallTicketIssuanceService } from './boston-city-hall-ticket-issuance.service';
 import { BostonCityHallTicketCheckinService } from './boston-city-hall-ticket-checkin.service';
+import { BostonCityHallComplimentaryService } from './boston-city-hall-complimentary.service';
+import { BostonCityHallSeatingService } from './boston-city-hall-seating.service';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import type { PaymentMethod } from '../payments/payment-core.constants';
@@ -54,6 +56,8 @@ export class BostonCityHallController {
     private readonly ticketPayment: BostonCityHallTicketPaymentService,
     private readonly ticketIssuance: BostonCityHallTicketIssuanceService,
     private readonly ticketCheckin: BostonCityHallTicketCheckinService,
+    private readonly complimentary: BostonCityHallComplimentaryService,
+    private readonly seating: BostonCityHallSeatingService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
@@ -789,6 +793,120 @@ export class BostonCityHallController {
   listRecentCheckins(@Query('eventId') eventId: string, @Query('limit') limit?: string) {
     const n = limit ? Number.parseInt(limit, 10) : 40;
     return this.ticketCheckin.listRecentForVenue(eventId, Number.isFinite(n) ? n : 40);
+  }
+
+  @Get('ticketing/complimentary')
+  listComplimentary(
+    @Query('eventId') eventId: string,
+    @Query('q') q?: string,
+    @Query('reason') reason?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.complimentary.listGuestListForVenue({ eventId, q, reason, status });
+  }
+
+  @Get('ticketing/complimentary/:id')
+  getComplimentary(@Param('id') id: string) {
+    return this.complimentary.getAdmissionDetailForVenue(id);
+  }
+
+  @Post('ticketing/complimentary')
+  async createComplimentary(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body()
+    body: {
+      eventId: string;
+      ticketTypeId: string;
+      ticketLotId?: string | null;
+      guestName: string;
+      guestEmail?: string;
+      guestPhone?: string;
+      quantity: number;
+      reason: string;
+      notes?: string;
+    },
+  ) {
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.complimentary.createAndIssueForVenue(body, operatorUserId);
+  }
+
+  @Post('ticketing/complimentary/:id/issue')
+  issueComplimentary(@Param('id') id: string) {
+    return this.complimentary.issueComplimentaryForVenue(id);
+  }
+
+  @Post('ticketing/complimentary/:id/cancel-unused')
+  cancelComplimentaryUnused(@Param('id') id: string) {
+    return this.complimentary.cancelUnusedTicketsForVenue(id);
+  }
+
+  @Get('ticketing/guests/search')
+  searchGuests(@Query('eventId') eventId: string, @Query('q') q: string) {
+    return this.complimentary.searchGuestsForVenue(eventId, q ?? '');
+  }
+
+  @Get('ticketing/tables')
+  listTables(@Query('eventId') eventId: string) {
+    return this.seating.listTablesForVenue(eventId);
+  }
+
+  @Post('ticketing/tables')
+  createTable(
+    @Body()
+    body: {
+      eventId: string;
+      name: string;
+      capacity: number;
+      section?: string;
+      notes?: string;
+      sortOrder?: number;
+    },
+  ) {
+    return this.seating.createTableForVenue(body.eventId, body);
+  }
+
+  @Patch('ticketing/tables/:id')
+  updateTable(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      name: string;
+      capacity: number;
+      section: string | null;
+      active: boolean;
+      notes: string | null;
+      sortOrder: number;
+    }>,
+  ) {
+    return this.seating.updateTableForVenue(id, body);
+  }
+
+  @Get('ticketing/seats')
+  listSeats(@Query('eventId') eventId: string, @Query('tableId') tableId?: string) {
+    return this.seating.listSeatsForVenue(eventId, tableId);
+  }
+
+  @Post('ticketing/seats')
+  createSeat(
+    @Body()
+    body: {
+      eventId: string;
+      seatLabel: string;
+      tableId?: string | null;
+      section?: string;
+      rowLabel?: string;
+      sortOrder?: number;
+    },
+  ) {
+    return this.seating.createSeatForVenue(body.eventId, body);
+  }
+
+  @Patch('ticketing/tickets/:id/seating')
+  assignTicketSeating(
+    @Param('id') id: string,
+    @Body() body: { tableId?: string | null; seatId?: string | null },
+  ) {
+    return this.seating.assignTicketSeatingForVenue(id, body);
   }
 
   @Patch('ticketing/lots/:id')

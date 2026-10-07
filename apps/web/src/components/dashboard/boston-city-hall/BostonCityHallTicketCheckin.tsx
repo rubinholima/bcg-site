@@ -181,6 +181,12 @@ export function BostonCityHallTicketCheckin() {
                     {lastResult.ticket.lotName ? ` · ${lastResult.ticket.lotName}` : ""}
                   </p>
                   <p className="text-sm">{lastResult.ticket.holderName}</p>
+                  {lastResult.ticket.tableName || lastResult.ticket.seatLabel ? (
+                    <p className="text-sm">
+                      {lastResult.ticket.tableName ? `Mesa: ${lastResult.ticket.tableName}` : ""}
+                      {lastResult.ticket.seatLabel ? ` · Assento: ${lastResult.ticket.seatLabel}` : ""}
+                    </p>
+                  ) : null}
                   {lastResult.ticket.usedAt ? (
                     <p className="text-xs opacity-90">
                       Utilizado em: {new Date(lastResult.ticket.usedAt).toLocaleString("pt-BR")}

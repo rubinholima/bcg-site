@@ -771,8 +771,22 @@ export type EventTicketCheckinResponse = {
     holderName: string;
     status: string;
     usedAt: string | null;
+    tableName?: string | null;
+    seatLabel?: string | null;
+    section?: string | null;
   } | null;
 };
+
+export const COMPLIMENTARY_REASON_OPTIONS = [
+  { value: "guest", label: "Convidado" },
+  { value: "sponsor", label: "Patrocinador" },
+  { value: "staff", label: "Staff" },
+  { value: "artist", label: "Artista" },
+  { value: "partner", label: "Parceiro" },
+  { value: "press", label: "Imprensa" },
+  { value: "courtesy", label: "Cortesia" },
+  { value: "other", label: "Outro" },
+] as const;
 
 export type EventTicketCheckinRecentItem = {
   id: string;
