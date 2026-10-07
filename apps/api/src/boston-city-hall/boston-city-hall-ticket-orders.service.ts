@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BCH_VENUE_SLUG } from './boston-city-hall.constants';
@@ -364,20 +365,42 @@ export class BostonCityHallTicketOrdersService {
   async createOrder(dto: {
     eventId: string;
     customer: { name: string; email: string; phone?: string; document?: string };
-    items: Array<{ ticketTypeId: string; quantity: number | string }>;
+    items: Array<{
+      ticketTypeId: string;
+      ticketLotId?: string | null;
+      quantity: number | string;
+    }>;
+    checkoutIdempotencyKey?: string;
   }): Promise<EventTicketOrderDetailDto> {
     const tenantId = await this.resolveTenantId();
     const eventId = dto.eventId?.trim();
     if (!eventId) throw new BadRequestException('Evento é obrigatório.');
     if (!dto.items?.length) throw new BadRequestException('Informe ao menos um item.');
 
+    const idemKey = dto.checkoutIdempotencyKey?.trim();
+    if (idemKey) {
+      if (idemKey.length < 8 || idemKey.length > 128) {
+        throw new BadRequestException('Chave de idempotência inválida.');
+      }
+      const existing = await this.prisma.eventTicketOrder.findFirst({
+        where: { tenantId, checkoutIdempotencyKey: idemKey },
+      });
+      if (existing) {
+        await this.ticketPayment.ensurePaymentForOrder(existing.id, tenantId);
+        return this.getOrder(existing.id);
+      }
+    }
+
     const now = new Date();
     const holdExpiresAt = new Date(now.getTime() + BCH_TICKET_ORDER_HOLD_MINUTES * 60 * 1000);
+    const publicAccessToken = randomBytes(32).toString('base64url');
 
-    const aggregated = new Map<string, number>();
+    type AggLine = { typeId: string; lotId: string | null; qty: number };
+    const aggregated = new Map<string, AggLine>();
     for (const item of dto.items) {
       const typeId = item.ticketTypeId?.trim();
       if (!typeId) throw new BadRequestException('ticketTypeId inválido.');
+      const lotId = item.ticketLotId?.trim() || null;
       const qty =
         typeof item.quantity === 'number'
           ? item.quantity
@@ -385,10 +408,16 @@ export class BostonCityHallTicketOrdersService {
       if (!Number.isFinite(qty) || qty <= 0) {
         throw new BadRequestException('Quantidade inválida.');
       }
-      aggregated.set(typeId, (aggregated.get(typeId) ?? 0) + qty);
+      const key = `${typeId}\0${lotId ?? ''}`;
+      const prev = aggregated.get(key);
+      if (prev) {
+        prev.qty += qty;
+      } else {
+        aggregated.set(key, { typeId, lotId, qty });
+      }
     }
 
-    const typeIds = [...aggregated.keys()].sort();
+    const typeIds = [...new Set([...aggregated.values()].map((v) => v.typeId))].sort();
 
     const orderId = await this.prisma.$transaction(async (tx) => {
       const event = await tx.event.findFirst({
@@ -414,9 +443,17 @@ export class BostonCityHallTicketOrdersService {
       const resolved: ResolvedLine[] = [];
       const lotIdsToLock: string[] = [];
 
-      for (const type of types) {
-        const qtyRequested = aggregated.get(type.id)!;
-        if (type.purchaseLimit != null && qtyRequested > type.purchaseLimit) {
+      const qtyByType = new Map<string, number>();
+      for (const line of aggregated.values()) {
+        qtyByType.set(line.typeId, (qtyByType.get(line.typeId) ?? 0) + line.qty);
+      }
+
+      for (const line of aggregated.values()) {
+        const type = types.find((t) => t.id === line.typeId);
+        if (!type) throw new BadRequestException('Tipo de ingresso inválido para este evento.');
+        const qtyRequested = line.qty;
+        const totalForType = qtyByType.get(type.id) ?? qtyRequested;
+        if (type.purchaseLimit != null && totalForType > type.purchaseLimit) {
           throw new BadRequestException(
             `Limite por compra (${type.purchaseLimit}) excedido para "${type.name}".`,
           );
@@ -439,28 +476,44 @@ export class BostonCityHallTicketOrdersService {
           if (!picked) {
             throw new BadRequestException(`Sem lote vendável para "${type.name}".`);
           }
-          if (qtyRequested > picked.available) {
+          const lotId = line.lotId ?? picked.lot.id;
+          if (line.lotId && line.lotId !== picked.lot.id) {
             throw new BadRequestException(
-              `Disponibilidade insuficiente para "${type.name}" (restam ${picked.available}).`,
+              `Lote selecionado para "${type.name}" não está mais disponível.`,
             );
           }
-          lotIdsToLock.push(picked.lot.id);
-          const unit = picked.lot.price;
+          const lot = (type.lots as LotRow[]).find((l) => l.id === lotId);
+          if (!lot?.active) {
+            throw new BadRequestException(`Lote inválido para "${type.name}".`);
+          }
+          const sold = counters.soldForLot(lot.id);
+          const held = counters.heldForLot(lot.id);
+          const available = Math.max(0, lot.quantity - sold - held);
+          if (qtyRequested > available) {
+            throw new BadRequestException(
+              `Disponibilidade insuficiente para "${type.name}".`,
+            );
+          }
+          lotIdsToLock.push(lot.id);
+          const unit = lot.price;
           const total = unit.mul(qtyRequested).toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
           resolved.push({
             ticketTypeId: type.id,
-            ticketLotId: picked.lot.id,
+            ticketLotId: lot.id,
             ticketTypeName: type.name,
-            lotName: picked.lot.name,
+            lotName: lot.name,
             quantity: qtyRequested,
             unitPrice: unit,
             totalPrice: total,
           });
         } else {
+          if (line.lotId) {
+            throw new BadRequestException(`Tipo "${type.name}" não utiliza lotes.`);
+          }
           const avail = resolveTypeAvailability(typeRow, type.id, now, counters);
           if (qtyRequested > avail.available) {
             throw new BadRequestException(
-              `Disponibilidade insuficiente para "${type.name}" (restam ${avail.available}).`,
+              `Disponibilidade insuficiente para "${type.name}".`,
             );
           }
           if (type.price == null) {
@@ -515,6 +568,8 @@ export class BostonCityHallTicketOrdersService {
           total,
           currency,
           holdExpiresAt,
+          publicAccessToken,
+          checkoutIdempotencyKey: idemKey || null,
           items: {
             create: resolved.map((line) => ({
               ticketTypeId: line.ticketTypeId,
@@ -533,5 +588,19 @@ export class BostonCityHallTicketOrdersService {
 
     await this.ticketPayment.ensurePaymentForOrder(orderId, tenantId);
     return this.getOrder(orderId);
+  }
+
+  async getOrderByPublicAccessToken(token: string): Promise<EventTicketOrderDetailDto> {
+    const trimmed = token?.trim();
+    if (!trimmed || trimmed.length < 16) {
+      throw new NotFoundException('Pedido não encontrado.');
+    }
+    const tenantId = await this.resolveTenantId();
+    const row = await this.prisma.eventTicketOrder.findFirst({
+      where: { tenantId, publicAccessToken: trimmed },
+      select: { id: true },
+    });
+    if (!row) throw new NotFoundException('Pedido não encontrado.');
+    return this.getOrder(row.id);
   }
 }

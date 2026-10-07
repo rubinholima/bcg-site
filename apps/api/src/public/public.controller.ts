@@ -30,6 +30,10 @@ import { BostonTvService } from '../boston-tv/boston-tv.service';
 import { RegistrationInviteService } from '../registration-invite/registration-invite.service';
 import { BostonCityHallService } from '../boston-city-hall/boston-city-hall.service';
 import { BostonCityHallPublicEventsService } from '../boston-city-hall/boston-city-hall-public-events.service';
+import {
+  BostonCityHallPublicCheckoutService,
+  type CreatePublicCheckoutOrderBody,
+} from '../boston-city-hall/boston-city-hall-public-checkout.service';
 import { TenantPressService } from '../tenant-press/tenant-press.service';
 import { SubmitEmployeeRegistrationDto } from '../registration-invite/dto/submit-employee-registration.dto';
 import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-player-registration.dto';
@@ -50,6 +54,7 @@ export class PublicController {
     private readonly registrationInviteService: RegistrationInviteService,
     private readonly bostonCityHallService: BostonCityHallService,
     private readonly bostonCityHallPublicEvents: BostonCityHallPublicEventsService,
+    private readonly bostonCityHallPublicCheckout: BostonCityHallPublicCheckoutService,
     private readonly tenantPressService: TenantPressService,
     private readonly prepPse: PrepPseService,
   ) {}
@@ -114,6 +119,27 @@ export class PublicController {
       return null;
     }
     return event;
+  }
+
+  /** BCH Phase 3.2 — cria pedido público (hold + Payment pending). */
+  @Post('boston-city-hall/events/:slug/orders')
+  createBchPublicOrder(
+    @Param('slug') slug: string,
+    @Body() body: CreatePublicCheckoutOrderBody,
+    @Req() req: Request,
+  ) {
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip =
+      (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : '') ||
+      req.socket?.remoteAddress ||
+      'unknown';
+    return this.bostonCityHallPublicCheckout.createOrderForEventSlug(slug, body, ip);
+  }
+
+  /** Consulta segura de pedido pelo token opaco (não enumerável). */
+  @Get('boston-city-hall/orders/:token')
+  getBchPublicOrderByToken(@Param('token') token: string) {
+    return this.bostonCityHallPublicCheckout.getOrderByPublicToken(token);
   }
 
   /** Galeria por link compartilhado (temporário ou permanente) — para /eventos/gallery/[token]. Deve vir antes de events/:slug. */

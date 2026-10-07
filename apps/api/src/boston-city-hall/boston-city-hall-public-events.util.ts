@@ -77,6 +77,7 @@ export function toPublicTicketType(
         capacity: lot.quantity,
       });
       currentLot = {
+        ticketLotId: lot.id,
         name: lot.name,
         price: lot.price,
         salesStartAt: lot.salesStartAt,
@@ -89,10 +90,12 @@ export function toPublicTicketType(
   }
 
   return {
+    ticketTypeId: type.id,
     name: type.name,
     description: type.description,
     price: type.currentPrice,
     currency,
+    purchaseLimit: type.purchaseLimit,
     salesStartAt,
     salesEndAt,
     availability,

@@ -3252,6 +3252,10 @@ model EventTicketOrder {
   holdExpiresAt    DateTime?
   confirmedAt      DateTime?
   cancelledAt      DateTime?
+  /// Token opaco para consulta pública segura (URL do pedido).
+  publicAccessToken String?  @unique
+  /// Idempotência do checkout público (evita pedidos duplicados).
+  checkoutIdempotencyKey String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   items            EventTicketOrderItem[]
@@ -3259,6 +3263,7 @@ model EventTicketOrder {
   tickets          EventTicket[]
 
   @@unique([tenantId, orderNumber])
+  @@unique([tenantId, checkoutIdempotencyKey])
   @@index([tenantId, eventId])
   @@index([tenantId, status])
   @@index([tenantId, createdAt])

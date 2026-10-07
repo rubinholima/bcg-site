@@ -1,9 +1,11 @@
+import Link from "next/link";
 import {
   BCH_TICKET_AVAILABILITY_LABEL,
   formatBchEventDateTime,
   type BchPublicEventDetail,
   type BchPublicTicketAvailability,
 } from "@/lib/bch-public-events";
+import { canPurchaseTickets } from "@/lib/bch-public-checkout";
 
 function availabilityBadgeClass(state: BchPublicTicketAvailability): string {
   switch (state) {
@@ -38,9 +40,11 @@ function formatPrice(price: string | null, currency: string): string {
 export function BchPublicEventTickets({
   event,
   lang,
+  portfolioSlug = "boston-city-hall",
 }: {
   event: BchPublicEventDetail;
   lang: "pt" | "en";
+  portfolioSlug?: string;
 }) {
   if (!event.ticketing?.enabled || event.ticketing.types.length === 0) {
     return null;
@@ -48,14 +52,27 @@ export function BchPublicEventTickets({
 
   const heading = lang === "pt" ? "Ingressos" : "Tickets";
   const windowLabel = lang === "pt" ? "Período de venda" : "Sale window";
+  const buyLabel = lang === "pt" ? "Comprar ingressos" : "Buy tickets";
+  const checkoutHref = `/portfolio/${portfolioSlug}/events/${encodeURIComponent(event.slug)}/checkout?lang=${lang}`;
+  const showBuyCta = event.ticketing.types.some((t) => canPurchaseTickets(t.availability));
 
   return (
     <section className="mt-12 rounded-2xl border border-white/10 bg-zinc-900/60 p-6 sm:p-8">
-      <h2 className="text-xl font-semibold text-white sm:text-2xl">{heading}</h2>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-semibold text-white sm:text-2xl">{heading}</h2>
+        {showBuyCta && (
+          <Link
+            href={checkoutHref}
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-amber-500/90 px-5 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-amber-400"
+          >
+            {buyLabel}
+          </Link>
+        )}
+      </div>
       <ul className="mt-6 space-y-4">
         {event.ticketing.types.map((type) => (
           <li
-            key={`${type.name}-${type.price}`}
+            key={type.ticketTypeId}
             className="rounded-xl border border-white/10 bg-zinc-950/50 p-4 sm:p-5"
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

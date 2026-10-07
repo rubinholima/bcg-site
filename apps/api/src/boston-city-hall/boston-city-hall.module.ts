@@ -25,6 +25,7 @@ import { PaymentsModule } from '../payments/payments.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { HomeContentModule } from '../home-content/home-content.module';
 import { BostonCityHallPublicEventsService } from './boston-city-hall-public-events.service';
+import { BostonCityHallPublicCheckoutService } from './boston-city-hall-public-checkout.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule, FinanceiroModule, HomeContentModule],
@@ -49,6 +50,7 @@ import { BostonCityHallPublicEventsService } from './boston-city-hall-public-eve
     BostonCityHallSeatingService,
     BostonCityHallTicketReportsService,
     BostonCityHallPublicEventsService,
+    BostonCityHallPublicCheckoutService,
   ],
   exports: [
     BostonCityHallService,
@@ -69,6 +71,7 @@ import { BostonCityHallPublicEventsService } from './boston-city-hall-public-eve
     BostonCityHallSeatingService,
     BostonCityHallTicketReportsService,
     BostonCityHallPublicEventsService,
+    BostonCityHallPublicCheckoutService,
   ],
 })
 export class BostonCityHallModule {}

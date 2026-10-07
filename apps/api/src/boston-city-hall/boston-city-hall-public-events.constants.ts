@@ -49,6 +49,7 @@ export type BchPublicEventListItemDto = {
 };
 
 export type BchPublicTicketLotDto = {
+  ticketLotId: string;
   name: string;
   price: string;
   salesStartAt: string | null;
@@ -57,10 +58,12 @@ export type BchPublicTicketLotDto = {
 };
 
 export type BchPublicTicketTypeDto = {
+  ticketTypeId: string;
   name: string;
   description: string | null;
   price: string | null;
   currency: string;
+  purchaseLimit: number | null;
   salesStartAt: string | null;
   salesEndAt: string | null;
   availability: BchPublicTicketAvailability;
@@ -129,4 +132,12 @@ export function summarizeTicketAvailability(
 
 export function bchPublicDetailPath(slug: string): string {
   return `/portfolio/boston-city-hall/events/${encodeURIComponent(slug)}`;
+}
+
+export function bchPublicCheckoutPath(eventSlug: string): string {
+  return `/portfolio/boston-city-hall/events/${encodeURIComponent(eventSlug)}/checkout`;
+}
+
+export function bchPublicOrderPath(publicAccessToken: string): string {
+  return `/portfolio/boston-city-hall/orders/${encodeURIComponent(publicAccessToken)}`;
 }

@@ -22,14 +22,17 @@ export type BchPublicEventListItem = {
 };
 
 export type BchPublicTicketType = {
+  ticketTypeId: string;
   name: string;
   description: string | null;
   price: string | null;
   currency: string;
+  purchaseLimit: number | null;
   salesStartAt: string | null;
   salesEndAt: string | null;
   availability: BchPublicTicketAvailability;
   currentLot: {
+    ticketLotId: string;
     name: string;
     price: string;
     salesStartAt: string | null;
