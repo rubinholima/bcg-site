@@ -17,6 +17,7 @@ import {
   type VenueContractListDto,
   type VenueContractStatus,
 } from './boston-city-hall.constants';
+import { BostonCityHallFinanceService } from './boston-city-hall-finance.service';
 
 function moneyToString(value: Prisma.Decimal | number | string): string {
   if (value instanceof Prisma.Decimal) return value.toFixed(2);
@@ -150,6 +151,8 @@ function toDetailDto(
     createdAt: row.createdAt.toISOString(),
     items: row.items.map(toItemDto),
     itemsCount: row.items.length,
+    receivableId: null,
+    financialSummary: null,
   };
 }
 
@@ -161,11 +164,15 @@ const listInclude = {
 const detailInclude = {
   proposal: { select: { proposalNumber: true } },
   items: { orderBy: [{ sortOrder: 'asc' as const }, { id: 'asc' as const }] },
-} as const;
+  venueReceivable: { select: { id: true } },
+} satisfies Prisma.VenueContractInclude;
 
 @Injectable()
 export class BostonCityHallContractsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly finance: BostonCityHallFinanceService,
+  ) {}
 
   private async resolveTenantId(venueSlug = BCH_VENUE_SLUG): Promise<string> {
     const tenant = await this.prisma.tenant.findUnique({
@@ -245,7 +252,12 @@ export class BostonCityHallContractsService {
       include: detailInclude,
     });
     if (!row) throw new NotFoundException('Contrato não encontrado');
-    return toDetailDto({ ...row, _count: { items: row.items.length } });
+    const dto = toDetailDto({ ...row, _count: { items: row.items.length } });
+    dto.receivableId = row.venueReceivable?.id ?? null;
+    if (dto.receivableId) {
+      dto.financialSummary = await this.finance.getSummaryByContractId(id, tenantId);
+    }
+    return dto;
   }
 
   async createContractFromProposal(dto: { proposalId: string }): Promise<VenueContractDto> {

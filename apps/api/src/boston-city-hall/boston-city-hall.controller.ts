@@ -18,6 +18,7 @@ import { RequireModule } from '../auth/require-module.decorator';
 import { BostonCityHallCatalogService } from './boston-city-hall-catalog.service';
 import { buildVenueContractPrintHtml } from './boston-city-hall-contract-print.util';
 import { BostonCityHallContractsService } from './boston-city-hall-contracts.service';
+import { BostonCityHallFinanceService } from './boston-city-hall-finance.service';
 import { BostonCityHallProposalPdfService } from './boston-city-hall-proposal-pdf.service';
 import { BostonCityHallProposalsService } from './boston-city-hall-proposals.service';
 import { BostonCityHallService } from './boston-city-hall.service';
@@ -32,6 +33,7 @@ export class BostonCityHallController {
     private readonly proposals: BostonCityHallProposalsService,
     private readonly proposalPdf: BostonCityHallProposalPdfService,
     private readonly contracts: BostonCityHallContractsService,
+    private readonly finance: BostonCityHallFinanceService,
   ) {}
 
   @Get('overview')
@@ -459,5 +461,86 @@ export class BostonCityHallController {
       type: 'application/pdf',
       disposition: `attachment; filename="contrato-${safe}.pdf"`,
     });
+  }
+
+  @Get('finance/overview')
+  financeOverview() {
+    return this.finance.getOverviewKpisForVenue();
+  }
+
+  @Get('finance')
+  listFinance(
+    @Query('q') q?: string,
+    @Query('status') status?: string,
+    @Query('overdueOnly') overdueOnly?: string,
+    @Query('updatedFrom') updatedFrom?: string,
+  ) {
+    const statusFilter =
+      status === 'unpaid' ||
+      status === 'partial' ||
+      status === 'paid' ||
+      status === 'overdue' ||
+      status === 'cancelled'
+        ? status
+        : 'all';
+    return this.finance.listReceivables({
+      q,
+      status: statusFilter,
+      overdueOnly: overdueOnly === '1' || overdueOnly === 'true',
+      updatedFrom,
+    });
+  }
+
+  @Get('finance/:id')
+  getFinance(@Param('id') id: string) {
+    return this.finance.getReceivable(id);
+  }
+
+  @Post('finance')
+  createFinance(
+    @Body()
+    body: {
+      contractId: string;
+      notes?: string;
+      installments: Array<{
+        label?: string;
+        dueDate: string;
+        amount: number | string;
+        notes?: string;
+      }>;
+    },
+  ) {
+    return this.finance.createReceivable(body);
+  }
+
+  @Post('finance/:id/payments')
+  registerPayment(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      installmentId: string;
+      amount: number | string;
+      paidAt: string;
+      paymentMethod: string;
+      reference?: string;
+      notes?: string;
+    },
+  ) {
+    return this.finance.registerPayment(id, body);
+  }
+
+  @Patch('finance/:id/installments/:installmentId')
+  updateInstallment(
+    @Param('id') id: string,
+    @Param('installmentId') installmentId: string,
+    @Body()
+    body: Partial<{
+      label: string | null;
+      dueDate: string;
+      amount: number | string;
+      notes: string | null;
+    }>,
+  ) {
+    return this.finance.updateInstallment(id, installmentId, body);
   }
 }

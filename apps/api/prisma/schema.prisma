@@ -227,6 +227,8 @@ model Tenant {
   venueProposalNumberSeqs      VenueProposalNumberSeq[]
   venueContracts               VenueContract[]
   venueContractNumberSeqs      VenueContractNumberSeq[]
+  venueReceivables             VenueReceivable[]
+  venueReceivablePayments      VenueReceivablePayment[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -3202,6 +3204,7 @@ model VenueContract {
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   items          VenueContractItem[]
+  venueReceivable VenueReceivable?
 
   @@unique([tenantId, contractNumber])
   @@index([tenantId])
@@ -3226,6 +3229,62 @@ model VenueContractItem {
 
   @@index([contractId])
   @@index([sourceProposalItemId])
+}
+
+/// Conta a receber BCH — 1 por contrato assinado (obrigação financeira).
+model VenueReceivable {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  contractId     String   @unique
+  contract       VenueContract @relation(fields: [contractId], references: [id], onDelete: Restrict)
+  originalAmount Decimal  @db.Decimal(12, 2)
+  status         String   @default("active")
+  notes          String?  @db.Text
+  cancelledAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  installments   VenueReceivableInstallment[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([updatedAt])
+}
+
+model VenueReceivableInstallment {
+  id           String   @id @default(cuid())
+  receivableId String
+  receivable   VenueReceivable @relation(fields: [receivableId], references: [id], onDelete: Cascade)
+  sequence     Int
+  label        String?
+  dueDate      DateTime
+  amount       Decimal  @db.Decimal(12, 2)
+  notes        String?  @db.Text
+  cancelledAt  DateTime?
+  payments     VenueReceivablePayment[]
+
+  @@unique([receivableId, sequence])
+  @@index([receivableId])
+  @@index([dueDate])
+}
+
+model VenueReceivablePayment {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  installmentId String
+  installment   VenueReceivableInstallment @relation(fields: [installmentId], references: [id], onDelete: Restrict)
+  amount        Decimal  @db.Decimal(12, 2)
+  paidAt        DateTime
+  paymentMethod String
+  reference     String?
+  notes         String?  @db.Text
+  voidedAt      DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([installmentId])
+  @@index([paidAt])
 }
 
 // ─── Captação / Scouting ─────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ import type { VenueOverview } from "@/types/boston-city-hall";
 import {
   BOOKING_STATUS_COLOR,
   BOOKING_STATUS_LABEL,
+  formatCatalogMoney,
   LEAD_SOURCE_LABEL,
   PIPELINE_STAGE_CHART_COLOR,
   PIPELINE_STAGE_LABEL,
@@ -130,6 +131,20 @@ export function BostonCityHallOperationalDashboard({ overview }: Props) {
             <Link href={`${BCH}/espacos`}>Gerenciar espaços</Link>
           </Button>
         </KpiCard>
+        {overview.finance ? (
+          <>
+            <KpiCard
+              label="Saldo em aberto"
+              value={formatCatalogMoney(overview.finance.openBalance)}
+              tone="warning"
+            />
+            <KpiCard
+              label="Vencido"
+              value={formatCatalogMoney(overview.finance.overdueBalance)}
+              tone={Number.parseFloat(overview.finance.overdueBalance) > 0 ? "danger" : undefined}
+            />
+          </>
+        ) : null}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

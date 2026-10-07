@@ -122,6 +122,14 @@ export type VenueOverviewAttentionLead = Pick<
   'id' | 'contactName' | 'companyName' | 'stage' | 'source' | 'updatedAt'
 >;
 
+export type VenueFinanceOverviewKpis = {
+  totalContracted: string;
+  totalReceived: string;
+  openBalance: string;
+  overdueBalance: string;
+  dueSoonBalance: string;
+};
+
 export type VenueOverviewDto = {
   spacesCount: number;
   bookingsToday: number;
@@ -138,6 +146,7 @@ export type VenueOverviewDto = {
   leadsBySource: VenueOverviewSourcePoint[];
   upcomingBookings: VenueOverviewUpcomingBooking[];
   leadsNeedingAttention: VenueOverviewAttentionLead[];
+  finance?: VenueFinanceOverviewKpis;
 };
 
 export const DEFAULT_VENUE_SPACES: Array<{
@@ -367,4 +376,94 @@ export type VenueContractDto = VenueContractListDto & {
   cancelledAt: string | null;
   createdAt: string;
   items: VenueContractItemDto[];
+  receivableId: string | null;
+  financialSummary: VenueReceivableSummaryDto | null;
+};
+
+export const VENUE_PAYMENT_METHODS = [
+  'cash',
+  'check',
+  'zelle',
+  'card',
+  'ach',
+  'wire',
+  'other',
+] as const;
+
+export type VenuePaymentMethod = (typeof VENUE_PAYMENT_METHODS)[number];
+
+export const VENUE_PAYMENT_METHOD_LABEL: Record<VenuePaymentMethod, string> = {
+  cash: 'Dinheiro',
+  check: 'Cheque',
+  zelle: 'Zelle',
+  card: 'Cartão',
+  ach: 'ACH',
+  wire: 'Wire',
+  other: 'Outro',
+};
+
+export type VenueInstallmentComputedStatus =
+  | 'pending'
+  | 'partial'
+  | 'paid'
+  | 'overdue'
+  | 'cancelled';
+
+export type VenueReceivableComputedStatus =
+  | 'unpaid'
+  | 'partial'
+  | 'paid'
+  | 'overdue'
+  | 'cancelled';
+
+export type VenueReceivablePaymentDto = {
+  id: string;
+  installmentId: string;
+  amount: string;
+  paidAt: string;
+  paymentMethod: string;
+  reference: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+export type VenueReceivableInstallmentDto = {
+  id: string;
+  sequence: number;
+  label: string | null;
+  dueDate: string;
+  amount: string;
+  paidAmount: string;
+  balance: string;
+  status: VenueInstallmentComputedStatus;
+  notes: string | null;
+  payments: VenueReceivablePaymentDto[];
+};
+
+export type VenueReceivableSummaryDto = {
+  id: string;
+  contractId: string;
+  originalAmount: string;
+  totalPaid: string;
+  balance: string;
+  status: VenueReceivableComputedStatus;
+  nextDueDate: string | null;
+  nextDueAmount: string | null;
+};
+
+export type VenueReceivableListDto = VenueReceivableSummaryDto & {
+  contractNumber: string;
+  contactName: string;
+  companyName: string | null;
+  title: string;
+  eventDate: string | null;
+  bookingId: string | null;
+  updatedAt: string;
+};
+
+export type VenueReceivableDetailDto = VenueReceivableListDto & {
+  notes: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  installments: VenueReceivableInstallmentDto[];
 };

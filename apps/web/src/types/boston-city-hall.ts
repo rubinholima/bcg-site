@@ -89,6 +89,14 @@ export type VenueOverviewAttentionLead = {
   updatedAt: string;
 };
 
+export type VenueFinanceOverviewKpis = {
+  totalContracted: string;
+  totalReceived: string;
+  openBalance: string;
+  overdueBalance: string;
+  dueSoonBalance: string;
+};
+
 export type VenueOverview = {
   spacesCount: number;
   bookingsToday: number;
@@ -105,6 +113,110 @@ export type VenueOverview = {
   leadsBySource: VenueOverviewSourcePoint[];
   upcomingBookings: VenueOverviewUpcomingBooking[];
   leadsNeedingAttention: VenueOverviewAttentionLead[];
+  finance?: VenueFinanceOverviewKpis;
+};
+
+export const VENUE_PAYMENT_METHODS = [
+  "cash",
+  "check",
+  "zelle",
+  "card",
+  "ach",
+  "wire",
+  "other",
+] as const;
+
+export const VENUE_PAYMENT_METHOD_LABEL: Record<string, string> = {
+  cash: "Dinheiro",
+  check: "Cheque",
+  zelle: "Zelle",
+  card: "Cartão",
+  ach: "ACH",
+  wire: "Wire",
+  other: "Outro",
+};
+
+export type VenueReceivableSummary = {
+  id: string;
+  contractId: string;
+  originalAmount: string;
+  totalPaid: string;
+  balance: string;
+  status: string;
+  nextDueDate: string | null;
+  nextDueAmount: string | null;
+};
+
+export type VenueReceivablePayment = {
+  id: string;
+  installmentId: string;
+  amount: string;
+  paidAt: string;
+  paymentMethod: string;
+  reference: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+export type VenueReceivableInstallment = {
+  id: string;
+  sequence: number;
+  label: string | null;
+  dueDate: string;
+  amount: string;
+  paidAmount: string;
+  balance: string;
+  status: string;
+  notes: string | null;
+  payments: VenueReceivablePayment[];
+};
+
+export type VenueReceivable = VenueReceivableSummary & {
+  contractNumber: string;
+  contactName: string;
+  companyName: string | null;
+  title: string;
+  eventDate: string | null;
+  bookingId: string | null;
+  updatedAt: string;
+  notes: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  installments: VenueReceivableInstallment[];
+};
+
+export const RECEIVABLE_STATUS_LABEL: Record<string, string> = {
+  unpaid: "Em aberto",
+  partial: "Parcial",
+  paid: "Quitado",
+  overdue: "Vencido",
+  cancelled: "Cancelado",
+};
+
+export const RECEIVABLE_STATUS_COLOR: Record<string, string> = {
+  unpaid: "bg-amber-500/15 text-amber-200 ring-amber-500/30",
+  partial: "bg-sky-500/15 text-sky-200 ring-sky-500/30",
+  paid: "bg-emerald-500/15 text-emerald-200 ring-emerald-500/30",
+  overdue: "bg-red-500/15 text-red-200 ring-red-500/30",
+  cancelled: "bg-muted text-muted-foreground ring-border",
+};
+
+export type VenueReceivableListItem = VenueReceivableSummary & {
+  contractNumber: string;
+  contactName: string;
+  companyName: string | null;
+  title: string;
+  eventDate: string | null;
+  bookingId: string | null;
+  updatedAt: string;
+};
+
+export const INSTALLMENT_STATUS_LABEL: Record<string, string> = {
+  pending: "Pendente",
+  partial: "Parcial",
+  paid: "Pago",
+  overdue: "Vencido",
+  cancelled: "Cancelado",
 };
 
 export const LEAD_SOURCE_LABEL: Record<string, string> = {
@@ -369,6 +481,8 @@ export type VenueContract = {
   updatedAt: string;
   itemsCount: number;
   items: VenueContractItem[];
+  receivableId: string | null;
+  financialSummary: VenueReceivableSummary | null;
 };
 
 export function parseProposalDateInput(iso: string | null): string {

@@ -16,6 +16,7 @@ import {
   type VenuePipelineLeadDto,
   type VenueSpaceDto,
 } from './boston-city-hall.constants';
+import { BostonCityHallFinanceService } from './boston-city-hall-finance.service';
 
 function toSpaceDto(row: {
   id: string;
@@ -175,7 +176,10 @@ function bookingDatesValid(startAt: Date, endAt: Date): boolean {
 
 @Injectable()
 export class BostonCityHallService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly finance: BostonCityHallFinanceService,
+  ) {}
 
   /** Venue operacional usa o mesmo slug do Tenant (ex.: boston-city-hall). */
   private async resolveVenueContext(venueSlug = BCH_VENUE_SLUG): Promise<{
@@ -397,6 +401,13 @@ export class BostonCityHallService {
       updatedAt: row.updatedAt.toISOString(),
     }));
 
+    let finance: VenueOverviewDto['finance'];
+    try {
+      finance = await this.finance.getOverviewKpis(tenantId);
+    } catch {
+      finance = undefined;
+    }
+
     return {
       spacesCount,
       bookingsToday,
@@ -413,6 +424,7 @@ export class BostonCityHallService {
       leadsBySource,
       upcomingBookings,
       leadsNeedingAttention,
+      finance,
     };
   }
 
