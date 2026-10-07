@@ -33,18 +33,48 @@ import {
   type BchBarProduct,
   type BchBarSellingUnit,
   type BchBarSellingUnitPrice,
+  BCH_BAR_MOVEMENT_TYPE_LABEL,
+  BCH_BAR_MOVEMENT_TYPES,
   type BchBarStockBalance,
+  type BchBarStockMovement,
 } from "@/types/bch-bar";
 import { cn } from "@/lib/utils";
 
-type Tab = "products" | "selling" | "prices" | "inventory";
+type Tab = "products" | "selling" | "prices" | "inventory" | "movements";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "products", label: "Produtos" },
   { id: "selling", label: "Unidades de venda" },
   { id: "prices", label: "Preços" },
   { id: "inventory", label: "Estoque" },
+  { id: "movements", label: "Movimentações" },
 ];
+
+const MOVEMENT_TYPES_IN = BCH_BAR_MOVEMENT_TYPES.filter(
+  (t) =>
+    t === "purchase_receipt" ||
+    t === "return_in" ||
+    t === "manual_adjustment" ||
+    t === "physical_count_adjustment" ||
+    t === "other",
+);
+
+const MOVEMENT_TYPES_OUT = BCH_BAR_MOVEMENT_TYPES.filter(
+  (t) =>
+    t === "breakage" ||
+    t === "spill_waste" ||
+    t === "internal_use" ||
+    t === "tasting" ||
+    t === "complimentary" ||
+    t === "return_out" ||
+    t === "manual_adjustment" ||
+    t === "physical_count_adjustment" ||
+    t === "other",
+);
+
+function movementTypeLabel(t: string): string {
+  return BCH_BAR_MOVEMENT_TYPE_LABEL[t as keyof typeof BCH_BAR_MOVEMENT_TYPE_LABEL] ?? t;
+}
 
 function categoryLabel(cat: string): string {
   return BCH_BAR_CATEGORY_LABEL[cat as keyof typeof BCH_BAR_CATEGORY_LABEL] ?? cat;
@@ -64,6 +94,7 @@ export function BostonCityHallBar() {
   const [prices, setPrices] = useState<BchBarSellingUnitPrice[]>([]);
   const [locations, setLocations] = useState<BchBarInventoryLocation[]>([]);
   const [stock, setStock] = useState<BchBarStockBalance[]>([]);
+  const [movements, setMovements] = useState<BchBarStockMovement[]>([]);
 
   const [saving, setSaving] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -76,22 +107,32 @@ export function BostonCityHallBar() {
 
   const activeProducts = useMemo(() => products.filter((p) => p.active), [products]);
 
+  const reversedMovementIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const m of movements) {
+      if (m.reversesMovementId) ids.add(m.reversesMovementId);
+    }
+    return ids;
+  }, [movements]);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const [prodRes, suRes, prRes, locRes, invRes] = await Promise.all([
+      const [prodRes, suRes, prRes, locRes, invRes, movRes] = await Promise.all([
         api.get<BchBarProduct[]>("/boston-city-hall/bar/products"),
         api.get<BchBarSellingUnit[]>("/boston-city-hall/bar/selling-units"),
         api.get<BchBarSellingUnitPrice[]>("/boston-city-hall/bar/prices"),
         api.get<BchBarInventoryLocation[]>("/boston-city-hall/bar/locations"),
         api.get<BchBarStockBalance[]>("/boston-city-hall/bar/inventory"),
+        api.get<BchBarStockMovement[]>("/boston-city-hall/bar/inventory/movements?limit=200"),
       ]);
       setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
       setSellingUnits(Array.isArray(suRes.data) ? suRes.data : []);
       setPrices(Array.isArray(prRes.data) ? prRes.data : []);
       setLocations(Array.isArray(locRes.data) ? locRes.data : []);
       setStock(Array.isArray(invRes.data) ? invRes.data : []);
+      setMovements(Array.isArray(movRes.data) ? movRes.data : []);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Erro ao carregar bar.");
     } finally {
@@ -357,27 +398,120 @@ export function BostonCityHallBar() {
   const [invForm, setInvForm] = useState({
     productId: "",
     locationId: "",
-    quantityOnHand: "",
+    targetQuantity: "",
+    adjustmentKind: "manual_adjustment",
+  });
+
+  const [movDialog, setMovDialog] = useState(false);
+  const [movMode, setMovMode] = useState<"in" | "out" | "transfer">("in");
+  const [movForm, setMovForm] = useState({
+    productId: "",
+    locationId: "",
+    fromLocationId: "",
+    toLocationId: "",
+    movementType: "purchase_receipt",
+    quantity: "",
+    reason: "",
+    notes: "",
   });
 
   const openInvAdjust = (row?: BchBarStockBalance) => {
     setInvForm({
       productId: row?.productId ?? activeProducts[0]?.id ?? "",
       locationId: row?.locationId ?? locations[0]?.id ?? "",
-      quantityOnHand: row?.quantityOnHand ?? "0",
+      targetQuantity: row?.quantityOnHand ?? "0",
+      adjustmentKind: "manual_adjustment",
     });
     setDialogError(null);
     setInvDialog(true);
+  };
+
+  const openMovDialog = (mode: "in" | "out" | "transfer") => {
+    setMovMode(mode);
+    setMovForm({
+      productId: activeProducts[0]?.id ?? "",
+      locationId: locations[0]?.id ?? "",
+      fromLocationId: locations[0]?.id ?? "",
+      toLocationId: locations[1]?.id ?? locations[0]?.id ?? "",
+      movementType: mode === "in" ? "purchase_receipt" : mode === "out" ? "spill_waste" : "purchase_receipt",
+      quantity: "",
+      reason: "",
+      notes: "",
+    });
+    setDialogError(null);
+    setMovDialog(true);
+  };
+
+  const saveMovement = async () => {
+    setSaving(true);
+    setDialogError(null);
+    try {
+      if (movMode === "transfer") {
+        await api.post("/boston-city-hall/bar/inventory/transfer", {
+          productId: movForm.productId,
+          fromLocationId: movForm.fromLocationId,
+          toLocationId: movForm.toLocationId,
+          quantity: movForm.quantity.replace(",", "."),
+          notes: movForm.notes.trim() || undefined,
+        });
+      } else {
+        await api.post("/boston-city-hall/bar/inventory/movements", {
+          productId: movForm.productId,
+          locationId: movForm.locationId,
+          movementType: movForm.movementType,
+          direction: movMode,
+          quantity: movForm.quantity.replace(",", "."),
+          reason: movForm.reason.trim() || undefined,
+          notes: movForm.notes.trim() || undefined,
+        });
+      }
+      setMovDialog(false);
+      await loadAll();
+      setFeedback({
+        open: true,
+        title: "Salvo",
+        message: "Movimentação registrada.",
+        variant: "success",
+      });
+    } catch (e) {
+      setDialogError(e instanceof Error ? e.message : "Erro ao registrar movimentação.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const reverseMovement = async (movementId: string) => {
+    setSaving(true);
+    try {
+      await api.post(`/boston-city-hall/bar/inventory/movements/${movementId}/reverse`, {});
+      await loadAll();
+      setFeedback({
+        open: true,
+        title: "Estornado",
+        message: "Movimentação estornada com registro de reversão.",
+        variant: "success",
+      });
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível estornar.",
+        variant: "error",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const saveInventory = async () => {
     setSaving(true);
     setDialogError(null);
     try {
-      await api.put("/boston-city-hall/bar/inventory", {
+      await api.post("/boston-city-hall/bar/inventory/adjust", {
         productId: invForm.productId,
         locationId: invForm.locationId,
-        quantityOnHand: invForm.quantityOnHand.replace(",", "."),
+        targetQuantity: invForm.targetQuantity.replace(",", "."),
+        adjustmentKind: invForm.adjustmentKind,
       });
       setInvDialog(false);
       await loadAll();
@@ -616,9 +750,9 @@ export function BostonCityHallBar() {
                 <TableRow>
                   <TableHead>Local</TableHead>
                   <TableHead>Produto</TableHead>
-                  <TableHead>SKU</TableHead>
+                  <TableHead>Unidade</TableHead>
                   <TableHead>Quantidade</TableHead>
-                  <TableHead>Atualizado</TableHead>
+                  <TableHead>Última mov.</TableHead>
                   <TableHead className="w-[80px]" />
                 </TableRow>
               </TableHeader>
@@ -634,15 +768,102 @@ export function BostonCityHallBar() {
                     <TableRow key={row.id}>
                       <TableCell>{row.locationName}</TableCell>
                       <TableCell>{row.productName}</TableCell>
-                      <TableCell className="font-mono text-xs">{row.productSku}</TableCell>
+                      <TableCell>
+                        {row.physicalUnitType
+                          ? physicalLabel(row.physicalUnitType)
+                          : "—"}
+                      </TableCell>
                       <TableCell>{row.quantityOnHand}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {new Date(row.updatedAt).toLocaleString("pt-BR")}
+                        {row.latestMovementAt
+                          ? new Date(row.latestMovementAt).toLocaleString("pt-BR")
+                          : "—"}
                       </TableCell>
                       <TableCell>
                         <Button type="button" variant="ghost" size="icon" onClick={() => openInvAdjust(row)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === "movements" && (
+        <Card>
+          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-lg">Movimentações</CardTitle>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={() => openMovDialog("in")}>
+                Entrada
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => openMovDialog("out")}>
+                Saída
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => openMovDialog("transfer")}
+                disabled={locations.length < 2}
+              >
+                Transferir
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Entrada/Saída</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Local</TableHead>
+                  <TableHead>Qtd</TableHead>
+                  <TableHead>Operador</TableHead>
+                  <TableHead className="w-[100px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {movements.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                      Nenhuma movimentação.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  movements.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                        {new Date(m.createdAt).toLocaleString("pt-BR")}
+                      </TableCell>
+                      <TableCell className="text-sm">{movementTypeLabel(m.movementType)}</TableCell>
+                      <TableCell>{m.direction === "in" ? "Entrada" : "Saída"}</TableCell>
+                      <TableCell>{m.productName}</TableCell>
+                      <TableCell>{m.locationName}</TableCell>
+                      <TableCell>{m.quantity}</TableCell>
+                      <TableCell className="text-xs">{m.createdByName ?? "—"}</TableCell>
+                      <TableCell>
+                        {m.reversesMovementId ? (
+                          <span className="text-xs text-muted-foreground">Estorno</span>
+                        ) : reversedMovementIds.has(m.id) ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs"
+                            disabled={saving}
+                            onClick={() => void reverseMovement(m.id)}
+                          >
+                            Estornar
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -974,11 +1195,22 @@ export function BostonCityHallBar() {
               </NativeSelect>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="bch-inv-qty">Quantidade em mãos</Label>
+              <Label htmlFor="bch-inv-kind">Motivo do ajuste</Label>
+              <NativeSelect
+                id="bch-inv-kind"
+                value={invForm.adjustmentKind}
+                onChange={(e) => setInvForm((f) => ({ ...f, adjustmentKind: e.target.value }))}
+              >
+                <option value="manual_adjustment">Ajuste manual</option>
+                <option value="physical_count_adjustment">Contagem física</option>
+              </NativeSelect>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="bch-inv-qty">Quantidade alvo</Label>
               <Input
                 id="bch-inv-qty"
-                value={invForm.quantityOnHand}
-                onChange={(e) => setInvForm((f) => ({ ...f, quantityOnHand: e.target.value }))}
+                value={invForm.targetQuantity}
+                onChange={(e) => setInvForm((f) => ({ ...f, targetQuantity: e.target.value }))}
               />
             </div>
             {dialogError && invDialog ? (
@@ -991,6 +1223,132 @@ export function BostonCityHallBar() {
             </Button>
             <Button type="button" disabled={saving} onClick={() => void saveInventory()}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={movDialog} onOpenChange={setMovDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {movMode === "in" ? "Entrada de estoque" : movMode === "out" ? "Saída de estoque" : "Transferência"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="bch-mov-prod">Produto</Label>
+              <NativeSelect
+                id="bch-mov-prod"
+                value={movForm.productId}
+                onChange={(e) => setMovForm((f) => ({ ...f, productId: e.target.value }))}
+              >
+                {activeProducts.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            {movMode === "transfer" ? (
+              <>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="bch-mov-from">Origem</Label>
+                  <NativeSelect
+                    id="bch-mov-from"
+                    value={movForm.fromLocationId}
+                    onChange={(e) => setMovForm((f) => ({ ...f, fromLocationId: e.target.value }))}
+                  >
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="bch-mov-to">Destino</Label>
+                  <NativeSelect
+                    id="bch-mov-to"
+                    value={movForm.toLocationId}
+                    onChange={(e) => setMovForm((f) => ({ ...f, toLocationId: e.target.value }))}
+                  >
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="bch-mov-loc">Local</Label>
+                  <NativeSelect
+                    id="bch-mov-loc"
+                    value={movForm.locationId}
+                    onChange={(e) => setMovForm((f) => ({ ...f, locationId: e.target.value }))}
+                  >
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="bch-mov-type">Tipo</Label>
+                  <NativeSelect
+                    id="bch-mov-type"
+                    value={movForm.movementType}
+                    onChange={(e) => setMovForm((f) => ({ ...f, movementType: e.target.value }))}
+                  >
+                    {(movMode === "in" ? MOVEMENT_TYPES_IN : MOVEMENT_TYPES_OUT).map((t) => (
+                      <option key={t} value={t}>
+                        {movementTypeLabel(t)}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+              </>
+            )}
+            <div className="grid gap-1.5">
+              <Label htmlFor="bch-mov-qty">Quantidade</Label>
+              <Input
+                id="bch-mov-qty"
+                value={movForm.quantity}
+                onChange={(e) => setMovForm((f) => ({ ...f, quantity: e.target.value }))}
+              />
+            </div>
+            {movMode !== "transfer" ? (
+              <div className="grid gap-1.5">
+                <Label htmlFor="bch-mov-reason">Motivo</Label>
+                <Input
+                  id="bch-mov-reason"
+                  value={movForm.reason}
+                  onChange={(e) => setMovForm((f) => ({ ...f, reason: e.target.value }))}
+                />
+              </div>
+            ) : null}
+            <div className="grid gap-1.5">
+              <Label htmlFor="bch-mov-notes">Observações</Label>
+              <Input
+                id="bch-mov-notes"
+                value={movForm.notes}
+                onChange={(e) => setMovForm((f) => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
+            {dialogError && movDialog ? (
+              <p className="text-sm text-destructive">{dialogError}</p>
+            ) : null}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setMovDialog(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" disabled={saving} onClick={() => void saveMovement()}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Registrar"}
             </Button>
           </DialogFooter>
         </DialogContent>

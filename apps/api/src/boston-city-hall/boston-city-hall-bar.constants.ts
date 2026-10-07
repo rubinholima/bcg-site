@@ -88,9 +88,86 @@ export type BchBarStockBalanceDto = {
   productId: string;
   productSku: string;
   productName: string;
+  physicalUnitType: string | null;
   locationId: string;
   locationCode: string;
   locationName: string;
   quantityOnHand: string;
   updatedAt: string;
+  latestMovementAt: string | null;
+};
+
+export const BCH_BAR_STOCK_DIRECTIONS = ['in', 'out'] as const;
+export type BchBarStockDirection = (typeof BCH_BAR_STOCK_DIRECTIONS)[number];
+
+export const BCH_BAR_MOVEMENT_TYPES = [
+  'initial_balance',
+  'purchase_receipt',
+  'transfer_in',
+  'transfer_out',
+  'sale',
+  'complimentary',
+  'breakage',
+  'spill_waste',
+  'internal_use',
+  'tasting',
+  'return_in',
+  'return_out',
+  'physical_count_adjustment',
+  'manual_adjustment',
+  'other',
+] as const;
+export type BchBarMovementType = (typeof BCH_BAR_MOVEMENT_TYPES)[number];
+
+/** Direção fixa por tipo; `both` = entrada ou saída explícita na API. */
+export const BCH_BAR_MOVEMENT_TYPE_DIRECTION: Record<
+  BchBarMovementType,
+  'in' | 'out' | 'both'
+> = {
+  initial_balance: 'in',
+  purchase_receipt: 'in',
+  transfer_in: 'in',
+  transfer_out: 'out',
+  sale: 'out',
+  complimentary: 'out',
+  breakage: 'out',
+  spill_waste: 'out',
+  internal_use: 'out',
+  tasting: 'out',
+  return_in: 'in',
+  return_out: 'out',
+  physical_count_adjustment: 'both',
+  manual_adjustment: 'both',
+  other: 'both',
+};
+
+export const BCH_BAR_STOCK_ADJUSTMENT_KINDS = [
+  'initial_balance',
+  'manual_adjustment',
+  'physical_count_adjustment',
+] as const;
+
+export type BchBarStockMovementDto = {
+  id: string;
+  productId: string;
+  productSku: string;
+  productName: string;
+  locationId: string;
+  locationCode: string;
+  locationName: string;
+  movementType: string;
+  direction: BchBarStockDirection;
+  quantity: string;
+  unitBasis: string | null;
+  eventId: string | null;
+  referenceType: string | null;
+  referenceId: string | null;
+  sourceKey: string | null;
+  transferGroupId: string | null;
+  reversesMovementId: string | null;
+  reason: string | null;
+  notes: string | null;
+  createdByUserId: string | null;
+  createdByName: string | null;
+  createdAt: string;
 };

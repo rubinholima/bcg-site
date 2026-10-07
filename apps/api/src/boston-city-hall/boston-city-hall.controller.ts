@@ -8,7 +8,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   StreamableFile,
   Req,
@@ -41,6 +40,7 @@ import { TenantAccessService } from '../auth/tenant-access.service';
 import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import type { PaymentMethod } from '../payments/payment-core.constants';
 import { BostonCityHallBarService } from './boston-city-hall-bar.service';
+import { BostonCityHallBarStockService } from './boston-city-hall-bar-stock.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -65,6 +65,7 @@ export class BostonCityHallController {
     private readonly ticketReports: BostonCityHallTicketReportsService,
     private readonly tenantAccess: TenantAccessService,
     private readonly bar: BostonCityHallBarService,
+    private readonly barStock: BostonCityHallBarStockService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -1156,23 +1157,138 @@ export class BostonCityHallController {
   @Get('bar/inventory')
   async listBarInventory(@Query('locationId') locationId?: string) {
     const tenantId = await this.bchTenantId();
-    return this.bar.listStockBalances(tenantId, locationId?.trim() || undefined);
+    return this.barStock.listStockBalances(tenantId, locationId?.trim() || undefined);
   }
 
-  @Put('bar/inventory')
-  async upsertBarInventory(
-    @Body()
-    body: { productId?: string; locationId?: string; quantityOnHand?: number | string },
+  @Get('bar/inventory/movements')
+  async listBarInventoryMovements(
+    @Query('productId') productId?: string,
+    @Query('locationId') locationId?: string,
+    @Query('movementType') movementType?: string,
+    @Query('eventId') eventId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('limit') limit?: string,
   ) {
     const tenantId = await this.bchTenantId();
-    if (!body.productId || !body.locationId || body.quantityOnHand == null) {
-      throw new BadRequestException('productId, locationId e quantityOnHand são obrigatórios.');
+    return this.barStock.listMovements(tenantId, {
+      productId: productId?.trim() || undefined,
+      locationId: locationId?.trim() || undefined,
+      movementType: movementType?.trim() || undefined,
+      eventId: eventId?.trim() || undefined,
+      from: from?.trim() || undefined,
+      to: to?.trim() || undefined,
+      limit: limit ? Number.parseInt(limit, 10) : undefined,
+    });
+  }
+
+  @Post('bar/inventory/movements')
+  async createBarInventoryMovement(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body()
+    body: {
+      productId?: string;
+      locationId?: string;
+      movementType?: string;
+      direction?: string;
+      quantity?: number | string;
+      eventId?: string | null;
+      referenceType?: string | null;
+      referenceId?: string | null;
+      sourceKey?: string | null;
+      reason?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.productId || !body.locationId || !body.movementType || !body.direction || body.quantity == null) {
+      throw new BadRequestException('productId, locationId, movementType, direction e quantity são obrigatórios.');
     }
-    return this.bar.upsertStockBalance(tenantId, {
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barStock.createManualMovement(tenantId, operatorUserId, {
       productId: body.productId,
       locationId: body.locationId,
-      quantityOnHand: body.quantityOnHand,
+      movementType: body.movementType,
+      direction: body.direction,
+      quantity: body.quantity,
+      eventId: body.eventId,
+      referenceType: body.referenceType,
+      referenceId: body.referenceId,
+      sourceKey: body.sourceKey,
+      reason: body.reason,
+      notes: body.notes,
     });
+  }
+
+  @Post('bar/inventory/adjust')
+  async adjustBarInventory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body()
+    body: {
+      productId?: string;
+      locationId?: string;
+      targetQuantity?: number | string;
+      adjustmentKind?: string;
+      reason?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.productId || !body.locationId || body.targetQuantity == null) {
+      throw new BadRequestException('productId, locationId e targetQuantity são obrigatórios.');
+    }
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barStock.adjustStockToTarget(tenantId, operatorUserId, {
+      productId: body.productId,
+      locationId: body.locationId,
+      targetQuantity: body.targetQuantity,
+      adjustmentKind: body.adjustmentKind,
+      reason: body.reason,
+      notes: body.notes,
+    });
+  }
+
+  @Post('bar/inventory/transfer')
+  async transferBarInventory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body()
+    body: {
+      productId?: string;
+      fromLocationId?: string;
+      toLocationId?: string;
+      quantity?: number | string;
+      eventId?: string | null;
+      sourceKey?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.productId || !body.fromLocationId || !body.toLocationId || body.quantity == null) {
+      throw new BadRequestException(
+        'productId, fromLocationId, toLocationId e quantity são obrigatórios.',
+      );
+    }
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barStock.transferStock(tenantId, operatorUserId, {
+      productId: body.productId,
+      fromLocationId: body.fromLocationId,
+      toLocationId: body.toLocationId,
+      quantity: body.quantity,
+      eventId: body.eventId,
+      sourceKey: body.sourceKey,
+      notes: body.notes,
+    });
+  }
+
+  @Post('bar/inventory/movements/:id/reverse')
+  async reverseBarInventoryMovement(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { notes?: string | null },
+  ) {
+    const tenantId = await this.bchTenantId();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barStock.reverseMovement(tenantId, operatorUserId, id, body.notes);
   }
 
   @Patch('ticketing/lots/:id')

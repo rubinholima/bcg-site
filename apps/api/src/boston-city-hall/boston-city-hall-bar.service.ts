@@ -17,7 +17,6 @@ import {
   type BchBarProductDto,
   type BchBarSellingUnitDto,
   type BchBarSellingUnitPriceDto,
-  type BchBarStockBalanceDto,
 } from './boston-city-hall-bar.constants';
 
 function decStr(v: Prisma.Decimal | number): string {
@@ -598,74 +597,6 @@ export class BostonCityHallBarService {
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
     return rows.map((r) => this.toLocationDto(r));
-  }
-
-  async listStockBalances(tenantId: string, locationId?: string): Promise<BchBarStockBalanceDto[]> {
-    const rows = await this.prisma.bchBarStockBalance.findMany({
-      where: { tenantId, ...(locationId ? { locationId } : {}) },
-      include: {
-        product: { select: { sku: true, name: true } },
-        location: { select: { code: true, name: true } },
-      },
-      orderBy: [{ locationId: 'asc' }, { product: { name: 'asc' } }],
-    });
-    return rows.map((r) => ({
-      id: r.id,
-      productId: r.productId,
-      productSku: r.product.sku,
-      productName: r.product.name,
-      locationId: r.locationId,
-      locationCode: r.location.code,
-      locationName: r.location.name,
-      quantityOnHand: decStr(r.quantityOnHand),
-      updatedAt: r.updatedAt.toISOString(),
-    }));
-  }
-
-  async upsertStockBalance(
-    tenantId: string,
-    input: { productId: string; locationId: string; quantityOnHand: number | string },
-  ): Promise<BchBarStockBalanceDto> {
-    const product = await this.prisma.bchBarProduct.findFirst({
-      where: { id: input.productId, tenantId },
-    });
-    if (!product) throw new NotFoundException('Produto não encontrado.');
-    const location = await this.prisma.bchBarInventoryLocation.findFirst({
-      where: { id: input.locationId, tenantId },
-    });
-    if (!location) throw new NotFoundException('Local não encontrado.');
-    if (!location.active) throw new BadRequestException('Local inativo.');
-
-    const qty = parseNonNegativeDecimal(input.quantityOnHand, 'Quantidade');
-
-    const row = await this.prisma.bchBarStockBalance.upsert({
-      where: {
-        productId_locationId: { productId: input.productId, locationId: input.locationId },
-      },
-      create: {
-        tenantId,
-        productId: input.productId,
-        locationId: input.locationId,
-        quantityOnHand: qty,
-      },
-      update: { quantityOnHand: qty },
-      include: {
-        product: { select: { sku: true, name: true } },
-        location: { select: { code: true, name: true } },
-      },
-    });
-
-    return {
-      id: row.id,
-      productId: row.productId,
-      productSku: row.product.sku,
-      productName: row.product.name,
-      locationId: row.locationId,
-      locationCode: row.location.code,
-      locationName: row.location.name,
-      quantityOnHand: decStr(row.quantityOnHand),
-      updatedAt: row.updatedAt.toISOString(),
-    };
   }
 
   /** Catálogo ativo para futuro POS — produto, unidade de venda e preço ativos. */

@@ -219,32 +219,6 @@ describe('BostonCityHallBarService', () => {
     expect(price.currency).toBe('BRL');
   });
 
-  it('6 — saldo por local', async () => {
-    prisma.bchBarProduct.findFirst.mockResolvedValue({ id: 'p1', tenantId: tenantA });
-    prisma.bchBarInventoryLocation.findFirst.mockResolvedValue({
-      id: 'loc1',
-      tenantId: tenantA,
-      active: true,
-    });
-    prisma.bchBarStockBalance.upsert.mockResolvedValue({
-      id: 'bal1',
-      tenantId: tenantA,
-      productId: 'p1',
-      locationId: 'loc1',
-      quantityOnHand: new Prisma.Decimal(12),
-      updatedAt: new Date(),
-      product: { sku: 'B1', name: 'Beer' },
-      location: { code: 'central', name: 'Central' },
-    });
-    const bal = await service.upsertStockBalance(tenantA, {
-      productId: 'p1',
-      locationId: 'loc1',
-      quantityOnHand: 12,
-    });
-    expect(bal.locationCode).toBe('central');
-    expect(bal.quantityOnHand).toBe('12');
-  });
-
   it('7 — produto inativo bloqueia nova unidade de venda', async () => {
     prisma.bchBarProduct.findFirst.mockResolvedValue({ id: 'p1', active: false });
     await expect(

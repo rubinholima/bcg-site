@@ -98,9 +98,72 @@ export type BchBarStockBalance = {
   productId: string;
   productSku: string;
   productName: string;
+  physicalUnitType: string | null;
   locationId: string;
   locationCode: string;
   locationName: string;
   quantityOnHand: string;
   updatedAt: string;
+  latestMovementAt: string | null;
+};
+
+export const BCH_BAR_MOVEMENT_TYPES = [
+  "initial_balance",
+  "purchase_receipt",
+  "transfer_in",
+  "transfer_out",
+  "sale",
+  "complimentary",
+  "breakage",
+  "spill_waste",
+  "internal_use",
+  "tasting",
+  "return_in",
+  "return_out",
+  "physical_count_adjustment",
+  "manual_adjustment",
+  "other",
+] as const;
+
+export const BCH_BAR_MOVEMENT_TYPE_LABEL: Record<(typeof BCH_BAR_MOVEMENT_TYPES)[number], string> = {
+  initial_balance: "Saldo inicial",
+  purchase_receipt: "Entrada (compra)",
+  transfer_in: "Transferência (entrada)",
+  transfer_out: "Transferência (saída)",
+  sale: "Venda",
+  complimentary: "Cortesia",
+  breakage: "Quebra",
+  spill_waste: "Desperdício",
+  internal_use: "Uso interno",
+  tasting: "Degustação",
+  return_in: "Devolução (entrada)",
+  return_out: "Devolução (saída)",
+  physical_count_adjustment: "Ajuste de contagem",
+  manual_adjustment: "Ajuste manual",
+  other: "Outro",
+};
+
+export type BchBarStockMovement = {
+  id: string;
+  productId: string;
+  productSku: string;
+  productName: string;
+  locationId: string;
+  locationCode: string;
+  locationName: string;
+  movementType: string;
+  direction: "in" | "out";
+  quantity: string;
+  unitBasis: string | null;
+  eventId: string | null;
+  referenceType: string | null;
+  referenceId: string | null;
+  sourceKey: string | null;
+  transferGroupId: string | null;
+  reversesMovementId: string | null;
+  reason: string | null;
+  notes: string | null;
+  createdByUserId: string | null;
+  createdByName: string | null;
+  createdAt: string;
 };

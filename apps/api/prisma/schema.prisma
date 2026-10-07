@@ -46,6 +46,7 @@ model User {
   learningQuizAttempts       LearningQuizAttempt[]
   eventTicketCheckins        EventTicketCheckin[]
   eventComplimentaryAdmissionsCreated EventComplimentaryAdmission[] @relation("ComplimentaryCreatedBy")
+  bchBarStockMovementsCreated         BchBarStockMovement[]         @relation("BchBarStockMovementCreatedBy")
 }
 
 model UserTenant {
@@ -253,6 +254,7 @@ model Tenant {
   bchBarSellingUnitPrices      BchBarSellingUnitPrice[]
   bchBarInventoryLocations     BchBarInventoryLocation[]
   bchBarStockBalances          BchBarStockBalance[]
+  bchBarStockMovements         BchBarStockMovement[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -984,6 +986,7 @@ model Event {
   eventTicketTables   EventTicketTable[]
   eventTicketSeats    EventTicketSeat[]
   bchBarInventoryLocations BchBarInventoryLocation[]
+  bchBarStockMovements     BchBarStockMovement[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -3500,6 +3503,7 @@ model BchBarProduct {
   physicalUnit BchBarProductPhysicalUnit?
   sellingUnits BchBarSellingUnit[]
   stockBalances BchBarStockBalance[]
+  stockMovements BchBarStockMovement[]
 
   @@unique([tenantId, sku])
   @@index([tenantId, active])
@@ -3583,6 +3587,7 @@ model BchBarInventoryLocation {
   updatedAt DateTime @updatedAt
 
   stockBalances BchBarStockBalance[]
+  stockMovements BchBarStockMovement[]
 
   @@unique([tenantId, code])
   @@index([tenantId, kind])
@@ -3603,6 +3608,43 @@ model BchBarStockBalance {
 
   @@unique([productId, locationId])
   @@index([tenantId, locationId])
+}
+
+/// Ledger de movimentações de estoque BCH (append-only).
+model BchBarStockMovement {
+  id                 String                  @id @default(cuid())
+  tenantId           String
+  tenant             Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  productId          String
+  product            BchBarProduct           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  locationId         String
+  location           BchBarInventoryLocation @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  movementType       String
+  /// in | out — quantity is always positive
+  direction          String
+  quantity           Decimal                 @db.Decimal(14, 4)
+  unitBasis          String?
+  eventId            String?
+  event              Event?                  @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  referenceType      String?
+  referenceId        String?
+  sourceKey          String?
+  transferGroupId    String?
+  reversesMovementId String?
+  reversesMovement   BchBarStockMovement?    @relation("BchBarMovementReversal", fields: [reversesMovementId], references: [id], onDelete: Restrict)
+  reversedBy         BchBarStockMovement[]   @relation("BchBarMovementReversal")
+  reason             String?
+  notes              String?                 @db.Text
+  createdByUserId    String?
+  createdBy          User?                   @relation("BchBarStockMovementCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt          DateTime                @default(now())
+
+  @@unique([tenantId, sourceKey])
+  @@index([tenantId, locationId, createdAt])
+  @@index([tenantId, productId, createdAt])
+  @@index([tenantId, movementType, createdAt])
+  @@index([tenantId, eventId])
+  @@index([transferGroupId])
 }
 
 model VenueBooking {
