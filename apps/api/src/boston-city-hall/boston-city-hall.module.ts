@@ -7,6 +7,7 @@ import { BostonCityHallCatalogService } from './boston-city-hall-catalog.service
 import { BostonCityHallContractsService } from './boston-city-hall-contracts.service';
 import { BostonCityHallFinanceService } from './boston-city-hall-finance.service';
 import { BostonCityHallOperationsService } from './boston-city-hall-operations.service';
+import { BostonCityHallBookingEventService } from './boston-city-hall-booking-event.service';
 import { BostonCityHallProposalPdfService } from './boston-city-hall-proposal-pdf.service';
 import { BostonCityHallProposalsService } from './boston-city-hall-proposals.service';
 import { BostonCityHallService } from './boston-city-hall.service';
@@ -22,6 +23,7 @@ import { BostonCityHallService } from './boston-city-hall.service';
     BostonCityHallContractsService,
     BostonCityHallFinanceService,
     BostonCityHallOperationsService,
+    BostonCityHallBookingEventService,
   ],
   exports: [
     BostonCityHallService,
@@ -30,6 +32,7 @@ import { BostonCityHallService } from './boston-city-hall.service';
     BostonCityHallContractsService,
     BostonCityHallFinanceService,
     BostonCityHallOperationsService,
+    BostonCityHallBookingEventService,
   ],
 })
 export class BostonCityHallModule {}

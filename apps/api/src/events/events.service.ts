@@ -129,7 +129,7 @@ function toDto(row: {
   };
 }
 
-function slugify(s: string): string {
+export function slugifyEventSlug(s: string): string {
   return s
     .toLowerCase()
     .trim()
@@ -138,7 +138,7 @@ function slugify(s: string): string {
 }
 
 /** Página inicial do evento (header, hero, texto, galeria, footer) — mesmo formato que Page.content */
-function buildDefaultEventPageContent(eventName: string): EventContentDto {
+export function buildDefaultEventPageContent(eventName: string): EventContentDto {
   const tid = Date.now();
   return {
     theme: {
@@ -348,7 +348,7 @@ export class EventsService {
   }
 
   async create(dto: CreateEventDto): Promise<EventResponseDto> {
-    const slug = slugify(dto.slug) || slugify(dto.name) || 'evento';
+    const slug = slugifyEventSlug(dto.slug) || slugifyEventSlug(dto.name) || 'evento';
     const existing = await this.prisma.event.findUnique({ where: { slug } });
     if (existing) {
       throw new ConflictException(
@@ -401,7 +401,7 @@ export class EventsService {
     const current = await this.findOne(id);
     const data: Record<string, unknown> = {};
     if (dto.slug !== undefined && dto.slug !== null) {
-      const newSlug = slugify(dto.slug) || slugify(current.name) || 'evento';
+      const newSlug = slugifyEventSlug(dto.slug) || slugifyEventSlug(current.name) || 'evento';
       if (newSlug !== current.slug) {
         const clash = await this.prisma.event.findFirst({
           where: { slug: newSlug, NOT: { id } },

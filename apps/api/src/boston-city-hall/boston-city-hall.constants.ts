@@ -55,6 +55,31 @@ export type VenueBookingLeadSummary = {
   stage: string;
 };
 
+export type VenueBookingEventRefDto = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+};
+
+export type VenueBookingEventPrefillDto = {
+  bookingId: string;
+  eligible: boolean;
+  bookingStatus: string;
+  existingEvent: VenueBookingEventRefDto | null;
+  suggested: {
+    name: string;
+    slug: string;
+    category: 'football' | 'other';
+    organizer: 'tenant';
+    tenantId: string;
+    startDate: string;
+    endDate: string;
+    locationLabel: string;
+    description: string;
+  };
+};
+
 export type VenueBookingDto = {
   id: string;
   venueSlug: string;
@@ -72,6 +97,7 @@ export type VenueBookingDto = {
   contactPhone: string | null;
   guestCount: number | null;
   notes: string | null;
+  event: VenueBookingEventRefDto | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -511,6 +537,7 @@ export type VenueOperationLeadRef = {
 
 export type VenueOperationListItemDto = {
   bookingId: string;
+  event: VenueBookingEventRefDto | null;
   title: string;
   eventType: string | null;
   startAt: string;
@@ -535,6 +562,7 @@ export type VenueOperationDetailDto = VenueOperationListItemDto & {
   notes: string | null;
   lead: VenueOperationLeadRef | null;
   proposals: VenueOperationProposalRef[];
+  event: VenueBookingEventRefDto | null;
   updatedAt: string;
 };
 

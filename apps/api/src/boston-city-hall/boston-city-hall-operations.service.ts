@@ -56,6 +56,7 @@ const operationBookingInclude = {
     },
     orderBy: [{ updatedAt: 'desc' as const }],
   },
+  event: { select: { id: true, name: true, slug: true, status: true } },
   venueContracts: {
     select: {
       id: true,
@@ -200,6 +201,14 @@ export class BostonCityHallOperationsService {
 
     return {
       bookingId: row.id,
+      event: row.event
+        ? {
+            id: row.event.id,
+            name: row.event.name,
+            slug: row.event.slug,
+            status: row.event.status,
+          }
+        : null,
       title: row.title,
       eventType: row.eventType,
       startAt: row.startAt.toISOString(),

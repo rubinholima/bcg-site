@@ -793,6 +793,7 @@ model Event {
   photos       EventPhoto[]
   galleryLinks EventGalleryLink[]
   uploadTokens EventUploadToken[]
+  venueBooking VenueBooking?
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -2990,6 +2991,8 @@ model VenueBooking {
   contactPhone   String?
   guestCount     Int?
   notes          String?             @db.Text
+  eventId        String?             @unique
+  event          Event?              @relation(fields: [eventId], references: [id], onDelete: SetNull)
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   venueProposals VenueProposal[]
@@ -2999,6 +3002,7 @@ model VenueBooking {
   @@index([venueSlug, startAt])
   @@index([spaceId])
   @@index([status])
+  @@index([eventId])
 }
 
 model VenuePipelineLead {

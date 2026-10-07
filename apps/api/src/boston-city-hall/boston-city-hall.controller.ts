@@ -20,6 +20,7 @@ import { buildVenueContractPrintHtml } from './boston-city-hall-contract-print.u
 import { BostonCityHallContractsService } from './boston-city-hall-contracts.service';
 import { BostonCityHallFinanceService } from './boston-city-hall-finance.service';
 import { BostonCityHallOperationsService } from './boston-city-hall-operations.service';
+import { BostonCityHallBookingEventService } from './boston-city-hall-booking-event.service';
 import { BostonCityHallProposalPdfService } from './boston-city-hall-proposal-pdf.service';
 import { BostonCityHallProposalsService } from './boston-city-hall-proposals.service';
 import { BostonCityHallService } from './boston-city-hall.service';
@@ -36,6 +37,7 @@ export class BostonCityHallController {
     private readonly contracts: BostonCityHallContractsService,
     private readonly finance: BostonCityHallFinanceService,
     private readonly operations: BostonCityHallOperationsService,
+    private readonly bookingEvent: BostonCityHallBookingEventService,
   ) {}
 
   @Get('overview')
@@ -95,6 +97,32 @@ export class BostonCityHallController {
     @Query('sort') sort?: string,
   ) {
     return this.service.listBookings({ from, to, spaceId, status, q, eventType, sort });
+  }
+
+  @Get('bookings/:id/event-prefill')
+  getBookingEventPrefill(@Param('id') id: string) {
+    return this.bookingEvent.getPrefill(id);
+  }
+
+  @Post('bookings/:id/event')
+  createBookingEvent(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      name: string;
+      slug?: string;
+      description?: string;
+      startDate?: string;
+      endDate?: string;
+      category?: 'football' | 'other';
+    },
+  ) {
+    return this.bookingEvent.createEventFromBooking(id, body);
+  }
+
+  @Post('bookings/:id/event-link')
+  linkBookingEvent(@Param('id') id: string, @Body() body: { eventId: string }) {
+    return this.bookingEvent.linkExistingEvent(id, body);
   }
 
   @Get('bookings/:id')

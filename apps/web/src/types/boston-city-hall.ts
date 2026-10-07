@@ -18,6 +18,37 @@ export type VenueBookingLeadSummary = {
   stage: string;
 };
 
+export type VenueBookingEventRef = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+};
+
+export type VenueBookingEventPrefill = {
+  bookingId: string;
+  eligible: boolean;
+  bookingStatus: string;
+  existingEvent: VenueBookingEventRef | null;
+  suggested: {
+    name: string;
+    slug: string;
+    category: "football" | "other";
+    organizer: "tenant";
+    tenantId: string;
+    startDate: string;
+    endDate: string;
+    locationLabel: string;
+    description: string;
+  };
+};
+
+export const EVENT_STATUS_LABEL: Record<string, string> = {
+  draft: "Rascunho",
+  published: "Publicado",
+  archived: "Arquivado",
+};
+
 export type VenueBooking = {
   id: string;
   venueSlug: string;
@@ -35,6 +66,7 @@ export type VenueBooking = {
   contactPhone: string | null;
   guestCount: number | null;
   notes: string | null;
+  event: VenueBookingEventRef | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -129,6 +161,7 @@ export type VenueOperationLeadRef = {
 
 export type VenueOperationListItem = {
   bookingId: string;
+  event: VenueBookingEventRef | null;
   title: string;
   eventType: string | null;
   startAt: string;

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { BostonCityHallBookingEventDialog } from "@/components/dashboard/boston-city-hall/BostonCityHallBookingEventDialog";
 import type { VenueOperationDetail } from "@/types/boston-city-hall";
 import {
   BOOKING_STATUS_LABEL,
@@ -22,6 +23,7 @@ import {
   RECEIVABLE_STATUS_COLOR,
   RECEIVABLE_STATUS_LABEL,
   BOOKING_STATUSES,
+  EVENT_STATUS_LABEL,
   VENUE_CONTRACT_STATUS_LABEL,
   VENUE_PROPOSAL_STATUS_LABEL,
 } from "@/types/boston-city-hall";
@@ -54,6 +56,7 @@ export function BostonCityHallOperationDetail({ bookingId }: { bookingId: string
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [notes, setNotes] = useState("");
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
 
   const [feedback, setFeedback] = useState<{
     open: boolean;
@@ -323,6 +326,42 @@ export function BostonCityHallOperationDetail({ bookingId }: { bookingId: string
       </Card>
 
       <Card>
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+          <CardTitle>Evento (plataforma)</CardTitle>
+          {row.event ? (
+            <Button variant="outline" size="sm" asChild className="min-h-[44px]">
+              <Link href={`/dashboard/eventos/${row.event.id}/editar`}>Abrir evento</Link>
+            </Button>
+          ) : row.bookingStatus === "confirmed" ? (
+            <Button
+              type="button"
+              size="sm"
+              className="min-h-[44px]"
+              onClick={() => setEventDialogOpen(true)}
+            >
+              Criar evento
+            </Button>
+          ) : null}
+        </CardHeader>
+        <CardContent className="text-sm">
+          {row.event ? (
+            <>
+              <p className="font-medium">{row.event.name}</p>
+              <p className="text-muted-foreground">
+                {EVENT_STATUS_LABEL[row.event.status] ?? row.event.status} · slug {row.event.slug}
+              </p>
+            </>
+          ) : (
+            <p className="text-muted-foreground">
+              {row.bookingStatus === "confirmed"
+                ? "Evento ainda não criado para esta reserva."
+                : "Criação disponível apenas para reserva confirmada."}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader>
           <CardTitle>Financeiro</CardTitle>
         </CardHeader>
@@ -411,6 +450,29 @@ export function BostonCityHallOperationDetail({ bookingId }: { bookingId: string
           </div>
         </CardContent>
       </Card>
+
+      <BostonCityHallBookingEventDialog
+        bookingId={bookingId}
+        open={eventDialogOpen}
+        onOpenChange={setEventDialogOpen}
+        onCreated={async () => {
+          await load();
+          setFeedback({
+            open: true,
+            title: "Evento criado",
+            message: "Rascunho vinculado. Publique em Eventos quando estiver pronto.",
+            variant: "success",
+          });
+        }}
+        onError={(message) =>
+          setFeedback({
+            open: true,
+            title: "Evento",
+            message,
+            variant: "error",
+          })
+        }
+      />
 
       <FeedbackModal
         open={feedback.open}

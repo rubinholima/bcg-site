@@ -32,6 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { BostonCityHallBookingEventDialog } from "@/components/dashboard/boston-city-hall/BostonCityHallBookingEventDialog";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +57,7 @@ import {
   BOOKING_STATUSES,
   BOOKING_STATUS_COLOR,
   BOOKING_STATUS_LABEL,
+  EVENT_STATUS_LABEL,
 } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
 import { BCH_BASE } from "./boston-city-hall-lead-shared";
@@ -152,6 +154,7 @@ export function BostonCityHallReservas() {
   const [formError, setFormError] = useState<string | null>(null);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
 
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
@@ -560,6 +563,39 @@ export function BostonCityHallReservas() {
             ) : null}
           </div>
 
+          {form.id ? (
+            <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+              <p className="text-sm font-medium">Evento (plataforma)</p>
+              {selectedBooking?.event ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedBooking.event.name} ·{" "}
+                    {EVENT_STATUS_LABEL[selectedBooking.event.status] ??
+                      selectedBooking.event.status}
+                  </p>
+                  <Button variant="outline" size="sm" className="min-h-[40px]" asChild>
+                    <Link href={`/dashboard/eventos/${selectedBooking.event.id}/editar`}>
+                      Abrir evento
+                    </Link>
+                  </Button>
+                </>
+              ) : form.status === "confirmed" ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="min-h-[40px]"
+                  onClick={() => setEventDialogOpen(true)}
+                >
+                  Criar evento a partir da reserva
+                </Button>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Disponível quando a reserva estiver confirmada.
+                </p>
+              )}
+            </div>
+          ) : null}
+
           <div className="grid gap-3 py-1">
             <div className="grid gap-1.5">
               <Label htmlFor="b-space">Espaço *</Label>
@@ -741,6 +777,31 @@ export function BostonCityHallReservas() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {form.id ? (
+        <BostonCityHallBookingEventDialog
+          bookingId={form.id}
+          open={eventDialogOpen}
+          onOpenChange={setEventDialogOpen}
+          onCreated={async () => {
+            await loadBookings();
+            setFeedback({
+              open: true,
+              title: "Evento criado",
+              message: "Rascunho vinculado à reserva. Publique depois em Eventos.",
+              variant: "success",
+            });
+          }}
+          onError={(message) =>
+            setFeedback({
+              open: true,
+              title: "Evento",
+              message,
+              variant: "error",
+            })
+          }
+        />
+      ) : null}
 
       <FeedbackModal
         open={feedback.open}

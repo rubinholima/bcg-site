@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { parseDateOnlyBrazil, parseDateTimeBrazil } from '../common/brazil-time.util';
 import {
@@ -61,7 +62,8 @@ const bookingInclude = {
   pipelineLead: {
     select: { id: true, contactName: true, companyName: true, stage: true },
   },
-} as const;
+  event: { select: { id: true, name: true, slug: true, status: true } },
+} satisfies Prisma.VenueBookingInclude;
 
 function toBookingDto(
   row: {
@@ -88,6 +90,7 @@ function toBookingDto(
       companyName: string | null;
       stage: string;
     } | null;
+    event?: { id: string; name: string; slug: string; status: string } | null;
   },
 ): VenueBookingDto {
   return {
@@ -114,6 +117,14 @@ function toBookingDto(
     contactPhone: row.contactPhone,
     guestCount: row.guestCount,
     notes: row.notes,
+    event: row.event
+      ? {
+          id: row.event.id,
+          name: row.event.name,
+          slug: row.event.slug,
+          status: row.event.status,
+        }
+      : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
