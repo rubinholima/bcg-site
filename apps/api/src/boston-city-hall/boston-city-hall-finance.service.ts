@@ -214,6 +214,21 @@ export class BostonCityHallFinanceService {
     };
   }
 
+  /** Resumo a partir de receivable já carregado (evita N+1 na operação BCH). */
+  receivableToSummary(
+    row: {
+      id: string;
+      contractId: string;
+      originalAmount: Prisma.Decimal;
+      status: string;
+      cancelledAt: Date | null;
+      installments: InstallmentRow[];
+    } | null | undefined,
+  ): VenueReceivableSummaryDto | null {
+    if (!row) return null;
+    return this.buildSummary(row);
+  }
+
   private buildSummary(
     row: {
       id: string;

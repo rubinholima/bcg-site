@@ -97,6 +97,78 @@ export type VenueFinanceOverviewKpis = {
   dueSoonBalance: string;
 };
 
+export type VenueOperationAlert = {
+  code: string;
+  label: string;
+  severity: "info" | "warning" | "danger";
+};
+
+export type VenueOperationProposalRef = {
+  id: string;
+  proposalNumber: string;
+  status: string;
+  total: string;
+};
+
+export type VenueOperationContractRef = {
+  id: string;
+  contractNumber: string;
+  status: string;
+  total: string;
+  signedAt: string | null;
+};
+
+export type VenueOperationLeadRef = {
+  id: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string | null;
+  companyName: string | null;
+  stage: string;
+};
+
+export type VenueOperationListItem = {
+  bookingId: string;
+  title: string;
+  eventType: string | null;
+  startAt: string;
+  endAt: string;
+  spaceId: string;
+  spaceName: string;
+  guestCount: number | null;
+  bookingStatus: string;
+  contactName: string | null;
+  companyName: string | null;
+  pipelineLeadId: string | null;
+  proposal: VenueOperationProposalRef | null;
+  contract: VenueOperationContractRef | null;
+  finance: VenueReceivableSummary | null;
+  receivableId: string | null;
+  alerts: VenueOperationAlert[];
+};
+
+export type VenueOperationDetail = VenueOperationListItem & {
+  contactEmail: string | null;
+  contactPhone: string | null;
+  notes: string | null;
+  lead: VenueOperationLeadRef | null;
+  proposals: VenueOperationProposalRef[];
+  updatedAt: string;
+};
+
+export type VenueOperationUpcomingItem = Pick<
+  VenueOperationListItem,
+  | "bookingId"
+  | "title"
+  | "startAt"
+  | "endAt"
+  | "spaceName"
+  | "contactName"
+  | "companyName"
+  | "bookingStatus"
+  | "alerts"
+>;
+
 export type VenueOverview = {
   spacesCount: number;
   bookingsToday: number;
@@ -114,6 +186,7 @@ export type VenueOverview = {
   upcomingBookings: VenueOverviewUpcomingBooking[];
   leadsNeedingAttention: VenueOverviewAttentionLead[];
   finance?: VenueFinanceOverviewKpis;
+  operationsUpcoming?: VenueOperationUpcomingItem[];
 };
 
 export const VENUE_PAYMENT_METHODS = [

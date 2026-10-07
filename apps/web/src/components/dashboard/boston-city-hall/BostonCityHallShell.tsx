@@ -12,6 +12,7 @@ import {
   FileText,
   Kanban,
   LayoutDashboard,
+  ListChecks,
   Tags,
   Wallet,
 } from "lucide-react";
@@ -26,6 +27,7 @@ const NAV = [
   { href: `${BCH_BASE}/agenda`, label: "Agenda", icon: CalendarDays },
   { href: `${BCH_BASE}/crm`, label: "CRM", icon: ContactRound },
   { href: `${BCH_BASE}/reservas`, label: "Reservas", icon: ClipboardList },
+  { href: `${BCH_BASE}/operacao`, label: "Operação", icon: ListChecks },
   { href: `${BCH_BASE}/espacos`, label: "Espaços", icon: Building2 },
   { href: `${BCH_BASE}/servicos`, label: "Serviços", icon: Tags },
   { href: `${BCH_BASE}/propostas`, label: "Propostas", icon: FileText },

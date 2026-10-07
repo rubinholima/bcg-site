@@ -230,6 +230,46 @@ export function BostonCityHallOperationalDashboard({ overview }: Props) {
         </Card>
       </div>
 
+      {overview.operationsUpcoming && overview.operationsUpcoming.length > 0 ? (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-base font-semibold">Próximos eventos operacionais</CardTitle>
+            <Button variant="ghost" size="sm" className="h-8" asChild>
+              <Link href={`${BCH}/operacao`}>Operação</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {overview.operationsUpcoming.map((ev) => {
+              const when = formatBookingWhen(ev.startAt, ev.endAt);
+              const label = ev.contactName?.trim() || ev.title;
+              return (
+                <Link
+                  key={ev.bookingId}
+                  href={`${BCH}/operacao/${ev.bookingId}`}
+                  className="flex flex-col gap-1 rounded-lg border border-border/80 bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">{label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {when.date} · {when.time} · {ev.spaceName}
+                      {ev.companyName ? ` · ${ev.companyName}` : ""}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 self-start rounded-md border px-2 py-0.5 text-xs font-medium sm:self-center",
+                      BOOKING_STATUS_COLOR[ev.bookingStatus] ?? "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {BOOKING_STATUS_LABEL[ev.bookingStatus] ?? ev.bookingStatus}
+                  </span>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
           <CardTitle className="text-base font-semibold">Agenda resumida</CardTitle>

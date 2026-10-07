@@ -19,6 +19,7 @@ import { BostonCityHallCatalogService } from './boston-city-hall-catalog.service
 import { buildVenueContractPrintHtml } from './boston-city-hall-contract-print.util';
 import { BostonCityHallContractsService } from './boston-city-hall-contracts.service';
 import { BostonCityHallFinanceService } from './boston-city-hall-finance.service';
+import { BostonCityHallOperationsService } from './boston-city-hall-operations.service';
 import { BostonCityHallProposalPdfService } from './boston-city-hall-proposal-pdf.service';
 import { BostonCityHallProposalsService } from './boston-city-hall-proposals.service';
 import { BostonCityHallService } from './boston-city-hall.service';
@@ -34,6 +35,7 @@ export class BostonCityHallController {
     private readonly proposalPdf: BostonCityHallProposalPdfService,
     private readonly contracts: BostonCityHallContractsService,
     private readonly finance: BostonCityHallFinanceService,
+    private readonly operations: BostonCityHallOperationsService,
   ) {}
 
   @Get('overview')
@@ -461,6 +463,32 @@ export class BostonCityHallController {
       type: 'application/pdf',
       disposition: `attachment; filename="contrato-${safe}.pdf"`,
     });
+  }
+
+  @Get('operations')
+  listOperations(
+    @Query('q') q?: string,
+    @Query('spaceId') spaceId?: string,
+    @Query('status') status?: string,
+    @Query('financeStatus') financeStatus?: string,
+    @Query('view') view?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.operations.listOperations({
+      q,
+      spaceId,
+      status,
+      financeStatus,
+      view,
+      from,
+      to,
+    });
+  }
+
+  @Get('operations/:bookingId')
+  getOperation(@Param('bookingId') bookingId: string) {
+    return this.operations.getOperation(bookingId);
   }
 
   @Get('finance/overview')

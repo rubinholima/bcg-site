@@ -147,6 +147,7 @@ export type VenueOverviewDto = {
   upcomingBookings: VenueOverviewUpcomingBooking[];
   leadsNeedingAttention: VenueOverviewAttentionLead[];
   finance?: VenueFinanceOverviewKpis;
+  operationsUpcoming?: VenueOperationUpcomingItemDto[];
 };
 
 export const DEFAULT_VENUE_SPACES: Array<{
@@ -467,3 +468,85 @@ export type VenueReceivableDetailDto = VenueReceivableListDto & {
   createdAt: string;
   installments: VenueReceivableInstallmentDto[];
 };
+
+export type VenueOperationAlertCode =
+  | 'event_today'
+  | 'booking_cancelled'
+  | 'hold_near_date'
+  | 'contract_missing'
+  | 'contract_unsigned'
+  | 'finance_missing'
+  | 'finance_overdue'
+  | 'finance_open_balance';
+
+export type VenueOperationAlert = {
+  code: VenueOperationAlertCode;
+  label: string;
+  severity: 'info' | 'warning' | 'danger';
+};
+
+export type VenueOperationProposalRef = {
+  id: string;
+  proposalNumber: string;
+  status: string;
+  total: string;
+};
+
+export type VenueOperationContractRef = {
+  id: string;
+  contractNumber: string;
+  status: string;
+  total: string;
+  signedAt: string | null;
+};
+
+export type VenueOperationLeadRef = {
+  id: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string | null;
+  companyName: string | null;
+  stage: string;
+};
+
+export type VenueOperationListItemDto = {
+  bookingId: string;
+  title: string;
+  eventType: string | null;
+  startAt: string;
+  endAt: string;
+  spaceId: string;
+  spaceName: string;
+  guestCount: number | null;
+  bookingStatus: string;
+  contactName: string | null;
+  companyName: string | null;
+  pipelineLeadId: string | null;
+  proposal: VenueOperationProposalRef | null;
+  contract: VenueOperationContractRef | null;
+  finance: VenueReceivableSummaryDto | null;
+  receivableId: string | null;
+  alerts: VenueOperationAlert[];
+};
+
+export type VenueOperationDetailDto = VenueOperationListItemDto & {
+  contactEmail: string | null;
+  contactPhone: string | null;
+  notes: string | null;
+  lead: VenueOperationLeadRef | null;
+  proposals: VenueOperationProposalRef[];
+  updatedAt: string;
+};
+
+export type VenueOperationUpcomingItemDto = Pick<
+  VenueOperationListItemDto,
+  | 'bookingId'
+  | 'title'
+  | 'startAt'
+  | 'endAt'
+  | 'spaceName'
+  | 'contactName'
+  | 'companyName'
+  | 'bookingStatus'
+  | 'alerts'
+>;

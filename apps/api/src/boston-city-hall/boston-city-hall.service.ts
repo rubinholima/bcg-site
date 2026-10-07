@@ -17,6 +17,7 @@ import {
   type VenueSpaceDto,
 } from './boston-city-hall.constants';
 import { BostonCityHallFinanceService } from './boston-city-hall-finance.service';
+import { BostonCityHallOperationsService } from './boston-city-hall-operations.service';
 
 function toSpaceDto(row: {
   id: string;
@@ -179,6 +180,7 @@ export class BostonCityHallService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly finance: BostonCityHallFinanceService,
+    private readonly operations: BostonCityHallOperationsService,
   ) {}
 
   /** Venue operacional usa o mesmo slug do Tenant (ex.: boston-city-hall). */
@@ -408,6 +410,13 @@ export class BostonCityHallService {
       finance = undefined;
     }
 
+    let operationsUpcoming: VenueOverviewDto['operationsUpcoming'];
+    try {
+      operationsUpcoming = await this.operations.getUpcomingPreview(5);
+    } catch {
+      operationsUpcoming = undefined;
+    }
+
     return {
       spacesCount,
       bookingsToday,
@@ -425,6 +434,7 @@ export class BostonCityHallService {
       upcomingBookings,
       leadsNeedingAttention,
       finance,
+      operationsUpcoming,
     };
   }
 
