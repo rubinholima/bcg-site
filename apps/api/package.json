@@ -45,6 +45,7 @@
     "fix:dept-access": "ts-node -r tsconfig-paths/register scripts/fix-department-access.ts",
     "fix:encoding": "ts-node -r tsconfig-paths/register scripts/fix-encoding.ts",
     "check:encoding": "ts-node -r tsconfig-paths/register scripts/check-encoding.ts",
+    "prebuild": "pnpm --filter @bcg/player-dossier-print build",
     "build": "nest build",
     "format": "prettier --write src test",
     "start": "nest start",

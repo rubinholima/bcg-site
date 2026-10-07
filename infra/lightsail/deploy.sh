@@ -110,7 +110,12 @@ if ! pnpm exec playwright install chromium; then
   log "AVISO: playwright install chromium falhou — PDF dossiê pode falhar até deps do SO estarem ok"
 fi
 
+log "API: build @bcg/player-dossier-print (runtime CJS)..."
+cd "$WORK_TREE"
+pnpm --filter @bcg/player-dossier-print build
+
 log "API: prisma migrate + generate + build..."
+cd "$WORK_TREE/apps/api"
 pnpm exec prisma migrate deploy
 pnpm exec prisma generate
 if [ -f scripts/cup360-production-access-pipeline.ts ]; then

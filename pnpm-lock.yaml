@@ -300,7 +300,11 @@ importers:
 
   packages/cup360-access: {}
 
-  packages/player-dossier-print: {}
+  packages/player-dossier-print:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
 
 packages:
 
