@@ -244,6 +244,14 @@ model FinanceiroLancamento {
   tipo         String
   /// pendente | pago | cancelado
   status       String   @default("pendente")
+  /// native | projection | external | adjustment
+  ownershipKind String  @default("native")
+  /// Domínio canônico ou integração (ex.: financeiro, player_negotiations, omie)
+  sourceModule  String?
+  sourceType    String?
+  sourceId      String?
+  /// ISO 4217
+  currency      String   @default("BRL")
   contraparte  String?  // legado / nome exibido quando cadastro vinculado
   supplierId   String?
   supplier     Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
@@ -253,18 +261,23 @@ model FinanceiroLancamento {
   valor        Decimal  @db.Decimal(14, 2)
   dueDate      DateTime // vencimento
   settledAt    DateTime? // data de quitação (pago/recebido)
+  cancelledAt  DateTime?
   categoria    String?
   referencia   String?  // NF, contrato, pedido
   notas        String?  @db.Text
+  createdByUserId String?
+  updatedByUserId String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  @@unique([tenantId, sourceModule, sourceType, sourceId])
   @@index([tenantId])
   @@index([tenantId, tipo])
   @@index([tenantId, status])
   @@index([tenantId, dueDate])
   @@index([supplierId])
   @@index([customerId])
+  @@index([tenantId, ownershipKind])
   playerNegotiationInstallment PlayerNegotiationInstallment?
 }
 

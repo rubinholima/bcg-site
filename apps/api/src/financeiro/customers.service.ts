@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { cadastroEmail, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -8,9 +9,28 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 export class CustomersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId?: string, search?: string) {
-    const where: Record<string, unknown> = {};
-    if (tenantId) where.tenantId = tenantId;
+  private tenantWhere(
+    tenantId: string | undefined,
+    allowedTenantIds: string[] | null,
+  ): Prisma.CustomerWhereInput {
+    if (tenantId) {
+      return { tenantId };
+    }
+    if (allowedTenantIds === null) {
+      return {};
+    }
+    if (!allowedTenantIds.length) {
+      return { tenantId: { in: [] } };
+    }
+    return { tenantId: { in: allowedTenantIds } };
+  }
+
+  async findAll(
+    tenantId: string | undefined,
+    search: string | undefined,
+    allowedTenantIds: string[] | null,
+  ) {
+    const where: Prisma.CustomerWhereInput = this.tenantWhere(tenantId, allowedTenantIds);
     if (search?.trim()) {
       where.OR = [
         { name: { contains: search.trim(), mode: 'insensitive' as const } },

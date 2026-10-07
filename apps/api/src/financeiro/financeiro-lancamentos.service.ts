@@ -2,6 +2,10 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import type { FinanceiroLancamento, Prisma } from '@prisma/client';
 import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  FINANCEIRO_DEFAULT_CURRENCY,
+  type FinanceiroOwnershipKind,
+} from './financeiro-lancamento.constants';
 import { CreateFinanceiroLancamentoDto } from './dto/create-financeiro-lancamento.dto';
 import { UpdateFinanceiroLancamentoDto } from './dto/update-financeiro-lancamento.dto';
 
@@ -20,6 +24,21 @@ function startOfTodayUtc(): Date {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
 }
+
+function normalizeCurrency(raw?: string | null): string {
+  const c = raw?.trim().toUpperCase();
+  if (!c || c.length !== 3) return FINANCEIRO_DEFAULT_CURRENCY;
+  return c;
+}
+
+export type CreateFinanceiroLancamentoInput = CreateFinanceiroLancamentoDto & {
+  ownershipKind?: FinanceiroOwnershipKind;
+  sourceModule?: string;
+  sourceType?: string;
+  sourceId?: string;
+  currency?: string;
+  createdByUserId?: string | null;
+};
 
 @Injectable()
 export class FinanceiroLancamentosService {
@@ -174,9 +193,28 @@ export class FinanceiroLancamentosService {
     return serialize(row);
   }
 
-  async create(dto: CreateFinanceiroLancamentoDto) {
+  async create(dto: CreateFinanceiroLancamentoInput) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: dto.tenantId } });
     if (!tenant) throw new NotFoundException('Empresa não encontrada');
+
+    const ownershipKind = dto.ownershipKind ?? 'native';
+    const sourceModule = dto.sourceModule ?? 'financeiro';
+    const sourceType = dto.sourceType ?? 'manual';
+    const sourceId = dto.sourceId?.trim() || null;
+
+    if (sourceId) {
+      const dup = await this.prisma.financeiroLancamento.findFirst({
+        where: {
+          tenantId: dto.tenantId,
+          sourceModule,
+          sourceType,
+          sourceId,
+        },
+      });
+      if (dup) {
+        throw new BadRequestException('Já existe lançamento financeiro para esta origem.');
+      }
+    }
 
     const status = dto.status ?? 'pendente';
     let settledAt: Date | null = null;
@@ -195,6 +233,11 @@ export class FinanceiroLancamentosService {
         tenantId: dto.tenantId,
         tipo: dto.tipo,
         status,
+        ownershipKind,
+        sourceModule,
+        sourceType,
+        sourceId,
+        currency: normalizeCurrency(dto.currency),
         contraparte: cadastro.contraparte,
         supplierId: cadastro.supplierId,
         customerId: cadastro.customerId,
@@ -205,14 +248,19 @@ export class FinanceiroLancamentosService {
         categoria: cadastroUpper(dto.categoria),
         referencia: cadastroUpper(dto.referencia),
         notas: cadastroUpper(dto.notas),
+        createdByUserId: dto.createdByUserId ?? null,
+        updatedByUserId: dto.createdByUserId ?? null,
       },
     });
     return serialize(row);
   }
 
-  async update(id: string, dto: UpdateFinanceiroLancamentoDto) {
+  async update(id: string, dto: UpdateFinanceiroLancamentoDto, actorUserId?: string | null) {
     const existing = await this.prisma.financeiroLancamento.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Lançamento não encontrado');
+    if (existing.status === 'cancelado') {
+      throw new BadRequestException('Lançamento cancelado não pode ser alterado.');
+    }
 
     const nextStatus = dto.status ?? existing.status;
     let settledAt: Date | null | undefined = undefined;
@@ -257,15 +305,32 @@ export class FinanceiroLancamentosService {
         ...(dto.categoria !== undefined ? { categoria: cadastroUpper(dto.categoria) } : {}),
         ...(dto.referencia !== undefined ? { referencia: cadastroUpper(dto.referencia) } : {}),
         ...(dto.notas !== undefined ? { notas: cadastroUpper(dto.notas) } : {}),
+        updatedByUserId: actorUserId ?? undefined,
       },
     });
     return serialize(row);
   }
 
-  async remove(id: string) {
+  /** Cancelamento lógico — preserva trilha; não apaga registro. */
+  async remove(id: string, actorUserId?: string | null) {
     const existing = await this.prisma.financeiroLancamento.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Lançamento não encontrado');
-    await this.prisma.financeiroLancamento.delete({ where: { id } });
-    return { ok: true };
+    if (existing.status === 'cancelado') {
+      return { ok: true, status: 'cancelado' as const };
+    }
+    if (existing.status === 'pago') {
+      throw new BadRequestException(
+        'Lançamento quitado não pode ser excluído. Mantenha o registro para trilha financeira.',
+      );
+    }
+    await this.prisma.financeiroLancamento.update({
+      where: { id },
+      data: {
+        status: 'cancelado',
+        cancelledAt: new Date(),
+        updatedByUserId: actorUserId ?? null,
+      },
+    });
+    return { ok: true, status: 'cancelado' as const };
   }
 }

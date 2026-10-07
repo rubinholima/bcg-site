@@ -279,7 +279,7 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
   }
 
   async function handleDelete(row: FinanceiroLancamentoRow) {
-    if (!confirm("Excluir este lançamento? Esta ação não pode ser desfeita.")) return;
+    if (!confirm("Cancelar este lançamento pendente? O registro permanece no histórico.")) return;
     try {
       await api.delete(`/financeiro/lancamentos/${row.id}`);
       await load();

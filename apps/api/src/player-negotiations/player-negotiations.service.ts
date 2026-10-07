@@ -480,6 +480,12 @@ export class PlayerNegotiationsService {
       customerId: dto.customerId,
       categoria: 'NEGOCIACAO_ATLETA',
       referencia: `player-negotiation:${inst.negotiationId}:${inst.sequence}`,
+      ownershipKind: 'projection',
+      sourceModule: 'player_negotiations',
+      sourceType: 'installment',
+      sourceId: installmentId,
+      currency: inst.negotiation.currency,
+      createdByUserId: editor?.sub ?? null,
     });
 
     await this.prisma.playerNegotiationInstallment.update({

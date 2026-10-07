@@ -29,6 +29,10 @@ export class FinanceiroLancamentosController {
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
+  private async actorUserId(req: Request & { user: CognitoJwtPayload }): Promise<string | null> {
+    return this.tenantAccess.resolveInternalUserId(req.user.sub);
+  }
+
   private async requireTenantScope(
     req: Request & { user: CognitoJwtPayload },
     tenantIdRaw: string | undefined,
@@ -94,7 +98,8 @@ export class FinanceiroLancamentosController {
     @Body() dto: CreateFinanceiroLancamentoDto,
   ) {
     await this.requireTenantScope(req, dto.tenantId);
-    return this.service.create(dto);
+    const userId = await this.actorUserId(req);
+    return this.service.create({ ...dto, createdByUserId: userId });
   }
 
   @Patch(':id')
@@ -107,7 +112,8 @@ export class FinanceiroLancamentosController {
   ) {
     const existing = await this.service.findOne(id);
     await this.requireTenantScope(req, existing.tenantId);
-    return this.service.update(id, dto);
+    const userId = await this.actorUserId(req);
+    return this.service.update(id, dto, userId);
   }
 
   @Delete(':id')
@@ -116,6 +122,7 @@ export class FinanceiroLancamentosController {
   async remove(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     const existing = await this.service.findOne(id);
     await this.requireTenantScope(req, existing.tenantId);
-    return this.service.remove(id);
+    const userId = await this.actorUserId(req);
+    return this.service.remove(id, userId);
   }
 }
