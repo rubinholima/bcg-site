@@ -37,6 +37,7 @@ import { EventsModule } from './events/events.module';
 import { BostonCityHallModule } from './boston-city-hall/boston-city-hall.module';
 import { TenantPressModule } from './tenant-press/tenant-press.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
+import { PaymentsModule } from './payments/payments.module';
 import { BostonTvModule } from './boston-tv/boston-tv.module';
 import { RegistrationInviteModule } from './registration-invite/registration-invite.module';
 import { FmfScraperModule } from './fmf-scraper/fmf-scraper.module';
@@ -107,6 +108,7 @@ import { PerformanceAnalysisModule } from './performance-analysis/performance-an
     BostonCityHallModule,
     TenantPressModule,
     FinanceiroModule,
+    PaymentsModule,
     BostonTvModule,
     RegistrationInviteModule,
     FmfScraperModule,

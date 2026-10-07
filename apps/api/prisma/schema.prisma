@@ -233,6 +233,11 @@ model Tenant {
   eventTicketTypes             EventTicketType[]
   eventTicketOrders            EventTicketOrder[]
   eventTicketOrderNumberSeqs   EventTicketOrderNumberSeq[]
+  paymentProviderAccounts      PaymentProviderAccount[]
+  payments                     Payment[]
+  paymentAttempts              PaymentAttempt[]
+  paymentRefunds               PaymentRefund[]
+  paymentWebhookEvents         PaymentWebhookEvent[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -279,6 +284,149 @@ model FinanceiroLancamento {
   @@index([customerId])
   @@index([tenantId, ownershipKind])
   playerNegotiationInstallment PlayerNegotiationInstallment?
+}
+
+// ========== CUP360 Payment Core (provider-independent) ==========
+
+model PaymentProviderAccount {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  providerKey         String
+  country             String?
+  environment         String   @default("sandbox")
+  enabledCurrencies   Json?
+  enabledMethods      Json?
+  active              Boolean  @default(true)
+  priority            Int      @default(0)
+  merchantAccountId   String?
+  credentialsEnc      String?  @db.Text
+  credentialsIv       String?
+  webhookSecretEnc    String?  @db.Text
+  webhookSecretIv     String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  payments            Payment[]
+  paymentAttempts     PaymentAttempt[]
+  webhookEvents       PaymentWebhookEvent[]
+
+  @@index([tenantId])
+  @@index([tenantId, providerKey, active])
+}
+
+/// Pagamento concreto — uma origem comercial obrigatória (FK exclusiva).
+model Payment {
+  id                             String   @id @default(cuid())
+  tenantId                       String
+  tenant                         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  eventTicketOrderId             String?  @unique
+  eventTicketOrder               EventTicketOrder? @relation(fields: [eventTicketOrderId], references: [id], onDelete: Restrict)
+  venueReceivableInstallmentId   String?  @unique
+  venueReceivableInstallment     VenueReceivableInstallment? @relation(fields: [venueReceivableInstallmentId], references: [id], onDelete: Restrict)
+  idempotencyKey                 String
+  amount                         Decimal  @db.Decimal(14, 2)
+  currency                       String
+  status                         String   @default("pending")
+  paymentMethod                  String?
+  paidAmount                     Decimal  @default(0) @db.Decimal(14, 2)
+  refundedAmount                 Decimal  @default(0) @db.Decimal(14, 2)
+  providerFee                    Decimal? @db.Decimal(14, 2)
+  expiresAt                      DateTime?
+  paidAt                         DateTime?
+  cancelledAt                    DateTime?
+  failedAt                       DateTime?
+  expiredAt                      DateTime?
+  manualReference                String?
+  manualNotes                    String?  @db.Text
+  externalProviderLabel          String?
+  paymentProviderAccountId       String?
+  paymentProviderAccount         PaymentProviderAccount? @relation(fields: [paymentProviderAccountId], references: [id], onDelete: SetNull)
+  createdByUserId                String?
+  updatedByUserId                String?
+  createdAt                      DateTime @default(now())
+  updatedAt                      DateTime @updatedAt
+  attempts                       PaymentAttempt[]
+  refunds                        PaymentRefund[]
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+}
+
+model PaymentAttempt {
+  id                         String   @id @default(cuid())
+  tenantId                   String
+  tenant                     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  paymentId                  String
+  payment                    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  paymentProviderAccountId   String?
+  paymentProviderAccount     PaymentProviderAccount? @relation(fields: [paymentProviderAccountId], references: [id], onDelete: SetNull)
+  attemptSequence            Int
+  idempotencyKey             String
+  status                     String   @default("pending")
+  providerPaymentId          String?
+  providerReference          String?
+  requestedMethod            String
+  amount                     Decimal  @db.Decimal(14, 2)
+  currency                   String
+  expiresAt                  DateTime?
+  authorizedAt               DateTime?
+  capturedAt                 DateTime?
+  responseMetadata           Json?
+  errorCode                  String?
+  errorMessage               String?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  @@unique([tenantId, idempotencyKey])
+  @@unique([paymentId, attemptSequence])
+  @@index([paymentId])
+  @@index([tenantId])
+}
+
+model PaymentRefund {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  paymentId         String
+  payment           Payment  @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  amount            Decimal  @db.Decimal(14, 2)
+  currency          String
+  status            String   @default("pending")
+  reason            String?
+  idempotencyKey    String
+  providerRefundId  String?
+  requestedAt       DateTime @default(now())
+  completedAt       DateTime?
+  failedAt          DateTime?
+  createdByUserId   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([paymentId])
+  @@index([tenantId])
+}
+
+model PaymentWebhookEvent {
+  id                       String   @id @default(cuid())
+  tenantId                 String
+  tenant                   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  paymentProviderAccountId String
+  paymentProviderAccount   PaymentProviderAccount @relation(fields: [paymentProviderAccountId], references: [id], onDelete: Cascade)
+  providerEventId          String
+  eventType                String
+  payloadMetadata          Json?
+  payloadHash              String?
+  processingStatus         String   @default("pending")
+  receivedAt               DateTime @default(now())
+  processedAt              DateTime?
+  processAttempts          Int      @default(0)
+  lastError                String?  @db.Text
+
+  @@unique([paymentProviderAccountId, providerEventId])
+  @@index([tenantId])
+  @@index([processingStatus])
 }
 
 /// Cliente (contas a receber) — cadastro mestre por tenant
@@ -3086,6 +3234,7 @@ model EventTicketOrder {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   items            EventTicketOrderItem[]
+  payment          Payment?
 
   @@unique([tenantId, orderNumber])
   @@index([tenantId, eventId])
@@ -3407,6 +3556,7 @@ model VenueReceivableInstallment {
   notes        String?  @db.Text
   cancelledAt  DateTime?
   payments     VenueReceivablePayment[]
+  cup360Payment Payment?
 
   @@unique([receivableId, sequence])
   @@index([receivableId])
