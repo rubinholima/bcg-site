@@ -104,8 +104,13 @@ log "pnpm install (com devDependencies para nest build)..."
 export CI=true
 NODE_ENV=development pnpm install
 
-log "API: prisma migrate + generate + build..."
+log "API: Playwright Chromium (PDF dossiê)..."
 cd "$WORK_TREE/apps/api"
+if ! pnpm exec playwright install chromium; then
+  log "AVISO: playwright install chromium falhou — PDF dossiê pode falhar até deps do SO estarem ok"
+fi
+
+log "API: prisma migrate + generate + build..."
 pnpm exec prisma migrate deploy
 pnpm exec prisma generate
 if [ -f scripts/cup360-production-access-pipeline.ts ]; then
