@@ -17,6 +17,7 @@ import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-ord
 import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
 import { BostonCityHallTicketFinanceProjectionService } from './boston-city-hall-ticket-finance-projection.service';
 import { BostonCityHallTicketIssuanceService } from './boston-city-hall-ticket-issuance.service';
+import { BostonCityHallTicketCheckinService } from './boston-city-hall-ticket-checkin.service';
 import { PaymentsModule } from '../payments/payments.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 
@@ -38,6 +39,7 @@ import { FinanceiroModule } from '../financeiro/financeiro.module';
     BostonCityHallTicketPaymentService,
     BostonCityHallTicketFinanceProjectionService,
     BostonCityHallTicketIssuanceService,
+    BostonCityHallTicketCheckinService,
   ],
   exports: [
     BostonCityHallService,
@@ -53,6 +55,7 @@ import { FinanceiroModule } from '../financeiro/financeiro.module';
     BostonCityHallTicketPaymentService,
     BostonCityHallTicketFinanceProjectionService,
     BostonCityHallTicketIssuanceService,
+    BostonCityHallTicketCheckinService,
   ],
 })
 export class BostonCityHallModule {}

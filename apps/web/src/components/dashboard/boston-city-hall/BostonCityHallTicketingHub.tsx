@@ -5,10 +5,12 @@ import { cn } from "@/lib/utils";
 import { BostonCityHallTicketing } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketing";
 import { BostonCityHallTicketOrders } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketOrders";
 import { BostonCityHallTicketCheckoutDev } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketCheckoutDev";
+import { BostonCityHallTicketCheckin } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketCheckin";
 
 const TABS = [
   { id: "config" as const, label: "Tipos e lotes" },
   { id: "orders" as const, label: "Pedidos" },
+  { id: "checkin" as const, label: "Check-in" },
   { id: "checkout" as const, label: "Checkout (teste)" },
 ];
 
@@ -36,6 +38,7 @@ export function BostonCityHallTicketingHub() {
       </div>
       {tab === "config" ? <BostonCityHallTicketing /> : null}
       {tab === "orders" ? <BostonCityHallTicketOrders /> : null}
+      {tab === "checkin" ? <BostonCityHallTicketCheckin /> : null}
       {tab === "checkout" ? <BostonCityHallTicketCheckoutDev /> : null}
     </div>
   );

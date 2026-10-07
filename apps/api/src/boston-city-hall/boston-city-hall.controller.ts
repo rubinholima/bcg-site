@@ -10,8 +10,10 @@ import {
   Post,
   Query,
   StreamableFile,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
@@ -29,6 +31,9 @@ import { BostonCityHallTicketingService } from './boston-city-hall-ticketing.ser
 import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-orders.service';
 import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
 import { BostonCityHallTicketIssuanceService } from './boston-city-hall-ticket-issuance.service';
+import { BostonCityHallTicketCheckinService } from './boston-city-hall-ticket-checkin.service';
+import { TenantAccessService } from '../auth/tenant-access.service';
+import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import type { PaymentMethod } from '../payments/payment-core.constants';
 
 @Controller('boston-city-hall')
@@ -48,6 +53,8 @@ export class BostonCityHallController {
     private readonly ticketOrders: BostonCityHallTicketOrdersService,
     private readonly ticketPayment: BostonCityHallTicketPaymentService,
     private readonly ticketIssuance: BostonCityHallTicketIssuanceService,
+    private readonly ticketCheckin: BostonCityHallTicketCheckinService,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
 
   @Get('overview')
@@ -755,6 +762,33 @@ export class BostonCityHallController {
   async getTicketQrPng(@Param('id') id: string) {
     const buffer = await this.ticketIssuance.renderQrPngForVenue(id);
     return new StreamableFile(buffer);
+  }
+
+  @Post('ticketing/checkin')
+  async checkinTicket(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body()
+    body: {
+      eventId: string;
+      credential?: string;
+      ticketCode?: string;
+      stationLabel?: string;
+    },
+  ) {
+    const scanInput = (body.credential ?? body.ticketCode ?? '').trim();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.ticketCheckin.performCheckinForVenue({
+      eventId: body.eventId,
+      scanInput,
+      operatorUserId,
+      stationLabel: body.stationLabel,
+    });
+  }
+
+  @Get('ticketing/checkins/recent')
+  listRecentCheckins(@Query('eventId') eventId: string, @Query('limit') limit?: string) {
+    const n = limit ? Number.parseInt(limit, 10) : 40;
+    return this.ticketCheckin.listRecentForVenue(eventId, Number.isFinite(n) ? n : 40);
   }
 
   @Patch('ticketing/lots/:id')

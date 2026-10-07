@@ -744,6 +744,46 @@ export const EVENT_TICKET_STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
+export type EventTicketCheckinResult =
+  | "accepted"
+  | "already_used"
+  | "cancelled"
+  | "invalid"
+  | "wrong_event";
+
+export const EVENT_TICKET_CHECKIN_RESULT_LABEL: Record<EventTicketCheckinResult, string> = {
+  accepted: "ACEITO",
+  already_used: "JÁ UTILIZADO",
+  cancelled: "CANCELADO",
+  invalid: "INVÁLIDO",
+  wrong_event: "OUTRO EVENTO",
+};
+
+export type EventTicketCheckinResponse = {
+  result: EventTicketCheckinResult;
+  checkinId: string;
+  scannedAt: string;
+  ticket: {
+    id: string;
+    ticketCode: string;
+    ticketTypeName: string;
+    lotName: string | null;
+    holderName: string;
+    status: string;
+    usedAt: string | null;
+  } | null;
+};
+
+export type EventTicketCheckinRecentItem = {
+  id: string;
+  result: EventTicketCheckinResult;
+  ticketCode: string | null;
+  ticketTypeName: string | null;
+  holderName: string | null;
+  stationLabel: string | null;
+  createdAt: string;
+};
+
 export type EventTicketOrderDetail = {
   id: string;
   orderNumber: string;

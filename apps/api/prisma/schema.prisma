@@ -44,6 +44,7 @@ model User {
   learningAssignmentsCreated LearningAssignment[] @relation("LearningAssignmentCreatedBy")
   learningEnrollments        LearningEnrollment[]
   learningQuizAttempts       LearningQuizAttempt[]
+  eventTicketCheckins        EventTicketCheckin[]
 }
 
 model UserTenant {
@@ -234,6 +235,7 @@ model Tenant {
   eventTicketOrders            EventTicketOrder[]
   eventTicketOrderNumberSeqs   EventTicketOrderNumberSeq[]
   eventTickets                 EventTicket[]
+  eventTicketCheckins          EventTicketCheckin[]
   paymentProviderAccounts      PaymentProviderAccount[]
   payments                     Payment[]
   paymentAttempts              PaymentAttempt[]
@@ -965,6 +967,7 @@ model Event {
   ticketTypes  EventTicketType[]
   ticketOrders EventTicketOrder[]
   eventTickets EventTicket[]
+  eventTicketCheckins EventTicketCheckin[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -3308,12 +3311,37 @@ model EventTicket {
   issuedAt       DateTime             @default(now())
   cancelledAt    DateTime?
   usedAt         DateTime?
+  checkins       EventTicketCheckin[]
 
   @@unique([orderItemId, lineIndex])
   @@unique([tenantId, ticketCode])
   @@index([tenantId, orderId])
   @@index([tenantId, eventId])
   @@index([tenantId, status])
+}
+
+/// Auditoria de tentativas de check-in (aceitas e rejeitadas).
+model EventTicketCheckin {
+  id                    String       @id @default(cuid())
+  tenantId              String
+  tenant                Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  eventId               String
+  event                 Event        @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  ticketId              String?
+  ticket                EventTicket? @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  operatorUserId        String?
+  operatorUser          User?        @relation(fields: [operatorUserId], references: [id], onDelete: SetNull)
+  result                String
+  stationLabel          String?
+  credentialFingerprint String?
+  ticketCode            String?
+  ticketTypeName        String?
+  holderName            String?
+  createdAt             DateTime     @default(now())
+
+  @@index([tenantId, eventId, createdAt])
+  @@index([ticketId, createdAt])
+  @@index([tenantId, createdAt])
 }
 
 model VenueBooking {
