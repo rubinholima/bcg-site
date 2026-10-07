@@ -223,6 +223,8 @@ model Tenant {
   venuePipelineLeads           VenuePipelineLead[]
   venueCatalogServices         VenueCatalogService[]
   venueCatalogPackages         VenueCatalogPackage[]
+  venueProposals               VenueProposal[]
+  venueProposalNumberSeqs      VenueProposalNumberSeq[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -2986,6 +2988,7 @@ model VenueBooking {
   notes          String?             @db.Text
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
+  venueProposals VenueProposal[]
 
   @@index([tenantId])
   @@index([venueSlug, startAt])
@@ -3013,6 +3016,7 @@ model VenuePipelineLead {
   updatedAt     DateTime      @updatedAt
   booking       VenueBooking?
   communicationConversations CommunicationConversation[]
+  venueProposals VenueProposal[]
 
   @@index([tenantId])
   @@index([venueSlug, stage])
@@ -3034,6 +3038,7 @@ model VenueCatalogService {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   packageItems VenueCatalogPackageItem[]
+  proposalItems VenueProposalItem[]
 
   @@index([tenantId])
   @@index([tenantId, active])
@@ -3052,6 +3057,7 @@ model VenueCatalogPackage {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   items        VenueCatalogPackageItem[]
+  proposalItems VenueProposalItem[]
 
   @@index([tenantId])
   @@index([tenantId, active])
@@ -3068,6 +3074,78 @@ model VenueCatalogPackageItem {
   @@unique([packageId, serviceId])
   @@index([packageId])
   @@index([serviceId])
+}
+
+/// Contador anual de numeração de propostas BCH (tenant-scoped).
+model VenueProposalNumberSeq {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  year     Int
+  lastSeq  Int    @default(0)
+
+  @@unique([tenantId, year])
+  @@index([tenantId])
+}
+
+/// Proposta comercial Boston City Hall — valores e textos são snapshot.
+model VenueProposal {
+  id             String              @id @default(cuid())
+  tenantId       String
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  proposalNumber String
+  pipelineLeadId String?
+  pipelineLead   VenuePipelineLead?  @relation(fields: [pipelineLeadId], references: [id], onDelete: SetNull)
+  bookingId      String?
+  booking        VenueBooking?       @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  status         String              @default("draft")
+  title          String
+  contactName    String
+  contactEmail   String
+  contactPhone   String?
+  companyName    String?
+  eventType      String?
+  eventDate      DateTime?
+  guestCount     Int?
+  subtotal       Decimal             @db.Decimal(12, 2)
+  discount       Decimal             @default(0) @db.Decimal(12, 2)
+  tax            Decimal             @default(0) @db.Decimal(12, 2)
+  total          Decimal             @db.Decimal(12, 2)
+  notes          String?             @db.Text
+  terms          String?             @db.Text
+  validUntil     DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  items          VenueProposalItem[]
+
+  @@unique([tenantId, proposalNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([pipelineLeadId])
+  @@index([bookingId])
+  @@index([eventDate])
+  @@index([updatedAt])
+}
+
+model VenueProposalItem {
+  id              String               @id @default(cuid())
+  proposalId      String
+  proposal        VenueProposal        @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  sourceType      String
+  sourceServiceId String?
+  sourceService   VenueCatalogService? @relation(fields: [sourceServiceId], references: [id], onDelete: SetNull)
+  sourcePackageId String?
+  sourcePackage   VenueCatalogPackage? @relation(fields: [sourcePackageId], references: [id], onDelete: SetNull)
+  name            String
+  description     String?              @db.Text
+  quantity        Decimal              @db.Decimal(10, 2)
+  unitPrice       Decimal              @db.Decimal(12, 2)
+  totalPrice      Decimal              @db.Decimal(12, 2)
+  sortOrder       Int                  @default(0)
+
+  @@index([proposalId])
+  @@index([sourceServiceId])
+  @@index([sourcePackageId])
 }
 
 // ─── Captação / Scouting ─────────────────────────────────────────────────────

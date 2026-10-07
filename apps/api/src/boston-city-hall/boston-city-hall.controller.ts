@@ -3,10 +3,12 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Patch,
   Post,
   Query,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -14,6 +16,8 @@ import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { BostonCityHallCatalogService } from './boston-city-hall-catalog.service';
+import { BostonCityHallProposalPdfService } from './boston-city-hall-proposal-pdf.service';
+import { BostonCityHallProposalsService } from './boston-city-hall-proposals.service';
 import { BostonCityHallService } from './boston-city-hall.service';
 
 @Controller('boston-city-hall')
@@ -23,6 +27,8 @@ export class BostonCityHallController {
   constructor(
     private readonly service: BostonCityHallService,
     private readonly catalog: BostonCityHallCatalogService,
+    private readonly proposals: BostonCityHallProposalsService,
+    private readonly proposalPdf: BostonCityHallProposalPdfService,
   ) {}
 
   @Get('overview')
@@ -298,5 +304,108 @@ export class BostonCityHallController {
     }>,
   ) {
     return this.catalog.updateCatalogPackage(id, body);
+  }
+
+  @Get('proposals')
+  listProposals(
+    @Query('q') q?: string,
+    @Query('status') status?: string,
+    @Query('updatedFrom') updatedFrom?: string,
+    @Query('updatedTo') updatedTo?: string,
+  ) {
+    return this.proposals.listProposals({ q, status, updatedFrom, updatedTo });
+  }
+
+  @Get('proposals/:id')
+  getProposal(@Param('id') id: string) {
+    return this.proposals.getProposal(id);
+  }
+
+  @Post('proposals')
+  createProposal(
+    @Body()
+    body: {
+      title?: string;
+      pipelineLeadId?: string;
+      bookingId?: string;
+      contactName?: string;
+      contactEmail?: string;
+      contactPhone?: string;
+      companyName?: string;
+      eventType?: string;
+      eventDate?: string;
+      guestCount?: number;
+      discount?: number | string;
+      tax?: number | string;
+      notes?: string;
+      terms?: string;
+      validUntil?: string;
+      items?: Array<{
+        sourceType: string;
+        sourceServiceId?: string;
+        sourcePackageId?: string;
+        name?: string;
+        description?: string | null;
+        quantity: number | string;
+        unitPrice?: number | string;
+        sortOrder?: number;
+      }>;
+    },
+  ) {
+    return this.proposals.createProposal(body);
+  }
+
+  @Patch('proposals/:id')
+  updateProposal(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      status: string;
+      title: string;
+      pipelineLeadId: string | null;
+      bookingId: string | null;
+      contactName: string;
+      contactEmail: string;
+      contactPhone: string | null;
+      companyName: string | null;
+      eventType: string | null;
+      eventDate: string | null;
+      guestCount: number | null;
+      discount: number | string;
+      tax: number | string;
+      notes: string | null;
+      terms: string | null;
+      validUntil: string | null;
+      items: Array<{
+        sourceType: string;
+        sourceServiceId?: string;
+        sourcePackageId?: string;
+        name?: string;
+        description?: string | null;
+        quantity: number | string;
+        unitPrice?: number | string;
+        sortOrder?: number;
+      }>;
+    }>,
+  ) {
+    return this.proposals.updateProposal(id, body);
+  }
+
+  @Post('proposals/:id/duplicate')
+  duplicateProposal(@Param('id') id: string) {
+    return this.proposals.duplicateProposal(id);
+  }
+
+  @Get('proposals/:id/pdf')
+  @Header('Cache-Control', 'private, no-store, max-age=0')
+  @Header('Pragma', 'no-cache')
+  async downloadProposalPdf(@Param('id') id: string) {
+    const proposal = await this.proposals.getProposal(id);
+    const pdf = await this.proposalPdf.renderProposalPdf(proposal);
+    const safe = proposal.proposalNumber.replace(/[^\w-]/g, '');
+    return new StreamableFile(pdf, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="proposta-${safe}.pdf"`,
+    });
   }
 }

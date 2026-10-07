@@ -228,3 +228,73 @@ export type VenueCatalogPackageDto = {
   items: VenueCatalogPackageItemDto[];
   itemsCount: number;
 };
+
+export const VENUE_PROPOSAL_STATUSES = [
+  'draft',
+  'sent',
+  'accepted',
+  'rejected',
+  'expired',
+  'cancelled',
+] as const;
+
+export type VenueProposalStatus = (typeof VENUE_PROPOSAL_STATUSES)[number];
+
+export const VENUE_PROPOSAL_STATUS_LABEL: Record<VenueProposalStatus, string> = {
+  draft: 'Rascunho',
+  sent: 'Enviada',
+  accepted: 'Aceita',
+  rejected: 'Rejeitada',
+  expired: 'Expirada',
+  cancelled: 'Cancelada',
+};
+
+export const VENUE_PROPOSAL_ITEM_SOURCE_TYPES = ['service', 'package', 'custom'] as const;
+
+export type VenueProposalItemSourceType = (typeof VENUE_PROPOSAL_ITEM_SOURCE_TYPES)[number];
+
+export const BCH_PROPOSAL_NUMBER_PREFIX = 'BCH';
+
+export type VenueProposalItemDto = {
+  id: string;
+  sourceType: string;
+  sourceServiceId: string | null;
+  sourcePackageId: string | null;
+  name: string;
+  description: string | null;
+  quantity: string;
+  unitPrice: string;
+  totalPrice: string;
+  sortOrder: number;
+};
+
+export type VenueProposalListDto = {
+  id: string;
+  tenantId: string;
+  proposalNumber: string;
+  pipelineLeadId: string | null;
+  bookingId: string | null;
+  status: string;
+  title: string;
+  contactName: string;
+  contactEmail: string;
+  companyName: string | null;
+  eventType: string | null;
+  eventDate: string | null;
+  guestCount: number | null;
+  subtotal: string;
+  discount: string;
+  tax: string;
+  total: string;
+  validUntil: string | null;
+  createdAt: string;
+  updatedAt: string;
+  itemsCount: number;
+};
+
+export type VenueProposalDto = VenueProposalListDto & {
+  contactPhone: string | null;
+  notes: string | null;
+  terms: string | null;
+  items: VenueProposalItemDto[];
+};

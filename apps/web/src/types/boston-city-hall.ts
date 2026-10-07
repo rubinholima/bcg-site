@@ -225,6 +225,97 @@ export function formatCatalogMoney(value: string): string {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+export const VENUE_PROPOSAL_STATUSES = [
+  "draft",
+  "sent",
+  "accepted",
+  "rejected",
+  "expired",
+  "cancelled",
+] as const;
+
+export const VENUE_PROPOSAL_STATUS_LABEL: Record<string, string> = {
+  draft: "Rascunho",
+  sent: "Enviada",
+  accepted: "Aceita",
+  rejected: "Rejeitada",
+  expired: "Expirada",
+  cancelled: "Cancelada",
+};
+
+export const VENUE_PROPOSAL_STATUS_COLOR: Record<string, string> = {
+  draft: "bg-zinc-500/20 text-zinc-300 border-zinc-500/30",
+  sent: "bg-sky-500/20 text-sky-300 border-sky-500/30",
+  accepted: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+  rejected: "bg-red-500/15 text-red-300 border-red-500/25",
+  expired: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+  cancelled: "bg-zinc-500/15 text-zinc-400 border-zinc-500/25",
+};
+
+export type VenueProposalItem = {
+  id: string;
+  sourceType: string;
+  sourceServiceId: string | null;
+  sourcePackageId: string | null;
+  name: string;
+  description: string | null;
+  quantity: string;
+  unitPrice: string;
+  totalPrice: string;
+  sortOrder: number;
+};
+
+export type VenueProposal = {
+  id: string;
+  tenantId: string;
+  proposalNumber: string;
+  pipelineLeadId: string | null;
+  bookingId: string | null;
+  status: string;
+  title: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string | null;
+  companyName: string | null;
+  eventType: string | null;
+  eventDate: string | null;
+  guestCount: number | null;
+  subtotal: string;
+  discount: string;
+  tax: string;
+  total: string;
+  notes: string | null;
+  terms: string | null;
+  validUntil: string | null;
+  createdAt: string;
+  updatedAt: string;
+  itemsCount: number;
+  items: VenueProposalItem[];
+};
+
+export function formatProposalDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+}
+
+export function parseProposalDateInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const y = parts.find((p) => p.type === "year")?.value;
+  const m = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+  return y && m && day ? `${y}-${m}-${day}` : "";
+}
+
 export const BOOKING_STATUS_COLOR: Record<string, string> = {
   hold: "bg-amber-500/20 text-amber-300 border-amber-500/30",
   confirmed: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
