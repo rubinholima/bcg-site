@@ -30,6 +30,7 @@ import { BostonCityHallPublicTicketService } from './boston-city-hall-public-tic
 import { BostonCityHallMyTicketsService } from './boston-city-hall-my-tickets.service';
 import { BostonCityHallPublicNotificationService } from './boston-city-hall-public-notification.service';
 import { MailService } from '../common/mail.service';
+import { BostonCityHallBarService } from './boston-city-hall-bar.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule, FinanceiroModule, HomeContentModule],
@@ -59,6 +60,7 @@ import { MailService } from '../common/mail.service';
     BostonCityHallMyTicketsService,
     BostonCityHallPublicNotificationService,
     MailService,
+    BostonCityHallBarService,
   ],
   exports: [
     BostonCityHallService,

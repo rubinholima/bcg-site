@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   StreamableFile,
   Req,
@@ -39,6 +40,7 @@ import type { TicketReportQueryDto } from './boston-city-hall-ticket-reports.con
 import { TenantAccessService } from '../auth/tenant-access.service';
 import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import type { PaymentMethod } from '../payments/payment-core.constants';
+import { BostonCityHallBarService } from './boston-city-hall-bar.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -62,7 +64,12 @@ export class BostonCityHallController {
     private readonly seating: BostonCityHallSeatingService,
     private readonly ticketReports: BostonCityHallTicketReportsService,
     private readonly tenantAccess: TenantAccessService,
+    private readonly bar: BostonCityHallBarService,
   ) {}
+
+  private async bchTenantId(): Promise<string> {
+    return this.bar.resolveBchTenantId();
+  }
 
   private parseTicketReportQuery(query: Record<string, string | undefined>): TicketReportQueryDto {
     const eventId = query.eventId?.trim();
@@ -966,6 +973,206 @@ export class BostonCityHallController {
   @Get('ticketing/reports/seating')
   ticketReportSeating(@Query() query: Record<string, string | undefined>) {
     return this.ticketReports.getSeatingForVenue(this.parseTicketReportQuery(query));
+  }
+
+  /** BCH Bar — catálogo (Fase 4.1) */
+  @Get('bar/locations')
+  async listBarLocations() {
+    const tenantId = await this.bchTenantId();
+    return this.bar.listLocations(tenantId);
+  }
+
+  @Get('bar/products')
+  async listBarProducts() {
+    const tenantId = await this.bchTenantId();
+    return this.bar.listProducts(tenantId);
+  }
+
+  @Get('bar/products/:id')
+  async getBarProduct(@Param('id') id: string) {
+    const tenantId = await this.bchTenantId();
+    return this.bar.getProduct(tenantId, id);
+  }
+
+  @Post('bar/products')
+  async createBarProduct(
+    @Body()
+    body: {
+      sku?: string;
+      name?: string;
+      category?: string;
+      description?: string;
+      imageUrl?: string;
+      active?: boolean;
+      physicalUnit?: {
+        unitType?: string;
+        label?: string;
+        volumeMl?: number;
+        quantityBasis?: number | string;
+      };
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.physicalUnit?.unitType) throw new BadRequestException('Unidade física obrigatória.');
+    return this.bar.createProduct(tenantId, {
+      sku: body.sku ?? '',
+      name: body.name ?? '',
+      category: body.category ?? 'other',
+      description: body.description,
+      imageUrl: body.imageUrl,
+      active: body.active,
+      physicalUnit: {
+        unitType: body.physicalUnit.unitType,
+        label: body.physicalUnit.label,
+        volumeMl: body.physicalUnit.volumeMl,
+        quantityBasis: body.physicalUnit.quantityBasis,
+      },
+    });
+  }
+
+  @Patch('bar/products/:id')
+  async updateBarProduct(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      sku: string;
+      name: string;
+      category: string;
+      description: string | null;
+      imageUrl: string | null;
+      active: boolean;
+      physicalUnit: {
+        unitType: string;
+        label?: string | null;
+        volumeMl?: number | null;
+        quantityBasis?: number | string;
+      };
+    }>,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.bar.updateProduct(tenantId, id, body);
+  }
+
+  @Get('bar/selling-units')
+  async listBarSellingUnits(@Query('productId') productId?: string) {
+    const tenantId = await this.bchTenantId();
+    return this.bar.listSellingUnits(tenantId, productId?.trim() || undefined);
+  }
+
+  @Post('bar/products/:productId/selling-units')
+  async createBarSellingUnit(
+    @Param('productId') productId: string,
+    @Body()
+    body: {
+      name?: string;
+      active?: boolean;
+      sortOrder?: number;
+      portionAmount?: number | string | null;
+      portionUnit?: string | null;
+      physicalUnitsConsumedPerSale?: number | string;
+      expectedPortionsPerPhysical?: number | string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.physicalUnitsConsumedPerSale) {
+      throw new BadRequestException('Consumo de unidade física por venda é obrigatório.');
+    }
+    return this.bar.createSellingUnit(tenantId, productId, {
+      name: body.name ?? '',
+      active: body.active,
+      sortOrder: body.sortOrder,
+      portionAmount: body.portionAmount,
+      portionUnit: body.portionUnit,
+      physicalUnitsConsumedPerSale: body.physicalUnitsConsumedPerSale,
+      expectedPortionsPerPhysical: body.expectedPortionsPerPhysical,
+    });
+  }
+
+  @Patch('bar/selling-units/:id')
+  async updateBarSellingUnit(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      name: string;
+      active: boolean;
+      sortOrder: number;
+      portionAmount: number | string | null;
+      portionUnit: string | null;
+      physicalUnitsConsumedPerSale: number | string;
+      expectedPortionsPerPhysical: number | string | null;
+    }>,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.bar.updateSellingUnit(tenantId, id, body);
+  }
+
+  @Get('bar/prices')
+  async listBarPrices(@Query('sellingUnitId') sellingUnitId?: string) {
+    const tenantId = await this.bchTenantId();
+    return this.bar.listPrices(tenantId, sellingUnitId?.trim() || undefined);
+  }
+
+  @Post('bar/selling-units/:sellingUnitId/prices')
+  async createBarPrice(
+    @Param('sellingUnitId') sellingUnitId: string,
+    @Body()
+    body: {
+      price?: number | string;
+      currency?: string;
+      active?: boolean;
+      validFrom?: string | null;
+      validTo?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (body.price == null || !body.currency) {
+      throw new BadRequestException('Preço e moeda são obrigatórios.');
+    }
+    return this.bar.createPrice(tenantId, sellingUnitId, {
+      price: body.price,
+      currency: body.currency,
+      active: body.active,
+      validFrom: body.validFrom,
+      validTo: body.validTo,
+    });
+  }
+
+  @Patch('bar/prices/:id')
+  async updateBarPrice(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      price: number | string;
+      currency: string;
+      active: boolean;
+      validFrom: string | null;
+      validTo: string | null;
+    }>,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.bar.updatePrice(tenantId, id, body);
+  }
+
+  @Get('bar/inventory')
+  async listBarInventory(@Query('locationId') locationId?: string) {
+    const tenantId = await this.bchTenantId();
+    return this.bar.listStockBalances(tenantId, locationId?.trim() || undefined);
+  }
+
+  @Put('bar/inventory')
+  async upsertBarInventory(
+    @Body()
+    body: { productId?: string; locationId?: string; quantityOnHand?: number | string },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.productId || !body.locationId || body.quantityOnHand == null) {
+      throw new BadRequestException('productId, locationId e quantityOnHand são obrigatórios.');
+    }
+    return this.bar.upsertStockBalance(tenantId, {
+      productId: body.productId,
+      locationId: body.locationId,
+      quantityOnHand: body.quantityOnHand,
+    });
   }
 
   @Patch('ticketing/lots/:id')

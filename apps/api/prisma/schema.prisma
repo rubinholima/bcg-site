@@ -247,6 +247,12 @@ model Tenant {
   paymentWebhookEvents         PaymentWebhookEvent[]
   bchMyTicketsMagicLinks       BchMyTicketsMagicLink[]
   bchMyTicketsSessions         BchMyTicketsSession[]
+  bchBarProducts               BchBarProduct[]
+  bchBarProductPhysicalUnits   BchBarProductPhysicalUnit[]
+  bchBarSellingUnits           BchBarSellingUnit[]
+  bchBarSellingUnitPrices      BchBarSellingUnitPrice[]
+  bchBarInventoryLocations     BchBarInventoryLocation[]
+  bchBarStockBalances          BchBarStockBalance[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -977,6 +983,7 @@ model Event {
   eventComplimentaryAdmissions EventComplimentaryAdmission[]
   eventTicketTables   EventTicketTable[]
   eventTicketSeats    EventTicketSeat[]
+  bchBarInventoryLocations BchBarInventoryLocation[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -3474,6 +3481,128 @@ model BchMyTicketsSession {
 
   @@index([tenantId, emailNormalized])
   @@index([expiresAt])
+}
+
+/// BCH Bar — catálogo de produtos (Fase 4.1).
+model BchBarProduct {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  sku         String
+  name        String
+  category    String
+  description String?  @db.Text
+  imageUrl    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  physicalUnit BchBarProductPhysicalUnit?
+  sellingUnits BchBarSellingUnit[]
+  stockBalances BchBarStockBalance[]
+
+  @@unique([tenantId, sku])
+  @@index([tenantId, active])
+  @@index([tenantId, category])
+}
+
+/// Unidade física estocada (garrafa, lata, barril…).
+model BchBarProductPhysicalUnit {
+  id             String        @id @default(cuid())
+  tenantId       String
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  productId      String        @unique
+  product        BchBarProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  unitType       String
+  label          String?
+  volumeMl       Int?
+  quantityBasis  Decimal       @default(1) @db.Decimal(12, 4)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([tenantId])
+}
+
+/// Unidade comercial de venda (dose, copo, garrafa…).
+model BchBarSellingUnit {
+  id                           String        @id @default(cuid())
+  tenantId                     String
+  tenant                       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  productId                    String
+  product                      BchBarProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name                         String
+  active                       Boolean       @default(true)
+  sortOrder                    Int           @default(0)
+  portionAmount                Decimal?      @db.Decimal(12, 4)
+  portionUnit                  String?
+  /// Consumo de unidade física por 1 venda desta porção (ex.: 0.1 = 1/10 garrafa).
+  physicalUnitsConsumedPerSale Decimal       @db.Decimal(12, 6)
+  /// Rendimento esperado (informativo): porções por 1 unidade física, ex.: 10 doses/garrafa.
+  expectedPortionsPerPhysical  Decimal?      @db.Decimal(12, 4)
+  createdAt                    DateTime      @default(now())
+  updatedAt                    DateTime      @updatedAt
+
+  prices BchBarSellingUnitPrice[]
+
+  @@index([tenantId, productId])
+  @@index([productId, sortOrder])
+}
+
+/// Preço por unidade de venda (separado do estoque).
+model BchBarSellingUnitPrice {
+  id            String            @id @default(cuid())
+  tenantId      String
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  sellingUnitId String
+  sellingUnit   BchBarSellingUnit @relation(fields: [sellingUnitId], references: [id], onDelete: Cascade)
+  price         Decimal           @db.Decimal(12, 2)
+  currency      String
+  active        Boolean           @default(true)
+  validFrom     DateTime?
+  validTo       DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([tenantId, sellingUnitId])
+  @@index([sellingUnitId, active])
+}
+
+/// Local de estoque BCH (central + futuros bars de evento).
+model BchBarInventoryLocation {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  code      String
+  name      String
+  kind      String   @default("central")
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockBalances BchBarStockBalance[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, kind])
+}
+
+/// Saldo físico atual por produto e local.
+model BchBarStockBalance {
+  id              String                  @id @default(cuid())
+  tenantId        String
+  tenant          Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  productId       String
+  product         BchBarProduct           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locationId      String
+  location        BchBarInventoryLocation @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  quantityOnHand  Decimal                 @default(0) @db.Decimal(14, 4)
+  updatedAt       DateTime                @updatedAt
+  createdAt       DateTime                @default(now())
+
+  @@unique([productId, locationId])
+  @@index([tenantId, locationId])
 }
 
 model VenueBooking {

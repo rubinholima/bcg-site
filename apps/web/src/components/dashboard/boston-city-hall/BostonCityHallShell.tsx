@@ -16,6 +16,7 @@ import {
   Tags,
   Ticket,
   Wallet,
+  Wine,
 } from "lucide-react";
 import { BostonCityHallLogo } from "@/components/dashboard/boston-city-hall/BostonCityHallLogo";
 import { DEPT_HUB_MENU_LABEL } from "@/lib/dashboard-labels";
@@ -32,6 +33,7 @@ const NAV = [
   { href: `${BCH_BASE}/ticketing`, label: "Ingressos", icon: Ticket },
   { href: `${BCH_BASE}/espacos`, label: "Espaços", icon: Building2 },
   { href: `${BCH_BASE}/servicos`, label: "Serviços", icon: Tags },
+  { href: `${BCH_BASE}/bar`, label: "Bar", icon: Wine },
   { href: `${BCH_BASE}/propostas`, label: "Propostas", icon: FileText },
   { href: `${BCH_BASE}/contratos`, label: "Contratos", icon: FileSignature },
   { href: `${BCH_BASE}/financeiro`, label: "Financeiro", icon: Wallet },
