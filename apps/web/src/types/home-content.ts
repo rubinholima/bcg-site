@@ -57,6 +57,7 @@ export type HomeBlockType =
   | "clubs"
   | "companies"
   | "eventos"
+  | "bch_upcoming_events"
   | "founder"
   | "how"
   | "cta"

@@ -23,9 +23,11 @@ import { BostonCityHallSeatingService } from './boston-city-hall-seating.service
 import { BostonCityHallTicketReportsService } from './boston-city-hall-ticket-reports.service';
 import { PaymentsModule } from '../payments/payments.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
+import { HomeContentModule } from '../home-content/home-content.module';
+import { BostonCityHallPublicEventsService } from './boston-city-hall-public-events.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule, FinanceiroModule],
+  imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule, FinanceiroModule, HomeContentModule],
   controllers: [BostonCityHallController],
   providers: [
     BostonCityHallService,
@@ -46,6 +48,7 @@ import { FinanceiroModule } from '../financeiro/financeiro.module';
     BostonCityHallComplimentaryService,
     BostonCityHallSeatingService,
     BostonCityHallTicketReportsService,
+    BostonCityHallPublicEventsService,
   ],
   exports: [
     BostonCityHallService,
@@ -65,6 +68,7 @@ import { FinanceiroModule } from '../financeiro/financeiro.module';
     BostonCityHallComplimentaryService,
     BostonCityHallSeatingService,
     BostonCityHallTicketReportsService,
+    BostonCityHallPublicEventsService,
   ],
 })
 export class BostonCityHallModule {}

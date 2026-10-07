@@ -84,6 +84,7 @@ const GENERIC_BLOCK_TYPES = [
   "clubs",
   "companies",
   "eventos",
+  "bch_upcoming_events",
   "founder",
   "how",
   "cta",

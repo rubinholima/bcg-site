@@ -264,6 +264,7 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: Mod
   { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)", category: "empresas" },
   // Eventos (páginas de venue, torneios, Boston City Hall, etc.)
   { type: "eventos", label: "Nossos Eventos", category: "eventos" },
+  { type: "bch_upcoming_events", label: "BCH — Próximos eventos", category: "eventos" },
   { type: "galeria_eventos", label: "Galeria de fotos do evento", category: "eventos" },
   { type: "proximos_eventos", label: "Próximos jogos (evento)", category: "eventos" },
   { type: "ultimos_eventos", label: "Últimos resultados (evento)", category: "eventos" },

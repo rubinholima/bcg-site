@@ -29,6 +29,7 @@ import { PublicService } from './public.service';
 import { BostonTvService } from '../boston-tv/boston-tv.service';
 import { RegistrationInviteService } from '../registration-invite/registration-invite.service';
 import { BostonCityHallService } from '../boston-city-hall/boston-city-hall.service';
+import { BostonCityHallPublicEventsService } from '../boston-city-hall/boston-city-hall-public-events.service';
 import { TenantPressService } from '../tenant-press/tenant-press.service';
 import { SubmitEmployeeRegistrationDto } from '../registration-invite/dto/submit-employee-registration.dto';
 import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-player-registration.dto';
@@ -48,6 +49,7 @@ export class PublicController {
     private readonly bostonTvService: BostonTvService,
     private readonly registrationInviteService: RegistrationInviteService,
     private readonly bostonCityHallService: BostonCityHallService,
+    private readonly bostonCityHallPublicEvents: BostonCityHallPublicEventsService,
     private readonly tenantPressService: TenantPressService,
     private readonly prepPse: PrepPseService,
   ) {}
@@ -96,6 +98,22 @@ export class PublicController {
   @Get('events')
   async getPublicEvents(@Query('tenantId') tenantId: string | undefined) {
     return this.eventsService.findPublishedForPublic(tenantId?.trim() || undefined);
+  }
+
+  /** Boston City Hall — vitrine pública de eventos (Phase 3.1). Escopo fixo no tenant boston-city-hall. */
+  @Get('boston-city-hall/events')
+  getBchPublicEvents(@Query('past') past?: string) {
+    const showPast = past === '1' || past === 'true';
+    return this.bostonCityHallPublicEvents.list({ past: showPast });
+  }
+
+  @Get('boston-city-hall/events/:slug')
+  async getBchPublicEventBySlug(@Param('slug') slug: string) {
+    const event = await this.bostonCityHallPublicEvents.getBySlug(slug);
+    if (!event) {
+      return null;
+    }
+    return event;
   }
 
   /** Galeria por link compartilhado (temporário ou permanente) — para /eventos/gallery/[token]. Deve vir antes de events/:slug. */

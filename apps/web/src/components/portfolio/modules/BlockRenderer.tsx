@@ -48,6 +48,7 @@ import { ComoFuncionaSection } from "@/components/portfolio/modules/ComoFunciona
 import { FaqSection } from "@/components/portfolio/modules/FaqSection";
 import { FormularioCapturaSection } from "@/components/portfolio/modules/FormularioCapturaSection";
 import { EventosSection } from "@/components/portfolio/modules/EventosSection";
+import { BchUpcomingEventsSection } from "@/components/portfolio/modules/BchUpcomingEventsSection";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import type { FixturesFetchContext } from "@/lib/fixtures-shared";
 import { Button } from "@/components/ui/button";
@@ -367,6 +368,21 @@ export function BlockRenderer({
   if (block.type === "eventos") {
     return (
       <EventosSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={showModuleTitle ?? !inSection}
+      />
+    );
+  }
+
+  if (block.type === "bch_upcoming_events") {
+    return (
+      <BchUpcomingEventsSection
         key={block.id}
         block={block}
         lang={lang}
