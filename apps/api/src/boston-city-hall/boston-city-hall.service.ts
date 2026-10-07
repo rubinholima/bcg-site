@@ -522,16 +522,105 @@ export class BostonCityHallService {
     await this.prisma.venueBooking.delete({ where: { id } });
   }
 
-  async listPipeline(venueSlug = BCH_VENUE_SLUG): Promise<VenuePipelineLeadDto[]> {
+  async listPipeline(
+    filters: {
+      venueSlug?: string;
+      stage?: string;
+      source?: string;
+      q?: string;
+      createdFrom?: string;
+      createdTo?: string;
+      commercialStatus?: string;
+      sort?: string;
+    } = {},
+  ): Promise<VenuePipelineLeadDto[]> {
+    const venueSlug = filters.venueSlug ?? BCH_VENUE_SLUG;
     const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
+
+    const where: Record<string, unknown> = { tenantId, venueSlug: slug };
+
+    if (filters.source?.trim()) {
+      where.source = filters.source.trim();
+    }
+
+    const commercial = filters.commercialStatus?.trim().toLowerCase();
+    if (filters.stage?.trim()) {
+      where.stage = filters.stage.trim();
+    } else if (commercial === 'open') {
+      where.stage = { notIn: ['confirmado', 'perdido'] };
+    } else if (commercial === 'won') {
+      where.stage = 'confirmado';
+    } else if (commercial === 'lost') {
+      where.stage = 'perdido';
+    } else if (commercial === 'closed') {
+      where.stage = { in: ['confirmado', 'perdido'] };
+    }
+
+    if (filters.createdFrom?.trim() || filters.createdTo?.trim()) {
+      where.createdAt = {};
+      if (filters.createdFrom?.trim()) {
+        const from = parseDateOnlyBrazil(filters.createdFrom.trim());
+        if (from) (where.createdAt as Record<string, Date>).gte = from;
+      }
+      if (filters.createdTo?.trim()) {
+        const to = parseDateOnlyBrazil(filters.createdTo.trim());
+        if (to) {
+          const end = new Date(to);
+          end.setHours(23, 59, 59, 999);
+          (where.createdAt as Record<string, Date>).lte = end;
+        }
+      }
+    }
+
+    const q = filters.q?.trim();
+    if (q) {
+      where.OR = [
+        { contactName: { contains: q, mode: 'insensitive' } },
+        { contactEmail: { contains: q, mode: 'insensitive' } },
+        { companyName: { contains: q, mode: 'insensitive' } },
+        { contactPhone: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    let orderBy: { updatedAt?: 'asc' | 'desc'; createdAt?: 'asc' | 'desc' } = {
+      updatedAt: 'desc',
+    };
+    switch (filters.sort?.trim()) {
+      case 'updatedAsc':
+        orderBy = { updatedAt: 'asc' };
+        break;
+      case 'createdDesc':
+        orderBy = { createdAt: 'desc' };
+        break;
+      case 'createdAsc':
+        orderBy = { createdAt: 'asc' };
+        break;
+      case 'updatedDesc':
+      default:
+        orderBy = { updatedAt: 'desc' };
+        break;
+    }
+
     const rows = await this.prisma.venuePipelineLead.findMany({
-      where: { tenantId, venueSlug: slug },
+      where,
       include: {
         booking: { include: { space: { select: { name: true } } } },
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy,
     });
     return rows.map(toLeadDto);
+  }
+
+  async getPipelineLead(id: string, venueSlug = BCH_VENUE_SLUG): Promise<VenuePipelineLeadDto> {
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
+    const row = await this.prisma.venuePipelineLead.findFirst({
+      where: { id, tenantId, venueSlug: slug },
+      include: {
+        booking: { include: { space: { select: { name: true } } } },
+      },
+    });
+    if (!row) throw new NotFoundException('Lead não encontrado');
+    return toLeadDto(row);
   }
 
   async createPipelineLead(dto: {

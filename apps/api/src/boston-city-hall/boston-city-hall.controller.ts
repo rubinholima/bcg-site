@@ -90,8 +90,29 @@ export class BostonCityHallController {
   }
 
   @Get('pipeline')
-  listPipeline() {
-    return this.service.listPipeline();
+  listPipeline(
+    @Query('stage') stage?: string,
+    @Query('source') source?: string,
+    @Query('q') q?: string,
+    @Query('createdFrom') createdFrom?: string,
+    @Query('createdTo') createdTo?: string,
+    @Query('commercialStatus') commercialStatus?: string,
+    @Query('sort') sort?: string,
+  ) {
+    return this.service.listPipeline({
+      stage,
+      source,
+      q,
+      createdFrom,
+      createdTo,
+      commercialStatus,
+      sort,
+    });
+  }
+
+  @Get('pipeline/:id')
+  getPipelineLead(@Param('id') id: string) {
+    return this.service.getPipelineLead(id);
   }
 
   @Post('pipeline')
