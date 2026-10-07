@@ -532,6 +532,7 @@ export class BostonCityHallService {
       createdTo?: string;
       commercialStatus?: string;
       sort?: string;
+      eventType?: string;
     } = {},
   ): Promise<VenuePipelineLeadDto[]> {
     const venueSlug = filters.venueSlug ?? BCH_VENUE_SLUG;
@@ -570,6 +571,11 @@ export class BostonCityHallService {
           (where.createdAt as Record<string, Date>).lte = end;
         }
       }
+    }
+
+    const eventTypeQ = filters.eventType?.trim();
+    if (eventTypeQ) {
+      where.eventType = { contains: eventTypeQ, mode: 'insensitive' };
     }
 
     const q = filters.q?.trim();

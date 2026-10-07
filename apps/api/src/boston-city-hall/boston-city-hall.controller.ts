@@ -98,6 +98,7 @@ export class BostonCityHallController {
     @Query('createdTo') createdTo?: string,
     @Query('commercialStatus') commercialStatus?: string,
     @Query('sort') sort?: string,
+    @Query('eventType') eventType?: string,
   ) {
     return this.service.listPipeline({
       stage,
@@ -107,6 +108,7 @@ export class BostonCityHallController {
       createdTo,
       commercialStatus,
       sort,
+      eventType,
     });
   }
 

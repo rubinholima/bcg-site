@@ -1,16 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  CalendarPlus,
-  Copy,
-  ExternalLink,
-  Kanban,
-  Loader2,
-  Plus,
-  Search,
-} from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +15,6 @@ import {
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import {
   Select,
   SelectContent,
@@ -47,97 +37,16 @@ import {
   PIPELINE_STAGE_LABEL,
 } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
-
-const BCH = "/dashboard/eventos/boston-city-hall";
-
-type LeadForm = {
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  companyName: string;
-  eventType: string;
-  guestCount: string;
-  preferredDate: string;
-  message: string;
-  notes: string;
-};
-
-type DetailForm = LeadForm & { stage: string };
-
-const emptyLead = (): LeadForm => ({
-  contactName: "",
-  contactEmail: "",
-  contactPhone: "",
-  companyName: "",
-  eventType: "",
-  guestCount: "",
-  preferredDate: "",
-  message: "",
-  notes: "",
-});
-
-function leadToDetailForm(lead: VenuePipelineLead): DetailForm {
-  return {
-    contactName: lead.contactName,
-    contactEmail: lead.contactEmail,
-    contactPhone: lead.contactPhone ?? "",
-    companyName: lead.companyName ?? "",
-    eventType: lead.eventType ?? "",
-    guestCount: lead.guestCount != null ? String(lead.guestCount) : "",
-    preferredDate: lead.preferredDate?.slice(0, 10) ?? "",
-    message: lead.message ?? "",
-    notes: lead.notes ?? "",
-    stage: lead.stage,
-  };
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function periodToDates(period: string): { createdFrom?: string; createdTo?: string } {
-  const now = new Date();
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  if (period === "7d") {
-    const from = new Date(now);
-    from.setDate(from.getDate() - 7);
-    return { createdFrom: iso(from) };
-  }
-  if (period === "30d") {
-    const from = new Date(now);
-    from.setDate(from.getDate() - 30);
-    return { createdFrom: iso(from) };
-  }
-  if (period === "month") {
-    const from = new Date(now.getFullYear(), now.getMonth(), 1);
-    return { createdFrom: iso(from), createdTo: iso(now) };
-  }
-  return {};
-}
-
-const STAGE_BADGE: Record<string, string> = {
-  lead: "bg-violet-500/15 text-violet-300",
-  analise: "bg-sky-500/15 text-sky-300",
-  proposta: "bg-amber-500/15 text-amber-300",
-  contrato: "bg-emerald-500/15 text-emerald-300",
-  confirmado: "bg-green-600/20 text-green-300",
-  perdido: "bg-zinc-500/20 text-zinc-400",
-};
-
-async function copyText(value: string) {
-  try {
-    await navigator.clipboard.writeText(value);
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { BostonCityHallLeadDetailDialog } from "./BostonCityHallLeadDetailDialog";
+import {
+  buildPipelineListQuery,
+  emptyLead,
+  formatDateTime,
+  leadToDetailForm,
+  STAGE_BADGE,
+  type DetailForm,
+  type LeadForm,
+} from "./boston-city-hall-lead-shared";
 
 export function BostonCityHallCrm() {
   const [leads, setLeads] = useState<VenuePipelineLead[]>([]);
@@ -171,16 +80,14 @@ export function BostonCityHallCrm() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (stageFilter !== "all") params.set("stage", stageFilter);
-      if (sourceFilter !== "all") params.set("source", sourceFilter);
-      if (commercialFilter !== "all") params.set("commercialStatus", commercialFilter);
-      if (searchDebounced) params.set("q", searchDebounced);
-      if (sort) params.set("sort", sort);
-      const period = periodToDates(periodFilter);
-      if (period.createdFrom) params.set("createdFrom", period.createdFrom);
-      if (period.createdTo) params.set("createdTo", period.createdTo);
-      const qs = params.toString();
+      const qs = buildPipelineListQuery({
+        stageFilter,
+        sourceFilter,
+        commercialFilter,
+        periodFilter,
+        searchDebounced,
+        sort,
+      });
       const res = await api.get<VenuePipelineLead[]>(
         `/boston-city-hall/pipeline${qs ? `?${qs}` : ""}`,
       );
@@ -316,10 +223,6 @@ export function BostonCityHallCrm() {
       setSavingCreate(false);
     }
   };
-
-  const reservationHref = selected?.booking?.id
-    ? `${BCH}/reservas?edit=${encodeURIComponent(selected.booking.id)}`
-    : `${BCH}/reservas`;
 
   return (
     <>
@@ -505,215 +408,19 @@ export function BostonCityHallCrm() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!selected && !!detailForm} onOpenChange={(o) => !o && closeDetail()}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
-          {selected && detailForm ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>{detailForm.companyName || detailForm.contactName}</DialogTitle>
-              </DialogHeader>
-
-              <div className="flex flex-wrap gap-2 border-b border-border pb-3">
-                <Button variant="outline" size="sm" className="min-h-[40px] gap-1" asChild>
-                  <Link href={`${BCH}/pipeline`}>
-                    <Kanban className="h-4 w-4" />
-                    Pipeline
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" className="min-h-[40px] gap-1" asChild>
-                  <Link href={reservationHref}>
-                    <CalendarPlus className="h-4 w-4" />
-                    {selected.booking ? "Ver reserva" : "Reservas"}
-                  </Link>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="min-h-[40px] gap-1"
-                  onClick={async () => {
-                    const ok = await copyText(detailForm.contactEmail);
-                    setFeedback({
-                      open: true,
-                      title: ok ? "E-mail copiado" : "Não foi possível copiar",
-                      message: detailForm.contactEmail,
-                      variant: ok ? "success" : "error",
-                    });
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                  E-mail
-                </Button>
-                {detailForm.contactPhone ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="min-h-[40px] gap-1"
-                    onClick={async () => {
-                      const ok = await copyText(detailForm.contactPhone);
-                      setFeedback({
-                        open: true,
-                        title: ok ? "Telefone copiado" : "Não foi possível copiar",
-                        message: detailForm.contactPhone,
-                        variant: ok ? "success" : "error",
-                      });
-                    }}
-                  >
-                    <Copy className="h-4 w-4" />
-                    Telefone
-                  </Button>
-                ) : null}
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="grid gap-1.5 sm:col-span-2">
-                  <Label htmlFor="crm-d-name">Nome *</Label>
-                  <Input
-                    id="crm-d-name"
-                    value={detailForm.contactName}
-                    onChange={(e) =>
-                      setDetailForm((f) => (f ? { ...f, contactName: e.target.value } : f))
-                    }
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="crm-d-email">E-mail *</Label>
-                  <Input
-                    id="crm-d-email"
-                    type="email"
-                    value={detailForm.contactEmail}
-                    onChange={(e) =>
-                      setDetailForm((f) => (f ? { ...f, contactEmail: e.target.value } : f))
-                    }
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="crm-d-phone">Telefone</Label>
-                  <Input
-                    id="crm-d-phone"
-                    value={detailForm.contactPhone}
-                    onChange={(e) =>
-                      setDetailForm((f) => (f ? { ...f, contactPhone: e.target.value } : f))
-                    }
-                  />
-                </div>
-                <div className="grid gap-1.5 sm:col-span-2">
-                  <Label htmlFor="crm-d-company">Empresa</Label>
-                  <Input
-                    id="crm-d-company"
-                    value={detailForm.companyName}
-                    onChange={(e) =>
-                      setDetailForm((f) => (f ? { ...f, companyName: e.target.value } : f))
-                    }
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="crm-d-event">Tipo de evento</Label>
-                  <Input
-                    id="crm-d-event"
-                    value={detailForm.eventType}
-                    onChange={(e) =>
-                      setDetailForm((f) => (f ? { ...f, eventType: e.target.value } : f))
-                    }
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="crm-d-guests">Convidados</Label>
-                  <Input
-                    id="crm-d-guests"
-                    inputMode="numeric"
-                    value={detailForm.guestCount}
-                    onChange={(e) =>
-                      setDetailForm((f) => (f ? { ...f, guestCount: e.target.value } : f))
-                    }
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="crm-d-pref">Data preferida</Label>
-                  <Input
-                    id="crm-d-pref"
-                    type="date"
-                    className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
-                    value={detailForm.preferredDate}
-                    onChange={(e) =>
-                      setDetailForm((f) => (f ? { ...f, preferredDate: e.target.value } : f))
-                    }
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="crm-d-stage">Estágio</Label>
-                  <NativeSelect
-                    id="crm-d-stage"
-                    value={detailForm.stage}
-                    onChange={(e) =>
-                      setDetailForm((f) => (f ? { ...f, stage: e.target.value } : f))
-                    }
-                  >
-                    {PIPELINE_STAGES.map((s) => (
-                      <option key={s} value={s}>
-                        {PIPELINE_STAGE_LABEL[s]}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </div>
-                <div className="grid gap-1.5 sm:col-span-2">
-                  <Label>Origem</Label>
-                  <p className="rounded-md border border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-                    {LEAD_SOURCE_LABEL[selected.source] ?? selected.source}
-                  </p>
-                </div>
-                {selected.message ? (
-                  <div className="grid gap-1.5 sm:col-span-2">
-                    <Label>Mensagem original</Label>
-                    <p className="rounded-md border border-border bg-muted/20 p-3 text-sm text-foreground">
-                      {selected.message}
-                    </p>
-                  </div>
-                ) : null}
-                <div className="grid gap-1.5 sm:col-span-2">
-                  <Label htmlFor="crm-d-notes">Anotações comerciais</Label>
-                  <textarea
-                    id="crm-d-notes"
-                    rows={4}
-                    className="flex min-h-[88px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    value={detailForm.notes}
-                    onChange={(e) =>
-                      setDetailForm((f) => (f ? { ...f, notes: e.target.value } : f))
-                    }
-                  />
-                </div>
-                <p className="sm:col-span-2 text-xs text-muted-foreground">
-                  Criado em {formatDateTime(selected.createdAt)} · Atualizado em{" "}
-                  {formatDateTime(selected.updatedAt)}
-                  {selected.booking ? (
-                    <>
-                      {" "}
-                      ·{" "}
-                      <Link
-                        href={reservationHref}
-                        className="inline-flex items-center gap-0.5 text-violet-300 hover:underline"
-                      >
-                        Reserva vinculada
-                        <ExternalLink className="h-3 w-3" />
-                      </Link>
-                    </>
-                  ) : null}
-                </p>
-              </div>
-
-              <DialogFooter className="gap-2 sm:gap-0">
-                <Button variant="outline" onClick={closeDetail} className="min-h-[44px]">
-                  Fechar
-                </Button>
-                <Button onClick={saveDetail} disabled={savingDetail} className="min-h-[44px]">
-                  {savingDetail ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
-                </Button>
-              </DialogFooter>
-            </>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <BostonCityHallLeadDetailDialog
+        open={!!selected && !!detailForm}
+        onOpenChange={(o) => !o && closeDetail()}
+        selected={selected}
+        detailForm={detailForm}
+        onDetailFormChange={setDetailForm}
+        onSave={saveDetail}
+        saving={savingDetail}
+        context="crm"
+        onCopyFeedback={(payload) =>
+          setFeedback({ open: true, ...payload })
+        }
+      />
 
       <Dialog open={openCreate} onOpenChange={setOpenCreate}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
