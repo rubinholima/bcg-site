@@ -66,8 +66,41 @@ export type BchBarSellingUnit = {
   portionUnit: string | null;
   physicalUnitsConsumedPerSale: string;
   expectedPortionsPerPhysical: string | null;
+  consumeDisplayLabel?: string | null;
+  yieldDisplayLabel?: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type BchBarOpenContainer = {
+  id: string;
+  productId: string;
+  productSku: string;
+  productName: string;
+  locationId: string;
+  locationCode: string;
+  locationName: string;
+  status: string;
+  contentUnit: string;
+  originalContent: string;
+  remainingContent: string;
+  expectedPortionsRemaining: string | null;
+  openedAt: string;
+  closedAt: string | null;
+  openedByName: string | null;
+};
+
+export type BchBarOpenContainerLedgerEntry = {
+  id: string;
+  recordType: string;
+  consumptionType: string | null;
+  quantity: string;
+  contentDelta: string | null;
+  remainingAfter: string;
+  sellingUnitName: string | null;
+  reason: string | null;
+  createdByName: string | null;
+  createdAt: string;
 };
 
 export type BchBarSellingUnitPrice = {

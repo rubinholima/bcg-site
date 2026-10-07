@@ -47,6 +47,9 @@ model User {
   eventTicketCheckins        EventTicketCheckin[]
   eventComplimentaryAdmissionsCreated EventComplimentaryAdmission[] @relation("ComplimentaryCreatedBy")
   bchBarStockMovementsCreated         BchBarStockMovement[]         @relation("BchBarStockMovementCreatedBy")
+  bchBarOpenContainersOpened          BchBarOpenContainer[]         @relation("BchBarOpenContainerOpenedBy")
+  bchBarOpenContainersClosed          BchBarOpenContainer[]         @relation("BchBarOpenContainerClosedBy")
+  bchBarOpenContainerLedgersCreated   BchBarOpenContainerLedger[]   @relation("BchBarOpenContainerLedgerCreatedBy")
 }
 
 model UserTenant {
@@ -255,6 +258,8 @@ model Tenant {
   bchBarInventoryLocations     BchBarInventoryLocation[]
   bchBarStockBalances          BchBarStockBalance[]
   bchBarStockMovements         BchBarStockMovement[]
+  bchBarOpenContainers         BchBarOpenContainer[]
+  bchBarOpenContainerLedgers   BchBarOpenContainerLedger[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -987,6 +992,8 @@ model Event {
   eventTicketSeats    EventTicketSeat[]
   bchBarInventoryLocations BchBarInventoryLocation[]
   bchBarStockMovements     BchBarStockMovement[]
+  bchBarOpenContainers     BchBarOpenContainer[]
+  bchBarOpenContainerLedgers BchBarOpenContainerLedger[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -3504,6 +3511,8 @@ model BchBarProduct {
   sellingUnits BchBarSellingUnit[]
   stockBalances BchBarStockBalance[]
   stockMovements BchBarStockMovement[]
+  openContainers BchBarOpenContainer[]
+  openContainerLedgers BchBarOpenContainerLedger[]
 
   @@unique([tenantId, sku])
   @@index([tenantId, active])
@@ -3523,6 +3532,8 @@ model BchBarProductPhysicalUnit {
   quantityBasis  Decimal       @default(1) @db.Decimal(12, 4)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+
+  openContainers BchBarOpenContainer[]
 
   @@index([tenantId])
 }
@@ -3547,6 +3558,7 @@ model BchBarSellingUnit {
   updatedAt                    DateTime      @updatedAt
 
   prices BchBarSellingUnitPrice[]
+  openContainerLedgers BchBarOpenContainerLedger[]
 
   @@index([tenantId, productId])
   @@index([productId, sortOrder])
@@ -3588,6 +3600,8 @@ model BchBarInventoryLocation {
 
   stockBalances BchBarStockBalance[]
   stockMovements BchBarStockMovement[]
+  openContainers BchBarOpenContainer[]
+  openContainerLedgers BchBarOpenContainerLedger[]
 
   @@unique([tenantId, code])
   @@index([tenantId, kind])
@@ -3645,6 +3659,74 @@ model BchBarStockMovement {
   @@index([tenantId, movementType, createdAt])
   @@index([tenantId, eventId])
   @@index([transferGroupId])
+}
+
+/// Garrafa/unidade física aberta — conteúdo parcial rastreável.
+model BchBarOpenContainer {
+  id                  String                    @id @default(cuid())
+  tenantId            String
+  tenant              Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  productId           String
+  product             BchBarProduct             @relation(fields: [productId], references: [id], onDelete: Restrict)
+  locationId          String
+  location            BchBarInventoryLocation     @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  physicalUnitId      String
+  physicalUnit        BchBarProductPhysicalUnit   @relation(fields: [physicalUnitId], references: [id], onDelete: Restrict)
+  eventId             String?
+  event               Event?                    @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  status              String                    @default("open")
+  contentUnit         String
+  originalContent     Decimal                   @db.Decimal(14, 4)
+  remainingContent    Decimal                   @db.Decimal(14, 4)
+  openedAt            DateTime                  @default(now())
+  closedAt            DateTime?
+  openedByUserId      String?
+  openedBy            User?                     @relation("BchBarOpenContainerOpenedBy", fields: [openedByUserId], references: [id], onDelete: SetNull)
+  closedByUserId      String?
+  closedBy            User?                     @relation("BchBarOpenContainerClosedBy", fields: [closedByUserId], references: [id], onDelete: SetNull)
+  openStockMovementId String?
+  notes               String?                   @db.Text
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  ledgerEntries BchBarOpenContainerLedger[]
+
+  @@index([tenantId, productId, locationId, status])
+  @@index([tenantId, locationId, openedAt])
+}
+
+/// Histórico append-only de consumo/ajuste/descarte em garrafa aberta.
+model BchBarOpenContainerLedger {
+  id              String              @id @default(cuid())
+  tenantId        String
+  tenant          Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  openContainerId String
+  openContainer   BchBarOpenContainer @relation(fields: [openContainerId], references: [id], onDelete: Restrict)
+  productId       String
+  product         BchBarProduct       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  locationId      String
+  location        BchBarInventoryLocation @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  sellingUnitId   String?
+  sellingUnit     BchBarSellingUnit?  @relation(fields: [sellingUnitId], references: [id], onDelete: SetNull)
+  recordType      String
+  consumptionType String?
+  quantity        Decimal             @db.Decimal(14, 4)
+  contentDelta    Decimal?            @db.Decimal(14, 4)
+  remainingAfter  Decimal             @db.Decimal(14, 4)
+  eventId         String?
+  event           Event?              @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  referenceType   String?
+  referenceId     String?
+  sourceKey       String?
+  reason          String?
+  notes           String?             @db.Text
+  createdByUserId String?
+  createdBy       User?               @relation("BchBarOpenContainerLedgerCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime            @default(now())
+
+  @@unique([tenantId, sourceKey])
+  @@index([openContainerId, createdAt])
+  @@index([tenantId, productId, locationId, createdAt])
 }
 
 model VenueBooking {

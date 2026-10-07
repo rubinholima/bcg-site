@@ -41,6 +41,7 @@ import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import type { PaymentMethod } from '../payments/payment-core.constants';
 import { BostonCityHallBarService } from './boston-city-hall-bar.service';
 import { BostonCityHallBarStockService } from './boston-city-hall-bar-stock.service';
+import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-open-container.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -66,6 +67,7 @@ export class BostonCityHallController {
     private readonly tenantAccess: TenantAccessService,
     private readonly bar: BostonCityHallBarService,
     private readonly barStock: BostonCityHallBarStockService,
+    private readonly barOpen: BostonCityHallBarOpenContainerService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -1278,6 +1280,107 @@ export class BostonCityHallController {
       sourceKey: body.sourceKey,
       notes: body.notes,
     });
+  }
+
+  @Get('bar/open-containers')
+  async listBarOpenContainers(
+    @Query('productId') productId?: string,
+    @Query('locationId') locationId?: string,
+    @Query('status') status?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barOpen.listOpenContainers(tenantId, {
+      productId: productId?.trim() || undefined,
+      locationId: locationId?.trim() || undefined,
+      status: status?.trim() || undefined,
+    });
+  }
+
+  @Post('bar/open-containers/open')
+  async openBarContainer(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body()
+    body: { productId?: string; locationId?: string; eventId?: string | null; notes?: string | null },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.productId || !body.locationId) {
+      throw new BadRequestException('productId e locationId são obrigatórios.');
+    }
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barOpen.openContainer(tenantId, operatorUserId, {
+      productId: body.productId,
+      locationId: body.locationId,
+      eventId: body.eventId,
+      notes: body.notes,
+    });
+  }
+
+  @Get('bar/open-containers/:id/history')
+  async listBarOpenContainerHistory(@Param('id') id: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barOpen.listContainerHistory(tenantId, id);
+  }
+
+  @Post('bar/open-containers/:id/discard')
+  async discardBarOpenContainer(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { notes?: string | null },
+  ) {
+    const tenantId = await this.bchTenantId();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barOpen.discardRemaining(tenantId, operatorUserId, id, body);
+  }
+
+  @Post('bar/open-containers/:id/adjust')
+  async adjustBarOpenContainer(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { newRemaining?: number | string; reason?: string | null },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (body.newRemaining == null) throw new BadRequestException('newRemaining é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barOpen.adjustContainerContent(tenantId, operatorUserId, id, {
+      newRemaining: body.newRemaining,
+      reason: body.reason,
+    });
+  }
+
+  @Post('bar/selling-units/:sellingUnitId/consume')
+  async consumeBarSellingUnit(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('sellingUnitId') sellingUnitId: string,
+    @Body()
+    body: {
+      locationId?: string;
+      consumptionType?: string;
+      eventId?: string | null;
+      sourceKey?: string | null;
+      portions?: number | string;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.locationId) throw new BadRequestException('locationId é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barOpen.consumeSellingUnit(tenantId, operatorUserId, {
+      sellingUnitId,
+      locationId: body.locationId,
+      consumptionType: body.consumptionType,
+      eventId: body.eventId,
+      sourceKey: body.sourceKey,
+      portions: body.portions,
+    });
+  }
+
+  @Get('bar/selling-units/:sellingUnitId/availability')
+  async getBarSellingUnitAvailability(
+    @Param('sellingUnitId') sellingUnitId: string,
+    @Query('locationId') locationId?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!locationId?.trim()) throw new BadRequestException('locationId é obrigatório.');
+    return this.barOpen.getSellingUnitAvailability(tenantId, sellingUnitId, locationId.trim());
   }
 
   @Post('bar/inventory/movements/:id/reverse')

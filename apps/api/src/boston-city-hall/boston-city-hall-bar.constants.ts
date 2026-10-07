@@ -56,6 +56,8 @@ export type BchBarSellingUnitDto = {
   portionUnit: string | null;
   physicalUnitsConsumedPerSale: string;
   expectedPortionsPerPhysical: string | null;
+  consumeDisplayLabel?: string | null;
+  yieldDisplayLabel?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -170,4 +172,63 @@ export type BchBarStockMovementDto = {
   createdByUserId: string | null;
   createdByName: string | null;
   createdAt: string;
+};
+
+export const BCH_BAR_OPEN_CONTAINER_STATUSES = ['open', 'empty', 'discarded', 'closed'] as const;
+
+export const BCH_BAR_CONTAINER_CONSUMPTION_TYPES = [
+  'sale',
+  'complimentary',
+  'spill_waste',
+  'internal_use',
+  'tasting',
+  'manual_adjustment',
+] as const;
+
+export type BchBarOpenContainerDto = {
+  id: string;
+  productId: string;
+  productSku: string;
+  productName: string;
+  locationId: string;
+  locationCode: string;
+  locationName: string;
+  status: string;
+  contentUnit: string;
+  originalContent: string;
+  remainingContent: string;
+  expectedPortionsRemaining: string | null;
+  openedAt: string;
+  closedAt: string | null;
+  eventId: string | null;
+  notes: string | null;
+  openedByUserId: string | null;
+  openedByName: string | null;
+};
+
+export type BchBarOpenContainerLedgerDto = {
+  id: string;
+  openContainerId: string;
+  recordType: string;
+  consumptionType: string | null;
+  quantity: string;
+  contentDelta: string | null;
+  remainingAfter: string;
+  sellingUnitName: string | null;
+  reason: string | null;
+  notes: string | null;
+  sourceKey: string | null;
+  createdByName: string | null;
+  createdAt: string;
+};
+
+export type BchBarSellingUnitAvailabilityDto = {
+  sellingUnitId: string;
+  locationId: string;
+  mode: 'whole_unit' | 'portion';
+  fulfillableUnits: string;
+  closedPhysicalUnits: string;
+  openRemainingContent: string;
+  contentUnit: string | null;
+  portionSize: string | null;
 };

@@ -37,10 +37,12 @@ import {
   BCH_BAR_MOVEMENT_TYPES,
   type BchBarStockBalance,
   type BchBarStockMovement,
+  type BchBarOpenContainer,
+  type BchBarOpenContainerLedgerEntry,
 } from "@/types/bch-bar";
 import { cn } from "@/lib/utils";
 
-type Tab = "products" | "selling" | "prices" | "inventory" | "movements";
+type Tab = "products" | "selling" | "prices" | "inventory" | "movements" | "open";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "products", label: "Produtos" },
@@ -48,6 +50,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "prices", label: "Preços" },
   { id: "inventory", label: "Estoque" },
   { id: "movements", label: "Movimentações" },
+  { id: "open", label: "Garrafas abertas" },
 ];
 
 const MOVEMENT_TYPES_IN = BCH_BAR_MOVEMENT_TYPES.filter(
@@ -95,6 +98,9 @@ export function BostonCityHallBar() {
   const [locations, setLocations] = useState<BchBarInventoryLocation[]>([]);
   const [stock, setStock] = useState<BchBarStockBalance[]>([]);
   const [movements, setMovements] = useState<BchBarStockMovement[]>([]);
+  const [openContainers, setOpenContainers] = useState<BchBarOpenContainer[]>([]);
+  const [openHistory, setOpenHistory] = useState<BchBarOpenContainerLedgerEntry[]>([]);
+  const [historyContainerId, setHistoryContainerId] = useState<string | null>(null);
 
   const [saving, setSaving] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -119,13 +125,14 @@ export function BostonCityHallBar() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [prodRes, suRes, prRes, locRes, invRes, movRes] = await Promise.all([
+      const [prodRes, suRes, prRes, locRes, invRes, movRes, openRes] = await Promise.all([
         api.get<BchBarProduct[]>("/boston-city-hall/bar/products"),
         api.get<BchBarSellingUnit[]>("/boston-city-hall/bar/selling-units"),
         api.get<BchBarSellingUnitPrice[]>("/boston-city-hall/bar/prices"),
         api.get<BchBarInventoryLocation[]>("/boston-city-hall/bar/locations"),
         api.get<BchBarStockBalance[]>("/boston-city-hall/bar/inventory"),
         api.get<BchBarStockMovement[]>("/boston-city-hall/bar/inventory/movements?limit=200"),
+        api.get<BchBarOpenContainer[]>("/boston-city-hall/bar/open-containers"),
       ]);
       setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
       setSellingUnits(Array.isArray(suRes.data) ? suRes.data : []);
@@ -133,6 +140,7 @@ export function BostonCityHallBar() {
       setLocations(Array.isArray(locRes.data) ? locRes.data : []);
       setStock(Array.isArray(invRes.data) ? invRes.data : []);
       setMovements(Array.isArray(movRes.data) ? movRes.data : []);
+      setOpenContainers(Array.isArray(openRes.data) ? openRes.data : []);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Erro ao carregar bar.");
     } finally {
@@ -415,6 +423,76 @@ export function BostonCityHallBar() {
     notes: "",
   });
 
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openForm, setOpenForm] = useState({ productId: "", locationId: "", notes: "" });
+  const [openAdjustDialog, setOpenAdjustDialog] = useState(false);
+  const [openAdjustForm, setOpenAdjustForm] = useState({ containerId: "", newRemaining: "", reason: "" });
+  const [historyDialog, setHistoryDialog] = useState(false);
+
+  const saveOpenContainer = async () => {
+    setSaving(true);
+    setDialogError(null);
+    try {
+      await api.post("/boston-city-hall/bar/open-containers/open", {
+        productId: openForm.productId,
+        locationId: openForm.locationId,
+        notes: openForm.notes.trim() || undefined,
+      });
+      setOpenDialog(false);
+      await loadAll();
+      setFeedback({ open: true, title: "Salvo", message: "Garrafa aberta.", variant: "success" });
+    } catch (e) {
+      setDialogError(e instanceof Error ? e.message : "Erro ao abrir.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const loadOpenHistory = async (containerId: string) => {
+    const res = await api.get<BchBarOpenContainerLedgerEntry[]>(
+      `/boston-city-hall/bar/open-containers/${containerId}/history`,
+    );
+    setOpenHistory(Array.isArray(res.data) ? res.data : []);
+    setHistoryContainerId(containerId);
+    setHistoryDialog(true);
+  };
+
+  const saveOpenAdjust = async () => {
+    setSaving(true);
+    setDialogError(null);
+    try {
+      await api.post(`/boston-city-hall/bar/open-containers/${openAdjustForm.containerId}/adjust`, {
+        newRemaining: openAdjustForm.newRemaining.replace(",", "."),
+        reason: openAdjustForm.reason.trim() || undefined,
+      });
+      setOpenAdjustDialog(false);
+      await loadAll();
+      setFeedback({ open: true, title: "Salvo", message: "Conteúdo ajustado.", variant: "success" });
+    } catch (e) {
+      setDialogError(e instanceof Error ? e.message : "Erro ao ajustar.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const discardOpen = async (containerId: string) => {
+    setSaving(true);
+    try {
+      await api.post(`/boston-city-hall/bar/open-containers/${containerId}/discard`, {});
+      await loadAll();
+      setFeedback({ open: true, title: "Salvo", message: "Restante descartado.", variant: "success" });
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Erro ao descartar.",
+        variant: "error",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const openInvAdjust = (row?: BchBarStockBalance) => {
     setInvForm({
       productId: row?.productId ?? activeProducts[0]?.id ?? "",
@@ -641,7 +719,7 @@ export function BostonCityHallBar() {
                   <TableHead>Produto</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Porção</TableHead>
-                  <TableHead>Consome (un. fís.)</TableHead>
+                  <TableHead>Consumo por venda</TableHead>
                   <TableHead>Rendimento</TableHead>
                   <TableHead>Ativo</TableHead>
                   <TableHead className="w-[80px]" />
@@ -664,8 +742,12 @@ export function BostonCityHallBar() {
                           ? `${su.portionAmount}${su.portionUnit ? ` ${su.portionUnit}` : ""}`
                           : "—"}
                       </TableCell>
-                      <TableCell>{su.physicalUnitsConsumedPerSale}</TableCell>
-                      <TableCell>{su.expectedPortionsPerPhysical ?? "—"}</TableCell>
+                      <TableCell className="text-sm">
+                        {su.consumeDisplayLabel ?? su.physicalUnitsConsumedPerSale}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {su.yieldDisplayLabel ?? su.expectedPortionsPerPhysical ?? "—"}
+                      </TableCell>
                       <TableCell>{su.active ? "Sim" : "Não"}</TableCell>
                       <TableCell>
                         <Button type="button" variant="ghost" size="icon" onClick={() => openSellingEdit(su)}>
@@ -864,6 +946,115 @@ export function BostonCityHallBar() {
                             Estornar
                           </Button>
                         )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === "open" && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle className="text-lg">Garrafas abertas</CardTitle>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                setOpenForm({
+                  productId: activeProducts[0]?.id ?? "",
+                  locationId: locations[0]?.id ?? "",
+                  notes: "",
+                });
+                setDialogError(null);
+                setOpenDialog(true);
+              }}
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Abrir
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Local</TableHead>
+                  <TableHead>Aberta em</TableHead>
+                  <TableHead>Original</TableHead>
+                  <TableHead>Restante</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Operador</TableHead>
+                  <TableHead className="min-w-[200px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {openContainers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                      Nenhuma garrafa aberta.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  openContainers.map((oc) => (
+                    <TableRow key={oc.id}>
+                      <TableCell>{oc.productName}</TableCell>
+                      <TableCell>{oc.locationName}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(oc.openedAt).toLocaleString("pt-BR")}
+                      </TableCell>
+                      <TableCell>
+                        {oc.originalContent} {oc.contentUnit}
+                      </TableCell>
+                      <TableCell>
+                        {oc.remainingContent} {oc.contentUnit}
+                      </TableCell>
+                      <TableCell>{oc.status}</TableCell>
+                      <TableCell className="text-xs">{oc.openedByName ?? "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {oc.status === "open" ? (
+                            <>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs"
+                                onClick={() => {
+                                  setOpenAdjustForm({
+                                    containerId: oc.id,
+                                    newRemaining: oc.remainingContent,
+                                    reason: "",
+                                  });
+                                  setOpenAdjustDialog(true);
+                                }}
+                              >
+                                Ajustar
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs"
+                                onClick={() => void discardOpen(oc.id)}
+                              >
+                                Descartar
+                              </Button>
+                            </>
+                          ) : null}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => void loadOpenHistory(oc.id)}
+                          >
+                            Histórico
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -1351,6 +1542,105 @@ export function BostonCityHallBar() {
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Registrar"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Abrir unidade</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <NativeSelect
+              value={openForm.productId}
+              onChange={(e) => setOpenForm((f) => ({ ...f, productId: e.target.value }))}
+            >
+              {activeProducts.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </NativeSelect>
+            <NativeSelect
+              value={openForm.locationId}
+              onChange={(e) => setOpenForm((f) => ({ ...f, locationId: e.target.value }))}
+            >
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </NativeSelect>
+            <Input
+              placeholder="Observações"
+              value={openForm.notes}
+              onChange={(e) => setOpenForm((f) => ({ ...f, notes: e.target.value }))}
+            />
+            {dialogError && openDialog ? <p className="text-sm text-destructive">{dialogError}</p> : null}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpenDialog(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" disabled={saving} onClick={() => void saveOpenContainer()}>
+              Abrir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openAdjustDialog} onOpenChange={setOpenAdjustDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajustar conteúdo</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <Input
+              value={openAdjustForm.newRemaining}
+              onChange={(e) => setOpenAdjustForm((f) => ({ ...f, newRemaining: e.target.value }))}
+            />
+            <Input
+              placeholder="Motivo"
+              value={openAdjustForm.reason}
+              onChange={(e) => setOpenAdjustForm((f) => ({ ...f, reason: e.target.value }))}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpenAdjustDialog(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" disabled={saving} onClick={() => void saveOpenAdjust()}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={historyDialog} onOpenChange={setHistoryDialog}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Histórico da garrafa</DialogTitle>
+          </DialogHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Qtd</TableHead>
+                <TableHead>Após</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {openHistory.map((h) => (
+                <TableRow key={h.id}>
+                  <TableCell className="text-xs">{new Date(h.createdAt).toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-xs">{h.recordType}</TableCell>
+                  <TableCell>{h.quantity}</TableCell>
+                  <TableCell>{h.remainingAfter}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </DialogContent>
       </Dialog>
 

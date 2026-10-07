@@ -7,6 +7,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BCH_VENUE_SLUG } from './boston-city-hall.constants';
+import { formatPortionLabel } from './boston-city-hall-bar-portion.util';
 import {
   BCH_BAR_CENTRAL_LOCATION_CODE,
   BCH_BAR_LOCATION_KINDS,
@@ -310,25 +311,43 @@ export class BostonCityHallBarService {
   async listSellingUnits(tenantId: string, productId?: string): Promise<BchBarSellingUnitDto[]> {
     const rows = await this.prisma.bchBarSellingUnit.findMany({
       where: { tenantId, ...(productId ? { productId } : {}) },
-      include: { product: { select: { name: true, active: true } } },
+      include: {
+        product: {
+          select: {
+            name: true,
+            active: true,
+            physicalUnit: {
+              select: { volumeMl: true, quantityBasis: true },
+            },
+          },
+        },
+      },
       orderBy: [{ productId: 'asc' }, { sortOrder: 'asc' }],
     });
-    return rows.map((r) => ({
-      id: r.id,
-      productId: r.productId,
-      productName: r.product.name,
-      productActive: r.product.active,
-      name: r.name,
-      active: r.active,
-      sortOrder: r.sortOrder,
-      portionAmount: r.portionAmount != null ? decStr(r.portionAmount) : null,
-      portionUnit: r.portionUnit,
-      physicalUnitsConsumedPerSale: decStr(r.physicalUnitsConsumedPerSale),
-      expectedPortionsPerPhysical:
-        r.expectedPortionsPerPhysical != null ? decStr(r.expectedPortionsPerPhysical) : null,
-      createdAt: r.createdAt.toISOString(),
-      updatedAt: r.updatedAt.toISOString(),
-    }));
+    return rows.map((r) => {
+      const labels =
+        r.product.physicalUnit != null
+          ? formatPortionLabel(r, r.product.physicalUnit)
+          : { consumeLabel: null, yieldLabel: null };
+      return {
+        id: r.id,
+        productId: r.productId,
+        productName: r.product.name,
+        productActive: r.product.active,
+        name: r.name,
+        active: r.active,
+        sortOrder: r.sortOrder,
+        portionAmount: r.portionAmount != null ? decStr(r.portionAmount) : null,
+        portionUnit: r.portionUnit,
+        physicalUnitsConsumedPerSale: decStr(r.physicalUnitsConsumedPerSale),
+        expectedPortionsPerPhysical:
+          r.expectedPortionsPerPhysical != null ? decStr(r.expectedPortionsPerPhysical) : null,
+        consumeDisplayLabel: labels.consumeLabel,
+        yieldDisplayLabel: labels.yieldLabel,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+      };
+    });
   }
 
   async createSellingUnit(

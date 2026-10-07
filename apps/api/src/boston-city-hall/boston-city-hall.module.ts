@@ -32,6 +32,7 @@ import { BostonCityHallPublicNotificationService } from './boston-city-hall-publ
 import { MailService } from '../common/mail.service';
 import { BostonCityHallBarService } from './boston-city-hall-bar.service';
 import { BostonCityHallBarStockService } from './boston-city-hall-bar-stock.service';
+import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-open-container.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule, FinanceiroModule, HomeContentModule],
@@ -63,6 +64,7 @@ import { BostonCityHallBarStockService } from './boston-city-hall-bar-stock.serv
     MailService,
     BostonCityHallBarService,
     BostonCityHallBarStockService,
+    BostonCityHallBarOpenContainerService,
   ],
   exports: [
     BostonCityHallService,
