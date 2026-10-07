@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import {
   generateHumanTicketCode,
+  generatePublicTicketRef,
   generateQrToken,
 } from './boston-city-hall-ticket-credential.util';
 
@@ -59,6 +60,7 @@ export async function createEventTicketInTx(
           lineIndex: data.lineIndex,
           ticketCode: generateHumanTicketCode(data.issuedAt),
           qrToken: generateQrToken(),
+          publicTicketRef: generatePublicTicketRef(),
           status: 'valid',
           orderNumber: data.orderNumber,
           ticketTypeName: data.ticketTypeName,

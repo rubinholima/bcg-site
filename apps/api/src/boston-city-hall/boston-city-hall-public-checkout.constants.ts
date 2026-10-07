@@ -1,4 +1,5 @@
 import type { EventTicketOrderStatus } from './boston-city-hall-ticket-orders.constants';
+import type { BchPublicTicketDto } from './boston-city-hall-public-tickets.constants';
 
 export type BchPublicPaymentStatus = 'pending' | 'paid' | 'cancelled' | 'expired' | 'unknown';
 
@@ -32,6 +33,9 @@ export type BchPublicOrderDto = {
   event: BchPublicOrderEventDto;
   items: BchPublicOrderItemDto[];
   orderPath: string;
+  confirmedAt: string | null;
+  ticketCount: number;
+  tickets: BchPublicTicketDto[];
 };
 
 export const BCH_PUBLIC_CHECKOUT_FORBIDDEN_BODY_KEYS = [

@@ -26,6 +26,10 @@ import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { HomeContentModule } from '../home-content/home-content.module';
 import { BostonCityHallPublicEventsService } from './boston-city-hall-public-events.service';
 import { BostonCityHallPublicCheckoutService } from './boston-city-hall-public-checkout.service';
+import { BostonCityHallPublicTicketService } from './boston-city-hall-public-ticket.service';
+import { BostonCityHallMyTicketsService } from './boston-city-hall-my-tickets.service';
+import { BostonCityHallPublicNotificationService } from './boston-city-hall-public-notification.service';
+import { MailService } from '../common/mail.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule, FinanceiroModule, HomeContentModule],
@@ -51,6 +55,10 @@ import { BostonCityHallPublicCheckoutService } from './boston-city-hall-public-c
     BostonCityHallTicketReportsService,
     BostonCityHallPublicEventsService,
     BostonCityHallPublicCheckoutService,
+    BostonCityHallPublicTicketService,
+    BostonCityHallMyTicketsService,
+    BostonCityHallPublicNotificationService,
+    MailService,
   ],
   exports: [
     BostonCityHallService,
@@ -72,6 +80,9 @@ import { BostonCityHallPublicCheckoutService } from './boston-city-hall-public-c
     BostonCityHallTicketReportsService,
     BostonCityHallPublicEventsService,
     BostonCityHallPublicCheckoutService,
+    BostonCityHallPublicTicketService,
+    BostonCityHallMyTicketsService,
+    BostonCityHallPublicNotificationService,
   ],
 })
 export class BostonCityHallModule {}

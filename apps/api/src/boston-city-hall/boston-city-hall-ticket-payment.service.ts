@@ -10,6 +10,7 @@ import {
 } from './boston-city-hall-ticket-order-confirmation';
 import { BostonCityHallTicketFinanceProjectionService } from './boston-city-hall-ticket-finance-projection.service';
 import { BostonCityHallTicketIssuanceService } from './boston-city-hall-ticket-issuance.service';
+import { BostonCityHallPublicNotificationService } from './boston-city-hall-public-notification.service';
 
 export type EventTicketOrderPaymentDto = {
   id: string;
@@ -41,6 +42,7 @@ export class BostonCityHallTicketPaymentService {
     private readonly paymentCore: PaymentCoreService,
     private readonly ticketFinanceProjection: BostonCityHallTicketFinanceProjectionService,
     private readonly ticketIssuance: BostonCityHallTicketIssuanceService,
+    private readonly publicNotifications: BostonCityHallPublicNotificationService,
   ) {}
 
   private async resolveTenantId(venueSlug = BCH_VENUE_SLUG): Promise<string> {
@@ -271,6 +273,9 @@ export class BostonCityHallTicketPaymentService {
     const confirmation = await this.confirmOrderFromPaidPayment(paymentDto.id, tenantId);
     await this.ticketFinanceProjection.afterOrderConfirmation(confirmation, tenantId);
     await this.ticketIssuance.afterOrderConfirmation(confirmation, tenantId);
+    if (confirmation.outcome === 'confirmed') {
+      await this.publicNotifications.sendOrderConfirmedEmailIfNeeded(confirmation.orderId, tenantId);
+    }
     const payment = await this.prisma.payment.findFirst({
       where: { id: paymentDto.id, tenantId },
     });

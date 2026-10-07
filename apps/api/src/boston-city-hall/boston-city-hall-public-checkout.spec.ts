@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BostonCityHallPublicEventsService } from './boston-city-hall-public-events.service';
 import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-orders.service';
 import { mapPaymentToPublicStatus } from './boston-city-hall-public-checkout.constants';
+import { BostonCityHallPublicTicketService } from './boston-city-hall-public-ticket.service';
 
 describe('BostonCityHallPublicCheckoutService', () => {
   let service: BostonCityHallPublicCheckoutService;
@@ -15,6 +16,7 @@ describe('BostonCityHallPublicCheckoutService', () => {
   };
   let publicEvents: { getBySlug: jest.Mock };
   let ticketOrders: { createOrder: jest.Mock; getOrderByPublicAccessToken: jest.Mock };
+  let publicTickets: { listPublicTicketsForConfirmedOrder: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -27,6 +29,9 @@ describe('BostonCityHallPublicCheckoutService', () => {
       createOrder: jest.fn(),
       getOrderByPublicAccessToken: jest.fn(),
     };
+    publicTickets = {
+      listPublicTicketsForConfirmedOrder: jest.fn().mockResolvedValue({ tickets: [], ticketCount: 0 }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -34,6 +39,7 @@ describe('BostonCityHallPublicCheckoutService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: BostonCityHallPublicEventsService, useValue: publicEvents },
         { provide: BostonCityHallTicketOrdersService, useValue: ticketOrders },
+        { provide: BostonCityHallPublicTicketService, useValue: publicTickets },
       ],
     }).compile();
 
@@ -93,6 +99,7 @@ describe('BostonCityHallPublicCheckoutService', () => {
       eventName: 'Gala',
       status: 'pending',
       holdExpiresAt: new Date().toISOString(),
+      confirmedAt: null,
       subtotal: '100.00',
       total: '100.00',
       currency: 'USD',

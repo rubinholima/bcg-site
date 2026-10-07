@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { BostonCityHallPublicEventsService } from './boston-city-hall-public-events.service';
 import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-orders.service';
+import { BostonCityHallPublicTicketService } from './boston-city-hall-public-ticket.service';
 import type { EventTicketOrderDetailDto } from './boston-city-hall-ticket-orders.constants';
 import {
   BCH_PUBLIC_CHECKOUT_FORBIDDEN_BODY_KEYS,
@@ -45,6 +46,7 @@ export class BostonCityHallPublicCheckoutService {
     private readonly prisma: PrismaService,
     private readonly publicEvents: BostonCityHallPublicEventsService,
     private readonly ticketOrders: BostonCityHallTicketOrdersService,
+    private readonly publicTickets: BostonCityHallPublicTicketService,
   ) {}
 
   private rejectForbiddenBodyKeys(body: Record<string, unknown>): void {
@@ -102,15 +104,23 @@ export class BostonCityHallPublicCheckoutService {
     return row;
   }
 
-  private toPublicOrder(
+  private async toPublicOrder(
     detail: EventTicketOrderDetailDto,
     publicAccessToken: string,
     eventDates: { startDate: Date | null; endDate: Date | null },
-  ): BchPublicOrderDto {
+  ): Promise<BchPublicOrderDto> {
     const paymentStatus = mapPaymentToPublicStatus(
       detail.status,
       detail.payment?.status,
     );
+    let tickets: BchPublicOrderDto['tickets'] = [];
+    let ticketCount = 0;
+    if (detail.status === 'confirmed') {
+      const issued = await this.publicTickets.listPublicTicketsForConfirmedOrder(publicAccessToken);
+      tickets = issued.tickets;
+      ticketCount = issued.ticketCount;
+    }
+
     return {
       orderNumber: detail.orderNumber,
       publicAccessToken,
@@ -137,6 +147,9 @@ export class BostonCityHallPublicCheckoutService {
         totalPrice: it.totalPrice,
       })),
       orderPath: bchPublicOrderPath(publicAccessToken),
+      confirmedAt: detail.confirmedAt ?? null,
+      ticketCount,
+      tickets,
     };
   }
 
@@ -223,7 +236,7 @@ export class BostonCityHallPublicCheckoutService {
       throw new ForbiddenException('Pedido criado sem referência pública.');
     }
 
-    return this.toPublicOrder(detail, token, {
+    return await this.toPublicOrder(detail, token, {
       startDate: event.startDate,
       endDate: event.endDate,
     });
@@ -246,7 +259,7 @@ export class BostonCityHallPublicCheckoutService {
     if (!token || token !== publicAccessToken.trim()) {
       throw new NotFoundException('Pedido não encontrado.');
     }
-    return this.toPublicOrder(detail, token, {
+    return await this.toPublicOrder(detail, token, {
       startDate: event.startDate,
       endDate: event.endDate,
     });

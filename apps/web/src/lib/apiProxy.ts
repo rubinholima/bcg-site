@@ -227,6 +227,7 @@ export async function forwardRequest(
     const isBinary =
       contentType.includes("application/pdf") ||
       contentType.includes("application/octet-stream") ||
+      contentType.includes("image/png") ||
       contentType.includes("video/") ||
       contentType.includes("application/vnd.apple.mpegurl");
 
@@ -246,21 +247,37 @@ export async function forwardRequest(
       }
     });
 
+    const setCookies =
+      typeof res.headers.getSetCookie === "function"
+        ? res.headers.getSetCookie()
+        : [];
+
+    const withSetCookies = (response: NextResponse): NextResponse => {
+      for (const cookie of setCookies) {
+        if (cookie) response.headers.append("Set-Cookie", cookie);
+      }
+      return response;
+    };
+
     // Streams de vídeo/HLS: repassa body sem buffer (IPTV ao vivo)
     if (isBinary && res.body && (contentType.includes("video/") || contentType.includes("mpegurl"))) {
-      return new NextResponse(res.body, {
-        status: res.status,
-        headers: nextResponseHeaders,
-      });
+      return withSetCookies(
+        new NextResponse(res.body, {
+          status: res.status,
+          headers: nextResponseHeaders,
+        }),
+      );
     }
 
     // Respostas binárias curtas (PDF, etc): repassa o buffer
     if (isBinary) {
       const buffer = await res.arrayBuffer();
-      return new NextResponse(buffer, {
-        status: res.status,
-        headers: nextResponseHeaders,
-      });
+      return withSetCookies(
+        new NextResponse(buffer, {
+          status: res.status,
+          headers: nextResponseHeaders,
+        }),
+      );
     }
 
     // JSON ou texto
@@ -280,16 +297,20 @@ export async function forwardRequest(
     }
 
     if (typeof responseData === "string") {
-      return new NextResponse(responseData, {
-        status: res.status,
-        headers: nextResponseHeaders,
-      });
+      return withSetCookies(
+        new NextResponse(responseData, {
+          status: res.status,
+          headers: nextResponseHeaders,
+        }),
+      );
     }
 
-    return NextResponse.json(responseData, {
-      status: res.status,
-      headers: nextResponseHeaders,
-    });
+    return withSetCookies(
+      NextResponse.json(responseData, {
+        status: res.status,
+        headers: nextResponseHeaders,
+      }),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro ao comunicar com o backend";
     return NextResponse.json(

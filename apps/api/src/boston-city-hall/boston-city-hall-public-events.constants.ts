@@ -141,3 +141,7 @@ export function bchPublicCheckoutPath(eventSlug: string): string {
 export function bchPublicOrderPath(publicAccessToken: string): string {
   return `/portfolio/boston-city-hall/orders/${encodeURIComponent(publicAccessToken)}`;
 }
+
+export function bchPublicMyTicketsPath(): string {
+  return '/portfolio/boston-city-hall/my-tickets';
+}

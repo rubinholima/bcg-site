@@ -34,6 +34,13 @@ import {
   BostonCityHallPublicCheckoutService,
   type CreatePublicCheckoutOrderBody,
 } from '../boston-city-hall/boston-city-hall-public-checkout.service';
+import { BostonCityHallPublicTicketService } from '../boston-city-hall/boston-city-hall-public-ticket.service';
+import { BostonCityHallMyTicketsService } from '../boston-city-hall/boston-city-hall-my-tickets.service';
+import {
+  BCH_MY_TICKETS_COOKIE,
+  BCH_MY_TICKETS_SESSION_TTL_MS,
+} from '../boston-city-hall/boston-city-hall-my-tickets.constants';
+import { readHttpCookie } from '../boston-city-hall/boston-city-hall-public-access.util';
 import { TenantPressService } from '../tenant-press/tenant-press.service';
 import { SubmitEmployeeRegistrationDto } from '../registration-invite/dto/submit-employee-registration.dto';
 import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-player-registration.dto';
@@ -55,6 +62,8 @@ export class PublicController {
     private readonly bostonCityHallService: BostonCityHallService,
     private readonly bostonCityHallPublicEvents: BostonCityHallPublicEventsService,
     private readonly bostonCityHallPublicCheckout: BostonCityHallPublicCheckoutService,
+    private readonly bostonCityHallPublicTickets: BostonCityHallPublicTicketService,
+    private readonly bostonCityHallMyTickets: BostonCityHallMyTicketsService,
     private readonly tenantPressService: TenantPressService,
     private readonly prepPse: PrepPseService,
   ) {}
@@ -136,10 +145,58 @@ export class PublicController {
     return this.bostonCityHallPublicCheckout.createOrderForEventSlug(slug, body, ip);
   }
 
+  /** QR PNG — exige token do pedido + referência pública do ingresso. */
+  @Get('boston-city-hall/orders/:token/tickets/:ticketRef/qr')
+  async getBchPublicTicketQr(
+    @Param('token') token: string,
+    @Param('ticketRef') ticketRef: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const png = await this.bostonCityHallPublicTickets.renderQrPngForOrderTicket(token, ticketRef);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('Content-Type', 'image/png');
+    return new StreamableFile(png);
+  }
+
   /** Consulta segura de pedido pelo token opaco (não enumerável). */
   @Get('boston-city-hall/orders/:token')
   getBchPublicOrderByToken(@Param('token') token: string) {
     return this.bostonCityHallPublicCheckout.getOrderByPublicToken(token);
+  }
+
+  /** Passwordless — solicita link por e-mail (resposta sempre neutra). */
+  @Post('boston-city-hall/my-tickets/request-access')
+  requestBchMyTicketsAccess(@Body() body: { email?: string }, @Req() req: Request) {
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip =
+      (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : '') ||
+      req.socket?.remoteAddress ||
+      'unknown';
+    return this.bostonCityHallMyTickets.requestPasswordlessAccess(body?.email ?? '', ip);
+  }
+
+  /** Troca magic link por sessão temporária (cookie HttpOnly). */
+  @Post('boston-city-hall/my-tickets/exchange')
+  async exchangeBchMyTicketsAccess(
+    @Body() body: { token?: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const out = await this.bostonCityHallMyTickets.exchangeMagicLink(body?.token ?? '');
+    res.cookie(BCH_MY_TICKETS_COOKIE, out.sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: BCH_MY_TICKETS_SESSION_TTL_MS,
+      path: '/',
+    });
+    return { ok: true, redirectPath: this.bostonCityHallMyTickets.myTicketsPagePath() };
+  }
+
+  /** Lista pedidos/ingressos elegíveis da sessão passwordless. */
+  @Get('boston-city-hall/my-tickets')
+  listBchMyTickets(@Req() req: Request) {
+    const session = readHttpCookie(req.headers.cookie, BCH_MY_TICKETS_COOKIE);
+    return this.bostonCityHallMyTickets.listTicketsForSession(session);
   }
 
   /** Galeria por link compartilhado (temporário ou permanente) — para /eventos/gallery/[token]. Deve vir antes de events/:slug. */

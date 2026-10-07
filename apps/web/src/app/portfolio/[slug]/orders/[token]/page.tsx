@@ -5,6 +5,7 @@ import { buildBackendUrl, getAppBaseUrl, getBackendOriginForServerFetch } from "
 import { PortfolioFavicon } from "@/components/portfolio/PortfolioFavicon";
 import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHeader";
 import { formatCheckoutMoney, type BchPublicOrder } from "@/lib/bch-public-checkout";
+import { BchPublicTicketsList } from "@/components/portfolio/bch/BchPublicTicketsList";
 import type { Page } from "@/types/page";
 
 const BCH_SLUG = "boston-city-hall";
@@ -41,9 +42,20 @@ async function fetchOrder(token: string): Promise<BchPublicOrder | null> {
 
 function statusCopy(order: BchPublicOrder, lang: "pt" | "en"): { title: string; body: string } {
   if (order.status === "confirmed" || order.paymentStatus === "paid") {
+    const withTickets = (order.ticketCount ?? 0) > 0;
     return lang === "pt"
-      ? { title: "Pedido confirmado", body: "Seu pagamento foi confirmado. Os ingressos serão disponibilizados conforme o fluxo do evento." }
-      : { title: "Order confirmed", body: "Your payment was confirmed." };
+      ? {
+          title: "Pedido confirmado",
+          body: withTickets
+            ? "Pagamento confirmado. Seus ingressos estão abaixo — apresente o QR na entrada."
+            : "Pagamento confirmado. Os ingressos serão emitidos em instantes; atualize esta página.",
+        }
+      : {
+          title: "Order confirmed",
+          body: withTickets
+            ? "Payment confirmed. Your tickets are below — show the QR at entry."
+            : "Payment confirmed. Tickets will appear shortly; refresh this page.",
+        };
   }
   if (order.status === "expired" || order.paymentStatus === "expired") {
     return lang === "pt"
@@ -160,13 +172,42 @@ export default async function BchPublicOrderPage({
               </ul>
             </dd>
           </div>
+          {order.confirmedAt && order.status === "confirmed" ? (
+            <div>
+              <dt className="text-zinc-500">{lang === "pt" ? "Confirmado em" : "Confirmed at"}</dt>
+              <dd className="text-zinc-200">
+                {new Date(order.confirmedAt).toLocaleString(lang === "pt" ? "pt-BR" : "en-US", {
+                  dateStyle: "short",
+                  timeStyle: "short",
+                })}
+              </dd>
+            </div>
+          ) : null}
           <div className="border-t border-white/10 pt-4 flex justify-between font-semibold">
             <span>{lang === "pt" ? "Total" : "Total"}</span>
             <span>{formatCheckoutMoney(order.total, order.currency)}</span>
           </div>
         </dl>
 
-        <p className="mt-8 text-center text-sm text-zinc-500">
+        {order.status === "confirmed" && order.tickets?.length ? (
+          <section className="mt-8">
+            <h2 className="text-lg font-semibold text-white">
+              {lang === "pt" ? `Ingressos (${order.ticketCount})` : `Tickets (${order.ticketCount})`}
+            </h2>
+            <BchPublicTicketsList tickets={order.tickets} lang={lang} />
+          </section>
+        ) : null}
+
+        <p className="mt-8 text-center text-sm">
+          <Link
+            href={`/portfolio/${slug}/my-tickets${lang === "en" ? "?lang=en" : ""}`}
+            className="text-amber-400 hover:underline"
+          >
+            {lang === "pt" ? "Ver todos os meus ingressos" : "View all my tickets"}
+          </Link>
+        </p>
+
+        <p className="mt-4 text-center text-sm text-zinc-500">
           {lang === "pt" ? "Status do pedido:" : "Order status:"}{" "}
           <span className="text-zinc-300">{order.status}</span>
         </p>

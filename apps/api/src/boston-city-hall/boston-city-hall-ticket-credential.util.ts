@@ -7,6 +7,11 @@ export function generateQrToken(): string {
   return randomBytes(32).toString('base64url');
 }
 
+/** Referência opaca para URLs públicas de ingresso (não é qrToken). */
+export function generatePublicTicketRef(): string {
+  return randomBytes(18).toString('base64url');
+}
+
 export function buildCup360TicketQrPayload(qrToken: string): string {
   return `${CUP360_TICKET_QR_PREFIX}${qrToken.trim()}`;
 }

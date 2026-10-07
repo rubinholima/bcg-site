@@ -26,6 +26,23 @@ export type BchPublicOrder = {
     totalPrice: string;
   }>;
   orderPath: string;
+  confirmedAt: string | null;
+  ticketCount: number;
+  tickets: Array<{
+    publicTicketRef: string;
+    ticketCode: string;
+    ticketTypeName: string;
+    lotName: string | null;
+    holderName: string;
+    status: "VALID" | "USED" | "CANCELLED";
+    issuedAt: string;
+    seating: {
+      tableName: string | null;
+      seatLabel: string | null;
+      section: string | null;
+    } | null;
+    qrPath: string;
+  }>;
 };
 
 export type CheckoutLineSelection = {
