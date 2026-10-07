@@ -125,7 +125,11 @@ export function BostonCityHallOperationalDashboard({ overview }: Props) {
           value={`${conversionPct}%`}
           hint={`${overview.leadsWon ?? 0} / ${overview.leadsTotal ?? 0}`}
         />
-        <KpiCard label="Espaços ativos" value={overview.spacesCount} />
+        <KpiCard label="Espaços ativos" value={overview.spacesCount}>
+          <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild>
+            <Link href={`${BCH}/espacos`}>Gerenciar espaços</Link>
+          </Button>
+        </KpiCard>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

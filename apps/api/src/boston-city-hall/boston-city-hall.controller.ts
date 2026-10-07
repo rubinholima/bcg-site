@@ -27,8 +27,44 @@ export class BostonCityHallController {
   }
 
   @Get('spaces')
-  listSpaces() {
-    return this.service.listSpaces();
+  listSpaces(@Query('all') all?: string) {
+    const includeInactive = all === '1' || all === 'true';
+    return this.service.listSpaces({ includeInactive });
+  }
+
+  @Get('spaces/:id')
+  getSpace(@Param('id') id: string) {
+    return this.service.getSpace(id);
+  }
+
+  @Post('spaces')
+  createSpace(
+    @Body()
+    body: {
+      name: string;
+      slug?: string;
+      capacityStanding?: number;
+      capacitySeated?: number;
+      sortOrder?: number;
+      active?: boolean;
+    },
+  ) {
+    return this.service.createSpace(body);
+  }
+
+  @Patch('spaces/:id')
+  updateSpace(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      name: string;
+      capacityStanding: number | null;
+      capacitySeated: number | null;
+      sortOrder: number;
+      active: boolean;
+    }>,
+  ) {
+    return this.service.updateSpace(id, body);
   }
 
   @Get('bookings')

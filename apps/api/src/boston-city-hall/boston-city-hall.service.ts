@@ -25,6 +25,8 @@ function toSpaceDto(row: {
   capacitySeated: number | null;
   sortOrder: number;
   active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }): VenueSpaceDto {
   return {
     id: row.id,
@@ -35,7 +37,20 @@ function toSpaceDto(row: {
     capacitySeated: row.capacitySeated,
     sortOrder: row.sortOrder,
     active: row.active,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function slugifyVenueSpaceName(name: string): string {
+  const base = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 48);
+  return base || 'espaco';
 }
 
 function toBookingDto(
@@ -375,14 +390,120 @@ export class BostonCityHallService {
     };
   }
 
-  async listSpaces(venueSlug = BCH_VENUE_SLUG): Promise<VenueSpaceDto[]> {
+  async listSpaces(
+    options: { venueSlug?: string; includeInactive?: boolean } = {},
+  ): Promise<VenueSpaceDto[]> {
+    const venueSlug = options.venueSlug ?? BCH_VENUE_SLUG;
     await this.ensureDefaultSpaces(venueSlug);
     const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
+    const where: { tenantId: string; venueSlug: string; active?: boolean } = {
+      tenantId,
+      venueSlug: slug,
+    };
+    if (!options.includeInactive) {
+      where.active = true;
+    }
     const rows = await this.prisma.venueSpace.findMany({
-      where: { tenantId, venueSlug: slug, active: true },
+      where,
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
     return rows.map(toSpaceDto);
+  }
+
+  async getSpace(id: string, venueSlug = BCH_VENUE_SLUG): Promise<VenueSpaceDto> {
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
+    const row = await this.prisma.venueSpace.findFirst({
+      where: { id, tenantId, venueSlug: slug },
+    });
+    if (!row) throw new NotFoundException('Espaço não encontrado');
+    return toSpaceDto(row);
+  }
+
+  async createSpace(dto: {
+    name: string;
+    slug?: string;
+    capacityStanding?: number;
+    capacitySeated?: number;
+    sortOrder?: number;
+    active?: boolean;
+    venueSlug?: string;
+  }): Promise<VenueSpaceDto> {
+    const venueSlug = dto.venueSlug ?? BCH_VENUE_SLUG;
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
+    const name = dto.name?.trim();
+    if (!name) throw new BadRequestException('Nome do espaço é obrigatório');
+
+    let baseSlug = (dto.slug?.trim() || slugifyVenueSpaceName(name)).toLowerCase();
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(baseSlug)) {
+      throw new BadRequestException('Identificador (slug) inválido');
+    }
+
+    let finalSlug = baseSlug;
+    for (let i = 0; i < 20; i++) {
+      const exists = await this.prisma.venueSpace.findFirst({
+        where: { venueSlug: slug, slug: finalSlug },
+        select: { id: true },
+      });
+      if (!exists) break;
+      finalSlug = `${baseSlug}-${i + 2}`;
+    }
+
+    const row = await this.prisma.venueSpace.create({
+      data: {
+        tenantId,
+        venueSlug: slug,
+        name,
+        slug: finalSlug,
+        capacityStanding: dto.capacityStanding ?? null,
+        capacitySeated: dto.capacitySeated ?? null,
+        sortOrder: dto.sortOrder ?? 0,
+        active: dto.active ?? true,
+      },
+    });
+    return toSpaceDto(row);
+  }
+
+  async updateSpace(
+    id: string,
+    dto: Partial<{
+      name: string;
+      capacityStanding: number | null;
+      capacitySeated: number | null;
+      sortOrder: number;
+      active: boolean;
+    }>,
+    venueSlug = BCH_VENUE_SLUG,
+  ): Promise<VenueSpaceDto> {
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
+    const existing = await this.prisma.venueSpace.findFirst({
+      where: { id, tenantId, venueSlug: slug },
+    });
+    if (!existing) throw new NotFoundException('Espaço não encontrado');
+
+    const data: Record<string, unknown> = {};
+    if (dto.name !== undefined) {
+      const name = dto.name.trim();
+      if (!name) throw new BadRequestException('Nome do espaço é obrigatório');
+      data.name = name;
+    }
+    if (dto.capacityStanding !== undefined) {
+      data.capacityStanding = dto.capacityStanding;
+    }
+    if (dto.capacitySeated !== undefined) {
+      data.capacitySeated = dto.capacitySeated;
+    }
+    if (dto.sortOrder !== undefined) {
+      data.sortOrder = dto.sortOrder;
+    }
+    if (dto.active !== undefined) {
+      data.active = dto.active;
+    }
+
+    const row = await this.prisma.venueSpace.update({
+      where: { id },
+      data,
+    });
+    return toSpaceDto(row);
   }
 
   async listBookings(filters: {
@@ -736,7 +857,7 @@ export class BostonCityHallService {
     });
 
     if (dto.stage === 'confirmado' && !row.booking && row.preferredDate) {
-      const spaces = await this.listSpaces(row.venueSlug);
+      const spaces = await this.listSpaces({ venueSlug: row.venueSlug });
       const spaceId = spaces[0]?.id;
       if (spaceId) {
         const start = new Date(row.preferredDate);

@@ -44,6 +44,8 @@ export type VenueSpaceDto = {
   capacitySeated: number | null;
   sortOrder: number;
   active: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type VenueBookingDto = {
