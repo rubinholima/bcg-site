@@ -48,6 +48,13 @@ export type VenueSpaceDto = {
   updatedAt: string;
 };
 
+export type VenueBookingLeadSummary = {
+  id: string;
+  contactName: string;
+  companyName: string | null;
+  stage: string;
+};
+
 export type VenueBookingDto = {
   id: string;
   venueSlug: string;
@@ -59,6 +66,7 @@ export type VenueBookingDto = {
   endAt: string;
   status: string;
   pipelineLeadId: string | null;
+  pipelineLead?: VenueBookingLeadSummary | null;
   contactName: string | null;
   contactEmail: string | null;
   contactPhone: string | null;

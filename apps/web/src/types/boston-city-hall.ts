@@ -11,6 +11,13 @@ export type VenueSpace = {
   updatedAt?: string;
 };
 
+export type VenueBookingLeadSummary = {
+  id: string;
+  contactName: string;
+  companyName: string | null;
+  stage: string;
+};
+
 export type VenueBooking = {
   id: string;
   venueSlug: string;
@@ -22,6 +29,7 @@ export type VenueBooking = {
   endAt: string;
   status: string;
   pipelineLeadId: string | null;
+  pipelineLead?: VenueBookingLeadSummary | null;
   contactName: string | null;
   contactEmail: string | null;
   contactPhone: string | null;

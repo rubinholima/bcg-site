@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -53,6 +54,13 @@ function slugifyVenueSpaceName(name: string): string {
   return base || 'espaco';
 }
 
+const bookingInclude = {
+  space: { select: { name: true } },
+  pipelineLead: {
+    select: { id: true, contactName: true, companyName: true, stage: true },
+  },
+} as const;
+
 function toBookingDto(
   row: {
     id: string;
@@ -72,6 +80,12 @@ function toBookingDto(
     createdAt: Date;
     updatedAt: Date;
     space?: { name: string } | null;
+    pipelineLead?: {
+      id: string;
+      contactName: string;
+      companyName: string | null;
+      stage: string;
+    } | null;
   },
 ): VenueBookingDto {
   return {
@@ -85,6 +99,14 @@ function toBookingDto(
     endAt: row.endAt.toISOString(),
     status: row.status,
     pipelineLeadId: row.pipelineLeadId,
+    pipelineLead: row.pipelineLead
+      ? {
+          id: row.pipelineLead.id,
+          contactName: row.pipelineLead.contactName,
+          companyName: row.pipelineLead.companyName,
+          stage: row.pipelineLead.stage,
+        }
+      : null,
     contactName: row.contactName,
     contactEmail: row.contactEmail,
     contactPhone: row.contactPhone,
@@ -145,6 +167,10 @@ function assertPipelineStage(stage: string) {
   if (!VENUE_PIPELINE_STAGES.includes(stage as (typeof VENUE_PIPELINE_STAGES)[number])) {
     throw new BadRequestException(`Estágio de pipeline inválido: ${stage}`);
   }
+}
+
+function bookingDatesValid(startAt: Date, endAt: Date): boolean {
+  return startAt instanceof Date && endAt instanceof Date && endAt > startAt;
 }
 
 @Injectable()
@@ -506,30 +532,126 @@ export class BostonCityHallService {
     return toSpaceDto(row);
   }
 
+  private async assertNoBookingConflict(params: {
+    tenantId: string;
+    spaceId: string;
+    startAt: Date;
+    endAt: Date;
+    excludeBookingId?: string;
+  }): Promise<void> {
+    const overlapping = await this.prisma.venueBooking.findFirst({
+      where: {
+        tenantId: params.tenantId,
+        spaceId: params.spaceId,
+        status: { not: 'cancelled' },
+        ...(params.excludeBookingId ? { id: { not: params.excludeBookingId } } : {}),
+        startAt: { lt: params.endAt },
+        endAt: { gt: params.startAt },
+      },
+      select: { id: true, title: true, startAt: true, endAt: true },
+    });
+    if (overlapping) {
+      const when = overlapping.startAt.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      throw new ConflictException(
+        `Conflito de horário: "${overlapping.title}" (${when}) já ocupa este espaço.`,
+      );
+    }
+  }
+
+  private async validatePipelineLeadLink(
+    pipelineLeadId: string | null,
+    tenantId: string,
+    venueSlug: string,
+    currentBookingId?: string,
+  ): Promise<string | null> {
+    if (!pipelineLeadId) return null;
+    const lead = await this.prisma.venuePipelineLead.findFirst({
+      where: { id: pipelineLeadId, tenantId, venueSlug },
+      include: { booking: { select: { id: true } } },
+    });
+    if (!lead) throw new NotFoundException('Lead não encontrado');
+    if (lead.booking && lead.booking.id !== currentBookingId) {
+      throw new BadRequestException('Este lead já possui outra reserva vinculada.');
+    }
+    return pipelineLeadId;
+  }
+
   async listBookings(filters: {
     venueSlug?: string;
     from?: string;
     to?: string;
     spaceId?: string;
     status?: string;
+    q?: string;
+    eventType?: string;
+    sort?: string;
   }): Promise<VenueBookingDto[]> {
     const venueSlug = filters.venueSlug ?? BCH_VENUE_SLUG;
     const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
     const where: Record<string, unknown> = { tenantId, venueSlug: slug };
     if (filters.spaceId) where.spaceId = filters.spaceId;
     if (filters.status) where.status = filters.status;
+    if (filters.eventType?.trim()) {
+      where.eventType = { contains: filters.eventType.trim(), mode: 'insensitive' };
+    }
     if (filters.from || filters.to) {
       where.startAt = {};
       if (filters.from) (where.startAt as Record<string, Date>).gte = new Date(filters.from);
       if (filters.to) (where.startAt as Record<string, Date>).lte = new Date(filters.to);
     }
 
+    const q = filters.q?.trim();
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { contactName: { contains: q, mode: 'insensitive' } },
+        { contactEmail: { contains: q, mode: 'insensitive' } },
+        { contactPhone: { contains: q, mode: 'insensitive' } },
+        { pipelineLead: { companyName: { contains: q, mode: 'insensitive' } } },
+        { pipelineLead: { contactName: { contains: q, mode: 'insensitive' } } },
+      ];
+    }
+
+    let orderBy: { startAt?: 'asc' | 'desc'; updatedAt?: 'desc'; createdAt?: 'desc' } = {
+      startAt: 'asc',
+    };
+    switch (filters.sort?.trim()) {
+      case 'startDesc':
+        orderBy = { startAt: 'desc' };
+        break;
+      case 'updatedDesc':
+        orderBy = { updatedAt: 'desc' };
+        break;
+      case 'createdDesc':
+        orderBy = { createdAt: 'desc' };
+        break;
+      case 'startAsc':
+      default:
+        orderBy = { startAt: 'asc' };
+        break;
+    }
+
     const rows = await this.prisma.venueBooking.findMany({
       where,
-      include: { space: { select: { name: true } } },
-      orderBy: { startAt: 'asc' },
+      include: bookingInclude,
+      orderBy,
     });
     return rows.map(toBookingDto);
+  }
+
+  async getBooking(id: string, venueSlug = BCH_VENUE_SLUG): Promise<VenueBookingDto> {
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(venueSlug);
+    const row = await this.prisma.venueBooking.findFirst({
+      where: { id, tenantId, venueSlug: slug },
+      include: bookingInclude,
+    });
+    if (!row) throw new NotFoundException('Reserva não encontrada');
+    return toBookingDto(row);
   }
 
   async createBooking(dto: {
@@ -553,14 +675,29 @@ export class BostonCityHallService {
     assertBookingStatus(status);
     const startAt = parseDateTimeBrazil(dto.startAt);
     const endAt = parseDateTimeBrazil(dto.endAt);
-    if (!startAt || !endAt || endAt <= startAt) {
-      throw new BadRequestException('Datas inválidas');
+    if (!startAt || !endAt || !bookingDatesValid(startAt, endAt)) {
+      throw new BadRequestException('Datas inválidas: o término deve ser após o início.');
     }
 
     const space = await this.prisma.venueSpace.findFirst({
       where: { id: dto.spaceId, tenantId, venueSlug: slug, active: true },
     });
     if (!space) throw new NotFoundException('Espaço não encontrado');
+
+    const pipelineLeadId = await this.validatePipelineLeadLink(
+      dto.pipelineLeadId ?? null,
+      tenantId,
+      slug,
+    );
+
+    if (status !== 'cancelled') {
+      await this.assertNoBookingConflict({
+        tenantId,
+        spaceId: dto.spaceId,
+        startAt,
+        endAt,
+      });
+    }
 
     const row = await this.prisma.venueBooking.create({
       data: {
@@ -572,14 +709,14 @@ export class BostonCityHallService {
         startAt,
         endAt,
         status,
-        pipelineLeadId: dto.pipelineLeadId || null,
+        pipelineLeadId: pipelineLeadId ?? null,
         contactName: dto.contactName?.trim() || null,
         contactEmail: dto.contactEmail?.trim() || null,
         contactPhone: dto.contactPhone?.trim() || null,
         guestCount: dto.guestCount ?? null,
         notes: dto.notes?.trim() || null,
       },
-      include: { space: { select: { name: true } } },
+      include: bookingInclude,
     });
     return toBookingDto(row);
   }
@@ -593,6 +730,7 @@ export class BostonCityHallService {
       startAt: string;
       endAt: string;
       status: string;
+      pipelineLeadId: string | null;
       contactName: string;
       contactEmail: string;
       contactPhone: string;
@@ -600,9 +738,9 @@ export class BostonCityHallService {
       notes: string;
     }>,
   ): Promise<VenueBookingDto> {
-    const { tenantId } = await this.resolveVenueContext(BCH_VENUE_SLUG);
+    const { tenantId, venueSlug: slug } = await this.resolveVenueContext(BCH_VENUE_SLUG);
     const existing = await this.prisma.venueBooking.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantId, venueSlug: slug },
     });
     if (!existing) throw new NotFoundException('Reserva não encontrada');
 
@@ -610,7 +748,7 @@ export class BostonCityHallService {
     const data: Record<string, unknown> = {};
     if (dto.spaceId !== undefined) {
       const space = await this.prisma.venueSpace.findFirst({
-        where: { id: dto.spaceId, tenantId, active: true },
+        where: { id: dto.spaceId, tenantId, venueSlug: slug, active: true },
       });
       if (!space) throw new NotFoundException('Espaço não encontrado');
       data.spaceId = dto.spaceId;
@@ -626,10 +764,38 @@ export class BostonCityHallService {
     if (dto.guestCount !== undefined) data.guestCount = dto.guestCount;
     if (dto.notes !== undefined) data.notes = dto.notes.trim() || null;
 
+    if (dto.pipelineLeadId !== undefined) {
+      data.pipelineLeadId = await this.validatePipelineLeadLink(
+        dto.pipelineLeadId,
+        tenantId,
+        slug,
+        id,
+      );
+    }
+
+    const startAt = (data.startAt as Date | undefined) ?? existing.startAt;
+    const endAt = (data.endAt as Date | undefined) ?? existing.endAt;
+    const spaceId = (data.spaceId as string | undefined) ?? existing.spaceId;
+    const status = (data.status as string | undefined) ?? existing.status;
+
+    if (!bookingDatesValid(startAt, endAt)) {
+      throw new BadRequestException('Datas inválidas: o término deve ser após o início.');
+    }
+
+    if (status !== 'cancelled') {
+      await this.assertNoBookingConflict({
+        tenantId,
+        spaceId,
+        startAt,
+        endAt,
+        excludeBookingId: id,
+      });
+    }
+
     const row = await this.prisma.venueBooking.update({
       where: { id },
       data,
-      include: { space: { select: { name: true } } },
+      include: bookingInclude,
     });
     return toBookingDto(row);
   }

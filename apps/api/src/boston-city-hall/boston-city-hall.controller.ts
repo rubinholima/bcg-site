@@ -73,8 +73,16 @@ export class BostonCityHallController {
     @Query('to') to?: string,
     @Query('spaceId') spaceId?: string,
     @Query('status') status?: string,
+    @Query('q') q?: string,
+    @Query('eventType') eventType?: string,
+    @Query('sort') sort?: string,
   ) {
-    return this.service.listBookings({ from, to, spaceId, status });
+    return this.service.listBookings({ from, to, spaceId, status, q, eventType, sort });
+  }
+
+  @Get('bookings/:id')
+  getBooking(@Param('id') id: string) {
+    return this.service.getBooking(id);
   }
 
   @Post('bookings')
@@ -114,6 +122,7 @@ export class BostonCityHallController {
       contactPhone: string;
       guestCount: number;
       notes: string;
+      pipelineLeadId: string | null;
     }>,
   ) {
     return this.service.updateBooking(id, body);
