@@ -748,6 +748,7 @@ export type EventTicketOrderDetail = {
   createdAt: string;
   updatedAt: string;
   payment: EventTicketOrderPaymentSummary | null;
+  financeProjection: { id: string; status: string } | null;
   items: EventTicketOrderItem[];
 };
 

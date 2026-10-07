@@ -193,6 +193,59 @@ export class FinanceiroLancamentosService {
     return serialize(row);
   }
 
+  async findProjectionBySource(
+    tenantId: string,
+    sourceModule: string,
+    sourceType: string,
+    sourceId: string,
+  ) {
+    const row = await this.prisma.financeiroLancamento.findFirst({
+      where: { tenantId, sourceModule, sourceType, sourceId },
+    });
+    return row ? serialize(row) : null;
+  }
+
+  /** Projeção idempotente — reutiliza lançamento existente para a mesma origem canônica. */
+  async createOrGetProjection(
+    dto: CreateFinanceiroLancamentoInput & {
+      ownershipKind: 'projection';
+      sourceModule: string;
+      sourceType: string;
+      sourceId: string;
+    },
+  ) {
+    const sourceId = dto.sourceId.trim();
+    const existing = await this.findProjectionBySource(
+      dto.tenantId,
+      dto.sourceModule,
+      dto.sourceType,
+      sourceId,
+    );
+    if (existing) {
+      return { lancamento: existing, created: false as const };
+    }
+
+    try {
+      const lancamento = await this.create({
+        ...dto,
+        ownershipKind: 'projection',
+        sourceId,
+      });
+      return { lancamento, created: true as const };
+    } catch (e) {
+      if (e instanceof BadRequestException) {
+        const again = await this.findProjectionBySource(
+          dto.tenantId,
+          dto.sourceModule,
+          dto.sourceType,
+          sourceId,
+        );
+        if (again) return { lancamento: again, created: false as const };
+      }
+      throw e;
+    }
+  }
+
   async create(dto: CreateFinanceiroLancamentoInput) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: dto.tenantId } });
     if (!tenant) throw new NotFoundException('Empresa não encontrada');

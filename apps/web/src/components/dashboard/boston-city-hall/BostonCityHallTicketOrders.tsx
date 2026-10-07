@@ -331,6 +331,24 @@ export function BostonCityHallTicketOrders() {
               <p className="text-right font-semibold">
                 Total: {formatTicketingMoney(detail.total, detail.currency)}
               </p>
+              {detail.status === "confirmed" || detail.financeProjection ? (
+                <div className="rounded-md border border-border p-3 space-y-1">
+                  <p className="font-medium">Financeiro (projeção)</p>
+                  {detail.financeProjection ? (
+                    <>
+                      <p className="text-muted-foreground">
+                        Lançamento:{" "}
+                        <span className="font-mono text-xs">{detail.financeProjection.id}</span>
+                      </p>
+                      <p className="text-muted-foreground">
+                        Status: {detail.financeProjection.status}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">Projeção ainda não gerada.</p>
+                  )}
+                </div>
+              ) : null}
               {detail.payment ? (
                 <div className="rounded-md border border-border p-3 space-y-1">
                   <p className="font-medium">Pagamento (CUP360)</p>

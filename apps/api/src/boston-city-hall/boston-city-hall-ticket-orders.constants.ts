@@ -51,6 +51,11 @@ export type EventTicketOrderListItemDto = {
   createdAt: string;
 };
 
+export type EventTicketOrderFinanceProjectionDto = {
+  id: string;
+  status: string;
+};
+
 export type EventTicketOrderDetailDto = {
   id: string;
   orderNumber: string;
@@ -70,6 +75,7 @@ export type EventTicketOrderDetailDto = {
   currency: string;
   holdExpiresAt: string | null;
   payment: EventTicketOrderPaymentSummaryDto | null;
+  financeProjection: EventTicketOrderFinanceProjectionDto | null;
   confirmedAt: string | null;
   cancelledAt: string | null;
   createdAt: string;

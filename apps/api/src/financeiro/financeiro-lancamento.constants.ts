@@ -11,6 +11,7 @@ export type FinanceiroOwnershipKind = (typeof FINANCEIRO_OWNERSHIP_KINDS)[number
 export const FINANCEIRO_SOURCE_MODULES = [
   'financeiro',
   'player_negotiations',
+  'bch_ticketing',
   'omie',
 ] as const;
 export type FinanceiroSourceModule = (typeof FINANCEIRO_SOURCE_MODULES)[number];
@@ -20,6 +21,7 @@ export const FINANCEIRO_SOURCE_TYPES = [
   'installment',
   'titulo',
   'adjustment',
+  'event_ticket_order',
 ] as const;
 export type FinanceiroSourceType = (typeof FINANCEIRO_SOURCE_TYPES)[number];
 
