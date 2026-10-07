@@ -144,7 +144,7 @@ CREATE INDEX "PaymentProviderAccount_tenantId_providerKey_active_idx" ON "Paymen
 
 ALTER TABLE "PaymentProviderAccount" ADD CONSTRAINT "PaymentProviderAccount_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "Payment" ADD CONSTRAINT "Payment_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "Payment" ADD CONSTRAINT "Payment_eventTicketOrderId_fkey" FOREIGN KEY ("eventTicketOrderId") REFERENCES "EventTicketOrder"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- FK EventTicketOrder adicionada em 20261007226000 (após criação de EventTicketOrder).
 ALTER TABLE "Payment" ADD CONSTRAINT "Payment_venueReceivableInstallmentId_fkey" FOREIGN KEY ("venueReceivableInstallmentId") REFERENCES "VenueReceivableInstallment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "Payment" ADD CONSTRAINT "Payment_paymentProviderAccountId_fkey" FOREIGN KEY ("paymentProviderAccountId") REFERENCES "PaymentProviderAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "PaymentAttempt" ADD CONSTRAINT "PaymentAttempt_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
