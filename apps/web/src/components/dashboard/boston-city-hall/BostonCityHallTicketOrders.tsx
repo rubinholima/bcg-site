@@ -32,8 +32,17 @@ import type {
 } from "@/types/boston-city-hall";
 import {
   EVENT_TICKET_ORDER_STATUS_LABEL,
+  PAYMENT_STATUS_LABEL,
   formatTicketingMoney,
 } from "@/types/boston-city-hall";
+
+const MANUAL_PAYMENT_METHODS = [
+  { value: "cash", label: "Dinheiro" },
+  { value: "check", label: "Cheque" },
+  { value: "bank_transfer", label: "Transferência bancária" },
+  { value: "other", label: "Outro" },
+] as const;
+
 export function BostonCityHallTicketOrders() {
   const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
   const [orders, setOrders] = useState<EventTicketOrderListItem[]>([]);
@@ -46,6 +55,11 @@ export function BostonCityHallTicketOrders() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualMethod, setManualMethod] = useState("cash");
+  const [manualReference, setManualReference] = useState("");
+  const [manualExternalLabel, setManualExternalLabel] = useState("");
+  const [manualSaving, setManualSaving] = useState(false);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -104,6 +118,42 @@ export function BostonCityHallTicketOrders() {
       setDetailOpen(false);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const submitManualPayment = async () => {
+    if (!detail) return;
+    setManualSaving(true);
+    try {
+      const res = await api.post<{ order: EventTicketOrderDetail; confirmation: { reconciliationRequired: boolean; outcome: string } }>(
+        `/boston-city-hall/ticketing/orders/${detail.id}/manual-payment`,
+        {
+          paymentMethod: manualMethod,
+          manualReference: manualReference.trim() || undefined,
+          externalProviderLabel: manualExternalLabel.trim() || undefined,
+        },
+      );
+      setDetail(res.data.order);
+      setManualOpen(false);
+      await loadOrders();
+      const needsRecon = res.data.confirmation?.reconciliationRequired;
+      setFeedback({
+        open: true,
+        title: needsRecon ? "Pagamento registrado" : "Pedido confirmado",
+        message: needsRecon
+          ? "Pagamento quitado, mas o hold expirou ou o pedido não pôde ser confirmado. Reconciliação necessária."
+          : "Pagamento manual registrado e pedido confirmado.",
+        variant: needsRecon ? "error" : "success",
+      });
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível registrar o pagamento.",
+        variant: "error",
+      });
+    } finally {
+      setManualSaving(false);
     }
   };
 
@@ -208,7 +258,7 @@ export function BostonCityHallTicketOrders() {
                         <div>{o.customerName}</div>
                         <div className="text-xs text-muted-foreground">{o.customerEmail}</div>
                       </TableCell>
-                      <TableCell>{formatTicketingMoney(o.total)}</TableCell>
+                      <TableCell>{formatTicketingMoney(o.total, o.currency)}</TableCell>
                       <TableCell>{EVENT_TICKET_ORDER_STATUS_LABEL[o.status]}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {o.holdExpiresAt
@@ -273,18 +323,47 @@ export function BostonCityHallTicketOrders() {
                         ) : null}
                       </TableCell>
                       <TableCell>{it.quantity}</TableCell>
-                      <TableCell>{formatTicketingMoney(it.totalPrice)}</TableCell>
+                      <TableCell>{formatTicketingMoney(it.totalPrice, detail.currency)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              <p className="text-right font-semibold">Total: {formatTicketingMoney(detail.total)}</p>
+              <p className="text-right font-semibold">
+                Total: {formatTicketingMoney(detail.total, detail.currency)}
+              </p>
+              {detail.payment ? (
+                <div className="rounded-md border border-border p-3 space-y-1">
+                  <p className="font-medium">Pagamento (CUP360)</p>
+                  <p className="text-muted-foreground">
+                    Status: {PAYMENT_STATUS_LABEL[detail.payment.status] ?? detail.payment.status}
+                  </p>
+                  {detail.payment.paymentMethod ? (
+                    <p className="text-muted-foreground">Método: {detail.payment.paymentMethod}</p>
+                  ) : null}
+                  {detail.payment.paidAt ? (
+                    <p className="text-muted-foreground">
+                      Pago em: {new Date(detail.payment.paidAt).toLocaleString("pt-BR")}
+                    </p>
+                  ) : null}
+                  {detail.payment.manualReference ? (
+                    <p className="text-muted-foreground">Ref.: {detail.payment.manualReference}</p>
+                  ) : null}
+                  {detail.payment.externalProviderLabel ? (
+                    <p className="text-muted-foreground">{detail.payment.externalProviderLabel}</p>
+                  ) : null}
+                </div>
+              ) : null}
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/dashboard/eventos/${detail.eventId}/editar`}>Abrir evento</Link>
               </Button>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {detail?.status === "pending" && detail.payment?.status !== "paid" ? (
+              <Button type="button" disabled={manualSaving} onClick={() => setManualOpen(true)}>
+                Registrar pagamento manual
+              </Button>
+            ) : null}
             {detail?.status === "pending" ? (
               <Button variant="destructive" disabled={cancelling} onClick={() => void cancelOrder()}>
                 {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cancelar pedido"}
@@ -292,6 +371,45 @@ export function BostonCityHallTicketOrders() {
             ) : null}
             <Button variant="outline" onClick={() => setDetailOpen(false)}>
               Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pagamento manual</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>Método</Label>
+              <NativeSelect value={manualMethod} onChange={(e) => setManualMethod(e.target.value)}>
+                {MANUAL_PAYMENT_METHODS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            <div className="space-y-1">
+              <Label>Referência</Label>
+              <Input value={manualReference} onChange={(e) => setManualReference(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Rótulo externo (Zelle, wire…)</Label>
+              <Input
+                value={manualExternalLabel}
+                onChange={(e) => setManualExternalLabel(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setManualOpen(false)}>
+              Voltar
+            </Button>
+            <Button type="button" disabled={manualSaving} onClick={() => void submitManualPayment()}>
+              {manualSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar pagamento"}
             </Button>
           </DialogFooter>
         </DialogContent>

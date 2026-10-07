@@ -3149,6 +3149,8 @@ model EventTicketing {
   eventId   String   @unique
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   enabled   Boolean  @default(false)
+  /// ISO 4217 — moeda comercial do evento (snapshot copiada no pedido).
+  currency  String   @default("USD")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -3228,6 +3230,8 @@ model EventTicketOrder {
   discount         Decimal   @default(0) @db.Decimal(12, 2)
   fees             Decimal   @default(0) @db.Decimal(12, 2)
   total            Decimal   @db.Decimal(12, 2)
+  /// ISO 4217 — snapshot da moeda comercial no momento do pedido.
+  currency         String    @default("USD")
   holdExpiresAt    DateTime?
   confirmedAt      DateTime?
   cancelledAt      DateTime?

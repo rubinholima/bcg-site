@@ -95,6 +95,7 @@ export type EventTicketingDetailDto = {
   eventSlug: string;
   eventStatus: string;
   ticketingEnabled: boolean;
+  currency: string;
   types: EventTicketTypeDto[];
   capacityHint: EventTicketingCapacityHintDto | null;
 };

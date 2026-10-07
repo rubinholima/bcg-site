@@ -673,6 +673,7 @@ export type EventTicketingDetail = {
   eventSlug: string;
   eventStatus: string;
   ticketingEnabled: boolean;
+  currency: string;
   types: EventTicketType[];
   capacityHint: EventTicketingCapacityHint | null;
 };
@@ -686,6 +687,18 @@ export const EVENT_TICKET_ORDER_STATUS_LABEL: Record<EventTicketOrderStatus, str
   expired: "Expirado",
 };
 
+export type EventTicketOrderPaymentSummary = {
+  id: string;
+  status: string;
+  amount: number;
+  currency: string;
+  paymentMethod: string | null;
+  paidAt: string | null;
+  manualReference: string | null;
+  externalProviderLabel: string | null;
+  expiresAt: string | null;
+};
+
 export type EventTicketOrderListItem = {
   id: string;
   orderNumber: string;
@@ -694,6 +707,7 @@ export type EventTicketOrderListItem = {
   customerName: string;
   customerEmail: string;
   total: string;
+  currency: string;
   status: EventTicketOrderStatus;
   holdExpiresAt: string | null;
   itemsCount: number;
@@ -727,19 +741,40 @@ export type EventTicketOrderDetail = {
   discount: string;
   fees: string;
   total: string;
+  currency: string;
   holdExpiresAt: string | null;
   confirmedAt: string | null;
   cancelledAt: string | null;
   createdAt: string;
   updatedAt: string;
+  payment: EventTicketOrderPaymentSummary | null;
   items: EventTicketOrderItem[];
 };
 
-export function formatTicketingMoney(value: string | null | undefined): string {
+export const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  pending: "Pendente",
+  processing: "Processando",
+  authorized: "Autorizado",
+  paid: "Pago",
+  failed: "Falhou",
+  cancelled: "Cancelado",
+  expired: "Expirado",
+  partially_refunded: "Reembolso parcial",
+  refunded: "Reembolsado",
+};
+
+export function formatTicketingMoney(
+  value: string | null | undefined,
+  currency = "USD",
+): string {
   if (value == null || value === "") return "—";
   const n = Number.parseFloat(value);
   if (!Number.isFinite(n)) return value;
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "USD" });
+  try {
+    return n.toLocaleString("pt-BR", { style: "currency", currency });
+  } catch {
+    return `${currency} ${n.toFixed(2)}`;
+  }
 }
 
 export function parseProposalDateInput(iso: string | null): string {

@@ -24,6 +24,18 @@ export type EventTicketOrderItemDto = {
   totalPrice: string;
 };
 
+export type EventTicketOrderPaymentSummaryDto = {
+  id: string;
+  status: string;
+  amount: number;
+  currency: string;
+  paymentMethod: string | null;
+  paidAt: string | null;
+  manualReference: string | null;
+  externalProviderLabel: string | null;
+  expiresAt: string | null;
+};
+
 export type EventTicketOrderListItemDto = {
   id: string;
   orderNumber: string;
@@ -32,6 +44,7 @@ export type EventTicketOrderListItemDto = {
   customerName: string;
   customerEmail: string;
   total: string;
+  currency: string;
   status: EventTicketOrderStatus;
   holdExpiresAt: string | null;
   itemsCount: number;
@@ -54,7 +67,9 @@ export type EventTicketOrderDetailDto = {
   discount: string;
   fees: string;
   total: string;
+  currency: string;
   holdExpiresAt: string | null;
+  payment: EventTicketOrderPaymentSummaryDto | null;
   confirmedAt: string | null;
   cancelledAt: string | null;
   createdAt: string;

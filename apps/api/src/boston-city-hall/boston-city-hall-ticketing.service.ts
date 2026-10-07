@@ -14,6 +14,7 @@ import {
   type LotRow,
   type TypeRow,
 } from './boston-city-hall-ticketing.availability';
+import { normalizeTicketingCurrency } from './boston-city-hall-ticketing-currency.constants';
 import {
   BostonCityHallTicketInventoryService,
   type TicketInventoryMaps,
@@ -117,7 +118,7 @@ export class BostonCityHallTicketingService {
         name: true,
         slug: true,
         status: true,
-        ticketing: { select: { enabled: true } },
+        ticketing: { select: { enabled: true, currency: true } },
         venueBooking: {
           select: {
             space: { select: { capacityStanding: true, capacitySeated: true } },
@@ -251,7 +252,7 @@ export class BostonCityHallTicketingService {
         status: true,
         startDate: true,
         endDate: true,
-        ticketing: { select: { enabled: true } },
+        ticketing: { select: { enabled: true, currency: true } },
       },
     });
     return rows.map((e) => ({
@@ -291,21 +292,36 @@ export class BostonCityHallTicketingService {
       eventSlug: event.slug,
       eventStatus: event.status,
       ticketingEnabled: event.ticketing?.enabled ?? false,
+      currency: normalizeTicketingCurrency(event.ticketing?.currency),
       types: typeDtos,
       capacityHint,
     };
   }
 
-  async setTicketingEnabled(eventId: string, enabled: boolean): Promise<{ enabled: boolean }> {
+  async setTicketingEnabled(
+    eventId: string,
+    enabled: boolean,
+    currency?: string,
+  ): Promise<{ enabled: boolean; currency: string }> {
     const tenantId = await this.resolveTenantId();
     await this.assertEventInTenant(eventId, tenantId);
 
-    await this.prisma.eventTicketing.upsert({
+    const currencyNorm = currency !== undefined ? normalizeTicketingCurrency(currency) : undefined;
+
+    const row = await this.prisma.eventTicketing.upsert({
       where: { eventId },
-      create: { tenantId, eventId, enabled },
-      update: { enabled },
+      create: {
+        tenantId,
+        eventId,
+        enabled,
+        currency: currencyNorm ?? normalizeTicketingCurrency(undefined),
+      },
+      update: {
+        enabled,
+        ...(currencyNorm !== undefined ? { currency: currencyNorm } : {}),
+      },
     });
-    return { enabled };
+    return { enabled: row.enabled, currency: row.currency };
   }
 
   async createTicketType(
@@ -507,7 +523,7 @@ export class BostonCityHallTicketingService {
         id: true,
         name: true,
         slug: true,
-        ticketing: { select: { enabled: true } },
+        ticketing: { select: { enabled: true, currency: true } },
       },
     });
     if (!event?.ticketing?.enabled) return null;

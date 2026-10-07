@@ -26,6 +26,8 @@ import { BostonCityHallProposalsService } from './boston-city-hall-proposals.ser
 import { BostonCityHallService } from './boston-city-hall.service';
 import { BostonCityHallTicketingService } from './boston-city-hall-ticketing.service';
 import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-orders.service';
+import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
+import type { PaymentMethod } from '../payments/payment-core.constants';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -42,6 +44,7 @@ export class BostonCityHallController {
     private readonly bookingEvent: BostonCityHallBookingEventService,
     private readonly ticketing: BostonCityHallTicketingService,
     private readonly ticketOrders: BostonCityHallTicketOrdersService,
+    private readonly ticketPayment: BostonCityHallTicketPaymentService,
   ) {}
 
   @Get('overview')
@@ -617,9 +620,9 @@ export class BostonCityHallController {
   @Patch('ticketing/events/:eventId')
   setEventTicketingEnabled(
     @Param('eventId') eventId: string,
-    @Body() body: { enabled: boolean },
+    @Body() body: { enabled: boolean; currency?: string },
   ) {
-    return this.ticketing.setTicketingEnabled(eventId, !!body.enabled);
+    return this.ticketing.setTicketingEnabled(eventId, !!body.enabled, body.currency);
   }
 
   @Post('ticketing/events/:eventId/types')
@@ -706,6 +709,29 @@ export class BostonCityHallController {
   @Post('ticketing/orders/:id/cancel')
   cancelTicketOrder(@Param('id') id: string) {
     return this.ticketOrders.cancelOrder(id);
+  }
+
+  @Post('ticketing/orders/:id/manual-payment')
+  async recordTicketOrderManualPayment(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      paymentMethod: string;
+      paidAt?: string;
+      manualReference?: string;
+      manualNotes?: string;
+      externalProviderLabel?: string;
+    },
+  ) {
+    const result = await this.ticketPayment.recordManualPaymentForOrderId(id, {
+      paymentMethod: body.paymentMethod as PaymentMethod,
+      paidAt: body.paidAt,
+      manualReference: body.manualReference,
+      manualNotes: body.manualNotes,
+      externalProviderLabel: body.externalProviderLabel,
+    });
+    const order = await this.ticketOrders.getOrder(id);
+    return { ...result, order };
   }
 
   @Patch('ticketing/lots/:id')

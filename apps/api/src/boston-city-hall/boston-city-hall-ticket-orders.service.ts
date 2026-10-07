@@ -22,8 +22,11 @@ import {
   BCH_TICKET_ORDER_NUMBER_PREFIX,
   type EventTicketOrderDetailDto,
   type EventTicketOrderListItemDto,
+  type EventTicketOrderPaymentSummaryDto,
   type EventTicketOrderStatus,
 } from './boston-city-hall-ticket-orders.constants';
+import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
+import { normalizeTicketingCurrency } from './boston-city-hall-ticketing-currency.constants';
 
 function moneyToString(value: Prisma.Decimal | number | string): string {
   if (value instanceof Prisma.Decimal) return value.toFixed(2);
@@ -57,6 +60,7 @@ export class BostonCityHallTicketOrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly inventory: BostonCityHallTicketInventoryService,
+    private readonly ticketPayment: BostonCityHallTicketPaymentService,
   ) {}
 
   private async resolveTenantId(venueSlug = BCH_VENUE_SLUG): Promise<string> {
@@ -97,7 +101,7 @@ export class BostonCityHallTicketOrdersService {
   }
 
   private async maybeMarkExpired(tx: Prisma.TransactionClient, id: string, tenantId: string, now: Date) {
-    await tx.eventTicketOrder.updateMany({
+    const res = await tx.eventTicketOrder.updateMany({
       where: {
         id,
         tenantId,
@@ -106,11 +110,21 @@ export class BostonCityHallTicketOrdersService {
       },
       data: { status: 'expired' },
     });
+    if (res.count > 0) {
+      await this.ticketPayment.syncPaymentAfterOrderExpired(id, tenantId, now);
+    }
   }
 
   private toDetail(
-    row: Prisma.EventTicketOrderGetPayload<{ include: { items: true; event: { select: { name: true; slug: true } } } }>,
+    row: Prisma.EventTicketOrderGetPayload<{
+      include: {
+        items: true;
+        event: { select: { name: true; slug: true } };
+        payment: true;
+      };
+    }>,
     now: Date,
+    payment?: EventTicketOrderPaymentSummaryDto | null,
   ): EventTicketOrderDetailDto {
     const status = this.normalizeStatus(row, now);
     return {
@@ -129,7 +143,9 @@ export class BostonCityHallTicketOrdersService {
       discount: moneyToString(row.discount),
       fees: moneyToString(row.fees),
       total: moneyToString(row.total),
+      currency: row.currency,
       holdExpiresAt: row.holdExpiresAt?.toISOString() ?? null,
+      payment: payment ?? this.ticketPayment.serializePaymentRow(row.payment),
       confirmedAt: row.confirmedAt?.toISOString() ?? null,
       cancelledAt: row.cancelledAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
@@ -201,6 +217,7 @@ export class BostonCityHallTicketOrdersService {
       customerName: r.customerName,
       customerEmail: r.customerEmail,
       total: moneyToString(r.total),
+      currency: r.currency,
       status: this.normalizeStatus(r, now),
       holdExpiresAt: r.holdExpiresAt?.toISOString() ?? null,
       itemsCount: r._count.items,
@@ -214,10 +231,18 @@ export class BostonCityHallTicketOrdersService {
     await this.maybeMarkExpired(this.prisma, id, tenantId, now);
     const row = await this.prisma.eventTicketOrder.findFirst({
       where: { id, tenantId },
-      include: { items: true, event: { select: { name: true, slug: true } } },
+      include: { items: true, event: { select: { name: true, slug: true } }, payment: true },
     });
     if (!row) throw new NotFoundException('Pedido não encontrado.');
-    return this.toDetail(row, now);
+    let paymentSummary = this.ticketPayment.serializePaymentRow(row.payment);
+    if (!paymentSummary && row.status === 'pending') {
+      try {
+        paymentSummary = await this.ticketPayment.ensurePaymentForOrder(id, tenantId);
+      } catch {
+        /* pedido legado sem pagamento — não bloquear detalhe */
+      }
+    }
+    return this.toDetail(row, now, paymentSummary);
   }
 
   async cancelOrder(id: string): Promise<EventTicketOrderDetailDto> {
@@ -233,6 +258,7 @@ export class BostonCityHallTicketOrdersService {
       where: { id },
       data: { status: 'cancelled', cancelledAt: now },
     });
+    await this.ticketPayment.syncPaymentAfterOrderCancelled(id, tenantId, now);
     return this.getOrder(id);
   }
 
@@ -431,6 +457,7 @@ export class BostonCityHallTicketOrdersService {
       const total = subtotal;
 
       const orderNumber = await this.nextOrderNumber(tx, tenantId);
+      const currency = normalizeTicketingCurrency(event.ticketing?.currency);
 
       const order = await tx.eventTicketOrder.create({
         data: {
@@ -447,6 +474,7 @@ export class BostonCityHallTicketOrdersService {
           discount,
           fees,
           total,
+          currency,
           holdExpiresAt,
           items: {
             create: resolved.map((line) => ({
@@ -464,6 +492,7 @@ export class BostonCityHallTicketOrdersService {
       return order.id;
     });
 
+    await this.ticketPayment.ensurePaymentForOrder(orderId, tenantId);
     return this.getOrder(orderId);
   }
 }

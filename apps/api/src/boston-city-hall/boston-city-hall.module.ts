@@ -14,9 +14,11 @@ import { BostonCityHallService } from './boston-city-hall.service';
 import { BostonCityHallTicketingService } from './boston-city-hall-ticketing.service';
 import { BostonCityHallTicketInventoryService } from './boston-city-hall-ticket-inventory.service';
 import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-orders.service';
+import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
+import { PaymentsModule } from '../payments/payments.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, ModulesModule],
+  imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule],
   controllers: [BostonCityHallController],
   providers: [
     BostonCityHallService,
@@ -30,6 +32,7 @@ import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-ord
     BostonCityHallTicketingService,
     BostonCityHallTicketInventoryService,
     BostonCityHallTicketOrdersService,
+    BostonCityHallTicketPaymentService,
   ],
   exports: [
     BostonCityHallService,
@@ -42,6 +45,7 @@ import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-ord
     BostonCityHallTicketingService,
     BostonCityHallTicketInventoryService,
     BostonCityHallTicketOrdersService,
+    BostonCityHallTicketPaymentService,
   ],
 })
 export class BostonCityHallModule {}
