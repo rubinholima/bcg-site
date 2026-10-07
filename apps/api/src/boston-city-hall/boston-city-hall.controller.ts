@@ -34,6 +34,8 @@ import { BostonCityHallTicketIssuanceService } from './boston-city-hall-ticket-i
 import { BostonCityHallTicketCheckinService } from './boston-city-hall-ticket-checkin.service';
 import { BostonCityHallComplimentaryService } from './boston-city-hall-complimentary.service';
 import { BostonCityHallSeatingService } from './boston-city-hall-seating.service';
+import { BostonCityHallTicketReportsService } from './boston-city-hall-ticket-reports.service';
+import type { TicketReportQueryDto } from './boston-city-hall-ticket-reports.constants';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import type { PaymentMethod } from '../payments/payment-core.constants';
@@ -58,8 +60,30 @@ export class BostonCityHallController {
     private readonly ticketCheckin: BostonCityHallTicketCheckinService,
     private readonly complimentary: BostonCityHallComplimentaryService,
     private readonly seating: BostonCityHallSeatingService,
+    private readonly ticketReports: BostonCityHallTicketReportsService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
+
+  private parseTicketReportQuery(query: Record<string, string | undefined>): TicketReportQueryDto {
+    const eventId = query.eventId?.trim();
+    if (!eventId) throw new BadRequestException('eventId é obrigatório.');
+    const admissionSource = query.admissionSource?.trim();
+    return {
+      eventId,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+      ticketTypeId: query.ticketTypeId,
+      ticketLotId: query.ticketLotId,
+      admissionSource:
+        admissionSource === 'paid_order' || admissionSource === 'complimentary'
+          ? admissionSource
+          : undefined,
+      ticketStatus: query.ticketStatus,
+      complimentaryReason: query.complimentaryReason,
+      stationLabel: query.stationLabel,
+      operatorUserId: query.operatorUserId,
+    };
+  }
 
   @Get('overview')
   overview() {
@@ -907,6 +931,41 @@ export class BostonCityHallController {
     @Body() body: { tableId?: string | null; seatId?: string | null },
   ) {
     return this.seating.assignTicketSeatingForVenue(id, body);
+  }
+
+  @Get('ticketing/reports/overview')
+  ticketReportOverview(@Query() query: Record<string, string | undefined>) {
+    return this.ticketReports.getOverviewForVenue(this.parseTicketReportQuery(query));
+  }
+
+  @Get('ticketing/reports/sales')
+  ticketReportSales(@Query() query: Record<string, string | undefined>) {
+    return this.ticketReports.getSalesForVenue(this.parseTicketReportQuery(query));
+  }
+
+  @Get('ticketing/reports/complimentary')
+  ticketReportComplimentary(@Query() query: Record<string, string | undefined>) {
+    return this.ticketReports.getComplimentaryForVenue(this.parseTicketReportQuery(query));
+  }
+
+  @Get('ticketing/reports/capacity')
+  ticketReportCapacity(@Query() query: Record<string, string | undefined>) {
+    return this.ticketReports.getCapacityForVenue(this.parseTicketReportQuery(query));
+  }
+
+  @Get('ticketing/reports/checkin')
+  ticketReportCheckin(@Query() query: Record<string, string | undefined>) {
+    return this.ticketReports.getCheckinForVenue(this.parseTicketReportQuery(query));
+  }
+
+  @Get('ticketing/reports/tickets')
+  ticketReportTickets(@Query() query: Record<string, string | undefined>) {
+    return this.ticketReports.getTicketsPerformanceForVenue(this.parseTicketReportQuery(query));
+  }
+
+  @Get('ticketing/reports/seating')
+  ticketReportSeating(@Query() query: Record<string, string | undefined>) {
+    return this.ticketReports.getSeatingForVenue(this.parseTicketReportQuery(query));
   }
 
   @Patch('ticketing/lots/:id')

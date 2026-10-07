@@ -8,6 +8,7 @@ import { BostonCityHallTicketCheckoutDev } from "@/components/dashboard/boston-c
 import { BostonCityHallTicketCheckin } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketCheckin";
 import { BostonCityHallTicketComplimentary } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketComplimentary";
 import { BostonCityHallTicketSeating } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketSeating";
+import { BostonCityHallTicketReports } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketReports";
 
 const TABS = [
   { id: "config" as const, label: "Tipos e lotes" },
@@ -15,6 +16,7 @@ const TABS = [
   { id: "complimentary" as const, label: "Cortesias" },
   { id: "seating" as const, label: "Mesas / assentos" },
   { id: "checkin" as const, label: "Check-in" },
+  { id: "reports" as const, label: "Relatórios" },
   { id: "checkout" as const, label: "Checkout (teste)" },
 ];
 
@@ -45,6 +47,7 @@ export function BostonCityHallTicketingHub() {
       {tab === "complimentary" ? <BostonCityHallTicketComplimentary /> : null}
       {tab === "seating" ? <BostonCityHallTicketSeating /> : null}
       {tab === "checkin" ? <BostonCityHallTicketCheckin /> : null}
+      {tab === "reports" ? <BostonCityHallTicketReports /> : null}
       {tab === "checkout" ? <BostonCityHallTicketCheckoutDev /> : null}
     </div>
   );
