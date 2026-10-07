@@ -13,13 +13,17 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
+import { BostonCityHallCatalogService } from './boston-city-hall-catalog.service';
 import { BostonCityHallService } from './boston-city-hall.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('eventos')
 export class BostonCityHallController {
-  constructor(private readonly service: BostonCityHallService) {}
+  constructor(
+    private readonly service: BostonCityHallService,
+    private readonly catalog: BostonCityHallCatalogService,
+  ) {}
 
   @Get('overview')
   overview() {
@@ -199,5 +203,100 @@ export class BostonCityHallController {
     }>,
   ) {
     return this.service.updatePipelineLead(id, body);
+  }
+
+  @Get('catalog/services')
+  listCatalogServices(
+    @Query('q') q?: string,
+    @Query('category') category?: string,
+    @Query('active') active?: string,
+  ) {
+    const activeFilter =
+      active === 'true' || active === 'false' ? active : ('all' as const);
+    return this.catalog.listCatalogServices({ q, category, active: activeFilter });
+  }
+
+  @Get('catalog/services/:id')
+  getCatalogService(@Param('id') id: string) {
+    return this.catalog.getCatalogService(id);
+  }
+
+  @Post('catalog/services')
+  createCatalogService(
+    @Body()
+    body: {
+      name: string;
+      description?: string;
+      category: string;
+      defaultPrice: number | string;
+      billingUnit: string;
+      sortOrder?: number;
+      active?: boolean;
+    },
+  ) {
+    return this.catalog.createCatalogService(body);
+  }
+
+  @Patch('catalog/services/:id')
+  updateCatalogService(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      name: string;
+      description: string | null;
+      category: string;
+      defaultPrice: number | string;
+      billingUnit: string;
+      sortOrder: number;
+      active: boolean;
+    }>,
+  ) {
+    return this.catalog.updateCatalogService(id, body);
+  }
+
+  @Get('catalog/packages')
+  listCatalogPackages(
+    @Query('q') q?: string,
+    @Query('active') active?: string,
+  ) {
+    const activeFilter =
+      active === 'true' || active === 'false' ? active : ('all' as const);
+    return this.catalog.listCatalogPackages({ q, active: activeFilter });
+  }
+
+  @Get('catalog/packages/:id')
+  getCatalogPackage(@Param('id') id: string) {
+    return this.catalog.getCatalogPackage(id);
+  }
+
+  @Post('catalog/packages')
+  createCatalogPackage(
+    @Body()
+    body: {
+      name: string;
+      description?: string;
+      defaultPrice: number | string;
+      sortOrder?: number;
+      active?: boolean;
+      items?: Array<{ serviceId: string; quantity: number | string }>;
+    },
+  ) {
+    return this.catalog.createCatalogPackage(body);
+  }
+
+  @Patch('catalog/packages/:id')
+  updateCatalogPackage(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      name: string;
+      description: string | null;
+      defaultPrice: number | string;
+      sortOrder: number;
+      active: boolean;
+      items: Array<{ serviceId: string; quantity: number | string }>;
+    }>,
+  ) {
+    return this.catalog.updateCatalogPackage(id, body);
   }
 }

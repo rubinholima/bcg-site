@@ -153,3 +153,78 @@ export const DEFAULT_VENUE_SPACES: Array<{
   { name: 'Zona de experiência', slug: 'zona-experiencia', capacityStanding: 60, sortOrder: 3 },
   { name: 'Anéis de circulação', slug: 'aneis-circulacao', capacityStanding: 2000, sortOrder: 4 },
 ];
+
+export const VENUE_CATALOG_CATEGORIES = [
+  'venue',
+  'audio',
+  'video',
+  'lighting',
+  'staffing',
+  'security',
+  'cleaning',
+  'furniture',
+  'catering',
+  'other',
+] as const;
+
+export type VenueCatalogCategory = (typeof VENUE_CATALOG_CATEGORIES)[number];
+
+export const VENUE_CATALOG_BILLING_UNITS = ['flat', 'hour', 'unit', 'person', 'day'] as const;
+
+export type VenueCatalogBillingUnit = (typeof VENUE_CATALOG_BILLING_UNITS)[number];
+
+export const VENUE_CATALOG_CATEGORY_LABEL: Record<VenueCatalogCategory, string> = {
+  venue: 'Venue',
+  audio: 'Áudio',
+  video: 'Vídeo',
+  lighting: 'Iluminação',
+  staffing: 'Equipe',
+  security: 'Segurança',
+  cleaning: 'Limpeza',
+  furniture: 'Mobiliário',
+  catering: 'Catering',
+  other: 'Outros',
+};
+
+export const VENUE_CATALOG_BILLING_UNIT_LABEL: Record<VenueCatalogBillingUnit, string> = {
+  flat: 'Valor fixo',
+  hour: 'Por hora',
+  unit: 'Por unidade',
+  person: 'Por pessoa',
+  day: 'Por dia',
+};
+
+export type VenueCatalogServiceDto = {
+  id: string;
+  tenantId: string;
+  name: string;
+  description: string | null;
+  category: string;
+  defaultPrice: string;
+  billingUnit: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type VenueCatalogPackageItemDto = {
+  id: string;
+  serviceId: string;
+  serviceName: string;
+  quantity: string;
+};
+
+export type VenueCatalogPackageDto = {
+  id: string;
+  tenantId: string;
+  name: string;
+  description: string | null;
+  defaultPrice: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  items: VenueCatalogPackageItemDto[];
+  itemsCount: number;
+};

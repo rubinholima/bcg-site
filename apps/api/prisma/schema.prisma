@@ -221,6 +221,8 @@ model Tenant {
   venueSpaces                  VenueSpace[]
   venueBookings                VenueBooking[]
   venuePipelineLeads           VenuePipelineLead[]
+  venueCatalogServices         VenueCatalogService[]
+  venueCatalogPackages         VenueCatalogPackage[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -3015,6 +3017,57 @@ model VenuePipelineLead {
   @@index([tenantId])
   @@index([venueSlug, stage])
   @@index([createdAt])
+}
+
+// Boston City Hall — catálogo comercial (serviços e pacotes; não é estoque/POS)
+model VenueCatalogService {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  name         String
+  description  String?  @db.Text
+  category     String
+  defaultPrice Decimal  @db.Decimal(12, 2)
+  billingUnit  String
+  sortOrder    Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  packageItems VenueCatalogPackageItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, active])
+  @@index([tenantId, category])
+}
+
+model VenueCatalogPackage {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  name         String
+  description  String?  @db.Text
+  defaultPrice Decimal  @db.Decimal(12, 2)
+  sortOrder    Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  items        VenueCatalogPackageItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, active])
+}
+
+model VenueCatalogPackageItem {
+  id        String              @id @default(cuid())
+  packageId String
+  package   VenueCatalogPackage @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  serviceId String
+  service   VenueCatalogService @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  quantity  Decimal             @default(1) @db.Decimal(10, 2)
+
+  @@unique([packageId, serviceId])
+  @@index([packageId])
+  @@index([serviceId])
 }
 
 // ─── Captação / Scouting ─────────────────────────────────────────────────────

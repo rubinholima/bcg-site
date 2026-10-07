@@ -10,6 +10,7 @@ import {
   ContactRound,
   Kanban,
   LayoutDashboard,
+  Tags,
 } from "lucide-react";
 import { BostonCityHallLogo } from "@/components/dashboard/boston-city-hall/BostonCityHallLogo";
 import { DEPT_HUB_MENU_LABEL } from "@/lib/dashboard-labels";
@@ -23,6 +24,7 @@ const NAV = [
   { href: `${BCH_BASE}/crm`, label: "CRM", icon: ContactRound },
   { href: `${BCH_BASE}/reservas`, label: "Reservas", icon: ClipboardList },
   { href: `${BCH_BASE}/espacos`, label: "Espaços", icon: Building2 },
+  { href: `${BCH_BASE}/servicos`, label: "Serviços", icon: Tags },
   { href: `${BCH_BASE}/pipeline`, label: "Pipeline", icon: Kanban },
 ] as const;
 

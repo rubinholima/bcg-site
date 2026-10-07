@@ -148,6 +148,83 @@ export const PIPELINE_STAGES = [
 
 export const BOOKING_STATUSES = ["hold", "confirmed", "blocked", "cancelled"] as const;
 
+export const VENUE_CATALOG_CATEGORIES = [
+  "venue",
+  "audio",
+  "video",
+  "lighting",
+  "staffing",
+  "security",
+  "cleaning",
+  "furniture",
+  "catering",
+  "other",
+] as const;
+
+export const VENUE_CATALOG_BILLING_UNITS = ["flat", "hour", "unit", "person", "day"] as const;
+
+export const VENUE_CATALOG_CATEGORY_LABEL: Record<string, string> = {
+  venue: "Venue",
+  audio: "Áudio",
+  video: "Vídeo",
+  lighting: "Iluminação",
+  staffing: "Equipe",
+  security: "Segurança",
+  cleaning: "Limpeza",
+  furniture: "Mobiliário",
+  catering: "Catering",
+  other: "Outros",
+};
+
+export const VENUE_CATALOG_BILLING_UNIT_LABEL: Record<string, string> = {
+  flat: "Valor fixo",
+  hour: "Por hora",
+  unit: "Por unidade",
+  person: "Por pessoa",
+  day: "Por dia",
+};
+
+export type VenueCatalogService = {
+  id: string;
+  tenantId: string;
+  name: string;
+  description: string | null;
+  category: string;
+  defaultPrice: string;
+  billingUnit: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type VenueCatalogPackageItem = {
+  id: string;
+  serviceId: string;
+  serviceName: string;
+  quantity: string;
+};
+
+export type VenueCatalogPackage = {
+  id: string;
+  tenantId: string;
+  name: string;
+  description: string | null;
+  defaultPrice: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  items: VenueCatalogPackageItem[];
+  itemsCount: number;
+};
+
+export function formatCatalogMoney(value: string): string {
+  const n = Number.parseFloat(value);
+  if (!Number.isFinite(n)) return value;
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 export const BOOKING_STATUS_COLOR: Record<string, string> = {
   hold: "bg-amber-500/20 text-amber-300 border-amber-500/30",
   confirmed: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
