@@ -229,6 +229,8 @@ model Tenant {
   venueContractNumberSeqs      VenueContractNumberSeq[]
   venueReceivables             VenueReceivable[]
   venueReceivablePayments      VenueReceivablePayment[]
+  eventTicketings              EventTicketing[]
+  eventTicketTypes             EventTicketType[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -794,6 +796,8 @@ model Event {
   galleryLinks EventGalleryLink[]
   uploadTokens EventUploadToken[]
   venueBooking VenueBooking?
+  ticketing    EventTicketing?
+  ticketTypes  EventTicketType[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -2970,6 +2974,61 @@ model VenueSpace {
   @@unique([venueSlug, slug])
   @@index([tenantId])
   @@index([venueSlug])
+}
+
+/// Configuração de venda de ingressos (1:1 com Event). Não altera status de publicação do evento.
+model EventTicketing {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId   String   @unique
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  enabled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+/// Tipo de ingresso por evento. Sem lotes: price/quantity no tipo. Com lotes: price/quantity vêm do lote ativo.
+model EventTicketType {
+  id            String           @id @default(cuid())
+  tenantId      String
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId       String
+  event         Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?          @db.Text
+  price         Decimal?         @db.Decimal(12, 2)
+  quantity      Int?
+  purchaseLimit Int?
+  active        Boolean          @default(true)
+  sortOrder     Int              @default(0)
+  salesStartAt  DateTime?
+  salesEndAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  lots          EventTicketLot[]
+
+  @@index([tenantId, eventId])
+  @@index([eventId, sortOrder])
+}
+
+model EventTicketLot {
+  id           String          @id @default(cuid())
+  ticketTypeId String
+  ticketType   EventTicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+  name         String
+  price        Decimal         @db.Decimal(12, 2)
+  quantity     Int
+  active       Boolean         @default(true)
+  sortOrder    Int             @default(0)
+  salesStartAt DateTime?
+  salesEndAt   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([ticketTypeId, sortOrder])
 }
 
 model VenueBooking {

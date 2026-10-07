@@ -591,6 +591,99 @@ export type VenueContract = {
   financialSummary: VenueReceivableSummary | null;
 };
 
+export type EventTicketingSalesStatus =
+  | "inactive"
+  | "not_started"
+  | "ended"
+  | "sold_out"
+  | "on_sale";
+
+export const EVENT_TICKETING_SALES_STATUS_LABEL: Record<EventTicketingSalesStatus, string> = {
+  inactive: "Inativo",
+  not_started: "Venda não iniciada",
+  ended: "Venda encerrada",
+  sold_out: "Esgotado",
+  on_sale: "Em venda",
+};
+
+export type EventTicketingEventListItem = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  ticketingEnabled: boolean;
+};
+
+export type EventTicketingCapacityHint = {
+  configuredTotal: number;
+  venueCapacityStanding: number | null;
+  venueCapacitySeated: number | null;
+  exceedsVenueCapacity: boolean;
+  message: string | null;
+};
+
+export type EventTicketLot = {
+  id: string;
+  ticketTypeId: string;
+  name: string;
+  price: string;
+  quantity: number;
+  active: boolean;
+  sortOrder: number;
+  salesStartAt: string | null;
+  salesEndAt: string | null;
+  sold: number;
+  held: number;
+  available: number;
+  salesStatus: EventTicketingSalesStatus;
+  isCurrentLot: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EventTicketType = {
+  id: string;
+  eventId: string;
+  name: string;
+  description: string | null;
+  price: string | null;
+  quantity: number | null;
+  purchaseLimit: number | null;
+  active: boolean;
+  sortOrder: number;
+  salesStartAt: string | null;
+  salesEndAt: string | null;
+  usesLots: boolean;
+  currentPrice: string | null;
+  capacity: number;
+  sold: number;
+  held: number;
+  available: number;
+  salesStatus: EventTicketingSalesStatus;
+  lots: EventTicketLot[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EventTicketingDetail = {
+  eventId: string;
+  eventName: string;
+  eventSlug: string;
+  eventStatus: string;
+  ticketingEnabled: boolean;
+  types: EventTicketType[];
+  capacityHint: EventTicketingCapacityHint | null;
+};
+
+export function formatTicketingMoney(value: string | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const n = Number.parseFloat(value);
+  if (!Number.isFinite(n)) return value;
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "USD" });
+}
+
 export function parseProposalDateInput(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);

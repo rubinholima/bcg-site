@@ -24,6 +24,7 @@ import { BostonCityHallBookingEventService } from './boston-city-hall-booking-ev
 import { BostonCityHallProposalPdfService } from './boston-city-hall-proposal-pdf.service';
 import { BostonCityHallProposalsService } from './boston-city-hall-proposals.service';
 import { BostonCityHallService } from './boston-city-hall.service';
+import { BostonCityHallTicketingService } from './boston-city-hall-ticketing.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -38,6 +39,7 @@ export class BostonCityHallController {
     private readonly finance: BostonCityHallFinanceService,
     private readonly operations: BostonCityHallOperationsService,
     private readonly bookingEvent: BostonCityHallBookingEventService,
+    private readonly ticketing: BostonCityHallTicketingService,
   ) {}
 
   @Get('overview')
@@ -598,5 +600,95 @@ export class BostonCityHallController {
     }>,
   ) {
     return this.finance.updateInstallment(id, installmentId, body);
+  }
+
+  @Get('ticketing/events')
+  listTicketingEvents() {
+    return this.ticketing.listEvents();
+  }
+
+  @Get('ticketing/events/:eventId')
+  getEventTicketing(@Param('eventId') eventId: string) {
+    return this.ticketing.getEventTicketing(eventId);
+  }
+
+  @Patch('ticketing/events/:eventId')
+  setEventTicketingEnabled(
+    @Param('eventId') eventId: string,
+    @Body() body: { enabled: boolean },
+  ) {
+    return this.ticketing.setTicketingEnabled(eventId, !!body.enabled);
+  }
+
+  @Post('ticketing/events/:eventId/types')
+  createTicketType(
+    @Param('eventId') eventId: string,
+    @Body()
+    body: {
+      name: string;
+      description?: string;
+      price?: number | string;
+      quantity?: number | string;
+      purchaseLimit?: number | string | null;
+      active?: boolean;
+      sortOrder?: number;
+      salesStartAt?: string | null;
+      salesEndAt?: string | null;
+    },
+  ) {
+    return this.ticketing.createTicketType(eventId, body);
+  }
+
+  @Patch('ticketing/types/:id')
+  updateTicketType(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      name: string;
+      description: string | null;
+      price: number | string | null;
+      quantity: number | string | null;
+      purchaseLimit: number | string | null;
+      active: boolean;
+      sortOrder: number;
+      salesStartAt: string | null;
+      salesEndAt: string | null;
+    }>,
+  ) {
+    return this.ticketing.updateTicketType(id, body);
+  }
+
+  @Post('ticketing/types/:id/lots')
+  createTicketLot(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      name: string;
+      price: number | string;
+      quantity: number | string;
+      active?: boolean;
+      sortOrder?: number;
+      salesStartAt?: string | null;
+      salesEndAt?: string | null;
+    },
+  ) {
+    return this.ticketing.createLot(id, body);
+  }
+
+  @Patch('ticketing/lots/:id')
+  updateTicketLot(
+    @Param('id') id: string,
+    @Body()
+    body: Partial<{
+      name: string;
+      price: number | string;
+      quantity: number | string;
+      active: boolean;
+      sortOrder: number;
+      salesStartAt: string | null;
+      salesEndAt: string | null;
+    }>,
+  ) {
+    return this.ticketing.updateLot(id, body);
   }
 }

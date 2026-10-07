@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Tags,
+  Ticket,
   Wallet,
 } from "lucide-react";
 import { BostonCityHallLogo } from "@/components/dashboard/boston-city-hall/BostonCityHallLogo";
@@ -28,6 +29,7 @@ const NAV = [
   { href: `${BCH_BASE}/crm`, label: "CRM", icon: ContactRound },
   { href: `${BCH_BASE}/reservas`, label: "Reservas", icon: ClipboardList },
   { href: `${BCH_BASE}/operacao`, label: "Operação", icon: ListChecks },
+  { href: `${BCH_BASE}/ticketing`, label: "Ingressos", icon: Ticket },
   { href: `${BCH_BASE}/espacos`, label: "Espaços", icon: Building2 },
   { href: `${BCH_BASE}/servicos`, label: "Serviços", icon: Tags },
   { href: `${BCH_BASE}/propostas`, label: "Propostas", icon: FileText },

@@ -11,6 +11,7 @@ import { BostonCityHallBookingEventService } from './boston-city-hall-booking-ev
 import { BostonCityHallProposalPdfService } from './boston-city-hall-proposal-pdf.service';
 import { BostonCityHallProposalsService } from './boston-city-hall-proposals.service';
 import { BostonCityHallService } from './boston-city-hall.service';
+import { BostonCityHallTicketingService } from './boston-city-hall-ticketing.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule],
@@ -24,6 +25,7 @@ import { BostonCityHallService } from './boston-city-hall.service';
     BostonCityHallFinanceService,
     BostonCityHallOperationsService,
     BostonCityHallBookingEventService,
+    BostonCityHallTicketingService,
   ],
   exports: [
     BostonCityHallService,
@@ -33,6 +35,7 @@ import { BostonCityHallService } from './boston-city-hall.service';
     BostonCityHallFinanceService,
     BostonCityHallOperationsService,
     BostonCityHallBookingEventService,
+    BostonCityHallTicketingService,
   ],
 })
 export class BostonCityHallModule {}
