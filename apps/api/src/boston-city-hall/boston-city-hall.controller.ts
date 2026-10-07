@@ -42,6 +42,7 @@ import type { PaymentMethod } from '../payments/payment-core.constants';
 import { BostonCityHallBarService } from './boston-city-hall-bar.service';
 import { BostonCityHallBarStockService } from './boston-city-hall-bar-stock.service';
 import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-open-container.service';
+import { BostonCityHallBarPosService } from './boston-city-hall-bar-pos.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -68,6 +69,7 @@ export class BostonCityHallController {
     private readonly bar: BostonCityHallBarService,
     private readonly barStock: BostonCityHallBarStockService,
     private readonly barOpen: BostonCityHallBarOpenContainerService,
+    private readonly barPos: BostonCityHallBarPosService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -1381,6 +1383,152 @@ export class BostonCityHallController {
     const tenantId = await this.bchTenantId();
     if (!locationId?.trim()) throw new BadRequestException('locationId é obrigatório.');
     return this.barOpen.getSellingUnitAvailability(tenantId, sellingUnitId, locationId.trim());
+  }
+
+  /** BCH Bar — POS (Fase 4.4) */
+  @Get('bar/pos/catalog')
+  async getBarPosCatalog(@Query('locationId') locationId?: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barPos.getPosCatalog(tenantId, locationId);
+  }
+
+  @Get('bar/pos/sales')
+  async listBarPosSales(
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('locationId') locationId?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : undefined;
+    return this.barPos.listSales(tenantId, {
+      limit: Number.isFinite(parsedLimit) ? parsedLimit : undefined,
+      status,
+      locationId,
+    });
+  }
+
+  @Post('bar/pos/sales')
+  async createBarPosSale(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body()
+    body: {
+      locationId?: string;
+      eventId?: string | null;
+      terminalLabel?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.locationId?.trim()) throw new BadRequestException('locationId é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPos.createSale(tenantId, operatorUserId, {
+      locationId: body.locationId.trim(),
+      eventId: body.eventId,
+      terminalLabel: body.terminalLabel,
+      notes: body.notes,
+    });
+  }
+
+  @Get('bar/pos/sales/:id')
+  async getBarPosSale(@Param('id') id: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barPos.getSale(tenantId, id);
+  }
+
+  @Post('bar/pos/sales/:id/items')
+  async addBarPosSaleItem(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      sellingUnitId?: string;
+      quantity?: number | string;
+      lineDiscount?: number | string;
+      unitPrice?: number | string;
+      lineTotal?: number | string;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.sellingUnitId?.trim()) throw new BadRequestException('sellingUnitId é obrigatório.');
+    if (body.quantity == null) throw new BadRequestException('quantity é obrigatório.');
+    return this.barPos.addSaleItem(tenantId, id, {
+      sellingUnitId: body.sellingUnitId.trim(),
+      quantity: body.quantity,
+      lineDiscount: body.lineDiscount,
+      unitPrice: body.unitPrice,
+      lineTotal: body.lineTotal,
+    });
+  }
+
+  @Patch('bar/pos/sales/:id/items/:itemId')
+  async updateBarPosSaleItem(
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+    @Body()
+    body: { quantity?: number | string; lineDiscount?: number | string; unitPrice?: number | string },
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barPos.updateSaleItem(tenantId, id, itemId, body);
+  }
+
+  @Delete('bar/pos/sales/:id/items/:itemId')
+  async removeBarPosSaleItem(@Param('id') id: string, @Param('itemId') itemId: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barPos.removeSaleItem(tenantId, id, itemId);
+  }
+
+  @Post('bar/pos/sales/:id/payments')
+  async addBarPosSalePayment(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body()
+    body: {
+      method?: string;
+      amount?: number | string;
+      reference?: string | null;
+      amountReceived?: number | string | null;
+      changeDue?: number | string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.method?.trim()) throw new BadRequestException('method é obrigatório.');
+    if (body.amount == null) throw new BadRequestException('amount é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPos.addPayment(tenantId, id, operatorUserId, {
+      method: body.method.trim(),
+      amount: body.amount,
+      reference: body.reference,
+      amountReceived: body.amountReceived,
+      changeDue: body.changeDue,
+    });
+  }
+
+  @Delete('bar/pos/sales/:id/payments/:paymentId')
+  async removeBarPosSalePayment(
+    @Param('id') id: string,
+    @Param('paymentId') paymentId: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barPos.removePayment(tenantId, id, paymentId);
+  }
+
+  @Post('bar/pos/sales/:id/complete')
+  async completeBarPosSale(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPos.completeSale(tenantId, id, operatorUserId);
+  }
+
+  @Post('bar/pos/sales/:id/cancel')
+  async cancelBarPosSale(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPos.cancelOpenSale(tenantId, id, operatorUserId);
   }
 
   @Post('bar/inventory/movements/:id/reverse')

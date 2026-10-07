@@ -139,6 +139,8 @@ describe('BostonCityHallBarOpenContainerService', () => {
           bchBarStockBalance: {
             findUnique: jest.fn(async () => ({ quantityOnHand: balances })),
           },
+          bchBarSellingUnit: prisma.bchBarSellingUnit,
+          bchBarStockMovement: prisma.bchBarStockMovement,
           bchBarOpenContainer: prisma.bchBarOpenContainer,
           bchBarOpenContainerLedger: prisma.bchBarOpenContainerLedger,
         };
@@ -269,7 +271,7 @@ describe('BostonCityHallBarOpenContainerService', () => {
       locationId: 'loc1',
     });
     expect(result.mode).toBe('whole_unit_stock');
-    expect(stock.createManualMovement).toHaveBeenCalled();
+    expect(stock.applyMovementInTransaction).toHaveBeenCalled();
   });
 
   it('9 — discard records waste and empties container', async () => {

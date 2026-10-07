@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { Loader2, Pencil, Plus, ShoppingCart } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -629,6 +630,14 @@ export function BostonCityHallBar() {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button asChild className="min-h-[44px] gap-2">
+          <Link href="/dashboard/eventos/boston-city-hall/bar/pos">
+            <ShoppingCart className="h-4 w-4" />
+            POS
+          </Link>
+        </Button>
+      </div>
       <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-muted/30 p-1">
         {TABS.map((t) => (
           <button

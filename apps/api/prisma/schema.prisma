@@ -50,6 +50,9 @@ model User {
   bchBarOpenContainersOpened          BchBarOpenContainer[]         @relation("BchBarOpenContainerOpenedBy")
   bchBarOpenContainersClosed          BchBarOpenContainer[]         @relation("BchBarOpenContainerClosedBy")
   bchBarOpenContainerLedgersCreated   BchBarOpenContainerLedger[]   @relation("BchBarOpenContainerLedgerCreatedBy")
+  bchBarSalesOpened                   BchBarSale[]                  @relation("BchBarSaleOpenedBy")
+  bchBarSalesClosed                   BchBarSale[]                  @relation("BchBarSaleClosedBy")
+  bchBarSalePaymentsReceived          BchBarSalePayment[]           @relation("BchBarSalePaymentReceivedBy")
 }
 
 model UserTenant {
@@ -260,6 +263,9 @@ model Tenant {
   bchBarStockMovements         BchBarStockMovement[]
   bchBarOpenContainers         BchBarOpenContainer[]
   bchBarOpenContainerLedgers   BchBarOpenContainerLedger[]
+  bchBarSales                  BchBarSale[]
+  bchBarSaleItems              BchBarSaleItem[]
+  bchBarSalePayments           BchBarSalePayment[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -994,6 +1000,7 @@ model Event {
   bchBarStockMovements     BchBarStockMovement[]
   bchBarOpenContainers     BchBarOpenContainer[]
   bchBarOpenContainerLedgers BchBarOpenContainerLedger[]
+  bchBarSales                BchBarSale[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -3513,6 +3520,7 @@ model BchBarProduct {
   stockMovements BchBarStockMovement[]
   openContainers BchBarOpenContainer[]
   openContainerLedgers BchBarOpenContainerLedger[]
+  saleItems BchBarSaleItem[]
 
   @@unique([tenantId, sku])
   @@index([tenantId, active])
@@ -3559,6 +3567,7 @@ model BchBarSellingUnit {
 
   prices BchBarSellingUnitPrice[]
   openContainerLedgers BchBarOpenContainerLedger[]
+  saleItems BchBarSaleItem[]
 
   @@index([tenantId, productId])
   @@index([productId, sortOrder])
@@ -3578,6 +3587,8 @@ model BchBarSellingUnitPrice {
   validTo       DateTime?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
+
+  saleItems BchBarSaleItem[]
 
   @@index([tenantId, sellingUnitId])
   @@index([sellingUnitId, active])
@@ -3602,6 +3613,7 @@ model BchBarInventoryLocation {
   stockMovements BchBarStockMovement[]
   openContainers BchBarOpenContainer[]
   openContainerLedgers BchBarOpenContainerLedger[]
+  sales              BchBarSale[]
 
   @@unique([tenantId, code])
   @@index([tenantId, kind])
@@ -3727,6 +3739,95 @@ model BchBarOpenContainerLedger {
   @@unique([tenantId, sourceKey])
   @@index([openContainerId, createdAt])
   @@index([tenantId, productId, locationId, createdAt])
+}
+
+/// Venda POS do bar BCH (carrinho → pagamento → consumo na conclusão).
+model BchBarSale {
+  id              String                    @id @default(cuid())
+  tenantId        String
+  tenant          Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  saleNumber      String
+  locationId      String
+  location        BchBarInventoryLocation   @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  eventId         String?
+  event           Event?                    @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  status          String                    @default("open")
+  currency        String                    @default("BRL")
+  subtotal        Decimal                   @db.Decimal(14, 4)
+  discountTotal   Decimal                   @default(0) @db.Decimal(14, 4)
+  total           Decimal                   @db.Decimal(14, 4)
+  paymentStatus   String                    @default("unpaid")
+  terminalLabel   String?
+  openedByUserId  String?
+  openedBy        User?                     @relation("BchBarSaleOpenedBy", fields: [openedByUserId], references: [id], onDelete: SetNull)
+  closedByUserId  String?
+  closedBy        User?                     @relation("BchBarSaleClosedBy", fields: [closedByUserId], references: [id], onDelete: SetNull)
+  openedAt        DateTime                  @default(now())
+  closedAt        DateTime?
+  notes           String?                   @db.Text
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  items    BchBarSaleItem[]
+  payments BchBarSalePayment[]
+
+  @@unique([tenantId, saleNumber])
+  @@index([tenantId, status, openedAt])
+  @@index([tenantId, locationId, openedAt])
+  @@index([tenantId, eventId, openedAt])
+}
+
+model BchBarSaleItem {
+  id                   String              @id @default(cuid())
+  tenantId             String
+  tenant               Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  saleId               String
+  sale                 BchBarSale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId            String
+  product              BchBarProduct       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  sellingUnitId        String
+  sellingUnit          BchBarSellingUnit   @relation(fields: [sellingUnitId], references: [id], onDelete: Restrict)
+  productName          String
+  sellingUnitName      String
+  quantity             Decimal             @db.Decimal(14, 4)
+  unitPrice            Decimal             @db.Decimal(14, 4)
+  lineSubtotal         Decimal             @db.Decimal(14, 4)
+  lineDiscount         Decimal             @default(0) @db.Decimal(14, 4)
+  lineTotal            Decimal             @db.Decimal(14, 4)
+  currency             String
+  priceId              String?
+  price                BchBarSellingUnitPrice? @relation(fields: [priceId], references: [id], onDelete: SetNull)
+  inventorySourceKey   String
+  inventoryConsumedAt  DateTime?
+  inventoryMode        String?
+  inventoryRefId       String?
+  sortOrder            Int                 @default(0)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@unique([tenantId, inventorySourceKey])
+  @@index([saleId])
+  @@index([tenantId, productId])
+}
+
+model BchBarSalePayment {
+  id               String     @id @default(cuid())
+  tenantId         String
+  tenant           Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  saleId           String
+  sale             BchBarSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  method           String
+  amount           Decimal    @db.Decimal(14, 4)
+  amountReceived   Decimal?   @db.Decimal(14, 4)
+  changeDue        Decimal?   @db.Decimal(14, 4)
+  status           String     @default("recorded")
+  reference        String?
+  receivedByUserId String?
+  receivedBy       User?      @relation("BchBarSalePaymentReceivedBy", fields: [receivedByUserId], references: [id], onDelete: SetNull)
+  createdAt        DateTime   @default(now())
+
+  @@index([saleId])
+  @@index([tenantId, createdAt])
 }
 
 model VenueBooking {

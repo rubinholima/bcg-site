@@ -468,6 +468,151 @@ export class BostonCityHallBarOpenContainerService {
     return candidates[0] ?? null;
   }
 
+  private async resolveIdempotentConsume(
+    tenantId: string,
+    sourceKey: string | null | undefined,
+    tx?: Prisma.TransactionClient,
+  ): Promise<{
+    mode: 'whole_unit_stock' | 'open_container';
+    stockMovementId?: string;
+    openContainerLedgerId?: string;
+    containerId?: string;
+  } | null> {
+    const key = sourceKey?.trim();
+    if (!key) return null;
+    const db = tx ?? this.prisma;
+    const dup = await db.bchBarOpenContainerLedger.findFirst({
+      where: { tenantId, sourceKey: key },
+    });
+    if (dup) {
+      return {
+        mode: 'open_container',
+        openContainerLedgerId: dup.id,
+        containerId: dup.openContainerId,
+      };
+    }
+    const dupStock = await db.bchBarStockMovement.findFirst({
+      where: { tenantId, sourceKey: key },
+    });
+    if (dupStock) {
+      return { mode: 'whole_unit_stock', stockMovementId: dupStock.id };
+    }
+    return null;
+  }
+
+  /** Consumo canônico dentro de transação Prisma (POS / orquestração atômica). */
+  async consumeSellingUnitInTransaction(
+    tx: Prisma.TransactionClient,
+    tenantId: string,
+    userId: string | null,
+    input: {
+      sellingUnitId: string;
+      locationId: string;
+      consumptionType?: string;
+      eventId?: string | null;
+      sourceKey?: string | null;
+      portions?: number | string | Prisma.Decimal;
+    },
+  ): Promise<{
+    mode: 'whole_unit_stock' | 'open_container';
+    stockMovementId?: string;
+    openContainerLedgerId?: string;
+    containerId?: string;
+  }> {
+    const consumptionType = this.assertConsumptionType(input.consumptionType ?? 'sale');
+    const portions =
+      input.portions != null
+        ? input.portions instanceof Prisma.Decimal
+          ? input.portions
+          : parsePositiveDecimal(input.portions, 'Porções')
+        : new Prisma.Decimal(1);
+
+    const idempotent = await this.resolveIdempotentConsume(tenantId, input.sourceKey, tx);
+    if (idempotent) return idempotent;
+
+    const sellingUnit = await tx.bchBarSellingUnit.findFirst({
+      where: { id: input.sellingUnitId, tenantId },
+      include: { product: { include: { physicalUnit: true } } },
+    });
+    if (!sellingUnit?.product.physicalUnit) {
+      throw new NotFoundException('Unidade de venda ou produto não encontrado.');
+    }
+    if (!sellingUnit.active || !sellingUnit.product.active) {
+      throw new BadRequestException('Unidade de venda ou produto inativo.');
+    }
+
+    const physical = sellingUnit.product.physicalUnit;
+    const productId = sellingUnit.productId;
+
+    if (isWholePhysicalUnitSale(sellingUnit)) {
+      const qty = sellingUnit.physicalUnitsConsumedPerSale.mul(portions);
+      const movement = await this.stock.applyMovementInTransaction(tx, tenantId, userId, {
+        productId,
+        locationId: input.locationId,
+        movementType: consumptionType as BchBarMovementType,
+        direction: 'out',
+        quantity: qty,
+        eventId: input.eventId,
+        sourceKey: input.sourceKey?.trim() || null,
+        reason: 'Consumo unidade física inteira',
+      });
+      return { mode: 'whole_unit_stock', stockMovementId: movement.id };
+    }
+
+    const portionAmount = getPortionContentAmount(sellingUnit, physical).mul(portions);
+
+    let container = await this.pickOpenContainerFifo(
+      tx,
+      tenantId,
+      productId,
+      input.locationId,
+      portionAmount,
+    );
+
+    if (!container) {
+      const balance = await tx.bchBarStockBalance.findUnique({
+        where: {
+          productId_locationId: { productId, locationId: input.locationId },
+        },
+      });
+      const closedQty = balance?.quantityOnHand ?? new Prisma.Decimal(0);
+      if (closedQty.lt(1)) {
+        throw new BadRequestException('Estoque insuficiente (fechado e aberto).');
+      }
+      container = await this.openContainerInTx(
+        tx,
+        tenantId,
+        userId,
+        productId,
+        input.locationId,
+        physical,
+        input.eventId,
+      );
+    }
+
+    if (container.remainingContent.lt(portionAmount)) {
+      throw new BadRequestException('Conteúdo insuficiente após abertura.');
+    }
+
+    const { ledgerId } = await this.appendLedgerAndReduce(tx, {
+      tenantId,
+      container,
+      userId,
+      quantity: portionAmount,
+      recordType: 'consumption',
+      consumptionType,
+      sellingUnitId: sellingUnit.id,
+      eventId: input.eventId,
+      sourceKey: input.sourceKey?.trim() || null,
+    });
+
+    return {
+      mode: 'open_container',
+      openContainerLedgerId: ledgerId,
+      containerId: container.id,
+    };
+  }
+
   async consumeSellingUnit(
     tenantId: string,
     userId: string | null,
@@ -485,113 +630,12 @@ export class BostonCityHallBarOpenContainerService {
     openContainerLedgerId?: string;
     containerId?: string;
   }> {
-    const consumptionType = this.assertConsumptionType(input.consumptionType ?? 'sale');
-    const portions = input.portions != null ? parsePositiveDecimal(input.portions, 'Porções') : new Prisma.Decimal(1);
+    const idempotent = await this.resolveIdempotentConsume(tenantId, input.sourceKey);
+    if (idempotent) return idempotent;
 
-    if (input.sourceKey?.trim()) {
-      const dup = await this.prisma.bchBarOpenContainerLedger.findFirst({
-        where: { tenantId, sourceKey: input.sourceKey.trim() },
-      });
-      if (dup) {
-        return {
-          mode: 'open_container',
-          openContainerLedgerId: dup.id,
-          containerId: dup.openContainerId,
-        };
-      }
-      const dupStock = await this.prisma.bchBarStockMovement.findFirst({
-        where: { tenantId, sourceKey: input.sourceKey.trim() },
-      });
-      if (dupStock) {
-        return { mode: 'whole_unit_stock', stockMovementId: dupStock.id };
-      }
-    }
-
-    const sellingUnit = await this.prisma.bchBarSellingUnit.findFirst({
-      where: { id: input.sellingUnitId, tenantId },
-      include: { product: { include: { physicalUnit: true } } },
-    });
-    if (!sellingUnit?.product.physicalUnit) {
-      throw new NotFoundException('Unidade de venda ou produto não encontrado.');
-    }
-    if (!sellingUnit.active || !sellingUnit.product.active) {
-      throw new BadRequestException('Unidade de venda ou produto inativo.');
-    }
-
-    const physical = sellingUnit.product.physicalUnit;
-    const productId = sellingUnit.productId;
-
-    if (isWholePhysicalUnitSale(sellingUnit)) {
-      const qty = sellingUnit.physicalUnitsConsumedPerSale.mul(portions);
-      const movement = await this.stock.createManualMovement(tenantId, userId, {
-        productId,
-        locationId: input.locationId,
-        movementType: consumptionType as BchBarMovementType,
-        direction: 'out',
-        quantity: decStr(qty),
-        eventId: input.eventId,
-        sourceKey: input.sourceKey?.trim() || null,
-        reason: 'Consumo unidade física inteira',
-      });
-      return { mode: 'whole_unit_stock', stockMovementId: movement.id };
-    }
-
-    const portionAmount = getPortionContentAmount(sellingUnit, physical).mul(portions);
-
-    const result = await this.prisma.$transaction(async (tx) => {
-      let container = await this.pickOpenContainerFifo(
-        tx,
-        tenantId,
-        productId,
-        input.locationId,
-        portionAmount,
-      );
-
-      if (!container) {
-        const balance = await tx.bchBarStockBalance.findUnique({
-          where: {
-            productId_locationId: { productId, locationId: input.locationId },
-          },
-        });
-        const closedQty = balance?.quantityOnHand ?? new Prisma.Decimal(0);
-        if (closedQty.lt(1)) {
-          throw new BadRequestException('Estoque insuficiente (fechado e aberto).');
-        }
-        container = await this.openContainerInTx(
-          tx,
-          tenantId,
-          userId,
-          productId,
-          input.locationId,
-          physical,
-          input.eventId,
-        );
-      }
-
-      if (container.remainingContent.lt(portionAmount)) {
-        throw new BadRequestException('Conteúdo insuficiente após abertura.');
-      }
-
-      const { ledgerId } = await this.appendLedgerAndReduce(tx, {
-        tenantId,
-        container,
-        userId,
-        quantity: portionAmount,
-        recordType: 'consumption',
-        consumptionType,
-        sellingUnitId: sellingUnit.id,
-        eventId: input.eventId,
-        sourceKey: input.sourceKey?.trim() || null,
-      });
-
-      return { containerId: container.id, ledgerId };
-    });
-
-    return {
-      mode: 'open_container',
-      openContainerLedgerId: result.ledgerId,
-      containerId: result.containerId,
-    };
+    return this.prisma.$transaction((tx) =>
+      this.consumeSellingUnitInTransaction(tx, tenantId, userId, input),
+    );
   }
 
   async getSellingUnitAvailability(
