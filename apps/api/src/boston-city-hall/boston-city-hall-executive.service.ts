@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BostonCityHallEventFinancialService } from './boston-city-hall-event-financial.service';
+import { BostonCityHallOperationalAlertService } from './boston-city-hall-operational-alert.service';
+import type { BchExecutiveAttentionCode } from './boston-city-hall-executive.constants';
 import type {
   BchExecutiveCompactEventDto,
   BchExecutiveEventsQuery,
@@ -13,7 +15,6 @@ import {
   attendanceRatePct,
   buildRevenueMix,
   buildRevenueTrend,
-  deriveAttentionFlags,
   mergeCurrencyGroups,
   resolveExecutivePeriod,
   type ResolvedExecutivePeriod,
@@ -39,35 +40,48 @@ export class BostonCityHallExecutiveService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventFinancial: BostonCityHallEventFinancialService,
+    private readonly alerts: BostonCityHallOperationalAlertService,
   ) {}
 
   async getSummary(tenantId: string, query: BchExecutiveEventsQuery): Promise<BchExecutiveSummaryResponseDto> {
+    await this.alerts.evaluate(tenantId);
     const period = resolveExecutivePeriod(query);
     const { inPeriod, summaries, bookingByEvent } = await this.loadPeriodContext(tenantId, period, query);
+    const alertSummary = await this.alerts.getSummaryCounts(tenantId);
 
     const now = new Date();
     const upcomingEvents = await this.loadCompactEvents(tenantId, { gte: now }, 8, 'asc');
     const recentEvents = await this.loadCompactEvents(tenantId, { lt: now }, 8, 'desc');
 
-    return this.buildSummaryResponse(period, inPeriod, summaries, bookingByEvent, upcomingEvents, recentEvents);
+    return await this.buildSummaryResponse(
+      tenantId,
+      period,
+      inPeriod,
+      summaries,
+      bookingByEvent,
+      upcomingEvents,
+      recentEvents,
+      alertSummary,
+    );
   }
 
   async getEventPerformance(
     tenantId: string,
     query: BchExecutiveEventsQuery,
   ): Promise<BchExecutiveEventsResponseDto> {
+    await this.alerts.evaluate(tenantId);
     const period = resolveExecutivePeriod(query);
     const { inPeriod, summaries, bookingByEvent } = await this.loadPeriodContext(tenantId, period, query);
+    const alertsByEvent = await this.alerts.listAttentionByEventIds(
+      tenantId,
+      inPeriod.map((e) => e.id),
+    );
 
     const items: BchExecutiveEventPerformanceRowDto[] = inPeriod.map((event) => {
       const summary = summaries.get(event.id)!;
       const booking = bookingByEvent.get(event.id);
-      const eventPast = event.startDate ? event.startDate.getTime() < Date.now() : false;
-      const flags = deriveAttentionFlags(summary, {
-        bookingLinked: !!booking,
-        eventPast,
-        ticketingEnabled: event.ticketing?.enabled ?? false,
-      });
+      const activeAlerts = alertsByEvent.get(event.id) ?? [];
+      const flags = activeAlerts.map((a) => a.alertType) as BchExecutiveAttentionCode[];
 
       const ticketsSold = summary.ticketsSold;
       const attendance = summary.attendance;
@@ -102,6 +116,7 @@ export class BostonCityHallExecutiveService {
         marginIncomplete: summary.marginIncomplete,
         resultComplete: summary.completeness.resultComplete,
         attentionFlags: flags,
+        activeAlerts,
         inventoryDivergenceProducts: summary.inventoryDivergenceProducts,
         summary,
       };
@@ -208,14 +223,16 @@ export class BostonCityHallExecutiveService {
     return map;
   }
 
-  private buildSummaryResponse(
+  private async buildSummaryResponse(
+    tenantId: string,
     period: ResolvedExecutivePeriod,
     inPeriod: EventRow[],
     summaries: Map<string, BchEventExecutiveSummaryDto>,
     bookingByEvent: Map<string, BookingMeta>,
     upcomingEvents: BchExecutiveCompactEventDto[],
     recentEvents: BchExecutiveCompactEventDto[],
-  ): BchExecutiveSummaryResponseDto {
+    alertSummary: Awaited<ReturnType<BostonCityHallOperationalAlertService['getSummaryCounts']>>,
+  ): Promise<BchExecutiveSummaryResponseDto> {
     const summaryList = inPeriod.map((e) => summaries.get(e.id)).filter(Boolean) as BchEventExecutiveSummaryDto[];
     const currencyGroups = mergeCurrencyGroups(summaryList.map((s) => s.currencies));
     const multiCurrency = currencyGroups.length > 1;
@@ -250,6 +267,10 @@ export class BostonCityHallExecutiveService {
     let incompleteResults = 0;
 
     const attentionRequired: BchExecutiveSummaryResponseDto['attentionRequired'] = [];
+    const alertsByEvent = await this.alerts.listAttentionByEventIds(
+      tenantId,
+      inPeriod.map((e) => e.id),
+    );
 
     for (const event of inPeriod) {
       const s = summaries.get(event.id);
@@ -281,18 +302,13 @@ export class BostonCityHallExecutiveService {
       if (s.currencies.some((g) => g.overdue != null && new Prisma.Decimal(g.overdue).gt(0))) overdueEvents += 1;
       if (!s.completeness.resultComplete) incompleteResults += 1;
 
-      const eventPast = event.startDate ? event.startDate.getTime() < now : false;
-      const flags = deriveAttentionFlags(s, {
-        bookingLinked: bookingByEvent.has(event.id),
-        eventPast,
-        ticketingEnabled: event.ticketing?.enabled ?? false,
-      });
-      if (flags.length) {
+      const eventAlerts = alertsByEvent.get(event.id) ?? [];
+      if (eventAlerts.length) {
         attentionRequired.push({
           eventId: event.id,
           eventName: event.name,
           eventStartAt: event.startDate?.toISOString() ?? null,
-          flags,
+          alerts: eventAlerts,
         });
       }
     }
@@ -383,6 +399,7 @@ export class BostonCityHallExecutiveService {
       revenueMix,
       revenueTrend: buildRevenueTrend(trendInput),
       attentionRequired,
+      alertSummary,
       upcomingEvents,
       recentEvents,
     };
@@ -433,22 +450,18 @@ export class BostonCityHallExecutiveService {
     });
 
     const ids = rows.map((r) => r.id);
-    const [summaries, bookingByEvent] = await Promise.all([
+    const [summaries, bookingByEvent, alertsByEvent] = await Promise.all([
       this.loadExecutiveSummaries(tenantId, ids),
       this.loadBookingMeta(tenantId, ids),
+      this.alerts.listAttentionByEventIds(tenantId, ids),
     ]);
 
     return rows.map((e) => {
       const s = summaries.get(e.id);
       const b = bookingByEvent.get(e.id);
-      const eventPast = e.startDate ? e.startDate.getTime() < Date.now() : false;
-      const flags = s
-        ? deriveAttentionFlags(s, {
-            bookingLinked: !!b,
-            eventPast,
-            ticketingEnabled: e.ticketing?.enabled ?? false,
-          })
-        : [];
+      const flags = (alertsByEvent.get(e.id) ?? []).map(
+        (a) => a.alertType,
+      ) as BchExecutiveAttentionCode[];
 
       return {
         eventId: e.id,

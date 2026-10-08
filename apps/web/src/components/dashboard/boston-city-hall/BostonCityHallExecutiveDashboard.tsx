@@ -30,13 +30,14 @@ import {
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import type {
-  BchExecutiveAttentionCode,
+  BchAlertType,
   BchExecutiveEventsResponse,
   BchExecutiveSummaryResponse,
   BchEventFinancialCurrencyGroup,
+  BchOperationalAlert,
 } from "@/types/boston-city-hall";
 import {
-  BCH_EXECUTIVE_ATTENTION_LABEL,
+  BCH_ALERT_TYPE_LABEL,
   EVENT_STATUS_LABEL,
   formatCatalogMoney,
 } from "@/types/boston-city-hall";
@@ -95,16 +96,16 @@ function CurrencyBlocks({ groups }: { groups: BchEventFinancialCurrencyGroup[] }
   );
 }
 
-function AttentionPills({ flags }: { flags: BchExecutiveAttentionCode[] }) {
-  if (!flags.length) return <span className="text-muted-foreground text-xs">—</span>;
+function AlertPills({ alerts }: { alerts: Array<{ alertType: BchAlertType; title: string }> }) {
+  if (!alerts.length) return <span className="text-muted-foreground text-xs">—</span>;
   return (
     <div className="flex flex-wrap gap-1">
-      {flags.map((f) => (
+      {alerts.map((a) => (
         <span
-          key={f}
+          key={`${a.alertType}-${a.title}`}
           className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-100 ring-1 ring-amber-500/30"
         >
-          {BCH_EXECUTIVE_ATTENTION_LABEL[f]}
+          {BCH_ALERT_TYPE_LABEL[a.alertType] ?? a.title}
         </span>
       ))}
     </div>
@@ -245,7 +246,15 @@ export function BostonCityHallExecutiveDashboard() {
         <KpiCard label="Pedidos confirmados" value={String(summary.ticketing.confirmedOrderCount)} />
         <KpiCard label="Cortesias" value={String(summary.ticketing.complimentaryCount)} />
         <KpiCard label="Vendas bar (POS)" value={String(summary.bar.completedSalesCount)} />
-        <KpiCard label="Atenção" value={String(summary.attentionRequired.length)} hint="eventos com flags" />
+        <KpiCard label="Críticos abertos" value={String(summary.alertSummary.openCritical)} />
+        <KpiCard label="Avisos abertos" value={String(summary.alertSummary.openWarning)} />
+        <KpiCard label="Reconhecidos" value={String(summary.alertSummary.acknowledgedUnresolved)} />
+      </div>
+
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" className="min-h-[44px]" asChild>
+          <Link href={`${BCH}/alerts`}>Central de alertas</Link>
+        </Button>
       </div>
 
       <section className="space-y-3">
@@ -353,7 +362,7 @@ export function BostonCityHallExecutiveDashboard() {
                       ) : null}
                     </TableCell>
                     <TableCell>
-                      <AttentionPills flags={row.attentionFlags} />
+                      <AlertPills alerts={row.activeAlerts ?? row.attentionFlags.map((f) => ({ alertType: f, title: f }))} />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex flex-wrap justify-end gap-1">
@@ -397,7 +406,7 @@ export function BostonCityHallExecutiveDashboard() {
                       : "Sem data"}
                   </p>
                 </div>
-                <AttentionPills flags={a.flags} />
+                <AlertPills alerts={a.alerts.map((al: BchOperationalAlert) => ({ alertType: al.alertType, title: al.title }))} />
               </li>
             ))}
           </ul>
@@ -421,7 +430,7 @@ export function BostonCityHallExecutiveDashboard() {
                     : "—"}
                   {e.spaceName ? ` · ${e.spaceName}` : ""}
                 </p>
-                <AttentionPills flags={e.attentionFlags} />
+                <AlertPills alerts={e.attentionFlags.map((f) => ({ alertType: f, title: f }))} />
               </div>
             ))}
             {!summary.upcomingEvents.length ? (

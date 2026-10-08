@@ -1122,24 +1122,71 @@ export type BchEventFinancialResult = {
   completeness: BchEventFinancialCompleteness;
 };
 
-export type BchExecutiveAttentionCode =
+export type BchAlertType =
   | "overdue_receivable"
-  | "incomplete_financial_data"
+  | "event_without_signed_contract"
+  | "event_without_receivable"
+  | "event_financial_incomplete"
   | "bar_not_closed"
-  | "no_physical_count"
-  | "margin_incomplete"
-  | "ticketing_pending"
-  | "event_without_contract";
+  | "physical_count_missing"
+  | "event_inventory_still_open"
+  | "open_containers_pending"
+  | "ticketing_configuration"
+  | "event_readiness";
 
-export const BCH_EXECUTIVE_ATTENTION_LABEL: Record<BchExecutiveAttentionCode, string> = {
-  overdue_receivable: "Recebível vencido",
-  incomplete_financial_data: "Resultado incompleto",
-  bar_not_closed: "Bar sem fechamento",
-  no_physical_count: "Contagem física pendente",
-  margin_incomplete: "Margem incompleta",
-  ticketing_pending: "Ingressos pendentes",
-  event_without_contract: "Sem contrato assinado",
+export type BchAlertStatus = "open" | "acknowledged" | "resolved";
+export type BchAlertSeverity = "info" | "warning" | "critical";
+
+export type BchOperationalAlert = {
+  id: string;
+  tenantId: string;
+  eventId: string | null;
+  eventName: string | null;
+  bookingId: string | null;
+  alertType: BchAlertType;
+  severity: BchAlertSeverity;
+  status: BchAlertStatus;
+  title: string;
+  message: string;
+  sourceModule: string;
+  sourceType: string;
+  sourceId: string | null;
+  deduplicationKey: string;
+  actionUrl: string | null;
+  detectedAt: string;
+  acknowledgedAt: string | null;
+  acknowledgedByUserId: string | null;
+  resolvedAt: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
 };
+
+export type BchAlertSummaryCounts = {
+  openCritical: number;
+  openWarning: number;
+  openInfo: number;
+  acknowledgedUnresolved: number;
+  recentlyResolved: number;
+};
+
+/** @deprecated Prefer alertType em BchOperationalAlert */
+export type BchExecutiveAttentionCode = BchAlertType;
+
+export const BCH_ALERT_TYPE_LABEL: Record<BchAlertType, string> = {
+  overdue_receivable: "Recebível vencido",
+  event_without_signed_contract: "Contrato não assinado",
+  event_without_receivable: "Recebível ausente",
+  event_financial_incomplete: "Resultado incompleto",
+  bar_not_closed: "Bar sem fechamento",
+  physical_count_missing: "Contagem física pendente",
+  event_inventory_still_open: "Inventário aberto",
+  open_containers_pending: "Garrafas abertas",
+  ticketing_configuration: "Ingressos",
+  event_readiness: "Prontidão operacional",
+};
+
+export const BCH_EXECUTIVE_ATTENTION_LABEL = BCH_ALERT_TYPE_LABEL;
 
 export type BchExecutivePeriod = {
   preset: "today" | "this_week" | "this_month" | "custom";
@@ -1202,8 +1249,9 @@ export type BchExecutiveSummaryResponse = {
     eventId: string;
     eventName: string;
     eventStartAt: string | null;
-    flags: BchExecutiveAttentionCode[];
+    alerts: BchOperationalAlert[];
   }>;
+  alertSummary: BchAlertSummaryCounts;
   upcomingEvents: BchExecutiveCompactEvent[];
   recentEvents: BchExecutiveCompactEvent[];
 };
@@ -1222,6 +1270,7 @@ export type BchExecutiveCompactEvent = {
   currencies: BchEventFinancialCurrencyGroup[];
   multiCurrency: boolean;
   attentionFlags: BchExecutiveAttentionCode[];
+  activeAlerts?: BchOperationalAlert[];
   resultComplete: boolean;
 };
 
@@ -1255,6 +1304,7 @@ export type BchExecutiveEventPerformanceRow = {
   marginIncomplete: boolean;
   resultComplete: boolean;
   attentionFlags: BchExecutiveAttentionCode[];
+  activeAlerts?: BchOperationalAlert[];
 };
 
 export function parseProposalDateInput(iso: string | null): string {

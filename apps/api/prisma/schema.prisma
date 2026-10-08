@@ -59,6 +59,7 @@ model User {
   bchBarPhysicalCountsCompleted       BchBarPhysicalCount[]         @relation("BchBarPhysicalCountCompletedBy")
   bchBarPhysicalCountItemsCounted     BchBarPhysicalCountItem[]     @relation("BchBarPhysicalCountItemCountedBy")
   bchBarClosesFinalized               BchBarClose[]                 @relation("BchBarCloseFinalizedBy")
+  bchOperationalAlertsAcknowledged    BchOperationalAlert[]         @relation("BchAlertAcknowledgedBy")
 }
 
 model UserTenant {
@@ -276,6 +277,7 @@ model Tenant {
   bchBarPhysicalCounts         BchBarPhysicalCount[]
   bchBarProductCosts           BchBarProductCost[]
   bchBarCloses                 BchBarClose[]
+  bchOperationalAlerts         BchOperationalAlert[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -1014,6 +1016,7 @@ model Event {
   bchBarEventInventories     BchBarEventInventory[]
   bchBarPhysicalCounts       BchBarPhysicalCount[]
   bchBarCloses               BchBarClose[]
+  bchOperationalAlerts       BchOperationalAlert[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -4004,12 +4007,49 @@ model VenueBooking {
   updatedAt      DateTime            @updatedAt
   venueProposals VenueProposal[]
   venueContracts VenueContract[]
+  bchOperationalAlerts BchOperationalAlert[]
 
   @@index([tenantId])
   @@index([venueSlug, startAt])
   @@index([spaceId])
   @@index([status])
   @@index([eventId])
+}
+
+/// Alerta operacional BCH — condição derivada de domínios canônicos (não é fonte financeira).
+model BchOperationalAlert {
+  id                   String        @id @default(cuid())
+  tenantId             String
+  tenant               Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  eventId              String?
+  event                Event?        @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  bookingId            String?
+  booking              VenueBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  alertType            String
+  severity             String
+  status               String        @default("open")
+  title                String
+  message              String        @db.Text
+  sourceModule         String
+  sourceType           String
+  sourceId             String?
+  deduplicationKey     String
+  actionUrl            String?
+  detectedAt           DateTime      @default(now())
+  acknowledgedAt       DateTime?
+  acknowledgedByUserId String?
+  acknowledgedBy       User?         @relation("BchAlertAcknowledgedBy", fields: [acknowledgedByUserId], references: [id], onDelete: SetNull)
+  resolvedAt           DateTime?
+  metadata             Json?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@unique([tenantId, deduplicationKey])
+  @@index([tenantId, status])
+  @@index([tenantId, severity])
+  @@index([tenantId, alertType])
+  @@index([tenantId, eventId])
+  @@index([tenantId, detectedAt])
 }
 
 model VenuePipelineLead {

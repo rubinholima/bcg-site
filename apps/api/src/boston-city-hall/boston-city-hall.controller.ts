@@ -51,6 +51,8 @@ import { BostonCityHallBarCloseService } from './boston-city-hall-bar-close.serv
 import { BostonCityHallEventFinancialService } from './boston-city-hall-event-financial.service';
 import { BostonCityHallExecutiveService } from './boston-city-hall-executive.service';
 import type { BchExecutiveEventsQuery } from './boston-city-hall-executive.constants';
+import { BostonCityHallOperationalAlertService } from './boston-city-hall-operational-alert.service';
+import type { BchAlertListQuery } from './boston-city-hall-operational-alert.constants';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -85,6 +87,7 @@ export class BostonCityHallController {
     private readonly barClose: BostonCityHallBarCloseService,
     private readonly eventFinancial: BostonCityHallEventFinancialService,
     private readonly executive: BostonCityHallExecutiveService,
+    private readonly alerts: BostonCityHallOperationalAlertService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -537,7 +540,7 @@ export class BostonCityHallController {
   }
 
   @Patch('contracts/:id')
-  updateContract(
+  async updateContract(
     @Param('id') id: string,
     @Body()
     body: Partial<{
@@ -548,7 +551,13 @@ export class BostonCityHallController {
       validUntil: string | null;
     }>,
   ) {
-    return this.contracts.updateContract(id, body);
+    const result = await this.contracts.updateContract(id, body);
+    if (body.status === 'signed') {
+      const tenantId = await this.bchTenantId();
+      const bookingId = (result as { bookingId?: string | null }).bookingId ?? undefined;
+      await this.alerts.evaluate(tenantId, { bookingId });
+    }
+    return result;
   }
 
   @Get('contracts/:id/pdf')
@@ -642,7 +651,7 @@ export class BostonCityHallController {
   }
 
   @Post('finance/:id/payments')
-  registerPayment(
+  async registerPayment(
     @Param('id') id: string,
     @Body()
     body: {
@@ -654,7 +663,10 @@ export class BostonCityHallController {
       notes?: string;
     },
   ) {
-    return this.finance.registerPayment(id, body);
+    const result = await this.finance.registerPayment(id, body);
+    const tenantId = await this.bchTenantId();
+    await this.alerts.evaluate(tenantId, { receivableId: id.trim() });
+    return result;
   }
 
   @Patch('finance/:id/installments/:installmentId')
@@ -678,6 +690,29 @@ export class BostonCityHallController {
   }
 
   /** BCH — dashboard executivo (Fase 5.2) */
+  @Get('alerts')
+  async listOperationalAlerts(@Query() query: Record<string, string | undefined>) {
+    const tenantId = await this.bchTenantId();
+    if (query.evaluate === '1') {
+      await this.alerts.evaluate(tenantId);
+    }
+    return this.alerts.list(tenantId, query as BchAlertListQuery);
+  }
+
+  @Post('alerts/evaluate')
+  async evaluateOperationalAlerts(@Body() body: { eventId?: string; receivableId?: string; bookingId?: string }) {
+    const tenantId = await this.bchTenantId();
+    return this.alerts.evaluate(tenantId, body);
+  }
+
+  @Post('alerts/:id/acknowledge')
+  async acknowledgeOperationalAlert(@Param('id') id: string, @Req() req: Request & { user: CognitoJwtPayload }) {
+    const tenantId = await this.bchTenantId();
+    const userId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    if (!userId) throw new BadRequestException('Usuário interno não encontrado.');
+    return this.alerts.acknowledge(tenantId, id.trim(), userId);
+  }
+
   @Get('executive/summary')
   async getExecutiveDashboardSummary(@Query() query: Record<string, string | undefined>) {
     const tenantId = await this.bchTenantId();
@@ -1937,7 +1972,10 @@ export class BostonCityHallController {
   ) {
     const tenantId = await this.bchTenantId();
     const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
-    return this.barClose.finalizeClose(tenantId, operatorUserId, id);
+    const closed = await this.barClose.finalizeClose(tenantId, operatorUserId, id);
+    const eventId = (closed as { eventId?: string }).eventId;
+    if (eventId) await this.alerts.evaluate(tenantId, { eventId });
+    return closed;
   }
 
   @Post('bar/inventory/movements/:id/reverse')

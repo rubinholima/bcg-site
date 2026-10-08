@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import type { BchEventFinancialCurrencyGroup, BchEventFinancialResult } from "@/types/boston-city-hall";
 import { formatCatalogMoney, EVENT_STATUS_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
+import { BostonCityHallEventAlertsBanner } from "@/components/dashboard/boston-city-hall/BostonCityHallEventAlertsBanner";
 
 function moneyOrDash(amount: string | null, currency: string | null, applicable: boolean): string {
   if (!applicable) return "—";
@@ -139,6 +140,7 @@ export function BostonCityHallEventFinancial({
         <ArrowLeft className="h-4 w-4" />
         {backLabel}
       </Link>
+      <BostonCityHallEventAlertsBanner eventId={eventId} />
 
       <div>
         <h2 className="text-lg font-semibold text-foreground">{data.eventName}</h2>

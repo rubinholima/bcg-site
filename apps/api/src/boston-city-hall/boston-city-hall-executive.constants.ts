@@ -1,5 +1,6 @@
 import type { BchEventFinancialCurrencyGroupDto } from './boston-city-hall-event-financial.constants';
 import type { BchEventExecutiveSummaryDto } from './boston-city-hall-event-financial.constants';
+import type { BchAlertSummaryCountsDto, BchOperationalAlertDto } from './boston-city-hall-operational-alert.constants';
 
 export const BCH_EXECUTIVE_ATTENTION_CODES = [
   'overdue_receivable',
@@ -40,7 +41,7 @@ export type BchExecutiveAttentionItemDto = {
   eventId: string;
   eventName: string;
   eventStartAt: string | null;
-  flags: BchExecutiveAttentionCode[];
+  alerts: BchOperationalAlertDto[];
 };
 
 export type BchExecutiveSummaryResponseDto = {
@@ -95,6 +96,7 @@ export type BchExecutiveSummaryResponseDto = {
   revenueMix: BchExecutiveRevenueMixSliceDto[];
   revenueTrend: BchExecutiveRevenueTrendPointDto[];
   attentionRequired: BchExecutiveAttentionItemDto[];
+  alertSummary: BchAlertSummaryCountsDto;
   upcomingEvents: BchExecutiveCompactEventDto[];
   recentEvents: BchExecutiveCompactEventDto[];
 };
@@ -146,6 +148,7 @@ export type BchExecutiveEventPerformanceRowDto = {
   marginIncomplete: boolean;
   resultComplete: boolean;
   attentionFlags: BchExecutiveAttentionCode[];
+  activeAlerts: BchOperationalAlertDto[];
   inventoryDivergenceProducts: number;
   summary: BchEventExecutiveSummaryDto;
 };

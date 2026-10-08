@@ -41,6 +41,7 @@ import { BostonCityHallBarReportsService } from './boston-city-hall-bar-reports.
 import { BostonCityHallBarCloseService } from './boston-city-hall-bar-close.service';
 import { BostonCityHallEventFinancialService } from './boston-city-hall-event-financial.service';
 import { BostonCityHallExecutiveService } from './boston-city-hall-executive.service';
+import { BostonCityHallOperationalAlertService } from './boston-city-hall-operational-alert.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule, FinanceiroModule, HomeContentModule],
@@ -81,6 +82,7 @@ import { BostonCityHallExecutiveService } from './boston-city-hall-executive.ser
     BostonCityHallBarCloseService,
     BostonCityHallEventFinancialService,
     BostonCityHallExecutiveService,
+    BostonCityHallOperationalAlertService,
   ],
   exports: [
     BostonCityHallService,
