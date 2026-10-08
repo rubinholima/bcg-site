@@ -128,6 +128,9 @@ describe('BostonCityHallBarEventInventoryService', () => {
       bchBarOpenContainer: {
         findMany: jest.fn(async () => openContainers),
       },
+      bchBarPhysicalCount: {
+        findFirst: jest.fn(async () => null),
+      },
       bchBarProduct: { findMany: jest.fn(async () => []) },
       bchBarStockMovement: { findMany: jest.fn(async () => []) },
       bchBarStockBalance: { findMany: jest.fn(async () => []) },

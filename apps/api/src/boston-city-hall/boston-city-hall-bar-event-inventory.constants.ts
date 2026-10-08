@@ -28,6 +28,8 @@ export type BchBarEventInventoryDto = {
   closedByName: string | null;
   notes: string | null;
   openContainersUnresolved: number;
+  latestPhysicalCountAt: string | null;
+  latestPhysicalCountDivergenceProducts: number;
 };
 
 export type BchBarEventInventorySummaryLineDto = {

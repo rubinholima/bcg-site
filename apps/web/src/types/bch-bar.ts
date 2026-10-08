@@ -281,6 +281,87 @@ export type BchBarEventInventory = {
   closedByName: string | null;
   notes: string | null;
   openContainersUnresolved: number;
+  latestPhysicalCountAt: string | null;
+  latestPhysicalCountDivergenceProducts: number;
+};
+
+export const BCH_BAR_PHYSICAL_COUNT_DIVERGENCE_REASONS = [
+  "breakage",
+  "spill_waste",
+  "unrecorded_sale",
+  "complimentary",
+  "internal_use",
+  "transfer_error",
+  "receiving_error",
+  "counting_error",
+  "theft_loss",
+  "found_stock",
+  "other",
+] as const;
+
+export const BCH_BAR_PHYSICAL_COUNT_DIVERGENCE_LABEL: Record<
+  (typeof BCH_BAR_PHYSICAL_COUNT_DIVERGENCE_REASONS)[number],
+  string
+> = {
+  breakage: "Quebra",
+  spill_waste: "Desperdício",
+  unrecorded_sale: "Venda não registrada",
+  complimentary: "Cortesia",
+  internal_use: "Uso interno",
+  transfer_error: "Erro de transferência",
+  receiving_error: "Erro de recebimento",
+  counting_error: "Erro de contagem",
+  theft_loss: "Perda/furto",
+  found_stock: "Estoque encontrado",
+  other: "Outro",
+};
+
+export type BchBarPhysicalCountItem = {
+  id: string;
+  productId: string;
+  productSku: string;
+  productName: string;
+  expectedQuantity: string;
+  countedQuantity: string | null;
+  divergenceQuantity: string | null;
+  unitBasis: string | null;
+  reason: string | null;
+  notes: string | null;
+  adjustedMovementId: string | null;
+  countedAt: string | null;
+};
+
+export type BchBarPhysicalCount = {
+  id: string;
+  locationId: string;
+  locationCode: string;
+  locationName: string;
+  eventId: string | null;
+  eventTitle: string | null;
+  status: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  startedByName: string | null;
+  completedByName: string | null;
+  notes: string | null;
+  items: BchBarPhysicalCountItem[];
+  openContainers: Array<{
+    id: string;
+    productId: string;
+    productName: string;
+    remainingContent: string;
+    contentUnit: string;
+    status: string;
+  }>;
+  totals: {
+    productsInSession: number;
+    productsCounted: number;
+    productsWithDivergence: number;
+    expectedByUnit: Record<string, string>;
+    countedByUnit: Record<string, string>;
+    positiveDivergenceByUnit: Record<string, string>;
+    negativeDivergenceByUnit: Record<string, string>;
+  };
 };
 
 export type BchBarEventInventorySummaryLine = {

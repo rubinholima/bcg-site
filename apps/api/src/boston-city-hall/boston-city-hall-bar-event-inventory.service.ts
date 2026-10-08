@@ -44,7 +44,28 @@ export class BostonCityHallBarEventInventoryService {
     return central.id;
   }
 
-  private mapInv(row: InvRow, openContainersUnresolved = 0): BchBarEventInventoryDto {
+  private async latestPhysicalCountMeta(
+    tenantId: string,
+    locationId: string,
+  ): Promise<{ completedAt: string | null; productsWithDivergence: number }> {
+    const row = await this.prisma.bchBarPhysicalCount.findFirst({
+      where: { tenantId, locationId, status: 'completed' },
+      orderBy: { completedAt: 'desc' },
+      include: { items: { select: { divergenceQuantity: true } } },
+    });
+    if (!row) return { completedAt: null, productsWithDivergence: 0 };
+    let n = 0;
+    for (const i of row.items) {
+      if (i.divergenceQuantity && !i.divergenceQuantity.isZero()) n += 1;
+    }
+    return { completedAt: row.completedAt?.toISOString() ?? null, productsWithDivergence: n };
+  }
+
+  private mapInv(
+    row: InvRow,
+    openContainersUnresolved = 0,
+    physicalMeta?: { completedAt: string | null; productsWithDivergence: number },
+  ): BchBarEventInventoryDto {
     return {
       id: row.id,
       eventId: row.eventId,
@@ -61,6 +82,8 @@ export class BostonCityHallBarEventInventoryService {
       closedByName: row.closedBy?.name ?? null,
       notes: row.notes,
       openContainersUnresolved,
+      latestPhysicalCountAt: physicalMeta?.completedAt ?? null,
+      latestPhysicalCountDivergenceProducts: physicalMeta?.productsWithDivergence ?? 0,
     };
   }
 
@@ -168,13 +191,15 @@ export class BostonCityHallBarEventInventoryService {
       include: this.includeInv(),
     });
 
-    return this.mapInv(row, 0);
+    const physicalMeta = await this.latestPhysicalCountMeta(tenantId, row.locationId);
+    return this.mapInv(row, 0, physicalMeta);
   }
 
   async getEventInventory(tenantId: string, id: string): Promise<BchBarEventInventoryDto> {
     const row = await this.loadInv(tenantId, id);
     const unresolved = await this.countUnresolvedOpenContainers(tenantId, row.locationId);
-    return this.mapInv(row, unresolved);
+    const physicalMeta = await this.latestPhysicalCountMeta(tenantId, row.locationId);
+    return this.mapInv(row, unresolved, physicalMeta);
   }
 
   async listEventInventories(
@@ -201,7 +226,8 @@ export class BostonCityHallBarEventInventoryService {
         row.status === 'active'
           ? await this.countUnresolvedOpenContainers(tenantId, row.locationId)
           : 0;
-      out.push(this.mapInv(row, unresolved));
+      const physicalMeta = await this.latestPhysicalCountMeta(tenantId, row.locationId);
+      out.push(this.mapInv(row, unresolved, physicalMeta));
     }
     return out;
   }

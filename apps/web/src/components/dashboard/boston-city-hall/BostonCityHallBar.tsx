@@ -634,6 +634,9 @@ export function BostonCityHallBar() {
         <Button asChild variant="outline" className="min-h-[44px]">
           <Link href="/dashboard/eventos/boston-city-hall/bar/event-inventory">Estoque evento</Link>
         </Button>
+        <Button asChild variant="outline" className="min-h-[44px]">
+          <Link href="/dashboard/eventos/boston-city-hall/bar/physical-counts">Contagem física</Link>
+        </Button>
         <Button asChild className="min-h-[44px] gap-2">
           <Link href="/dashboard/eventos/boston-city-hall/bar/pos">
             <ShoppingCart className="h-4 w-4" />

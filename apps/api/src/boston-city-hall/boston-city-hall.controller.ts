@@ -44,6 +44,7 @@ import { BostonCityHallBarStockService } from './boston-city-hall-bar-stock.serv
 import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-open-container.service';
 import { BostonCityHallBarPosService } from './boston-city-hall-bar-pos.service';
 import { BostonCityHallBarEventInventoryService } from './boston-city-hall-bar-event-inventory.service';
+import { BostonCityHallBarPhysicalCountService } from './boston-city-hall-bar-physical-count.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -72,6 +73,7 @@ export class BostonCityHallController {
     private readonly barOpen: BostonCityHallBarOpenContainerService,
     private readonly barPos: BostonCityHallBarPosService,
     private readonly barEventInventory: BostonCityHallBarEventInventoryService,
+    private readonly barPhysicalCount: BostonCityHallBarPhysicalCountService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -1640,6 +1642,106 @@ export class BostonCityHallController {
     const tenantId = await this.bchTenantId();
     const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
     return this.barEventInventory.closeEventInventory(tenantId, operatorUserId, id);
+  }
+
+  /** BCH Bar — contagem física (Fase 4.6) */
+  @Get('bar/physical-counts')
+  async listBarPhysicalCounts(
+    @Query('locationId') locationId?: string,
+    @Query('eventId') eventId?: string,
+    @Query('status') status?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barPhysicalCount.listPhysicalCounts(tenantId, { locationId, eventId, status });
+  }
+
+  @Post('bar/physical-counts')
+  async createBarPhysicalCount(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() body: { locationId?: string; eventId?: string | null; notes?: string | null },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.locationId?.trim()) throw new BadRequestException('locationId é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPhysicalCount.createPhysicalCount(tenantId, operatorUserId, {
+      locationId: body.locationId.trim(),
+      eventId: body.eventId,
+      notes: body.notes,
+    });
+  }
+
+  @Get('bar/physical-counts/:id')
+  async getBarPhysicalCount(@Param('id') id: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barPhysicalCount.getPhysicalCount(tenantId, id);
+  }
+
+  @Post('bar/physical-counts/:id/start')
+  async startBarPhysicalCount(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPhysicalCount.startPhysicalCount(tenantId, operatorUserId, id);
+  }
+
+  @Post('bar/physical-counts/:id/items')
+  async addBarPhysicalCountItem(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { productId?: string },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.productId?.trim()) throw new BadRequestException('productId é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPhysicalCount.addCountItem(tenantId, operatorUserId, id, {
+      productId: body.productId.trim(),
+    });
+  }
+
+  @Patch('bar/physical-counts/:id/items/:itemId')
+  async updateBarPhysicalCountItem(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+    @Body()
+    body: {
+      countedQuantity?: number | string;
+      reason?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (body.countedQuantity === undefined || body.countedQuantity === null) {
+      throw new BadRequestException('countedQuantity é obrigatório.');
+    }
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPhysicalCount.updateCountItem(tenantId, operatorUserId, id, itemId, {
+      countedQuantity: body.countedQuantity,
+      reason: body.reason,
+      notes: body.notes,
+    });
+  }
+
+  @Post('bar/physical-counts/:id/complete')
+  async completeBarPhysicalCount(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPhysicalCount.completePhysicalCount(tenantId, operatorUserId, id);
+  }
+
+  @Post('bar/physical-counts/:id/cancel')
+  async cancelBarPhysicalCount(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barPhysicalCount.cancelPhysicalCount(tenantId, operatorUserId, id);
   }
 
   @Post('bar/inventory/movements/:id/reverse')
