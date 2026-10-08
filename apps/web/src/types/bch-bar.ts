@@ -267,6 +267,47 @@ export type BchBarSale = {
   amountDue: string;
 };
 
+export type BchBarEventInventory = {
+  id: string;
+  eventId: string;
+  eventTitle: string | null;
+  locationId: string;
+  locationCode: string;
+  locationName: string;
+  status: string;
+  openedAt: string | null;
+  closedAt: string | null;
+  openedByName: string | null;
+  closedByName: string | null;
+  notes: string | null;
+  openContainersUnresolved: number;
+};
+
+export type BchBarEventInventorySummaryLine = {
+  productId: string;
+  productSku: string;
+  productName: string;
+  initiallyAllocated: string;
+  replenished: string;
+  totalReceived: string;
+  returnedClosed: string;
+  currentClosedBalance: string;
+  posSold: string;
+  complimentary: string;
+  wasteBreakage: string;
+  internalUseTasting: string;
+  openContainersCount: number;
+  openRemainingContent: string;
+};
+
+export type BchBarEventInventorySummary = {
+  eventInventoryId: string;
+  eventId: string;
+  locationId: string;
+  status: string;
+  lines: BchBarEventInventorySummaryLine[];
+};
+
 export type BchBarStockMovement = {
   id: string;
   productId: string;

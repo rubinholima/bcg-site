@@ -53,6 +53,8 @@ model User {
   bchBarSalesOpened                   BchBarSale[]                  @relation("BchBarSaleOpenedBy")
   bchBarSalesClosed                   BchBarSale[]                  @relation("BchBarSaleClosedBy")
   bchBarSalePaymentsReceived          BchBarSalePayment[]           @relation("BchBarSalePaymentReceivedBy")
+  bchBarEventInventoriesOpened        BchBarEventInventory[]        @relation("BchBarEventInventoryOpenedBy")
+  bchBarEventInventoriesClosed        BchBarEventInventory[]        @relation("BchBarEventInventoryClosedBy")
 }
 
 model UserTenant {
@@ -266,6 +268,7 @@ model Tenant {
   bchBarSales                  BchBarSale[]
   bchBarSaleItems              BchBarSaleItem[]
   bchBarSalePayments           BchBarSalePayment[]
+  bchBarEventInventories       BchBarEventInventory[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -1001,6 +1004,7 @@ model Event {
   bchBarOpenContainers     BchBarOpenContainer[]
   bchBarOpenContainerLedgers BchBarOpenContainerLedger[]
   bchBarSales                BchBarSale[]
+  bchBarEventInventories     BchBarEventInventory[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -3614,6 +3618,7 @@ model BchBarInventoryLocation {
   openContainers BchBarOpenContainer[]
   openContainerLedgers BchBarOpenContainerLedger[]
   sales              BchBarSale[]
+  eventInventories   BchBarEventInventory[]
 
   @@unique([tenantId, code])
   @@index([tenantId, kind])
@@ -3828,6 +3833,32 @@ model BchBarSalePayment {
 
   @@index([saleId])
   @@index([tenantId, createdAt])
+}
+
+/// Ciclo de estoque do bar ligado a um evento BCH (alocação → consumo POS → devolução → fechamento).
+model BchBarEventInventory {
+  id             String                  @id @default(cuid())
+  tenantId       String
+  tenant         Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  eventId        String
+  event          Event                   @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  locationId     String
+  location       BchBarInventoryLocation   @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  status         String                  @default("draft")
+  openedAt       DateTime?
+  closedAt       DateTime?
+  openedByUserId String?
+  openedBy       User?                   @relation("BchBarEventInventoryOpenedBy", fields: [openedByUserId], references: [id], onDelete: SetNull)
+  closedByUserId String?
+  closedBy       User?                   @relation("BchBarEventInventoryClosedBy", fields: [closedByUserId], references: [id], onDelete: SetNull)
+  closeSnapshot  Json?
+  notes          String?                 @db.Text
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@index([tenantId, eventId])
+  @@index([tenantId, status])
+  @@index([tenantId, locationId])
 }
 
 model VenueBooking {

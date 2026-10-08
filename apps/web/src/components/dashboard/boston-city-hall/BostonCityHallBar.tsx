@@ -630,7 +630,10 @@ export function BostonCityHallBar() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button asChild variant="outline" className="min-h-[44px]">
+          <Link href="/dashboard/eventos/boston-city-hall/bar/event-inventory">Estoque evento</Link>
+        </Button>
         <Button asChild className="min-h-[44px] gap-2">
           <Link href="/dashboard/eventos/boston-city-hall/bar/pos">
             <ShoppingCart className="h-4 w-4" />

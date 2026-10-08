@@ -6,6 +6,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-open-container.service';
+import { BostonCityHallBarEventInventoryService } from './boston-city-hall-bar-event-inventory.service';
 import {
   BCH_BAR_POS_PAYMENT_METHOD_LABEL,
   BCH_BAR_POS_PAYMENT_METHODS,
@@ -57,6 +58,7 @@ export class BostonCityHallBarPosService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly openContainer: BostonCityHallBarOpenContainerService,
+    private readonly eventInventory: BostonCityHallBarEventInventoryService,
   ) {}
 
   private assertSaleStatus(status: string): void {
@@ -254,6 +256,7 @@ export class BostonCityHallBarPosService {
   ): Promise<BchBarSaleDto> {
     await this.assertLocation(tenantId, input.locationId);
     const eventId = await this.assertEvent(tenantId, input.eventId);
+    await this.eventInventory.assertPosSaleLocation(tenantId, input.locationId, eventId);
     const saleNumber = await this.nextSaleNumber(tenantId);
     const currency = input.currency?.trim() || 'BRL';
     const sale = await this.prisma.bchBarSale.create({

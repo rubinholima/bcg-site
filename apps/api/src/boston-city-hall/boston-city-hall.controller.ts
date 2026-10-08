@@ -43,6 +43,7 @@ import { BostonCityHallBarService } from './boston-city-hall-bar.service';
 import { BostonCityHallBarStockService } from './boston-city-hall-bar-stock.service';
 import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-open-container.service';
 import { BostonCityHallBarPosService } from './boston-city-hall-bar-pos.service';
+import { BostonCityHallBarEventInventoryService } from './boston-city-hall-bar-event-inventory.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -70,6 +71,7 @@ export class BostonCityHallController {
     private readonly barStock: BostonCityHallBarStockService,
     private readonly barOpen: BostonCityHallBarOpenContainerService,
     private readonly barPos: BostonCityHallBarPosService,
+    private readonly barEventInventory: BostonCityHallBarEventInventoryService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -1529,6 +1531,115 @@ export class BostonCityHallController {
     const tenantId = await this.bchTenantId();
     const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
     return this.barPos.cancelOpenSale(tenantId, id, operatorUserId);
+  }
+
+  /** BCH Bar — estoque de evento (Fase 4.5) */
+  @Get('bar/event-inventories')
+  async listBarEventInventories(
+    @Query('eventId') eventId?: string,
+    @Query('status') status?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barEventInventory.listEventInventories(tenantId, { eventId, status });
+  }
+
+  @Post('bar/event-inventories')
+  async openBarEventInventory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() body: { eventId?: string; notes?: string | null },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.eventId?.trim()) throw new BadRequestException('eventId é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barEventInventory.openEventInventory(tenantId, operatorUserId, {
+      eventId: body.eventId.trim(),
+      notes: body.notes,
+    });
+  }
+
+  @Get('bar/event-inventories/:id')
+  async getBarEventInventory(@Param('id') id: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barEventInventory.getEventInventory(tenantId, id);
+  }
+
+  @Get('bar/event-inventories/:id/summary')
+  async getBarEventInventorySummary(@Param('id') id: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barEventInventory.getSummary(tenantId, id);
+  }
+
+  @Post('bar/event-inventories/:id/allocate')
+  async allocateBarEventInventory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body()
+    body: {
+      lines?: Array<{ productId: string; quantity: number | string; sourceKey?: string | null }>;
+      batchSourceKey?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.lines?.length) throw new BadRequestException('lines é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barEventInventory.allocateInitial(tenantId, operatorUserId, id, {
+      lines: body.lines,
+      batchSourceKey: body.batchSourceKey,
+      notes: body.notes,
+    });
+  }
+
+  @Post('bar/event-inventories/:id/replenish')
+  async replenishBarEventInventory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body()
+    body: {
+      lines?: Array<{ productId: string; quantity: number | string; sourceKey?: string | null }>;
+      batchSourceKey?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.lines?.length) throw new BadRequestException('lines é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barEventInventory.replenish(tenantId, operatorUserId, id, {
+      lines: body.lines,
+      batchSourceKey: body.batchSourceKey,
+      notes: body.notes,
+    });
+  }
+
+  @Post('bar/event-inventories/:id/return')
+  async returnBarEventInventory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body()
+    body: {
+      lines?: Array<{ productId: string; quantity: number | string; sourceKey?: string | null }>;
+      batchSourceKey?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.lines?.length) throw new BadRequestException('lines é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barEventInventory.returnClosedStock(tenantId, operatorUserId, id, {
+      lines: body.lines,
+      batchSourceKey: body.batchSourceKey,
+      notes: body.notes,
+    });
+  }
+
+  @Post('bar/event-inventories/:id/close')
+  async closeBarEventInventory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barEventInventory.closeEventInventory(tenantId, operatorUserId, id);
   }
 
   @Post('bar/inventory/movements/:id/reverse')

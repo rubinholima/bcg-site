@@ -393,39 +393,41 @@ export class BostonCityHallBarStockService {
     return { balance, movement: this.toMovementDto(row) };
   }
 
-  async transferStock(
+  async transferStockInTransaction(
+    tx: Prisma.TransactionClient,
     tenantId: string,
     userId: string | null,
     input: {
       productId: string;
       fromLocationId: string;
       toLocationId: string;
-      quantity: number | string;
+      quantity: Prisma.Decimal;
       eventId?: string | null;
       sourceKey?: string | null;
+      transferGroupId?: string | null;
+      referenceType?: string | null;
+      referenceId?: string | null;
+      reason?: string | null;
       notes?: string | null;
     },
-  ): Promise<{ transferGroupId: string; outMovement: BchBarStockMovementDto; inMovement: BchBarStockMovementDto }> {
+  ): Promise<{ transferGroupId: string; outRow: MovementRow; inRow: MovementRow }> {
     if (input.fromLocationId === input.toLocationId) {
       throw new BadRequestException('Origem e destino devem ser diferentes.');
     }
-    const quantity = parsePositiveDecimal(input.quantity, 'Quantidade');
 
     const baseKey = input.sourceKey?.trim();
     if (baseKey) {
-      const existingOut = await this.prisma.bchBarStockMovement.findFirst({
+      const existingOut = await tx.bchBarStockMovement.findFirst({
         where: { tenantId, sourceKey: `${baseKey}:out` },
-        include: this.movementInclude,
       });
-      const existingIn = await this.prisma.bchBarStockMovement.findFirst({
+      const existingIn = await tx.bchBarStockMovement.findFirst({
         where: { tenantId, sourceKey: `${baseKey}:in` },
-        include: this.movementInclude,
       });
       if (existingOut && existingIn) {
         return {
           transferGroupId: existingOut.transferGroupId ?? '',
-          outMovement: this.toMovementDto(existingOut),
-          inMovement: this.toMovementDto(existingIn),
+          outRow: existingOut as MovementRow,
+          inRow: existingIn as MovementRow,
         };
       }
     }
@@ -438,41 +440,118 @@ export class BostonCityHallBarStockService {
     );
     await this.validateStockContext(tenantId, input.productId, input.toLocationId, input.eventId);
 
-    const transferGroupId = randomUUID();
+    const transferGroupId = input.transferGroupId?.trim() || randomUUID();
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      const outRow = await this.applyMovementInTransaction(tx, tenantId, userId, {
-        productId: input.productId,
-        locationId: input.fromLocationId,
-        movementType: 'transfer_out',
-        direction: 'out',
-        quantity,
-        unitBasis,
-        eventId: input.eventId,
-        transferGroupId,
-        sourceKey: baseKey ? `${baseKey}:out` : null,
-        notes: input.notes,
-      });
-      const inRow = await this.applyMovementInTransaction(tx, tenantId, userId, {
-        productId: input.productId,
-        locationId: input.toLocationId,
-        movementType: 'transfer_in',
-        direction: 'in',
-        quantity,
-        unitBasis,
-        eventId: input.eventId,
-        transferGroupId,
-        sourceKey: baseKey ? `${baseKey}:in` : null,
-        notes: input.notes,
-      });
-      return { outRow, inRow };
-    });
-
-    return {
+    const outRow = await this.applyMovementInTransaction(tx, tenantId, userId, {
+      productId: input.productId,
+      locationId: input.fromLocationId,
+      movementType: 'transfer_out',
+      direction: 'out',
+      quantity: input.quantity,
+      unitBasis,
+      eventId: input.eventId,
       transferGroupId,
+      sourceKey: baseKey ? `${baseKey}:out` : null,
+      referenceType: input.referenceType ?? null,
+      referenceId: input.referenceId ?? null,
+      reason: input.reason ?? null,
+      notes: input.notes,
+    });
+    const inRow = await this.applyMovementInTransaction(tx, tenantId, userId, {
+      productId: input.productId,
+      locationId: input.toLocationId,
+      movementType: 'transfer_in',
+      direction: 'in',
+      quantity: input.quantity,
+      unitBasis,
+      eventId: input.eventId,
+      transferGroupId,
+      sourceKey: baseKey ? `${baseKey}:in` : null,
+      referenceType: input.referenceType ?? null,
+      referenceId: input.referenceId ?? null,
+      reason: input.reason ?? null,
+      notes: input.notes,
+    });
+    return { transferGroupId, outRow, inRow };
+  }
+
+  async transferStock(
+    tenantId: string,
+    userId: string | null,
+    input: {
+      productId: string;
+      fromLocationId: string;
+      toLocationId: string;
+      quantity: number | string;
+      eventId?: string | null;
+      sourceKey?: string | null;
+      referenceType?: string | null;
+      referenceId?: string | null;
+      reason?: string | null;
+      notes?: string | null;
+    },
+  ): Promise<{ transferGroupId: string; outMovement: BchBarStockMovementDto; inMovement: BchBarStockMovementDto }> {
+    const quantity = parsePositiveDecimal(input.quantity, 'Quantidade');
+    const result = await this.prisma.$transaction((tx) =>
+      this.transferStockInTransaction(tx, tenantId, userId, {
+        ...input,
+        quantity,
+      }),
+    );
+    return {
+      transferGroupId: result.transferGroupId,
       outMovement: this.toMovementDto(result.outRow),
       inMovement: this.toMovementDto(result.inRow),
     };
+  }
+
+  async transferStockBatch(
+    tenantId: string,
+    userId: string | null,
+    input: {
+      fromLocationId: string;
+      toLocationId: string;
+      eventId?: string | null;
+      batchSourceKey?: string | null;
+      referenceType?: string | null;
+      referenceId?: string | null;
+      reason?: string | null;
+      notes?: string | null;
+      lines: Array<{ productId: string; quantity: number | string; sourceKey?: string | null }>;
+    },
+  ): Promise<{ transferGroupId: string; lines: number }> {
+    if (!input.lines.length) throw new BadRequestException('Informe ao menos um produto.');
+    const parsed = input.lines.map((line, index) => ({
+      productId: line.productId,
+      quantity: parsePositiveDecimal(line.quantity, `Quantidade (item ${index + 1})`),
+      sourceKey:
+        line.sourceKey?.trim() ||
+        (input.batchSourceKey?.trim()
+          ? `${input.batchSourceKey.trim()}:line:${line.productId}`
+          : null),
+    }));
+
+    const transferGroupId = randomUUID();
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const line of parsed) {
+        await this.transferStockInTransaction(tx, tenantId, userId, {
+          productId: line.productId,
+          fromLocationId: input.fromLocationId,
+          toLocationId: input.toLocationId,
+          quantity: line.quantity,
+          eventId: input.eventId,
+          sourceKey: line.sourceKey,
+          transferGroupId,
+          referenceType: input.referenceType,
+          referenceId: input.referenceId,
+          reason: input.reason,
+          notes: input.notes,
+        });
+      }
+    });
+
+    return { transferGroupId, lines: parsed.length };
   }
 
   async reverseMovement(

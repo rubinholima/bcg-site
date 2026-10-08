@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 import { BostonCityHallBarPosService } from './boston-city-hall-bar-pos.service';
 import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-open-container.service';
+import { BostonCityHallBarEventInventoryService } from './boston-city-hall-bar-event-inventory.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { saleItemInventorySourceKey } from './boston-city-hall-bar-pos.constants';
 
@@ -193,6 +194,10 @@ describe('BostonCityHallBarPosService', () => {
         BostonCityHallBarPosService,
         { provide: PrismaService, useValue: prisma },
         { provide: BostonCityHallBarOpenContainerService, useValue: openContainer },
+        {
+          provide: BostonCityHallBarEventInventoryService,
+          useValue: { assertPosSaleLocation: jest.fn(async () => undefined) },
+        },
       ],
     }).compile();
 

@@ -59,6 +59,19 @@ export function BostonCityHallBarPos() {
     variant: "success" | "error";
   }>({ open: false, title: "", message: "", variant: "success" });
 
+  const selectedLocation = useMemo(
+    () => locations.find((l) => l.id === locationId) ?? null,
+    [locations, locationId],
+  );
+
+  const saleCreateBody = useMemo(() => {
+    const body: { locationId: string; eventId?: string } = { locationId };
+    if (selectedLocation?.kind === "event_bar" && selectedLocation.eventId) {
+      body.eventId = selectedLocation.eventId;
+    }
+    return body;
+  }, [locationId, selectedLocation]);
+
   const loadLocations = useCallback(async () => {
     const { data: locs } = await api.get<BchBarInventoryLocation[]>("/boston-city-hall/bar/locations");
     const active = Array.isArray(locs) ? locs.filter((l) => l.active) : [];
@@ -87,7 +100,7 @@ export function BostonCityHallBarPos() {
     if (!locationId) return;
     setBusy(true);
     try {
-      const { data: s } = await api.post<BchBarSale>("/boston-city-hall/bar/pos/sales", { locationId });
+      const { data: s } = await api.post<BchBarSale>("/boston-city-hall/bar/pos/sales", saleCreateBody);
       setSale(s);
       setPaymentAmount("");
       setCashReceived("");
@@ -101,7 +114,7 @@ export function BostonCityHallBarPos() {
     } finally {
       setBusy(false);
     }
-  }, [locationId]);
+  }, [saleCreateBody]);
 
   useEffect(() => {
     void (async () => {
@@ -143,7 +156,7 @@ export function BostonCityHallBarPos() {
     try {
       let id = sale?.status === "open" ? sale.id : null;
       if (!id) {
-        const { data: s } = await api.post<BchBarSale>("/boston-city-hall/bar/pos/sales", { locationId });
+        const { data: s } = await api.post<BchBarSale>("/boston-city-hall/bar/pos/sales", saleCreateBody);
         id = s.id;
       }
       const { data: updated } = await api.post<BchBarSale>(`/boston-city-hall/bar/pos/sales/${id}/items`, {
