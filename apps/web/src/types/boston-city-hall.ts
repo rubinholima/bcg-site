@@ -1014,6 +1014,23 @@ export type BchEventFinancialCompleteness = {
   physicalCountCompleted: boolean;
   venueContractLinked: boolean;
   resultComplete: boolean;
+  multiCurrency: boolean;
+  currencyMismatch: boolean;
+};
+
+export type BchEventFinancialCurrencyGroup = {
+  currency: string;
+  ticketingRevenue: string | null;
+  barRevenue: string | null;
+  venueRevenue: string | null;
+  grossOperationalRevenue: string;
+  knownOperationalCost: string;
+  operationalResult: string;
+  operationalMarginPct: string | null;
+  marginIncomplete: boolean;
+  collected: string;
+  outstanding: string;
+  overdue: string | null;
 };
 
 export type BchEventFinancialResult = {
@@ -1042,7 +1059,7 @@ export type BchEventFinancialResult = {
       contractStatus: string | null;
     };
     otherCanonical: BchEventFinancialRevenueLine;
-    grossOperationalRevenue: string;
+    grossOperationalRevenue: string | null;
   };
   collection: {
     ticketing: {
@@ -1069,21 +1086,25 @@ export type BchEventFinancialResult = {
       overdue: string | null;
       currency: string | null;
     };
-    totalCollected: string;
-    totalOutstanding: string;
+    totalCollected: string | null;
+    totalOutstanding: string | null;
   };
   cost: {
     barCogs: string | null;
     otherKnownOperationalCost: string | null;
-    totalKnownOperationalCost: string;
+    totalKnownOperationalCost: string | null;
   };
   result: {
-    grossOperationalRevenue: string;
-    knownOperationalCost: string;
-    operationalResult: string;
+    grossOperationalRevenue: string | null;
+    knownOperationalCost: string | null;
+    operationalResult: string | null;
     operationalMarginPct: string | null;
     marginIncomplete: boolean;
   };
+  multiCurrency: boolean;
+  currencyMismatch: boolean;
+  consolidatedCurrency: string | null;
+  currencies: BchEventFinancialCurrencyGroup[];
   financeiro: {
     projectionCount: number;
     projectionAmountInformative: string;

@@ -8,10 +8,9 @@ import {
   type BchEventFinancialResultDto,
 } from './boston-city-hall-event-financial.constants';
 import {
-  addMoneyStrings,
+  buildPerCurrencyAggregates,
+  consolidatedFromGroups,
   moneyDec,
-  operationalMarginPct,
-  sumApplicableRevenues,
 } from './boston-city-hall-event-financial.util';
 import {
   BCH_TICKETING_FINANCE_SOURCE_MODULE,
@@ -210,27 +209,36 @@ export class BostonCityHallEventFinancialService {
       notes: 'Nenhuma outra fonte canônica configurada nesta fase.',
     };
 
-    const grossOperationalRevenue = sumApplicableRevenues([
-      ticketingLine,
-      barLine,
-      venueLine,
-      otherLine,
-    ]);
-
-    const totalKnownCost = barSales.length > 0 ? moneyDec(barCogs) : '0.00';
-    const marginIncomplete = barMarginIncomplete;
-    const operationalResult = moneyDec(new Prisma.Decimal(grossOperationalRevenue).minus(totalKnownCost));
-
     const ticketCollected = ticketApplicable ? moneyDec(ticketRevenueDec) : null;
     const barCollected = barSales.length > 0 ? moneyDec(barRevenue) : barApplicable ? '0.00' : null;
 
-    const totalCollected = addMoneyStrings(
-      addMoneyStrings(ticketCollected ?? '0', barCollected ?? '0'),
-      receivableSummary?.totalPaid ?? '0',
-    );
+    const perCurrency = buildPerCurrencyAggregates({
+      ticketing: {
+        applicable: ticketApplicable,
+        currency: ticketingLine.currency,
+        revenue: ticketingLine.amount,
+        collected: ticketCollected,
+      },
+      bar: {
+        applicable: barApplicable,
+        currency: barLine.currency,
+        revenue: barLine.amount,
+        cogs: barLine.estimatedCogs,
+        collected: barCollected,
+        marginIncomplete: barMarginIncomplete,
+      },
+      venue: {
+        applicable: venueApplicable,
+        currency: venueLine.currency,
+        revenue: venueLine.amount,
+        collected: receivableSummary?.totalPaid ?? null,
+        outstanding: receivableSummary?.balance ?? null,
+        overdue: overdueAmount,
+      },
+    });
 
-    const venueOutstanding = receivableSummary?.balance ?? null;
-    const totalOutstanding = venueOutstanding ?? '0.00';
+    const consolidated = consolidatedFromGroups(perCurrency.currencies, perCurrency.multiCurrency);
+    const marginIncomplete = consolidated.marginIncomplete;
 
     const completeness = {
       ticketingConfigured,
@@ -240,7 +248,10 @@ export class BostonCityHallEventFinancialService {
       financialProjectionPresent: financeProjections.count > 0,
       physicalCountCompleted: !!physicalCount,
       venueContractLinked: !!signedContract,
+      multiCurrency: perCurrency.multiCurrency,
+      currencyMismatch: perCurrency.currencyMismatch,
       resultComplete:
+        !perCurrency.multiCurrency &&
         (!barSales.length || !barMarginIncomplete) &&
         (!booking || !!signedContract) &&
         (ticketingConfigured || ticketAgg._count === 0),
@@ -258,13 +269,13 @@ export class BostonCityHallEventFinancialService {
       eventName: event.name,
       eventStatus: event.status,
       eventStartAt: event.startDate?.toISOString() ?? null,
-      currencyHint: ticketCurrencyRow?.currency ?? 'USD',
+      currencyHint: perCurrency.consolidatedCurrency ?? ticketCurrencyRow?.currency ?? null,
       revenue: {
         ticketing: ticketingLine,
         bar: barLine,
         venueContract: venueLine,
         otherCanonical: otherLine,
-        grossOperationalRevenue,
+        grossOperationalRevenue: consolidated.grossOperationalRevenue,
       },
       collection: {
         ticketing: {
@@ -291,21 +302,25 @@ export class BostonCityHallEventFinancialService {
           overdue: overdueAmount,
           currency: 'USD',
         },
-        totalCollected,
-        totalOutstanding,
+        totalCollected: consolidated.totalCollected,
+        totalOutstanding: consolidated.totalOutstanding,
       },
       cost: {
         barCogs: barSales.length > 0 ? moneyDec(barCogs) : null,
         otherKnownOperationalCost: null,
-        totalKnownOperationalCost: totalKnownCost,
+        totalKnownOperationalCost: consolidated.knownOperationalCost,
       },
       result: {
-        grossOperationalRevenue,
-        knownOperationalCost: totalKnownCost,
-        operationalResult,
-        operationalMarginPct: operationalMarginPct(grossOperationalRevenue, totalKnownCost),
+        grossOperationalRevenue: consolidated.grossOperationalRevenue,
+        knownOperationalCost: consolidated.knownOperationalCost,
+        operationalResult: consolidated.operationalResult,
+        operationalMarginPct: consolidated.operationalMarginPct,
         marginIncomplete,
       },
+      multiCurrency: perCurrency.multiCurrency,
+      currencyMismatch: perCurrency.currencyMismatch,
+      consolidatedCurrency: perCurrency.consolidatedCurrency,
+      currencies: perCurrency.currencies,
       financeiro: {
         projectionCount: financeProjections.count,
         projectionAmountInformative: moneyDec(financeProjections.amount),
@@ -342,6 +357,10 @@ export class BostonCityHallEventFinancialService {
       operationalResult: full.result.operationalResult,
       operationalMarginPct: full.result.operationalMarginPct,
       marginIncomplete: full.result.marginIncomplete,
+      multiCurrency: full.multiCurrency,
+      currencyMismatch: full.currencyMismatch,
+      consolidatedCurrency: full.consolidatedCurrency,
+      currencies: full.currencies,
       ticketsSold: full.operationalKpis.ticketsSold,
       attendance: full.operationalKpis.attendance,
       barSalesCount: full.operationalKpis.barSalesCount,

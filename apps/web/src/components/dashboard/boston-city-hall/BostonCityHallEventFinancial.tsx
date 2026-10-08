@@ -6,7 +6,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { BchEventFinancialResult } from "@/types/boston-city-hall";
+import type { BchEventFinancialCurrencyGroup, BchEventFinancialResult } from "@/types/boston-city-hall";
 import { formatCatalogMoney, EVENT_STATUS_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,53 @@ function moneyOrDash(amount: string | null, currency: string | null, applicable:
   if (!applicable) return "—";
   if (amount == null) return "—";
   return currency ? `${currency} ${amount}` : formatCatalogMoney(amount);
+}
+
+function withCurrency(amount: string | null, currency: string | null): string {
+  if (amount == null) return "—";
+  return currency ? `${currency} ${amount}` : formatCatalogMoney(amount);
+}
+
+function CurrencyGroupCards({ group }: { group: BchEventFinancialCurrencyGroup }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{group.currency}</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
+        <div>
+          <p className="text-muted-foreground">Receita operacional</p>
+          <p className="font-medium">{withCurrency(group.grossOperationalRevenue, group.currency)}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Ingressos: {withCurrency(group.ticketingRevenue, group.currency)} · Bar:{" "}
+            {withCurrency(group.barRevenue, group.currency)} · Venue:{" "}
+            {withCurrency(group.venueRevenue, group.currency)}
+          </p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Recebido / em aberto</p>
+          <p>{withCurrency(group.collected, group.currency)}</p>
+          <p className="text-muted-foreground">
+            Aberto: {withCurrency(group.outstanding, group.currency)}
+            {group.overdue != null ? ` · Vencido: ${withCurrency(group.overdue, group.currency)}` : ""}
+          </p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Custo / resultado</p>
+          <p>Custo: {withCurrency(group.knownOperationalCost, group.currency)}</p>
+          <p className="font-medium">
+            {withCurrency(group.operationalResult, group.currency)}
+            {group.operationalMarginPct ? (
+              <span className="ml-1 text-muted-foreground font-normal">({group.operationalMarginPct}%)</span>
+            ) : null}
+          </p>
+          {group.marginIncomplete ? (
+            <p className="text-xs text-amber-400 mt-1">Margem incompleta nesta moeda.</p>
+          ) : null}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 function CompletenessPill({ ok, label }: { ok: boolean; label: string }) {
@@ -107,6 +154,12 @@ export function BostonCityHallEventFinancial({
         <p className="text-sm text-amber-400">Margem operacional incompleta — faltam custos canônicos do bar.</p>
       ) : null}
 
+      {data.multiCurrency ? (
+        <p className="text-sm text-sky-200/90">
+          Este evento possui movimentações em mais de uma moeda. Os totais são apresentados separadamente por moeda.
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
         <CompletenessPill ok={data.completeness.ticketingConfigured} label="Ingressos" />
         <CompletenessPill ok={data.completeness.barCloseFinalized} label="Fechamento bar" />
@@ -115,45 +168,53 @@ export function BostonCityHallEventFinancial({
         <CompletenessPill ok={data.completeness.resultComplete} label="Resultado" />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Receita operacional</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-semibold">
-            {formatCatalogMoney(data.revenue.grossOperationalRevenue)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Resultado operacional</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-semibold">
-            {formatCatalogMoney(data.result.operationalResult)}
-            {data.result.operationalMarginPct ? (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                ({data.result.operationalMarginPct}%)
-              </span>
-            ) : null}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Recebido</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-semibold">
-            {formatCatalogMoney(data.collection.totalCollected)}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Em aberto</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-semibold">
-            {formatCatalogMoney(data.collection.totalOutstanding)}
-          </CardContent>
-        </Card>
-      </div>
+      {data.multiCurrency ? (
+        <div className="space-y-3">
+          {data.currencies.map((g) => (
+            <CurrencyGroupCards key={g.currency} group={g} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Receita operacional</CardTitle>
+            </CardHeader>
+            <CardContent className="text-xl font-semibold">
+              {withCurrency(data.revenue.grossOperationalRevenue, data.consolidatedCurrency)}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Resultado operacional</CardTitle>
+            </CardHeader>
+            <CardContent className="text-xl font-semibold">
+              {withCurrency(data.result.operationalResult, data.consolidatedCurrency)}
+              {data.result.operationalMarginPct ? (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({data.result.operationalMarginPct}%)
+                </span>
+              ) : null}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Recebido</CardTitle>
+            </CardHeader>
+            <CardContent className="text-xl font-semibold">
+              {withCurrency(data.collection.totalCollected, data.consolidatedCurrency)}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Em aberto</CardTitle>
+            </CardHeader>
+            <CardContent className="text-xl font-semibold">
+              {withCurrency(data.collection.totalOutstanding, data.consolidatedCurrency)}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -203,7 +264,9 @@ export function BostonCityHallEventFinancial({
           </div>
           <div>
             <p className="text-muted-foreground">Total custo operacional</p>
-            <p className="font-medium">{formatCatalogMoney(data.cost.totalKnownOperationalCost)}</p>
+            <p className="font-medium">
+              {withCurrency(data.cost.totalKnownOperationalCost, data.consolidatedCurrency)}
+            </p>
           </div>
         </CardContent>
       </Card>

@@ -15,6 +15,23 @@ export type BchEventFinancialCompletenessDto = {
   physicalCountCompleted: boolean;
   venueContractLinked: boolean;
   resultComplete: boolean;
+  multiCurrency: boolean;
+  currencyMismatch: boolean;
+};
+
+export type BchEventFinancialCurrencyGroupDto = {
+  currency: string;
+  ticketingRevenue: string | null;
+  barRevenue: string | null;
+  venueRevenue: string | null;
+  grossOperationalRevenue: string;
+  knownOperationalCost: string;
+  operationalResult: string;
+  operationalMarginPct: string | null;
+  marginIncomplete: boolean;
+  collected: string;
+  outstanding: string;
+  overdue: string | null;
 };
 
 export type BchEventFinancialRevenueLineDto = {
@@ -61,30 +78,38 @@ export type BchEventFinancialResultDto = {
       contractStatus: string | null;
     };
     otherCanonical: BchEventFinancialRevenueLineDto;
-    grossOperationalRevenue: string;
+    /** null quando há mais de uma moeda aplicável — usar `currencies`. */
+    grossOperationalRevenue: string | null;
   };
 
   collection: {
     ticketing: BchEventFinancialCollectionDto;
     bar: BchEventFinancialCollectionDto;
     venueReceivable: BchEventFinancialCollectionDto;
-    totalCollected: string;
-    totalOutstanding: string;
+    /** null quando multi-moeda. */
+    totalCollected: string | null;
+    totalOutstanding: string | null;
   };
 
   cost: {
     barCogs: string | null;
     otherKnownOperationalCost: string | null;
-    totalKnownOperationalCost: string;
+    totalKnownOperationalCost: string | null;
   };
 
   result: {
-    grossOperationalRevenue: string;
-    knownOperationalCost: string;
-    operationalResult: string;
+    grossOperationalRevenue: string | null;
+    knownOperationalCost: string | null;
+    operationalResult: string | null;
     operationalMarginPct: string | null;
     marginIncomplete: boolean;
   };
+
+  multiCurrency: boolean;
+  currencyMismatch: boolean;
+  /** Preenchido quando todas as fontes monetárias usam a mesma moeda. */
+  consolidatedCurrency: string | null;
+  currencies: BchEventFinancialCurrencyGroupDto[];
 
   financeiro: {
     projectionCount: number;
@@ -115,13 +140,17 @@ export type BchEventExecutiveSummaryDto = {
   ticketRevenue: string | null;
   barRevenue: string | null;
   venueRevenue: string | null;
-  totalOperationalRevenue: string;
-  collected: string;
-  outstanding: string;
-  knownCosts: string;
-  operationalResult: string;
+  totalOperationalRevenue: string | null;
+  collected: string | null;
+  outstanding: string | null;
+  knownCosts: string | null;
+  operationalResult: string | null;
   operationalMarginPct: string | null;
   marginIncomplete: boolean;
+  multiCurrency: boolean;
+  currencyMismatch: boolean;
+  consolidatedCurrency: string | null;
+  currencies: BchEventFinancialCurrencyGroupDto[];
   ticketsSold: number;
   attendance: number;
   barSalesCount: number;
