@@ -58,6 +58,7 @@ model User {
   bchBarPhysicalCountsStarted         BchBarPhysicalCount[]         @relation("BchBarPhysicalCountStartedBy")
   bchBarPhysicalCountsCompleted       BchBarPhysicalCount[]         @relation("BchBarPhysicalCountCompletedBy")
   bchBarPhysicalCountItemsCounted     BchBarPhysicalCountItem[]     @relation("BchBarPhysicalCountItemCountedBy")
+  bchBarClosesFinalized               BchBarClose[]                 @relation("BchBarCloseFinalizedBy")
 }
 
 model UserTenant {
@@ -273,6 +274,8 @@ model Tenant {
   bchBarSalePayments           BchBarSalePayment[]
   bchBarEventInventories       BchBarEventInventory[]
   bchBarPhysicalCounts         BchBarPhysicalCount[]
+  bchBarProductCosts           BchBarProductCost[]
+  bchBarCloses                 BchBarClose[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -1010,6 +1013,7 @@ model Event {
   bchBarSales                BchBarSale[]
   bchBarEventInventories     BchBarEventInventory[]
   bchBarPhysicalCounts       BchBarPhysicalCount[]
+  bchBarCloses               BchBarClose[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
@@ -3531,6 +3535,7 @@ model BchBarProduct {
   openContainerLedgers BchBarOpenContainerLedger[]
   saleItems BchBarSaleItem[]
   physicalCountItems BchBarPhysicalCountItem[]
+  productCosts       BchBarProductCost[]
 
   @@unique([tenantId, sku])
   @@index([tenantId, active])
@@ -3552,6 +3557,7 @@ model BchBarProductPhysicalUnit {
   updatedAt      DateTime      @updatedAt
 
   openContainers BchBarOpenContainer[]
+  productCosts   BchBarProductCost[]
 
   @@index([tenantId])
 }
@@ -3626,6 +3632,7 @@ model BchBarInventoryLocation {
   sales              BchBarSale[]
   eventInventories   BchBarEventInventory[]
   physicalCounts     BchBarPhysicalCount[]
+  barCloses          BchBarClose[]
 
   @@unique([tenantId, code])
   @@index([tenantId, kind])
@@ -3814,6 +3821,8 @@ model BchBarSaleItem {
   inventoryConsumedAt  DateTime?
   inventoryMode        String?
   inventoryRefId       String?
+  unitCostSnapshot     Decimal?            @db.Decimal(14, 4)
+  lineCostSnapshot     Decimal?            @db.Decimal(14, 4)
   sortOrder            Int                 @default(0)
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
@@ -3841,6 +3850,53 @@ model BchBarSalePayment {
 
   @@index([saleId])
   @@index([tenantId, createdAt])
+}
+
+/// Custo histórico por produto (unidade física) — separado do preço de venda.
+model BchBarProductCost {
+  id             String                  @id @default(cuid())
+  tenantId       String
+  tenant         Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  productId      String
+  product        BchBarProduct           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  physicalUnitId String?
+  physicalUnit   BchBarProductPhysicalUnit? @relation(fields: [physicalUnitId], references: [id], onDelete: SetNull)
+  amount         Decimal                 @db.Decimal(14, 4)
+  currency       String                  @default("BRL")
+  validFrom      DateTime                @default(now())
+  validTo        DateTime?
+  notes          String?                 @db.Text
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@index([tenantId, productId, validFrom])
+  @@index([tenantId, productId, validTo])
+}
+
+/// Fechamento operacional do bar de evento (snapshot imutável após finalized).
+model BchBarClose {
+  id               String                  @id @default(cuid())
+  tenantId         String
+  tenant           Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  eventId          String
+  event            Event                   @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  eventInventoryId String
+  eventInventory   BchBarEventInventory    @relation(fields: [eventInventoryId], references: [id], onDelete: Restrict)
+  locationId       String
+  location         BchBarInventoryLocation @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  status           String                  @default("draft")
+  closedAt         DateTime?
+  closedByUserId   String?
+  closedBy         User?                   @relation("BchBarCloseFinalizedBy", fields: [closedByUserId], references: [id], onDelete: SetNull)
+  snapshot         Json?
+  warnings         Json?
+  notes            String?                 @db.Text
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@unique([tenantId, eventInventoryId])
+  @@index([tenantId, eventId])
+  @@index([tenantId, status])
 }
 
 /// Sessão de contagem física de estoque fechado (central ou bar de evento).
@@ -3915,6 +3971,8 @@ model BchBarEventInventory {
   notes          String?                 @db.Text
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
+
+  barCloses BchBarClose[]
 
   @@index([tenantId, eventId])
   @@index([tenantId, status])

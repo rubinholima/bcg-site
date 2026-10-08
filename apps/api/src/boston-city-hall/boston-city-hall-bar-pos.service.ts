@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-open-container.service';
 import { BostonCityHallBarEventInventoryService } from './boston-city-hall-bar-event-inventory.service';
+import { BostonCityHallBarCostService } from './boston-city-hall-bar-cost.service';
 import {
   BCH_BAR_POS_PAYMENT_METHOD_LABEL,
   BCH_BAR_POS_PAYMENT_METHODS,
@@ -59,6 +60,7 @@ export class BostonCityHallBarPosService {
     private readonly prisma: PrismaService,
     private readonly openContainer: BostonCityHallBarOpenContainerService,
     private readonly eventInventory: BostonCityHallBarEventInventoryService,
+    private readonly cost: BostonCityHallBarCostService,
   ) {}
 
   private assertSaleStatus(status: string): void {
@@ -179,6 +181,8 @@ export class BostonCityHallBarPosService {
         currency: i.currency,
         priceId: i.priceId,
         inventoryConsumedAt: i.inventoryConsumedAt?.toISOString() ?? null,
+        unitCostSnapshot: i.unitCostSnapshot != null ? moneyStr(i.unitCostSnapshot) : null,
+        lineCostSnapshot: i.lineCostSnapshot != null ? moneyStr(i.lineCostSnapshot) : null,
         sortOrder: i.sortOrder,
       })),
       payments: sale.payments.map((p) => ({
@@ -581,12 +585,23 @@ export class BostonCityHallBarPosService {
           },
         );
 
+        const at = new Date();
+        const costSnap = await this.cost.computeLineCostSnapshot(
+          tenantId,
+          item.productId,
+          item.sellingUnitId,
+          item.quantity,
+          at,
+        );
+
         await tx.bchBarSaleItem.update({
           where: { id: item.id },
           data: {
-            inventoryConsumedAt: new Date(),
+            inventoryConsumedAt: at,
             inventoryMode: consume.mode,
             inventoryRefId: consume.stockMovementId ?? consume.openContainerLedgerId ?? null,
+            unitCostSnapshot: costSnap?.unitCostSnapshot ?? null,
+            lineCostSnapshot: costSnap?.lineCostSnapshot ?? null,
           },
         });
       }

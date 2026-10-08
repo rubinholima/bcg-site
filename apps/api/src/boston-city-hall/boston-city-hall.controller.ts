@@ -45,6 +45,9 @@ import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-op
 import { BostonCityHallBarPosService } from './boston-city-hall-bar-pos.service';
 import { BostonCityHallBarEventInventoryService } from './boston-city-hall-bar-event-inventory.service';
 import { BostonCityHallBarPhysicalCountService } from './boston-city-hall-bar-physical-count.service';
+import { BostonCityHallBarCostService } from './boston-city-hall-bar-cost.service';
+import { BostonCityHallBarReportsService } from './boston-city-hall-bar-reports.service';
+import { BostonCityHallBarCloseService } from './boston-city-hall-bar-close.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -74,6 +77,9 @@ export class BostonCityHallController {
     private readonly barPos: BostonCityHallBarPosService,
     private readonly barEventInventory: BostonCityHallBarEventInventoryService,
     private readonly barPhysicalCount: BostonCityHallBarPhysicalCountService,
+    private readonly barCost: BostonCityHallBarCostService,
+    private readonly barReports: BostonCityHallBarReportsService,
+    private readonly barClose: BostonCityHallBarCloseService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -1742,6 +1748,165 @@ export class BostonCityHallController {
     const tenantId = await this.bchTenantId();
     const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
     return this.barPhysicalCount.cancelPhysicalCount(tenantId, operatorUserId, id);
+  }
+
+  /** BCH Bar — custos, relatórios e fechamento (Fase 4.7) */
+  @Get('bar/products/:productId/costs')
+  async listBarProductCosts(@Param('productId') productId: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barCost.listProductCosts(tenantId, productId);
+  }
+
+  @Post('bar/products/:productId/costs')
+  async createBarProductCost(
+    @Param('productId') productId: string,
+    @Body()
+    body: {
+      amount?: number | string;
+      currency?: string;
+      validFrom?: string | null;
+      validTo?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (body.amount === undefined || body.amount === null) {
+      throw new BadRequestException('amount é obrigatório.');
+    }
+    return this.barCost.createProductCost(tenantId, productId, {
+      amount: body.amount,
+      currency: body.currency,
+      validFrom: body.validFrom,
+      validTo: body.validTo,
+      notes: body.notes,
+    });
+  }
+
+  @Get('bar/reports/dashboard')
+  async barReportsDashboard(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('eventId') eventId?: string,
+    @Query('locationId') locationId?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barReports.getDashboard(tenantId, { from, to, eventId, locationId });
+  }
+
+  @Get('bar/reports/sales')
+  async barReportsSales(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('eventId') eventId?: string,
+    @Query('locationId') locationId?: string,
+    @Query('status') status?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barReports.getSalesReport(tenantId, { from, to, eventId, locationId, status });
+  }
+
+  @Get('bar/reports/products')
+  async barReportsProducts(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('eventId') eventId?: string,
+    @Query('locationId') locationId?: string,
+    @Query('productId') productId?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barReports.getProductPerformance(tenantId, { from, to, eventId, locationId, productId });
+  }
+
+  @Get('bar/reports/inventory')
+  async barReportsInventory(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('locationId') locationId?: string,
+    @Query('eventId') eventId?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barReports.getInventoryReport(tenantId, { from, to, locationId, eventId });
+  }
+
+  @Get('bar/reports/events/:eventId')
+  async barReportsEvent(@Param('eventId') eventId: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barReports.getEventReport(tenantId, eventId);
+  }
+
+  @Get('bar/reports/loss')
+  async barReportsLoss(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('locationId') locationId?: string,
+    @Query('eventId') eventId?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barReports.getLossDivergenceReport(tenantId, { from, to, locationId, eventId });
+  }
+
+  @Get('bar/reports/operators')
+  async barReportsOperators(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('locationId') locationId?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barReports.getOperatorReport(tenantId, { from, to, locationId });
+  }
+
+  @Get('bar/reports/payments')
+  async barReportsPayments(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('eventId') eventId?: string,
+    @Query('locationId') locationId?: string,
+    @Query('paymentMethod') paymentMethod?: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    return this.barReports.getPaymentMethodReport(tenantId, {
+      from,
+      to,
+      eventId,
+      locationId,
+      paymentMethod,
+    });
+  }
+
+  @Get('bar/closes')
+  async listBarCloses(@Query('eventId') eventId?: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barClose.listCloses(tenantId, eventId);
+  }
+
+  @Get('bar/closes/:id')
+  async getBarClose(@Param('id') id: string) {
+    const tenantId = await this.bchTenantId();
+    return this.barClose.getClose(tenantId, id);
+  }
+
+  @Post('bar/closes')
+  async createBarCloseDraft(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() body: { eventInventoryId?: string; notes?: string | null },
+  ) {
+    const tenantId = await this.bchTenantId();
+    if (!body.eventInventoryId?.trim()) throw new BadRequestException('eventInventoryId é obrigatório.');
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barClose.createOrRefreshDraft(tenantId, operatorUserId, {
+      eventInventoryId: body.eventInventoryId.trim(),
+      notes: body.notes,
+    });
+  }
+
+  @Post('bar/closes/:id/finalize')
+  async finalizeBarClose(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const tenantId = await this.bchTenantId();
+    const operatorUserId = await this.tenantAccess.resolveInternalUserId(req.user.sub);
+    return this.barClose.finalizeClose(tenantId, operatorUserId, id);
   }
 
   @Post('bar/inventory/movements/:id/reverse')

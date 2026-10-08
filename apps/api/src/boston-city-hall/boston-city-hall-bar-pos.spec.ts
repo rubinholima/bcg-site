@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { BostonCityHallBarPosService } from './boston-city-hall-bar-pos.service';
 import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-open-container.service';
 import { BostonCityHallBarEventInventoryService } from './boston-city-hall-bar-event-inventory.service';
+import { BostonCityHallBarCostService } from './boston-city-hall-bar-cost.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { saleItemInventorySourceKey } from './boston-city-hall-bar-pos.constants';
 
@@ -197,6 +198,10 @@ describe('BostonCityHallBarPosService', () => {
         {
           provide: BostonCityHallBarEventInventoryService,
           useValue: { assertPosSaleLocation: jest.fn(async () => undefined) },
+        },
+        {
+          provide: BostonCityHallBarCostService,
+          useValue: { computeLineCostSnapshot: jest.fn(async () => null) },
         },
       ],
     }).compile();

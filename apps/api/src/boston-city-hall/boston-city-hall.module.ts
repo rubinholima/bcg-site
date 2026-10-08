@@ -36,6 +36,9 @@ import { BostonCityHallBarOpenContainerService } from './boston-city-hall-bar-op
 import { BostonCityHallBarPosService } from './boston-city-hall-bar-pos.service';
 import { BostonCityHallBarEventInventoryService } from './boston-city-hall-bar-event-inventory.service';
 import { BostonCityHallBarPhysicalCountService } from './boston-city-hall-bar-physical-count.service';
+import { BostonCityHallBarCostService } from './boston-city-hall-bar-cost.service';
+import { BostonCityHallBarReportsService } from './boston-city-hall-bar-reports.service';
+import { BostonCityHallBarCloseService } from './boston-city-hall-bar-close.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule, FinanceiroModule, HomeContentModule],
@@ -71,6 +74,9 @@ import { BostonCityHallBarPhysicalCountService } from './boston-city-hall-bar-ph
     BostonCityHallBarPosService,
     BostonCityHallBarEventInventoryService,
     BostonCityHallBarPhysicalCountService,
+    BostonCityHallBarCostService,
+    BostonCityHallBarReportsService,
+    BostonCityHallBarCloseService,
   ],
   exports: [
     BostonCityHallService,

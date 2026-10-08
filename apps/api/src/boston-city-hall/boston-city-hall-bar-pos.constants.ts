@@ -35,6 +35,8 @@ export type BchBarSaleItemDto = {
   currency: string;
   priceId: string | null;
   inventoryConsumedAt: string | null;
+  unitCostSnapshot: string | null;
+  lineCostSnapshot: string | null;
   sortOrder: number;
 };
 

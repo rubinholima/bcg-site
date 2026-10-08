@@ -632,6 +632,15 @@ export function BostonCityHallBar() {
     <div className="space-y-4">
       <div className="flex flex-wrap justify-end gap-2">
         <Button asChild variant="outline" className="min-h-[44px]">
+          <Link href="/dashboard/eventos/boston-city-hall/bar/dashboard">Painel</Link>
+        </Button>
+        <Button asChild variant="outline" className="min-h-[44px]">
+          <Link href="/dashboard/eventos/boston-city-hall/bar/reports">Relatórios</Link>
+        </Button>
+        <Button asChild variant="outline" className="min-h-[44px]">
+          <Link href="/dashboard/eventos/boston-city-hall/bar/close">Fechamento</Link>
+        </Button>
+        <Button asChild variant="outline" className="min-h-[44px]">
           <Link href="/dashboard/eventos/boston-city-hall/bar/event-inventory">Estoque evento</Link>
         </Button>
         <Button asChild variant="outline" className="min-h-[44px]">
