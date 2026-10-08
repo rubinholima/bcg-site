@@ -363,6 +363,8 @@ export class BostonCityHallEventFinancialService {
       currencies: full.currencies,
       ticketsSold: full.operationalKpis.ticketsSold,
       attendance: full.operationalKpis.attendance,
+      complimentaryCount: full.operationalKpis.complimentaryCount,
+      confirmedOrderCount: full.revenue.ticketing.confirmedOrderCount,
       barSalesCount: full.operationalKpis.barSalesCount,
       inventoryDivergenceProducts: full.revenue.bar.physicalDivergenceProducts,
       completeness: full.completeness,

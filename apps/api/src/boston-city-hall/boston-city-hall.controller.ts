@@ -49,6 +49,8 @@ import { BostonCityHallBarCostService } from './boston-city-hall-bar-cost.servic
 import { BostonCityHallBarReportsService } from './boston-city-hall-bar-reports.service';
 import { BostonCityHallBarCloseService } from './boston-city-hall-bar-close.service';
 import { BostonCityHallEventFinancialService } from './boston-city-hall-event-financial.service';
+import { BostonCityHallExecutiveService } from './boston-city-hall-executive.service';
+import type { BchExecutiveEventsQuery } from './boston-city-hall-executive.constants';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -82,6 +84,7 @@ export class BostonCityHallController {
     private readonly barReports: BostonCityHallBarReportsService,
     private readonly barClose: BostonCityHallBarCloseService,
     private readonly eventFinancial: BostonCityHallEventFinancialService,
+    private readonly executive: BostonCityHallExecutiveService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -672,6 +675,19 @@ export class BostonCityHallController {
   @Get('ticketing/events')
   listTicketingEvents() {
     return this.ticketing.listEvents();
+  }
+
+  /** BCH — dashboard executivo (Fase 5.2) */
+  @Get('executive/summary')
+  async getExecutiveDashboardSummary(@Query() query: Record<string, string | undefined>) {
+    const tenantId = await this.bchTenantId();
+    return this.executive.getSummary(tenantId, query as BchExecutiveEventsQuery);
+  }
+
+  @Get('executive/events')
+  async getExecutiveEventPerformance(@Query() query: Record<string, string | undefined>) {
+    const tenantId = await this.bchTenantId();
+    return this.executive.getEventPerformance(tenantId, query as BchExecutiveEventsQuery);
   }
 
   /** BCH — resultado financeiro executivo por evento (Fase 5.1) */

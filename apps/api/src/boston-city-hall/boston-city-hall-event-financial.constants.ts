@@ -153,6 +153,8 @@ export type BchEventExecutiveSummaryDto = {
   currencies: BchEventFinancialCurrencyGroupDto[];
   ticketsSold: number;
   attendance: number;
+  complimentaryCount: number;
+  confirmedOrderCount: number;
   barSalesCount: number;
   inventoryDivergenceProducts: number;
   completeness: BchEventFinancialCompletenessDto;

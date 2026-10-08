@@ -1122,6 +1122,141 @@ export type BchEventFinancialResult = {
   completeness: BchEventFinancialCompleteness;
 };
 
+export type BchExecutiveAttentionCode =
+  | "overdue_receivable"
+  | "incomplete_financial_data"
+  | "bar_not_closed"
+  | "no_physical_count"
+  | "margin_incomplete"
+  | "ticketing_pending"
+  | "event_without_contract";
+
+export const BCH_EXECUTIVE_ATTENTION_LABEL: Record<BchExecutiveAttentionCode, string> = {
+  overdue_receivable: "Recebível vencido",
+  incomplete_financial_data: "Resultado incompleto",
+  bar_not_closed: "Bar sem fechamento",
+  no_physical_count: "Contagem física pendente",
+  margin_incomplete: "Margem incompleta",
+  ticketing_pending: "Ingressos pendentes",
+  event_without_contract: "Sem contrato assinado",
+};
+
+export type BchExecutivePeriod = {
+  preset: "today" | "this_week" | "this_month" | "custom";
+  from: string;
+  to: string;
+};
+
+export type BchExecutiveSummaryResponse = {
+  period: BchExecutivePeriod;
+  multiCurrency: boolean;
+  currencyMismatch: boolean;
+  currencies: BchEventFinancialCurrencyGroup[];
+  events: {
+    inPeriod: number;
+    upcoming: number;
+    pastInPeriod: number;
+    activeOperational: number;
+  };
+  ticketing: {
+    confirmedOrderCount: number;
+    ticketsSold: number;
+    complimentaryCount: number;
+    attendance: number;
+    attendanceRatePct: string | null;
+    revenueByCurrency: Array<{ currency: string; amount: string }>;
+  };
+  bar: {
+    completedSalesCount: number;
+    revenueByCurrency: Array<{ currency: string; amount: string }>;
+    knownCogsByCurrency: Array<{ currency: string; amount: string }>;
+    grossMarginByCurrency: Array<{ currency: string; amount: string; marginPct: string | null }>;
+    wasteLossEventCount: number;
+    physicalDivergenceEventCount: number;
+    barClosePendingEventCount: number;
+  };
+  collection: {
+    byCurrency: Array<{
+      currency: string;
+      receivable: string;
+      collected: string;
+      outstanding: string;
+      overdue: string | null;
+    }>;
+    overdueEventCount: number;
+  };
+  result: {
+    byCurrency: Array<{
+      currency: string;
+      grossOperationalRevenue: string;
+      knownOperationalCost: string;
+      operationalResult: string;
+      operationalMarginPct: string | null;
+      marginIncomplete: boolean;
+    }>;
+    incompleteResultEventCount: number;
+  };
+  revenueMix: Array<{ currency: string; ticketing: string; bar: string; venue: string; total: string }>;
+  revenueTrend: Array<{ date: string; currency: string; grossOperationalRevenue: string; attendance: number }>;
+  attentionRequired: Array<{
+    eventId: string;
+    eventName: string;
+    eventStartAt: string | null;
+    flags: BchExecutiveAttentionCode[];
+  }>;
+  upcomingEvents: BchExecutiveCompactEvent[];
+  recentEvents: BchExecutiveCompactEvent[];
+};
+
+export type BchExecutiveCompactEvent = {
+  eventId: string;
+  eventName: string;
+  eventStatus: string;
+  eventStartAt: string | null;
+  spaceName: string | null;
+  bookingId: string | null;
+  bookingStatus: string | null;
+  ticketingEnabled: boolean;
+  ticketsSold: number;
+  attendance: number;
+  currencies: BchEventFinancialCurrencyGroup[];
+  multiCurrency: boolean;
+  attentionFlags: BchExecutiveAttentionCode[];
+  resultComplete: boolean;
+};
+
+export type BchExecutiveEventsResponse = {
+  period: BchExecutivePeriod;
+  total: number;
+  items: BchExecutiveEventPerformanceRow[];
+  comparisonByCurrency: Array<{
+    currency: string;
+    topByRevenue: Array<{ eventId: string; eventName: string; grossOperationalRevenue: string }>;
+    topByAttendance: Array<{ eventId: string; eventName: string; attendance: number }>;
+  }>;
+};
+
+export type BchExecutiveEventPerformanceRow = {
+  eventId: string;
+  eventName: string;
+  eventStatus: string;
+  eventStartAt: string | null;
+  bookingId: string | null;
+  bookingStatus: string | null;
+  spaceName: string | null;
+  ticketingEnabled: boolean;
+  ticketsSold: number;
+  attendance: number;
+  attendanceRatePct: string | null;
+  complimentaryCount: number;
+  multiCurrency: boolean;
+  currencies: BchEventFinancialCurrencyGroup[];
+  consolidatedCurrency: string | null;
+  marginIncomplete: boolean;
+  resultComplete: boolean;
+  attentionFlags: BchExecutiveAttentionCode[];
+};
+
 export function parseProposalDateInput(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
