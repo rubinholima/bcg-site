@@ -998,6 +998,109 @@ export type TicketReportSeating = {
   bySection: { section: string; assigned: number; used: number }[];
 };
 
+export type BchEventFinancialRevenueLine = {
+  amount: string | null;
+  currency: string | null;
+  applicable: boolean;
+  notes?: string | null;
+};
+
+export type BchEventFinancialCompleteness = {
+  ticketingConfigured: boolean;
+  barCloseFinalized: boolean;
+  barCostComplete: boolean;
+  receivableLinked: boolean;
+  financialProjectionPresent: boolean;
+  physicalCountCompleted: boolean;
+  venueContractLinked: boolean;
+  resultComplete: boolean;
+};
+
+export type BchEventFinancialResult = {
+  eventId: string;
+  eventName: string;
+  eventStatus: string;
+  eventStartAt: string | null;
+  currencyHint: string | null;
+  revenue: {
+    ticketing: BchEventFinancialRevenueLine & {
+      ticketsSold: number;
+      complimentaryCount: number;
+      confirmedOrderCount: number;
+    };
+    bar: BchEventFinancialRevenueLine & {
+      salesCount: number;
+      estimatedCogs: string | null;
+      estimatedGrossMargin: string | null;
+      marginIncomplete: boolean;
+      wasteLossSummary: { movementType: string; quantity: string }[];
+      physicalDivergenceProducts: number;
+    };
+    venueContract: BchEventFinancialRevenueLine & {
+      contractId: string | null;
+      contractNumber: string | null;
+      contractStatus: string | null;
+    };
+    otherCanonical: BchEventFinancialRevenueLine;
+    grossOperationalRevenue: string;
+  };
+  collection: {
+    ticketing: {
+      applicable: boolean;
+      invoicedOrReceivable: string | null;
+      paid: string | null;
+      outstanding: string | null;
+      overdue: string | null;
+      currency: string | null;
+    };
+    bar: {
+      applicable: boolean;
+      invoicedOrReceivable: string | null;
+      paid: string | null;
+      outstanding: string | null;
+      overdue: string | null;
+      currency: string | null;
+    };
+    venueReceivable: {
+      applicable: boolean;
+      invoicedOrReceivable: string | null;
+      paid: string | null;
+      outstanding: string | null;
+      overdue: string | null;
+      currency: string | null;
+    };
+    totalCollected: string;
+    totalOutstanding: string;
+  };
+  cost: {
+    barCogs: string | null;
+    otherKnownOperationalCost: string | null;
+    totalKnownOperationalCost: string;
+  };
+  result: {
+    grossOperationalRevenue: string;
+    knownOperationalCost: string;
+    operationalResult: string;
+    operationalMarginPct: string | null;
+    marginIncomplete: boolean;
+  };
+  financeiro: {
+    projectionCount: number;
+    projectionAmountInformative: string;
+    note: string;
+  };
+  operationalKpis: {
+    ticketsSold: number;
+    attendance: number;
+    complimentaryCount: number;
+    barSalesCount: number;
+    barRevenue: string | null;
+    ticketRevenue: string | null;
+    venueRevenue: string | null;
+  };
+  completeness: BchEventFinancialCompleteness;
+};
+
 export function parseProposalDateInput(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);

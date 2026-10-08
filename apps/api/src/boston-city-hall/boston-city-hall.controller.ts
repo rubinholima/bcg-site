@@ -48,6 +48,7 @@ import { BostonCityHallBarPhysicalCountService } from './boston-city-hall-bar-ph
 import { BostonCityHallBarCostService } from './boston-city-hall-bar-cost.service';
 import { BostonCityHallBarReportsService } from './boston-city-hall-bar-reports.service';
 import { BostonCityHallBarCloseService } from './boston-city-hall-bar-close.service';
+import { BostonCityHallEventFinancialService } from './boston-city-hall-event-financial.service';
 
 @Controller('boston-city-hall')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -80,6 +81,7 @@ export class BostonCityHallController {
     private readonly barCost: BostonCityHallBarCostService,
     private readonly barReports: BostonCityHallBarReportsService,
     private readonly barClose: BostonCityHallBarCloseService,
+    private readonly eventFinancial: BostonCityHallEventFinancialService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -670,6 +672,19 @@ export class BostonCityHallController {
   @Get('ticketing/events')
   listTicketingEvents() {
     return this.ticketing.listEvents();
+  }
+
+  /** BCH — resultado financeiro executivo por evento (Fase 5.1) */
+  @Get('events/:eventId/financial-result')
+  async getEventFinancialResult(@Param('eventId') eventId: string) {
+    const tenantId = await this.bchTenantId();
+    return this.eventFinancial.getFinancialResult(tenantId, eventId.trim());
+  }
+
+  @Get('events/:eventId/executive-summary')
+  async getEventExecutiveSummary(@Param('eventId') eventId: string) {
+    const tenantId = await this.bchTenantId();
+    return this.eventFinancial.getExecutiveSummary(tenantId, eventId.trim());
   }
 
   @Get('ticketing/events/:eventId')

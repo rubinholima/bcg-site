@@ -329,9 +329,18 @@ export function BostonCityHallOperationDetail({ bookingId }: { bookingId: string
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
           <CardTitle>Evento (plataforma)</CardTitle>
           {row.event ? (
-            <Button variant="outline" size="sm" asChild className="min-h-[44px]">
-              <Link href={`/dashboard/eventos/${row.event.id}/editar`}>Abrir evento</Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" asChild className="min-h-[44px]">
+                <Link href={`/dashboard/eventos/${row.event.id}/editar`}>Abrir evento</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="min-h-[44px]">
+                <Link
+                  href={`${BCH_BASE}/eventos/${row.event.id}/financeiro?bookingId=${encodeURIComponent(bookingId)}`}
+                >
+                  Resultado financeiro
+                </Link>
+              </Button>
+            </div>
           ) : row.bookingStatus === "confirmed" ? (
             <Button
               type="button"
