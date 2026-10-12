@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TenantAccessService } from '../auth/tenant-access.service';
 import { VaultEncryptionService } from './vault-encryption.service';
 import { CreateVaultItemDto } from './dto/create-vault-item.dto';
 import { UpdateVaultItemDto } from './dto/update-vault-item.dto';
 import { GeneratePasswordDto } from './dto/generate-password.dto';
 import { CognitoJwtPayload } from '../auth/jwt-auth.guard';
+import {
+  assertVaultItemTenantAllowed,
+  assertVaultTargetTenantAllowed,
+  buildVaultListWhere,
+} from './vault-tenant-access.util';
 
 const AUDIT_ACTIONS = {
   VIEW_LIST: 'VIEW_LIST',
@@ -59,11 +65,31 @@ function performerId(user: CognitoJwtPayload): string {
   return user.email ?? user.sub ?? 'unknown';
 }
 
+function roleFromUser(user: CognitoJwtPayload): string {
+  return user.role ?? user['cognito:groups']?.[0] ?? 'user';
+}
+
+const metaSelect = {
+  id: true,
+  tenantId: true,
+  title: true,
+  category: true,
+  username: true,
+  url: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  createdBy: true,
+} as const;
+
 @Injectable()
 export class VaultService {
+  private readonly logger = new Logger(VaultService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly encryption: VaultEncryptionService,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
 
   private async audit(
@@ -82,73 +108,92 @@ export class VaultService {
     });
   }
 
+  /** Auditoria não deve invalidar mutação bem-sucedida. */
+  private async auditSafe(
+    action: keyof typeof AUDIT_ACTIONS,
+    performedBy: string,
+    itemId?: string,
+    details?: string,
+  ): Promise<void> {
+    try {
+      await this.audit(action, performedBy, itemId, details);
+    } catch (err) {
+      this.logger.warn(
+        `Falha ao gravar auditoria Vault (${AUDIT_ACTIONS[action]}) item=${itemId ?? 'n/a'}`,
+      );
+    }
+  }
+
+  private async accessContext(user: CognitoJwtPayload) {
+    const role = roleFromUser(user);
+    const allowedTenantIds = await this.tenantAccess.getAllowedTenantIds(user.sub, role);
+    return { role, allowedTenantIds };
+  }
+
+  private async loadItemForActor(id: string, user: CognitoJwtPayload) {
+    const { role, allowedTenantIds } = await this.accessContext(user);
+    const row = await this.prisma.vaultItem.findUnique({ where: { id } });
+    if (!row) throw new NotFoundException('Vault item not found');
+    assertVaultItemTenantAllowed(allowedTenantIds, role, row.tenantId);
+    return { row, role, allowedTenantIds };
+  }
+
   async list(
     user: CognitoJwtPayload,
     filters?: { tenantId?: string; category?: string; search?: string; status?: string },
   ): Promise<VaultItemMeta[]> {
     const who = performerId(user);
-    await this.audit('VIEW_LIST', who);
+    const { role, allowedTenantIds } = await this.accessContext(user);
+    await this.auditSafe('VIEW_LIST', who);
 
-    const where: Record<string, unknown> = {};
-    if (filters?.tenantId !== undefined) {
-      where.tenantId = filters.tenantId === '__group__' ? null : filters.tenantId;
-    }
-    if (filters?.category) where.category = { contains: filters.category, mode: 'insensitive' };
-    if (filters?.status) where.status = filters.status;
-    if (filters?.search) {
-      where.OR = [
-        { title: { contains: filters.search, mode: 'insensitive' } },
-        { username: { contains: filters.search, mode: 'insensitive' } },
-      ];
-    }
+    const where = buildVaultListWhere(allowedTenantIds, role, filters);
 
     const rows = await this.prisma.vaultItem.findMany({
       where,
       orderBy: { updatedAt: 'desc' },
-      select: {
-        id: true,
-        tenantId: true,
-        title: true,
-        category: true,
-        username: true,
-        url: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        createdBy: true,
-      },
+      select: metaSelect,
     });
     return rows.map(toMeta);
   }
 
   async getOne(id: string, user: CognitoJwtPayload): Promise<VaultItemMeta> {
     const who = performerId(user);
-    const row = await this.prisma.vaultItem.findUnique({ where: { id } });
-    if (!row) throw new NotFoundException('Vault item not found');
-    await this.audit('VIEW_DETAILS', who, id);
+    const { row } = await this.loadItemForActor(id, user);
+    await this.auditSafe('VIEW_DETAILS', who, id);
     return toMeta(row);
+  }
+
+  async getNotesForEdit(id: string, user: CognitoJwtPayload): Promise<{ notes: string | null }> {
+    const { row } = await this.loadItemForActor(id, user);
+    if (!row.encryptedNotes || !row.notesIv) {
+      return { notes: null };
+    }
+    const notes = this.encryption.decrypt(row.encryptedNotes, row.notesIv);
+    return { notes };
   }
 
   async reveal(id: string, user: CognitoJwtPayload): Promise<{ secret: string }> {
     const who = performerId(user);
-    const row = await this.prisma.vaultItem.findUnique({ where: { id } });
-    if (!row) throw new NotFoundException('Vault item not found');
+    const { row } = await this.loadItemForActor(id, user);
     const secret = this.encryption.decrypt(row.encryptedSecret, row.iv);
-    await this.audit('REVEAL_SECRET', who, id);
+    await this.auditSafe('REVEAL_SECRET', who, id);
     return { secret };
   }
 
   async copyReveal(id: string, user: CognitoJwtPayload): Promise<{ secret: string }> {
     const who = performerId(user);
-    const row = await this.prisma.vaultItem.findUnique({ where: { id } });
-    if (!row) throw new NotFoundException('Vault item not found');
+    const { row } = await this.loadItemForActor(id, user);
     const secret = this.encryption.decrypt(row.encryptedSecret, row.iv);
-    await this.audit('COPY_SECRET', who, id);
+    await this.auditSafe('COPY_SECRET', who, id);
     return { secret };
   }
 
   async create(dto: CreateVaultItemDto, user: CognitoJwtPayload): Promise<VaultItemMeta> {
     const who = performerId(user);
+    const { role, allowedTenantIds } = await this.accessContext(user);
+    const targetTenantId = dto.tenantId ?? null;
+    assertVaultTargetTenantAllowed(allowedTenantIds, role, targetTenantId);
+
     const { encrypted: encryptedSecret, iv } = this.encryption.encrypt(dto.secret);
     let encryptedNotes: string | null = null;
     let notesIv: string | null = null;
@@ -159,7 +204,7 @@ export class VaultService {
     }
     const row = await this.prisma.vaultItem.create({
       data: {
-        tenantId: dto.tenantId ?? null,
+        tenantId: targetTenantId,
         title: dto.title,
         category: dto.category,
         username: dto.username ?? null,
@@ -172,16 +217,16 @@ export class VaultService {
         createdBy: who,
       },
     });
-    await this.audit('CREATE', who, row.id);
+    await this.auditSafe('CREATE', who, row.id);
     return toMeta(row);
   }
 
   async update(id: string, dto: UpdateVaultItemDto, user: CognitoJwtPayload): Promise<VaultItemMeta> {
     const who = performerId(user);
-    const existing = await this.prisma.vaultItem.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Vault item not found');
+    const { row, role, allowedTenantIds } = await this.loadItemForActor(id, user);
 
     const data: {
+      tenantId?: string | null;
       title?: string;
       category?: string;
       username?: string | null;
@@ -193,43 +238,45 @@ export class VaultService {
       status?: string;
     } = {};
 
+    if (dto.tenantId !== undefined) {
+      assertVaultTargetTenantAllowed(allowedTenantIds, role, dto.tenantId);
+      data.tenantId = dto.tenantId;
+    }
+
     if (dto.title !== undefined) data.title = dto.title;
     if (dto.category !== undefined) data.category = dto.category;
     if (dto.username !== undefined) data.username = dto.username;
     if (dto.url !== undefined) data.url = dto.url;
     if (dto.status !== undefined) data.status = dto.status;
 
-    if (dto.secret !== undefined) {
+    if (dto.secret !== undefined && dto.secret.trim() !== '') {
       const enc = this.encryption.encrypt(dto.secret);
       data.encryptedSecret = enc.encrypted;
       data.iv = enc.iv;
     }
 
-    if (dto.notes !== undefined) {
-      if (dto.notes === null || dto.notes === '') {
-        data.encryptedNotes = null;
-        data.notesIv = null;
-      } else {
-        const encNotes = this.encryption.encrypt(dto.notes);
-        data.encryptedNotes = encNotes.encrypted;
-        data.notesIv = encNotes.iv;
-      }
+    if (dto.clearNotes === true) {
+      data.encryptedNotes = null;
+      data.notesIv = null;
+    } else if (dto.notes !== undefined) {
+      const encNotes = this.encryption.encrypt(dto.notes);
+      data.encryptedNotes = encNotes.encrypted;
+      data.notesIv = encNotes.iv;
     }
 
-    const row = await this.prisma.vaultItem.update({
-      where: { id },
+    const updated = await this.prisma.vaultItem.update({
+      where: { id: row.id },
       data,
     });
-    await this.audit('UPDATE', who, id);
-    return toMeta(row);
+    await this.auditSafe('UPDATE', who, id);
+    return toMeta(updated);
   }
 
   async delete(id: string, user: CognitoJwtPayload): Promise<void> {
     const who = performerId(user);
-    const existing = await this.prisma.vaultItem.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Vault item not found');
-    await this.prisma.vaultItem.delete({ where: { id } });
-    await this.audit('DELETE', who, id);
+    const { row } = await this.loadItemForActor(id, user);
+    await this.prisma.vaultItem.delete({ where: { id: row.id } });
+    await this.auditSafe('DELETE', who, id);
   }
 
   generatePassword(dto: GeneratePasswordDto): { password: string } {

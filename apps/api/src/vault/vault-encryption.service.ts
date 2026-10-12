@@ -10,10 +10,12 @@ export class VaultEncryptionService {
   private getMasterKey(): Buffer {
     const raw = process.env.VAULT_MASTER_KEY;
     const keyHex = typeof raw === 'string' ? raw.trim().replace(/\s/g, '') : '';
-    if (!keyHex || keyHex.length < 64) {
-      throw new Error('VAULT_MASTER_KEY must be set and at least 32 bytes (64 hex chars)');
+    if (!keyHex || !/^[0-9a-fA-F]{64}$/.test(keyHex)) {
+      throw new Error(
+        'VAULT_MASTER_KEY must be set to exactly 64 hexadecimal characters (32 bytes for AES-256)',
+      );
     }
-    return Buffer.from(keyHex.slice(0, 64), 'hex');
+    return Buffer.from(keyHex, 'hex');
   }
 
   encrypt(plaintext: string): { encrypted: string; iv: string } {

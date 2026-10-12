@@ -1,10 +1,17 @@
 import {
+  expandImplications,
   resolveEffectiveModuleSlugs,
 } from './effective-access.util';
 
 describe('effective-access.util', () => {
   const all = ['dashboard', 'medico', 'futebol_tryouts', 'adm_rh'];
   const implications = [{ slug: 'futebol_treinadores', impliesSlug: 'relatorios_futebol' }];
+
+  it('vault_manage implica vault', () => {
+    const out = expandImplications(['vault_manage'], implications);
+    expect(out).toContain('vault');
+    expect(out).toContain('vault_manage');
+  });
 
   it('menu location não altera autorização (resolver puro)', () => {
     const a = resolveEffectiveModuleSlugs({

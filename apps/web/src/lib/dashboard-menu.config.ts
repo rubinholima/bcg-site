@@ -212,6 +212,12 @@ export function canAccessMenuLeaf(
   const perm = resolveCanonicalMenuPermission(item);
   if (canAccessModule(perm)) return true;
   if (
+    (perm === "vault" || item.href?.startsWith("/dashboard/senhas")) &&
+    (canAccessModule("vault_manage") || canAccessModule("vault_reveal"))
+  ) {
+    return true;
+  }
+  if (
     (item.href?.includes("/kits-uniforme") || perm === "futebol_logistica_uniformes") &&
     role === "company_admin"
   ) {

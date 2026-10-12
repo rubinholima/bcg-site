@@ -58,5 +58,9 @@ export function expandImplications(slugs: string[], implications: ModuleImplicat
     const row = implications.find((m) => m.slug === s);
     if (row?.impliesSlug) out.add(row.impliesSlug);
   }
+  // Vault: gerenciar/revelar exige acesso à interface de listagem (slug `vault`).
+  if (out.has('vault_manage') || out.has('vault_reveal')) {
+    out.add('vault');
+  }
   return [...out];
 }

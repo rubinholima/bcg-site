@@ -16,6 +16,7 @@ import {
 } from './require-module.decorator';
 import { ModulesService } from '../modules/modules.service';
 import { canAccessSeasonHighlights } from '../season-highlights/season-highlights-access.util';
+import { hasVaultListModuleAccess } from '../vault/vault-module-access.util';
 
 const TEAM_REPORT_READ_MODULES = ['futebol_treinadores', 'diretoria', 'relatorios_futebol'];
 
@@ -95,6 +96,9 @@ export class ModuleAccessGuard implements CanActivate {
       const slugs = await this.modulesService.getSlugsForActor(user.sub, role);
       const needed = Array.isArray(required) ? required : [required];
       if (needed.some((s) => slugs.includes(s))) return true;
+      if (needed.length === 1 && needed[0] === 'vault' && hasVaultListModuleAccess(slugs)) {
+        return true;
+      }
       throw new ForbiddenException(
         `Acesso negado: um dos módulos requeridos: ${needed.join(', ')}`,
       );

@@ -51,6 +51,13 @@ export class VaultController {
     return this.vaultService.getOne(id, req.user);
   }
 
+  @Get('items/:id/notes')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('vault_manage')
+  async getNotes(@Param('id') id: string, @Req() req: Request & { user: CognitoJwtPayload }) {
+    return this.vaultService.getNotesForEdit(id, req.user);
+  }
+
   @Post('items')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('vault_manage')

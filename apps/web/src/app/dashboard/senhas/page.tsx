@@ -32,8 +32,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { authFetch } from "@/lib/authFetch";
 import { useAuth } from "@/context/AuthContext";
+import { canAccessVaultList } from "@/lib/vault-access";
 import { VAULT_CATEGORIES } from "./categories";
 
 const AUTO_HIDE_SECONDS = 30;
@@ -55,7 +66,7 @@ type Tenant = { id: string; name: string; slug?: string };
 
 export default function SenhasPage() {
   const router = useRouter();
-  const { canAccessModule, loading: authLoading } = useAuth();
+  const { canAccessModule, loading: authLoading, modules, role, isSuperAdmin } = useAuth();
   const [items, setItems] = useState<VaultItemMeta[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,9 +78,10 @@ export default function SenhasPage() {
   const [revealed, setRevealed] = useState<Record<string, { secret: string; expiresAt: number }>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const canView = canAccessModule("vault");
+  const canView = canAccessVaultList(modules, role);
   const canManage = canAccessModule("vault_manage");
   const canReveal = canAccessModule("vault_reveal");
 
@@ -199,55 +211,52 @@ export default function SenhasPage() {
   const handleCopy = useCallback(
     async (id: string) => {
       if (!canReveal) return;
-      const existing = revealed[id];
-      let secret: string;
-      if (existing) {
-        secret = existing.secret;
-      } else {
-        try {
-          const res = await authFetch(`/api/vault/items/${id}/copy`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-          });
-          if (!res.ok) return;
-          const data = await res.json();
-          secret = data.secret;
-        } catch {
-          return;
-        }
-      }
       try {
+        const res = await authFetch(`/api/vault/items/${id}/copy`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const secret = data.secret as string;
         await navigator.clipboard.writeText(secret);
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 2000);
+        setRevealed((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          if (timersRef.current[id]) {
+            clearTimeout(timersRef.current[id]);
+            delete timersRef.current[id];
+          }
+          return next;
+        });
       } catch {
         // ignore
       }
     },
-    [canReveal, revealed],
+    [canReveal],
   );
 
-  const handleDeleteClick = useCallback(
-    async (id: string) => {
-      if (!canManage) return;
-      if (!window.confirm("Excluir este item do Vault? Esta ação não pode ser desfeita.")) return;
-      setDeleting(true);
-      try {
-        const res = await authFetch(`/api/vault/items/${id}`, { method: "DELETE" });
-        if (res.ok) {
-          setItems((prev) => prev.filter((i) => i.id !== id));
-          setRevealed((prev) => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-          });
-        }
-      } finally {
-        setDeleting(false);
+  const handleDeleteConfirm = useCallback(async () => {
+    const id = deleteTargetId;
+    if (!id || !canManage) return;
+    setDeleting(true);
+    try {
+      const res = await authFetch(`/api/vault/items/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        setRevealed((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
       }
-    },
-    [canManage],
-  );
+    } finally {
+      setDeleting(false);
+      setDeleteTargetId(null);
+    }
+  }, [canManage, deleteTargetId]);
 
   const tenantName = (tenantId: string | null) => {
     if (!tenantId) return "Grupo";
@@ -284,7 +293,7 @@ export default function SenhasPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="group">Grupo</SelectItem>
+                {isSuperAdmin && <SelectItem value="group">Grupo</SelectItem>}
                 {tenants.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
@@ -340,15 +349,25 @@ export default function SenhasPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Itens do Vault</CardTitle>
-          <CardDescription>
-            {loading
-              ? "Carregando..."
-              : items.length === 0
-                ? "Nenhum item. Crie um com permissão de gerenciar."
-                : `${items.length} item(ns)`}
-          </CardDescription>
+        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle>Itens do Vault</CardTitle>
+            <CardDescription>
+              {loading
+                ? "Carregando..."
+                : items.length === 0
+                  ? "Nenhum item. Crie um com permissão de gerenciar."
+                  : `${items.length} item(ns)`}
+            </CardDescription>
+          </div>
+          {canManage && (
+            <Button asChild size="sm">
+              <Link href="/dashboard/senhas/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Nova senha
+              </Link>
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {error && (
@@ -463,7 +482,7 @@ export default function SenhasPage() {
                                 size="icon"
                                 className="h-8 w-8 text-destructive"
                                 title="Excluir"
-                                onClick={() => handleDeleteClick(item.id)}
+                                onClick={() => setDeleteTargetId(item.id)}
                                 disabled={deleting}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -480,6 +499,30 @@ export default function SenhasPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteTargetId != null} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir item do Vault?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O segredo será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDeleteConfirm();
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

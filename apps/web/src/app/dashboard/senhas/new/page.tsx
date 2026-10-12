@@ -24,7 +24,7 @@ type Tenant = { id: string; name: string; slug?: string };
 
 export default function NovaSenhaPage() {
   const router = useRouter();
-  const { canAccessModule, loading: authLoading } = useAuth();
+  const { canAccessModule, loading: authLoading, isSuperAdmin } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +124,7 @@ export default function NovaSenhaPage() {
       const item = (await res.json()) as { id?: string };
       if (item?.id) {
         markSaveSuccessForNavigation();
-        router.replace(`/dashboard/senhas/${item.id}/edit`);
+        router.replace("/dashboard/senhas");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar item");
@@ -192,7 +192,7 @@ export default function NovaSenhaPage() {
                     <SelectValue placeholder="Grupo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="group">Grupo</SelectItem>
+                    {isSuperAdmin && <SelectItem value="group">Grupo</SelectItem>}
                     {tenants.map((t) => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.name}

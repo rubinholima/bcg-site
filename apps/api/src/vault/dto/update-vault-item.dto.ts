@@ -1,6 +1,10 @@
-import { IsString, IsOptional, IsIn, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsIn, MaxLength, IsBoolean } from 'class-validator';
 
 export class UpdateVaultItemDto {
+  @IsOptional()
+  @IsString()
+  tenantId?: string | null;
+
   @IsOptional()
   @IsString()
   @MaxLength(255)
@@ -25,9 +29,15 @@ export class UpdateVaultItemDto {
   @IsString()
   secret?: string;
 
+  /** Nova nota (texto). Omitir = manter. */
   @IsOptional()
   @IsString()
-  notes?: string | null;
+  notes?: string;
+
+  /** true = apagar notas criptografadas. */
+  @IsOptional()
+  @IsBoolean()
+  clearNotes?: boolean;
 
   @IsOptional()
   @IsIn(['active', 'archived'])

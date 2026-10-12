@@ -27,7 +27,7 @@ export default function EditarSenhaPage() {
   const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
-  const { canAccessModule, loading: authLoading } = useAuth();
+  const { canAccessModule, loading: authLoading, isSuperAdmin } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -43,6 +43,8 @@ export default function EditarSenhaPage() {
     notes: "",
     status: "active",
   });
+  const [initialNotes, setInitialNotes] = useState<string | null>(null);
+  const [clearNotes, setClearNotes] = useState(false);
 
   const canManage = canAccessModule("vault_manage");
 
@@ -72,6 +74,13 @@ export default function EditarSenhaPage() {
         notes: "",
         status: item.status ?? "active",
       });
+      const notesRes = await authFetch(`/api/vault/items/${id}/notes`);
+      if (notesRes.ok) {
+        const notesPayload = (await notesRes.json()) as { notes?: string | null };
+        const loaded = notesPayload.notes ?? "";
+        setInitialNotes(loaded);
+        setFormData((p) => ({ ...p, notes: loaded }));
+      }
     } catch {
       setLoadError("Erro ao carregar item.");
     }
@@ -136,8 +145,12 @@ export default function EditarSenhaPage() {
         url: formData.url.trim() || null,
         status: formData.status,
       };
-      if (formData.secret) body.secret = formData.secret;
-      if (formData.notes.trim()) body.notes = formData.notes.trim();
+      if (formData.secret.trim()) body.secret = formData.secret;
+      if (clearNotes) {
+        body.clearNotes = true;
+      } else if (initialNotes !== null && formData.notes !== initialNotes) {
+        body.notes = formData.notes;
+      }
       const res = await authFetch(`/api/vault/items/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -229,7 +242,7 @@ export default function EditarSenhaPage() {
                     <SelectValue placeholder="Grupo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="group">Grupo</SelectItem>
+                    {isSuperAdmin && <SelectItem value="group">Grupo</SelectItem>}
                     {tenants.map((t) => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.name}
@@ -290,9 +303,22 @@ export default function EditarSenhaPage() {
                 id="notes"
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={formData.notes}
-                onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
+                onChange={(e) => {
+                  setClearNotes(false);
+                  setFormData((p) => ({ ...p, notes: e.target.value }));
+                }}
                 placeholder="Opcional"
+                disabled={clearNotes}
               />
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={clearNotes}
+                  onChange={(e) => setClearNotes(e.target.checked)}
+                  className="rounded border-input"
+                />
+                Limpar notas salvas
+              </label>
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
