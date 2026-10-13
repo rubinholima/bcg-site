@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 import type {
   EventTicketOrderDetail,
   EventTicketOrderListItem,
@@ -442,7 +443,7 @@ export function BostonCityHallTicketOrders() {
                 </div>
               ) : null}
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/dashboard/eventos/${detail.eventId}/editar`}>Abrir evento</Link>
+                <Link href={bchEventSetupPath(detail.eventId)}>Event Setup</Link>
               </Button>
             </div>
           )}

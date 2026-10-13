@@ -39,6 +39,7 @@ import {
   formatTicketingMoney,
 } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
+import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 
 function isoToDatetimeLocal(iso: string | null): string {
   if (!iso) return "";
@@ -107,9 +108,18 @@ const emptyLotForm = (): LotForm => ({
   salesEndAt: "",
 });
 
-export function BostonCityHallTicketing() {
+export function BostonCityHallTicketing({
+  fixedEventId,
+  embedded = false,
+  onDetailChange,
+}: {
+  /** Evento fixo (Event Setup) — oculta seletor. */
+  fixedEventId?: string;
+  embedded?: boolean;
+  onDetailChange?: (detail: EventTicketingDetail | null) => void;
+} = {}) {
   const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
-  const [eventId, setEventId] = useState("");
+  const [eventId, setEventId] = useState(fixedEventId ?? "");
   const [detail, setDetail] = useState<EventTicketingDetail | null>(null);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -142,13 +152,13 @@ export function BostonCityHallTicketing() {
       const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
       const list = Array.isArray(res.data) ? res.data : [];
       setEvents(list);
-      setEventId((prev) => prev || list[0]?.id || "");
+      setEventId((prev) => fixedEventId || prev || list[0]?.id || "");
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Erro ao carregar eventos.");
     } finally {
       setLoadingEvents(false);
     }
-  }, []);
+  }, [fixedEventId]);
 
   const loadDetail = useCallback(async (id: string) => {
     if (!id) {
@@ -160,13 +170,19 @@ export function BostonCityHallTicketing() {
     try {
       const res = await api.get<EventTicketingDetail>(`/boston-city-hall/ticketing/events/${id}`);
       setDetail(res.data);
+      onDetailChange?.(res.data);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Erro ao carregar ingressos.");
       setDetail(null);
+      onDetailChange?.(null);
     } finally {
       setLoadingDetail(false);
     }
-  }, []);
+  }, [onDetailChange]);
+
+  useEffect(() => {
+    if (fixedEventId) setEventId(fixedEventId);
+  }, [fixedEventId]);
 
   useEffect(() => {
     void loadEvents();
@@ -323,57 +339,78 @@ export function BostonCityHallTicketing() {
         <p className="text-sm text-destructive">{loadError}</p>
       ) : null}
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Evento</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0 flex-1 space-y-2">
-            <Label htmlFor="bch-ticketing-event">Selecione o evento</Label>
-            {loadingEvents ? (
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            ) : (
-              <NativeSelect
-                id="bch-ticketing-event"
-                value={eventId}
-                onChange={(e) => setEventId(e.target.value)}
-                className="w-full max-w-xl"
-              >
-                <option value="">Selecione…</option>
-                {events.map((ev) => (
-                  <option key={ev.id} value={ev.id}>
-                    {ev.name} ({EVENT_STATUS_LABEL[ev.status] ?? ev.status})
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-            {selectedEvent ? (
-              <p className="text-xs text-muted-foreground">
-                Slug: {selectedEvent.slug}
-                {selectedEvent.startDate ? ` · ${new Date(selectedEvent.startDate).toLocaleDateString("pt-BR")}` : ""}
-              </p>
-            ) : null}
-          </div>
-          {detail ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex min-h-[44px] cursor-pointer items-center gap-2">
-                <Checkbox
-                  checked={detail.ticketingEnabled}
-                  disabled={saving || !eventId}
-                  onCheckedChange={(v) => void toggleTicketing(v === true)}
-                />
-                <span className="text-sm">Ingressos habilitados</span>
-              </label>
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/dashboard/eventos/${detail.eventId}/editar`}>
-                  <ExternalLink className="mr-1 h-4 w-4" />
-                  Abrir evento
-                </Link>
-              </Button>
+      {!embedded ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Evento</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Label htmlFor="bch-ticketing-event">Selecione o evento</Label>
+              {loadingEvents ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : (
+                <NativeSelect
+                  id="bch-ticketing-event"
+                  value={eventId}
+                  onChange={(e) => setEventId(e.target.value)}
+                  className="w-full max-w-xl"
+                >
+                  <option value="">Selecione…</option>
+                  {events.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      {ev.name} ({EVENT_STATUS_LABEL[ev.status] ?? ev.status})
+                    </option>
+                  ))}
+                </NativeSelect>
+              )}
+              {selectedEvent ? (
+                <p className="text-xs text-muted-foreground">
+                  Slug: {selectedEvent.slug}
+                  {selectedEvent.startDate
+                    ? ` · ${new Date(selectedEvent.startDate).toLocaleDateString("pt-BR")}`
+                    : ""}
+                </p>
+              ) : null}
             </div>
-          ) : null}
-        </CardContent>
-      </Card>
+            {detail ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex min-h-[44px] cursor-pointer items-center gap-2">
+                  <Checkbox
+                    checked={detail.ticketingEnabled}
+                    disabled={saving || !eventId}
+                    onCheckedChange={(v) => void toggleTicketing(v === true)}
+                  />
+                  <span className="text-sm">Ingressos habilitados</span>
+                </label>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={bchEventSetupPath(detail.eventId)}>
+                    <ExternalLink className="mr-1 h-4 w-4" />
+                    Event Setup
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : detail ? (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2">
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-2">
+            <Checkbox
+              checked={detail.ticketingEnabled}
+              disabled={saving || !eventId}
+              onCheckedChange={(v) => void toggleTicketing(v === true)}
+            />
+            <span className="text-sm text-slate-200">Venda de ingressos habilitada</span>
+          </label>
+          <p className="text-xs text-slate-400">
+            Moeda: {detail.currency}
+            {detail.capacityHint?.configuredTotal
+              ? ` · ${detail.capacityHint.configuredTotal} lugares configurados`
+              : ""}
+          </p>
+        </div>
+      ) : null}
 
       {detail?.capacityHint?.message ? (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
@@ -382,7 +419,7 @@ export function BostonCityHallTicketing() {
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Tipos de ingresso</h2>
+        {!embedded ? <h2 className="text-lg font-semibold">Tipos de ingresso</h2> : <span className="text-sm font-medium text-slate-200">Tipos e lotes</span>}
         <Button type="button" size="sm" disabled={!eventId || loadingDetail} onClick={openNewType}>
           <Plus className="mr-1 h-4 w-4" />
           Novo tipo

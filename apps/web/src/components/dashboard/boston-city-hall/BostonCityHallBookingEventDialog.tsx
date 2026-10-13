@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
+import { bchEventSetupPathWithBooking } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 import type { VenueBookingEventPrefill, VenueBookingEventRef } from "@/types/boston-city-hall";
 import { EVENT_STATUS_LABEL } from "@/types/boston-city-hall";
 
@@ -43,15 +44,15 @@ export function BostonCityHallBookingEventDialog({
   onCreated,
   onError,
 }: Props) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [prefill, setPrefill] = useState<VenueBookingEventPrefill | null>(null);
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [category, setCategory] = useState<"other" | "football">("other");
+  const category = "other" as const;
 
   const load = useCallback(async () => {
     if (!bookingId) return;
@@ -62,11 +63,9 @@ export function BostonCityHallBookingEventDialog({
       );
       setPrefill(res.data);
       setName(res.data.suggested.name);
-      setSlug(res.data.suggested.slug);
       setDescription(res.data.suggested.description);
       setStartDate(toDateInput(res.data.suggested.startDate));
       setEndDate(toDateInput(res.data.suggested.endDate));
-      setCategory(res.data.suggested.category);
     } catch (e) {
       onError(e instanceof Error ? e.message : "Não foi possível carregar sugestões.");
       setPrefill(null);
@@ -90,7 +89,6 @@ export function BostonCityHallBookingEventDialog({
         `/boston-city-hall/bookings/${bookingId}/event`,
         {
           name: name.trim(),
-          slug: slug.trim() || undefined,
           description: description.trim() || undefined,
           startDate: startDate ? `${startDate}T12:00:00.000Z` : undefined,
           endDate: endDate ? `${endDate}T23:59:59.000Z` : undefined,
@@ -99,6 +97,7 @@ export function BostonCityHallBookingEventDialog({
       );
       onCreated(res.data);
       onOpenChange(false);
+      router.push(bchEventSetupPathWithBooking(res.data.id, bookingId));
     } catch (e) {
       onError(e instanceof Error ? e.message : "Falha ao criar evento.");
     } finally {
@@ -118,7 +117,7 @@ export function BostonCityHallBookingEventDialog({
             {ev.name} · {EVENT_STATUS_LABEL[ev.status] ?? ev.status}
           </p>
           <Button asChild className="min-h-[44px]">
-            <Link href={`/dashboard/eventos/${ev.id}/editar`}>Abrir evento</Link>
+            <Link href={bchEventSetupPathWithBooking(ev.id, bookingId)}>Preparar evento</Link>
           </Button>
         </DialogContent>
       </Dialog>
@@ -149,21 +148,6 @@ export function BostonCityHallBookingEventDialog({
               <div className="space-y-2">
                 <Label htmlFor="ev-name">Nome *</Label>
                 <Input id="ev-name" value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ev-slug">Slug (URL)</Label>
-                <Input id="ev-slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ev-cat">Categoria</Label>
-                <NativeSelect
-                  id="ev-cat"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as "other" | "football")}
-                >
-                  <option value="other">Outros (venue / BCH)</option>
-                  <option value="football">Futebol / torneio</option>
-                </NativeSelect>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">

@@ -218,6 +218,13 @@ export function resolveBchPageMeta(pathname: string, titleOverride?: string): Bc
       parentHref: `${BCH_BASE}/financeiro`,
       parentLabel: "Financeiro",
     },
+    {
+      test: /^\/dashboard\/eventos\/boston-city-hall\/eventos\/[^/]+\/setup$/,
+      groupId: "events",
+      title: "Preparar evento",
+      parentHref: `${BCH_BASE}/ticketing`,
+      parentLabel: "Ingressos",
+    },
   ];
 
   for (const rule of dynamicRules) {
@@ -254,6 +261,12 @@ export function isBchNavItemActive(pathname: string, item: BchNavItem): boolean 
   if (path === hrefPath) return true;
   if (path.startsWith(`${hrefPath}/`)) return true;
   if (hrefPath === `${BCH_BASE}/ticketing` && path.startsWith(`${BCH_BASE}/ticketing`)) return true;
+  if (
+    hrefPath === `${BCH_BASE}/ticketing` &&
+    /^\/dashboard\/eventos\/boston-city-hall\/eventos\/[^/]+\/setup$/.test(path)
+  ) {
+    return true;
+  }
   return false;
 }
 

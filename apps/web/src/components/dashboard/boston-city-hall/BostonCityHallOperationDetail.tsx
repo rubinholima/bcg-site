@@ -28,6 +28,7 @@ import {
   VENUE_PROPOSAL_STATUS_LABEL,
 } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
+import { bchEventSetupPathWithBooking } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 import { BCH_BASE } from "./boston-city-hall-lead-shared";
 
 function formatWhen(startIso: string, endIso: string): string {
@@ -331,7 +332,9 @@ export function BostonCityHallOperationDetail({ bookingId }: { bookingId: string
           {row.event ? (
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" asChild className="min-h-[44px]">
-                <Link href={`/dashboard/eventos/${row.event.id}/editar`}>Abrir evento</Link>
+                <Link href={bchEventSetupPathWithBooking(row.event.id, bookingId)}>
+                  Preparar evento
+                </Link>
               </Button>
               <Button variant="outline" size="sm" asChild className="min-h-[44px]">
                 <Link
@@ -469,7 +472,7 @@ export function BostonCityHallOperationDetail({ bookingId }: { bookingId: string
           setFeedback({
             open: true,
             title: "Evento criado",
-            message: "Rascunho vinculado. Publique em Eventos quando estiver pronto.",
+            message: "Rascunho vinculado. Continue em Preparar evento para publicar.",
             variant: "success",
           });
         }}

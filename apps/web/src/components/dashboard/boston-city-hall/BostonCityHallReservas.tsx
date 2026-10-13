@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { BostonCityHallBookingEventDialog } from "@/components/dashboard/boston-city-hall/BostonCityHallBookingEventDialog";
+import { bchEventSetupPathWithBooking } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -574,8 +575,13 @@ export function BostonCityHallReservas() {
                       selectedBooking.event.status}
                   </p>
                   <Button variant="outline" size="sm" className="min-h-[40px]" asChild>
-                    <Link href={`/dashboard/eventos/${selectedBooking.event.id}/editar`}>
-                      Abrir evento
+                    <Link
+                      href={bchEventSetupPathWithBooking(
+                        selectedBooking.event.id,
+                        selectedBooking.id,
+                      )}
+                    >
+                      Preparar evento
                     </Link>
                   </Button>
                 </>
@@ -788,7 +794,7 @@ export function BostonCityHallReservas() {
             setFeedback({
               open: true,
               title: "Evento criado",
-              message: "Rascunho vinculado à reserva. Publique depois em Eventos.",
+              message: "Rascunho vinculado. Abra Preparar evento para concluir a publicação.",
               variant: "success",
             });
           }}
