@@ -22,7 +22,8 @@ import type {
 } from "@/types/boston-city-hall";
 import { EVENT_TICKET_CHECKIN_RESULT_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
-import { bchOperationalEventList } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
+import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
 
 const RESULT_STYLE: Record<string, string> = {
   accepted: "border-emerald-500/50 bg-emerald-500/10 text-emerald-200",
@@ -33,8 +34,16 @@ const RESULT_STYLE: Record<string, string> = {
 };
 
 export function BostonCityHallTicketCheckin() {
-  const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
-  const [eventId, setEventId] = useState("");
+  const {
+    events,
+    eventId,
+    setEventId,
+    loading: loadingEvents,
+    error: eventsError,
+    rawCount,
+    smokeHiddenCount,
+    reload: reloadEvents,
+  } = useBchHubEventBinding();
   const [stationLabel, setStationLabel] = useState("");
   const [scanValue, setScanValue] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -45,15 +54,6 @@ export function BostonCityHallTicketCheckin() {
 
   const focusScan = useCallback(() => {
     window.requestAnimationFrame(() => scanRef.current?.focus());
-  }, []);
-
-  useEffect(() => {
-    void (async () => {
-      const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
-      const list = bchOperationalEventList(Array.isArray(res.data) ? res.data : []);
-      setEvents(list);
-      if (list.length === 1) setEventId(list[0]!.id);
-    })();
   }, []);
 
   const loadRecent = useCallback(async (ev: string) => {
@@ -114,6 +114,15 @@ export function BostonCityHallTicketCheckin() {
 
   return (
     <div className="space-y-4">
+      {eventsError || (!loadingEvents && events.length === 0) ? (
+        <BchEventListDiagnostics
+          error={eventsError}
+          rawCount={rawCount}
+          operationalCount={events.length}
+          smokeHiddenCount={smokeHiddenCount}
+          onRetry={() => void reloadEvents()}
+        />
+      ) : null}
       <Card>
         <CardContent className="space-y-4 pt-6">
           <div className="grid gap-4 sm:grid-cols-2">

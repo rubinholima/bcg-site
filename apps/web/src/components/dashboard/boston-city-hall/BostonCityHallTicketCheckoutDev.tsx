@@ -9,18 +9,14 @@ import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import type {
-  EventTicketOrderDetail,
-  EventTicketingDetail,
-  EventTicketingEventListItem,
-} from "@/types/boston-city-hall";
+import type { EventTicketOrderDetail, EventTicketingDetail } from "@/types/boston-city-hall";
 import { EVENT_TICKETING_SALES_STATUS_LABEL, formatTicketingMoney } from "@/types/boston-city-hall";
+import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
 
 type Line = { ticketTypeId: string; quantity: string };
 
 export function BostonCityHallTicketCheckoutDev() {
-  const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
-  const [eventId, setEventId] = useState("");
+  const { events, eventId, setEventId } = useBchHubEventBinding();
   const [catalog, setCatalog] = useState<EventTicketingDetail | null>(null);
   const [lines, setLines] = useState<Line[]>([{ ticketTypeId: "", quantity: "1" }]);
   const [name, setName] = useState("");
@@ -36,13 +32,6 @@ export function BostonCityHallTicketCheckoutDev() {
     variant: "success" | "error";
   }>({ open: false, title: "", message: "", variant: "success" });
 
-  const loadEvents = useCallback(async () => {
-    const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
-    const list = Array.isArray(res.data) ? res.data : [];
-    setEvents(list);
-    setEventId((p) => p || list[0]?.id || "");
-  }, []);
-
   const loadCatalog = useCallback(async (id: string) => {
     if (!id) {
       setCatalog(null);
@@ -51,10 +40,6 @@ export function BostonCityHallTicketCheckoutDev() {
     const res = await api.get<EventTicketingDetail>(`/boston-city-hall/ticketing/events/${id}`);
     setCatalog(res.data);
   }, []);
-
-  useEffect(() => {
-    void loadEvents();
-  }, [loadEvents]);
 
   useEffect(() => {
     void loadCatalog(eventId);

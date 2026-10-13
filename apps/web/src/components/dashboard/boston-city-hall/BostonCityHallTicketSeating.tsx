@@ -17,8 +17,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { EventTicketingEventListItem } from "@/types/boston-city-hall";
-import { bchOperationalEventList } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
 import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
+import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
 
 type TableRow = {
   id: string;
@@ -36,8 +37,16 @@ type SeatRow = {
 };
 
 export function BostonCityHallTicketSeating() {
-  const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
-  const [eventId, setEventId] = useState("");
+  const {
+    events,
+    eventId,
+    setEventId,
+    loading: loadingEvents,
+    error: eventsError,
+    rawCount,
+    smokeHiddenCount,
+    reload: reloadEventsList,
+  } = useBchHubEventBinding();
   const [tables, setTables] = useState<TableRow[]>([]);
   const [seats, setSeats] = useState<SeatRow[]>([]);
   const [tableName, setTableName] = useState("");
@@ -47,12 +56,6 @@ export function BostonCityHallTicketSeating() {
   const [assignTableId, setAssignTableId] = useState("");
   const [assignSeatId, setAssignSeatId] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    void api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events").then((res) => {
-      setEvents(bchOperationalEventList(Array.isArray(res.data) ? res.data : []));
-    });
-  }, []);
 
   const reload = useCallback(async () => {
     if (!eventId) return;
@@ -106,6 +109,15 @@ export function BostonCityHallTicketSeating() {
 
   return (
     <div className="space-y-4">
+      {eventsError || (!loadingEvents && events.length === 0) ? (
+        <BchEventListDiagnostics
+          error={eventsError}
+          rawCount={rawCount}
+          operationalCount={events.length}
+          smokeHiddenCount={smokeHiddenCount}
+          onRetry={() => void reloadEventsList()}
+        />
+      ) : null}
       <BchEventSelectField events={events} value={eventId} onChange={setEventId} placeholder="Evento…" />
 
       <Card>

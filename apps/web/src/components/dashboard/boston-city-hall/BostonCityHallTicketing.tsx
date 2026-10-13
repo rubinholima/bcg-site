@@ -46,6 +46,8 @@ import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-e
 import {
   bchOperationalEventList,
 } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { useBchTicketingSelectionOptional } from "@/components/dashboard/boston-city-hall/bch-ticketing-selection-context";
+import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
 
 function isoToDatetimeLocal(iso: string | null): string {
   if (!iso) return "";
@@ -124,10 +126,13 @@ export function BostonCityHallTicketing({
   embedded?: boolean;
   onDetailChange?: (detail: EventTicketingDetail | null) => void;
 } = {}) {
+  const hubSelection = useBchTicketingSelectionOptional();
+  const useHubEvents = Boolean(hubSelection && !fixedEventId);
+
   const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
-  const [eventId, setEventId] = useState(fixedEventId ?? "");
+  const [eventIdLocal, setEventIdLocal] = useState(fixedEventId ?? "");
   const [detail, setDetail] = useState<EventTicketingDetail | null>(null);
-  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [loadingEventsLocal, setLoadingEvents] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -152,13 +157,14 @@ export function BostonCityHallTicketing({
   }>({ open: false, title: "", message: "", variant: "success" });
 
   const loadEvents = useCallback(async () => {
+    if (useHubEvents) return;
     setLoadingEvents(true);
     setLoadError(null);
     try {
       const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
       const list = bchOperationalEventList(Array.isArray(res.data) ? res.data : []);
       setEvents(list);
-      setEventId((prev) => {
+      setEventIdLocal((prev) => {
         if (fixedEventId) return fixedEventId;
         if (prev && list.some((e) => e.id === prev)) return prev;
         return list[0]?.id || "";
@@ -168,7 +174,13 @@ export function BostonCityHallTicketing({
     } finally {
       setLoadingEvents(false);
     }
-  }, [fixedEventId]);
+  }, [fixedEventId, useHubEvents]);
+
+  const eventsResolved = useHubEvents ? hubSelection!.operationalEvents : events;
+  const eventId = fixedEventId ?? (useHubEvents ? hubSelection!.eventId : eventIdLocal);
+  const setEventId = useHubEvents ? hubSelection!.setEventId : setEventIdLocal;
+  const loadingEvents = useHubEvents ? hubSelection!.loading : loadingEventsLocal;
+  const eventsLoadError = useHubEvents ? hubSelection!.error : null;
 
   const loadDetail = useCallback(async (id: string) => {
     if (!id) {
@@ -191,7 +203,7 @@ export function BostonCityHallTicketing({
   }, [onDetailChange]);
 
   useEffect(() => {
-    if (fixedEventId) setEventId(fixedEventId);
+    if (fixedEventId) setEventIdLocal(fixedEventId);
   }, [fixedEventId]);
 
   useEffect(() => {
@@ -203,8 +215,8 @@ export function BostonCityHallTicketing({
   }, [eventId, loadDetail]);
 
   const selectedEvent = useMemo(
-    () => events.find((e) => e.id === eventId) ?? null,
-    [events, eventId],
+    () => eventsResolved.find((e) => e.id === eventId) ?? null,
+    [eventsResolved, eventId],
   );
 
   const toggleTicketing = async (enabled: boolean) => {
@@ -213,7 +225,8 @@ export function BostonCityHallTicketing({
     try {
       await api.patch(`/boston-city-hall/ticketing/events/${eventId}`, { enabled });
       await loadDetail(eventId);
-      await loadEvents();
+      if (useHubEvents) await hubSelection!.reload();
+      else await loadEvents();
     } catch (e) {
       setFeedback({
         open: true,
@@ -347,16 +360,34 @@ export function BostonCityHallTicketing({
     <div className="space-y-4">
       {loadError ? <BchInlineError message={loadError} onRetry={() => void loadDetail(eventId)} /> : null}
 
+      {!embedded && eventsLoadError ? (
+        <BchEventListDiagnostics
+          error={eventsLoadError}
+          rawCount={hubSelection?.rawEvents.length ?? 0}
+          operationalCount={eventsResolved.length}
+          smokeHiddenCount={hubSelection?.smokeHiddenCount ?? 0}
+          onRetry={() => void hubSelection?.reload()}
+        />
+      ) : null}
+
       {!embedded ? (
         <BchFilterBar>
             <div className="min-w-0 flex-1">
               {loadingEvents ? (
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : eventsResolved.length === 0 && !eventsLoadError ? (
+                <BchEventListDiagnostics
+                  error={null}
+                  rawCount={hubSelection?.rawEvents.length ?? 0}
+                  operationalCount={0}
+                  smokeHiddenCount={hubSelection?.smokeHiddenCount ?? 0}
+                  onRetry={() => void hubSelection?.reload()}
+                />
               ) : (
                 <BchEventSelectField
                   id="bch-ticketing-event"
                   label="Evento"
-                  events={events}
+                  events={eventsResolved}
                   value={eventId}
                   onChange={setEventId}
                   placeholder="Selecione o evento…"

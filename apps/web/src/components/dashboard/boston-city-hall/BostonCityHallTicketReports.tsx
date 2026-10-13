@@ -13,7 +13,8 @@ import {
   YAxis,
 } from "recharts";
 import { api } from "@/lib/api";
-import { bchOperationalEventList } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
+import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
 import { cn } from "@/lib/utils";
 import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
@@ -63,8 +64,16 @@ function formatDay(iso: string): string {
 }
 
 export function BostonCityHallTicketReports() {
-  const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
-  const [eventId, setEventId] = useState("");
+  const {
+    events,
+    eventId,
+    setEventId,
+    loading: loadingEvents,
+    error: eventsError,
+    rawCount,
+    smokeHiddenCount,
+    reload: reloadEvents,
+  } = useBchHubEventBinding();
   const [section, setSection] = useState<(typeof SECTIONS)[number]["id"]>("overview");
   const [loading, setLoading] = useState(false);
   const [overview, setOverview] = useState<TicketReportOverview | null>(null);
@@ -74,14 +83,6 @@ export function BostonCityHallTicketReports() {
   const [checkin, setCheckin] = useState<TicketReportCheckin | null>(null);
   const [capacity, setCapacity] = useState<TicketReportCapacity | null>(null);
   const [seating, setSeating] = useState<TicketReportSeating | null>(null);
-
-  useEffect(() => {
-    void api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events").then((res) => {
-      const list = bchOperationalEventList(Array.isArray(res.data) ? res.data : []);
-      setEvents(list);
-      if (list.length === 1) setEventId(list[0]!.id);
-    });
-  }, []);
 
   const qs = useMemo(() => (eventId ? `?eventId=${encodeURIComponent(eventId)}` : ""), [eventId]);
 
@@ -176,6 +177,15 @@ export function BostonCityHallTicketReports() {
 
   return (
     <div className="space-y-4">
+      {eventsError || (!loadingEvents && events.length === 0) ? (
+        <BchEventListDiagnostics
+          error={eventsError}
+          rawCount={rawCount}
+          operationalCount={events.length}
+          smokeHiddenCount={smokeHiddenCount}
+          onRetry={() => void reloadEvents()}
+        />
+      ) : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <BchEventSelectField events={events} value={eventId} onChange={setEventId} />
       </div>

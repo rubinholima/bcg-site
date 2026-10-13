@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/table";
 import type { EventTicketingDetail, EventTicketingEventListItem, EventTicketType } from "@/types/boston-city-hall";
 import { COMPLIMENTARY_REASON_OPTIONS } from "@/types/boston-city-hall";
-import { bchOperationalEventList } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
 import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
+import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
 
 type GuestRow = {
   id: string;
@@ -36,8 +37,16 @@ type GuestRow = {
 };
 
 export function BostonCityHallTicketComplimentary() {
-  const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
-  const [eventId, setEventId] = useState("");
+  const {
+    events,
+    eventId,
+    setEventId,
+    loading: loadingEvents,
+    error: eventsError,
+    rawCount,
+    smokeHiddenCount,
+    reload: reloadEvents,
+  } = useBchHubEventBinding();
   const [types, setTypes] = useState<EventTicketType[]>([]);
   const [guests, setGuests] = useState<GuestRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,12 +64,6 @@ export function BostonCityHallTicketComplimentary() {
     message: string;
     variant: "success" | "error";
   }>({ open: false, title: "", message: "", variant: "success" });
-
-  useEffect(() => {
-    void api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events").then((res) => {
-      setEvents(bchOperationalEventList(Array.isArray(res.data) ? res.data : []));
-    });
-  }, []);
 
   const loadTypes = useCallback(async (ev: string) => {
     if (!ev) {
@@ -133,6 +136,15 @@ export function BostonCityHallTicketComplimentary() {
 
   return (
     <div className="space-y-4">
+      {eventsError || (!loadingEvents && events.length === 0) ? (
+        <BchEventListDiagnostics
+          error={eventsError}
+          rawCount={rawCount}
+          operationalCount={events.length}
+          smokeHiddenCount={smokeHiddenCount}
+          onRetry={() => void reloadEvents()}
+        />
+      ) : null}
       <Card>
         <CardContent className="space-y-3 pt-6">
           <BchEventSelectField events={events} value={eventId} onChange={setEventId} placeholder="Evento…" />

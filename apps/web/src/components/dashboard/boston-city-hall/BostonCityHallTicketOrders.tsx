@@ -30,9 +30,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
-import {
-  bchOperationalEventList,
-} from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
+import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
 import type {
   EventTicketOrderDetail,
   EventTicketOrderListItem,
@@ -54,9 +53,17 @@ const MANUAL_PAYMENT_METHODS = [
 ] as const;
 
 export function BostonCityHallTicketOrders() {
-  const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
+  const {
+    events,
+    eventId: eventFilter,
+    setEventId: setEventFilter,
+    loading: loadingEvents,
+    error: eventsError,
+    rawCount,
+    smokeHiddenCount,
+    reload: reloadEvents,
+  } = useBchHubEventBinding();
   const [orders, setOrders] = useState<EventTicketOrderListItem[]>([]);
-  const [eventFilter, setEventFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
@@ -86,11 +93,6 @@ export function BostonCityHallTicketOrders() {
     return () => window.clearTimeout(t);
   }, [search]);
 
-  const loadEvents = useCallback(async () => {
-    const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
-    setEvents(bchOperationalEventList(Array.isArray(res.data) ? res.data : []));
-  }, []);
-
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -107,10 +109,6 @@ export function BostonCityHallTicketOrders() {
       setLoading(false);
     }
   }, [eventFilter, statusFilter, searchDebounced]);
-
-  useEffect(() => {
-    void loadEvents();
-  }, [loadEvents]);
 
   useEffect(() => {
     void loadOrders();
@@ -229,13 +227,21 @@ export function BostonCityHallTicketOrders() {
 
   return (
     <div className="space-y-4">
+      {eventsError || (!loadingEvents && events.length === 0) ? (
+        <BchEventListDiagnostics
+          error={eventsError}
+          rawCount={rawCount}
+          operationalCount={events.length}
+          smokeHiddenCount={smokeHiddenCount}
+          onRetry={() => void reloadEvents()}
+        />
+      ) : null}
       <BchFilterBar>
         <BchEventSelectField
           label="Evento"
           value={eventFilter}
           onChange={setEventFilter}
           events={events}
-          allowAll
           className="min-w-[200px] flex-1"
         />
         <div className="min-w-[160px] space-y-1">
