@@ -5,7 +5,11 @@ import Link from "next/link";
 import { Loader2, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BCH_CARD, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +32,6 @@ import {
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 import {
   bchOperationalEventList,
-  bchOperationalEventOptions,
 } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import type {
   EventTicketOrderDetail,
@@ -226,18 +229,15 @@ export function BostonCityHallTicketOrders() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <div className="min-w-[200px] flex-1 space-y-1">
-          <Label>Evento</Label>
-          <NativeSelect value={eventFilter} onChange={(e) => setEventFilter(e.target.value)}>
-            <option value="">Todos</option>
-            {bchOperationalEventOptions(events).map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
+      <BchFilterBar>
+        <BchEventSelectField
+          label="Evento"
+          value={eventFilter}
+          onChange={setEventFilter}
+          events={events}
+          allowAll
+          className="min-w-[200px] flex-1"
+        />
         <div className="min-w-[160px] space-y-1">
           <Label>Status</Label>
           <NativeSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -260,10 +260,9 @@ export function BostonCityHallTicketOrders() {
             />
           </div>
         </div>
-      </div>
+      </BchFilterBar>
 
-      <Card>
-        <CardContent className="p-0">
+      <div className={BCH_CARD + " p-0 overflow-hidden"}>
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -315,8 +314,7 @@ export function BostonCityHallTicketOrders() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+      </div>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">

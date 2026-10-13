@@ -15,7 +15,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { KpiCard } from "@/components/dashboard/cup360/KpiCard";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BCH_BTN_PRIMARY, BCH_CARD } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +44,6 @@ import {
   EVENT_STATUS_LABEL,
   formatCatalogMoney,
 } from "@/types/boston-city-hall";
-import { cn } from "@/lib/utils";
 
 const BCH = "/dashboard/eventos/boston-city-hall";
 
@@ -59,11 +61,9 @@ function CurrencyBlocks({ groups }: { groups: BchEventFinancialCurrencyGroup[] }
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       {groups.map((g) => (
-        <Card key={g.currency}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">{g.currency}</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
+        <div key={g.currency} className={cn(BCH_CARD)}>
+          <h3 className="mb-3 text-sm font-semibold text-amber-100/90">{g.currency}</h3>
+          <div className="grid gap-2 text-sm sm:grid-cols-2">
             <div>
               <p className="text-muted-foreground">Receita</p>
               <p className="font-medium">{money(g.currency, g.grossOperationalRevenue)}</p>
@@ -89,8 +89,8 @@ function CurrencyBlocks({ groups }: { groups: BchEventFinancialCurrencyGroup[] }
                 ) : null}
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -200,7 +200,7 @@ export function BostonCityHallExecutiveDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+      <BchFilterBar>
         <div className="min-w-[160px]">
           <label className="mb-1 block text-xs text-muted-foreground">Período</label>
           <NativeSelect value={preset} onChange={(e) => setPreset(e.target.value as PeriodPreset)}>
@@ -227,10 +227,15 @@ export function BostonCityHallExecutiveDashboard() {
             </div>
           </>
         ) : null}
-        <Button type="button" className="min-h-[44px]" onClick={() => void load()} disabled={loading}>
+        <Button
+          type="button"
+          className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}
+          onClick={() => void load()}
+          disabled={loading}
+        >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
         </Button>
-      </div>
+      </BchFilterBar>
 
       {summary.multiCurrency ? (
         <p className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
@@ -239,16 +244,21 @@ export function BostonCityHallExecutiveDashboard() {
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Eventos no período" value={String(summary.events.inPeriod)} />
-        <KpiCard label="Próximos (no período)" value={String(summary.events.upcoming)} />
-        <KpiCard label="Ingressos vendidos" value={String(summary.ticketing.ticketsSold)} />
-        <KpiCard label="Comparecimento" value={String(summary.ticketing.attendance)} hint={summary.ticketing.attendanceRatePct ? `${summary.ticketing.attendanceRatePct}%` : undefined} />
-        <KpiCard label="Pedidos confirmados" value={String(summary.ticketing.confirmedOrderCount)} />
-        <KpiCard label="Cortesias" value={String(summary.ticketing.complimentaryCount)} />
-        <KpiCard label="Vendas bar (POS)" value={String(summary.bar.completedSalesCount)} />
-        <KpiCard label="Críticos abertos" value={String(summary.alertSummary.openCritical)} />
-        <KpiCard label="Avisos abertos" value={String(summary.alertSummary.openWarning)} />
-        <KpiCard label="Reconhecidos" value={String(summary.alertSummary.acknowledgedUnresolved)} />
+        <BchKpiCard label="Eventos no período" value={String(summary.events.inPeriod)} tone="gold" />
+        <BchKpiCard label="Próximos (no período)" value={String(summary.events.upcoming)} tone="info" />
+        <BchKpiCard label="Ingressos vendidos" value={String(summary.ticketing.ticketsSold)} tone="gold" />
+        <BchKpiCard
+          label="Comparecimento"
+          value={String(summary.ticketing.attendance)}
+          hint={summary.ticketing.attendanceRatePct ? `${summary.ticketing.attendanceRatePct}%` : undefined}
+          tone="success"
+        />
+        <BchKpiCard label="Pedidos confirmados" value={String(summary.ticketing.confirmedOrderCount)} />
+        <BchKpiCard label="Cortesias" value={String(summary.ticketing.complimentaryCount)} />
+        <BchKpiCard label="Vendas bar (POS)" value={String(summary.bar.completedSalesCount)} tone="gold" />
+        <BchKpiCard label="Críticos abertos" value={String(summary.alertSummary.openCritical)} tone="danger" />
+        <BchKpiCard label="Avisos abertos" value={String(summary.alertSummary.openWarning)} tone="warning" />
+        <BchKpiCard label="Reconhecidos" value={String(summary.alertSummary.acknowledgedUnresolved)} tone="info" />
       </div>
 
       <div className="flex justify-end">

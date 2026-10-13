@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar, Loader2, Plus, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +31,9 @@ import {
   PIPELINE_STAGE_LABEL,
 } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
+import { BCH_BTN_PRIMARY, BCH_CARD } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { BostonCityHallLeadDetailDialog } from "./BostonCityHallLeadDetailDialog";
 import {
   buildPipelineListQuery,
@@ -278,22 +280,22 @@ export function BostonCityHallPipeline() {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-lg">Pipeline comercial</CardTitle>
+      <div className={cn(BCH_CARD, "space-y-4")}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <Button
             onClick={() => {
               setForm(emptyLead());
               setOpenCreate(true);
             }}
-            className="min-h-[44px] w-full sm:w-auto"
+            className={cn("min-h-[44px] w-full sm:w-auto", BCH_BTN_PRIMARY)}
           >
             <Plus className="mr-2 h-4 w-4" />
             Novo lead
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+        </div>
+        {loadError ? <BchInlineError message={loadError} onRetry={() => void load()} /> : null}
+        <BchFilterBar className="border-0 bg-transparent p-0">
+          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center w-full">
             <div className="relative min-w-0 flex-1 lg:max-w-xs">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -343,19 +345,13 @@ export function BostonCityHallPipeline() {
               </SelectContent>
             </Select>
           </div>
+        </BchFilterBar>
 
-          {loading ? (
+          {!loadError && loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : loadError ? (
-            <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-destructive">{loadError}</p>
-              <Button variant="outline" onClick={() => load()} className="min-h-[44px]">
-                Tentar novamente
-              </Button>
-            </div>
-          ) : leads.length === 0 ? (
+          ) : !loadError && leads.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
               Nenhum lead com os filtros atuais. Ajuste a busca ou cadastre um novo contato.
             </p>
@@ -502,8 +498,7 @@ export function BostonCityHallPipeline() {
               mudar estágio
             </p>
           ) : null}
-        </CardContent>
-      </Card>
+      </div>
 
       <BostonCityHallLeadDetailDialog
         open={!!selected && !!detailForm}

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +36,10 @@ import {
   PIPELINE_STAGE_LABEL,
 } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BCH_BTN_PRIMARY, BCH_CARD, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { BostonCityHallLeadDetailDialog } from "./BostonCityHallLeadDetailDialog";
 import {
   buildPipelineListQuery,
@@ -227,48 +230,27 @@ export function BostonCityHallCrm() {
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-xs text-muted-foreground">Total (filtros)</p>
-            <p className="text-2xl font-bold">{stats.total}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-xs text-muted-foreground">Em aberto</p>
-            <p className="text-2xl font-bold">{stats.open}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-xs text-muted-foreground">Do site</p>
-            <p className="text-2xl font-bold">{stats.website}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-xs text-muted-foreground">Confirmados</p>
-            <p className="text-2xl font-bold">{stats.won}</p>
-          </CardContent>
-        </Card>
+        <BchKpiCard label="Total (filtros)" value={stats.total} tone="gold" />
+        <BchKpiCard label="Em aberto" value={stats.open} tone="info" />
+        <BchKpiCard label="Do site" value={stats.website} />
+        <BchKpiCard label="Confirmados" value={stats.won} tone="success" />
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-lg">CRM — Leads</CardTitle>
+      <div className={cn(BCH_CARD, "space-y-4")}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <Button
             onClick={() => {
               setForm(emptyLead());
               setOpenCreate(true);
             }}
-            className="min-h-[44px] w-full sm:w-auto"
+            className={cn("min-h-[44px] w-full sm:w-auto", BCH_BTN_PRIMARY)}
           >
             <Plus className="mr-2 h-4 w-4" />
             Novo lead
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+        </div>
+        <BchFilterBar className="border-0 bg-transparent p-0">
+          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center w-full">
             <div className="relative min-w-0 flex-1 lg:max-w-xs">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -336,17 +318,31 @@ export function BostonCityHallCrm() {
               </SelectContent>
             </Select>
           </div>
+        </BchFilterBar>
 
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : leads.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Nenhum lead encontrado com os filtros atuais.
-            </p>
+            <BchEmptyState
+              message="Nenhum lead encontrado com os filtros atuais."
+              action={
+                <Button
+                  type="button"
+                  className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}
+                  onClick={() => {
+                    setForm(emptyLead());
+                    setOpenCreate(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Cadastrar lead
+                </Button>
+              }
+            />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border">
+            <div className={BCH_TABLE_WRAP}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -405,8 +401,7 @@ export function BostonCityHallCrm() {
           <p className="text-xs text-muted-foreground">
             {leads.length} lead(s) — clique na linha para ver e editar o contato.
           </p>
-        </CardContent>
-      </Card>
+      </div>
 
       <BostonCityHallLeadDetailDialog
         open={!!selected && !!detailForm}

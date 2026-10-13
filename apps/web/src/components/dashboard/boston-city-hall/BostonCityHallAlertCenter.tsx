@@ -6,7 +6,10 @@ import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Card, CardContent } from "@/components/ui/card";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BCH_BTN_SECONDARY, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import {
   Table,
   TableBody,
@@ -67,7 +70,7 @@ export function BostonCityHallAlertCenter({ initialEventId }: { initialEventId?:
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+      <BchFilterBar>
         <div className="min-w-[140px]">
           <label className="mb-1 block text-xs text-muted-foreground">Status</label>
           <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -96,18 +99,21 @@ export function BostonCityHallAlertCenter({ initialEventId }: { initialEventId?:
             />
           </div>
         )}
-        <Button type="button" variant="outline" className="min-h-[44px]" onClick={() => void load()} disabled={loading}>
+        <Button
+          type="button"
+          variant="outline"
+          className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}
+          onClick={() => void load()}
+          disabled={loading}
+        >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
         </Button>
-      </div>
+      </BchFilterBar>
 
       {loading && !items.length ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <BchLoadingBlock label="Carregando alertas…" />
       ) : (
-        <Card>
-          <CardContent className="p-0 overflow-x-auto">
+        <div className={BCH_TABLE_WRAP}>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -163,10 +169,9 @@ export function BostonCityHallAlertCenter({ initialEventId }: { initialEventId?:
               </TableBody>
             </Table>
             {!items.length ? (
-              <p className="p-6 text-sm text-muted-foreground text-center">Nenhum alerta neste filtro.</p>
+              <BchEmptyState message="Nenhum alerta neste filtro." className="py-8" />
             ) : null}
-          </CardContent>
-        </Card>
+        </div>
       )}
     </div>
   );
