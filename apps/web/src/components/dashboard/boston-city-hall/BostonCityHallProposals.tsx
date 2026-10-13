@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BCH_BTN_PRIMARY, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -88,18 +93,18 @@ export function BostonCityHallProposals() {
   }, [load]);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle>Propostas comerciais</CardTitle>
-        <Button asChild className="min-h-[44px]">
+    <BchCard
+      actions={
+        <Button asChild className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}>
           <Link href={`${BCH_BASE}/propostas/new`}>
             <Plus className="mr-2 h-4 w-4" />
             Nova proposta
           </Link>
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      }
+    >
+        <BchFilterBar className="mb-4 border-0 bg-transparent p-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap w-full">
           <div className="relative min-w-0 flex-1 sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -133,17 +138,26 @@ export function BostonCityHallProposals() {
             </SelectContent>
           </Select>
         </div>
+        </BchFilterBar>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <BchLoadingBlock label="Carregando propostas…" />
         ) : error ? (
-          <p className="text-sm text-destructive">{error}</p>
+          <BchInlineError message={error} onRetry={() => void load()} />
         ) : rows.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma proposta encontrada.</p>
+          <BchEmptyState
+            message="Nenhuma proposta com estes filtros."
+            action={
+              <Button asChild className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}>
+                <Link href={`${BCH_BASE}/propostas/new`}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova proposta
+                </Link>
+              </Button>
+            }
+          />
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-border">
+          <div className={BCH_TABLE_WRAP}>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -206,7 +220,6 @@ export function BostonCityHallProposals() {
             </Table>
           </div>
         )}
-      </CardContent>
-    </Card>
+    </BchCard>
   );
 }

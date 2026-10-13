@@ -14,7 +14,12 @@ import {
 import { api } from "@/lib/api";
 import { parseDateTimeLocalBrazil, toDateTimeLocalBrazil, BRAZIL_TZ } from "@/lib/brazil-time";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BCH_BTN_PRIMARY, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import {
   Dialog,
   DialogContent,
@@ -372,16 +377,16 @@ export function BostonCityHallReservas() {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-lg">Reservas e bloqueios</CardTitle>
-          <Button onClick={openCreate} className="min-h-[44px] w-full sm:w-auto">
+      <BchCard
+        actions={
+          <Button onClick={openCreate} className={cn("min-h-[44px] w-full sm:w-auto", BCH_BTN_PRIMARY)}>
             <Plus className="mr-2 h-4 w-4" />
             Nova reserva
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+        }
+      >
+          <BchFilterBar className="mb-4 border-0 bg-transparent p-0">
+          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center w-full">
             <div className="relative min-w-0 flex-1 lg:max-w-xs">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -446,24 +451,24 @@ export function BostonCityHallReservas() {
               </SelectContent>
             </Select>
           </div>
+          </BchFilterBar>
 
           {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <BchLoadingBlock label="Carregando reservas…" />
           ) : loadError ? (
-            <div className="flex flex-col items-center gap-3 py-10 text-center">
-              <p className="text-sm text-destructive">{loadError}</p>
-              <Button variant="outline" onClick={() => loadBookings()} className="min-h-[44px]">
-                Tentar novamente
-              </Button>
-            </div>
+            <BchInlineError message={loadError} onRetry={() => loadBookings()} />
           ) : bookings.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              Nenhuma reserva com os filtros atuais.
-            </p>
+            <BchEmptyState
+              message="Nenhuma reserva com os filtros atuais."
+              action={
+                <Button type="button" className={cn("min-h-[44px]", BCH_BTN_PRIMARY)} onClick={openCreate}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova reserva
+                </Button>
+              }
+            />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border">
+            <div className={BCH_TABLE_WRAP}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -526,8 +531,7 @@ export function BostonCityHallReservas() {
               são bloqueados ao salvar
             </p>
           ) : null}
-        </CardContent>
-      </Card>
+      </BchCard>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">

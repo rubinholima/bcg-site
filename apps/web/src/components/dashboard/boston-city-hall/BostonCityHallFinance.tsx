@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { api } from "@/lib/api";
-import { KpiCard } from "@/components/dashboard/cup360/KpiCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
+import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -98,24 +103,21 @@ export function BostonCityHallFinance() {
     <div className="space-y-6">
       {kpis ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          <KpiCard label="A receber (contratado)" value={formatCatalogMoney(kpis.totalContracted)} />
-          <KpiCard label="Recebido" value={formatCatalogMoney(kpis.totalReceived)} tone="success" />
-          <KpiCard label="Saldo em aberto" value={formatCatalogMoney(kpis.openBalance)} tone="warning" />
-          <KpiCard
+          <BchKpiCard label="A receber (contratado)" value={formatCatalogMoney(kpis.totalContracted)} tone="gold" />
+          <BchKpiCard label="Recebido" value={formatCatalogMoney(kpis.totalReceived)} tone="success" />
+          <BchKpiCard label="Saldo em aberto" value={formatCatalogMoney(kpis.openBalance)} tone="warning" />
+          <BchKpiCard
             label="Vencido"
             value={formatCatalogMoney(kpis.overdueBalance)}
             tone={Number.parseFloat(kpis.overdueBalance) > 0 ? "danger" : "default"}
           />
-          <KpiCard label="A vencer (14 dias)" value={formatCatalogMoney(kpis.dueSoonBalance)} tone="info" />
+          <BchKpiCard label="A vencer (14 dias)" value={formatCatalogMoney(kpis.dueSoonBalance)} tone="info" />
         </div>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Contas a receber</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <BchCard>
+          <BchFilterBar className="mb-4 border-0 bg-transparent p-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap w-full">
             <div className="relative min-w-0 flex-1 sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -160,19 +162,16 @@ export function BostonCityHallFinance() {
               </SelectContent>
             </Select>
           </div>
+          </BchFilterBar>
 
           {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <BchLoadingBlock label="Carregando contas…" />
           ) : error ? (
-            <p className="text-sm text-destructive">{error}</p>
+            <BchInlineError message={error} onRetry={() => void load()} />
           ) : rows.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Nenhum financeiro encontrado. Crie a partir de um contrato assinado.
-            </p>
+            <BchEmptyState message="Nenhuma conta a receber com estes filtros. Gere financeiro a partir de um contrato assinado." />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border">
+            <div className={BCH_TABLE_WRAP}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -245,8 +244,7 @@ export function BostonCityHallFinance() {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </BchCard>
     </div>
   );
 }
