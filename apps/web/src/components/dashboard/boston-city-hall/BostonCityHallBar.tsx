@@ -42,6 +42,7 @@ import {
   type BchBarOpenContainerLedgerEntry,
 } from "@/types/bch-bar";
 import { cn } from "@/lib/utils";
+import { bchProductDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 type Tab = "products" | "selling" | "prices" | "inventory" | "movements" | "open";
 
@@ -759,7 +760,12 @@ export function BostonCityHallBar() {
                 ) : (
                   sellingUnits.map((su) => (
                     <TableRow key={su.id}>
-                      <TableCell>{su.productName ?? su.productId}</TableCell>
+                      <TableCell>
+                        {bchProductDisplayName(
+                          su.productName,
+                          activeProducts.find((p) => p.id === su.productId),
+                        )}
+                      </TableCell>
                       <TableCell>{su.name}</TableCell>
                       <TableCell>
                         {su.portionAmount
@@ -873,7 +879,7 @@ export function BostonCityHallBar() {
                   stock.map((row) => (
                     <TableRow key={row.id}>
                       <TableCell>{row.locationName}</TableCell>
-                      <TableCell>{row.productName}</TableCell>
+                      <TableCell>{bchProductDisplayName(row.productName)}</TableCell>
                       <TableCell>
                         {row.physicalUnitType
                           ? physicalLabel(row.physicalUnitType)
@@ -949,7 +955,7 @@ export function BostonCityHallBar() {
                       </TableCell>
                       <TableCell className="text-sm">{movementTypeLabel(m.movementType)}</TableCell>
                       <TableCell>{m.direction === "in" ? "Entrada" : "Saída"}</TableCell>
-                      <TableCell>{m.productName}</TableCell>
+                      <TableCell>{bchProductDisplayName(m.productName)}</TableCell>
                       <TableCell>{m.locationName}</TableCell>
                       <TableCell>{m.quantity}</TableCell>
                       <TableCell className="text-xs">{m.createdByName ?? "—"}</TableCell>

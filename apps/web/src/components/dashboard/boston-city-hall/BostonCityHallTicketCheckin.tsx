@@ -22,6 +22,10 @@ import type {
 } from "@/types/boston-city-hall";
 import { EVENT_TICKET_CHECKIN_RESULT_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
+import {
+  bchOperationalEventList,
+  bchOperationalEventOptions,
+} from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 const RESULT_STYLE: Record<string, string> = {
   accepted: "border-emerald-500/50 bg-emerald-500/10 text-emerald-200",
@@ -49,7 +53,7 @@ export function BostonCityHallTicketCheckin() {
   useEffect(() => {
     void (async () => {
       const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
-      const list = Array.isArray(res.data) ? res.data : [];
+      const list = bchOperationalEventList(Array.isArray(res.data) ? res.data : []);
       setEvents(list);
       if (list.length === 1) setEventId(list[0]!.id);
     })();
@@ -122,7 +126,7 @@ export function BostonCityHallTicketCheckin() {
                 value={eventId}
                 onChange={(e) => setEventId(e.target.value)}
                 placeholder="Selecione o evento…"
-                options={events.map((ev) => ({ value: ev.id, label: ev.name }))}
+                options={bchOperationalEventOptions(events)}
               />
             </div>
             <div className="space-y-1">

@@ -17,6 +17,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { EventTicketingEventListItem } from "@/types/boston-city-hall";
+import {
+  bchOperationalEventList,
+  bchOperationalEventOptions,
+} from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 type TableRow = {
   id: string;
@@ -48,7 +52,7 @@ export function BostonCityHallTicketSeating() {
 
   useEffect(() => {
     void api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events").then((res) => {
-      setEvents(Array.isArray(res.data) ? res.data : []);
+      setEvents(bchOperationalEventList(Array.isArray(res.data) ? res.data : []));
     });
   }, []);
 
@@ -108,7 +112,7 @@ export function BostonCityHallTicketSeating() {
         value={eventId}
         onChange={(e) => setEventId(e.target.value)}
         placeholder="Evento…"
-        options={events.map((e) => ({ value: e.id, label: e.name }))}
+        options={bchOperationalEventOptions(events)}
       />
 
       <Card>

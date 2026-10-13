@@ -325,16 +325,26 @@ export class BostonCityHallBarStockService {
         (b) => b.productId === input.productId && b.locationId === input.locationId,
       );
       if (bal) return { balance: bal, movement: null };
+      const [product, location] = await Promise.all([
+        this.prisma.bchBarProduct.findFirst({
+          where: { id: input.productId, tenantId },
+          select: { sku: true, name: true },
+        }),
+        this.prisma.bchBarInventoryLocation.findFirst({
+          where: { id: input.locationId, tenantId },
+          select: { code: true, name: true },
+        }),
+      ]);
       return {
         balance: {
           id: balanceRow?.id ?? '',
           productId: input.productId,
-          productSku: '',
-          productName: '',
+          productSku: product?.sku ?? '',
+          productName: product?.name ?? '',
           physicalUnitType: unitBasis,
           locationId: input.locationId,
-          locationCode: '',
-          locationName: '',
+          locationCode: location?.code ?? '',
+          locationName: location?.name ?? '',
           quantityOnHand: decStr(target),
           updatedAt: new Date().toISOString(),
           latestMovementAt: null,

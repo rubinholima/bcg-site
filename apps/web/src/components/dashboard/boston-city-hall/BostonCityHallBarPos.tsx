@@ -19,6 +19,10 @@ import {
   type BchBarSale,
 } from "@/types/bch-bar";
 import { cn } from "@/lib/utils";
+import {
+  bchOperationalProducts,
+  bchProductDisplayName,
+} from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 function formatMoney(value: string, currency: string) {
   const n = Number.parseFloat(value);
@@ -87,7 +91,7 @@ export function BostonCityHallBarPos() {
     const { data: rows } = await api.get<BchBarPosCatalogItem[]>(
       `/boston-city-hall/bar/pos/catalog?locationId=${encodeURIComponent(locId)}`,
     );
-    setCatalog(Array.isArray(rows) ? rows : []);
+    setCatalog(bchOperationalProducts(Array.isArray(rows) ? rows : []));
   }, []);
 
   const refreshSale = useCallback(async (saleId: string) => {
@@ -144,9 +148,10 @@ export function BostonCityHallBarPos() {
     if (!q) return catalog;
     return catalog.filter(
       (c) =>
-        c.productName.toLowerCase().includes(q) ||
-        c.sellingUnitName.toLowerCase().includes(q) ||
-        c.productSku.toLowerCase().includes(q),
+        bchProductDisplayName(c.productName, { name: c.sellingUnitName, sku: c.productSku })
+          .toLowerCase()
+          .includes(q) ||
+        c.sellingUnitName.toLowerCase().includes(q),
     );
   }, [catalog, search]);
 
@@ -355,7 +360,7 @@ export function BostonCityHallBarPos() {
               {sale.items.map((i) => (
                 <li key={i.id} className="flex justify-between gap-2 px-3 py-2">
                   <span>
-                    {i.quantity}× {i.productName} ({i.sellingUnitName})
+                    {i.quantity}× {bchProductDisplayName(i.productName)} ({i.sellingUnitName})
                   </span>
                   <span>{formatMoney(i.lineTotal, i.currency)}</span>
                 </li>
@@ -408,7 +413,9 @@ export function BostonCityHallBarPos() {
                     )}
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{c.productName}</p>
+                      <p className="truncate font-medium">
+                        {bchProductDisplayName(c.productName, { sku: c.productSku })}
+                      </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {c.sellingUnitName} · {categoryLabel(c.category)}
                       </p>
@@ -444,7 +451,7 @@ export function BostonCityHallBarPos() {
                         className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-2"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{i.productName}</p>
+                          <p className="truncate font-medium">{bchProductDisplayName(i.productName)}</p>
                           <p className="text-xs text-muted-foreground">{i.sellingUnitName}</p>
                         </div>
                         <div className="flex items-center gap-1">

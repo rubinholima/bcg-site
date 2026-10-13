@@ -23,6 +23,10 @@ import type {
   BchBarEventInventorySummary,
   BchBarProduct,
 } from "@/types/bch-bar";
+import {
+  bchOperationalEventList,
+  bchOperationalProducts,
+} from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 type TicketingEvent = { id: string; name: string; slug?: string };
 
@@ -57,9 +61,11 @@ export function BostonCityHallBarEventInventory() {
       api.get<BchBarEventInventory[]>("/boston-city-hall/bar/event-inventories"),
       api.get<BchBarProduct[]>("/boston-city-hall/bar/products"),
     ]);
-    setEvents(Array.isArray(evs) ? evs : []);
+    setEvents(
+      bchOperationalEventList(Array.isArray(evs) ? evs : []),
+    );
     setInventories(Array.isArray(invs) ? invs : []);
-    setProducts(Array.isArray(prods) ? prods : []);
+    setProducts(bchOperationalProducts(Array.isArray(prods) ? prods : []));
   }, []);
 
   const loadSummary = useCallback(async (id: string) => {
@@ -193,7 +199,7 @@ export function BostonCityHallBarEventInventory() {
               <option value="">Selecione…</option>
               {events.map((ev) => (
                 <option key={ev.id} value={ev.id}>
-                  {ev.name}
+                  {ev.name?.trim() || "Evento sem nome"}
                 </option>
               ))}
             </NativeSelect>

@@ -26,6 +26,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
+import {
+  bchOperationalEventList,
+  bchOperationalEventOptions,
+} from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import type {
   EventTicketOrderDetail,
   EventTicketOrderListItem,
@@ -81,7 +85,7 @@ export function BostonCityHallTicketOrders() {
 
   const loadEvents = useCallback(async () => {
     const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
-    setEvents(Array.isArray(res.data) ? res.data : []);
+    setEvents(bchOperationalEventList(Array.isArray(res.data) ? res.data : []));
   }, []);
 
   const loadOrders = useCallback(async () => {
@@ -227,9 +231,9 @@ export function BostonCityHallTicketOrders() {
           <Label>Evento</Label>
           <NativeSelect value={eventFilter} onChange={(e) => setEventFilter(e.target.value)}>
             <option value="">Todos</option>
-            {events.map((ev) => (
-              <option key={ev.id} value={ev.id}>
-                {ev.name}
+            {bchOperationalEventOptions(events).map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
               </option>
             ))}
           </NativeSelect>

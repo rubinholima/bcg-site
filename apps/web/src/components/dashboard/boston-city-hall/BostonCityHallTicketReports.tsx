@@ -37,6 +37,12 @@ import type {
   TicketReportTicketsPerformance,
 } from "@/types/boston-city-hall";
 import { formatTicketingMoney } from "@/types/boston-city-hall";
+import { bchOperationalEventOptions } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import {
+  asArray,
+  hasSeatingReportData,
+  normalizeTicketReportSeating,
+} from "@/components/dashboard/boston-city-hall/bch-ticket-report-utils";
 
 const SECTIONS = [
   { id: "overview" as const, label: "Visão geral" },
@@ -70,7 +76,8 @@ export function BostonCityHallTicketReports() {
     void api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events").then((res) => {
       const list = Array.isArray(res.data) ? res.data : [];
       setEvents(list);
-      if (list.length === 1) setEventId(list[0].id);
+      const opts = bchOperationalEventOptions(list);
+      if (opts.length === 1) setEventId(opts[0].value);
     });
   }, []);
 
@@ -124,7 +131,7 @@ export function BostonCityHallTicketReports() {
         const res = await api.get<TicketReportSeating | null>(
           `/boston-city-hall/ticketing/reports/seating${qs}`,
         );
-        setSeating(res.data ?? null);
+        setSeating(normalizeTicketReportSeating(res.data));
       }
     } finally {
       setLoading(false);
@@ -172,7 +179,7 @@ export function BostonCityHallTicketReports() {
           value={eventId}
           onChange={(e) => setEventId(e.target.value)}
           placeholder="Selecione o evento…"
-          options={events.map((ev) => ({ value: ev.id, label: ev.name }))}
+          options={bchOperationalEventOptions(events)}
           className="sm:max-w-md"
         />
       </div>
@@ -299,18 +306,18 @@ export function BostonCityHallTicketReports() {
               <ReportTable
                 title="Vendas por tipo"
                 headers={["Tipo", "Qtd", "Receita", "Ticket médio"]}
-                rows={sales.byTicketType.map((r) => [
+                rows={asArray(sales.byTicketType).map((r) => [
                   r.ticketTypeName,
                   String(r.ticketsSold),
                   formatTicketingMoney(r.revenue, currency),
                   r.averageUnitPrice ? formatTicketingMoney(r.averageUnitPrice, currency) : "—",
                 ])}
               />
-              {sales.byLot.length > 0 ? (
+              {asArray(sales.byLot).length > 0 ? (
                 <ReportTable
                   title="Vendas por lote"
                   headers={["Lote", "Tipo", "Qtd", "Receita"]}
-                  rows={sales.byLot.map((r) => [
+                  rows={asArray(sales.byLot).map((r) => [
                     r.lotName,
                     r.ticketTypeName,
                     String(r.ticketsSold),
@@ -335,7 +342,7 @@ export function BostonCityHallTicketReports() {
                 "Receita",
                 "Uso %",
               ]}
-              rows={ticketsPerf.typeAndLotPerformance.map((r) => [
+              rows={asArray(ticketsPerf.typeAndLotPerformance).map((r) => [
                 r.ticketTypeName,
                 r.lotName ?? "—",
                 String(r.capacity),
@@ -360,7 +367,7 @@ export function BostonCityHallTicketReports() {
               <ReportTable
                 title="Por motivo"
                 headers={["Motivo", "Emitidos", "Usados", "Não usados"]}
-                rows={complimentary.byReason.map((r) => [
+                rows={asArray(complimentary.byReason).map((r) => [
                   r.reasonLabel,
                   String(r.issued),
                   String(r.used),
@@ -370,7 +377,7 @@ export function BostonCityHallTicketReports() {
               <ReportTable
                 title="Por tipo de ingresso"
                 headers={["Tipo", "Emitidos", "Usados", "Valor de face"]}
-                rows={complimentary.byTicketType.map((r) => [
+                rows={asArray(complimentary.byTicketType).map((r) => [
                   r.ticketTypeName,
                   String(r.issued),
                   String(r.used),
@@ -413,7 +420,7 @@ export function BostonCityHallTicketReports() {
               <ReportTable
                 title="Por tipo"
                 headers={["Tipo", "Tentativas aceitas", "Tickets usados"]}
-                rows={checkin.byTicketType.map((r) => [
+                rows={asArray(checkin.byTicketType).map((r) => [
                   r.ticketTypeName,
                   String(r.accepted),
                   String(r.uniqueUsed),
@@ -422,7 +429,11 @@ export function BostonCityHallTicketReports() {
               <ReportTable
                 title="Por estação"
                 headers={["Estação", "Tentativas", "Aceitas"]}
-                rows={checkin.byStation.map((r) => [r.stationLabel, String(r.attempts), String(r.accepted)])}
+                rows={asArray(checkin.byStation).map((r) => [
+                  r.stationLabel,
+                  String(r.attempts),
+                  String(r.accepted),
+                ])}
               />
             </div>
           ) : null}
@@ -431,7 +442,7 @@ export function BostonCityHallTicketReports() {
             <ReportTable
               title="Capacidade por tipo"
               headers={["Tipo", "Cap.", "Vendidos", "Hold", "Disp.", "Cortesia", "Emitidos", "Check-in"]}
-              rows={capacity.byTicketType.map((r) => [
+              rows={asArray(capacity.byTicketType).map((r) => [
                 r.ticketTypeName,
                 String(r.capacity),
                 String(r.sold),
@@ -445,7 +456,7 @@ export function BostonCityHallTicketReports() {
           ) : null}
 
           {section === "seating" ? (
-            seating ? (
+            hasSeatingReportData(seating) && seating ? (
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <KpiCard label="Mesas" value={seating.tablesConfigured} />
@@ -456,18 +467,29 @@ export function BostonCityHallTicketReports() {
                 <ReportTable
                   title="Por mesa"
                   headers={["Mesa", "Cap.", "Atribuídos", "Usados"]}
-                  rows={seating.byTable.map((r) => [
+                  rows={asArray(seating.byTable).map((r) => [
                     r.tableName,
                     String(r.capacity),
                     String(r.assigned),
                     String(r.used),
                   ])}
                 />
+                {asArray(seating.bySection).length > 0 ? (
+                  <ReportTable
+                    title="Por setor"
+                    headers={["Setor", "Atribuídos", "Usados"]}
+                    rows={asArray(seating.bySection).map((r) => [
+                      r.section,
+                      String(r.assigned),
+                      String(r.used),
+                    ])}
+                  />
+                ) : null}
               </div>
             ) : (
               <Card>
                 <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                  Assentos não habilitados para este evento.
+                  Assentos não habilitados ou sem dados de mesa para este evento.
                 </CardContent>
               </Card>
             )

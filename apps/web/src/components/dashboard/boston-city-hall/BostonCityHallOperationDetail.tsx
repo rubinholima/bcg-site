@@ -360,7 +360,7 @@ export function BostonCityHallOperationDetail({ bookingId }: { bookingId: string
             <>
               <p className="font-medium">{row.event.name}</p>
               <p className="text-muted-foreground">
-                {EVENT_STATUS_LABEL[row.event.status] ?? row.event.status} · slug {row.event.slug}
+                {EVENT_STATUS_LABEL[row.event.status] ?? row.event.status}
               </p>
             </>
           ) : (

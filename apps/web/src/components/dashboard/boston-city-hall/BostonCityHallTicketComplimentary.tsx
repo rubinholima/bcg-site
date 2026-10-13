@@ -19,6 +19,10 @@ import {
 } from "@/components/ui/table";
 import type { EventTicketingDetail, EventTicketingEventListItem, EventTicketType } from "@/types/boston-city-hall";
 import { COMPLIMENTARY_REASON_OPTIONS } from "@/types/boston-city-hall";
+import {
+  bchOperationalEventList,
+  bchOperationalEventOptions,
+} from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 type GuestRow = {
   id: string;
@@ -56,7 +60,7 @@ export function BostonCityHallTicketComplimentary() {
 
   useEffect(() => {
     void api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events").then((res) => {
-      setEvents(Array.isArray(res.data) ? res.data : []);
+      setEvents(bchOperationalEventList(Array.isArray(res.data) ? res.data : []));
     });
   }, []);
 
@@ -137,7 +141,7 @@ export function BostonCityHallTicketComplimentary() {
             value={eventId}
             onChange={(e) => setEventId(e.target.value)}
             placeholder="Evento…"
-            options={events.map((e) => ({ value: e.id, label: e.name }))}
+            options={bchOperationalEventOptions(events)}
           />
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">

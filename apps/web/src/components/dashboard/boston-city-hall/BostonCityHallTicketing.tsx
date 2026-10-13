@@ -40,6 +40,10 @@ import {
 } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
+import {
+  bchOperationalEventList,
+  bchOperationalEventOptions,
+} from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 function isoToDatetimeLocal(iso: string | null): string {
   if (!iso) return "";
@@ -150,9 +154,13 @@ export function BostonCityHallTicketing({
     setLoadError(null);
     try {
       const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
-      const list = Array.isArray(res.data) ? res.data : [];
+      const list = bchOperationalEventList(Array.isArray(res.data) ? res.data : []);
       setEvents(list);
-      setEventId((prev) => fixedEventId || prev || list[0]?.id || "");
+      setEventId((prev) => {
+        if (fixedEventId) return fixedEventId;
+        if (prev && list.some((e) => e.id === prev)) return prev;
+        return list[0]?.id || "";
+      });
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Erro ao carregar eventos.");
     } finally {
@@ -357,18 +365,21 @@ export function BostonCityHallTicketing({
                   className="w-full max-w-xl"
                 >
                   <option value="">Selecione…</option>
-                  {events.map((ev) => (
-                    <option key={ev.id} value={ev.id}>
-                      {ev.name} ({EVENT_STATUS_LABEL[ev.status] ?? ev.status})
-                    </option>
-                  ))}
+                {bchOperationalEventOptions(events).map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
                 </NativeSelect>
               )}
               {selectedEvent ? (
                 <p className="text-xs text-muted-foreground">
-                  Slug: {selectedEvent.slug}
+                  {EVENT_STATUS_LABEL[selectedEvent.status] ?? selectedEvent.status}
                   {selectedEvent.startDate
-                    ? ` · ${new Date(selectedEvent.startDate).toLocaleDateString("pt-BR")}`
+                    ? ` · ${new Date(selectedEvent.startDate).toLocaleString("pt-BR", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}`
                     : ""}
                 </p>
               ) : null}
