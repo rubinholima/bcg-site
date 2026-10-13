@@ -72,10 +72,6 @@ function datetimeLocalToIso(value: string): string | null {
   return d.toISOString();
 }
 
-const EVENT_TYPE_LABEL: Record<string, string> = {
-  other: "Evento de venue",
-  football: "Futebol / torneio",
-};
 
 function stepIndex(step: SetupStep): number {
   return STEPS.findIndex((s) => s.id === step);
@@ -439,9 +435,9 @@ export function BostonCityHallEventSetup({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Tipo</Label>
+                <Label>Organizador</Label>
                 <p className="rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm text-slate-200">
-                  {EVENT_TYPE_LABEL[eventForm.category] ?? eventForm.category}
+                  Boston City Hall
                 </p>
               </div>
               <div className="space-y-2">
@@ -504,9 +500,6 @@ export function BostonCityHallEventSetup({
               choosePlaceholder="Escolher capa"
               urlPlaceholder="URL da capa"
             />
-            <p className="text-xs text-slate-500">
-              URL pública: {publicPath} (slug gerado automaticamente ao salvar)
-            </p>
           </div>
           <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-800/80 pt-4">
             <Button

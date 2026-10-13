@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelectField } from "@/components/ui/native-select";
+import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
 import {
   Table,
   TableBody,
@@ -22,10 +22,7 @@ import type {
 } from "@/types/boston-city-hall";
 import { EVENT_TICKET_CHECKIN_RESULT_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
-import {
-  bchOperationalEventList,
-  bchOperationalEventOptions,
-} from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { bchOperationalEventList } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 const RESULT_STYLE: Record<string, string> = {
   accepted: "border-emerald-500/50 bg-emerald-500/10 text-emerald-200",
@@ -122,12 +119,7 @@ export function BostonCityHallTicketCheckin() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <Label>Evento</Label>
-              <NativeSelectField
-                value={eventId}
-                onChange={(e) => setEventId(e.target.value)}
-                placeholder="Selecione o evento…"
-                options={bchOperationalEventOptions(events)}
-              />
+              <BchEventSelectField events={events} value={eventId} onChange={setEventId} />
             </div>
             <div className="space-y-1">
               <Label>Estação / scanner</Label>

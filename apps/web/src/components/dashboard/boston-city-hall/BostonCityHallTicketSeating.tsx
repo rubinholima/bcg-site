@@ -17,10 +17,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { EventTicketingEventListItem } from "@/types/boston-city-hall";
-import {
-  bchOperationalEventList,
-  bchOperationalEventOptions,
-} from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { bchOperationalEventList } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
 
 type TableRow = {
   id: string;
@@ -108,12 +106,7 @@ export function BostonCityHallTicketSeating() {
 
   return (
     <div className="space-y-4">
-      <NativeSelectField
-        value={eventId}
-        onChange={(e) => setEventId(e.target.value)}
-        placeholder="Evento…"
-        options={bchOperationalEventOptions(events)}
-      />
+      <BchEventSelectField events={events} value={eventId} onChange={setEventId} placeholder="Evento…" />
 
       <Card>
         <CardContent className="grid gap-3 pt-6 sm:grid-cols-3">

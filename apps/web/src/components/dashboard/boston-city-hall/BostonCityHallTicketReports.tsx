@@ -12,12 +12,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { bchOperationalEventList } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { cn } from "@/lib/utils";
-import { KpiCard } from "@/components/dashboard/cup360/KpiCard";
-import { Card, CardContent } from "@/components/ui/card";
-import { NativeSelectField } from "@/components/ui/native-select";
+import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
+import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BchTabBar } from "@/components/dashboard/boston-city-hall/BchTabBar";
+import { BCH_CARD } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import {
   Table,
   TableBody,
@@ -37,7 +41,6 @@ import type {
   TicketReportTicketsPerformance,
 } from "@/types/boston-city-hall";
 import { formatTicketingMoney } from "@/types/boston-city-hall";
-import { bchOperationalEventOptions } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import {
   asArray,
   hasSeatingReportData,
@@ -74,10 +77,9 @@ export function BostonCityHallTicketReports() {
 
   useEffect(() => {
     void api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events").then((res) => {
-      const list = Array.isArray(res.data) ? res.data : [];
+      const list = bchOperationalEventList(Array.isArray(res.data) ? res.data : []);
       setEvents(list);
-      const opts = bchOperationalEventOptions(list);
-      if (opts.length === 1) setEventId(opts[0].value);
+      if (list.length === 1) setEventId(list[0]!.id);
     });
   }, []);
 
@@ -175,67 +177,40 @@ export function BostonCityHallTicketReports() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <NativeSelectField
-          value={eventId}
-          onChange={(e) => setEventId(e.target.value)}
-          placeholder="Selecione o evento…"
-          options={bchOperationalEventOptions(events)}
-          className="sm:max-w-md"
-        />
+        <BchEventSelectField events={events} value={eventId} onChange={setEventId} />
       </div>
 
-      <div className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-muted/30 p-1">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setSection(s.id)}
-            className={cn(
-              "min-h-[44px] shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              section === s.id
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
-            )}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
+      <BchTabBar tabs={SECTIONS} active={section} onChange={setSection} />
 
       {!eventId ? (
-        <Card>
-          <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            Selecione um evento para ver os relatórios.
-          </CardContent>
-        </Card>
+        <BchCard>
+          <BchEmptyState message="Selecione um evento para ver os relatórios de ingressos." />
+        </BchCard>
       ) : loading && !overview ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <BchLoadingBlock />
       ) : (
         <>
           {(section === "overview" || section === "sales") && overview ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <KpiCard
+              <BchKpiCard
                 label="Receita"
                 value={formatTicketingMoney(overview.sales.grossAmount, currency)}
-                tone="accent"
+                tone="gold"
               />
-              <KpiCard label="Pedidos confirmados" value={overview.orders.confirmed} />
-              <KpiCard label="Ingressos vendidos" value={overview.sales.ticketsSold} />
-              <KpiCard label="Cortesias" value={overview.tickets.complimentaryIssued} tone="info" />
-              <KpiCard label="Check-ins" value={overview.tickets.checkedIn} tone="success" />
-              <KpiCard label="Ocupação" value={`${overview.tickets.occupancyPercent}%`} />
-              <KpiCard label="No-show" value={overview.tickets.noShow} tone="warning" />
-              <KpiCard label="Capacidade restante" value={overview.capacity.remaining} />
+              <BchKpiCard label="Pedidos confirmados" value={overview.orders.confirmed} />
+              <BchKpiCard label="Ingressos vendidos" value={overview.sales.ticketsSold} />
+              <BchKpiCard label="Cortesias" value={overview.tickets.complimentaryIssued} tone="info" />
+              <BchKpiCard label="Check-ins" value={overview.tickets.checkedIn} tone="success" />
+              <BchKpiCard label="Ocupação" value={`${overview.tickets.occupancyPercent}%`} />
+              <BchKpiCard label="No-show" value={overview.tickets.noShow} tone="warning" />
+              <BchKpiCard label="Capacidade restante" value={overview.capacity.remaining} />
             </div>
           ) : null}
 
           {section === "overview" && overview ? (
             <div className="grid gap-4 lg:grid-cols-2">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="mb-2 text-sm font-medium text-foreground">{overview.event.name}</p>
+              <div className={BCH_CARD}>
+                  <p className="mb-2 text-sm font-medium text-slate-100">{overview.event.name}</p>
                   <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <dt className="text-muted-foreground">Ticketing</dt>
                     <dd>{overview.ticketing.enabled ? "Ativo" : "Inativo"}</dd>
@@ -250,12 +225,10 @@ export function BostonCityHallTicketReports() {
                       {overview.tickets.paidNoShow} / {overview.tickets.complimentaryNoShow}
                     </dd>
                   </dl>
-                  <p className="mt-4 text-xs text-muted-foreground">{overview.financeReconciliation.note}</p>
-                </CardContent>
-              </Card>
+                  <p className="mt-4 text-xs text-slate-500">{overview.financeReconciliation.note}</p>
+              </div>
               {mixChart.some((x) => x.value > 0) ? (
-                <Card>
-                  <CardContent className="h-64 pt-6">
+                <div className={cn(BCH_CARD, "h-64 pt-2")}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={mixChart}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -271,8 +244,7 @@ export function BostonCityHallTicketReports() {
                         <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -280,8 +252,7 @@ export function BostonCityHallTicketReports() {
           {section === "sales" && sales ? (
             <div className="space-y-4">
               {salesChart.length > 0 ? (
-                <Card>
-                  <CardContent className="h-64 pt-6">
+                <div className={cn(BCH_CARD, "h-64 pt-2")}>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={salesChart}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -300,8 +271,7 @@ export function BostonCityHallTicketReports() {
                         <Line type="monotone" dataKey="revenueNum" stroke="hsl(var(--primary))" strokeWidth={2} />
                       </LineChart>
                     </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+                </div>
               ) : null}
               <ReportTable
                 title="Vendas por tipo"
@@ -390,14 +360,13 @@ export function BostonCityHallTicketReports() {
           {section === "checkin" && checkin ? (
             <div className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <KpiCard label="Entradas aceitas" value={checkin.summary.acceptedAttempts} tone="success" />
-                <KpiCard label="Tickets únicos (used)" value={checkin.summary.uniqueCheckedInTickets} />
-                <KpiCard label="Já utilizado" value={checkin.summary.alreadyUsedAttempts} tone="warning" />
-                <KpiCard label="Inválidos" value={checkin.summary.invalidAttempts} tone="danger" />
+                <BchKpiCard label="Entradas aceitas" value={checkin.summary.acceptedAttempts} tone="success" />
+                <BchKpiCard label="Tickets únicos (used)" value={checkin.summary.uniqueCheckedInTickets} />
+                <BchKpiCard label="Já utilizado" value={checkin.summary.alreadyUsedAttempts} tone="warning" />
+                <BchKpiCard label="Inválidos" value={checkin.summary.invalidAttempts} tone="danger" />
               </div>
               {checkinChart.length > 0 ? (
-                <Card>
-                  <CardContent className="h-64 pt-6">
+                <div className={cn(BCH_CARD, "h-64 pt-2")}>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={checkinChart}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -414,8 +383,7 @@ export function BostonCityHallTicketReports() {
                         <Line type="monotone" dataKey="rejected" name="Rejeitados" stroke="#f87171" strokeWidth={2} />
                       </LineChart>
                     </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+                </div>
               ) : null}
               <ReportTable
                 title="Por tipo"
@@ -459,10 +427,10 @@ export function BostonCityHallTicketReports() {
             hasSeatingReportData(seating) && seating ? (
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <KpiCard label="Mesas" value={seating.tablesConfigured} />
-                  <KpiCard label="Assentos" value={seating.seatsConfigured} />
-                  <KpiCard label="Assentos atribuídos" value={seating.assignedSeats} />
-                  <KpiCard label="Assentos usados" value={seating.usedAssignedSeats} tone="success" />
+                  <BchKpiCard label="Mesas" value={seating.tablesConfigured} />
+                  <BchKpiCard label="Assentos" value={seating.seatsConfigured} />
+                  <BchKpiCard label="Assentos atribuídos" value={seating.assignedSeats} />
+                  <BchKpiCard label="Assentos usados" value={seating.usedAssignedSeats} tone="success" />
                 </div>
                 <ReportTable
                   title="Por mesa"
@@ -487,11 +455,9 @@ export function BostonCityHallTicketReports() {
                 ) : null}
               </div>
             ) : (
-              <Card>
-                <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                  Assentos não habilitados ou sem dados de mesa para este evento.
-                </CardContent>
-              </Card>
+              <BchCard>
+                <BchEmptyState message="Assentos não habilitados ou sem dados de mesa para este evento." />
+              </BchCard>
             )
           ) : null}
         </>
@@ -511,9 +477,8 @@ function ReportTable({
 }) {
   if (rows.length === 0) return null;
   return (
-    <Card>
-      <CardContent className="pt-4">
-        <p className="mb-3 text-sm font-medium text-foreground">{title}</p>
+    <section className={BCH_CARD}>
+        <p className="mb-3 text-sm font-medium text-slate-100">{title}</p>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -534,7 +499,6 @@ function ReportTable({
             </TableBody>
           </Table>
         </div>
-      </CardContent>
-    </Card>
+    </section>
   );
 }

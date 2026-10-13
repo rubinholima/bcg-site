@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -104,12 +109,8 @@ export function BostonCityHallOperations() {
   }, [load]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Operação de eventos</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+    <BchCard contentClassName="space-y-4">
+        <BchFilterBar>
           <div className="relative min-w-0 flex-1 sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -169,18 +170,16 @@ export function BostonCityHallOperations() {
               <SelectItem value="paid">Quitado</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </BchFilterBar>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <BchLoadingBlock />
         ) : error ? (
-          <p className="text-sm text-destructive">{error}</p>
+          <BchInlineError message={error} onRetry={() => void load()} />
         ) : rows.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Nenhum evento neste filtro.</p>
+          <BchEmptyState message="Nenhuma operação neste filtro. Ajuste o período ou a busca." />
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-border">
+          <div className={BCH_TABLE_WRAP}>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -274,7 +273,6 @@ export function BostonCityHallOperations() {
             </Table>
           </div>
         )}
-      </CardContent>
-    </Card>
+    </BchCard>
   );
 }

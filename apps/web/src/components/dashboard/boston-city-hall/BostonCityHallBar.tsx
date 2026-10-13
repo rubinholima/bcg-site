@@ -43,6 +43,9 @@ import {
 } from "@/types/bch-bar";
 import { cn } from "@/lib/utils";
 import { bchProductDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { BchTabBar } from "@/components/dashboard/boston-city-hall/BchTabBar";
+import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
+import { BCH_BTN_PRIMARY } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 
 type Tab = "products" | "selling" | "prices" | "inventory" | "movements" | "open";
 
@@ -617,16 +620,7 @@ export function BostonCityHallBar() {
   }
 
   if (loadError) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-10">
-          <p className="text-sm text-destructive">{loadError}</p>
-          <Button type="button" variant="outline" onClick={() => void loadAll()}>
-            Tentar novamente
-          </Button>
-        </CardContent>
-      </Card>
-    );
+    return <BchInlineError message={loadError} onRetry={() => void loadAll()} />;
   }
 
   return (
@@ -647,30 +641,14 @@ export function BostonCityHallBar() {
         <Button asChild variant="outline" className="min-h-[44px]">
           <Link href="/dashboard/eventos/boston-city-hall/bar/physical-counts">Contagem física</Link>
         </Button>
-        <Button asChild className="min-h-[44px] gap-2">
+        <Button asChild className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}>
           <Link href="/dashboard/eventos/boston-city-hall/bar/pos">
             <ShoppingCart className="h-4 w-4" />
             POS
           </Link>
         </Button>
       </div>
-      <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-muted/30 p-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={cn(
-              "min-h-[44px] rounded-md px-4 py-2 text-sm font-medium transition-colors",
-              tab === t.id
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <BchTabBar tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === "products" && (
         <Card>

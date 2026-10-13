@@ -19,10 +19,8 @@ import {
 } from "@/components/ui/table";
 import type { EventTicketingDetail, EventTicketingEventListItem, EventTicketType } from "@/types/boston-city-hall";
 import { COMPLIMENTARY_REASON_OPTIONS } from "@/types/boston-city-hall";
-import {
-  bchOperationalEventList,
-  bchOperationalEventOptions,
-} from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { bchOperationalEventList } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
 
 type GuestRow = {
   id: string;
@@ -137,12 +135,7 @@ export function BostonCityHallTicketComplimentary() {
     <div className="space-y-4">
       <Card>
         <CardContent className="space-y-3 pt-6">
-          <NativeSelectField
-            value={eventId}
-            onChange={(e) => setEventId(e.target.value)}
-            placeholder="Evento…"
-            options={bchOperationalEventOptions(events)}
-          />
+          <BchEventSelectField events={events} value={eventId} onChange={setEventId} placeholder="Evento…" />
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label>Convidado</Label>
