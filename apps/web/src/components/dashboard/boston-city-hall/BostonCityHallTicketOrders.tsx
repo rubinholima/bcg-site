@@ -264,9 +264,7 @@ export function BostonCityHallTicketOrders() {
 
       <div className={BCH_CARD + " p-0 overflow-hidden"}>
           {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <BchLoadingBlock label="Carregando pedidos…" />
           ) : (
             <Table>
               <TableHeader>
@@ -283,8 +281,8 @@ export function BostonCityHallTicketOrders() {
               <TableBody>
                 {orders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
-                      Nenhum pedido.
+                    <TableCell colSpan={7} className="p-0">
+                      <BchEmptyState message="Nenhum pedido com estes filtros." className="py-8" />
                     </TableCell>
                   </TableRow>
                 ) : (

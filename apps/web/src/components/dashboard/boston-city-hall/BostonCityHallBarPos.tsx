@@ -18,6 +18,7 @@ import {
   type BchBarPosCatalogItem,
   type BchBarSale,
 } from "@/types/bch-bar";
+import { BCH_BTN_PRIMARY } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { cn } from "@/lib/utils";
 import {
   bchOperationalProducts,
@@ -341,7 +342,12 @@ export function BostonCityHallBarPos() {
             Cancelar venda
           </Button>
         ) : (
-          <Button type="button" className="min-h-[44px]" onClick={() => void startSale()} disabled={busy || !locationId}>
+          <Button
+            type="button"
+            className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}
+            onClick={() => void startSale()}
+            disabled={busy || !locationId}
+          >
             Nova venda
           </Button>
         )}
@@ -562,7 +568,7 @@ export function BostonCityHallBarPos() {
 
                   <Button
                     type="button"
-                    className="min-h-[48px] w-full text-base"
+                    className={cn("min-h-[48px] w-full text-base", BCH_BTN_PRIMARY)}
                     disabled={busy || sale.items.length === 0}
                     onClick={() => void completeSale()}
                   >

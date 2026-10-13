@@ -2,9 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { bchProductDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   Table,
@@ -63,11 +69,7 @@ export function BostonCityHallBarReports() {
   }, [load]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[200px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <BchLoadingBlock label="Carregando relatórios…" />;
   }
 
   return (
@@ -79,102 +81,118 @@ export function BostonCityHallBarReports() {
         <ArrowLeft className="h-4 w-4" />
         Voltar ao bar
       </Link>
-      <NativeSelect className="min-h-[44px] max-w-xs" value={view} onChange={(e) => setView(e.target.value)}>
-        <option value="sales">Vendas</option>
-        <option value="products">Produtos</option>
-        <option value="payments">Pagamentos</option>
-        <option value="loss">Perdas / divergência</option>
-      </NativeSelect>
+      <BchFilterBar>
+        <div className="min-w-[200px]">
+          <label className="mb-1 block text-xs text-muted-foreground">Visão</label>
+          <NativeSelect className="min-h-[44px] w-full" value={view} onChange={(e) => setView(e.target.value)}>
+            <option value="sales">Vendas</option>
+            <option value="products">Produtos</option>
+            <option value="payments">Pagamentos</option>
+            <option value="loss">Perdas / divergência</option>
+          </NativeSelect>
+        </div>
+      </BchFilterBar>
 
       {view === "sales" && sales ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Vendas concluídas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1 text-sm">
-            <p>Quantidade: {sales.salesCount}</p>
-            <p>Receita líquida: R$ {sales.netSales}</p>
-            <p>Margem bruta est.: R$ {sales.estimatedGrossMargin}</p>
-            {sales.marginIncomplete ? <p className="text-amber-400">Margem incompleta (custos ausentes).</p> : null}
-          </CardContent>
-        </Card>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <BchKpiCard label="Vendas concluídas" value={sales.salesCount} tone="gold" />
+          <BchKpiCard label="Receita líquida" value={`R$ ${sales.netSales}`} tone="gold" />
+          <BchKpiCard
+            label="Margem bruta est."
+            value={`R$ ${sales.estimatedGrossMargin}`}
+            hint={sales.marginIncomplete ? "Custos ausentes em vendas antigas" : undefined}
+            tone="success"
+          />
+        </div>
       ) : null}
 
       {view === "products" ? (
-        <Card>
-          <CardContent className="overflow-x-auto pt-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Unidade</TableHead>
-                  <TableHead>Qtd</TableHead>
-                  <TableHead>Receita</TableHead>
-                  <TableHead>Margem</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((r, i) => (
-                  <TableRow key={`${r.productName}-${i}`}>
-                    <TableCell>{r.productName}</TableCell>
-                    <TableCell>{r.sellingUnitName}</TableCell>
-                    <TableCell>{r.quantitySold}</TableCell>
-                    <TableCell>{r.revenue}</TableCell>
-                    <TableCell>{r.grossMargin}</TableCell>
+        products.length === 0 ? (
+          <BchEmptyState message="Nenhuma venda por produto no período." />
+        ) : (
+          <BchCard title="Por produto">
+            <div className={BCH_TABLE_WRAP}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Produto</TableHead>
+                    <TableHead>Unidade</TableHead>
+                    <TableHead>Qtd</TableHead>
+                    <TableHead>Receita</TableHead>
+                    <TableHead>Margem</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {products.map((r, i) => (
+                    <TableRow key={`${r.productName}-${i}`}>
+                      <TableCell>{bchProductDisplayName(r.productName)}</TableCell>
+                      <TableCell>{r.sellingUnitName}</TableCell>
+                      <TableCell>{r.quantitySold}</TableCell>
+                      <TableCell>{r.revenue}</TableCell>
+                      <TableCell>{r.grossMargin}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </BchCard>
+        )
       ) : null}
 
       {view === "payments" ? (
-        <Card>
-          <CardContent className="overflow-x-auto pt-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Forma</TableHead>
-                  <TableHead>Qtd</TableHead>
-                  <TableHead>Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.map((r) => (
-                  <TableRow key={r.methodLabel}>
-                    <TableCell>{r.methodLabel}</TableCell>
-                    <TableCell>{r.count}</TableCell>
-                    <TableCell>{r.totalAmount}</TableCell>
+        payments.length === 0 ? (
+          <BchEmptyState message="Nenhum pagamento registrado no período." />
+        ) : (
+          <BchCard title="Por forma de pagamento">
+            <div className={BCH_TABLE_WRAP}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Forma</TableHead>
+                    <TableHead>Qtd</TableHead>
+                    <TableHead>Total</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {payments.map((r) => (
+                    <TableRow key={r.methodLabel}>
+                      <TableCell>{r.methodLabel}</TableCell>
+                      <TableCell>{r.count}</TableCell>
+                      <TableCell>{r.totalAmount}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </BchCard>
+        )
       ) : null}
 
       {view === "loss" ? (
-        <Card>
-          <CardContent className="overflow-x-auto pt-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Quantidade</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loss.map((r) => (
-                  <TableRow key={r.movementType}>
-                    <TableCell>{r.movementType}</TableCell>
-                    <TableCell>{r.quantity}</TableCell>
+        loss.length === 0 ? (
+          <BchEmptyState message="Nenhuma perda ou divergência no período." />
+        ) : (
+          <BchCard title="Perdas e divergências">
+            <div className={BCH_TABLE_WRAP}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Quantidade</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {loss.map((r) => (
+                    <TableRow key={r.movementType}>
+                      <TableCell>{r.movementType}</TableCell>
+                      <TableCell>{r.quantity}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </BchCard>
+        )
       ) : null}
     </div>
   );

@@ -5,6 +5,9 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, ExternalLink, Loader2, Plus } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -42,7 +45,6 @@ import { cn } from "@/lib/utils";
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 import {
   bchOperationalEventList,
-  bchOperationalEventOptions,
 } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 function isoToDatetimeLocal(iso: string | null): string {
@@ -343,37 +345,25 @@ export function BostonCityHallTicketing({
 
   return (
     <div className="space-y-4">
-      {loadError ? (
-        <p className="text-sm text-destructive">{loadError}</p>
-      ) : null}
+      {loadError ? <BchInlineError message={loadError} onRetry={() => void loadDetail(eventId)} /> : null}
 
       {!embedded ? (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Evento</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0 flex-1 space-y-2">
-              <Label htmlFor="bch-ticketing-event">Selecione o evento</Label>
+        <BchFilterBar>
+            <div className="min-w-0 flex-1">
               {loadingEvents ? (
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               ) : (
-                <NativeSelect
+                <BchEventSelectField
                   id="bch-ticketing-event"
+                  label="Evento"
+                  events={events}
                   value={eventId}
-                  onChange={(e) => setEventId(e.target.value)}
-                  className="w-full max-w-xl"
-                >
-                  <option value="">Selecione…</option>
-                {bchOperationalEventOptions(events).map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-                </NativeSelect>
+                  onChange={setEventId}
+                  placeholder="Selecione o evento…"
+                />
               )}
               {selectedEvent ? (
-                <p className="text-xs text-muted-foreground">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {EVENT_STATUS_LABEL[selectedEvent.status] ?? selectedEvent.status}
                   {selectedEvent.startDate
                     ? ` · ${new Date(selectedEvent.startDate).toLocaleString("pt-BR", {
@@ -394,16 +384,15 @@ export function BostonCityHallTicketing({
                   />
                   <span className="text-sm">Ingressos habilitados</span>
                 </label>
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" className="min-h-[44px]" asChild>
                   <Link href={bchEventSetupPath(detail.eventId)}>
                     <ExternalLink className="mr-1 h-4 w-4" />
-                    Event Setup
+                    Preparar evento
                   </Link>
                 </Button>
               </div>
             ) : null}
-          </CardContent>
-        </Card>
+        </BchFilterBar>
       ) : detail ? (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2">
           <label className="flex min-h-[44px] cursor-pointer items-center gap-2">

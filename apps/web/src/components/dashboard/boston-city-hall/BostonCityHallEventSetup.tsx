@@ -342,7 +342,7 @@ export function BostonCityHallEventSetup({
 
   if (loadError || !eventForm) {
     return (
-      <BchSection title="Event Setup">
+      <BchSection title="Não foi possível carregar">
         <p className="text-sm text-red-300">{loadError ?? "Evento não encontrado."}</p>
         <Button variant="outline" className="mt-3 min-h-[44px]" asChild>
           <Link href={resolvedBackHref}>{resolvedBackLabel}</Link>

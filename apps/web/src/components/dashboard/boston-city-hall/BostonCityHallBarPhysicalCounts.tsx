@@ -5,7 +5,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
+import { BCH_BTN_PRIMARY, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { bchProductDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { cn } from "@/lib/utils";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +28,6 @@ import {
   type BchBarPhysicalCount,
   type BchBarProduct,
 } from "@/types/bch-bar";
-import { cn } from "@/lib/utils";
 
 function divergenceClass(value: string | null) {
   if (value == null) return "text-muted-foreground";
@@ -230,11 +232,8 @@ export function BostonCityHallBarPhysicalCounts() {
         Voltar ao bar
       </Link>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Nova contagem</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <BchCard title="Nova contagem">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1">
             <Label className="text-xs">Local</Label>
             <NativeSelect
@@ -250,17 +249,19 @@ export function BostonCityHallBarPhysicalCounts() {
               ))}
             </NativeSelect>
           </div>
-          <Button type="button" className="min-h-[44px]" disabled={busy || !newLocationId} onClick={() => void createAndStart()}>
+          <Button
+            type="button"
+            className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}
+            disabled={busy || !newLocationId}
+            onClick={() => void createAndStart()}
+          >
             Iniciar contagem
           </Button>
-        </CardContent>
-      </Card>
+          </div>
+      </BchCard>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Sessões</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <BchCard title="Sessões">
+          <div>
           <NativeSelect
             className="min-h-[44px] w-full max-w-xl"
             value={selectedId}
@@ -278,17 +279,12 @@ export function BostonCityHallBarPhysicalCounts() {
               {detail.openContainers.length} garrafa(s) aberta(s) neste local — contagem abaixo é só estoque fechado.
             </p>
           ) : null}
-        </CardContent>
-      </Card>
+          </div>
+      </BchCard>
 
       {selected && rows.length > 0 ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              {readOnly ? "Histórico" : "Contagem"} — {selected.locationName}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
+        <BchCard title={`${readOnly ? "Histórico" : "Contagem"} — ${selected.locationName}`}>
+            <div className={BCH_TABLE_WRAP}>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -307,7 +303,7 @@ export function BostonCityHallBarPhysicalCounts() {
                   const reasonDisplay = readOnly ? line.reason : draft?.reason ?? line.reason ?? "";
                   return (
                     <TableRow key={line.id}>
-                      <TableCell>{line.productName}</TableCell>
+                      <TableCell>{bchProductDisplayName(line.productName)}</TableCell>
                       <TableCell>{line.expectedQuantity}</TableCell>
                       <TableCell>
                         {readOnly ? (
@@ -389,7 +385,12 @@ export function BostonCityHallBarPhysicalCounts() {
             ) : null}
             {!readOnly && selected.status === "in_progress" ? (
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button type="button" className="min-h-[44px]" disabled={busy} onClick={() => void completeCount()}>
+                <Button
+                  type="button"
+                  className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}
+                  disabled={busy}
+                  onClick={() => void completeCount()}
+                >
                   Concluir e ajustar estoque
                 </Button>
                 <Button type="button" variant="outline" className="min-h-[44px]" disabled={busy} onClick={() => void cancelCount()}>
@@ -397,8 +398,8 @@ export function BostonCityHallBarPhysicalCounts() {
                 </Button>
               </div>
             ) : null}
-          </CardContent>
-        </Card>
+            </div>
+        </BchCard>
       ) : null}
 
       <FeedbackModal

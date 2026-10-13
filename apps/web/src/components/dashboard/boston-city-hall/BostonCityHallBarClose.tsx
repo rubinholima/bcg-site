@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BCH_BTN_PRIMARY } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { cn } from "@/lib/utils";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { BchBarEventInventory } from "@/types/bch-bar";
@@ -93,11 +96,7 @@ export function BostonCityHallBarClose() {
   const selected = closes.find((c) => c.id === selectedCloseId);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[200px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <BchLoadingBlock label="Carregando fechamentos…" />;
   }
 
   return (
@@ -109,29 +108,28 @@ export function BostonCityHallBarClose() {
         <ArrowLeft className="h-4 w-4" />
         Voltar ao bar
       </Link>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Gerar fechamento</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <BchCard title="Gerar fechamento">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <NativeSelect className="min-h-[44px] flex-1" value={invId} onChange={(e) => setInvId(e.target.value)}>
             <option value="">Estoque de evento fechado…</option>
             {inventories.map((i) => (
               <option key={i.id} value={i.id}>
-                {i.eventTitle ?? i.eventId} — {i.locationName}
+                {i.eventTitle ?? "Evento"} — {i.locationName}
               </option>
             ))}
           </NativeSelect>
-          <Button type="button" className="min-h-[44px]" disabled={busy || !invId} onClick={() => void draft()}>
+          <Button
+            type="button"
+            className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}
+            disabled={busy || !invId}
+            onClick={() => void draft()}
+          >
             Prévia
           </Button>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Fechamentos</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </div>
+      </BchCard>
+      <BchCard title="Fechamentos">
+          <div className="space-y-3">
           <NativeSelect
             className="min-h-[44px] w-full max-w-xl"
             value={selectedCloseId}
@@ -152,15 +150,20 @@ export function BostonCityHallBarClose() {
             </ul>
           ) : null}
           {selected?.status === "draft" ? (
-            <Button type="button" className="min-h-[44px]" disabled={busy} onClick={() => void finalize()}>
+            <Button
+              type="button"
+              className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}
+              disabled={busy}
+              onClick={() => void finalize()}
+            >
               Finalizar fechamento
             </Button>
           ) : null}
           {selected?.status === "finalized" ? (
             <p className="text-sm text-muted-foreground">Fechamento imutável — consulta apenas.</p>
           ) : null}
-        </CardContent>
-      </Card>
+          </div>
+      </BchCard>
       <FeedbackModal
         open={feedback.open}
         onOpenChange={(open) => setFeedback((f) => ({ ...f, open }))}

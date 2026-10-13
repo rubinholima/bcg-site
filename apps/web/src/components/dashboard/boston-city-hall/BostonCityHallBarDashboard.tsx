@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
 
 type Dashboard = {
   salesCount: number;
@@ -37,69 +38,43 @@ export function BostonCityHallBarDashboard() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[200px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <BchLoadingBlock label="Carregando indicadores do bar…" />;
   }
 
   return (
     <div className="space-y-4">
       <Link
         href="/dashboard/eventos/boston-city-hall/bar"
-        className="inline-flex min-h-[44px] items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex min-h-[44px] items-center gap-1 text-sm text-slate-400 hover:text-slate-100"
       >
         <ArrowLeft className="h-4 w-4" />
         Voltar ao bar
       </Link>
       {data?.marginIncomplete ? (
-        <p className="text-sm text-amber-400">Margem parcial: faltam snapshots de custo em vendas antigas.</p>
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+          Margem parcial: faltam snapshots de custo em vendas antigas.
+        </p>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Vendas (30 dias)</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{data?.salesCount ?? 0}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Receita</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">R$ {data?.revenue ?? "0.00"}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Margem bruta est.</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            R$ {data?.estimatedGrossMargin ?? "0.00"}
-            {data?.estimatedGrossMarginPct ? ` (${data.estimatedGrossMarginPct}%)` : ""}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Itens vendidos</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{data?.itemsSold ?? "0"}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Estoque baixo / zerado</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            {data?.lowStockProducts ?? 0} / {data?.outOfStockProducts ?? 0}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Eventos ativos / abertas</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            {data?.activeEventInventories ?? 0} · {data?.openContainers ?? 0} garrafas
-          </CardContent>
-        </Card>
+        <BchKpiCard label="Vendas (30 dias)" value={data?.salesCount ?? 0} tone="gold" />
+        <BchKpiCard label="Receita" value={`R$ ${data?.revenue ?? "0.00"}`} tone="gold" />
+        <BchKpiCard
+          label="Margem bruta est."
+          value={`R$ ${data?.estimatedGrossMargin ?? "0.00"}`}
+          hint={data?.estimatedGrossMarginPct ? `${data.estimatedGrossMarginPct}%` : undefined}
+          tone="success"
+        />
+        <BchKpiCard label="Itens vendidos" value={data?.itemsSold ?? "0"} />
+        <BchKpiCard
+          label="Estoque baixo / zerado"
+          value={`${data?.lowStockProducts ?? 0} / ${data?.outOfStockProducts ?? 0}`}
+          tone="warning"
+        />
+        <BchKpiCard
+          label="Inventários ativos / garrafas abertas"
+          value={`${data?.activeEventInventories ?? 0} · ${data?.openContainers ?? 0}`}
+          tone="info"
+        />
       </div>
     </div>
   );
