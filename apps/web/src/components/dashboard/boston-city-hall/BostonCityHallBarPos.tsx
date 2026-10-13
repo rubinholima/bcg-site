@@ -21,7 +21,6 @@ import {
 import { BCH_BTN_PRIMARY } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { cn } from "@/lib/utils";
 import {
-  bchOperationalProducts,
   bchProductDisplayName,
 } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
@@ -92,7 +91,7 @@ export function BostonCityHallBarPos() {
     const { data: rows } = await api.get<BchBarPosCatalogItem[]>(
       `/boston-city-hall/bar/pos/catalog?locationId=${encodeURIComponent(locId)}`,
     );
-    setCatalog(bchOperationalProducts(Array.isArray(rows) ? rows : []));
+    setCatalog(Array.isArray(rows) ? rows : []);
   }, []);
 
   const refreshSale = useCallback(async (saleId: string) => {

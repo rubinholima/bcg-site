@@ -40,8 +40,6 @@ export function BostonCityHallTicketCheckin() {
     setEventId,
     loading: loadingEvents,
     error: eventsError,
-    rawCount,
-    smokeHiddenCount,
     reload: reloadEvents,
   } = useBchHubEventBinding();
   const [stationLabel, setStationLabel] = useState("");
@@ -117,9 +115,7 @@ export function BostonCityHallTicketCheckin() {
       {eventsError || (!loadingEvents && events.length === 0) ? (
         <BchEventListDiagnostics
           error={eventsError}
-          rawCount={rawCount}
-          operationalCount={events.length}
-          smokeHiddenCount={smokeHiddenCount}
+          eventCount={events.length}
           onRetry={() => void reloadEvents()}
         />
       ) : null}

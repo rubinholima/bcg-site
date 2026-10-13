@@ -373,7 +373,7 @@ export function BostonCityHallBarPhysicalCounts() {
                     <option value="">Produto ativo…</option>
                     {products.filter((p) => p.active).map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name}
+                        {bchProductDisplayName(p.name)}
                       </option>
                     ))}
                   </NativeSelect>

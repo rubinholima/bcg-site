@@ -19,6 +19,7 @@ import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall
 import { BostonCityHallCreateBchEventDialog } from "@/components/dashboard/boston-city-hall/BostonCityHallCreateBchEventDialog";
 import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
 import { useBchTicketingSelection } from "@/components/dashboard/boston-city-hall/bch-ticketing-selection-context";
+import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 import {
   BCH_BTN_PRIMARY,
@@ -73,25 +74,24 @@ export function BostonCityHallTicketSalesOverview({
   const {
     loading,
     error,
-    rawEvents,
     operationalEvents,
-    smokeHiddenCount,
     reload,
   } = useBchTicketingSelection();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [metaById, setMetaById] = useState<Record<string, EventCardMeta>>({});
   const [metaLoading, setMetaLoading] = useState(false);
+  const events = operationalEvents;
 
-  const loadMeta = useCallback(async (events: EventTicketingEventListItem[]) => {
-    if (!events.length) {
+  const loadMeta = useCallback(async (list: EventTicketingEventListItem[]) => {
+    if (!list.length) {
       setMetaById({});
       return;
     }
     setMetaLoading(true);
     try {
       const pairs = await Promise.all(
-        events.map(async (ev) => {
+        list.map(async (ev) => {
           try {
             const [overviewRes, eventRes] = await Promise.all([
               api.get<TicketReportOverview>(
@@ -118,8 +118,8 @@ export function BostonCityHallTicketSalesOverview({
   }, []);
 
   useEffect(() => {
-    void loadMeta(operationalEvents);
-  }, [loadMeta, operationalEvents]);
+    void loadMeta(events);
+  }, [loadMeta, events]);
 
   const aggregate = useMemo(() => {
     let revenue = 0;
@@ -127,7 +127,7 @@ export function BostonCityHallTicketSalesOverview({
     let sold = 0;
     let capacity = 0;
     let confirmedOrders = 0;
-    for (const ev of operationalEvents) {
+    for (const ev of events) {
       const o = metaById[ev.id]?.overview;
       if (!o) continue;
       currency = o.sales.currency || o.ticketing.currency || currency;
@@ -136,21 +136,15 @@ export function BostonCityHallTicketSalesOverview({
       capacity += o.capacity.configured ?? 0;
       confirmedOrders += o.orders.confirmed ?? 0;
     }
-    return { revenue, currency, sold, capacity, confirmedOrders, eventCount: operationalEvents.length };
-  }, [metaById, operationalEvents]);
+    return { revenue, currency, sold, capacity, confirmedOrders, eventCount: events.length };
+  }, [metaById, events]);
 
-  const showDiagnostics = !loading && (error || operationalEvents.length === 0);
+  const showDiagnostics = !loading && (error || events.length === 0);
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-50">Eventos e vendas</h2>
-          <p className="text-xs text-slate-500">
-            Visão operacional · checkout público disponível; cobrança online depende de provedor no
-            Payment Core.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold text-slate-50">Eventos e vendas</h2>
         <Button
           type="button"
           className={cn("min-h-[44px] shrink-0 gap-2", BCH_BTN_PRIMARY)}
@@ -165,15 +159,13 @@ export function BostonCityHallTicketSalesOverview({
         <BchEventListDiagnostics
           loading={loading}
           error={error}
-          rawCount={rawEvents.length}
-          operationalCount={operationalEvents.length}
-          smokeHiddenCount={smokeHiddenCount}
+          eventCount={events.length}
           onRetry={() => void reload()}
           onCreateEvent={() => setCreateOpen(true)}
         />
       ) : null}
 
-      {!loading && operationalEvents.length > 0 ? (
+      {!loading && events.length > 0 ? (
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <BchKpiCard
@@ -215,7 +207,7 @@ export function BostonCityHallTicketSalesOverview({
             </div>
           ) : (
             <ul className="grid gap-4 lg:grid-cols-2">
-              {operationalEvents.map((ev) => {
+              {events.map((ev) => {
                 const meta = metaById[ev.id];
                 const overview = meta?.overview;
                 const cover = meta?.logoUrl ? getPublicImageUrl(meta.logoUrl) : null;
@@ -242,13 +234,15 @@ export function BostonCityHallTicketSalesOverview({
                           />
                         ) : (
                           <div className="flex h-full min-h-[8rem] items-center justify-center text-3xl font-semibold text-amber-500/40">
-                            {ev.name.trim().charAt(0).toUpperCase() || "?"}
+                            {bchEventDisplayName(ev.name).charAt(0).toUpperCase() || "?"}
                           </div>
                         )}
                       </div>
                       <div className="min-w-0 flex-1 space-y-3 p-4 sm:p-5">
                         <div>
-                          <h3 className="truncate text-base font-semibold text-slate-50">{ev.name}</h3>
+                          <h3 className="truncate text-base font-semibold text-slate-50">
+                            {bchEventDisplayName(ev.name)}
+                          </h3>
                           <p className="mt-0.5 text-xs text-slate-400">{formatEventWhen(ev)}</p>
                           <div className="mt-2 flex flex-wrap gap-2">
                             <span className="rounded-md border border-slate-600/50 bg-slate-900/60 px-2 py-0.5 text-[11px] font-medium text-slate-200">

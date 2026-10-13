@@ -43,9 +43,6 @@ import {
 } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
-import {
-  bchOperationalEventList,
-} from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { useBchTicketingSelectionOptional } from "@/components/dashboard/boston-city-hall/bch-ticketing-selection-context";
 import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
 
@@ -162,7 +159,7 @@ export function BostonCityHallTicketing({
     setLoadError(null);
     try {
       const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
-      const list = bchOperationalEventList(Array.isArray(res.data) ? res.data : []);
+      const list = Array.isArray(res.data) ? res.data : [];
       setEvents(list);
       setEventIdLocal((prev) => {
         if (fixedEventId) return fixedEventId;
@@ -363,9 +360,7 @@ export function BostonCityHallTicketing({
       {!embedded && eventsLoadError ? (
         <BchEventListDiagnostics
           error={eventsLoadError}
-          rawCount={hubSelection?.rawEvents.length ?? 0}
-          operationalCount={eventsResolved.length}
-          smokeHiddenCount={hubSelection?.smokeHiddenCount ?? 0}
+          eventCount={eventsResolved.length}
           onRetry={() => void hubSelection?.reload()}
         />
       ) : null}
@@ -378,9 +373,7 @@ export function BostonCityHallTicketing({
               ) : eventsResolved.length === 0 && !eventsLoadError ? (
                 <BchEventListDiagnostics
                   error={null}
-                  rawCount={hubSelection?.rawEvents.length ?? 0}
-                  operationalCount={0}
-                  smokeHiddenCount={hubSelection?.smokeHiddenCount ?? 0}
+                  eventCount={0}
                   onRetry={() => void hubSelection?.reload()}
                 />
               ) : (

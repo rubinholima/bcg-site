@@ -682,7 +682,7 @@ export function BostonCityHallBar() {
                   products.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell className="font-mono text-xs">{p.sku}</TableCell>
-                      <TableCell>{p.name}</TableCell>
+                      <TableCell>{bchProductDisplayName(p.name)}</TableCell>
                       <TableCell>{categoryLabel(p.category)}</TableCell>
                       <TableCell>
                         {p.physicalUnit

@@ -13,7 +13,6 @@ export function BchEventSelectField<T extends BchEventListLike>({
   onChange,
   placeholder = "Selecione o evento…",
   className,
-  includeSmokeTests,
   allowAll,
   allLabel = "Todos os eventos",
   id,
@@ -24,13 +23,12 @@ export function BchEventSelectField<T extends BchEventListLike>({
   onChange: (eventId: string) => void;
   placeholder?: string;
   className?: string;
-  includeSmokeTests?: boolean;
   allowAll?: boolean;
   allLabel?: string;
   id?: string;
   label?: string;
 }) {
-  const options = bchOperationalEventOptions(events, { includeSmokeTests });
+  const options = bchOperationalEventOptions(events);
   const withAll = allowAll ? [{ value: "", label: allLabel }, ...options] : options;
   return (
     <div className={cn("space-y-1", className)}>

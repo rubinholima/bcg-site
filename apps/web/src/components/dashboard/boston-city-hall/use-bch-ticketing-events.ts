@@ -2,18 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
-import {
-  bchOperationalEventList,
-  isBchSmokeTestEvent,
-} from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import type { EventTicketingEventListItem } from "@/types/boston-city-hall";
 
 export type BchTicketingEventsLoadState = {
   loading: boolean;
   error: string | null;
   rawEvents: EventTicketingEventListItem[];
+  /** Alias de rawEvents — todos os eventos do tenant visíveis na operação. */
   operationalEvents: EventTicketingEventListItem[];
-  smokeHiddenCount: number;
   reload: () => void;
 };
 
@@ -40,22 +36,13 @@ export function useBchTicketingEvents(): BchTicketingEventsLoadState {
     void load();
   }, [load]);
 
-  const operationalEvents = useMemo(
-    () => bchOperationalEventList(rawEvents),
-    [rawEvents],
-  );
-
-  const smokeHiddenCount = useMemo(
-    () => rawEvents.filter((ev) => isBchSmokeTestEvent(ev)).length,
-    [rawEvents],
-  );
+  const operationalEvents = useMemo(() => rawEvents, [rawEvents]);
 
   return {
     loading,
     error,
     rawEvents,
     operationalEvents,
-    smokeHiddenCount,
     reload: load,
   };
 }

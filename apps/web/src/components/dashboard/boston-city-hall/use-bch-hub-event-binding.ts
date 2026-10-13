@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { bchOperationalEventList } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { useBchTicketingSelectionOptional } from "@/components/dashboard/boston-city-hall/bch-ticketing-selection-context";
 import type { EventTicketingEventListItem } from "@/types/boston-city-hall";
 
@@ -17,7 +16,7 @@ export function useBchHubEventBinding() {
     setLoadingLocal(true);
     try {
       const res = await api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events");
-      const list = bchOperationalEventList(Array.isArray(res.data) ? res.data : []);
+      const list = Array.isArray(res.data) ? res.data : [];
       setEventsLocal(list);
       setEventIdLocal((prev) => {
         if (prev && list.some((e) => e.id === prev)) return prev;
@@ -39,8 +38,6 @@ export function useBchHubEventBinding() {
       setEventId: hub.setEventId,
       loading: hub.loading,
       error: hub.error,
-      rawCount: hub.rawEvents.length,
-      smokeHiddenCount: hub.smokeHiddenCount,
       reload: hub.reload,
     };
   }
@@ -51,8 +48,6 @@ export function useBchHubEventBinding() {
     setEventId: setEventIdLocal,
     loading: loadingLocal,
     error: null as string | null,
-    rawCount: eventsLocal.length,
-    smokeHiddenCount: 0,
     reload: loadLocal,
   };
 }

@@ -59,8 +59,6 @@ export function BostonCityHallTicketOrders() {
     setEventId: setEventFilter,
     loading: loadingEvents,
     error: eventsError,
-    rawCount,
-    smokeHiddenCount,
     reload: reloadEvents,
   } = useBchHubEventBinding();
   const [orders, setOrders] = useState<EventTicketOrderListItem[]>([]);
@@ -230,9 +228,7 @@ export function BostonCityHallTicketOrders() {
       {eventsError || (!loadingEvents && events.length === 0) ? (
         <BchEventListDiagnostics
           error={eventsError}
-          rawCount={rawCount}
-          operationalCount={events.length}
-          smokeHiddenCount={smokeHiddenCount}
+          eventCount={events.length}
           onRetry={() => void reloadEvents()}
         />
       ) : null}

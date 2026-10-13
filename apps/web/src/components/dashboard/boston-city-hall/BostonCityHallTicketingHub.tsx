@@ -29,7 +29,7 @@ const PRIMARY_TABS: BchTabItem[] = [
   { id: "reports", label: "Relatórios" },
 ];
 
-const CHECKOUT_TAB: BchTabItem = { id: "checkout", label: "Checkout (teste)" };
+const CHECKOUT_TAB: BchTabItem = { id: "checkout", label: "Checkout" };
 
 type TabId = BchTicketingHubTabId;
 

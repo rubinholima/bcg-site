@@ -24,8 +24,8 @@ import type {
   BchBarProduct,
 } from "@/types/bch-bar";
 import {
-  bchOperationalEventList,
-  bchOperationalProducts,
+  bchEventDisplayName,
+  bchProductDisplayName,
 } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 
 type TicketingEvent = { id: string; name: string; slug?: string };
@@ -61,11 +61,9 @@ export function BostonCityHallBarEventInventory() {
       api.get<BchBarEventInventory[]>("/boston-city-hall/bar/event-inventories"),
       api.get<BchBarProduct[]>("/boston-city-hall/bar/products"),
     ]);
-    setEvents(
-      bchOperationalEventList(Array.isArray(evs) ? evs : []),
-    );
+    setEvents(Array.isArray(evs) ? evs : []);
     setInventories(Array.isArray(invs) ? invs : []);
-    setProducts(bchOperationalProducts(Array.isArray(prods) ? prods : []));
+    setProducts(Array.isArray(prods) ? prods : []);
   }, []);
 
   const loadSummary = useCallback(async (id: string) => {
@@ -199,7 +197,7 @@ export function BostonCityHallBarEventInventory() {
               <option value="">Selecione…</option>
               {events.map((ev) => (
                 <option key={ev.id} value={ev.id}>
-                  {ev.name?.trim() || "Evento sem nome"}
+                  {bchEventDisplayName(ev.name)}
                 </option>
               ))}
             </NativeSelect>
@@ -260,7 +258,7 @@ export function BostonCityHallBarEventInventory() {
                   <option value="">Selecione…</option>
                   {activeProducts.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name}
+                      {bchProductDisplayName(p.name)}
                     </option>
                   ))}
                 </NativeSelect>
@@ -314,7 +312,7 @@ export function BostonCityHallBarEventInventory() {
               <TableBody>
                 {summary.lines.map((line) => (
                   <TableRow key={line.productId}>
-                    <TableCell>{line.productName}</TableCell>
+                    <TableCell>{bchProductDisplayName(line.productName)}</TableCell>
                     <TableCell>{line.initiallyAllocated}</TableCell>
                     <TableCell>{line.replenished}</TableCell>
                     <TableCell>{line.currentClosedBalance}</TableCell>

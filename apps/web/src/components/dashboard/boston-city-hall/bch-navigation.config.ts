@@ -37,7 +37,7 @@ export type BchNavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  /** Oculto do menu principal (ex.: checkout de teste); ainda listado em rotas. */
+  /** Oculto do menu principal; ainda listado em rotas. */
   devOnly?: boolean;
   /** Correspondência exata (hub). */
   exact?: boolean;
@@ -106,7 +106,7 @@ export const BCH_NAV_GROUPS: BchNavGroup[] = [
       { href: `${BCH_BASE}/servicos`, label: "Serviços", icon: Tags },
       {
         href: `${BCH_BASE}/ticketing?tab=checkout`,
-        label: "Checkout (teste)",
+        label: "Checkout",
         icon: FlaskConical,
         devOnly: true,
       },

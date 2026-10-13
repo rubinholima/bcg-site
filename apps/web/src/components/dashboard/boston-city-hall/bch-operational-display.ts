@@ -4,53 +4,43 @@ export type BchEventListLike = {
   slug?: string | null;
 };
 
-/** Registros de smoke/integration test no tenant BCH (nome com sufixo numérico longo). */
-const SMOKE_EVENT_NAME =
-  /^(BCH Bar Smoke|Smoke Ticketing|BCH Core Smoke|POS Smoke|Smoke Beer|Smoke Whisky)\b/i;
-
-const SMOKE_EVENT_SLUG = /^(bch-bar-smoke-|smoke-tix-|bch-core-smoke)/i;
-
-export function isBchSmokeTestEvent(item: BchEventListLike): boolean {
-  const name = item.name?.trim() ?? "";
-  if (SMOKE_EVENT_NAME.test(name) && /\d{10,}/.test(name)) return true;
-  const slug = item.slug?.trim() ?? "";
-  if (slug && SMOKE_EVENT_SLUG.test(slug)) return true;
-  return false;
+/** Remove sufixo numérico longo gerado em testes (somente rótulo na UI). */
+export function bchStripGeneratedNumericSuffix(label: string): string {
+  const trimmed = label.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.replace(/\s+\d{10,}$/, "").trim() || trimmed;
 }
 
-/** Listas operacionais — oculta eventos de smoke test; slug só uso interno. */
-export function bchOperationalEventOptions(
-  events: BchEventListLike[],
-  opts?: { includeSmokeTests?: boolean },
-): { value: string; label: string }[] {
-  const list = bchOperationalEventList(events, opts);
-  return list.map((ev) => ({
+/** Nome do evento para exibição — sempre `name`, nunca slug/ID. */
+export function bchEventDisplayName(name: string | null | undefined): string {
+  const base = name?.trim();
+  if (!base) return "Evento sem nome";
+  return bchStripGeneratedNumericSuffix(base);
+}
+
+export function bchOperationalEventOptions(events: BchEventListLike[]): { value: string; label: string }[] {
+  return events.map((ev) => ({
     value: ev.id,
-    label: ev.name?.trim() || "Evento sem nome",
+    label: bchEventDisplayName(ev.name),
   }));
 }
 
-export function bchOperationalEventList<T extends BchEventListLike>(
-  events: T[],
-  opts?: { includeSmokeTests?: boolean },
-): T[] {
-  if (opts?.includeSmokeTests) return events;
-  return events.filter((ev) => !isBchSmokeTestEvent(ev));
+/** Lista completa de eventos (sem ocultar registros). */
+export function bchOperationalEventList<T extends BchEventListLike>(events: T[]): T[] {
+  return events;
 }
 
-/** Rótulo de produto comercial — nunca expor ID técnico na UI. */
+/** Rótulo de produto — `name` com limpeza de sufixo; nunca expor ID técnico na UI. */
 export function bchProductDisplayName(
   productName: string | null | undefined,
   fallback?: { name?: string | null; sku?: string | null },
 ): string {
   const primary = productName?.trim();
-  if (primary) return primary;
+  if (primary) return bchStripGeneratedNumericSuffix(primary);
   const alt = fallback?.name?.trim();
-  if (alt) return alt;
+  if (alt) return bchStripGeneratedNumericSuffix(alt);
   return "Produto sem nome";
 }
-
-const SMOKE_PRODUCT_NAME = /^(Smoke Beer|Smoke Whisky|POS Smoke)/i;
 
 export type BchProductListLike = {
   name?: string;
@@ -59,18 +49,7 @@ export type BchProductListLike = {
   productSku?: string | null;
 };
 
-export function isBchSmokeTestProduct(item: BchProductListLike): boolean {
-  const name = (item.productName ?? item.name ?? "").trim();
-  if (SMOKE_PRODUCT_NAME.test(name) && /\d{10,}/.test(name)) return true;
-  const sku = (item.productSku ?? item.sku ?? "").trim();
-  if (/^(SMK-|POS-SMOKE-)/i.test(sku) && /\d{10,}/.test(sku)) return true;
-  return false;
-}
-
-export function bchOperationalProducts<T extends BchProductListLike>(
-  products: T[],
-  opts?: { includeSmokeTests?: boolean },
-): T[] {
-  if (opts?.includeSmokeTests) return products;
-  return products.filter((p) => !isBchSmokeTestProduct(p));
+/** Lista completa de produtos (sem ocultar registros). */
+export function bchOperationalProducts<T extends BchProductListLike>(products: T[]): T[] {
+  return products;
 }
