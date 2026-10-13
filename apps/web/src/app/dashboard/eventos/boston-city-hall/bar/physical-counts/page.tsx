@@ -25,7 +25,7 @@ export default function BostonCityHallBarPhysicalCountsPage() {
   }
 
   return (
-    <BostonCityHallShell title="Contagem física">
+    <BostonCityHallShell>
       <BostonCityHallBarPhysicalCounts />
     </BostonCityHallShell>
   );

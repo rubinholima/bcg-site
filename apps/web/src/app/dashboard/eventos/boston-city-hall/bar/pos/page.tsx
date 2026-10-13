@@ -25,7 +25,7 @@ export default function BostonCityHallBarPosPage() {
   }
 
   return (
-    <BostonCityHallShell title="POS Bar">
+    <BostonCityHallShell>
       <BostonCityHallBarPos />
     </BostonCityHallShell>
   );

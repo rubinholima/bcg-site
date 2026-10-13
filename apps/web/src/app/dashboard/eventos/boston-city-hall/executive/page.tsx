@@ -25,7 +25,7 @@ export default function BostonCityHallExecutivePage() {
   }
 
   return (
-    <BostonCityHallShell title="Executivo">
+    <BostonCityHallShell>
       <BostonCityHallExecutiveDashboard />
     </BostonCityHallShell>
   );

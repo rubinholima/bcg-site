@@ -27,10 +27,7 @@ export default function BostonCityHallAgendaPage() {
   }
 
   return (
-    <BostonCityHallShell
-      title="Agenda"
-      description="Calendário mensal de reservas e bloqueios do palco. Para cadastrar, use Reservas."
-    >
+    <BostonCityHallShell>
       <Suspense
         fallback={
           <div className="flex justify-center py-12">

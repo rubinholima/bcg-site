@@ -31,7 +31,7 @@ export default function BostonCityHallContractDetailPage() {
   }
 
   return (
-    <BostonCityHallShell title="Contrato">
+    <BostonCityHallShell>
       <Suspense
         fallback={
           <div className="flex justify-center py-12">

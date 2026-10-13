@@ -25,7 +25,7 @@ export default function BostonCityHallServicosPage() {
   }
 
   return (
-    <BostonCityHallShell title="Serviços">
+    <BostonCityHallShell>
       <BostonCityHallCatalog />
     </BostonCityHallShell>
   );

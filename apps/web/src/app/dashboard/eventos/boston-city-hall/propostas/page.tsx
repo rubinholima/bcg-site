@@ -25,7 +25,7 @@ export default function BostonCityHallProposalsPage() {
   }
 
   return (
-    <BostonCityHallShell title="Propostas">
+    <BostonCityHallShell>
       <Suspense
         fallback={
           <div className="flex justify-center py-12">

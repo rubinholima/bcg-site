@@ -25,7 +25,7 @@ export default function BostonCityHallBarClosePage() {
   }
 
   return (
-    <BostonCityHallShell title="Fechamento do bar">
+    <BostonCityHallShell>
       <BostonCityHallBarClose />
     </BostonCityHallShell>
   );

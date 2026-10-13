@@ -27,10 +27,7 @@ export default function BostonCityHallCrmPage() {
   }
 
   return (
-    <BostonCityHallShell
-      title="CRM — Leads"
-      description="Monitore contatos do site e cadastros manuais, filtros e anotações comerciais."
-    >
+    <BostonCityHallShell>
       <BostonCityHallCrm />
     </BostonCityHallShell>
   );

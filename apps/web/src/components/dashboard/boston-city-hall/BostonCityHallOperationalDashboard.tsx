@@ -1,41 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   CalendarDays,
-  CalendarPlus,
   ClipboardList,
   ContactRound,
-  Kanban,
-  UserPlus,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
-import { KpiCard } from "@/components/dashboard/cup360/KpiCard";
-import { BostonCityHallOverviewCharts } from "@/components/dashboard/boston-city-hall/BostonCityHallOverviewCharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
-import type { VenueOverview } from "@/types/boston-city-hall";
+import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
+import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BchSection } from "@/components/dashboard/boston-city-hall/BchSection";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
+import type { BchOperationalAlert, VenueOverview } from "@/types/boston-city-hall";
 import {
   BOOKING_STATUS_COLOR,
   BOOKING_STATUS_LABEL,
-  formatCatalogMoney,
-  LEAD_SOURCE_LABEL,
+  formatTicketingMoney,
   PIPELINE_STAGE_CHART_COLOR,
   PIPELINE_STAGE_LABEL,
   PIPELINE_STAGES,
 } from "@/types/boston-city-hall";
+import { cn } from "@/lib/utils";
 
-const BCH = "/dashboard/eventos/boston-city-hall";
-
-const QUICK_ACTIONS = [
-  { href: `${BCH}/pipeline`, label: "Novo lead", icon: UserPlus },
-  { href: `${BCH}/reservas`, label: "Nova reserva", icon: CalendarPlus },
-  { href: agendaHubUrl(AGENDA_VISAO.BOSTON_HALL), label: "Agenda", icon: CalendarDays },
-  { href: `${BCH}/pipeline`, label: "Pipeline", icon: Kanban },
-  { href: `${BCH}/crm`, label: "CRM", icon: ContactRound },
-] as const;
+const BCH_FINANCE_CURRENCY = "USD";
 
 function formatBookingWhen(startIso: string, endIso: string): { date: string; time: string } {
   const start = new Date(startIso);
@@ -59,30 +51,66 @@ function formatRelativeUpdated(iso: string): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 }
 
+function welcomeName(displayName: string | null | undefined, username: string | null | undefined): string {
+  const fromName = displayName?.trim();
+  if (fromName) return fromName.split(/\s+/)[0] ?? fromName;
+  return username?.trim() || "equipe";
+}
+
 type Props = {
   overview: VenueOverview;
 };
 
 export function BostonCityHallOperationalDashboard({ overview }: Props) {
+  const { user } = useAuth();
+  const [alerts, setAlerts] = useState<BchOperationalAlert[]>([]);
+  const [alertsLoading, setAlertsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAlertsLoading(true);
+    api
+      .get<BchOperationalAlert[]>(
+        "/boston-city-hall/alerts?status=open&evaluate=1",
+      )
+      .then((res) => {
+        if (!cancelled) setAlerts(Array.isArray(res.data) ? res.data.slice(0, 6) : []);
+      })
+      .catch(() => {
+        if (!cancelled) setAlerts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setAlertsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const conversionPct =
     overview.leadsTotal > 0 ? Math.round((overview.leadsWon / overview.leadsTotal) * 100) : 0;
 
   const upcoming = overview.upcomingBookings ?? [];
+  const operations = overview.operationsUpcoming ?? [];
   const attention = overview.leadsNeedingAttention ?? [];
 
-  const agendaByDay = useMemo(() => {
-    const map = new Map<string, typeof upcoming>();
-    const horizon = Date.now() + 14 * 24 * 60 * 60 * 1000;
-    for (const b of upcoming) {
-      const t = new Date(b.startAt).getTime();
-      if (t > horizon) continue;
-      const key = b.startAt.slice(0, 10);
-      const list = map.get(key) ?? [];
-      list.push(b);
-      map.set(key, list);
-    }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [upcoming]);
+  const combinedEvents = useMemo(() => {
+    const fromOps = operations.map((ev) => ({
+      key: `op-${ev.bookingId}`,
+      href: `${BCH_BASE}/operacao/${ev.bookingId}`,
+      title: ev.contactName?.trim() || ev.title,
+      subtitle: `${formatBookingWhen(ev.startAt, ev.endAt).date} · ${ev.spaceName}`,
+      status: ev.bookingStatus,
+    }));
+    const fromBookings = upcoming.slice(0, 6).map((b) => ({
+      key: `bk-${b.id}`,
+      href: `${BCH_BASE}/reservas?edit=${encodeURIComponent(b.id)}`,
+      title: b.contactName?.trim() || b.title,
+      subtitle: `${formatBookingWhen(b.startAt, b.endAt).date}${b.spaceName ? ` · ${b.spaceName}` : ""}`,
+      status: b.status,
+    }));
+    return [...fromOps, ...fromBookings].slice(0, 8);
+  }, [operations, upcoming]);
 
   const pipelineStages = useMemo(
     () =>
@@ -97,259 +125,220 @@ export function BostonCityHallOperationalDashboard({ overview }: Props) {
 
   const pipelineMax = Math.max(1, ...pipelineStages.map((s) => s.count));
 
+  const finance = overview.finance;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
-        {QUICK_ACTIONS.map(({ href, label, icon: Icon }) => (
-          <Button key={label} variant="outline" size="sm" className="min-h-[40px] gap-2" asChild>
-            <Link href={href}>
-              <Icon className="h-4 w-4" aria-hidden />
-              {label}
-            </Link>
-          </Button>
-        ))}
+    <div className="space-y-5">
+      <div className="rounded-xl border border-amber-500/20 bg-gradient-to-r from-[#0a0f1a] via-[#101a2e] to-[#0a0f1a] px-4 py-4 sm:px-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-amber-500/90">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+              Boston City Hall
+            </p>
+            <p className="mt-1 text-lg font-semibold text-slate-50 sm:text-xl">
+              Olá, {welcomeName(user?.name, user?.username)} — painel operacional
+            </p>
+            <p className="mt-1 text-sm text-slate-400">
+              {overview.bookingsToday ?? 0} reserva(s) hoje · {overview.leadsOpen} lead(s) em aberto ·{" "}
+              {overview.spacesCount} espaço(s) ativos
+            </p>
+          </div>
+          <Link
+            href={`${BCH_BASE}/agenda`}
+            className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 text-sm font-medium text-amber-100 hover:bg-amber-500/15"
+          >
+            <CalendarDays className="h-4 w-4" aria-hidden />
+            Agenda
+          </Link>
+        </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
-        <KpiCard label="Reservas hoje" value={overview.bookingsToday ?? 0} tone="accent" />
-        <KpiCard
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <BchKpiCard
+          label="Reservas hoje"
+          value={overview.bookingsToday ?? 0}
+          icon={CalendarDays}
+          tone="gold"
+        />
+        <BchKpiCard
           label="Próximas reservas"
           value={overview.upcomingBookingsTotal ?? 0}
-          hint="Ativas à frente"
+          hint="Confirmadas à frente"
+          icon={ClipboardList}
           tone="info"
         />
-        <KpiCard label="Reservas no mês" value={overview.bookingsThisMonth} />
-        <KpiCard label="Leads em aberto" value={overview.leadsOpen} tone="warning" />
-        <KpiCard label="Novos leads no mês" value={overview.leadsNewThisMonth ?? 0} />
-        <KpiCard
-          label="Taxa de conversão"
-          value={`${conversionPct}%`}
-          hint={`${overview.leadsWon ?? 0} / ${overview.leadsTotal ?? 0}`}
+        <BchKpiCard
+          label="Leads em aberto"
+          value={overview.leadsOpen}
+          hint={`${conversionPct}% conversão (${overview.leadsWon}/${overview.leadsTotal})`}
+          icon={ContactRound}
+          tone="warning"
         />
-        <KpiCard label="Espaços ativos" value={overview.spacesCount}>
-          <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild>
-            <Link href={`${BCH}/espacos`}>Gerenciar espaços</Link>
-          </Button>
-        </KpiCard>
-        {overview.finance ? (
-          <>
-            <KpiCard
-              label="Saldo em aberto"
-              value={formatCatalogMoney(overview.finance.openBalance)}
-              tone="warning"
-            />
-            <KpiCard
-              label="Vencido"
-              value={formatCatalogMoney(overview.finance.overdueBalance)}
-              tone={Number.parseFloat(overview.finance.overdueBalance) > 0 ? "danger" : undefined}
-            />
-          </>
-        ) : null}
+        <BchKpiCard
+          label="Novos leads no mês"
+          value={overview.leadsNewThisMonth ?? 0}
+          hint={`${overview.bookingsThisMonth} reservas no mês`}
+          tone="default"
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-base font-semibold">Próximas reservas</CardTitle>
-            <Button variant="ghost" size="sm" className="h-8" asChild>
-              <Link href={`${BCH}/reservas`}>Ver todas</Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {upcoming.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma reserva à frente.</p>
-            ) : (
-              upcoming.slice(0, 8).map((b) => {
-                const when = formatBookingWhen(b.startAt, b.endAt);
-                const contact = b.contactName?.trim() || b.title;
-                return (
+        <BchSection title="Próximos eventos e reservas" actionHref={`${BCH_BASE}/reservas`} actionLabel="Ver reservas">
+          {combinedEvents.length === 0 ? (
+            <BchEmptyState icon={CalendarDays} message="Nenhum evento ou reserva próxima." />
+          ) : (
+            <ul className="space-y-2">
+              {combinedEvents.map((row) => (
+                <li key={row.key}>
                   <Link
-                    key={b.id}
-                    href={`${BCH}/reservas?edit=${encodeURIComponent(b.id)}`}
-                    className="flex flex-col gap-1 rounded-lg border border-border/80 bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
+                    href={row.href}
+                    className="flex flex-col gap-1 rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2.5 transition-colors hover:border-amber-500/20 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground">{contact}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {when.date} · {when.time}
-                        {b.spaceName ? ` · ${b.spaceName}` : ""}
-                        {b.eventType ? ` · ${b.eventType}` : ""}
-                        {b.guestCount != null ? ` · ${b.guestCount} conv.` : ""}
-                      </p>
+                      <p className="truncate font-medium text-slate-100">{row.title}</p>
+                      <p className="truncate text-xs text-slate-500">{row.subtitle}</p>
                     </div>
                     <span
                       className={cn(
                         "shrink-0 self-start rounded-md border px-2 py-0.5 text-xs font-medium sm:self-center",
-                        BOOKING_STATUS_COLOR[b.status] ?? "bg-muted text-muted-foreground",
+                        BOOKING_STATUS_COLOR[row.status] ?? "bg-muted text-muted-foreground",
                       )}
                     >
-                      {BOOKING_STATUS_LABEL[b.status] ?? b.status}
+                      {BOOKING_STATUS_LABEL[row.status] ?? row.status}
                     </span>
                   </Link>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
+                </li>
+              ))}
+            </ul>
+          )}
+        </BchSection>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-base font-semibold">Leads que precisam de atenção</CardTitle>
-            <Button variant="ghost" size="sm" className="h-8" asChild>
-              <Link href={`${BCH}/crm`}>Abrir CRM</Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {attention.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Nenhum lead em aberto.</p>
-            ) : (
-              attention.map((lead) => (
-                <Link
-                  key={lead.id}
-                  href={`${BCH}/pipeline`}
-                  className="block rounded-lg border border-border/80 bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/40"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{lead.contactName}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {lead.companyName?.trim() || "—"} · {LEAD_SOURCE_LABEL[lead.source] ?? lead.source}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatRelativeUpdated(lead.updatedAt)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-violet-300/90">
-                    {PIPELINE_STAGE_LABEL[lead.stage] ?? lead.stage}
-                  </p>
-                </Link>
-              ))
-            )}
-          </CardContent>
-        </Card>
+        <BchSection title="Alertas que exigem ação" actionHref={`${BCH_BASE}/alerts`} actionLabel="Central de alertas">
+          {alertsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
+            </div>
+          ) : alerts.length === 0 ? (
+            <BchEmptyState icon={AlertTriangle} message="Nenhum alerta operacional aberto." />
+          ) : (
+            <ul className="space-y-2">
+              {alerts.map((a) => (
+                <li key={a.id}>
+                  <Link
+                    href={a.actionUrl ?? `${BCH_BASE}/alerts`}
+                    className="block rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2.5 hover:border-amber-500/20"
+                  >
+                    <p className="text-sm font-medium text-slate-100">{a.title}</p>
+                    <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">{a.message}</p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </BchSection>
       </div>
 
-      {overview.operationsUpcoming && overview.operationsUpcoming.length > 0 ? (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-base font-semibold">Próximos eventos operacionais</CardTitle>
-            <Button variant="ghost" size="sm" className="h-8" asChild>
-              <Link href={`${BCH}/operacao`}>Operação</Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {overview.operationsUpcoming.map((ev) => {
-              const when = formatBookingWhen(ev.startAt, ev.endAt);
-              const label = ev.contactName?.trim() || ev.title;
-              return (
-                <Link
-                  key={ev.bookingId}
-                  href={`${BCH}/operacao/${ev.bookingId}`}
-                  className="flex flex-col gap-1 rounded-lg border border-border/80 bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-foreground">{label}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {when.date} · {when.time} · {ev.spaceName}
-                      {ev.companyName ? ` · ${ev.companyName}` : ""}
-                    </p>
-                  </div>
-                  <span
-                    className={cn(
-                      "shrink-0 self-start rounded-md border px-2 py-0.5 text-xs font-medium sm:self-center",
-                      BOOKING_STATUS_COLOR[ev.bookingStatus] ?? "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {BOOKING_STATUS_LABEL[ev.bookingStatus] ?? ev.bookingStatus}
-                  </span>
-                </Link>
-              );
-            })}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-          <CardTitle className="text-base font-semibold">Agenda resumida</CardTitle>
-          <Button variant="ghost" size="sm" className="h-8 gap-1" asChild>
-            <Link href={agendaHubUrl(AGENDA_VISAO.BOSTON_HALL)}>
-              <CalendarDays className="h-4 w-4" />
-              Agenda
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {agendaByDay.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">Nada agendado nos próximos 14 dias.</p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <BchSection title="Funil comercial" actionHref={`${BCH_BASE}/pipeline`} actionLabel="Abrir funil">
+          {pipelineStages.every((s) => s.count === 0) ? (
+            <BchEmptyState message="Sem leads no funil." />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {agendaByDay.map(([day, items]) => (
-                <div key={day} className="rounded-lg border border-border/60 bg-muted/15 p-3">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {new Date(`${day}T12:00:00`).toLocaleDateString("pt-BR", {
-                      weekday: "long",
-                      day: "2-digit",
-                      month: "short",
-                    })}
-                  </p>
-                  <ul className="space-y-1.5">
-                    {items.map((b) => (
-                      <li key={b.id}>
-                        <Link
-                          href={`${BCH}/reservas?edit=${encodeURIComponent(b.id)}`}
-                          className="text-sm text-foreground hover:text-violet-300"
-                        >
-                          {new Date(b.startAt).toLocaleTimeString("pt-BR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}{" "}
-                          — {b.title}
-                          {b.spaceName ? ` (${b.spaceName})` : ""}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+            <div className="space-y-2">
+              {pipelineStages.map(({ stage, label, count, color }) => (
+                <div key={stage} className="flex items-center gap-3">
+                  <span className="w-[7rem] shrink-0 truncate text-xs text-slate-500 sm:w-32">{label}</span>
+                  <div className="relative h-6 min-w-0 flex-1 overflow-hidden rounded-md bg-slate-900/80">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-md transition-all"
+                      style={{
+                        width: `${Math.max(count > 0 ? 8 : 0, (count / pipelineMax) * 100)}%`,
+                        backgroundColor: color,
+                        opacity: count > 0 ? 0.85 : 0,
+                      }}
+                    />
+                  </div>
+                  <span className="w-8 shrink-0 text-right text-sm font-semibold tabular-nums text-slate-200">
+                    {count}
+                  </span>
                 </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+          {attention.length > 0 ? (
+            <div className="mt-4 border-t border-slate-800/80 pt-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Leads prioritários</p>
+              <ul className="space-y-1.5">
+                {attention.slice(0, 4).map((lead) => (
+                  <li key={lead.id}>
+                    <Link
+                      href={`${BCH_BASE}/crm`}
+                      className="flex items-center justify-between gap-2 text-sm text-slate-300 hover:text-amber-200"
+                    >
+                      <span className="truncate">{lead.contactName}</span>
+                      <span className="shrink-0 text-xs text-slate-500">
+                        {formatRelativeUpdated(lead.updatedAt)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </BchSection>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-          <CardTitle className="text-base font-semibold">Pipeline comercial</CardTitle>
-          <Button variant="ghost" size="sm" className="h-8" asChild>
-            <Link href={`${BCH}/pipeline`}>Abrir pipeline</Link>
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {pipelineStages.every((s) => s.count === 0) ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">Sem leads no pipeline.</p>
+        <BchSection title="Resumo financeiro" actionHref={`${BCH_BASE}/financeiro`} actionLabel="Financeiro">
+          {!finance ? (
+            <BchEmptyState message="Sem dados financeiros agregados." />
           ) : (
-            pipelineStages.map(({ stage, label, count, color }) => (
-              <div key={stage} className="flex items-center gap-3">
-                <span className="w-[7.5rem] shrink-0 truncate text-xs text-muted-foreground sm:w-36">{label}</span>
-                <div className="relative h-6 min-w-0 flex-1 overflow-hidden rounded-md bg-muted/40">
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-md transition-all"
-                    style={{
-                      width: `${Math.max(count > 0 ? 8 : 0, (count / pipelineMax) * 100)}%`,
-                      backgroundColor: color,
-                      opacity: count > 0 ? 0.85 : 0,
-                    }}
-                  />
-                </div>
-                <span className="w-8 shrink-0 text-right text-sm font-semibold tabular-nums">{count}</span>
-              </div>
-            ))
+            <div className="grid gap-2 sm:grid-cols-2">
+              <FinanceLine label="Contratado" value={finance.totalContracted} />
+              <FinanceLine label="Recebido" value={finance.totalReceived} />
+              <FinanceLine label="Em aberto" value={finance.openBalance} emphasize />
+              <FinanceLine label="Vencido" value={finance.overdueBalance} danger={Number.parseFloat(finance.overdueBalance) > 0} />
+              <FinanceLine label="Vence em 14 dias" value={finance.dueSoonBalance} className="sm:col-span-2" />
+              <p className="sm:col-span-2 text-[11px] text-slate-600">
+                Valores em {BCH_FINANCE_CURRENCY} (recebíveis do venue).
+              </p>
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </BchSection>
+      </div>
+    </div>
+  );
+}
 
-      <BostonCityHallOverviewCharts overview={overview} />
+function FinanceLine({
+  label,
+  value,
+  emphasize,
+  danger,
+  className,
+}: {
+  label: string;
+  value: string;
+  emphasize?: boolean;
+  danger?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border border-slate-800/70 bg-slate-950/50 px-3 py-2",
+        emphasize && "border-amber-500/25",
+        danger && "border-red-500/30",
+        className,
+      )}
+    >
+      <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p
+        className={cn(
+          "text-sm font-semibold tabular-nums text-slate-100",
+          danger && "text-red-300",
+        )}
+      >
+        {formatTicketingMoney(value, BCH_FINANCE_CURRENCY)}
+      </p>
     </div>
   );
 }

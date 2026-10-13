@@ -25,7 +25,7 @@ export default function BostonCityHallBarDashboardPage() {
   }
 
   return (
-    <BostonCityHallShell title="Bar — painel">
+    <BostonCityHallShell>
       <BostonCityHallBarDashboard />
     </BostonCityHallShell>
   );

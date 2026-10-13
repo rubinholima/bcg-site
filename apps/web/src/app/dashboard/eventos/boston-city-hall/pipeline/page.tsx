@@ -25,10 +25,7 @@ export default function BostonCityHallPipelinePage() {
   }
 
   return (
-    <BostonCityHallShell
-      title="Pipeline comercial"
-      description="Solicitações do site e leads manuais — do primeiro contato ao contrato."
-    >
+    <BostonCityHallShell>
       <BostonCityHallPipeline />
     </BostonCityHallShell>
   );

@@ -1,6 +1,6 @@
 import type { VenuePipelineLead } from "@/types/boston-city-hall";
 
-export const BCH_BASE = "/dashboard/eventos/boston-city-hall";
+export { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 
 export type LeadForm = {
   contactName: string;

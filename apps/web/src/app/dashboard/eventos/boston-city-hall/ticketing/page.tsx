@@ -1,11 +1,25 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
 import { BostonCityHallTicketingHub } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketingHub";
 import { useAuth } from "@/context/AuthContext";
+
+function TicketingContent() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <BostonCityHallTicketingHub />
+    </Suspense>
+  );
+}
 
 export default function BostonCityHallTicketingPage() {
   const router = useRouter();
@@ -25,8 +39,8 @@ export default function BostonCityHallTicketingPage() {
   }
 
   return (
-    <BostonCityHallShell title="Ingressos">
-      <BostonCityHallTicketingHub />
+    <BostonCityHallShell>
+      <TicketingContent />
     </BostonCityHallShell>
   );
 }

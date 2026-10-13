@@ -25,7 +25,7 @@ export default function BostonCityHallBarEventInventoryPage() {
   }
 
   return (
-    <BostonCityHallShell title="Estoque de evento">
+    <BostonCityHallShell>
       <BostonCityHallBarEventInventory />
     </BostonCityHallShell>
   );

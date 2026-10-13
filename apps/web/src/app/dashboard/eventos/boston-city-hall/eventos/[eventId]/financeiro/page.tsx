@@ -39,7 +39,7 @@ export default function BostonCityHallEventFinanceiroPage() {
   }
 
   return (
-    <BostonCityHallShell title="Resultado financeiro">
+    <BostonCityHallShell>
       <Suspense
         fallback={
           <div className="flex justify-center py-12">

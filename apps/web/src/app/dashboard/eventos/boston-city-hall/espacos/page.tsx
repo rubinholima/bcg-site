@@ -25,7 +25,7 @@ export default function BostonCityHallEspacosPage() {
   }
 
   return (
-    <BostonCityHallShell title="Espaços">
+    <BostonCityHallShell>
       <BostonCityHallSpaces />
     </BostonCityHallShell>
   );

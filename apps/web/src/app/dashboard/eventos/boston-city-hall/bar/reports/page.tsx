@@ -25,7 +25,7 @@ export default function BostonCityHallBarReportsPage() {
   }
 
   return (
-    <BostonCityHallShell title="Relatórios do bar">
+    <BostonCityHallShell>
       <BostonCityHallBarReports />
     </BostonCityHallShell>
   );

@@ -25,10 +25,7 @@ export default function BostonCityHallReservasPage() {
   }
 
   return (
-    <BostonCityHallShell
-      title="Reservas"
-      description="Gerencie reservas, pré-reservas e bloqueios operacionais por espaço do palco."
-    >
+    <BostonCityHallShell>
       <Suspense
         fallback={
           <div className="flex justify-center py-12">
