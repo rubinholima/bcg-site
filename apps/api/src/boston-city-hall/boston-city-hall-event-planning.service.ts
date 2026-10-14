@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, type BchEventStaffAssignment } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BostonCityHallBarService } from './boston-city-hall-bar.service';
 
@@ -74,6 +74,50 @@ export class BostonCityHallEventPlanningService {
     });
   }
 
+  async updateScheduleItem(
+    eventId: string,
+    itemId: string,
+    body: Partial<{
+      itemType: string;
+      title: string;
+      startsAt: string;
+      endsAt: string | null;
+      locationLabel: string | null;
+      responsibleName: string | null;
+      responsibleTeamMemberId: string | null;
+      status: string;
+      notes: string | null;
+    }>,
+  ) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    const row = await this.prisma.bchEventScheduleItem.findFirst({
+      where: { id: itemId, tenantId, eventId: eventId.trim() },
+    });
+    if (!row) throw new NotFoundException('Marco não encontrado.');
+    if (row.status === 'cancelled') throw new BadRequestException('Marco cancelado.');
+    return this.prisma.bchEventScheduleItem.update({
+      where: { id: itemId },
+      data: {
+        ...(body.itemType !== undefined ? { itemType: body.itemType.trim() } : {}),
+        ...(body.title !== undefined ? { title: body.title.trim() } : {}),
+        ...(body.startsAt !== undefined ? { startsAt: new Date(body.startsAt) } : {}),
+        ...(body.endsAt !== undefined ? { endsAt: body.endsAt ? new Date(body.endsAt) : null } : {}),
+        ...(body.locationLabel !== undefined ? { locationLabel: body.locationLabel?.trim() || null } : {}),
+        ...(body.responsibleName !== undefined ? { responsibleName: body.responsibleName?.trim() || null } : {}),
+        ...(body.responsibleTeamMemberId !== undefined
+          ? { responsibleTeamMemberId: body.responsibleTeamMemberId?.trim() || null }
+          : {}),
+        ...(body.status !== undefined ? { status: body.status.trim() } : {}),
+        ...(body.notes !== undefined ? { notes: body.notes?.trim() || null } : {}),
+      },
+    });
+  }
+
+  async cancelScheduleItem(eventId: string, itemId: string) {
+    return this.updateScheduleItem(eventId, itemId, { status: 'cancelled' });
+  }
+
   async seedDefaultSchedule(eventId: string) {
     const tenantId = await this.tenantId();
     const event = await this.assertEvent(tenantId, eventId);
@@ -104,6 +148,250 @@ export class BostonCityHallEventPlanningService {
       })),
     });
     return { seeded: true, count: items.length };
+  }
+
+  private personKey(a: Pick<BchEventStaffAssignment, 'employeeId' | 'userId' | 'contractorName' | 'supplierId'>) {
+    return [a.employeeId ?? '', a.userId ?? '', a.contractorName ?? '', a.supplierId ?? ''].join('|');
+  }
+
+  async backfillTeamMembers(eventId: string) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    const assignments = await this.prisma.bchEventStaffAssignment.findMany({
+      where: { tenantId, eventId: eventId.trim(), teamMemberId: null },
+    });
+    let linked = 0;
+    for (const a of assignments) {
+      const key = this.personKey(a);
+      let member = await this.prisma.bchEventTeamMember.findFirst({
+        where: {
+          tenantId,
+          eventId: eventId.trim(),
+          employeeId: a.employeeId,
+          userId: a.userId,
+          contractorName: a.contractorName,
+          supplierId: a.supplierId,
+        },
+      });
+      if (!member) {
+        member = await this.prisma.bchEventTeamMember.create({
+          data: {
+            tenantId,
+            eventId: eventId.trim(),
+            employeeId: a.employeeId,
+            userId: a.userId,
+            contractorName: a.contractorName,
+            supplierId: a.supplierId,
+            roleLabel: a.roleLabel,
+            areaLabel: a.locationLabel,
+            responsibility: a.responsibility,
+            status: a.status === 'cancelled' ? 'inactive' : 'active',
+          },
+        });
+      }
+      await this.prisma.bchEventStaffAssignment.update({
+        where: { id: a.id },
+        data: { teamMemberId: member.id },
+      });
+      linked += 1;
+      void key;
+    }
+    return { linked };
+  }
+
+  async listTeamMembers(eventId: string) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    await this.backfillTeamMembers(eventId);
+    return this.prisma.bchEventTeamMember.findMany({
+      where: { tenantId, eventId: eventId.trim() },
+      include: {
+        employee: { select: { id: true, name: true, code: true } },
+        supplier: { select: { id: true, name: true } },
+        supervisor: { select: { id: true, roleLabel: true, contractorName: true, employee: { select: { name: true } } } },
+        shifts: {
+          where: { status: { not: 'cancelled' } },
+          orderBy: [{ plannedStartAt: 'asc' }, { createdAt: 'asc' }],
+        },
+      },
+      orderBy: [{ roleLabel: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  async createTeamMember(
+    eventId: string,
+    body: {
+      employeeId?: string | null;
+      userId?: string | null;
+      contractorName?: string | null;
+      supplierId?: string | null;
+      roleLabel: string;
+      areaLabel?: string | null;
+      responsibility?: string | null;
+      supervisorId?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    if (!body.roleLabel?.trim()) throw new BadRequestException('Função é obrigatória.');
+    const hasPerson =
+      body.employeeId?.trim() ||
+      body.userId?.trim() ||
+      body.contractorName?.trim() ||
+      body.supplierId?.trim();
+    if (!hasPerson) throw new BadRequestException('Selecione ou informe a pessoa.');
+    return this.prisma.bchEventTeamMember.create({
+      data: {
+        tenantId,
+        eventId: eventId.trim(),
+        employeeId: body.employeeId?.trim() || null,
+        userId: body.userId?.trim() || null,
+        contractorName: body.contractorName?.trim() || null,
+        supplierId: body.supplierId?.trim() || null,
+        roleLabel: body.roleLabel.trim(),
+        areaLabel: body.areaLabel?.trim() || null,
+        responsibility: body.responsibility?.trim() || null,
+        supervisorId: body.supervisorId?.trim() || null,
+        notes: body.notes?.trim() || null,
+        status: 'active',
+      },
+    });
+  }
+
+  async updateTeamMember(
+    eventId: string,
+    memberId: string,
+    body: Partial<{
+      roleLabel: string;
+      areaLabel: string | null;
+      responsibility: string | null;
+      supervisorId: string | null;
+      status: string;
+      notes: string | null;
+    }>,
+  ) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    const row = await this.prisma.bchEventTeamMember.findFirst({
+      where: { id: memberId, tenantId, eventId: eventId.trim() },
+    });
+    if (!row) throw new NotFoundException('Membro não encontrado.');
+    return this.prisma.bchEventTeamMember.update({
+      where: { id: memberId },
+      data: {
+        ...(body.roleLabel !== undefined ? { roleLabel: body.roleLabel.trim() } : {}),
+        ...(body.areaLabel !== undefined ? { areaLabel: body.areaLabel?.trim() || null } : {}),
+        ...(body.responsibility !== undefined ? { responsibility: body.responsibility?.trim() || null } : {}),
+        ...(body.supervisorId !== undefined ? { supervisorId: body.supervisorId?.trim() || null } : {}),
+        ...(body.status !== undefined ? { status: body.status.trim() } : {}),
+        ...(body.notes !== undefined ? { notes: body.notes?.trim() || null } : {}),
+      },
+    });
+  }
+
+  async createStaffShift(
+    eventId: string,
+    teamMemberId: string,
+    body: Omit<Parameters<BostonCityHallEventPlanningService['createStaff']>[1], 'employeeId' | 'userId' | 'contractorName' | 'supplierId' | 'roleLabel' | 'responsibility' | 'locationLabel'> & {
+      roleLabel?: string;
+      locationLabel?: string | null;
+    },
+  ) {
+    const tenantId = await this.tenantId();
+    const member = await this.prisma.bchEventTeamMember.findFirst({
+      where: { id: teamMemberId.trim(), tenantId, eventId: eventId.trim() },
+    });
+    if (!member) throw new NotFoundException('Membro da equipe não encontrado.');
+    return this.createStaff(eventId, {
+      teamMemberId: member.id,
+      employeeId: member.employeeId,
+      userId: member.userId,
+      contractorName: member.contractorName,
+      supplierId: member.supplierId,
+      roleLabel: body.roleLabel?.trim() || member.roleLabel,
+      responsibility: member.responsibility,
+      locationLabel: body.locationLabel?.trim() || member.areaLabel,
+      plannedStartAt: body.plannedStartAt,
+      plannedEndAt: body.plannedEndAt,
+      rateType: body.rateType,
+      rateAmount: body.rateAmount,
+      rateCurrency: body.rateCurrency,
+      plannedCost: body.plannedCost,
+      notes: body.notes,
+    });
+  }
+
+  async listOperationalTasks(eventId: string) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    return this.prisma.bchEventOperationalTask.findMany({
+      where: { tenantId, eventId: eventId.trim() },
+      include: {
+        ownerTeamMember: {
+          select: { id: true, roleLabel: true, employee: { select: { name: true } }, contractorName: true },
+        },
+      },
+      orderBy: [{ dueAt: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  async createOperationalTask(
+    eventId: string,
+    body: {
+      title: string;
+      ownerTeamMemberId?: string | null;
+      dueAt?: string | null;
+      status?: string;
+      priority?: string;
+      notes?: string | null;
+    },
+  ) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    return this.prisma.bchEventOperationalTask.create({
+      data: {
+        tenantId,
+        eventId: eventId.trim(),
+        title: body.title.trim(),
+        ownerTeamMemberId: body.ownerTeamMemberId?.trim() || null,
+        dueAt: body.dueAt ? new Date(body.dueAt) : null,
+        status: body.status?.trim() || 'open',
+        priority: body.priority?.trim() || 'normal',
+        notes: body.notes?.trim() || null,
+      },
+    });
+  }
+
+  async updateOperationalTask(
+    eventId: string,
+    taskId: string,
+    body: Partial<{
+      title: string;
+      ownerTeamMemberId: string | null;
+      dueAt: string | null;
+      status: string;
+      priority: string;
+      notes: string | null;
+    }>,
+  ) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    const row = await this.prisma.bchEventOperationalTask.findFirst({
+      where: { id: taskId, tenantId, eventId: eventId.trim() },
+    });
+    if (!row) throw new NotFoundException('Tarefa não encontrada.');
+    return this.prisma.bchEventOperationalTask.update({
+      where: { id: taskId },
+      data: {
+        ...(body.title !== undefined ? { title: body.title.trim() } : {}),
+        ...(body.ownerTeamMemberId !== undefined ? { ownerTeamMemberId: body.ownerTeamMemberId?.trim() || null } : {}),
+        ...(body.dueAt !== undefined ? { dueAt: body.dueAt ? new Date(body.dueAt) : null } : {}),
+        ...(body.status !== undefined ? { status: body.status.trim() } : {}),
+        ...(body.priority !== undefined ? { priority: body.priority.trim() } : {}),
+        ...(body.notes !== undefined ? { notes: body.notes?.trim() || null } : {}),
+      },
+    });
   }
 
   async listStaff(eventId: string) {
@@ -146,6 +434,7 @@ export class BostonCityHallEventPlanningService {
       data: {
         tenantId,
         eventId: eventId.trim(),
+        teamMemberId: (body as { teamMemberId?: string | null }).teamMemberId?.trim() || null,
         employeeId: body.employeeId?.trim() || null,
         userId: body.userId?.trim() || null,
         contractorName: body.contractorName?.trim() || null,
@@ -346,8 +635,10 @@ export class BostonCityHallEventPlanningService {
     eventId: string,
     commitmentId: string,
     body: Partial<{
+      catalogServiceId: string | null;
       supplierId: string | null;
       description: string;
+      quantity: number | string | null;
       plannedCost: number | string | null;
       actualCost: number | string | null;
       contractedAmount: number | string | null;
@@ -368,8 +659,10 @@ export class BostonCityHallEventPlanningService {
     return this.prisma.bchEventServiceCommitment.update({
       where: { id: commitmentId },
       data: {
+        ...(body.catalogServiceId !== undefined ? { catalogServiceId: body.catalogServiceId?.trim() || null } : {}),
         ...(body.supplierId !== undefined ? { supplierId: body.supplierId?.trim() || null } : {}),
         ...(body.description !== undefined ? { description: body.description.trim() } : {}),
+        ...(body.quantity !== undefined ? { quantity: this.dec(body.quantity) } : {}),
         ...(body.plannedCost !== undefined ? { plannedCost: this.dec(body.plannedCost) } : {}),
         ...(body.actualCost !== undefined ? { actualCost: this.dec(body.actualCost) } : {}),
         ...(body.contractedAmount !== undefined ? { contractedAmount: this.dec(body.contractedAmount) } : {}),

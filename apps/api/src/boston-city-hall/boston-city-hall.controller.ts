@@ -56,6 +56,8 @@ import { BostonCityHallEventWorkspaceService } from './boston-city-hall-event-wo
 import { BostonCityHallEventPlanningService } from './boston-city-hall-event-planning.service';
 import { BostonCityHallCheckinSessionsService } from './boston-city-hall-checkin-sessions.service';
 import { BostonCityHallPosCashService } from './boston-city-hall-pos-cash.service';
+import { BostonCityHallBuyerCrmService } from './boston-city-hall-buyer-crm.service';
+import { BostonCityHallEventVenueService } from './boston-city-hall-event-venue.service';
 import type { BchAlertListQuery } from './boston-city-hall-operational-alert.constants';
 
 @Controller('boston-city-hall')
@@ -96,6 +98,8 @@ export class BostonCityHallController {
     private readonly eventPlanning: BostonCityHallEventPlanningService,
     private readonly checkinSessions: BostonCityHallCheckinSessionsService,
     private readonly posCash: BostonCityHallPosCashService,
+    private readonly buyerCrm: BostonCityHallBuyerCrmService,
+    private readonly eventVenue: BostonCityHallEventVenueService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -770,6 +774,120 @@ export class BostonCityHallController {
   @Post('events/:eventId/schedule/seed-defaults')
   seedEventSchedule(@Param('eventId') eventId: string) {
     return this.eventPlanning.seedDefaultSchedule(eventId.trim());
+  }
+
+  @Patch('events/:eventId/schedule/:itemId')
+  patchEventSchedule(
+    @Param('eventId') eventId: string,
+    @Param('itemId') itemId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.eventPlanning.updateScheduleItem(eventId.trim(), itemId, body as never);
+  }
+
+  @Post('events/:eventId/schedule/:itemId/cancel')
+  cancelEventSchedule(@Param('eventId') eventId: string, @Param('itemId') itemId: string) {
+    return this.eventPlanning.cancelScheduleItem(eventId.trim(), itemId);
+  }
+
+  @Get('events/:eventId/venue-space')
+  getEventVenueSpace(@Param('eventId') eventId: string) {
+    return this.eventVenue.getEventVenueSpace(eventId.trim());
+  }
+
+  @Patch('events/:eventId/venue-space')
+  patchEventVenueSpace(
+    @Param('eventId') eventId: string,
+    @Body() body: { spaceId: string },
+  ) {
+    return this.eventVenue.setEventVenueSpace(eventId.trim(), body.spaceId);
+  }
+
+  @Get('events/:eventId/team-members')
+  listEventTeamMembers(@Param('eventId') eventId: string) {
+    return this.eventPlanning.listTeamMembers(eventId.trim());
+  }
+
+  @Post('events/:eventId/team-members')
+  createEventTeamMember(@Param('eventId') eventId: string, @Body() body: Record<string, unknown>) {
+    return this.eventPlanning.createTeamMember(eventId.trim(), body as never);
+  }
+
+  @Patch('events/:eventId/team-members/:memberId')
+  patchEventTeamMember(
+    @Param('eventId') eventId: string,
+    @Param('memberId') memberId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.eventPlanning.updateTeamMember(eventId.trim(), memberId, body as never);
+  }
+
+  @Post('events/:eventId/team-members/:memberId/shifts')
+  createEventTeamShift(
+    @Param('eventId') eventId: string,
+    @Param('memberId') memberId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.eventPlanning.createStaffShift(eventId.trim(), memberId, body as never);
+  }
+
+  @Get('events/:eventId/operational-tasks')
+  listEventOperationalTasks(@Param('eventId') eventId: string) {
+    return this.eventPlanning.listOperationalTasks(eventId.trim());
+  }
+
+  @Post('events/:eventId/operational-tasks')
+  createEventOperationalTask(@Param('eventId') eventId: string, @Body() body: Record<string, unknown>) {
+    return this.eventPlanning.createOperationalTask(eventId.trim(), body as never);
+  }
+
+  @Patch('events/:eventId/operational-tasks/:taskId')
+  patchEventOperationalTask(
+    @Param('eventId') eventId: string,
+    @Param('taskId') taskId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.eventPlanning.updateOperationalTask(eventId.trim(), taskId, body as never);
+  }
+
+  @Get('buyers')
+  listTicketBuyers(
+    @Query('q') q?: string,
+    @Query('marketingOptIn') marketingOptIn?: string,
+  ) {
+    return this.buyerCrm.listBuyers({
+      q,
+      marketingOptIn: marketingOptIn === 'true' ? true : undefined,
+    });
+  }
+
+  @Post('buyers/sync-from-orders')
+  syncTicketBuyersFromOrders() {
+    return this.buyerCrm.syncFromOrders();
+  }
+
+  @Get('buyers/export/marketing-opt-in')
+  exportMarketingOptInBuyers() {
+    return this.buyerCrm.exportMarketingOptIn();
+  }
+
+  @Get('buyers/by-email')
+  getBuyerByEmail(@Query('email') email?: string) {
+    if (!email?.trim()) throw new BadRequestException('email é obrigatório.');
+    return this.buyerCrm.findByEmail(email);
+  }
+
+  @Get('buyers/:profileId')
+  getTicketBuyerDetail(@Param('profileId') profileId: string) {
+    return this.buyerCrm.getBuyerDetail(profileId.trim());
+  }
+
+  @Patch('buyers/:profileId/marketing-opt-in')
+  patchBuyerMarketingOptIn(
+    @Param('profileId') profileId: string,
+    @Body() body: { marketingOptIn: boolean; source?: string | null },
+  ) {
+    return this.buyerCrm.updateMarketingOptIn(profileId.trim(), body);
   }
 
   @Get('events/:eventId/staff-assignments')

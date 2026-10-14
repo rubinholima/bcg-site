@@ -61,6 +61,7 @@ model User {
   bchBarClosesFinalized               BchBarClose[]                 @relation("BchBarCloseFinalizedBy")
   bchOperationalAlertsAcknowledged    BchOperationalAlert[]         @relation("BchAlertAcknowledgedBy")
   bchEventStaffAssignments            BchEventStaffAssignment[]     @relation("BchEventStaffAssignmentUser")
+  bchEventTeamMembers                 BchEventTeamMember[]          @relation("BchEventTeamMemberUser")
   bchCheckinSessionsOperated          BchCheckinSession[]           @relation("BchCheckinSessionOperator")
   bchPosCashSessionsOperated          BchPosCashSession[]           @relation("BchPosCashSessionOperator")
 }
@@ -287,6 +288,9 @@ model Tenant {
   bchCheckinStations           BchCheckinStation[]
   bchCheckinSessions           BchCheckinSession[]
   bchPosCashSessions           BchPosCashSession[]
+  bchEventTeamMembers          BchEventTeamMember[]
+  bchEventOperationalTasks     BchEventOperationalTask[]
+  bchTicketBuyerProfiles       BchTicketBuyerProfile[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -494,6 +498,7 @@ model Customer {
   financeiroLancamentos FinanceiroLancamento[]
   communicationConversations CommunicationConversation[]
   eventTicketOrders         EventTicketOrder[]
+  bchTicketBuyerProfiles    BchTicketBuyerProfile[]
   @@index([tenantId])
 }
 
@@ -999,6 +1004,9 @@ model Event {
   fixtureCategory String?
   startDate   DateTime?
   endDate     DateTime?
+  /// Espaço físico BCH (independente de reserva comercial, quando aplicável).
+  bchVenueSpaceId String?
+  bchVenueSpace   VenueSpace? @relation(fields: [bchVenueSpaceId], references: [id], onDelete: SetNull)
   logoUrl     String?
   content            Json      // { theme?, blocks: [{ id, type, sortOrder, config }] } — mesmo formato que Page
   competitionFormat  Json?     // { formatType, clubsCount, ... } — quando category=football
@@ -1032,10 +1040,45 @@ model Event {
   bchCheckinStations         BchCheckinStation[]
   bchCheckinSessions         BchCheckinSession[]
   bchPosCashSessions         BchPosCashSession[]
+  bchEventTeamMembers        BchEventTeamMember[]
+  bchEventOperationalTasks   BchEventOperationalTask[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
   @@index([status])
+  @@index([bchVenueSpaceId])
+}
+
+/// Pessoa vinculada ao evento (função, área, supervisor) — turnos em BchEventStaffAssignment.
+model BchEventTeamMember {
+  id               String    @id @default(cuid())
+  tenantId         String
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId          String
+  event            Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  employeeId       String?
+  employee         Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  userId           String?
+  user             User?     @relation("BchEventTeamMemberUser", fields: [userId], references: [id], onDelete: SetNull)
+  contractorName   String?
+  supplierId       String?
+  supplier         Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  roleLabel        String
+  areaLabel        String?
+  responsibility   String?   @db.Text
+  supervisorId     String?
+  supervisor       BchEventTeamMember?  @relation("BchTeamSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+  directReports    BchEventTeamMember[] @relation("BchTeamSupervisor")
+  status           String    @default("active")
+  notes            String?   @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  shifts           BchEventStaffAssignment[]
+  ownedTasks       BchEventOperationalTask[] @relation("BchTaskOwnerMember")
+  scheduleItemsResponsible BchEventScheduleItem[]
+
+  @@index([tenantId, eventId, status])
+  @@index([employeeId])
 }
 
 /// Cronograma operacional do evento (montagem, portas, show, desmontagem).
@@ -1051,6 +1094,8 @@ model BchEventScheduleItem {
   endsAt          DateTime?
   locationLabel   String?
   responsibleName String?
+  responsibleTeamMemberId String?
+  responsibleTeamMember   BchEventTeamMember? @relation(fields: [responsibleTeamMemberId], references: [id], onDelete: SetNull)
   status          String    @default("planned")
   notes           String?   @db.Text
   sortOrder       Int       @default(0)
@@ -1068,6 +1113,8 @@ model BchEventStaffAssignment {
   tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   eventId          String
   event            Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  teamMemberId     String?
+  teamMember       BchEventTeamMember? @relation(fields: [teamMemberId], references: [id], onDelete: SetNull)
   employeeId       String?
   employee         Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
   userId           String?
@@ -1096,6 +1143,49 @@ model BchEventStaffAssignment {
   @@index([tenantId, eventId, status])
   @@index([tenantId, eventId, plannedStartAt])
   @@index([employeeId])
+  @@index([teamMemberId])
+}
+
+/// Checklist / tarefa operacional do evento.
+model BchEventOperationalTask {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId             String
+  event               Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  title               String
+  ownerTeamMemberId   String?
+  ownerTeamMember     BchEventTeamMember? @relation("BchTaskOwnerMember", fields: [ownerTeamMemberId], references: [id], onDelete: SetNull)
+  dueAt               DateTime?
+  status              String    @default("open")
+  priority            String    @default("normal")
+  notes               String?   @db.Text
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([tenantId, eventId, status])
+  @@index([tenantId, eventId, dueAt])
+}
+
+/// Perfil de comprador de ingressos (CRM BCH) — opt-in de marketing explícito.
+model BchTicketBuyerProfile {
+  id                   String    @id @default(cuid())
+  tenantId             String
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  emailNormalized      String
+  customerId           String?
+  customer             Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  displayName          String?
+  phone                String?
+  marketingOptIn       Boolean   @default(false)
+  marketingOptInAt     DateTime?
+  marketingOptInSource String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([tenantId, emailNormalized])
+  @@index([tenantId])
+  @@index([customerId])
 }
 
 /// Serviço / fornecedor contratado para execução no evento.
@@ -2184,6 +2274,7 @@ model Supplier {
   financeiroLancamentos FinanceiroLancamento[]
   bchEventStaffAssignments     BchEventStaffAssignment[]
   bchEventServiceCommitments BchEventServiceCommitment[]
+  bchEventTeamMembers          BchEventTeamMember[]
   @@index([tenantId])
 }
 
@@ -2492,6 +2583,7 @@ model Employee {
   dependents EmployeeDependent[]
   registrationInvites RegistrationInvite[]
   bchEventStaffAssignments BchEventStaffAssignment[]
+  bchEventTeamMembers      BchEventTeamMember[]
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, type])
@@ -3376,6 +3468,7 @@ model VenueSpace {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   bookings         VenueBooking[]
+  bchEvents        Event[]
 
   @@unique([venueSlug, slug])
   @@index([tenantId])

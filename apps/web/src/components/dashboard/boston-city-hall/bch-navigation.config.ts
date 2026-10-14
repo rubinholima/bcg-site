@@ -78,6 +78,7 @@ export const BCH_NAV_GROUPS: BchNavGroup[] = [
       { href: `${BCH_BASE}/reservas`, label: "Reservas", icon: ClipboardList },
       { href: `${BCH_BASE}/operacao`, label: "Operação", icon: ListChecks },
       { href: `${BCH_BASE}/ticketing`, label: "Ingressos", icon: Ticket },
+      { href: `${BCH_BASE}/compradores`, label: "Compradores", icon: ContactRound },
     ],
   },
   {
@@ -126,6 +127,7 @@ export const BCH_INTERNAL_ROUTE_PATTERNS = [
   `${BCH_BASE}/executive`,
   `${BCH_BASE}/alerts`,
   `${BCH_BASE}/ticketing`,
+  `${BCH_BASE}/compradores`,
   `${BCH_BASE}/espacos`,
   `${BCH_BASE}/servicos`,
   `${BCH_BASE}/bar`,

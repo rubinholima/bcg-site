@@ -9,7 +9,8 @@ import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyS
 import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
 import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
-import { BCH_CARD, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BCH_CARD, BCH_DIALOG_CONTENT, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 import {
   Dialog,
   DialogContent,
@@ -85,6 +86,7 @@ export function BostonCityHallTicketOrders() {
   const [qrOpen, setQrOpen] = useState(false);
   const [qrLoading, setQrLoading] = useState(false);
   const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
+  const [buyerProfileId, setBuyerProfileId] = useState<string | null>(null);
 
   useEffect(() => {
     const t = window.setTimeout(() => setSearchDebounced(search.trim()), 300);
@@ -143,9 +145,18 @@ export function BostonCityHallTicketOrders() {
   const openDetail = async (id: string) => {
     setDetailOpen(true);
     setDetailLoading(true);
+    setBuyerProfileId(null);
     try {
       const res = await api.get<EventTicketOrderDetail>(`/boston-city-hall/ticketing/orders/${id}`);
       setDetail(res.data);
+      if (res.data.customerEmail?.trim()) {
+        void api
+          .get<{ id: string } | null>(
+            `/boston-city-hall/buyers/by-email?email=${encodeURIComponent(res.data.customerEmail.trim())}`,
+          )
+          .then((r) => setBuyerProfileId(r.data?.id ?? null))
+          .catch(() => setBuyerProfileId(null));
+      }
     } catch (e) {
       setFeedback({
         open: true,
@@ -317,7 +328,7 @@ export function BostonCityHallTicketOrders() {
       </div>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+        <DialogContent className={BCH_DIALOG_CONTENT}>
           <DialogHeader>
             <DialogTitle>{detail?.orderNumber ?? "Pedido"}</DialogTitle>
           </DialogHeader>
@@ -336,11 +347,17 @@ export function BostonCityHallTicketOrders() {
                   </p>
                 ) : null}
               </div>
-              <div>
+              <div className="rounded-md border border-slate-800/80 bg-slate-950/40 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Comprador</p>
                 <p className="font-medium">{detail.customerName}</p>
                 <p>{detail.customerEmail}</p>
                 {detail.customerPhone ? <p>{detail.customerPhone}</p> : null}
                 {detail.customerDocument ? <p>{detail.customerDocument}</p> : null}
+                {buyerProfileId ? (
+                  <Button type="button" variant="link" className="mt-1 h-auto p-0 text-amber-400/90" asChild>
+                    <Link href={`${BCH_BASE}/compradores`}>Ver perfil CRM</Link>
+                  </Button>
+                ) : null}
               </div>
               <Table>
                 <TableHeader>

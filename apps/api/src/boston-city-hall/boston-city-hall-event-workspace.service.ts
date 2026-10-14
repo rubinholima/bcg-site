@@ -32,6 +32,7 @@ export class BostonCityHallEventWorkspaceService {
       include: {
         ticketing: true,
         tenant: { select: { name: true } },
+        bchVenueSpace: { select: { id: true, name: true } },
       },
     });
     if (!event) throw new NotFoundException('Evento não encontrado.');
@@ -94,7 +95,13 @@ export class BostonCityHallEventWorkspaceService {
         endAt: event.endDate?.toISOString() ?? null,
         startDate: dateOnly(event.startDate),
         endDate: dateOnly(event.endDate),
-        locationLabel: locationFromContent(event.content) ?? booking?.spaceName ?? null,
+        locationLabel:
+          event.bchVenueSpace?.name ??
+          locationFromContent(event.content) ??
+          booking?.spaceName ??
+          null,
+        venueSpaceId: event.bchVenueSpaceId ?? booking?.spaceId ?? null,
+        venueSpaceName: event.bchVenueSpace?.name ?? booking?.spaceName ?? null,
         content: event.content,
       },
       booking,

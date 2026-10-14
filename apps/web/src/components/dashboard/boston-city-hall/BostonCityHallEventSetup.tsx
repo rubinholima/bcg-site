@@ -19,6 +19,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { LogoUploadWithName } from "@/components/dashboard/LogoUploadWithName";
 import { BchSection } from "@/components/dashboard/boston-city-hall/BchSection";
+import { BchWorkspaceContent } from "@/components/dashboard/boston-city-hall/BchWorkspaceContent";
+import { NativeSelect } from "@/components/ui/native-select";
+import type { VenueSpace } from "@/types/boston-city-hall";
 import { BostonCityHallTicketing } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketing";
 import {
   bchEventSetupPathWithBooking,
@@ -132,6 +135,9 @@ export function BostonCityHallEventSetup({
   const [eventForm, setEventForm] = useState<EventForm | null>(null);
   const [ticketing, setTicketing] = useState<EventTicketingDetail | null>(null);
   const [venueLabel, setVenueLabel] = useState<string | null>(null);
+  const [spaces, setSpaces] = useState<VenueSpace[]>([]);
+  const [venueSpaceId, setVenueSpaceId] = useState("");
+  const [savingSpace, setSavingSpace] = useState(false);
   const [saving, setSaving] = useState(false);
   const [scheduleItems, setScheduleItems] = useState<
     { id: string; title: string; itemType: string; startsAt: string }[]
@@ -187,11 +193,27 @@ export function BostonCityHallEventSetup({
 
       try {
         const sch = await api.get<
-          { id: string; title: string; itemType: string; startsAt: string }[]
+          { id: string; title: string; itemType: string; startsAt: string; status?: string }[]
         >(`/boston-city-hall/events/${encodeURIComponent(eventId)}/schedule`);
         setScheduleItems(Array.isArray(sch.data) ? sch.data : []);
       } catch {
         setScheduleItems([]);
+      }
+
+      try {
+        const [spacesRes, venueRes] = await Promise.all([
+          api.get<VenueSpace[]>("/boston-city-hall/spaces"),
+          api.get<{ venueSpaceId: string | null; space: VenueSpace | null }>(
+            `/boston-city-hall/events/${encodeURIComponent(eventId)}/venue-space`,
+          ),
+        ]);
+        setSpaces(Array.isArray(spacesRes.data) ? spacesRes.data.filter((s) => s.active) : []);
+        setVenueSpaceId(venueRes.data.venueSpaceId ?? venueRes.data.space?.id ?? "");
+        if (venueRes.data.space?.name) {
+          setVenueLabel(`Boston City Hall · ${venueRes.data.space.name}`);
+        }
+      } catch {
+        setSpaces([]);
       }
 
       const resolvedBookingId = bookingId?.trim();
@@ -393,7 +415,7 @@ export function BostonCityHallEventSetup({
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
+    <BchWorkspaceContent>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {!embedded ? (
           <Button variant="ghost" size="sm" className="min-h-[40px] text-slate-300" asChild>
@@ -483,19 +505,70 @@ export function BostonCityHallEventSetup({
                   Boston City Hall
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label>Local / espaço</Label>
-                <p className="rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm text-slate-200">
-                  {venueLabel ?? "Boston City Hall"}
+              <div className="space-y-2 sm:col-span-2">
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                  <Label htmlFor="bch-ev-space">Espaço do venue</Label>
+                  <Link
+                    href={`${BCH_BASE}/espacos`}
+                    className="text-xs text-amber-400/90 hover:text-amber-300"
+                  >
+                    Gerenciar espaços
+                  </Link>
+                </div>
+                <NativeSelect
+                  id="bch-ev-space"
+                  value={venueSpaceId}
+                  onChange={(e) => setVenueSpaceId(e.target.value)}
+                >
+                  <option value="">Selecione o espaço…</option>
+                  {spaces.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                      {s.capacitySeated != null ? ` · ${s.capacitySeated} assentos` : ""}
+                      {s.capacityStanding != null ? ` · ${s.capacityStanding} em pé` : ""}
+                    </option>
+                  ))}
+                </NativeSelect>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!venueSpaceId || savingSpace}
+                    className="min-h-[36px]"
+                    onClick={() => {
+                      setSavingSpace(true);
+                      void api
+                        .patch(`/boston-city-hall/events/${encodeURIComponent(eventId)}/venue-space`, {
+                          spaceId: venueSpaceId,
+                        })
+                        .then((res) => {
+                          const name = res.data.space?.name;
+                          if (name) setVenueLabel(`Boston City Hall · ${name}`);
+                        })
+                        .catch((err: Error) => {
+                          setFeedback({
+                            open: true,
+                            title: "Espaço não salvo",
+                            message: err.message || "Verifique conflitos de agenda.",
+                            variant: "error",
+                          });
+                        })
+                        .finally(() => setSavingSpace(false));
+                    }}
+                  >
+                    {savingSpace ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar espaço"}
+                  </Button>
+                  {venueLabel ? <span className="text-xs text-slate-400">{venueLabel}</span> : null}
                   {bookingId ? (
                     <Link
                       href={`${BCH_BASE}/operacao/${encodeURIComponent(bookingId)}`}
-                      className="ml-2 text-xs text-amber-400/90 hover:text-amber-300"
+                      className="text-xs text-sky-400/90 hover:text-sky-300"
                     >
-                      Ver reserva
+                      Reserva comercial vinculada
                     </Link>
                   ) : null}
-                </p>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bch-ev-start">Início</Label>
@@ -795,7 +868,7 @@ export function BostonCityHallEventSetup({
         message={feedback.message}
         variant={feedback.variant}
       />
-    </div>
+    </BchWorkspaceContent>
   );
 }
 
