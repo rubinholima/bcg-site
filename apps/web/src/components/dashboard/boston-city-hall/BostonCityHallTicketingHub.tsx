@@ -43,7 +43,13 @@ function tabFromQuery(raw: string | null, devCheckout: boolean): TabId {
   return devCheckout ? "checkout" : "overview";
 }
 
-function BostonCityHallTicketingHubInner() {
+function BostonCityHallTicketingHubInner({
+  embedded,
+  fixedEventId,
+}: {
+  embedded?: boolean;
+  fixedEventId?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const searchParams = useSearchParams();
@@ -51,12 +57,20 @@ function BostonCityHallTicketingHubInner() {
 
   const devCheckout = searchParams.get("tab") === "checkout";
   const queryTab = searchParams.get("tab");
-  const tabs = useMemo(
-    () => (devCheckout ? [...PRIMARY_TABS, CHECKOUT_TAB] : PRIMARY_TABS),
-    [devCheckout],
-  );
+  const tabs = useMemo(() => {
+    const base = embedded
+      ? PRIMARY_TABS.filter((t) => t.id !== "overview")
+      : PRIMARY_TABS;
+    return devCheckout ? [...base, CHECKOUT_TAB] : base;
+  }, [devCheckout, embedded]);
 
-  const [tab, setTabState] = useState<TabId>(() => tabFromQuery(queryTab, devCheckout));
+  const defaultTab: TabId = embedded ? "orders" : devCheckout ? "checkout" : "overview";
+
+  const [tab, setTabState] = useState<TabId>(() => {
+    const fromQ = tabFromQuery(queryTab, devCheckout);
+    if (embedded && fromQ === "overview") return defaultTab;
+    return fromQ;
+  });
 
   const setTab = useCallback(
     (next: TabId) => {
@@ -71,8 +85,17 @@ function BostonCityHallTicketingHubInner() {
   );
 
   useEffect(() => {
-    setTabState(tabFromQuery(queryTab, devCheckout));
-  }, [queryTab, devCheckout]);
+    const fromQ = tabFromQuery(queryTab, devCheckout);
+    if (embedded && fromQ === "overview") {
+      setTabState(defaultTab);
+      return;
+    }
+    setTabState(fromQ);
+  }, [defaultTab, devCheckout, embedded, queryTab]);
+
+  useEffect(() => {
+    if (fixedEventId?.trim()) setEventId(fixedEventId.trim());
+  }, [fixedEventId, setEventId]);
 
   const onNavigateTab = useCallback(
     (next: TabId, eventId?: string) => {
@@ -97,10 +120,16 @@ function BostonCityHallTicketingHubInner() {
   );
 }
 
-export function BostonCityHallTicketingHub() {
+export function BostonCityHallTicketingHub({
+  fixedEventId,
+  embedded,
+}: {
+  fixedEventId?: string;
+  embedded?: boolean;
+}) {
   return (
-    <BchTicketingSelectionProvider>
-      <BostonCityHallTicketingHubInner />
+    <BchTicketingSelectionProvider fixedEventId={fixedEventId}>
+      <BostonCityHallTicketingHubInner embedded={embedded} fixedEventId={fixedEventId} />
     </BchTicketingSelectionProvider>
   );
 }

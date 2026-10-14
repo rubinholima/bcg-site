@@ -12,7 +12,14 @@ type Ctx = BchTicketingEventsLoadState & {
 
 const BchTicketingSelectionContext = createContext<Ctx | null>(null);
 
-export function BchTicketingSelectionProvider({ children }: { children: React.ReactNode }) {
+export function BchTicketingSelectionProvider({
+  children,
+  fixedEventId,
+}: {
+  children: React.ReactNode;
+  /** Trava o evento (workspace) — não altera seleção pela URL do hub genérico. */
+  fixedEventId?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const searchParams = useSearchParams();
@@ -20,9 +27,11 @@ export function BchTicketingSelectionProvider({ children }: { children: React.Re
   const didAutoPickRef = useRef(false);
 
   const eventIdFromUrl = searchParams.get("eventId")?.trim() ?? "";
+  const lockedId = fixedEventId?.trim() ?? "";
 
   const setEventId = useCallback(
     (id: string) => {
+      if (lockedId) return;
       const p = new URLSearchParams(searchParams.toString());
       const next = id.trim();
       if (next) p.set("eventId", next);
@@ -30,18 +39,20 @@ export function BchTicketingSelectionProvider({ children }: { children: React.Re
       const qs = p.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [pathname, router, searchParams],
+    [lockedId, pathname, router, searchParams],
   );
 
   const eventId = useMemo(() => {
+    if (lockedId) return lockedId;
     if (eventIdFromUrl && eventsState.operationalEvents.some((e) => e.id === eventIdFromUrl)) {
       return eventIdFromUrl;
     }
     if (eventIdFromUrl && eventsState.loading) return eventIdFromUrl;
     return eventsState.operationalEvents[0]?.id ?? "";
-  }, [eventIdFromUrl, eventsState.loading, eventsState.operationalEvents]);
+  }, [eventIdFromUrl, eventsState.loading, eventsState.operationalEvents, lockedId]);
 
   useEffect(() => {
+    if (lockedId) return;
     if (eventsState.loading || eventsState.error) return;
     if (eventIdFromUrl) {
       if (!eventsState.operationalEvents.some((e) => e.id === eventIdFromUrl)) {
@@ -61,6 +72,7 @@ export function BchTicketingSelectionProvider({ children }: { children: React.Re
     eventsState.loading,
     eventsState.operationalEvents,
     setEventId,
+    lockedId,
   ]);
 
   const value = useMemo(

@@ -326,6 +326,26 @@ export class BostonCityHallOperationsService {
     return list;
   }
 
+  async getOperationListItemByEventId(eventId: string): Promise<VenueOperationListItemDto | null> {
+    const tenantId = await this.resolveTenantId();
+    const row = await this.prisma.venueBooking.findFirst({
+      where: { tenantId, eventId: eventId.trim(), venueSlug: BCH_VENUE_SLUG },
+      include: operationBookingInclude,
+    });
+    if (!row) return null;
+    return this.mapListItem(row);
+  }
+
+  async getOperationByEventId(eventId: string): Promise<VenueOperationDetailDto | null> {
+    const tenantId = await this.resolveTenantId();
+    const row = await this.prisma.venueBooking.findFirst({
+      where: { tenantId, eventId: eventId.trim(), venueSlug: BCH_VENUE_SLUG },
+      include: operationBookingInclude,
+    });
+    if (!row) return null;
+    return this.buildOperationDetail(row);
+  }
+
   async getOperation(bookingId: string): Promise<VenueOperationDetailDto> {
     const tenantId = await this.resolveTenantId();
     const row = await this.prisma.venueBooking.findFirst({
@@ -334,6 +354,10 @@ export class BostonCityHallOperationsService {
     });
     if (!row) throw new NotFoundException('Reserva não encontrada');
 
+    return this.buildOperationDetail(row);
+  }
+
+  private buildOperationDetail(row: BookingRow): VenueOperationDetailDto {
     const base = this.mapListItem(row);
     const proposals: VenueOperationProposalRef[] = row.venueProposals.map((p) => ({
       id: p.id,

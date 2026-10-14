@@ -117,11 +117,13 @@ export function BostonCityHallEventSetup({
   bookingId,
   backHref,
   backLabel,
+  embedded,
 }: {
   eventId: string;
   bookingId?: string | null;
   backHref?: string;
   backLabel?: string;
+  embedded?: boolean;
 }) {
   const [step, setStep] = useState<SetupStep>("info");
   const [loading, setLoading] = useState(true);
@@ -153,6 +155,8 @@ export function BostonCityHallEventSetup({
           category: string;
           startDate: string | null;
           endDate: string | null;
+          startAt?: string | null;
+          endAt?: string | null;
           logoUrl: string | null;
           status: string;
           tenantId: string | null;
@@ -168,8 +172,8 @@ export function BostonCityHallEventSetup({
         name: ev.name,
         description: ev.description ?? "",
         category: ev.category,
-        startLocal: isoToDatetimeLocal(ev.startDate),
-        endLocal: isoToDatetimeLocal(ev.endDate),
+        startLocal: isoToDatetimeLocal(ev.startAt ?? ev.startDate),
+        endLocal: isoToDatetimeLocal(ev.endAt ?? ev.endDate),
         logoUrl: ev.logoUrl ?? "",
         status: ev.status,
         tenantId: ev.tenantId,
@@ -177,10 +181,11 @@ export function BostonCityHallEventSetup({
       });
       setTicketing(tickRes.data);
 
-      if (bookingId?.trim()) {
+      const resolvedBookingId = bookingId?.trim();
+      if (resolvedBookingId) {
         try {
           const op = await api.get<VenueOperationDetail>(
-            `/boston-city-hall/operations/${bookingId.trim()}`,
+            `/boston-city-hall/operations/${resolvedBookingId}`,
           );
           setVenueLabel(
             op.data.spaceName
@@ -191,7 +196,20 @@ export function BostonCityHallEventSetup({
           setVenueLabel(null);
         }
       } else {
-        setVenueLabel(null);
+        try {
+          const op = await api.get<VenueOperationDetail | null>(
+            `/boston-city-hall/operations/by-event/${encodeURIComponent(eventId)}`,
+          );
+          setVenueLabel(
+            op.data?.spaceName
+              ? `Boston City Hall · ${op.data.spaceName}`
+              : op.data
+                ? "Boston City Hall"
+                : null,
+          );
+        } catch {
+          setVenueLabel(null);
+        }
       }
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Não foi possível carregar o evento.");
@@ -344,9 +362,11 @@ export function BostonCityHallEventSetup({
     return (
       <BchSection title="Não foi possível carregar">
         <p className="text-sm text-red-300">{loadError ?? "Evento não encontrado."}</p>
-        <Button variant="outline" className="mt-3 min-h-[44px]" asChild>
-          <Link href={resolvedBackHref}>{resolvedBackLabel}</Link>
-        </Button>
+        {!embedded ? (
+          <Button variant="outline" className="mt-3 min-h-[44px]" asChild>
+            <Link href={resolvedBackHref}>{resolvedBackLabel}</Link>
+          </Button>
+        ) : null}
       </BchSection>
     );
   }
@@ -358,12 +378,18 @@ export function BostonCityHallEventSetup({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" className="min-h-[40px] text-slate-300" asChild>
-          <Link href={resolvedBackHref}>
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            {resolvedBackLabel}
-          </Link>
-        </Button>
+        {!embedded ? (
+          <Button variant="ghost" size="sm" className="min-h-[40px] text-slate-300" asChild>
+            <Link href={resolvedBackHref}>
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              {resolvedBackLabel}
+            </Link>
+          </Button>
+        ) : (
+          <span className="text-xs font-semibold uppercase tracking-wide text-sky-400/80">
+            Planejamento do evento
+          </span>
+        )}
         <span
           className={cn(
             "rounded-full border px-3 py-1 text-xs font-medium",

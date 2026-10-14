@@ -1307,6 +1307,51 @@ export type BchExecutiveEventPerformanceRow = {
   activeAlerts?: BchOperationalAlert[];
 };
 
+export type BchEventWorkspaceReadinessItem = {
+  code: string;
+  ok: boolean;
+  label: string;
+  detail?: string | null;
+};
+
+export type BchEventWorkspace = {
+  event: {
+    id: string;
+    slug: string;
+    name: string;
+    description: string | null;
+    status: string;
+    organizer: string;
+    category: string;
+    logoUrl: string | null;
+    startAt: string | null;
+    endAt: string | null;
+    startDate: string | null;
+    endDate: string | null;
+    locationLabel: string | null;
+    content: unknown;
+  };
+  booking: VenueOperationListItem | null;
+  ticketing: {
+    enabled: boolean;
+    currency: string | null;
+    typesActiveCount: number;
+    salesOpen: boolean;
+  };
+  ticketKpis: {
+    applicable: boolean;
+    enabled: boolean;
+    currency: string | null;
+    ticketsSold: number;
+    capacityConfigured: number | null;
+    checkedIn: number;
+    grossAmount: string | null;
+  };
+  readiness: BchEventWorkspaceReadinessItem[];
+  operationalStage: "planejamento" | "preparacao" | "execucao" | "fechamento";
+  alertOpenCount: number;
+};
+
 export function parseProposalDateInput(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);

@@ -30,7 +30,13 @@ import {
 
 type TicketingEvent = { id: string; name: string; slug?: string };
 
-export function BostonCityHallBarEventInventory() {
+export function BostonCityHallBarEventInventory({
+  fixedEventId,
+  embedded,
+}: {
+  fixedEventId?: string;
+  embedded?: boolean;
+} = {}) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [events, setEvents] = useState<TicketingEvent[]>([]);
@@ -98,6 +104,14 @@ export function BostonCityHallBarEventInventory() {
   useEffect(() => {
     if (selectedId) void loadSummary(selectedId).catch(() => setSummary(null));
   }, [selectedId, loadSummary]);
+
+  useEffect(() => {
+    const id = fixedEventId?.trim();
+    if (!id || inventories.length === 0) return;
+    setOpenEventId(id);
+    const mine = inventories.filter((i) => i.eventId === id);
+    if (mine[0] && !selectedId) setSelectedId(mine[0].id);
+  }, [fixedEventId, inventories, selectedId]);
 
   const openInventory = async () => {
     if (!openEventId) return;
@@ -174,6 +188,7 @@ export function BostonCityHallBarEventInventory() {
 
   return (
     <div className="space-y-4">
+      {!embedded ? (
       <Link
         href="/dashboard/eventos/boston-city-hall/bar"
         className="inline-flex min-h-[44px] items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -181,30 +196,42 @@ export function BostonCityHallBarEventInventory() {
         <ArrowLeft className="h-4 w-4" />
         Voltar ao bar
       </Link>
+      ) : null}
 
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Abrir estoque de evento</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="min-w-0 flex-1">
-            <Label className="text-xs">Evento</Label>
-            <NativeSelect
-              className="mt-1 min-h-[44px] w-full"
-              value={openEventId}
-              onChange={(e) => setOpenEventId(e.target.value)}
-            >
-              <option value="">Selecione…</option>
-              {events.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {bchEventDisplayName(ev.name)}
-                </option>
-              ))}
-            </NativeSelect>
-          </div>
-          <Button type="button" className="min-h-[44px]" disabled={busy || !openEventId} onClick={() => void openInventory()}>
-            Abrir
-          </Button>
+          {!embedded || !fixedEventId ? (
+            <>
+              <div className="min-w-0 flex-1">
+                <Label className="text-xs">Evento</Label>
+                <NativeSelect
+                  className="mt-1 min-h-[44px] w-full"
+                  value={openEventId}
+                  onChange={(e) => setOpenEventId(e.target.value)}
+                >
+                  <option value="">Selecione…</option>
+                  {events.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      {bchEventDisplayName(ev.name)}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+              <Button
+                type="button"
+                className="min-h-[44px]"
+                disabled={busy || !openEventId}
+                onClick={() => void openInventory()}
+              >
+                Abrir
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Estoque ligado a este evento.</p>
+          )}
         </CardContent>
       </Card>
 

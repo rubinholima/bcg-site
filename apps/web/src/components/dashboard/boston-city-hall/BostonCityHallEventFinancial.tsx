@@ -81,10 +81,12 @@ export function BostonCityHallEventFinancial({
   eventId,
   backHref,
   backLabel,
+  embedded,
 }: {
   eventId: string;
   backHref: string;
   backLabel: string;
+  embedded?: boolean;
 }) {
   const [data, setData] = useState<BchEventFinancialResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,14 +135,16 @@ export function BostonCityHallEventFinancial({
 
   return (
     <div className="space-y-4">
-      <Link
-        href={backHref}
-        className="inline-flex min-h-[44px] items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {backLabel}
-      </Link>
-      <BostonCityHallEventAlertsBanner eventId={eventId} />
+      {!embedded ? (
+        <Link
+          href={backHref}
+          className="inline-flex min-h-[44px] items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {backLabel}
+        </Link>
+      ) : null}
+      {!embedded ? <BostonCityHallEventAlertsBanner eventId={eventId} lazy /> : null}
 
       <div>
         <h2 className="text-lg font-semibold text-foreground">{data.eventName}</h2>

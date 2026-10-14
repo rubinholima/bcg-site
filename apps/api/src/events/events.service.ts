@@ -1,8 +1,10 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import { TenantAccessService } from '../auth/tenant-access.service';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { HomeContentService } from '../home-content/home-content.service';
@@ -41,6 +43,9 @@ export type EventResponseDto = {
   fixtureCategory: string | null;
   startDate: string | null;
   endDate: string | null;
+  /** ISO 8601 completo (quando existir no banco) */
+  startAt?: string | null;
+  endAt?: string | null;
   logoUrl: string | null;
   content: EventContentDto;
   competitionFormat: CompetitionFormatDto | null;
@@ -120,6 +125,8 @@ function toDto(row: {
     fixtureCategory: row.fixtureCategory?.trim() || null,
     startDate: row.startDate ? row.startDate.toISOString().slice(0, 10) : null,
     endDate: row.endDate ? row.endDate.toISOString().slice(0, 10) : null,
+    startAt: row.startDate?.toISOString() ?? null,
+    endAt: row.endDate?.toISOString() ?? null,
     logoUrl: row.logoUrl,
     content,
     competitionFormat,
@@ -241,6 +248,7 @@ export class EventsService {
     private readonly prisma: PrismaService,
     private readonly homeContentService: HomeContentService,
     private readonly s3: S3Service,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
 
   async findAll(filters?: {
@@ -261,13 +269,24 @@ export class EventsService {
     return rows.map(toDto);
   }
 
-  async findOne(id: string): Promise<EventResponseDto> {
+  async findOne(
+    id: string,
+    access?: { jwtSub: string; role?: string },
+  ): Promise<EventResponseDto> {
     const row = await this.prisma.event.findUnique({
       where: { id },
       include: { tenant: { select: { name: true, slug: true, logoUrl: true } } },
     });
     if (!row) {
       throw new NotFoundException(`Evento com ID "${id}" não encontrado`);
+    }
+    if (access && row.tenantId) {
+      const allowed = await this.tenantAccess.getAllowedTenantIds(access.jwtSub, access.role);
+      try {
+        this.tenantAccess.assertCanAccessTenant(allowed, row.tenantId);
+      } catch {
+        throw new ForbiddenException('Acesso negado a este evento.');
+      }
     }
     const dto = toDto(row as Parameters<typeof toDto>[0]);
     const blocks = (dto.content?.blocks ?? []) as unknown[];

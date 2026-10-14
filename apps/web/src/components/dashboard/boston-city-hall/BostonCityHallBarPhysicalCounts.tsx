@@ -36,7 +36,10 @@ function divergenceClass(value: string | null) {
   return n > 0 ? "text-emerald-400" : "text-red-400";
 }
 
-export function BostonCityHallBarPhysicalCounts() {
+export function BostonCityHallBarPhysicalCounts(_props?: {
+  fixedEventId?: string;
+  embedded?: boolean;
+}) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [locations, setLocations] = useState<BchBarInventoryLocation[]>([]);

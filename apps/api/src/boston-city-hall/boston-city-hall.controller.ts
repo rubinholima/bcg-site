@@ -52,6 +52,7 @@ import { BostonCityHallEventFinancialService } from './boston-city-hall-event-fi
 import { BostonCityHallExecutiveService } from './boston-city-hall-executive.service';
 import type { BchExecutiveEventsQuery } from './boston-city-hall-executive.constants';
 import { BostonCityHallOperationalAlertService } from './boston-city-hall-operational-alert.service';
+import { BostonCityHallEventWorkspaceService } from './boston-city-hall-event-workspace.service';
 import type { BchAlertListQuery } from './boston-city-hall-operational-alert.constants';
 
 @Controller('boston-city-hall')
@@ -88,6 +89,7 @@ export class BostonCityHallController {
     private readonly eventFinancial: BostonCityHallEventFinancialService,
     private readonly executive: BostonCityHallExecutiveService,
     private readonly alerts: BostonCityHallOperationalAlertService,
+    private readonly eventWorkspace: BostonCityHallEventWorkspaceService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -595,6 +597,11 @@ export class BostonCityHallController {
     });
   }
 
+  @Get('operations/by-event/:eventId')
+  getOperationByEvent(@Param('eventId') eventId: string) {
+    return this.operations.getOperationByEventId(eventId.trim());
+  }
+
   @Get('operations/:bookingId')
   getOperation(@Param('bookingId') bookingId: string) {
     return this.operations.getOperation(bookingId);
@@ -723,6 +730,13 @@ export class BostonCityHallController {
   async getExecutiveEventPerformance(@Query() query: Record<string, string | undefined>) {
     const tenantId = await this.bchTenantId();
     return this.executive.getEventPerformance(tenantId, query as BchExecutiveEventsQuery);
+  }
+
+  /** BCH — payload essencial do workspace por evento */
+  @Get('events/:eventId/workspace')
+  async getEventWorkspace(@Param('eventId') eventId: string) {
+    const tenantId = await this.bchTenantId();
+    return this.eventWorkspace.getWorkspace(tenantId, eventId.trim());
   }
 
   /** BCH — resultado financeiro executivo por evento (Fase 5.1) */

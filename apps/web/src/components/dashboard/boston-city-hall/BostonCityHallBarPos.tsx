@@ -45,7 +45,13 @@ function availabilityBadge(a: BchBarPosCatalogItem["availability"]) {
   return <span className={cn("text-xs font-medium", map[a])}>{labels[a]}</span>;
 }
 
-export function BostonCityHallBarPos() {
+export function BostonCityHallBarPos({
+  fixedEventId,
+  embedded,
+}: {
+  fixedEventId?: string;
+  embedded?: boolean;
+} = {}) {
   const [locations, setLocations] = useState<BchBarInventoryLocation[]>([]);
   const [locationId, setLocationId] = useState("");
   const [catalog, setCatalog] = useState<BchBarPosCatalogItem[]>([]);
@@ -78,10 +84,17 @@ export function BostonCityHallBarPos() {
 
   const loadLocations = useCallback(async () => {
     const { data: locs } = await api.get<BchBarInventoryLocation[]>("/boston-city-hall/bar/locations");
-    const active = Array.isArray(locs) ? locs.filter((l) => l.active) : [];
+    let active = Array.isArray(locs) ? locs.filter((l) => l.active) : [];
+    const lock = fixedEventId?.trim();
+    if (lock) {
+      active = active.filter((l) => l.eventId === lock || (l.kind === "event_bar" && l.eventId === lock));
+    }
     setLocations(active);
-    setLocationId((prev) => prev || active[0]?.id || "");
-  }, []);
+    setLocationId((prev) => {
+      if (prev && active.some((l) => l.id === prev)) return prev;
+      return active[0]?.id || "";
+    });
+  }, [fixedEventId]);
 
   const loadCatalog = useCallback(async (locId: string) => {
     if (!locId) {

@@ -21,7 +21,7 @@ type BarClose = {
   snapshot: Record<string, unknown> | null;
 };
 
-export function BostonCityHallBarClose() {
+export function BostonCityHallBarClose(_props?: { fixedEventId?: string; embedded?: boolean }) {
   const [inventories, setInventories] = useState<BchBarEventInventory[]>([]);
   const [closes, setCloses] = useState<BarClose[]>([]);
   const [invId, setInvId] = useState("");

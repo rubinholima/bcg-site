@@ -8,10 +8,13 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import type { Request } from 'express';
+import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
@@ -44,8 +47,8 @@ export class EventsController {
   @Get(':id')
   @UseGuards(JwtAuthGuard, ModuleAccessGuard)
   @RequireModule('eventos')
-  findOne(@Param('id') id: string) {
-    return this.eventsService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req: Request & { user: CognitoJwtPayload }) {
+    return this.eventsService.findOne(id, { jwtSub: req.user.sub, role: req.user.role });
   }
 
   @Post()
