@@ -303,21 +303,27 @@ export function BostonCityHallEventsIndex() {
         />
       </div>
 
-      <div className="rounded-xl border border-slate-800/80 bg-[#0c1222]/55 p-3 sm:p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
-          <div className="relative min-w-0 flex-1 lg:max-w-xs">
+      <div className="rounded-xl border border-slate-800/80 bg-[#0c1222]/55 p-3 xl:p-3">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-2",
+            "md:grid-cols-2 md:gap-2.5",
+            "xl:flex xl:flex-nowrap xl:items-center xl:gap-2.5",
+          )}
+        >
+          <div className="relative min-w-0 md:col-span-2 xl:col-auto xl:w-[min(100%,280px)] xl:min-w-[240px] xl:max-w-[300px] xl:shrink-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar evento…"
-              className="min-h-[44px] border-slate-700 bg-slate-950/50 pl-9 text-foreground"
+              className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 pl-9 text-foreground"
             />
           </div>
           <NativeSelect
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="min-h-[44px] min-w-[140px] border-slate-700 bg-slate-950/50 text-foreground"
+            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[150px] xl:max-w-[170px] xl:shrink-0"
           >
             <option value="all">Status: todos</option>
             <option value="draft">Rascunho</option>
@@ -327,7 +333,7 @@ export function BostonCityHallEventsIndex() {
           <NativeSelect
             value={spaceFilter}
             onChange={(e) => setSpaceFilter(e.target.value)}
-            className="min-h-[44px] min-w-[140px] border-slate-700 bg-slate-950/50 text-foreground"
+            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[150px] xl:max-w-[170px] xl:shrink-0"
           >
             <option value="all">Espaço: todos</option>
             {spaceOptions.map((s) => (
@@ -340,7 +346,7 @@ export function BostonCityHallEventsIndex() {
             <NativeSelect
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="min-h-[44px] min-w-[140px] border-slate-700 bg-slate-950/50 text-foreground"
+              className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[150px] xl:max-w-[170px] xl:shrink-0"
             >
               <option value="all">Tipo: todos</option>
               {typeOptions.map((t) => (
@@ -354,32 +360,32 @@ export function BostonCityHallEventsIndex() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="min-h-[44px] w-full border-slate-700 bg-slate-950/50 text-foreground sm:w-[150px]"
+            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[145px] xl:shrink-0"
             aria-label="Data inicial"
           />
           <Input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="min-h-[44px] w-full border-slate-700 bg-slate-950/50 text-foreground sm:w-[150px]"
+            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[145px] xl:shrink-0"
             aria-label="Data final"
           />
           <NativeSelect
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="min-h-[44px] min-w-[160px] border-slate-700 bg-slate-950/50 text-foreground"
+            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[150px] xl:shrink-0"
           >
             <option value="dateDesc">Ordenar: data ↓</option>
             <option value="dateAsc">Ordenar: data ↑</option>
             <option value="nameAsc">Ordenar: nome</option>
             <option value="status">Ordenar: status</option>
           </NativeSelect>
-          <div className="flex gap-1 rounded-lg border border-slate-800 p-0.5">
+          <div className="flex shrink-0 gap-1 rounded-lg border border-slate-800 p-0.5 md:col-span-2 md:justify-self-start xl:col-auto xl:ml-auto xl:justify-self-auto">
             <Button
               type="button"
               size="sm"
               variant={view === "list" ? "secondary" : "ghost"}
-              className="min-h-[40px] gap-1"
+              className="h-9 min-h-0 gap-1 px-2.5"
               onClick={() => setView("list")}
             >
               <List className="h-4 w-4" aria-hidden />
@@ -389,7 +395,7 @@ export function BostonCityHallEventsIndex() {
               type="button"
               size="sm"
               variant={view === "calendar" ? "secondary" : "ghost"}
-              className="min-h-[40px] gap-1"
+              className="h-9 min-h-0 gap-1 px-2.5"
               onClick={() => setView("calendar")}
             >
               <CalendarDays className="h-4 w-4" aria-hidden />
