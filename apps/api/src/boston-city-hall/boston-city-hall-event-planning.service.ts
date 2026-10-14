@@ -418,6 +418,7 @@ export class BostonCityHallEventPlanningService {
   async createStaff(
     eventId: string,
     body: {
+      teamMemberId?: string | null;
       employeeId?: string | null;
       userId?: string | null;
       contractorName?: string | null;
@@ -442,7 +443,7 @@ export class BostonCityHallEventPlanningService {
       data: {
         tenantId,
         eventId: eventId.trim(),
-        teamMemberId: (body as { teamMemberId?: string | null }).teamMemberId?.trim() || null,
+        teamMemberId: body.teamMemberId?.trim() || null,
         employeeId: body.employeeId?.trim() || null,
         userId: body.userId?.trim() || null,
         contractorName: body.contractorName?.trim() || null,

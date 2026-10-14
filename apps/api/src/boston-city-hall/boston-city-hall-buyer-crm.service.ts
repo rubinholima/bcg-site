@@ -219,7 +219,12 @@ export class BostonCityHallBuyerCrmService {
     let upserted = 0;
     for (const o of orders) {
       if (!o.customerEmail?.trim()) continue;
-      await this.upsertProfile(tenantId, o);
+      await this.upsertProfile(tenantId, {
+        email: o.customerEmail,
+        displayName: o.customerName,
+        phone: o.customerPhone,
+        customerId: o.customerId,
+      });
       upserted += 1;
     }
     return { upserted };
@@ -270,7 +275,12 @@ export class BostonCityHallBuyerCrmService {
         orderBy: { createdAt: 'desc' },
       });
       if (!order) return null;
-      const created = await this.upsertProfile(tenantId, order);
+      const created = await this.upsertProfile(tenantId, {
+        email: order.customerEmail,
+        displayName: order.customerName,
+        phone: order.customerPhone,
+        customerId: order.customerId,
+      });
       if (!created) return null;
       return this.enrichProfile(tenantId, created);
     }

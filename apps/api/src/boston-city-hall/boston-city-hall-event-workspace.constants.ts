@@ -33,6 +33,8 @@ export type BchEventWorkspaceEventDto = {
   startDate: string | null;
   endDate: string | null;
   locationLabel: string | null;
+  venueSpaceId: string | null;
+  venueSpaceName: string | null;
   content: unknown;
 };
 
