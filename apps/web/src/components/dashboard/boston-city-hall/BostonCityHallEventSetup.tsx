@@ -417,8 +417,8 @@ export function BostonCityHallEventSetup({
     (s) => (s.id !== "ticketing" || ticketing?.ticketingEnabled) && !(hideScheduleStep && s.id === "schedule"),
   );
 
-  return (
-    <BchWorkspaceContent>
+  const setupInner = (
+    <>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {!embedded ? (
           <Button variant="ghost" size="sm" className="min-h-[40px] text-slate-300" asChild>
@@ -546,7 +546,8 @@ export function BostonCityHallEventSetup({
                           spaceId: venueSpaceId,
                         })
                         .then((res) => {
-                          const name = res.data.space?.name;
+                          const data = res.data as { space?: { name?: string } };
+                          const name = data.space?.name;
                           if (name) setVenueLabel(`Boston City Hall · ${name}`);
                         })
                         .catch((err: Error) => {
@@ -871,7 +872,13 @@ export function BostonCityHallEventSetup({
         message={feedback.message}
         variant={feedback.variant}
       />
-    </BchWorkspaceContent>
+    </>
+  );
+
+  return embedded ? (
+    <div className="space-y-4">{setupInner}</div>
+  ) : (
+    <BchWorkspaceContent>{setupInner}</BchWorkspaceContent>
   );
 }
 

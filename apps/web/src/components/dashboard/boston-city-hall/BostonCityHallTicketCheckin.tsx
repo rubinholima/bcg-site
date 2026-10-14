@@ -310,7 +310,7 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
   }, [cameraOn, session?.id, processing]);
 
   return (
-    <div className="w-full max-w-[min(100%,90rem)] space-y-4 pb-4">
+    <div className="space-y-4">
       {!fixedEventId && (eventsError || (!loadingEvents && events.length === 0)) ? (
         <BchEventListDiagnostics
           error={eventsError}

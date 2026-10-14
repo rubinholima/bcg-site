@@ -103,10 +103,11 @@ function memberLabel(m: TeamMember): string {
 
 export function BostonCityHallEventPlanningPanel({
   eventId,
-  onChanged,
+  onMutated,
 }: {
   eventId: string;
-  onChanged?: () => void;
+  /** Atualiza prontidão do workspace após alteração persistida (não no load inicial). */
+  onMutated?: () => void;
 }) {
   const base = `/boston-city-hall/events/${encodeURIComponent(eventId)}`;
   const [loading, setLoading] = useState(true);
@@ -155,17 +156,21 @@ export function BostonCityHallEventPlanningPanel({
       setSchedule(Array.isArray(sch.data) ? sch.data.filter((s) => s.status !== "cancelled") : []);
       setTasks(Array.isArray(tsk.data) ? tsk.data.filter((t) => t.status !== "cancelled") : []);
       setTeam(Array.isArray(tm.data) ? tm.data : []);
-      onChanged?.();
     } catch {
       setFeedback({ title: "Erro", message: "Não foi possível carregar planejamento.", variant: "error" });
     } finally {
       setLoading(false);
     }
-  }, [base, onChanged]);
+  }, [base]);
 
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  const afterMutation = useCallback(async () => {
+    await reload();
+    onMutated?.();
+  }, [onMutated, reload]);
 
   const openNewSchedule = () => {
     setEditSchedule(null);
@@ -219,7 +224,7 @@ export function BostonCityHallEventPlanningPanel({
         await api.post(`${base}/schedule`, payload);
       }
       setScheduleDialog(false);
-      await reload();
+      await afterMutation();
     } catch (e) {
       setFeedback({
         title: "Erro",
@@ -292,7 +297,7 @@ export function BostonCityHallEventPlanningPanel({
         await api.post(`${base}/operational-tasks`, payload);
       }
       setTaskDialog(false);
-      await reload();
+      await afterMutation();
     } catch (e) {
       setFeedback({
         title: "Erro",
@@ -590,7 +595,7 @@ export function BostonCityHallEventPlanningPanel({
                 if (!cancelScheduleId) return;
                 void api.post(`${base}/schedule/${cancelScheduleId}/cancel`).then(() => {
                   setCancelScheduleId(null);
-                  void reload();
+                  void afterMutation();
                 });
               }}
             >
@@ -613,7 +618,7 @@ export function BostonCityHallEventPlanningPanel({
                 if (!cancelTaskId) return;
                 void api.post(`${base}/operational-tasks/${cancelTaskId}/cancel`).then(() => {
                   setCancelTaskId(null);
-                  void reload();
+                  void afterMutation();
                 });
               }}
             >

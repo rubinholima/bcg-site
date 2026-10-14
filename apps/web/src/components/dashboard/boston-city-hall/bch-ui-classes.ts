@@ -16,9 +16,12 @@ export const BCH_BTN_SECONDARY =
 export const BCH_INPUT =
   "border-slate-700 bg-slate-950/50 text-foreground placeholder:text-slate-500";
 
-/** Container padrão do workspace e telas operacionais BCH (largura útil, scroll da página). */
-export const BCH_WORKSPACE_CONTENT =
-  "w-full max-w-[min(100%,90rem)] space-y-4 pb-6";
+/** Shell único do workspace de evento — alinhamento e largura em todas as abas. */
+export const BCH_EVENT_WORKSPACE_SHELL =
+  "mx-auto w-full min-w-0 max-w-[1440px] space-y-4 pb-8 px-3 sm:px-4 lg:px-6";
+
+/** @deprecated Preferir BCH_EVENT_WORKSPACE_SHELL no workspace de evento. */
+export const BCH_WORKSPACE_CONTENT = BCH_EVENT_WORKSPACE_SHELL;
 
 /** Dialogs BCH — largura e scroll interno consistentes. */
 export const BCH_DIALOG_CONTENT =

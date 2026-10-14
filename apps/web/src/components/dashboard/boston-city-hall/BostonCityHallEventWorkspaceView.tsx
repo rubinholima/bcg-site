@@ -125,22 +125,30 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
 
   const nextAction = useMemo(() => primaryNextAction(snapshot), [snapshot]);
 
+  const refreshWorkspace = useCallback(() => {
+    void reload();
+  }, [reload]);
+
   if (loading) {
     return (
-      <div className="flex justify-center py-24">
-        <Loader2 className="h-10 w-10 animate-spin text-sky-400/80" />
-      </div>
+      <BchWorkspaceContent>
+        <div className="flex justify-center py-24">
+          <Loader2 className="h-10 w-10 animate-spin text-sky-400/80" />
+        </div>
+      </BchWorkspaceContent>
     );
   }
 
   if (error || !event || !workspace) {
     return (
-      <div className={cn(BCH_CARD, "mx-auto max-w-lg text-center")}>
-        <p className="text-sm text-red-300">{error ?? "Evento não encontrado."}</p>
-        <Button type="button" variant="outline" className="mt-4 min-h-[44px]" onClick={() => void reload()}>
-          Tentar novamente
-        </Button>
-      </div>
+      <BchWorkspaceContent>
+        <div className={cn(BCH_CARD, "mx-auto max-w-lg text-center")}>
+          <p className="text-sm text-red-300">{error ?? "Evento não encontrado."}</p>
+          <Button type="button" variant="outline" className="mt-4 min-h-[44px]" onClick={() => void reload()}>
+            Tentar novamente
+          </Button>
+        </div>
+      </BchWorkspaceContent>
     );
   }
 
@@ -173,7 +181,7 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
   const logoSrc = event.logoUrl ? getPublicImageUrl(event.logoUrl) : null;
 
   return (
-    <div className="w-full space-y-4 pb-8">
+    <BchWorkspaceContent>
       <header className="overflow-hidden rounded-xl border border-slate-800/80 bg-gradient-to-r from-[#070d18] via-[#0c1222] to-[#070d18]">
         <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 gap-4">
@@ -289,8 +297,8 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
       </nav>
 
       {section === "resumo" ? (
-        <BchWorkspaceContent>
-          <BostonCityHallEventCommercialPanel eventId={event.id} booking={booking} onLinked={() => void reload()} />
+        <>
+          <BostonCityHallEventCommercialPanel eventId={event.id} booking={booking} onLinked={refreshWorkspace} />
           <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <KpiCard
@@ -407,12 +415,12 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
             </Panel>
           </div>
         </div>
-        </BchWorkspaceContent>
+        </>
       ) : null}
 
       {section === "planejamento" ? (
-        <BchWorkspaceContent className="space-y-6">
-          <BostonCityHallEventPlanningPanel eventId={event.id} onChanged={() => void reload()} />
+        <div className="space-y-6">
+          <BostonCityHallEventPlanningPanel eventId={event.id} onMutated={refreshWorkspace} />
           <BostonCityHallEventSetup
             eventId={event.id}
             bookingId={booking?.bookingId ?? null}
@@ -421,11 +429,11 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
             backHref={links.workspace}
             backLabel="Voltar ao workspace"
           />
-        </BchWorkspaceContent>
+        </div>
       ) : null}
 
       {section === "equipe" ? (
-        <BchWorkspaceContent className="space-y-4">
+        <div className="space-y-4">
           {booking ? (
             <Panel title="Contato comercial (reserva)">
               <div className="grid gap-3 sm:grid-cols-2 text-sm">
@@ -449,11 +457,11 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
             </Panel>
           )}
           <BostonCityHallEventStaffAndServices eventId={event.id} />
-        </BchWorkspaceContent>
+        </div>
       ) : null}
 
       {section === "bilheteria" ? (
-        <BchWorkspaceContent className="space-y-3">
+        <div className="space-y-3">
           {!workspace.ticketing.enabled ? (
             <div className={cn(BCH_CARD, "flex items-start gap-3 text-sm text-slate-300")}>
               <Ticket className="mt-0.5 h-5 w-5 shrink-0 text-sky-400/80" aria-hidden />
@@ -470,7 +478,7 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
           ) : (
             <BostonCityHallTicketingHub fixedEventId={event.id} embedded />
           )}
-        </BchWorkspaceContent>
+        </div>
       ) : null}
 
       {section === "bar" ? (
@@ -489,12 +497,12 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
       ) : null}
 
       {section === "fechamento" ? (
-        <BchWorkspaceContent className="space-y-4">
+        <div className="space-y-4">
           <BostonCityHallEventClosingPanel eventId={event.id} />
           <BostonCityHallEventAlertsBanner eventId={event.id} />
-        </BchWorkspaceContent>
+        </div>
       ) : null}
-    </div>
+    </BchWorkspaceContent>
   );
 }
 

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
-import { BchWorkspaceContent } from "@/components/dashboard/boston-city-hall/BchWorkspaceContent";
 import {
   BCH_BTN_SECONDARY,
   BCH_CARD,
@@ -425,7 +424,7 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
   }
 
   return (
-    <BchWorkspaceContent className="space-y-6">
+    <div className="space-y-6">
       <section className={cn(BCH_CARD, "space-y-3")}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-100">Equipe do evento</h3>
@@ -902,6 +901,6 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
         title={feedback?.title ?? ""}
         message={feedback?.message ?? ""}
       />
-    </BchWorkspaceContent>
+    </div>
   );
 }

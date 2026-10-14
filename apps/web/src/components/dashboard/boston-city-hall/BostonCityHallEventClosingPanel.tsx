@@ -65,7 +65,7 @@ export function BostonCityHallEventClosingPanel({ eventId }: { eventId: string }
   ];
 
   return (
-    <div className="w-full max-w-[min(100%,90rem)] space-y-4 pb-4">
+    <div className="space-y-4">
       <div className="rounded-lg border border-slate-800/80 p-4">
         <p className="text-sm font-medium text-slate-200">Prontidão financeira</p>
         <p className="mt-1 text-xs text-slate-400">
