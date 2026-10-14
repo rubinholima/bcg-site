@@ -1057,7 +1057,6 @@ function SidebarNav() {
                             );
                           }
                           if (!child.href) return null;
-                          const ChildIcon = child.icon!;
                           const isChildActive =
                             !child.external && child.href === activeHubChildHref;
                           return (
@@ -1076,7 +1075,14 @@ function SidebarNav() {
                                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                               )}
                             >
-                              <ChildIcon className="h-4 w-4 shrink-0" />
+                              <SidebarMenuIcon
+                                item={child}
+                                className={
+                                  child.menuLogoSrc
+                                    ? "h-[23px] w-[23px] shrink-0"
+                                    : "h-4 w-4 shrink-0"
+                                }
+                              />
                               <span className="text-left uppercase tracking-wide leading-snug">{child.label}</span>
                             </SidebarMenuLink>
                           );
@@ -1277,7 +1283,6 @@ function SidebarNav() {
                           );
                         }
                         if (!child.href) return null;
-                        const ChildIcon = child.icon!;
                         const isChildActive =
                           !child.external && child.href === activeHubChildHref;
                         const compact = "compactGroup" in child && (child as MenuItemConfig & { compactGroup?: string }).compactGroup;
@@ -1295,7 +1300,14 @@ function SidebarNav() {
                                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             )}
                           >
-                            <ChildIcon className="h-4 w-4 shrink-0" />
+                            <SidebarMenuIcon
+                              item={child}
+                              className={
+                                child.menuLogoSrc
+                                  ? "h-[23px] w-[23px] shrink-0"
+                                  : "h-4 w-4 shrink-0"
+                              }
+                            />
                             {child.label}
                           </SidebarMenuLink>
                         );
