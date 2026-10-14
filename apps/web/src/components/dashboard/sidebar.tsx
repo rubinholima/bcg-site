@@ -323,7 +323,7 @@ function resolveLinkActive(
   if (href === "/dashboard/adm") return pathname === "/dashboard/adm";
   if (href === "/dashboard/saude") return pathname === "/dashboard/saude";
   if (href === "/dashboard/eventos/boston-city-hall") {
-    return pathname === "/dashboard/eventos/boston-city-hall";
+    return !!pathname?.startsWith("/dashboard/eventos/boston-city-hall");
   }
   if (href === "/dashboard/relatorios/futebol") {
     return !!pathname?.startsWith("/dashboard/relatorios/futebol");

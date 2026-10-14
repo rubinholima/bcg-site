@@ -39,10 +39,7 @@ export function BchEventListDiagnostics({
           <div className="min-w-0 space-y-2">
             <p className="text-sm font-medium text-red-100">Falha ao carregar eventos</p>
             <p className="text-xs text-red-200/90">{error}</p>
-            <p className="text-xs text-red-200/70">
-              Verifique se a API está no ar (porta 3001) e se sua sessão tem acesso ao módulo Eventos /
-              tenant Boston City Hall.
-            </p>
+            <p className="text-xs text-red-200/70">Verifique sua conexão e tente novamente.</p>
             {onRetry ? (
               <Button type="button" variant="outline" size="sm" className="min-h-[40px]" onClick={onRetry}>
                 Tentar novamente

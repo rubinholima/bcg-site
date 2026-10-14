@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  Clock,
   Loader2,
   Package,
   Ticket,
@@ -12,6 +13,7 @@ import {
   Wallet,
   Wrench,
 } from "lucide-react";
+import { BostonCityHallLogo } from "@/components/dashboard/boston-city-hall/BostonCityHallLogo";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { useBchAppShellEvent } from "@/components/dashboard/boston-city-hall/bch-app-shell-event-context";
@@ -215,30 +217,49 @@ export function BostonCityHallEventCommandCenter({ eventId }: { eventId: string 
         )
       : "—";
 
+  const soldPct =
+    capacity > 0 ? Math.min(100, Math.round((sold / capacity) * 100)) : null;
+
+  const timelineItems: { label: string; at: string }[] = [];
+  if (booking?.startAt) timelineItems.push({ label: "Reserva · início", at: booking.startAt });
+  if (event.startDate) timelineItems.push({ label: "Evento · início", at: event.startDate });
+  if (event.endDate) timelineItems.push({ label: "Evento · término", at: event.endDate });
+  if (booking?.endAt) timelineItems.push({ label: "Reserva · término", at: booking.endAt });
+
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <header className={cn(BCH_CARD, "border-sky-500/20 bg-gradient-to-br from-[#0a1220] to-[#0c1018]")}>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-sky-400/80">Centro do evento</p>
-            <h1 className="text-2xl font-semibold text-slate-50 sm:text-3xl">
-              {bchEventDisplayName(event.name)}
-            </h1>
-            <p className="text-sm text-slate-400">{formatWhen(event.startDate, event.endDate)}</p>
-            <p className="text-sm text-slate-400">
-              <span className="text-slate-500">Espaço / reserva:</span> {venueLabel}
-            </p>
-            {booking ? (
-              <Link
-                href={`${BCH_BASE}/operacao/${encodeURIComponent(booking.bookingId)}`}
-                className="inline-flex text-sm text-sky-300 hover:text-sky-200"
-              >
-                Ver reserva operacional
-              </Link>
-            ) : null}
+    <div className="mx-auto w-full max-w-[1600px] space-y-5">
+      <header
+        className={cn(
+          BCH_CARD,
+          "overflow-hidden border-sky-500/15 bg-gradient-to-br from-[#0a1220] via-[#0c1018] to-[#070b12] p-0",
+        )}
+      >
+        <div className="flex flex-col gap-4 p-4 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 gap-4">
+            <BostonCityHallLogo size="lg" className="shrink-0 ring-1 ring-amber-500/30" />
+            <div className="min-w-0 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-sky-400/80">
+                Centro do evento
+              </p>
+              <h1 className="text-2xl font-semibold text-slate-50 sm:text-3xl">
+                {bchEventDisplayName(event.name)}
+              </h1>
+              <p className="text-sm text-slate-400">{formatWhen(event.startDate, event.endDate)}</p>
+              <p className="text-sm text-slate-400">
+                <span className="text-slate-500">Espaço / reserva:</span> {venueLabel}
+              </p>
+              {booking ? (
+                <Link
+                  href={`${BCH_BASE}/operacao/${encodeURIComponent(booking.bookingId)}`}
+                  className="inline-flex text-sm text-sky-300 hover:text-sky-200"
+                >
+                  Ver reserva operacional
+                </Link>
+              ) : null}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-sm text-slate-200">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-100">
               {EVENT_STATUS_LABEL[event.status] ?? event.status}
             </span>
             <Button asChild className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}>
@@ -246,9 +267,44 @@ export function BostonCityHallEventCommandCenter({ eventId }: { eventId: string 
             </Button>
           </div>
         </div>
+
+        <div className="grid border-t border-slate-800/80 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <QuickStat label="Preparação" value={readiness.summary} href={setupHref} />
+          <QuickStat label="Equipe" value="Em breve" href={`${BCH_BASE}/operacao`} muted />
+          <QuickStat
+            label="Bilheteria"
+            value={
+              ticketing?.ticketingEnabled
+                ? soldPct != null
+                  ? `${soldPct}% vendido`
+                  : `${sold} vendidos`
+                : "Desligada"
+            }
+            href={ticketingHref}
+          />
+          <QuickStat
+            label="Check-in"
+            value={checkedIn > 0 ? `${checkedIn} presentes` : "Sem entradas"}
+            href={checkinHref}
+          />
+          <QuickStat
+            label="Bar"
+            value={
+              financial?.revenue.bar.applicable
+                ? formatTicketingMoney(
+                    financial.revenue.bar.amount,
+                    financial.revenue.bar.currency ?? currency,
+                  )
+                : "—"
+            }
+            href={barHref}
+          />
+          <QuickStat label="Resultado" value={resultLabel} href={financeHref} accent />
+        </div>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-5 xl:grid-cols-[1fr_minmax(240px,280px)]">
+        <div className="grid gap-4 md:grid-cols-2">
         <AreaCard
           title="Preparação"
           icon={Wrench}
@@ -263,9 +319,8 @@ export function BostonCityHallEventCommandCenter({ eventId }: { eventId: string 
           ) : null}
         </AreaCard>
 
-        <AreaCard title="Equipe e fornecedores" icon={Users} status="Em breve" statusTone="muted">
-          <p>Gestão de equipe, fornecedores e credenciais será disponibilizada nesta área.</p>
-          <p className="mt-2 text-xs text-slate-500">Nenhum dado simulado é exibido aqui.</p>
+        <AreaCard title="Equipe e fornecedores" icon={Users} status="Indisponível" statusTone="muted">
+          <p>Equipe, fornecedores e credenciais estarão disponíveis nesta área em uma próxima versão.</p>
         </AreaCard>
 
         <AreaCard
@@ -345,7 +400,66 @@ export function BostonCityHallEventCommandCenter({ eventId }: { eventId: string 
             </p>
           ) : null}
         </AreaCard>
+        </div>
+
+        <aside className={cn(BCH_CARD, "h-fit xl:sticky xl:top-4")}>
+          <div className="mb-3 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-sky-400/80" aria-hidden />
+            <h2 className="text-sm font-semibold text-slate-100">Linha do tempo</h2>
+          </div>
+          {timelineItems.length === 0 ? (
+            <p className="text-sm text-slate-500">Sem marcos de data cadastrados.</p>
+          ) : (
+            <ol className="space-y-3 border-l border-slate-800 pl-3">
+              {timelineItems.map((item) => (
+                <li key={`${item.label}-${item.at}`} className="relative">
+                  <span className="absolute -left-[1.05rem] top-1.5 h-2 w-2 rounded-full bg-sky-500/80" />
+                  <p className="text-xs font-medium text-slate-300">{item.label}</p>
+                  <p className="text-xs text-slate-500">
+                    {item.at
+                      ? new Date(item.at).toLocaleString("pt-BR", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })
+                      : "—"}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          )}
+        </aside>
       </div>
     </div>
+  );
+}
+
+function QuickStat({
+  label,
+  value,
+  href,
+  muted,
+  accent,
+}: {
+  label: string;
+  value: string;
+  href: string;
+  muted?: boolean;
+  accent?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex min-h-[76px] flex-col justify-center border-slate-800/80 px-4 py-3 transition-colors hover:bg-sky-500/5 sm:border-r xl:last:border-r-0 [&:not(:last-child)]:border-b sm:[&:not(:last-child)]:border-b-0 xl:[&:not(:last-child)]:border-b-0"
+    >
+      <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{label}</span>
+      <span
+        className={cn(
+          "mt-1 truncate text-sm font-semibold",
+          muted ? "text-slate-500" : accent ? "text-amber-200/95" : "text-slate-100",
+        )}
+      >
+        {value}
+      </span>
+    </Link>
   );
 }

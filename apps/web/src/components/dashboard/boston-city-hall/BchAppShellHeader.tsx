@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, Menu } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { BostonCityHallLogo } from "@/components/dashboard/boston-city-hall/BostonCityHallLogo";
 import { resolveBchAppSectionLabel } from "@/components/dashboard/boston-city-hall/bch-app-shell.config";
 import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,8 @@ export function BchAppShellHeader({
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-4">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <BostonCityHallLogo size="sm" className="hidden shrink-0 sm:block ring-1 ring-amber-500/25" />
           <span className="truncate text-sm font-semibold tracking-tight text-slate-50">
             Boston City Hall
           </span>

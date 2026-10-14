@@ -39,10 +39,6 @@ export function BchAppShellNav({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </ul>
-      <p className="mt-4 px-2 text-[10px] leading-snug text-slate-600">
-        Acesso hoje via permissão <span className="text-slate-500">eventos</span>. Papéis operacionais
-        finos entram na próxima fase.
-      </p>
     </nav>
   );
 }
