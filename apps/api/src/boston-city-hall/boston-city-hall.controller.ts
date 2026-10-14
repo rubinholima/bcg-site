@@ -850,6 +850,16 @@ export class BostonCityHallController {
     return this.eventPlanning.updateOperationalTask(eventId.trim(), taskId, body as never);
   }
 
+  @Post('events/:eventId/operational-tasks/:taskId/cancel')
+  cancelEventOperationalTask(@Param('eventId') eventId: string, @Param('taskId') taskId: string) {
+    return this.eventPlanning.cancelOperationalTask(eventId.trim(), taskId);
+  }
+
+  @Get('events/:eventId/eligible-bookings')
+  listEligibleBookingsForEvent(@Param('eventId') eventId: string) {
+    return this.bookingEvent.listEligibleBookingsForEvent(eventId.trim());
+  }
+
   @Get('buyers')
   listTicketBuyers(
     @Query('q') q?: string,

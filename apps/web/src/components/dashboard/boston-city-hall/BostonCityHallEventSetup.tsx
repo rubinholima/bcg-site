@@ -122,12 +122,15 @@ export function BostonCityHallEventSetup({
   backHref,
   backLabel,
   embedded,
+  hideScheduleStep,
 }: {
   eventId: string;
   bookingId?: string | null;
   backHref?: string;
   backLabel?: string;
   embedded?: boolean;
+  /** Workspace: cronograma fica no painel dedicado acima. */
+  hideScheduleStep?: boolean;
 }) {
   const [step, setStep] = useState<SetupStep>("info");
   const [loading, setLoading] = useState(true);
@@ -411,7 +414,7 @@ export function BostonCityHallEventSetup({
   const isPublished = eventForm.status === "published";
 
   const visibleSteps = STEPS.filter(
-    (s) => s.id !== "ticketing" || ticketing?.ticketingEnabled,
+    (s) => (s.id !== "ticketing" || ticketing?.ticketingEnabled) && !(hideScheduleStep && s.id === "schedule"),
   );
 
   return (

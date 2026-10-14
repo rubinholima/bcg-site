@@ -119,7 +119,6 @@ export class BostonCityHallBuyerCrmService {
     const orders = await this.prisma.eventTicketOrder.findMany({
       where: {
         tenantId,
-        status: { in: ['confirmed', 'pending'] },
         customerEmail: { equals: profile.emailNormalized, mode: 'insensitive' },
       },
       select: {
@@ -139,7 +138,7 @@ export class BostonCityHallBuyerCrmService {
     const eventIds = new Set<string>();
     let lastPurchaseAt: Date | null = null;
     for (const o of orders) {
-      if (o.status === 'confirmed' || o.confirmedAt) {
+      if (o.status === 'confirmed') {
         const cur = o.currency || 'USD';
         spendByCurrency[cur] = (spendByCurrency[cur] ?? new Prisma.Decimal(0)).add(o.total);
       }

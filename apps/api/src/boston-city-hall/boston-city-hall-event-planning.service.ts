@@ -51,6 +51,8 @@ export class BostonCityHallEventPlanningService {
       endsAt?: string | null;
       locationLabel?: string | null;
       responsibleName?: string | null;
+      responsibleTeamMemberId?: string | null;
+      status?: string;
       notes?: string | null;
     },
   ) {
@@ -69,6 +71,8 @@ export class BostonCityHallEventPlanningService {
         endsAt: body.endsAt ? new Date(body.endsAt) : null,
         locationLabel: body.locationLabel?.trim() || null,
         responsibleName: body.responsibleName?.trim() || null,
+        responsibleTeamMemberId: body.responsibleTeamMemberId?.trim() || null,
+        status: body.status?.trim() || 'planned',
         notes: body.notes?.trim() || null,
       },
     });
@@ -361,6 +365,10 @@ export class BostonCityHallEventPlanningService {
         notes: body.notes?.trim() || null,
       },
     });
+  }
+
+  async cancelOperationalTask(eventId: string, taskId: string) {
+    return this.updateOperationalTask(eventId, taskId, { status: 'cancelled' });
   }
 
   async updateOperationalTask(

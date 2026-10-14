@@ -65,6 +65,18 @@ export class BostonCityHallEventWorkspaceService {
 
     const ticketKpis = await this.loadTicketKpis(tenantId, event.id, ticketingEnabled, event.ticketing?.currency ?? null);
 
+    const [scheduleActiveCount, taskOpenCount, taskTotalCount] = await Promise.all([
+      this.prisma.bchEventScheduleItem.count({
+        where: { tenantId, eventId: event.id, status: { not: 'cancelled' } },
+      }),
+      this.prisma.bchEventOperationalTask.count({
+        where: { tenantId, eventId: event.id, status: { in: ['open', 'in_progress'] } },
+      }),
+      this.prisma.bchEventOperationalTask.count({
+        where: { tenantId, eventId: event.id, status: { not: 'cancelled' } },
+      }),
+    ]);
+
     const readiness = this.buildReadiness({
       eventStart: event.startDate,
       eventStatus: event.status,
@@ -73,6 +85,9 @@ export class BostonCityHallEventWorkspaceService {
       typesCount: types.length,
       salesOpen,
       capacityIssue: false,
+      scheduleActiveCount,
+      taskOpenCount,
+      taskTotalCount,
     });
 
     const operationalStage = this.deriveStage(event.startDate, event.endDate, booking);
@@ -182,6 +197,9 @@ export class BostonCityHallEventWorkspaceService {
     typesCount: number;
     salesOpen: boolean;
     capacityIssue: boolean;
+    scheduleActiveCount: number;
+    taskOpenCount: number;
+    taskTotalCount: number;
   }): BchEventWorkspaceReadinessItemDto[] {
     const items: BchEventWorkspaceReadinessItemDto[] = [];
 
@@ -191,33 +209,68 @@ export class BostonCityHallEventWorkspaceService {
       label: input.eventStart ? 'Data e horário definidos' : 'Data do evento pendente',
     });
 
+    const bookingCancelled = input.booking?.bookingStatus === 'cancelled';
     items.push({
       code: 'booking',
-      ok: Boolean(input.booking && input.booking.bookingStatus !== 'cancelled'),
+      ok: !bookingCancelled,
       label: input.booking
-        ? input.booking.bookingStatus === 'cancelled'
+        ? bookingCancelled
           ? 'Reserva cancelada'
-          : 'Reserva vinculada'
-        : 'Sem reserva vinculada',
-      detail: input.booking?.spaceName ?? null,
+          : 'Reserva comercial vinculada'
+        : 'Sem reserva comercial',
+      detail: input.booking?.spaceName ?? 'Opcional para eventos internos',
     });
 
-    if (input.booking?.contract) {
+    if (input.booking && !bookingCancelled) {
+      if (input.booking.contract) {
+        items.push({
+          code: 'contract',
+          ok: input.booking.contract.status === 'signed',
+          label:
+            input.booking.contract.status === 'signed'
+              ? 'Contrato assinado'
+              : 'Contrato pendente de assinatura',
+        });
+      } else {
+        items.push({
+          code: 'contract',
+          ok: true,
+          label: 'Contrato comercial não vinculado',
+          detail: 'Abra a operação da reserva para associar proposta/contrato',
+        });
+      }
+    } else if (!input.booking) {
       items.push({
         code: 'contract',
-        ok: input.booking.contract.status === 'signed',
-        label:
-          input.booking.contract.status === 'signed'
-            ? 'Contrato assinado'
-            : 'Contrato pendente de assinatura',
-      });
-    } else {
-      items.push({
-        code: 'contract',
-        ok: false,
-        label: 'Sem contrato',
+        ok: true,
+        label: 'Vínculo comercial não aplicável',
+        detail: 'Evento interno ou sem reserva',
       });
     }
+
+    items.push({
+      code: 'operational_schedule',
+      ok: input.scheduleActiveCount > 0,
+      label:
+        input.scheduleActiveCount > 0
+          ? `Cronograma operacional (${input.scheduleActiveCount} marcos)`
+          : 'Cronograma operacional pendente',
+    });
+
+    items.push({
+      code: 'operational_tasks',
+      ok: input.taskTotalCount === 0 || input.taskOpenCount === 0,
+      label:
+        input.taskTotalCount === 0
+          ? 'Checklist operacional (sem tarefas)'
+          : input.taskOpenCount === 0
+            ? 'Checklist operacional concluído'
+            : `Checklist operacional (${input.taskOpenCount} abertas)`,
+      detail:
+        input.taskTotalCount > 0
+          ? `${input.taskTotalCount - input.taskOpenCount} concluídas de ${input.taskTotalCount}`
+          : null,
+    });
 
     if (input.ticketingEnabled) {
       const ok =

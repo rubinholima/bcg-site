@@ -14,6 +14,9 @@ import {
 import { BostonCityHallEventAlertsBanner } from "@/components/dashboard/boston-city-hall/BostonCityHallEventAlertsBanner";
 import { BostonCityHallEventFinancial } from "@/components/dashboard/boston-city-hall/BostonCityHallEventFinancial";
 import { BostonCityHallEventSetup } from "@/components/dashboard/boston-city-hall/BostonCityHallEventSetup";
+import { BostonCityHallEventPlanningPanel } from "@/components/dashboard/boston-city-hall/BostonCityHallEventPlanningPanel";
+import { BostonCityHallEventCommercialPanel } from "@/components/dashboard/boston-city-hall/BostonCityHallEventCommercialPanel";
+import { BchWorkspaceContent } from "@/components/dashboard/boston-city-hall/BchWorkspaceContent";
 import { BostonCityHallEventStaffAndServices } from "@/components/dashboard/boston-city-hall/BostonCityHallEventStaffAndServices";
 import { BostonCityHallEventClosingPanel } from "@/components/dashboard/boston-city-hall/BostonCityHallEventClosingPanel";
 import { BostonCityHallEventWorkspaceBarTab } from "@/components/dashboard/boston-city-hall/BostonCityHallEventWorkspaceBarTab";
@@ -286,7 +289,9 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
       </nav>
 
       {section === "resumo" ? (
-        <div className="space-y-4">
+        <BchWorkspaceContent>
+          <BostonCityHallEventCommercialPanel eventId={event.id} booking={booking} onLinked={() => void reload()} />
+          <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <KpiCard
               label="Vendas de ingressos"
@@ -376,9 +381,6 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-slate-500">
-                Checklist operacional persistido (tarefas por evento) ainda não está disponível nesta fase.
-              </p>
             </Panel>
 
             <Panel title="Agenda (reserva)">
@@ -405,20 +407,25 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
             </Panel>
           </div>
         </div>
+        </BchWorkspaceContent>
       ) : null}
 
       {section === "planejamento" ? (
-        <BostonCityHallEventSetup
-          eventId={event.id}
-          bookingId={booking?.bookingId ?? null}
-          embedded
-          backHref={links.workspace}
-          backLabel="Voltar ao workspace"
-        />
+        <BchWorkspaceContent className="space-y-6">
+          <BostonCityHallEventPlanningPanel eventId={event.id} onChanged={() => void reload()} />
+          <BostonCityHallEventSetup
+            eventId={event.id}
+            bookingId={booking?.bookingId ?? null}
+            embedded
+            hideScheduleStep
+            backHref={links.workspace}
+            backLabel="Voltar ao workspace"
+          />
+        </BchWorkspaceContent>
       ) : null}
 
       {section === "equipe" ? (
-        <div className="space-y-4">
+        <BchWorkspaceContent className="space-y-4">
           {booking ? (
             <Panel title="Contato comercial (reserva)">
               <div className="grid gap-3 sm:grid-cols-2 text-sm">
@@ -442,11 +449,11 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
             </Panel>
           )}
           <BostonCityHallEventStaffAndServices eventId={event.id} />
-        </div>
+        </BchWorkspaceContent>
       ) : null}
 
       {section === "bilheteria" ? (
-        <div className="space-y-3">
+        <BchWorkspaceContent className="space-y-3">
           {!workspace.ticketing.enabled ? (
             <div className={cn(BCH_CARD, "flex items-start gap-3 text-sm text-slate-300")}>
               <Ticket className="mt-0.5 h-5 w-5 shrink-0 text-sky-400/80" aria-hidden />
@@ -463,7 +470,7 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
           ) : (
             <BostonCityHallTicketingHub fixedEventId={event.id} embedded />
           )}
-        </div>
+        </BchWorkspaceContent>
       ) : null}
 
       {section === "bar" ? (
@@ -482,10 +489,10 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
       ) : null}
 
       {section === "fechamento" ? (
-        <div className="space-y-4">
+        <BchWorkspaceContent className="space-y-4">
           <BostonCityHallEventClosingPanel eventId={event.id} />
           <BostonCityHallEventAlertsBanner eventId={event.id} />
-        </div>
+        </BchWorkspaceContent>
       ) : null}
     </div>
   );

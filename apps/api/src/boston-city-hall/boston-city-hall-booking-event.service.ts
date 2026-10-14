@@ -167,6 +167,34 @@ export class BostonCityHallBookingEventService {
     return this.toEventRef(result);
   }
 
+  async listEligibleBookingsForEvent(eventId: string) {
+    const tenantId = await this.resolveTenantId();
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId.trim(), tenantId },
+      select: { id: true },
+    });
+    if (!event) throw new NotFoundException('Evento não encontrado.');
+    const rows = await this.prisma.venueBooking.findMany({
+      where: {
+        tenantId,
+        venueSlug: BCH_VENUE_SLUG,
+        status: 'confirmed',
+        OR: [{ eventId: null }, { eventId: event.id }],
+      },
+      include: { space: { select: { name: true } } },
+      orderBy: { startAt: 'desc' },
+      take: 40,
+    });
+    return rows.map((b) => ({
+      bookingId: b.id,
+      title: b.title,
+      startAt: b.startAt.toISOString(),
+      endAt: b.endAt.toISOString(),
+      spaceName: b.space.name,
+      linkedToThisEvent: b.eventId === event.id,
+    }));
+  }
+
   async linkExistingEvent(
     bookingId: string,
     dto: { eventId: string },
