@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import {
   BCH_APP_DESTINATIONS,
   isBchAppDestinationActive,
@@ -27,6 +28,9 @@ export function BchAppShellNav({ onNavigate }: { onNavigate?: () => void }) {
         />
         <span className="mt-2 text-[10px] font-semibold tracking-[0.18em] text-amber-500/85">
           BOSTON CITY HALL
+        </span>
+        <span className="mt-1 text-center text-[8px] font-medium leading-snug tracking-[0.12em] text-slate-500">
+          BAR · RESTAURANTE · EVENTOS
         </span>
       </Link>
 
@@ -57,6 +61,20 @@ export function BchAppShellNav({ onNavigate }: { onNavigate?: () => void }) {
             );
           })}
         </ul>
+      </div>
+
+      <div className="shrink-0 border-t border-slate-800/90 p-3">
+        <Link
+          href="/dashboard/eventos"
+          onClick={onNavigate}
+          className="flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2.5 text-xs font-medium text-slate-400 transition-colors hover:border-sky-500/25 hover:text-slate-200"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+          Voltar para CUP360
+        </Link>
+        <p className="mt-2 text-center text-[9px] font-semibold tracking-[0.2em] text-sky-500/70">
+          CUP360
+        </p>
       </div>
     </nav>
   );
