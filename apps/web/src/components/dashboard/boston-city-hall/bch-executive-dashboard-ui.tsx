@@ -90,6 +90,7 @@ const KPI_LINK_CLASS =
 
 export function BchExecutiveKpiCard({
   href,
+  onFilterClick,
   navHint,
   label,
   value,
@@ -100,7 +101,9 @@ export function BchExecutiveKpiCard({
   barChart,
   footerStatus,
 }: {
-  href: string;
+  href?: string;
+  /** Quando definido, renderiza botão de filtro local (sem navegação). */
+  onFilterClick?: () => void;
   navHint?: string;
   label: string;
   value: string | number;
@@ -118,13 +121,8 @@ export function BchExecutiveKpiCard({
     (sparkline && sparkline.length >= 2 && sparkline.some((v, i, a) => i > 0 && v !== a[0]));
   const showSparkline = sparkline && sparkline.length >= 2;
 
-  return (
-    <Link
-      href={href}
-      title={navHint}
-      aria-label={`${label}: ${value}. ${navHint ?? "Abrir destino relacionado."}`}
-      className={cn(KPI_LINK_CLASS, tone.ring)}
-    >
+  const inner = (
+    <>
       <div
         className={cn(
           "pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-80 transition-opacity group-hover:opacity-100",
@@ -162,6 +160,31 @@ export function BchExecutiveKpiCard({
       ) : footerStatus ? (
         <p className="relative mt-3 text-xs text-slate-500">{footerStatus}</p>
       ) : null}
+    </>
+  );
+
+  if (onFilterClick) {
+    return (
+      <button
+        type="button"
+        onClick={onFilterClick}
+        title={navHint}
+        aria-label={`${label}: ${value}. ${navHint ?? "Filtrar lista."}`}
+        className={cn(KPI_LINK_CLASS, tone.ring, "w-full text-left")}
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={href ?? "#"}
+      title={navHint}
+      aria-label={`${label}: ${value}. ${navHint ?? "Abrir destino relacionado."}`}
+      className={cn(KPI_LINK_CLASS, tone.ring)}
+    >
+      {inner}
     </Link>
   );
 }

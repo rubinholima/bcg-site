@@ -130,6 +130,7 @@ export function useBchEventOperationalSnapshot(eventId: string | null) {
         finance: `${BCH_BASE}/financeiro`,
         operation: `${BCH_BASE}/operacao`,
         reservas: `${BCH_BASE}/reservas`,
+        closing: `${BCH_BASE}/bar/close`,
       };
     }
     const setupBase = bchEventSetupPath(eventId);
@@ -156,6 +157,7 @@ export function useBchEventOperationalSnapshot(eventId: string | null) {
       reservas: booking?.bookingId
         ? `${BCH_BASE}/reservas?edit=${encodeURIComponent(booking.bookingId)}`
         : `${BCH_BASE}/reservas`,
+      closing: `${BCH_BASE}/bar/close`,
     };
   }, [booking?.bookingId, eventId]);
 
