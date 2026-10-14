@@ -34,9 +34,44 @@ export class BostonCityHallPosCashService {
         status: 'open',
         ...(operatorUserId ? { operatorUserId } : {}),
       },
-      include: { location: { select: { id: true, name: true } } },
+      include: {
+        location: { select: { id: true, name: true } },
+        operatorUser: { select: { id: true, name: true, email: true } },
+      },
       orderBy: { openedAt: 'desc' },
     });
+  }
+
+  async getSessionSummary(eventId: string, sessionId: string) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    const session = await this.prisma.bchPosCashSession.findFirst({
+      where: { id: sessionId, tenantId, eventId: eventId.trim() },
+      include: {
+        location: { select: { id: true, name: true } },
+        operatorUser: { select: { id: true, name: true, email: true } },
+      },
+    });
+    if (!session) throw new NotFoundException('Sessão de caixa não encontrada.');
+    const totals = await this.salesTotalsForSession(sessionId);
+    const fmt = (d: Prisma.Decimal) => d.toFixed(2);
+    return {
+      sessionId: session.id,
+      status: session.status,
+      locationName: session.location.name,
+      operatorName: session.operatorUser?.name ?? session.operatorUser?.email ?? null,
+      openingFloat: session.openingFloat.toFixed(2),
+      currency: session.currency,
+      saleCount: totals.saleCount,
+      expected: {
+        cash: fmt(totals.cash),
+        card: fmt(totals.card),
+        pix: fmt(totals.pix),
+        other: fmt(totals.other),
+        total: fmt(totals.total),
+      },
+      expectedCashInDrawer: fmt(totals.cash.plus(session.openingFloat)),
+    };
   }
 
   async openSession(
@@ -130,7 +165,10 @@ export class BostonCityHallPosCashService {
       .filter((d): d is Prisma.Decimal => d != null)
       .reduce((a, b) => a.plus(b), new Prisma.Decimal(0));
     const variance = declaredTotal.minus(expected.total);
-    return this.prisma.bchPosCashSession.update({
+    const expectedCashInDrawer = expected.cash.plus(session.openingFloat);
+    const declaredCashOnly = declaredCash ?? new Prisma.Decimal(0);
+    const cashVariance = declaredCashOnly.minus(expectedCashInDrawer);
+    const closed = await this.prisma.bchPosCashSession.update({
       where: { id: sessionId },
       data: {
         status: 'closed',
@@ -143,8 +181,34 @@ export class BostonCityHallPosCashService {
         varianceAmount: variance,
         closeNotes: body.closeNotes?.trim() || null,
       },
-      include: { location: { select: { id: true, name: true } } },
+      include: {
+        location: { select: { id: true, name: true } },
+        operatorUser: { select: { id: true, name: true, email: true } },
+      },
     });
+    return {
+      session: closed,
+      summary: {
+        expected: {
+          cash: expected.cash.toFixed(2),
+          card: expected.card.toFixed(2),
+          pix: expected.pix.toFixed(2),
+          other: expected.other.toFixed(2),
+          total: expected.total.toFixed(2),
+          cashInDrawer: expectedCashInDrawer.toFixed(2),
+        },
+        declared: {
+          cash: declaredCash?.toFixed(2) ?? null,
+          card: declaredCard?.toFixed(2) ?? null,
+          pix: declaredPix?.toFixed(2) ?? null,
+          other: declaredOther?.toFixed(2) ?? null,
+          total: declaredTotal.toFixed(2),
+        },
+        varianceTotal: variance.toFixed(2),
+        varianceCash: cashVariance.toFixed(2),
+        saleCount: expected.saleCount,
+      },
+    };
   }
 
   async listSessions(eventId: string, limit = 20) {

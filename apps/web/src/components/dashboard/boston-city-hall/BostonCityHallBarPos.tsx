@@ -1,12 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { ArrowLeft, Loader2, Minus, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -45,7 +53,28 @@ function availabilityBadge(a: BchBarPosCatalogItem["availability"]) {
   return <span className={cn("text-xs font-medium", map[a])}>{labels[a]}</span>;
 }
 
-type PosCashSession = { id: string; status: string; openingFloat: string };
+type PosCashSession = {
+  id: string;
+  status: string;
+  openingFloat: string;
+  operatorUser?: { name: string | null; email: string | null } | null;
+  location?: { name: string };
+};
+
+type PosCashSummary = {
+  saleCount: number;
+  expected: { cash: string; card: string; pix: string; other: string; total: string; cashInDrawer: string };
+  operatorName: string | null;
+  locationName: string;
+};
+
+type PosCashCloseSummary = {
+  expected: { cash: string; card: string; pix: string; other: string; total: string; cashInDrawer: string };
+  declared: { cash: string | null; card: string | null; pix: string | null; other: string | null; total: string };
+  varianceTotal: string;
+  varianceCash: string;
+  saleCount: number;
+};
 
 export function BostonCityHallBarPos({
   fixedEventId,
@@ -56,6 +85,8 @@ export function BostonCityHallBarPos({
   embedded?: boolean;
   tabletMode?: boolean;
 } = {}) {
+  const { user } = useAuth();
+  const paymentLock = useRef(false);
   const [locations, setLocations] = useState<BchBarInventoryLocation[]>([]);
   const [locationId, setLocationId] = useState("");
   const [catalog, setCatalog] = useState<BchBarPosCatalogItem[]>([]);
@@ -68,6 +99,13 @@ export function BostonCityHallBarPos({
   const [cashReceived, setCashReceived] = useState("");
   const [cashSession, setCashSession] = useState<PosCashSession | null>(null);
   const [openingFloat, setOpeningFloat] = useState("0");
+  const [cashSummary, setCashSummary] = useState<PosCashSummary | null>(null);
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [declaredCash, setDeclaredCash] = useState("");
+  const [declaredCard, setDeclaredCard] = useState("");
+  const [declaredPix, setDeclaredPix] = useState("");
+  const [declaredOther, setDeclaredOther] = useState("");
+  const [closeResult, setCloseResult] = useState<PosCashCloseSummary | null>(null);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -92,6 +130,7 @@ export function BostonCityHallBarPos({
     const ev = fixedEventId?.trim();
     if (!ev || !locationId) {
       setCashSession(null);
+      setCashSummary(null);
       return;
     }
     try {
@@ -99,10 +138,50 @@ export function BostonCityHallBarPos({
         `/boston-city-hall/events/${encodeURIComponent(ev)}/pos/cash-sessions/active?locationId=${encodeURIComponent(locationId)}`,
       );
       setCashSession(data ?? null);
+      if (data?.id) {
+        const sum = await api.get<PosCashSummary>(
+          `/boston-city-hall/events/${encodeURIComponent(ev)}/pos/cash-sessions/${data.id}/summary`,
+        );
+        setCashSummary(sum.data);
+      } else {
+        setCashSummary(null);
+      }
     } catch {
       setCashSession(null);
+      setCashSummary(null);
     }
   }, [fixedEventId, locationId]);
+
+  const closeCashSession = async () => {
+    const ev = fixedEventId?.trim();
+    if (!ev || !cashSession?.id) return;
+    setBusy(true);
+    try {
+      const { data } = await api.post<{ summary: PosCashCloseSummary }>(
+        `/boston-city-hall/events/${encodeURIComponent(ev)}/pos/cash-sessions/${cashSession.id}/close`,
+        {
+          declaredCash: declaredCash || null,
+          declaredCard: declaredCard || null,
+          declaredPix: declaredPix || null,
+          declaredOther: declaredOther || null,
+        },
+      );
+      setCloseResult(data.summary);
+      setCashSession(null);
+      setCashSummary(null);
+      setCloseDialogOpen(false);
+      setSale(null);
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro ao fechar caixa",
+        message: e instanceof Error ? e.message : "Falha no fechamento.",
+        variant: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const openCashSession = async () => {
     const ev = fixedEventId?.trim();
@@ -279,7 +358,8 @@ export function BostonCityHallBarPos({
   };
 
   const addPayment = async () => {
-    if (!sale) return;
+    if (!sale || paymentLock.current) return;
+    paymentLock.current = true;
     const amount = paymentAmount.trim() || sale.amountDue;
     setBusy(true);
     try {
@@ -306,11 +386,13 @@ export function BostonCityHallBarPos({
       });
     } finally {
       setBusy(false);
+      paymentLock.current = false;
     }
   };
 
   const completeSale = async () => {
-    if (!sale) return;
+    if (!sale || paymentLock.current) return;
+    paymentLock.current = true;
     setBusy(true);
     try {
       const { data: updated } = await api.post<BchBarSale>(
@@ -324,6 +406,7 @@ export function BostonCityHallBarPos({
         message: `Venda ${updated.saleNumber} registrada com sucesso.`,
         variant: "success",
       });
+      void loadCashSession();
     } catch (e) {
       setFeedback({
         open: true,
@@ -333,6 +416,7 @@ export function BostonCityHallBarPos({
       });
     } finally {
       setBusy(false);
+      paymentLock.current = false;
     }
   };
 
@@ -413,7 +497,21 @@ export function BostonCityHallBarPos({
           </>
         ) : null}
         {cashSession ? (
-          <span className="text-xs text-emerald-300/90">Caixa aberto</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+            <span className="text-emerald-300/90">Caixa aberto</span>
+            <span>
+              {cashSession.operatorUser?.name ?? user?.name ?? user?.email ?? "Operador"} ·{" "}
+              {cashSession.location?.name ?? selectedLocation?.name ?? "Local"}
+            </span>
+            {cashSummary ? (
+              <span>
+                Vendas: {cashSummary.saleCount} · Total {formatMoney(cashSummary.expected.total, "BRL")}
+              </span>
+            ) : null}
+            <Button type="button" size="sm" variant="outline" className="min-h-[32px]" onClick={() => setCloseDialogOpen(true)}>
+              Fechar caixa
+            </Button>
+          </div>
         ) : null}
         {sale?.status === "open" ? (
           <Button type="button" variant="outline" className="min-h-[44px]" onClick={() => void cancelSale()} disabled={busy}>
@@ -658,6 +756,58 @@ export function BostonCityHallBarPos({
           </Card>
         </div>
       )}
+
+      <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Fechamento de caixa</DialogTitle>
+          </DialogHeader>
+          {cashSummary ? (
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>Esperado dinheiro (vendas + fundo): {formatMoney(cashSummary.expected.cashInDrawer, "BRL")}</p>
+              <p>Esperado cartão: {formatMoney(cashSummary.expected.card, "BRL")}</p>
+              <p>Esperado PIX: {formatMoney(cashSummary.expected.pix, "BRL")}</p>
+              <p>Total vendas: {formatMoney(cashSummary.expected.total, "BRL")}</p>
+            </div>
+          ) : null}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label>Dinheiro contado</Label>
+              <Input value={declaredCash} onChange={(e) => setDeclaredCash(e.target.value)} className="text-foreground" />
+            </div>
+            <div className="space-y-1">
+              <Label>Cartão contado</Label>
+              <Input value={declaredCard} onChange={(e) => setDeclaredCard(e.target.value)} className="text-foreground" />
+            </div>
+            <div className="space-y-1">
+              <Label>PIX contado</Label>
+              <Input value={declaredPix} onChange={(e) => setDeclaredPix(e.target.value)} className="text-foreground" />
+            </div>
+            <div className="space-y-1">
+              <Label>Outros</Label>
+              <Input value={declaredOther} onChange={(e) => setDeclaredOther(e.target.value)} className="text-foreground" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCloseDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" disabled={busy} onClick={() => void closeCashSession()}>
+              Confirmar fechamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {closeResult ? (
+        <FeedbackModal
+          open
+          onOpenChange={() => setCloseResult(null)}
+          variant="success"
+          title="Caixa fechado"
+          message={`Vendas: ${closeResult.saleCount}. Diferença total: ${closeResult.varianceTotal}. Diferença dinheiro: ${closeResult.varianceCash}.`}
+        />
+      ) : null}
 
       <FeedbackModal
         open={feedback.open}

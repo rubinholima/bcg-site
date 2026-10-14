@@ -109,11 +109,11 @@ export class BostonCityHallEventFinancialService {
       }),
       this.loadTicketingFinanceProjectionStats(tenantId, eventId),
       this.prisma.bchEventStaffAssignment.findMany({
-        where: { tenantId, eventId },
+        where: { tenantId, eventId, status: { not: 'cancelled' } },
         select: { actualCost: true, plannedCost: true },
       }),
       this.prisma.bchEventServiceCommitment.findMany({
-        where: { tenantId, eventId },
+        where: { tenantId, eventId, operationalStatus: { not: 'cancelled' } },
         select: { actualCost: true, plannedCost: true, contractedAmount: true },
       }),
       this.prisma.bchPosCashSession.count({
@@ -138,12 +138,13 @@ export class BostonCityHallEventFinancialService {
 
     let laborCost = new Prisma.Decimal(0);
     for (const row of staffCosts) {
-      const c = row.actualCost ?? row.plannedCost;
+      const c = row.actualCost != null ? row.actualCost : row.plannedCost;
       if (c) laborCost = laborCost.plus(c);
     }
     let supplierCost = new Prisma.Decimal(0);
     for (const row of serviceCosts) {
-      const c = row.actualCost ?? row.plannedCost ?? row.contractedAmount;
+      const c =
+        row.actualCost != null ? row.actualCost : row.plannedCost ?? row.contractedAmount;
       if (c) supplierCost = supplierCost.plus(c);
     }
     const eventOpsCost = laborCost.plus(supplierCost);

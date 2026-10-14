@@ -135,7 +135,7 @@ export class BostonCityHallSeatingService {
 
   async listSeatsForVenue(eventId: string, tableId?: string) {
     const tenantId = await this.resolveTenantId();
-    return this.prisma.eventTicketSeat.findMany({
+    const seats = await this.prisma.eventTicketSeat.findMany({
       where: {
         tenantId,
         eventId,
@@ -144,6 +144,65 @@ export class BostonCityHallSeatingService {
       orderBy: [{ sortOrder: 'asc' }, { seatLabel: 'asc' }],
       include: { table: { select: { name: true } } },
     });
+    const occupied = await this.prisma.eventTicket.findMany({
+      where: {
+        tenantId,
+        eventId,
+        seatId: { in: seats.map((s) => s.id) },
+        status: { in: ['valid', 'used'] },
+      },
+      select: { seatId: true, ticketCode: true, holderName: true },
+    });
+    const occMap = new Map(occupied.map((t) => [t.seatId!, t]));
+    return seats.map((s) => ({
+      ...s,
+      occupied: occMap.has(s.id),
+      ticketCode: occMap.get(s.id)?.ticketCode ?? null,
+      holderName: occMap.get(s.id)?.holderName ?? null,
+    }));
+  }
+
+  async createSeatsBatchForVenue(
+    eventId: string,
+    body: {
+      tableId?: string | null;
+      prefix?: string;
+      from: number;
+      to: number;
+    },
+  ) {
+    const tenantId = await this.resolveTenantId();
+    const from = Math.floor(Number(body.from));
+    const to = Math.floor(Number(body.to));
+    if (!Number.isFinite(from) || !Number.isFinite(to) || from < 1 || to < from || to - from > 200) {
+      throw new BadRequestException('Intervalo de assentos inválido (máx. 200).');
+    }
+    const prefix = body.prefix?.trim() || '';
+    if (body.tableId) {
+      const table = await this.prisma.eventTicketTable.findFirst({
+        where: { id: body.tableId, tenantId, eventId },
+      });
+      if (!table) throw new BadRequestException('Mesa inválida.');
+    }
+    const labels: string[] = [];
+    for (let i = from; i <= to; i++) labels.push(`${prefix}${i}`);
+    const existing = await this.prisma.eventTicketSeat.findMany({
+      where: { tenantId, eventId, seatLabel: { in: labels } },
+      select: { seatLabel: true },
+    });
+    if (existing.length) {
+      throw new BadRequestException(`Assentos já existem: ${existing.map((e) => e.seatLabel).join(', ')}`);
+    }
+    await this.prisma.eventTicketSeat.createMany({
+      data: labels.map((seatLabel, sortOrder) => ({
+        tenantId,
+        eventId,
+        tableId: body.tableId ?? null,
+        seatLabel,
+        sortOrder,
+      })),
+    });
+    return { created: labels.length, labels };
   }
 
   async createSeatForVenue(

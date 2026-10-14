@@ -66,7 +66,12 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
   const [lastResult, setLastResult] = useState<EventTicketCheckinResponse | null>(null);
   const [recent, setRecent] = useState<EventTicketCheckinRecentItem[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(false);
+  const [manualQ, setManualQ] = useState("");
+  const [manualHits, setManualHits] = useState<{ id: string; label: string; ticketCode: string }[]>([]);
+  const [cameraOn, setCameraOn] = useState(false);
   const scanRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const cameraLoopRef = useRef<number | null>(null);
 
   const focusScan = useCallback(() => {
     window.requestAnimationFrame(() => scanRef.current?.focus());
@@ -143,6 +148,21 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
   useEffect(() => {
     focusScan();
   }, [focusScan, eventId, session?.id]);
+
+  useEffect(() => {
+    if (!eventId || manualQ.trim().length < 2) {
+      setManualHits([]);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      void api
+        .get<{ id: string; label: string; ticketCode: string }[]>(
+          `/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/tickets/search?q=${encodeURIComponent(manualQ.trim())}`,
+        )
+        .then((r) => setManualHits(Array.isArray(r.data) ? r.data : []));
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [eventId, manualQ]);
 
   const createStation = async () => {
     if (!eventId || !newStationName.trim()) return;
@@ -239,6 +259,55 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
       focusScan();
     }
   };
+
+  useEffect(() => {
+    if (!cameraOn || !session?.id) return;
+    let stream: MediaStream | null = null;
+    let lastScan = 0;
+    const start = async () => {
+      if (!("BarcodeDetector" in window)) return;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+        const detector = new (window as unknown as {
+          BarcodeDetector: new (o: { formats: string[] }) => {
+            detect: (v: HTMLVideoElement) => Promise<{ rawValue: string }[]>;
+          };
+        }).BarcodeDetector({ formats: ["qr_code"] });
+        const tick = async () => {
+          if (!videoRef.current || videoRef.current.readyState < 2) {
+            cameraLoopRef.current = window.requestAnimationFrame(() => void tick());
+            return;
+          }
+          try {
+            const codes = await detector.detect(videoRef.current);
+            const raw = codes[0]?.rawValue;
+            if (raw && Date.now() - lastScan > 1500) {
+              lastScan = Date.now();
+              await submitScan(raw);
+            }
+          } catch {
+            /* ignore */
+          }
+          cameraLoopRef.current = window.requestAnimationFrame(() => void tick());
+        };
+        void tick();
+      } catch {
+        setCameraOn(false);
+      }
+    };
+    void start();
+    return () => {
+      if (cameraLoopRef.current) cancelAnimationFrame(cameraLoopRef.current);
+      stream?.getTracks().forEach((tr) => tr.stop());
+    };
+  }, [cameraOn, session?.id, processing]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
@@ -342,7 +411,23 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
       </div>
 
       <div className="rounded-lg border border-slate-800/80 bg-slate-950/30 p-4 space-y-3">
-        <Label>Leitura QR / código</Label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Label>Leitura QR / código</Label>
+          {session ? (
+            <Button
+              type="button"
+              size="sm"
+              variant={cameraOn ? "default" : "outline"}
+              className="min-h-[36px]"
+              onClick={() => setCameraOn((v) => !v)}
+            >
+              {cameraOn ? "Desligar câmera" : "Câmera (Android/tablet)"}
+            </Button>
+          ) : null}
+        </div>
+        {cameraOn ? (
+          <video ref={videoRef} className="max-h-48 w-full max-w-md rounded-md bg-black object-cover" muted playsInline />
+        ) : null}
         <Input
           ref={scanRef}
           value={scanValue}
@@ -382,6 +467,31 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
               </>
             ) : null}
           </div>
+        ) : null}
+      </div>
+
+      <div className="rounded-lg border border-slate-800/80 p-4 space-y-2">
+        <p className="text-sm font-medium">Busca manual</p>
+        <Input
+          value={manualQ}
+          onChange={(e) => setManualQ(e.target.value)}
+          className="max-w-md text-foreground"
+          placeholder="Código, titular, e-mail ou pedido"
+        />
+        {manualHits.length > 0 ? (
+          <ul className="max-h-36 overflow-y-auto rounded border border-slate-700 text-sm">
+            {manualHits.map((h) => (
+              <li key={h.id}>
+                <button
+                  type="button"
+                  className="block w-full px-3 py-2 text-left hover:bg-slate-800/60"
+                  onClick={() => void submitScan(h.ticketCode)}
+                >
+                  {h.label}
+                </button>
+              </li>
+            ))}
+          </ul>
         ) : null}
       </div>
 

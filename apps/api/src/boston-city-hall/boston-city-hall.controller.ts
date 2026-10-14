@@ -785,6 +785,30 @@ export class BostonCityHallController {
     return this.eventPlanning.createStaff(eventId.trim(), body as Parameters<BostonCityHallEventPlanningService['createStaff']>[1]);
   }
 
+  @Patch('events/:eventId/staff-assignments/:assignmentId')
+  patchEventStaff(
+    @Param('eventId') eventId: string,
+    @Param('assignmentId') assignmentId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.eventPlanning.updateStaffAssignment(eventId.trim(), assignmentId, body as never);
+  }
+
+  @Post('events/:eventId/staff-assignments/:assignmentId/cancel')
+  cancelEventStaff(@Param('eventId') eventId: string, @Param('assignmentId') assignmentId: string) {
+    return this.eventPlanning.cancelStaffAssignment(eventId.trim(), assignmentId);
+  }
+
+  @Get('events/:eventId/staff-lookups/employees')
+  lookupEventEmployees(@Query('q') q?: string) {
+    return this.eventPlanning.searchEmployees(q ?? '');
+  }
+
+  @Get('events/:eventId/staff-lookups/suppliers')
+  lookupEventSuppliers(@Query('q') q?: string) {
+    return this.eventPlanning.searchSuppliers(q ?? '');
+  }
+
   @Get('events/:eventId/service-commitments')
   listEventServiceCommitments(@Param('eventId') eventId: string) {
     return this.eventPlanning.listServiceCommitments(eventId.trim());
@@ -799,6 +823,23 @@ export class BostonCityHallController {
       eventId.trim(),
       body as Parameters<BostonCityHallEventPlanningService['createServiceCommitment']>[1],
     );
+  }
+
+  @Patch('events/:eventId/service-commitments/:commitmentId')
+  patchEventServiceCommitment(
+    @Param('eventId') eventId: string,
+    @Param('commitmentId') commitmentId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.eventPlanning.updateServiceCommitment(eventId.trim(), commitmentId, body as never);
+  }
+
+  @Post('events/:eventId/service-commitments/:commitmentId/cancel')
+  cancelEventServiceCommitment(
+    @Param('eventId') eventId: string,
+    @Param('commitmentId') commitmentId: string,
+  ) {
+    return this.eventPlanning.cancelServiceCommitment(eventId.trim(), commitmentId);
   }
 
   @Get('events/:eventId/checkin/stations')
@@ -918,6 +959,11 @@ export class BostonCityHallController {
   listPosCash(@Param('eventId') eventId: string, @Query('limit') limit?: string) {
     const n = limit ? Number.parseInt(limit, 10) : 20;
     return this.posCash.listSessions(eventId.trim(), Number.isFinite(n) ? n : 20);
+  }
+
+  @Get('events/:eventId/pos/cash-sessions/:sessionId/summary')
+  posCashSummary(@Param('eventId') eventId: string, @Param('sessionId') sessionId: string) {
+    return this.posCash.getSessionSummary(eventId.trim(), sessionId);
   }
 
   /** BCH — resultado financeiro executivo por evento (Fase 5.1) */
@@ -1214,12 +1260,31 @@ export class BostonCityHallController {
     return this.seating.createSeatForVenue(body.eventId, body);
   }
 
+  @Post('ticketing/seats/batch')
+  createSeatsBatch(
+    @Body()
+    body: {
+      eventId: string;
+      tableId?: string | null;
+      prefix?: string;
+      from: number;
+      to: number;
+    },
+  ) {
+    return this.seating.createSeatsBatchForVenue(body.eventId, body);
+  }
+
   @Patch('ticketing/tickets/:id/seating')
   assignTicketSeating(
     @Param('id') id: string,
     @Body() body: { tableId?: string | null; seatId?: string | null },
   ) {
     return this.seating.assignTicketSeatingForVenue(id, body);
+  }
+
+  @Delete('ticketing/tickets/:id/seating')
+  releaseTicketSeating(@Param('id') id: string) {
+    return this.seating.clearTicketSeatingForVenue(id);
   }
 
   @Get('ticketing/reports/overview')

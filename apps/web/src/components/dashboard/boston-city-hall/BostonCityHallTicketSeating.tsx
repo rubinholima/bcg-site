@@ -35,6 +35,8 @@ type SeatRow = {
   seatLabel: string;
   tableId: string | null;
   table?: { name: string } | null;
+  occupied?: boolean;
+  ticketCode?: string | null;
 };
 
 type TicketHit = {
@@ -67,6 +69,9 @@ export function BostonCityHallTicketSeating({ fixedEventId }: { fixedEventId?: s
   const [selectedTicketId, setSelectedTicketId] = useState("");
   const [assignTableId, setAssignTableId] = useState("");
   const [assignSeatId, setAssignSeatId] = useState("");
+  const [batchFrom, setBatchFrom] = useState("1");
+  const [batchTo, setBatchTo] = useState("8");
+  const [batchPrefix, setBatchPrefix] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{
     title: string;
@@ -134,6 +139,43 @@ export function BostonCityHallTicketSeating({ fixedEventId }: { fixedEventId?: s
     });
     setSeatLabel("");
     await reload();
+  };
+
+  const createBatch = async () => {
+    if (!eventId) return;
+    try {
+      await api.post("/boston-city-hall/ticketing/seats/batch", {
+        eventId,
+        tableId: seatTableId || null,
+        prefix: batchPrefix,
+        from: Number.parseInt(batchFrom, 10),
+        to: Number.parseInt(batchTo, 10),
+      });
+      await reload();
+    } catch (e) {
+      setFeedback({
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível criar assentos em lote.",
+        variant: "error",
+      });
+    }
+  };
+
+  const releaseAssignment = async () => {
+    if (!selectedTicketId) return;
+    try {
+      await api.delete(`/boston-city-hall/ticketing/tickets/${selectedTicketId}/seating`);
+      setSelectedTicketId("");
+      setTicketQuery("");
+      setFeedback({ title: "Liberado", message: "Mesa/assento removidos do ingresso.", variant: "success" });
+      await reload();
+    } catch (e) {
+      setFeedback({
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível liberar.",
+        variant: "error",
+      });
+    }
   };
 
   const assign = async () => {
@@ -213,6 +255,23 @@ export function BostonCityHallTicketSeating({ fixedEventId }: { fixedEventId?: s
             Criar assento
           </Button>
         </div>
+        <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-slate-800/60 pt-3">
+          <div className="w-16 space-y-1">
+            <Label className="text-xs">De</Label>
+            <Input value={batchFrom} onChange={(e) => setBatchFrom(e.target.value)} className="h-9 text-foreground" />
+          </div>
+          <div className="w-16 space-y-1">
+            <Label className="text-xs">Até</Label>
+            <Input value={batchTo} onChange={(e) => setBatchTo(e.target.value)} className="h-9 text-foreground" />
+          </div>
+          <div className="w-20 space-y-1">
+            <Label className="text-xs">Prefixo</Label>
+            <Input value={batchPrefix} onChange={(e) => setBatchPrefix(e.target.value)} className="h-9 text-foreground" />
+          </div>
+          <Button type="button" size="sm" variant="outline" className="min-h-[36px]" onClick={() => void createBatch()}>
+            Lote de assentos
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border border-slate-800/80 bg-slate-950/30 p-4">
@@ -283,6 +342,16 @@ export function BostonCityHallTicketSeating({ fixedEventId }: { fixedEventId?: s
             >
               Salvar atribuição
             </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="min-h-[36px]"
+              disabled={!selectedTicketId}
+              onClick={() => void releaseAssignment()}
+            >
+              Liberar
+            </Button>
           </div>
         </div>
       </div>
@@ -318,6 +387,7 @@ export function BostonCityHallTicketSeating({ fixedEventId }: { fixedEventId?: s
               <TableRow>
                 <TableHead>Assento</TableHead>
                 <TableHead>Mesa</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -325,6 +395,7 @@ export function BostonCityHallTicketSeating({ fixedEventId }: { fixedEventId?: s
                 <TableRow key={s.id}>
                   <TableCell>{s.seatLabel}</TableCell>
                   <TableCell>{s.table?.name ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{s.occupied ? s.ticketCode ?? "Ocupado" : "Livre"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
