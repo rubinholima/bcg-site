@@ -85,7 +85,12 @@ const KPI_ACCENT: Record<
   },
 };
 
+const KPI_LINK_CLASS =
+  "group relative block overflow-hidden rounded-xl border bg-[#0a101c]/90 p-4 transition-colors hover:border-sky-500/35 hover:bg-[#0d1528]/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/45 sm:p-4";
+
 export function BchExecutiveKpiCard({
+  href,
+  navHint,
   label,
   value,
   hint,
@@ -93,7 +98,10 @@ export function BchExecutiveKpiCard({
   accent,
   sparkline,
   barChart,
+  footerStatus,
 }: {
+  href: string;
+  navHint?: string;
   label: string;
   value: string | number;
   hint?: string;
@@ -101,50 +109,60 @@ export function BchExecutiveKpiCard({
   accent: KpiAccent;
   sparkline?: number[];
   barChart?: { received: number; open: number };
+  /** Quando não há série histórica — texto compacto em vez de gráfico vazio. */
+  footerStatus?: string;
 }) {
   const tone = KPI_ACCENT[accent];
+  const hasChart =
+    (barChart && (barChart.received > 0 || barChart.open > 0)) ||
+    (sparkline && sparkline.length >= 2 && sparkline.some((v, i, a) => i > 0 && v !== a[0]));
+  const showSparkline = sparkline && sparkline.length >= 2;
+
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-xl border bg-[#0a101c]/90 p-3.5 sm:p-4",
-        tone.ring,
-      )}
+    <Link
+      href={href}
+      title={navHint}
+      aria-label={`${label}: ${value}. ${navHint ?? "Abrir destino relacionado."}`}
+      className={cn(KPI_LINK_CLASS, tone.ring)}
     >
       <div
         className={cn(
-          "pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-80",
+          "pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-80 transition-opacity group-hover:opacity-100",
           tone.glow,
         )}
       />
       <div className="relative flex items-start justify-between gap-2">
         <div
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-white/5",
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ring-1 ring-white/5",
             tone.iconBg,
           )}
         >
-          <Icon className={cn("h-[18px] w-[18px]", tone.iconText)} aria-hidden />
+          <Icon className={cn("h-5 w-5", tone.iconText)} aria-hidden />
         </div>
+        <span className="text-[10px] font-medium uppercase tracking-wide text-sky-500/0 transition-colors group-hover:text-sky-400/90">
+          Abrir →
+        </span>
       </div>
-      <p className="relative mt-3 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+      <p className="relative mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
         {label}
       </p>
-      <p className="relative mt-0.5 text-2xl font-semibold tabular-nums tracking-tight text-slate-50">
+      <p className="relative mt-1 text-[1.65rem] font-bold tabular-nums leading-none tracking-tight text-slate-50 sm:text-3xl">
         {value}
       </p>
-      {hint ? <p className="relative mt-1 text-[11px] text-slate-500">{hint}</p> : null}
-      <div className="relative mt-3 h-8 w-full">
-        {barChart ? (
-          <BchMiniReceivableBars received={barChart.received} open={barChart.open} color={tone.spark} />
-        ) : sparkline && sparkline.length >= 2 ? (
-          <BchMiniSparkline values={sparkline} stroke={tone.spark} />
-        ) : (
-          <div className="h-full w-full opacity-30">
-            <BchMiniSparkline values={[1, 1, 1, 1, 1, 1, 1]} stroke={tone.spark} flat />
-          </div>
-        )}
-      </div>
-    </div>
+      {hint ? <p className="relative mt-1.5 text-xs text-slate-400">{hint}</p> : null}
+      {hasChart ? (
+        <div className="relative mt-3 h-9 w-full">
+          {barChart ? (
+            <BchMiniReceivableBars received={barChart.received} open={barChart.open} color={tone.spark} />
+          ) : showSparkline ? (
+            <BchMiniSparkline values={sparkline!} stroke={tone.spark} />
+          ) : null}
+        </div>
+      ) : footerStatus ? (
+        <p className="relative mt-3 text-xs text-slate-500">{footerStatus}</p>
+      ) : null}
+    </Link>
   );
 }
 
@@ -225,9 +243,13 @@ export type BchPipelineDonutSegment = {
 export function BchPipelineDonut({
   segments,
   totalLabel,
+  stageHref,
+  stageNavHint,
 }: {
   segments: BchPipelineDonutSegment[];
   totalLabel: string;
+  stageHref: (stageKey: string) => string;
+  stageNavHint?: string;
 }) {
   const total = segments.reduce((s, x) => s + x.count, 0);
   const r = 42;
@@ -280,22 +302,32 @@ export function BchPipelineDonut({
             return el;
           })}
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <Link
+          href={stageHref(slices[0]?.key ?? "lead")}
+          title={stageNavHint}
+          className="absolute inset-0 flex flex-col items-center justify-center rounded-full text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+        >
           <span className="text-xl font-semibold tabular-nums text-slate-100">{total}</span>
           <span className="max-w-[4.5rem] text-[10px] leading-tight text-slate-500">{totalLabel}</span>
-        </div>
+        </Link>
       </div>
-      <ul className="min-w-0 flex-1 space-y-2">
+      <ul className="min-w-0 flex-1 space-y-1">
         {slices.map((seg) => (
-          <li key={seg.key} className="flex items-center justify-between gap-2 text-sm">
-            <span className="flex min-w-0 items-center gap-2 text-slate-400">
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: seg.color }}
-              />
-              <span className="truncate">{seg.label}</span>
-            </span>
-            <span className="shrink-0 font-semibold tabular-nums text-slate-100">{seg.count}</span>
+          <li key={seg.key}>
+            <Link
+              href={stageHref(seg.key)}
+              title={stageNavHint}
+              className="flex min-h-[40px] items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-slate-900/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+            >
+              <span className="flex min-w-0 items-center gap-2 text-slate-400">
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: seg.color }}
+                />
+                <span className="truncate">{seg.label}</span>
+              </span>
+              <span className="shrink-0 font-semibold tabular-nums text-slate-100">{seg.count}</span>
+            </Link>
           </li>
         ))}
       </ul>
@@ -307,71 +339,108 @@ export function BchFinanceProgress({
   totalContracted,
   totalReceived,
   openBalance,
+  overdueBalance,
   formatMoney,
+  financeHref,
+  financeNavHint,
 }: {
   totalContracted: number;
   totalReceived: number;
   openBalance: number;
+  overdueBalance?: number;
   formatMoney: (n: number) => string;
+  financeHref: string;
+  financeNavHint?: string;
 }) {
   const contracted = totalContracted > 0 ? totalContracted : totalReceived + openBalance;
   const receivedPct = contracted > 0 ? Math.min(100, (totalReceived / contracted) * 100) : 0;
   const openPct = contracted > 0 ? Math.min(100, (openBalance / contracted) * 100) : 0;
+  const overdue = overdueBalance ?? 0;
+  const overduePct = contracted > 0 ? Math.min(100, (overdue / contracted) * 100) : 0;
 
   return (
     <div className="space-y-4">
-      <div>
-        <p className="text-xs text-slate-500">Total contratado</p>
-        <p className="text-2xl font-semibold tabular-nums text-slate-50">
+      <Link
+        href={financeHref}
+        title={financeNavHint}
+        className="block rounded-lg p-1 -m-1 transition-colors hover:bg-slate-900/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+      >
+        <p className="text-xs font-medium text-slate-500">Total contratado (venue · USD)</p>
+        <p className="text-2xl font-bold tabular-nums text-slate-50 sm:text-[1.75rem]">
           {formatMoney(contracted)}
         </p>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-800/80">
+        <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-800/80">
           <div
             className="h-full rounded-full bg-gradient-to-r from-sky-600 to-sky-400"
             style={{ width: `${receivedPct}%` }}
           />
         </div>
-      </div>
-      <div className="space-y-3">
-        <FinanceRow
+      </Link>
+      <div className="space-y-2">
+        <FinanceRowLink
+          href={financeHref}
+          navHint={financeNavHint}
           label="Recebido"
           value={formatMoney(totalReceived)}
           pct={receivedPct}
           barClass="bg-sky-500/90"
         />
-        <FinanceRow
+        <FinanceRowLink
+          href={financeHref}
+          navHint={financeNavHint}
           label="Em aberto"
           value={formatMoney(openBalance)}
           pct={openPct}
           barClass="bg-amber-500/85"
         />
+        {overdue > 0 ? (
+          <FinanceRowLink
+            href={financeHref}
+            navHint="Abre Financeiro. Use o filtro Vencido na página."
+            label="Vencido"
+            value={formatMoney(overdue)}
+            pct={overduePct}
+            barClass="bg-rose-500/85"
+            valueClass="text-rose-300"
+          />
+        ) : null}
       </div>
     </div>
   );
 }
 
-function FinanceRow({
+function FinanceRowLink({
+  href,
+  navHint,
   label,
   value,
   pct,
   barClass,
+  valueClass,
 }: {
+  href: string;
+  navHint?: string;
   label: string;
   value: string;
   pct: number;
   barClass: string;
+  valueClass?: string;
 }) {
   return (
-    <div>
+    <Link
+      href={href}
+      title={navHint}
+      className="block min-h-[44px] rounded-lg px-2 py-2 transition-colors hover:bg-slate-900/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+    >
       <div className="flex items-baseline justify-between gap-2 text-sm">
         <span className="text-slate-400">{label}</span>
-        <span className="font-semibold tabular-nums text-slate-100">{value}</span>
+        <span className={cn("font-semibold tabular-nums text-slate-100", valueClass)}>{value}</span>
       </div>
-      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-800/70">
+      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-800/70">
         <div className={cn("h-full rounded-full transition-all", barClass)} style={{ width: `${pct}%` }} />
       </div>
-      <p className="mt-0.5 text-[10px] tabular-nums text-slate-600">{pct.toFixed(0)}%</p>
-    </div>
+      <p className="mt-0.5 text-[10px] tabular-nums text-slate-600">{pct.toFixed(0)}% do contratado</p>
+    </Link>
   );
 }
 
@@ -430,45 +499,74 @@ export function BchActivityTimeline({ items }: { items: BchActivityItem[] }) {
   );
 }
 
-export function BchExecutiveHero() {
+export type BchExecutiveHeaderStat = {
+  label: string;
+  value: string;
+  href: string;
+  title?: string;
+};
+
+export function BchExecutiveManagementHeader({
+  dateLabel,
+  operationSummary,
+  pendingActionsCount,
+  pendingActionsHref,
+  stats,
+}: {
+  dateLabel: string;
+  operationSummary: string;
+  pendingActionsCount: number;
+  pendingActionsHref: string;
+  stats: BchExecutiveHeaderStat[];
+}) {
   return (
-    <header className="relative overflow-hidden rounded-2xl border border-slate-800/80 shadow-lg">
-      <div
-        className="absolute inset-0 bg-[#060a12]"
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-[#0a1628] via-[#0c1424]/95 to-[#050810]"
-        aria-hidden
-      />
-      <div
-        className="absolute -right-8 top-0 h-full w-[55%] bg-gradient-to-l from-sky-950/40 via-indigo-950/20 to-transparent"
-        aria-hidden
-      />
-      <div
-        className="absolute bottom-0 right-0 h-32 w-2/3 bg-gradient-to-t from-amber-950/25 to-transparent"
-        aria-hidden
-      />
-      <div className="relative flex min-h-[148px] flex-col justify-end px-5 py-5 sm:min-h-[172px] sm:px-7 sm:py-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex min-w-0 items-center gap-4">
-            <img
-              src="/boston-city-hall-logo.png"
-              alt=""
-              className="h-14 w-14 shrink-0 rounded-full object-contain ring-2 ring-amber-500/25 sm:h-16 sm:w-16"
-            />
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-500/90">
-                Boston City Hall
-              </p>
-              <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-[1.65rem]">
-                Visão Geral
-              </h1>
-              <p className="mt-0.5 text-sm text-slate-400">Gestão e operação do estabelecimento</p>
-            </div>
+    <header className="rounded-xl border border-slate-800/80 bg-gradient-to-r from-[#0a101c] via-[#0c1222] to-[#0a101c] px-4 py-4 sm:px-5 sm:py-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <img
+            src="/boston-city-hall-logo.png"
+            alt=""
+            className="h-11 w-11 shrink-0 rounded-full object-contain ring-2 ring-amber-500/25 sm:h-12 sm:w-12"
+          />
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-500/90">
+              Boston City Hall
+            </p>
+            <h1 className="text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">Visão Geral</h1>
+            <p className="text-sm text-slate-400">Gestão e operação do estabelecimento</p>
+            <p className="mt-1 text-xs text-slate-500">{dateLabel}</p>
           </div>
         </div>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <p className="text-sm text-slate-300">{operationSummary}</p>
+          {pendingActionsCount > 0 ? (
+            <Link
+              href={pendingActionsHref}
+              className="inline-flex min-h-[36px] items-center rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 text-xs font-medium text-amber-200/95 hover:bg-amber-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+            >
+              {pendingActionsCount} ação{pendingActionsCount === 1 ? "" : "ões"} pendente
+              {pendingActionsCount === 1 ? "" : "s"}
+            </Link>
+          ) : (
+            <p className="text-xs text-slate-600">Nenhuma ação comercial pendente no momento.</p>
+          )}
+        </div>
       </div>
+      {stats.length > 0 ? (
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {stats.map((s) => (
+            <Link
+              key={s.label}
+              href={s.href}
+              title={s.title}
+              className="min-h-[44px] rounded-lg border border-slate-800/80 bg-slate-950/35 px-3 py-2 transition-colors hover:border-sky-500/30 hover:bg-slate-900/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+            >
+              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500">{s.label}</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-100">{s.value}</p>
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </header>
   );
 }
