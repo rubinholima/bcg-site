@@ -10,7 +10,7 @@ import { BostonCityHallCreateBchEventDialog } from "@/components/dashboard/bosto
 import { bchEventWorkspacePath } from "@/components/dashboard/boston-city-hall/bch-app-shell.config";
 import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { BCH_BTN_PRIMARY, BCH_CARD } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
-import type { EventTicketingEventListItem } from "@/types/boston-city-hall";
+import type { EventTicketingEventListItem, VenueOperationListItem } from "@/types/boston-city-hall";
 import { EVENT_STATUS_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ function formatWhen(ev: EventTicketingEventListItem): string {
 
 export function BostonCityHallEventsIndex() {
   const [events, setEvents] = useState<EventTicketingEventListItem[]>([]);
+  const [spaceByEventId, setSpaceByEventId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -31,9 +32,20 @@ export function BostonCityHallEventsIndex() {
   const load = () => {
     setLoading(true);
     setError(null);
-    void api
-      .get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events")
-      .then((r) => setEvents(Array.isArray(r.data) ? r.data : []))
+    void Promise.all([
+      api.get<EventTicketingEventListItem[]>("/boston-city-hall/ticketing/events"),
+      api.get<VenueOperationListItem[]>("/boston-city-hall/operations"),
+    ])
+      .then(([evRes, opsRes]) => {
+        setEvents(Array.isArray(evRes.data) ? evRes.data : []);
+        const map: Record<string, string> = {};
+        for (const op of Array.isArray(opsRes.data) ? opsRes.data : []) {
+          if (op.event?.id && op.spaceName?.trim()) {
+            map[op.event.id] = op.spaceName.trim();
+          }
+        }
+        setSpaceByEventId(map);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "Erro ao carregar eventos."))
       .finally(() => setLoading(false));
   };
@@ -43,7 +55,7 @@ export function BostonCityHallEventsIndex() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="w-full space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-semibold text-slate-50">Eventos</h1>
         <Button
@@ -80,7 +92,10 @@ export function BostonCityHallEventsIndex() {
                     )}
                   >
                     <p className="font-semibold text-slate-50">{bchEventDisplayName(ev.name)}</p>
-                    <p className="mt-1 text-xs text-slate-400">{formatWhen(ev)}</p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {formatWhen(ev)}
+                      {spaceByEventId[ev.id] ? ` · ${spaceByEventId[ev.id]}` : ""}
+                    </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span className="rounded-md border border-slate-700 bg-slate-900/50 px-2 py-0.5 text-[11px] text-slate-300">
                         {EVENT_STATUS_LABEL[ev.status] ?? ev.status}
