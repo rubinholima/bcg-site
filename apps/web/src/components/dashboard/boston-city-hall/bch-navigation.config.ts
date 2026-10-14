@@ -141,6 +141,9 @@ export const BCH_INTERNAL_ROUTE_PATTERNS = [
   `${BCH_BASE}/contratos/:id`,
   `${BCH_BASE}/financeiro`,
   `${BCH_BASE}/financeiro/:id`,
+  `${BCH_BASE}/eventos`,
+  `${BCH_BASE}/eventos/:eventId`,
+  `${BCH_BASE}/eventos/:eventId/setup`,
   `${BCH_BASE}/eventos/:eventId/financeiro`,
   `${BCH_BASE}/ticketing?tab=checkout`,
 ] as const;
@@ -222,8 +225,29 @@ export function resolveBchPageMeta(pathname: string, titleOverride?: string): Bc
       test: /^\/dashboard\/eventos\/boston-city-hall\/eventos\/[^/]+\/setup$/,
       groupId: "events",
       title: "Preparar evento",
-      parentHref: `${BCH_BASE}/ticketing`,
-      parentLabel: "Ingressos",
+      parentHref: `${BCH_BASE}/eventos`,
+      parentLabel: "Eventos",
+    },
+    {
+      test: /^\/dashboard\/eventos\/boston-city-hall\/eventos\/[^/]+\/financeiro$/,
+      groupId: "revenue",
+      title: "Resultado financeiro",
+      parentHref: `${BCH_BASE}/eventos`,
+      parentLabel: "Eventos",
+    },
+    {
+      test: /^\/dashboard\/eventos\/boston-city-hall\/eventos\/[^/]+$/,
+      groupId: "events",
+      title: "Centro do evento",
+      parentHref: `${BCH_BASE}/eventos`,
+      parentLabel: "Eventos",
+    },
+    {
+      test: /^\/dashboard\/eventos\/boston-city-hall\/eventos$/,
+      groupId: "events",
+      title: "Eventos",
+      parentHref: BCH_BASE,
+      parentLabel: "Visão geral",
     },
   ];
 

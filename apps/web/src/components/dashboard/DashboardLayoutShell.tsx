@@ -16,12 +16,27 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const isSessaoPage = pathname.includes("/consultas/sessao");
   const isControleHallPage = pathname.includes("/marketing/boston-tv/controle-hall");
   const isAcademiasEmbed = pathname.startsWith("/dashboard/academias/");
-  const usePageFrame = !isSessaoPage && !isAcademiasEmbed && !isControleHallPage;
+  const isBchApp = pathname.startsWith("/dashboard/eventos/boston-city-hall");
+  const usePageFrame = !isSessaoPage && !isAcademiasEmbed && !isControleHallPage && !isBchApp;
   const { sidebarOpen, closeSidebar, sidebarDesktopMode } = useDashboardShell();
   const { resolvedTheme } = useDashboardTheme();
 
   const desktopHidden = sidebarDesktopMode === "hidden";
   const desktopIcons = sidebarDesktopMode === "icons";
+
+  if (isBchApp) {
+    return (
+      <div
+        data-dashboard-root
+        data-theme={resolvedTheme}
+        suppressHydrationWarning
+        className="app-screen-h w-full min-w-0 overflow-hidden bg-[#070b12]"
+      >
+        <DashboardPresenceTracker />
+        {children}
+      </div>
+    );
+  }
 
   if (isSessaoPage || isControleHallPage) {
     return (
