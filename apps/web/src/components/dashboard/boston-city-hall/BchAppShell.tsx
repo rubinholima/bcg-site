@@ -50,7 +50,7 @@ export function BchAppShell({ children }: { children: React.ReactNode }) {
 
           <aside
             className={cn(
-              "fixed inset-y-0 left-0 z-40 w-[min(100vw-3rem,17.5rem)] border-r border-slate-800/90 bg-[#0a101c] pt-[56px] transition-transform lg:static lg:z-auto lg:w-[17.5rem] lg:shrink-0 lg:translate-x-0 lg:pt-0",
+              "fixed inset-y-0 left-0 z-40 flex w-[min(100vw-3rem,15.25rem)] flex-col border-r border-slate-800/90 bg-[#0a101c] pt-[56px] transition-transform lg:static lg:z-auto lg:w-[15.25rem] lg:shrink-0 lg:translate-x-0 lg:pt-0",
               mobileNav ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
             )}
           >
@@ -58,7 +58,7 @@ export function BchAppShell({ children }: { children: React.ReactNode }) {
           </aside>
 
           <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden">
-            <div className="dashboard-scroll min-h-0 h-full overflow-y-auto overflow-x-hidden px-3 py-4 sm:px-6 sm:py-6">
+            <div className="dashboard-scroll min-h-0 h-full w-full overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
               {children}
             </div>
           </main>
