@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelectField } from "@/components/ui/native-select";
@@ -16,10 +15,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { EventTicketingEventListItem } from "@/types/boston-city-hall";
 import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
 import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
 import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 
 type TableRow = {
   id: string;
@@ -27,6 +26,8 @@ type TableRow = {
   capacity: number;
   section: string | null;
   active: boolean;
+  occupiedCount?: number;
+  availableCapacity?: number;
 };
 
 type SeatRow = {
@@ -36,24 +37,47 @@ type SeatRow = {
   table?: { name: string } | null;
 };
 
-export function BostonCityHallTicketSeating() {
+type TicketHit = {
+  id: string;
+  label: string;
+  ticketCode: string;
+  holderName: string;
+  status: string;
+};
+
+export function BostonCityHallTicketSeating({ fixedEventId }: { fixedEventId?: string } = {}) {
+  const binding = useBchHubEventBinding();
   const {
     events,
-    eventId,
+    eventId: boundEventId,
     setEventId,
     loading: loadingEvents,
     error: eventsError,
     reload: reloadEventsList,
-  } = useBchHubEventBinding();
+  } = binding;
+  const eventId = fixedEventId ?? boundEventId;
   const [tables, setTables] = useState<TableRow[]>([]);
   const [seats, setSeats] = useState<SeatRow[]>([]);
   const [tableName, setTableName] = useState("");
   const [tableCapacity, setTableCapacity] = useState("8");
   const [seatLabel, setSeatLabel] = useState("");
-  const [assignTicketId, setAssignTicketId] = useState("");
+  const [seatTableId, setSeatTableId] = useState("");
+  const [ticketQuery, setTicketQuery] = useState("");
+  const [ticketHits, setTicketHits] = useState<TicketHit[]>([]);
+  const [selectedTicketId, setSelectedTicketId] = useState("");
   const [assignTableId, setAssignTableId] = useState("");
   const [assignSeatId, setAssignSeatId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    title: string;
+    message: string;
+    variant: "success" | "error";
+  } | null>(null);
+
+  const filteredSeats = useMemo(
+    () => (assignTableId ? seats.filter((s) => s.tableId === assignTableId) : seats),
+    [seats, assignTableId],
+  );
 
   const reload = useCallback(async () => {
     if (!eventId) return;
@@ -74,6 +98,22 @@ export function BostonCityHallTicketSeating() {
     void reload();
   }, [reload]);
 
+  useEffect(() => {
+    if (!eventId || ticketQuery.trim().length < 2) {
+      setTicketHits([]);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      void api
+        .get<TicketHit[]>(
+          `/boston-city-hall/ticketing/tickets/search?eventId=${encodeURIComponent(eventId)}&q=${encodeURIComponent(ticketQuery.trim())}`,
+        )
+        .then((res) => setTicketHits(Array.isArray(res.data) ? res.data : []))
+        .catch(() => setTicketHits([]));
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [eventId, ticketQuery]);
+
   const createTable = async () => {
     if (!eventId || !tableName.trim()) return;
     await api.post("/boston-city-hall/ticketing/tables", {
@@ -90,97 +130,162 @@ export function BostonCityHallTicketSeating() {
     await api.post("/boston-city-hall/ticketing/seats", {
       eventId,
       seatLabel: seatLabel.trim(),
-      tableId: assignTableId || undefined,
+      tableId: seatTableId || undefined,
     });
     setSeatLabel("");
     await reload();
   };
 
   const assign = async () => {
-    if (!assignTicketId.trim()) return;
-    await api.patch(`/boston-city-hall/ticketing/tickets/${assignTicketId.trim()}/seating`, {
-      tableId: assignTableId || null,
-      seatId: assignSeatId || null,
-    });
-    setAssignTicketId("");
+    if (!selectedTicketId) return;
+    try {
+      await api.patch(`/boston-city-hall/ticketing/tickets/${selectedTicketId}/seating`, {
+        tableId: assignTableId || null,
+        seatId: assignSeatId || null,
+      });
+      setTicketQuery("");
+      setSelectedTicketId("");
+      setFeedback({
+        title: "Atribuição salva",
+        message: "Mesa/assento vinculados ao ingresso.",
+        variant: "success",
+      });
+    } catch (e) {
+      setFeedback({
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível salvar a atribuição.",
+        variant: "error",
+      });
+    }
   };
 
   return (
-    <div className="space-y-4">
-      {eventsError || (!loadingEvents && events.length === 0) ? (
+    <div className="mx-auto max-w-5xl space-y-4">
+      {!fixedEventId && (eventsError || (!loadingEvents && events.length === 0)) ? (
         <BchEventListDiagnostics
           error={eventsError}
           eventCount={events.length}
           onRetry={() => void reloadEventsList()}
         />
       ) : null}
-      <BchEventSelectField events={events} value={eventId} onChange={setEventId} placeholder="Evento…" />
+      {!fixedEventId ? (
+        <BchEventSelectField events={events} value={eventId} onChange={setEventId} placeholder="Evento…" />
+      ) : null}
 
-      <Card>
-        <CardContent className="grid gap-3 pt-6 sm:grid-cols-3">
-          <div className="space-y-1 sm:col-span-2">
-            <Label>Nova mesa</Label>
-            <Input value={tableName} onChange={(e) => setTableName(e.target.value)} className="text-foreground" />
+      <div className="rounded-lg border border-slate-800/80 bg-slate-950/30 p-4">
+        <p className="mb-3 text-sm font-medium text-slate-200">Nova mesa</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[140px] flex-1 space-y-1">
+            <Label className="text-xs">Nome</Label>
+            <Input value={tableName} onChange={(e) => setTableName(e.target.value)} className="h-9 text-foreground" />
           </div>
-          <div className="space-y-1">
-            <Label>Capacidade</Label>
-            <Input value={tableCapacity} onChange={(e) => setTableCapacity(e.target.value)} className="text-foreground" />
+          <div className="w-24 space-y-1">
+            <Label className="text-xs">Capacidade</Label>
+            <Input
+              value={tableCapacity}
+              onChange={(e) => setTableCapacity(e.target.value)}
+              className="h-9 text-foreground"
+            />
           </div>
-          <Button type="button" disabled={!eventId} onClick={() => void createTable()}>
+          <Button type="button" size="sm" className="min-h-[36px]" disabled={!eventId} onClick={() => void createTable()}>
             Criar mesa
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="grid gap-3 pt-6 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label>Novo assento</Label>
-            <Input value={seatLabel} onChange={(e) => setSeatLabel(e.target.value)} className="text-foreground" />
+      <div className="rounded-lg border border-slate-800/80 bg-slate-950/30 p-4">
+        <p className="mb-3 text-sm font-medium text-slate-200">Novo assento</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[120px] flex-1 space-y-1">
+            <Label className="text-xs">Identificação</Label>
+            <Input value={seatLabel} onChange={(e) => setSeatLabel(e.target.value)} className="h-9 text-foreground" />
           </div>
-          <div className="space-y-1">
-            <Label>Mesa (opcional)</Label>
+          <div className="w-40 space-y-1">
+            <Label className="text-xs">Mesa (opcional)</Label>
             <NativeSelectField
-              value={assignTableId}
-              onChange={(e) => setAssignTableId(e.target.value)}
+              value={seatTableId}
+              onChange={(e) => setSeatTableId(e.target.value)}
               placeholder="—"
               options={tables.map((t) => ({ value: t.id, label: t.name }))}
             />
           </div>
-          <Button type="button" disabled={!eventId} onClick={() => void createSeat()}>
+          <Button type="button" size="sm" className="min-h-[36px]" disabled={!eventId} onClick={() => void createSeat()}>
             Criar assento
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="space-y-3 pt-6">
-          <p className="font-medium">Atribuir mesa/assento ao ingresso</p>
-          <div className="grid gap-3 sm:grid-cols-3">
+      <div className="rounded-lg border border-slate-800/80 bg-slate-950/30 p-4">
+        <p className="mb-3 text-sm font-medium text-slate-200">Atribuir ao ingresso</p>
+        <div className="space-y-2">
+          <div className="max-w-md space-y-1">
+            <Label className="text-xs">Buscar ingresso</Label>
             <Input
-              placeholder="ID do ingresso"
-              value={assignTicketId}
-              onChange={(e) => setAssignTicketId(e.target.value)}
-              className="text-foreground"
-            />
-            <NativeSelectField
-              value={assignTableId}
-              onChange={(e) => setAssignTableId(e.target.value)}
-              placeholder="Mesa"
-              options={tables.map((t) => ({ value: t.id, label: t.name }))}
-            />
-            <NativeSelectField
-              value={assignSeatId}
-              onChange={(e) => setAssignSeatId(e.target.value)}
-              placeholder="Assento"
-              options={seats.map((s) => ({ value: s.id, label: s.seatLabel }))}
+              value={ticketQuery}
+              onChange={(e) => {
+                setTicketQuery(e.target.value);
+                setSelectedTicketId("");
+              }}
+              placeholder="Código, titular, e-mail ou pedido"
+              className="h-9 text-foreground"
             />
           </div>
-          <Button type="button" variant="outline" onClick={() => void assign()}>
-            Salvar atribuição
-          </Button>
-        </CardContent>
-      </Card>
+          {ticketHits.length > 0 ? (
+            <ul className="max-h-40 overflow-y-auto rounded-md border border-slate-800 text-sm">
+              {ticketHits.map((h) => (
+                <li key={h.id}>
+                  <button
+                    type="button"
+                    className={`block w-full px-3 py-2 text-left hover:bg-slate-800/60 ${
+                      selectedTicketId === h.id ? "bg-violet-500/15" : ""
+                    }`}
+                    onClick={() => {
+                      setSelectedTicketId(h.id);
+                      setTicketQuery(h.label);
+                      setTicketHits([]);
+                    }}
+                  >
+                    {h.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="w-40 space-y-1">
+              <Label className="text-xs">Mesa</Label>
+              <NativeSelectField
+                value={assignTableId}
+                onChange={(e) => {
+                  setAssignTableId(e.target.value);
+                  setAssignSeatId("");
+                }}
+                placeholder="—"
+                options={tables.map((t) => ({ value: t.id, label: t.name }))}
+              />
+            </div>
+            <div className="w-40 space-y-1">
+              <Label className="text-xs">Assento</Label>
+              <NativeSelectField
+                value={assignSeatId}
+                onChange={(e) => setAssignSeatId(e.target.value)}
+                placeholder="—"
+                options={filteredSeats.map((s) => ({ value: s.id, label: s.seatLabel }))}
+              />
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="min-h-[36px]"
+              disabled={!selectedTicketId}
+              onClick={() => void assign()}
+            >
+              Salvar atribuição
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {loading ? (
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -191,6 +296,8 @@ export function BostonCityHallTicketSeating() {
               <TableRow>
                 <TableHead>Mesa</TableHead>
                 <TableHead>Capacidade</TableHead>
+                <TableHead>Ocupação</TableHead>
+                <TableHead>Disponível</TableHead>
                 <TableHead>Seção</TableHead>
               </TableRow>
             </TableHeader>
@@ -199,6 +306,8 @@ export function BostonCityHallTicketSeating() {
                 <TableRow key={t.id}>
                   <TableCell>{t.name}</TableCell>
                   <TableCell>{t.capacity}</TableCell>
+                  <TableCell>{t.occupiedCount ?? "—"}</TableCell>
+                  <TableCell>{t.availableCapacity ?? "—"}</TableCell>
                   <TableCell>{t.section ?? "—"}</TableCell>
                 </TableRow>
               ))}
@@ -222,6 +331,14 @@ export function BostonCityHallTicketSeating() {
           </Table>
         </>
       )}
+
+      <FeedbackModal
+        open={!!feedback}
+        onOpenChange={(o) => !o && setFeedback(null)}
+        variant={feedback?.variant ?? "success"}
+        title={feedback?.title ?? ""}
+        message={feedback?.message ?? ""}
+      />
     </div>
   );
 }

@@ -53,6 +53,8 @@ import { BostonCityHallExecutiveService } from './boston-city-hall-executive.ser
 import type { BchExecutiveEventsQuery } from './boston-city-hall-executive.constants';
 import { BostonCityHallOperationalAlertService } from './boston-city-hall-operational-alert.service';
 import { BostonCityHallEventWorkspaceService } from './boston-city-hall-event-workspace.service';
+import { BostonCityHallEventPlanningService } from './boston-city-hall-event-planning.service';
+import { BostonCityHallCheckinSessionsService } from './boston-city-hall-checkin-sessions.service';
 import type { BchAlertListQuery } from './boston-city-hall-operational-alert.constants';
 
 @Controller('boston-city-hall')
@@ -90,6 +92,8 @@ export class BostonCityHallController {
     private readonly executive: BostonCityHallExecutiveService,
     private readonly alerts: BostonCityHallOperationalAlertService,
     private readonly eventWorkspace: BostonCityHallEventWorkspaceService,
+    private readonly eventPlanning: BostonCityHallEventPlanningService,
+    private readonly checkinSessions: BostonCityHallCheckinSessionsService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -739,6 +743,137 @@ export class BostonCityHallController {
     return this.eventWorkspace.getWorkspace(tenantId, eventId.trim());
   }
 
+  @Get('events/:eventId/schedule')
+  listEventSchedule(@Param('eventId') eventId: string) {
+    return this.eventPlanning.listSchedule(eventId.trim());
+  }
+
+  @Post('events/:eventId/schedule')
+  createEventSchedule(
+    @Param('eventId') eventId: string,
+    @Body()
+    body: {
+      itemType: string;
+      title: string;
+      startsAt: string;
+      endsAt?: string | null;
+      locationLabel?: string | null;
+      responsibleName?: string | null;
+      notes?: string | null;
+    },
+  ) {
+    return this.eventPlanning.createSchedule(eventId.trim(), body);
+  }
+
+  @Post('events/:eventId/schedule/seed-defaults')
+  seedEventSchedule(@Param('eventId') eventId: string) {
+    return this.eventPlanning.seedDefaultSchedule(eventId.trim());
+  }
+
+  @Get('events/:eventId/staff-assignments')
+  listEventStaff(@Param('eventId') eventId: string) {
+    return this.eventPlanning.listStaff(eventId.trim());
+  }
+
+  @Post('events/:eventId/staff-assignments')
+  createEventStaff(
+    @Param('eventId') eventId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.eventPlanning.createStaff(eventId.trim(), body as Parameters<BostonCityHallEventPlanningService['createStaff']>[1]);
+  }
+
+  @Get('events/:eventId/service-commitments')
+  listEventServiceCommitments(@Param('eventId') eventId: string) {
+    return this.eventPlanning.listServiceCommitments(eventId.trim());
+  }
+
+  @Post('events/:eventId/service-commitments')
+  createEventServiceCommitment(
+    @Param('eventId') eventId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.eventPlanning.createServiceCommitment(
+      eventId.trim(),
+      body as Parameters<BostonCityHallEventPlanningService['createServiceCommitment']>[1],
+    );
+  }
+
+  @Get('events/:eventId/checkin/stations')
+  listCheckinStations(@Param('eventId') eventId: string) {
+    return this.checkinSessions.listStations(eventId.trim());
+  }
+
+  @Post('events/:eventId/checkin/stations')
+  createCheckinStation(
+    @Param('eventId') eventId: string,
+    @Body() body: { name: string; location?: string | null; deviceLabel?: string | null },
+  ) {
+    return this.checkinSessions.createStation(eventId.trim(), body);
+  }
+
+  @Patch('events/:eventId/checkin/stations/:stationId')
+  patchCheckinStation(
+    @Param('eventId') eventId: string,
+    @Param('stationId') stationId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.checkinSessions.patchStation(eventId.trim(), stationId, body as never);
+  }
+
+  @Get('events/:eventId/checkin/sessions/active')
+  getActiveCheckinSession(
+    @Param('eventId') eventId: string,
+    @Req() req: Request & { user: CognitoJwtPayload },
+  ) {
+    return this.tenantAccess.resolveInternalUserId(req.user.sub).then((operatorUserId) =>
+      this.checkinSessions.getActiveSession(eventId.trim(), operatorUserId),
+    );
+  }
+
+  @Post('events/:eventId/checkin/sessions/open')
+  openCheckinSession(
+    @Param('eventId') eventId: string,
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() body: { stationId: string; deviceLabel?: string | null },
+  ) {
+    return this.tenantAccess.resolveInternalUserId(req.user.sub).then((operatorUserId) =>
+      this.checkinSessions.openSession(eventId.trim(), body, operatorUserId),
+    );
+  }
+
+  @Post('events/:eventId/checkin/sessions/:sessionId/close')
+  closeCheckinSession(
+    @Param('eventId') eventId: string,
+    @Param('sessionId') sessionId: string,
+    @Body() body: { notes?: string | null },
+  ) {
+    return this.checkinSessions.closeSession(eventId.trim(), sessionId, body.notes);
+  }
+
+  @Post('events/:eventId/checkin/sessions/:sessionId/scan')
+  scanCheckinSession(
+    @Param('eventId') eventId: string,
+    @Param('sessionId') sessionId: string,
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() body: { credential?: string; ticketCode?: string },
+  ) {
+    const scanInput = (body.credential ?? body.ticketCode ?? '').trim();
+    return this.tenantAccess.resolveInternalUserId(req.user.sub).then((operatorUserId) =>
+      this.checkinSessions.scanInSession(eventId.trim(), sessionId, scanInput, operatorUserId),
+    );
+  }
+
+  @Get('events/:eventId/checkin/summary')
+  checkinSummary(@Param('eventId') eventId: string) {
+    return this.checkinSessions.getSummary(eventId.trim());
+  }
+
+  @Get('events/:eventId/checkin/tickets/search')
+  searchCheckinTickets(@Param('eventId') eventId: string, @Query('q') q?: string) {
+    return this.checkinSessions.searchTickets(eventId.trim(), q ?? '');
+  }
+
   /** BCH — resultado financeiro executivo por evento (Fase 5.1) */
   @Get('events/:eventId/financial-result')
   async getEventFinancialResult(@Param('eventId') eventId: string) {
@@ -872,6 +1007,12 @@ export class BostonCityHallController {
     });
     const order = await this.ticketOrders.getOrder(id);
     return { ...result, order };
+  }
+
+  @Get('ticketing/tickets/search')
+  searchEventTickets(@Query('eventId') eventId: string, @Query('q') q?: string) {
+    if (!eventId?.trim()) throw new BadRequestException('eventId é obrigatório.');
+    return this.seating.searchTicketsForEvent(eventId.trim(), q ?? '');
   }
 
   @Get('ticketing/tickets/lookup')

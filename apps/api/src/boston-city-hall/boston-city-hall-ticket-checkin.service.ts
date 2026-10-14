@@ -50,6 +50,23 @@ export class BostonCityHallTicketCheckinService {
     };
   }
 
+  private async bumpSessionCounter(
+    sessionId: string | null | undefined,
+    result: EventTicketCheckinResult,
+  ) {
+    if (!sessionId) return;
+    const field =
+      result === 'accepted'
+        ? 'acceptedCount'
+        : result === 'already_used'
+          ? 'duplicateCount'
+          : 'rejectedCount';
+    await this.prisma.bchCheckinSession.updateMany({
+      where: { id: sessionId, status: 'open' },
+      data: { [field]: { increment: 1 } },
+    });
+  }
+
   private async persistCheckin(data: {
     tenantId: string;
     eventId: string;
@@ -57,6 +74,8 @@ export class BostonCityHallTicketCheckinService {
     result: EventTicketCheckinResult;
     operatorUserId: string | null;
     stationLabel?: string | null;
+    stationId?: string | null;
+    sessionId?: string | null;
     credentialFingerprint: string;
   }): Promise<EventTicketCheckinResponseDto> {
     const row = await this.prisma.eventTicketCheckin.create({
@@ -67,12 +86,15 @@ export class BostonCityHallTicketCheckinService {
         operatorUserId: data.operatorUserId,
         result: data.result,
         stationLabel: data.stationLabel?.trim() || null,
+        stationId: data.stationId ?? null,
+        sessionId: data.sessionId ?? null,
         credentialFingerprint: data.credentialFingerprint || null,
         ticketCode: data.ticket?.ticketCode ?? null,
         ticketTypeName: data.ticket?.ticketTypeName ?? null,
         holderName: data.ticket?.holderName ?? null,
       },
     });
+    await this.bumpSessionCounter(data.sessionId, data.result);
     return {
       result: data.result,
       checkinId: row.id,
@@ -86,6 +108,8 @@ export class BostonCityHallTicketCheckinService {
     scanInput: string;
     operatorUserId: string | null;
     stationLabel?: string | null;
+    stationId?: string | null;
+    sessionId?: string | null;
   }): Promise<EventTicketCheckinResponseDto> {
     const tenantId = await this.resolveTenantId();
     return this.performCheckin({ tenantId, ...input });
@@ -97,6 +121,8 @@ export class BostonCityHallTicketCheckinService {
     scanInput: string;
     operatorUserId: string | null;
     stationLabel?: string | null;
+    stationId?: string | null;
+    sessionId?: string | null;
   }): Promise<EventTicketCheckinResponseDto> {
     const event = await this.prisma.event.findFirst({
       where: { id: input.eventId, tenantId: input.tenantId },
@@ -115,6 +141,8 @@ export class BostonCityHallTicketCheckinService {
         result: 'invalid',
         operatorUserId: input.operatorUserId,
         stationLabel: input.stationLabel,
+        stationId: input.stationId,
+        sessionId: input.sessionId,
         credentialFingerprint: fingerprint,
       });
     }
@@ -143,6 +171,8 @@ export class BostonCityHallTicketCheckinService {
         result: 'invalid',
         operatorUserId: input.operatorUserId,
         stationLabel: input.stationLabel,
+        stationId: input.stationId,
+        sessionId: input.sessionId,
         credentialFingerprint: fingerprint,
       });
     }
@@ -161,6 +191,8 @@ export class BostonCityHallTicketCheckinService {
         result: 'wrong_event',
         operatorUserId: input.operatorUserId,
         stationLabel: input.stationLabel,
+        stationId: input.stationId,
+        sessionId: input.sessionId,
         credentialFingerprint: fingerprint,
       });
     }
@@ -173,6 +205,8 @@ export class BostonCityHallTicketCheckinService {
         result: 'cancelled',
         operatorUserId: input.operatorUserId,
         stationLabel: input.stationLabel,
+        stationId: input.stationId,
+        sessionId: input.sessionId,
         credentialFingerprint: fingerprint,
       });
     }
@@ -185,6 +219,8 @@ export class BostonCityHallTicketCheckinService {
         result: 'already_used',
         operatorUserId: input.operatorUserId,
         stationLabel: input.stationLabel,
+        stationId: input.stationId,
+        sessionId: input.sessionId,
         credentialFingerprint: fingerprint,
       });
     }
@@ -197,6 +233,8 @@ export class BostonCityHallTicketCheckinService {
         result: 'invalid',
         operatorUserId: input.operatorUserId,
         stationLabel: input.stationLabel,
+        stationId: input.stationId,
+        sessionId: input.sessionId,
         credentialFingerprint: fingerprint,
       });
     }
@@ -237,12 +275,15 @@ export class BostonCityHallTicketCheckinService {
             operatorUserId: input.operatorUserId,
             result,
             stationLabel: input.stationLabel?.trim() || null,
+            stationId: input.stationId ?? null,
+            sessionId: input.sessionId ?? null,
             credentialFingerprint: fingerprint,
             ticketCode: fresh?.ticketCode ?? ticket!.ticketCode,
             ticketTypeName: fresh?.ticketTypeName ?? ticket!.ticketTypeName,
             holderName: fresh?.holderName ?? ticket!.holderName,
           },
         });
+        await this.bumpSessionCounter(input.sessionId, result);
 
         return {
           result,
@@ -264,12 +305,15 @@ export class BostonCityHallTicketCheckinService {
           operatorUserId: input.operatorUserId,
           result: 'accepted',
           stationLabel: input.stationLabel?.trim() || null,
+          stationId: input.stationId ?? null,
+          sessionId: input.sessionId ?? null,
           credentialFingerprint: fingerprint,
           ticketCode: ticket!.ticketCode,
           ticketTypeName: ticket!.ticketTypeName,
           holderName: ticket!.holderName,
         },
       });
+      await this.bumpSessionCounter(input.sessionId, 'accepted');
 
       return {
         result: 'accepted' as const,

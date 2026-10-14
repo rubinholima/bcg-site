@@ -60,6 +60,9 @@ model User {
   bchBarPhysicalCountItemsCounted     BchBarPhysicalCountItem[]     @relation("BchBarPhysicalCountItemCountedBy")
   bchBarClosesFinalized               BchBarClose[]                 @relation("BchBarCloseFinalizedBy")
   bchOperationalAlertsAcknowledged    BchOperationalAlert[]         @relation("BchAlertAcknowledgedBy")
+  bchEventStaffAssignments            BchEventStaffAssignment[]     @relation("BchEventStaffAssignmentUser")
+  bchCheckinSessionsOperated          BchCheckinSession[]           @relation("BchCheckinSessionOperator")
+  bchPosCashSessionsOperated          BchPosCashSession[]           @relation("BchPosCashSessionOperator")
 }
 
 model UserTenant {
@@ -278,6 +281,12 @@ model Tenant {
   bchBarProductCosts           BchBarProductCost[]
   bchBarCloses                 BchBarClose[]
   bchOperationalAlerts         BchOperationalAlert[]
+  bchEventScheduleItems        BchEventScheduleItem[]
+  bchEventStaffAssignments     BchEventStaffAssignment[]
+  bchEventServiceCommitments   BchEventServiceCommitment[]
+  bchCheckinStations           BchCheckinStation[]
+  bchCheckinSessions           BchCheckinSession[]
+  bchPosCashSessions           BchPosCashSession[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -1017,10 +1026,185 @@ model Event {
   bchBarPhysicalCounts       BchBarPhysicalCount[]
   bchBarCloses               BchBarClose[]
   bchOperationalAlerts       BchOperationalAlert[]
+  bchEventScheduleItems      BchEventScheduleItem[]
+  bchEventStaffAssignments   BchEventStaffAssignment[]
+  bchEventServiceCommitments BchEventServiceCommitment[]
+  bchCheckinStations         BchCheckinStation[]
+  bchCheckinSessions         BchCheckinSession[]
+  bchPosCashSessions         BchPosCashSession[]
   @@index([organizer])
   @@index([tenantId])
   @@index([category])
   @@index([status])
+}
+
+/// Cronograma operacional do evento (montagem, portas, show, desmontagem).
+model BchEventScheduleItem {
+  id              String    @id @default(cuid())
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId         String
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  itemType        String
+  title           String
+  startsAt        DateTime
+  endsAt          DateTime?
+  locationLabel   String?
+  responsibleName String?
+  status          String    @default("planned")
+  notes           String?   @db.Text
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId, eventId, startsAt])
+  @@index([tenantId, eventId, status])
+}
+
+/// Escala / turno de pessoa no evento.
+model BchEventStaffAssignment {
+  id               String    @id @default(cuid())
+  tenantId         String
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId          String
+  event            Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  employeeId       String?
+  employee         Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  userId           String?
+  user             User?     @relation("BchEventStaffAssignmentUser", fields: [userId], references: [id], onDelete: SetNull)
+  contractorName   String?
+  supplierId       String?
+  supplier         Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  roleLabel        String
+  responsibility   String?
+  locationLabel    String?
+  plannedStartAt   DateTime?
+  plannedEndAt     DateTime?
+  actualStartAt    DateTime?
+  actualEndAt      DateTime?
+  breakMinutes     Int?
+  rateType         String?
+  rateAmount       Decimal?  @db.Decimal(14, 4)
+  rateCurrency     String?
+  plannedCost      Decimal?  @db.Decimal(14, 4)
+  actualCost       Decimal?  @db.Decimal(14, 4)
+  status           String    @default("planned")
+  notes            String?   @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([tenantId, eventId, status])
+  @@index([tenantId, eventId, plannedStartAt])
+  @@index([employeeId])
+}
+
+/// Serviço / fornecedor contratado para execução no evento.
+model BchEventServiceCommitment {
+  id                String              @id @default(cuid())
+  tenantId          String
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId           String
+  event             Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  catalogServiceId  String?
+  catalogService    VenueCatalogService? @relation(fields: [catalogServiceId], references: [id], onDelete: SetNull)
+  supplierId        String?
+  supplier          Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  description       String
+  quantity          Decimal?            @db.Decimal(14, 4)
+  unitLabel         String?
+  contractedAmount  Decimal?            @db.Decimal(14, 4)
+  plannedCost       Decimal?            @db.Decimal(14, 4)
+  actualCost        Decimal?            @db.Decimal(14, 4)
+  currency          String              @default("BRL")
+  responsibleName   String?
+  operationalStatus String              @default("planned")
+  notes             String?             @db.Text
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([tenantId, eventId, operationalStatus])
+  @@index([supplierId])
+}
+
+/// Posto físico de check-in por evento.
+model BchCheckinStation {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  location    String?
+  active      Boolean  @default(true)
+  deviceLabel String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sessions BchCheckinSession[]
+  checkins EventTicketCheckin[]
+
+  @@index([tenantId, eventId, active])
+}
+
+/// Sessão operacional de check-in (operador + estação).
+model BchCheckinSession {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId        String
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  stationId      String
+  station        BchCheckinStation @relation(fields: [stationId], references: [id], onDelete: Restrict)
+  operatorUserId String?
+  operatorUser   User?    @relation("BchCheckinSessionOperator", fields: [operatorUserId], references: [id], onDelete: SetNull)
+  deviceLabel    String?
+  status         String   @default("open")
+  openedAt       DateTime @default(now())
+  closedAt       DateTime?
+  acceptedCount  Int      @default(0)
+  duplicateCount Int      @default(0)
+  rejectedCount  Int      @default(0)
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  checkins EventTicketCheckin[]
+
+  @@index([tenantId, eventId, status])
+  @@index([stationId, status])
+}
+
+/// Sessão de caixa POS por evento/local.
+model BchPosCashSession {
+  id                  String                  @id @default(cuid())
+  tenantId            String
+  tenant              Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId             String
+  event               Event                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  locationId          String
+  location            BchBarInventoryLocation @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  operatorUserId      String?
+  operatorUser        User?                   @relation("BchPosCashSessionOperator", fields: [operatorUserId], references: [id], onDelete: SetNull)
+  terminalLabel       String?
+  status              String                  @default("open")
+  openingFloat        Decimal                 @default(0) @db.Decimal(14, 4)
+  declaredCash        Decimal?                @db.Decimal(14, 4)
+  declaredCard        Decimal?                @db.Decimal(14, 4)
+  declaredPix         Decimal?                @db.Decimal(14, 4)
+  declaredOther       Decimal?                @db.Decimal(14, 4)
+  expectedTotal       Decimal?                @db.Decimal(14, 4)
+  varianceAmount      Decimal?                @db.Decimal(14, 4)
+  currency            String                  @default("BRL")
+  openedAt            DateTime                @default(now())
+  closedAt            DateTime?
+  closeNotes          String?                 @db.Text
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  sales BchBarSale[]
+
+  @@index([tenantId, eventId, status])
+  @@index([tenantId, locationId, status])
 }
 
 // Foto do evento — upload por fotógrafos; exibida na galeria pública e em links compartilhados
@@ -1998,6 +2182,8 @@ model Supplier {
   purchaseOrders PurchaseOrder[]
   quotes         PurchaseQuote[]
   financeiroLancamentos FinanceiroLancamento[]
+  bchEventStaffAssignments     BchEventStaffAssignment[]
+  bchEventServiceCommitments BchEventServiceCommitment[]
   @@index([tenantId])
 }
 
@@ -2305,6 +2491,7 @@ model Employee {
   documents  EmployeeDocument[]
   dependents EmployeeDependent[]
   registrationInvites RegistrationInvite[]
+  bchEventStaffAssignments BchEventStaffAssignment[]
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, type])
@@ -3480,9 +3667,15 @@ model EventTicketCheckin {
   ticketCode            String?
   ticketTypeName        String?
   holderName            String?
+  stationId             String?
+  station               BchCheckinStation? @relation(fields: [stationId], references: [id], onDelete: SetNull)
+  sessionId             String?
+  session               BchCheckinSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
   createdAt             DateTime     @default(now())
 
   @@index([tenantId, eventId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([stationId, createdAt])
   @@index([ticketId, createdAt])
   @@index([tenantId, createdAt])
 }
@@ -3636,6 +3829,7 @@ model BchBarInventoryLocation {
   eventInventories   BchBarEventInventory[]
   physicalCounts     BchBarPhysicalCount[]
   barCloses          BchBarClose[]
+  bchPosCashSessions BchPosCashSession[]
 
   @@unique([tenantId, code])
   @@index([tenantId, kind])
@@ -3774,6 +3968,8 @@ model BchBarSale {
   location        BchBarInventoryLocation   @relation(fields: [locationId], references: [id], onDelete: Restrict)
   eventId         String?
   event           Event?                    @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  cashSessionId   String?
+  cashSession     BchPosCashSession?        @relation(fields: [cashSessionId], references: [id], onDelete: SetNull)
   status          String                    @default("open")
   currency        String                    @default("BRL")
   subtotal        Decimal                   @db.Decimal(14, 4)
@@ -3798,6 +3994,7 @@ model BchBarSale {
   @@index([tenantId, status, openedAt])
   @@index([tenantId, locationId, openedAt])
   @@index([tenantId, eventId, openedAt])
+  @@index([cashSessionId])
 }
 
 model BchBarSaleItem {
@@ -4096,6 +4293,7 @@ model VenueCatalogService {
   updatedAt    DateTime @updatedAt
   packageItems VenueCatalogPackageItem[]
   proposalItems VenueProposalItem[]
+  bchEventServiceCommitments BchEventServiceCommitment[]
 
   @@index([tenantId])
   @@index([tenantId, active])

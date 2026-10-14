@@ -18,11 +18,75 @@ export class BostonCityHallSeatingService {
 
   async listTablesForVenue(eventId: string) {
     const tenantId = await this.resolveTenantId();
-    return this.prisma.eventTicketTable.findMany({
+    const tables = await this.prisma.eventTicketTable.findMany({
       where: { tenantId, eventId },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       include: { _count: { select: { seats: true } } },
     });
+    const occupiedByTable = await this.prisma.eventTicket.groupBy({
+      by: ['tableId'],
+      where: {
+        tenantId,
+        eventId,
+        tableId: { not: null },
+        status: { in: ['valid', 'used'] },
+      },
+      _count: { _all: true },
+    });
+    const occMap = new Map(
+      occupiedByTable.map((r) => [r.tableId!, r._count._all]),
+    );
+    return tables.map((t) => ({
+      ...t,
+      occupiedCount: occMap.get(t.id) ?? 0,
+      availableCapacity: Math.max(0, t.capacity - (occMap.get(t.id) ?? 0)),
+    }));
+  }
+
+  async searchTicketsForEvent(eventId: string, q: string, limit = 20) {
+    const tenantId = await this.resolveTenantId();
+    const term = q.trim();
+    if (term.length < 2) return [];
+    const take = Math.min(Math.max(limit, 1), 50);
+    const rows = await this.prisma.eventTicket.findMany({
+      where: {
+        tenantId,
+        eventId,
+        OR: [
+          { ticketCode: { contains: term, mode: 'insensitive' } },
+          { holderName: { contains: term, mode: 'insensitive' } },
+          { holderEmail: { contains: term, mode: 'insensitive' } },
+          { orderNumber: { contains: term, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { ticketCode: 'asc' },
+      take,
+      select: {
+        id: true,
+        ticketCode: true,
+        holderName: true,
+        holderEmail: true,
+        orderNumber: true,
+        ticketTypeName: true,
+        status: true,
+        tableId: true,
+        seatId: true,
+        table: { select: { name: true } },
+        seat: { select: { seatLabel: true } },
+      },
+    });
+    return rows.map((t) => ({
+      id: t.id,
+      ticketCode: t.ticketCode,
+      holderName: t.holderName,
+      holderEmail: t.holderEmail,
+      orderNumber: t.orderNumber,
+      ticketTypeName: t.ticketTypeName,
+      status: t.status,
+      tableName: t.table?.name ?? null,
+      seatLabel: t.seat?.seatLabel ?? null,
+      label: `${t.ticketCode} — ${t.holderName} — ${t.ticketTypeName} — pedido ${t.orderNumber}`,
+    }));
   }
 
   async createTableForVenue(

@@ -242,6 +242,8 @@ export type EventGalleryLinkDto = {
   createdAt: string;
 };
 
+export type EventAccessContext = { jwtSub: string; role?: string };
+
 @Injectable()
 export class EventsService {
   constructor(
@@ -251,12 +253,39 @@ export class EventsService {
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
-  async findAll(filters?: {
-    organizer?: string;
-    category?: string;
-    status?: string;
-  }): Promise<EventResponseDto[]> {
-    const where: Record<string, unknown> = {};
+  private async allowedTenantIds(access: EventAccessContext): Promise<string[] | null> {
+    return this.tenantAccess.getAllowedTenantIds(access.jwtSub, access.role);
+  }
+
+  private assertTenantScope(
+    allowed: string[] | null,
+    tenantId: string | null | undefined,
+    organizer?: string,
+  ): void {
+    if (allowed === null) return;
+    if (organizer === 'group' || !tenantId) {
+      throw new ForbiddenException('Acesso negado a este evento.');
+    }
+    this.tenantAccess.assertCanAccessTenant(allowed, tenantId);
+  }
+
+  private tenantScopedWhere(allowed: string[] | null): Prisma.EventWhereInput {
+    if (allowed === null) return {};
+    if (!allowed.length) return { id: { in: [] } };
+    return { tenantId: { in: allowed } };
+  }
+
+  async findAll(
+    filters?: {
+      organizer?: string;
+      category?: string;
+      status?: string;
+    },
+    access?: EventAccessContext,
+  ): Promise<EventResponseDto[]> {
+    const where: Prisma.EventWhereInput = access
+      ? this.tenantScopedWhere(await this.allowedTenantIds(access))
+      : {};
     if (filters?.organizer) where.organizer = filters.organizer;
     if (filters?.category) where.category = filters.category;
     if (filters?.status) where.status = filters.status;
@@ -269,10 +298,7 @@ export class EventsService {
     return rows.map(toDto);
   }
 
-  async findOne(
-    id: string,
-    access?: { jwtSub: string; role?: string },
-  ): Promise<EventResponseDto> {
+  async findOne(id: string, access?: EventAccessContext): Promise<EventResponseDto> {
     const row = await this.prisma.event.findUnique({
       where: { id },
       include: { tenant: { select: { name: true, slug: true, logoUrl: true } } },
@@ -280,10 +306,10 @@ export class EventsService {
     if (!row) {
       throw new NotFoundException(`Evento com ID "${id}" não encontrado`);
     }
-    if (access && row.tenantId) {
-      const allowed = await this.tenantAccess.getAllowedTenantIds(access.jwtSub, access.role);
+    if (access) {
+      const allowed = await this.allowedTenantIds(access);
       try {
-        this.tenantAccess.assertCanAccessTenant(allowed, row.tenantId);
+        this.assertTenantScope(allowed, row.tenantId, row.organizer);
       } catch {
         throw new ForbiddenException('Acesso negado a este evento.');
       }
@@ -366,7 +392,7 @@ export class EventsService {
     return { ...dto, content: { ...baseContent, blocks } };
   }
 
-  async create(dto: CreateEventDto): Promise<EventResponseDto> {
+  async create(dto: CreateEventDto, access?: EventAccessContext): Promise<EventResponseDto> {
     const slug = slugifyEventSlug(dto.slug) || slugifyEventSlug(dto.name) || 'evento';
     const existing = await this.prisma.event.findUnique({ where: { slug } });
     if (existing) {
@@ -381,6 +407,14 @@ export class EventsService {
       throw new ConflictException(
         'Ao organizar como tenant, informe o tenantId.',
       );
+    }
+    if (access) {
+      const allowed = await this.allowedTenantIds(access);
+      if (dto.organizer === 'tenant' && dto.tenantId) {
+        this.assertTenantScope(allowed, dto.tenantId, dto.organizer);
+      } else if (allowed !== null) {
+        throw new ForbiddenException('Apenas super admin pode criar eventos do grupo.');
+      }
     }
 
     const incoming = dto.content as EventContentDto | undefined;
@@ -416,8 +450,8 @@ export class EventsService {
     return toDto(row as Parameters<typeof toDto>[0]);
   }
 
-  async update(id: string, dto: UpdateEventDto): Promise<EventResponseDto> {
-    const current = await this.findOne(id);
+  async update(id: string, dto: UpdateEventDto, access?: EventAccessContext): Promise<EventResponseDto> {
+    const current = await this.findOne(id, access);
     const data: Record<string, unknown> = {};
     if (dto.slug !== undefined && dto.slug !== null) {
       const newSlug = slugifyEventSlug(dto.slug) || slugifyEventSlug(current.name) || 'evento';
@@ -445,6 +479,17 @@ export class EventsService {
     } else if (dto.organizer === 'group') {
       data.tenantId = null;
     }
+    if (access) {
+      const allowed = await this.allowedTenantIds(access);
+      const nextTenantId =
+        (data.tenantId as string | null | undefined) ?? current.tenantId;
+      const nextOrganizer =
+        (data.organizer as string | undefined) ?? current.organizer;
+      this.assertTenantScope(allowed, nextTenantId, nextOrganizer);
+      if (dto.tenantId && dto.organizer === 'tenant') {
+        this.assertTenantScope(allowed, dto.tenantId, 'tenant');
+      }
+    }
     if (dto.category !== undefined) data.category = dto.category;
     if (dto.fixtureCategory !== undefined) {
       data.fixtureCategory =
@@ -471,11 +516,11 @@ export class EventsService {
         data: data as Parameters<typeof this.prisma.event.update>[0]['data'],
       });
     }
-    return this.findOne(id);
+    return this.findOne(id, access);
   }
 
-  async remove(id: string): Promise<{ deleted: boolean }> {
-    await this.findOne(id);
+  async remove(id: string, access?: EventAccessContext): Promise<{ deleted: boolean }> {
+    await this.findOne(id, access);
     await this.prisma.event.delete({ where: { id } });
     return { deleted: true };
   }

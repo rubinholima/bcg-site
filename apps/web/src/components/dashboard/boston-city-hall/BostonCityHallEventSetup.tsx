@@ -34,11 +34,12 @@ import {
 } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
 
-type SetupStep = "info" | "ticketing" | "review";
+type SetupStep = "info" | "schedule" | "ticketing" | "review";
 
 const STEPS: { id: SetupStep; label: string }[] = [
   { id: "info", label: "Informações" },
-  { id: "ticketing", label: "Ingressos" },
+  { id: "schedule", label: "Cronograma" },
+  { id: "ticketing", label: "Ingressos (opcional)" },
   { id: "review", label: "Revisão" },
 ];
 
@@ -132,6 +133,9 @@ export function BostonCityHallEventSetup({
   const [ticketing, setTicketing] = useState<EventTicketingDetail | null>(null);
   const [venueLabel, setVenueLabel] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [scheduleItems, setScheduleItems] = useState<
+    { id: string; title: string; itemType: string; startsAt: string }[]
+  >([]);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -180,6 +184,15 @@ export function BostonCityHallEventSetup({
         organizer: ev.organizer,
       });
       setTicketing(tickRes.data);
+
+      try {
+        const sch = await api.get<
+          { id: string; title: string; itemType: string; startsAt: string }[]
+        >(`/boston-city-hall/events/${encodeURIComponent(eventId)}/schedule`);
+        setScheduleItems(Array.isArray(sch.data) ? sch.data : []);
+      } catch {
+        setScheduleItems([]);
+      }
 
       const resolvedBookingId = bookingId?.trim();
       if (resolvedBookingId) {
@@ -375,8 +388,12 @@ export function BostonCityHallEventSetup({
   const publicPath = bchPublicEventPath(eventForm.slug);
   const isPublished = eventForm.status === "published";
 
+  const visibleSteps = STEPS.filter(
+    (s) => s.id !== "ticketing" || ticketing?.ticketingEnabled,
+  );
+
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-5xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {!embedded ? (
           <Button variant="ghost" size="sm" className="min-h-[40px] text-slate-300" asChild>
@@ -404,8 +421,8 @@ export function BostonCityHallEventSetup({
 
       <nav aria-label="Progresso" className="rounded-xl border border-slate-800/80 bg-[#0a0f1a]/80 p-3">
         <ol className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          {STEPS.map((s, i) => {
-            const done = i < currentIdx;
+          {visibleSteps.map((s, i) => {
+            const done = stepIndex(s.id) < currentIdx;
             const active = s.id === step;
             return (
               <li key={s.id} className="flex flex-1 items-center gap-2">
@@ -501,6 +518,24 @@ export function BostonCityHallEventSetup({
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
+                <Label>Bilheteria</Label>
+                <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-slate-200">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-600"
+                    checked={!!ticketing?.ticketingEnabled}
+                    onChange={(e) => {
+                      void api
+                        .patch(`/boston-city-hall/ticketing/events/${eventId}`, {
+                          enabled: e.target.checked,
+                        })
+                        .then(() => refreshTicketing());
+                    }}
+                  />
+                  Este evento utiliza ingressos (venda ou check-in)
+                </label>
+              </div>
+              <div className="space-y-2 sm:col-span-2">
                 <Label>Capacidade (ingressos / venue)</Label>
                 <p className="text-sm text-slate-300">{capacityDisplay}</p>
                 {ticketing?.capacityHint?.message ? (
@@ -538,8 +573,70 @@ export function BostonCityHallEventSetup({
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Salvar rascunho
             </Button>
-            <Button type="button" className="min-h-[44px] bg-amber-600 hover:bg-amber-500" onClick={() => setStep("ticketing")}>
+            <Button type="button" className="min-h-[44px] bg-amber-600 hover:bg-amber-500" onClick={() => setStep("schedule")}>
               Continuar
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </BchSection>
+      ) : null}
+
+      {step === "schedule" ? (
+        <BchSection title="Cronograma operacional">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-slate-400">Marcos de montagem, portas, show e desmontagem.</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-[40px]"
+              onClick={() => {
+                void api
+                  .post(`/boston-city-hall/events/${encodeURIComponent(eventId)}/schedule/seed-defaults`)
+                  .then(async () => {
+                    const sch = await api.get<
+                      { id: string; title: string; itemType: string; startsAt: string }[]
+                    >(`/boston-city-hall/events/${encodeURIComponent(eventId)}/schedule`);
+                    setScheduleItems(Array.isArray(sch.data) ? sch.data : []);
+                  });
+              }}
+            >
+              Gerar a partir das datas do evento
+            </Button>
+          </div>
+          <ul className="mt-4 space-y-2 text-sm">
+            {scheduleItems.length === 0 ? (
+              <li className="text-slate-500">Nenhum item — use o botão acima ou cadastre na API.</li>
+            ) : (
+              scheduleItems.map((it) => (
+                <li
+                  key={it.id}
+                  className="flex flex-wrap justify-between gap-2 rounded-md border border-slate-800/80 px-3 py-2"
+                >
+                  <span className="font-medium text-slate-100">{it.title}</span>
+                  <span className="text-slate-400">
+                    {new Date(it.startsAt).toLocaleString("pt-BR", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </li>
+              ))
+            )}
+          </ul>
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-800/80 pt-4">
+            <Button type="button" variant="outline" className="min-h-[44px]" onClick={() => setStep("info")}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+            <Button
+              type="button"
+              className="min-h-[44px] bg-amber-600 hover:bg-amber-500"
+              onClick={() => setStep(ticketing?.ticketingEnabled ? "ticketing" : "review")}
+            >
+              {ticketing?.ticketingEnabled ? "Configurar ingressos" : "Revisar publicação"}
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -559,7 +656,7 @@ export function BostonCityHallEventSetup({
             onDetailChange={setTicketing}
           />
           <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-800/80 pt-4">
-            <Button type="button" variant="outline" className="min-h-[44px]" onClick={() => setStep("info")}>
+            <Button type="button" variant="outline" className="min-h-[44px]" onClick={() => setStep("schedule")}>
               <ChevronLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
@@ -655,9 +752,14 @@ export function BostonCityHallEventSetup({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-800/80 pt-4">
-            <Button type="button" variant="outline" className="min-h-[44px]" onClick={() => setStep("ticketing")}>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-[44px]"
+              onClick={() => setStep(ticketing?.ticketingEnabled ? "ticketing" : "schedule")}
+            >
               <ChevronLeft className="mr-2 h-4 w-4" />
-              Ajustar ingressos
+              {ticketing?.ticketingEnabled ? "Ajustar ingressos" : "Cronograma"}
             </Button>
             <Button
               type="button"

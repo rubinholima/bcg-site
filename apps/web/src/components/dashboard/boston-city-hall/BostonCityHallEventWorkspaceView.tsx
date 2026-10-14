@@ -14,6 +14,7 @@ import {
 import { BostonCityHallEventAlertsBanner } from "@/components/dashboard/boston-city-hall/BostonCityHallEventAlertsBanner";
 import { BostonCityHallEventFinancial } from "@/components/dashboard/boston-city-hall/BostonCityHallEventFinancial";
 import { BostonCityHallEventSetup } from "@/components/dashboard/boston-city-hall/BostonCityHallEventSetup";
+import { BostonCityHallEventStaffAndServices } from "@/components/dashboard/boston-city-hall/BostonCityHallEventStaffAndServices";
 import { BostonCityHallEventWorkspaceBarTab } from "@/components/dashboard/boston-city-hall/BostonCityHallEventWorkspaceBarTab";
 import { BostonCityHallTicketingHub } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketingHub";
 import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
@@ -416,36 +417,31 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
       ) : null}
 
       {section === "equipe" ? (
-        <Panel title="Equipe, contatos e comercial">
+        <div className="space-y-4">
           {booking ? (
-            <div className="grid gap-3 sm:grid-cols-2 text-sm">
-              <InfoRow label="Operação" value={booking.title} />
-              <InfoRow label="Contato" value={booking.contactName ?? "—"} />
-              <InfoRow label="Empresa" value={booking.companyName ?? "—"} />
-              <InfoRow
-                label="Financeiro venue"
-                value={booking.finance ? `${booking.finance.status} · saldo ${booking.finance.balance}` : "—"}
-              />
-              <InfoRow
-                label="Alertas da reserva"
-                value={booking.alerts.length ? booking.alerts.map((a) => a.label).join("; ") : "Nenhum"}
-              />
-            </div>
+            <Panel title="Contato comercial (reserva)">
+              <div className="grid gap-3 sm:grid-cols-2 text-sm">
+                <InfoRow label="Operação" value={booking.title} />
+                <InfoRow label="Contato" value={booking.contactName ?? "—"} />
+                <InfoRow label="Empresa" value={booking.companyName ?? "—"} />
+                <InfoRow
+                  label="Financeiro venue"
+                  value={booking.finance ? `${booking.finance.status} · saldo ${booking.finance.balance}` : "—"}
+                />
+              </div>
+              <Button asChild variant="outline" className="mt-4 min-h-[44px] border-slate-700">
+                <Link href={links.operation}>Abrir ficha da operação (reserva)</Link>
+              </Button>
+            </Panel>
           ) : (
-            <p className="text-sm text-slate-400">
-              Nenhuma reserva vinculada a este evento. Vincule uma reserva para rastrear contato, contrato e recebíveis.
-            </p>
+            <Panel title="Contato comercial (reserva)">
+              <p className="text-sm text-slate-400">
+                Nenhuma reserva vinculada. Vincule uma reserva para rastrear contato, contrato e recebíveis.
+              </p>
+            </Panel>
           )}
-          <p className="mt-4 text-xs text-slate-500">
-            Atribuições de equipe, turnos e compromissos com fornecedores exigem modelos operacionais da próxima fase
-            (sem dados inventados aqui).
-          </p>
-          {booking ? (
-            <Button asChild variant="outline" className="mt-4 min-h-[44px] border-slate-700">
-              <Link href={links.operation}>Abrir ficha da operação (reserva)</Link>
-            </Button>
-          ) : null}
-        </Panel>
+          <BostonCityHallEventStaffAndServices eventId={event.id} />
+        </div>
       ) : null}
 
       {section === "bilheteria" ? (
