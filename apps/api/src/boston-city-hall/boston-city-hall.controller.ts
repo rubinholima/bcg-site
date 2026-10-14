@@ -58,6 +58,7 @@ import { BostonCityHallCheckinSessionsService } from './boston-city-hall-checkin
 import { BostonCityHallPosCashService } from './boston-city-hall-pos-cash.service';
 import { BostonCityHallBuyerCrmService } from './boston-city-hall-buyer-crm.service';
 import { BostonCityHallEventVenueService } from './boston-city-hall-event-venue.service';
+import { BostonCityHallOperationalRolesService } from './boston-city-hall-operational-roles.service';
 import type { BchAlertListQuery } from './boston-city-hall-operational-alert.constants';
 
 @Controller('boston-city-hall')
@@ -100,6 +101,7 @@ export class BostonCityHallController {
     private readonly posCash: BostonCityHallPosCashService,
     private readonly buyerCrm: BostonCityHallBuyerCrmService,
     private readonly eventVenue: BostonCityHallEventVenueService,
+    private readonly operationalRoles: BostonCityHallOperationalRolesService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -925,6 +927,29 @@ export class BostonCityHallController {
   @Post('events/:eventId/staff-assignments/:assignmentId/cancel')
   cancelEventStaff(@Param('eventId') eventId: string, @Param('assignmentId') assignmentId: string) {
     return this.eventPlanning.cancelStaffAssignment(eventId.trim(), assignmentId);
+  }
+
+  @Get('rh/employees')
+  lookupRhEmployees(@Query('q') q?: string) {
+    return this.eventPlanning.searchEmployees(q ?? '');
+  }
+
+  @Get('operational-roles')
+  listOperationalRoles(@Query('all') all?: string) {
+    return all === 'true' ? this.operationalRoles.listAllForAdmin() : this.operationalRoles.list(true);
+  }
+
+  @Post('operational-roles')
+  createOperationalRole(@Body() body: { code: string; name: string; sortOrder?: number; active?: boolean }) {
+    return this.operationalRoles.create(body);
+  }
+
+  @Patch('operational-roles/:roleId')
+  patchOperationalRole(
+    @Param('roleId') roleId: string,
+    @Body() body: Partial<{ name: string; sortOrder: number; active: boolean }>,
+  ) {
+    return this.operationalRoles.update(roleId.trim(), body);
   }
 
   @Get('events/:eventId/staff-lookups/employees')

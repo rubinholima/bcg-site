@@ -2,6 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma, type BchEventStaffAssignment } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BostonCityHallBarService } from './boston-city-hall-bar.service';
+import { BostonCityHallOperationalRolesService } from './boston-city-hall-operational-roles.service';
+import {
+  computeStaffActualCost,
+  computeStaffPlannedCost,
+  decOrNull,
+} from './boston-city-hall-staff-cost.util';
 
 const SCHEDULE_PRESETS = [
   'setup',
@@ -18,7 +24,27 @@ export class BostonCityHallEventPlanningService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly bar: BostonCityHallBarService,
+    private readonly operationalRoles: BostonCityHallOperationalRolesService,
   ) {}
+
+  private assertPersonSource(body: {
+    employeeId?: string | null;
+    userId?: string | null;
+    contractorName?: string | null;
+    supplierId?: string | null;
+  }) {
+    const n = [
+      body.employeeId?.trim(),
+      body.userId?.trim(),
+      body.contractorName?.trim(),
+      body.supplierId?.trim(),
+    ].filter(Boolean).length;
+    if (n !== 1) {
+      throw new BadRequestException(
+        'Selecione exatamente uma origem: colaborador RH, contratado avulso ou fornecedor.',
+      );
+    }
+  }
 
   private async tenantId(): Promise<string> {
     return this.bar.resolveBchTenantId();
@@ -212,6 +238,7 @@ export class BostonCityHallEventPlanningService {
       include: {
         employee: { select: { id: true, name: true, code: true } },
         supplier: { select: { id: true, name: true } },
+        operationalRole: { select: { id: true, code: true, name: true } },
         supervisor: { select: { id: true, roleLabel: true, contractorName: true, employee: { select: { name: true } } } },
         shifts: {
           where: { status: { not: 'cancelled' } },
@@ -229,23 +256,35 @@ export class BostonCityHallEventPlanningService {
       userId?: string | null;
       contractorName?: string | null;
       supplierId?: string | null;
+      operationalRoleId?: string | null;
       roleLabel: string;
       areaLabel?: string | null;
       responsibility?: string | null;
       supervisorId?: string | null;
       notes?: string | null;
+      initialShift?: {
+        rateType?: string | null;
+        rateAmount?: number | string | null;
+        rateCurrency?: string | null;
+        plannedQuantity?: number | string | null;
+        plannedStartAt?: string | null;
+        plannedEndAt?: string | null;
+        paymentStatus?: string | null;
+      } | null;
     },
   ) {
     const tenantId = await this.tenantId();
     await this.assertEvent(tenantId, eventId);
-    if (!body.roleLabel?.trim()) throw new BadRequestException('Função é obrigatória.');
-    const hasPerson =
-      body.employeeId?.trim() ||
-      body.userId?.trim() ||
-      body.contractorName?.trim() ||
-      body.supplierId?.trim();
-    if (!hasPerson) throw new BadRequestException('Selecione ou informe a pessoa.');
-    return this.prisma.bchEventTeamMember.create({
+    if (!body.roleLabel?.trim() && !body.operationalRoleId?.trim()) {
+      throw new BadRequestException('Função operacional é obrigatória.');
+    }
+    this.assertPersonSource(body);
+    const roleLabel = await this.operationalRoles.resolveRoleLabel(
+      tenantId,
+      body.operationalRoleId,
+      body.roleLabel || 'Função',
+    );
+    const member = await this.prisma.bchEventTeamMember.create({
       data: {
         tenantId,
         eventId: eventId.trim(),
@@ -253,12 +292,35 @@ export class BostonCityHallEventPlanningService {
         userId: body.userId?.trim() || null,
         contractorName: body.contractorName?.trim() || null,
         supplierId: body.supplierId?.trim() || null,
-        roleLabel: body.roleLabel.trim(),
+        operationalRoleId: body.operationalRoleId?.trim() || null,
+        roleLabel,
         areaLabel: body.areaLabel?.trim() || null,
         responsibility: body.responsibility?.trim() || null,
         supervisorId: body.supervisorId?.trim() || null,
         notes: body.notes?.trim() || null,
         status: 'active',
+      },
+    });
+    if (body.initialShift?.rateAmount != null && body.initialShift.rateAmount !== '') {
+      await this.createStaffShift(eventId, member.id, {
+        operationalRoleId: body.operationalRoleId,
+        rateType: body.initialShift.rateType,
+        rateAmount: body.initialShift.rateAmount,
+        rateCurrency: body.initialShift.rateCurrency,
+        plannedQuantity: body.initialShift.plannedQuantity,
+        plannedStartAt: body.initialShift.plannedStartAt,
+        plannedEndAt: body.initialShift.plannedEndAt,
+        paymentStatus: body.initialShift.paymentStatus ?? 'planned',
+      });
+    }
+    return this.prisma.bchEventTeamMember.findFirst({
+      where: { id: member.id },
+      include: {
+        employee: { select: { id: true, name: true, code: true } },
+        supplier: { select: { id: true, name: true } },
+        operationalRole: { select: { id: true, code: true, name: true } },
+        supervisor: { select: { id: true, roleLabel: true, contractorName: true, employee: { select: { name: true } } } },
+        shifts: { where: { status: { not: 'cancelled' } }, orderBy: [{ plannedStartAt: 'asc' }] },
       },
     });
   }
@@ -268,6 +330,7 @@ export class BostonCityHallEventPlanningService {
     memberId: string,
     body: Partial<{
       roleLabel: string;
+      operationalRoleId: string | null;
       areaLabel: string | null;
       responsibility: string | null;
       supervisorId: string | null;
@@ -281,10 +344,21 @@ export class BostonCityHallEventPlanningService {
       where: { id: memberId, tenantId, eventId: eventId.trim() },
     });
     if (!row) throw new NotFoundException('Membro não encontrado.');
+    let roleLabel = body.roleLabel;
+    if (body.operationalRoleId !== undefined || body.roleLabel !== undefined) {
+      roleLabel = await this.operationalRoles.resolveRoleLabel(
+        tenantId,
+        body.operationalRoleId !== undefined ? body.operationalRoleId : row.operationalRoleId,
+        body.roleLabel ?? row.roleLabel,
+      );
+    }
     return this.prisma.bchEventTeamMember.update({
       where: { id: memberId },
       data: {
-        ...(body.roleLabel !== undefined ? { roleLabel: body.roleLabel.trim() } : {}),
+        ...(body.operationalRoleId !== undefined
+          ? { operationalRoleId: body.operationalRoleId?.trim() || null }
+          : {}),
+        ...(roleLabel !== undefined ? { roleLabel } : {}),
         ...(body.areaLabel !== undefined ? { areaLabel: body.areaLabel?.trim() || null } : {}),
         ...(body.responsibility !== undefined ? { responsibility: body.responsibility?.trim() || null } : {}),
         ...(body.supervisorId !== undefined ? { supervisorId: body.supervisorId?.trim() || null } : {}),
@@ -300,6 +374,7 @@ export class BostonCityHallEventPlanningService {
     body: Omit<Parameters<BostonCityHallEventPlanningService['createStaff']>[1], 'employeeId' | 'userId' | 'contractorName' | 'supplierId' | 'roleLabel' | 'responsibility' | 'locationLabel'> & {
       roleLabel?: string;
       locationLabel?: string | null;
+      operationalRoleId?: string | null;
     },
   ) {
     const tenantId = await this.tenantId();
@@ -313,6 +388,7 @@ export class BostonCityHallEventPlanningService {
       userId: member.userId,
       contractorName: member.contractorName,
       supplierId: member.supplierId,
+      operationalRoleId: body.operationalRoleId?.trim() || member.operationalRoleId,
       roleLabel: body.roleLabel?.trim() || member.roleLabel,
       responsibility: member.responsibility,
       locationLabel: body.locationLabel?.trim() || member.areaLabel,
@@ -321,7 +397,11 @@ export class BostonCityHallEventPlanningService {
       rateType: body.rateType,
       rateAmount: body.rateAmount,
       rateCurrency: body.rateCurrency,
+      plannedQuantity: body.plannedQuantity,
+      actualQuantity: body.actualQuantity,
       plannedCost: body.plannedCost,
+      actualCost: body.actualCost,
+      paymentStatus: body.paymentStatus,
       notes: body.notes,
     });
   }
@@ -423,22 +503,63 @@ export class BostonCityHallEventPlanningService {
       userId?: string | null;
       contractorName?: string | null;
       supplierId?: string | null;
+      operationalRoleId?: string | null;
       roleLabel: string;
       responsibility?: string | null;
       locationLabel?: string | null;
       plannedStartAt?: string | null;
       plannedEndAt?: string | null;
+      actualStartAt?: string | null;
+      actualEndAt?: string | null;
       rateType?: string | null;
       rateAmount?: number | string | null;
       rateCurrency?: string | null;
+      plannedQuantity?: number | string | null;
+      actualQuantity?: number | string | null;
       plannedCost?: number | string | null;
+      actualCost?: number | string | null;
+      paymentStatus?: string | null;
       notes?: string | null;
     },
   ) {
     const tenantId = await this.tenantId();
     await this.assertEvent(tenantId, eventId);
-    const dec = (v: number | string | null | undefined) =>
-      v == null || v === '' ? null : new Prisma.Decimal(String(v));
+    const plannedStartAt = body.plannedStartAt ? new Date(body.plannedStartAt) : null;
+    const plannedEndAt = body.plannedEndAt ? new Date(body.plannedEndAt) : null;
+    const actualStartAt = body.actualStartAt ? new Date(body.actualStartAt) : null;
+    const actualEndAt = body.actualEndAt ? new Date(body.actualEndAt) : null;
+    const rateType = body.rateType?.trim() || null;
+    const rateAmount = decOrNull(body.rateAmount);
+    const plannedQuantity = decOrNull(body.plannedQuantity);
+    const actualQuantity = decOrNull(body.actualQuantity);
+    let plannedCost = decOrNull(body.plannedCost);
+    if (plannedCost == null && rateAmount) {
+      plannedCost = computeStaffPlannedCost({
+        rateType,
+        rateAmount,
+        plannedQuantity,
+        plannedStartAt,
+        plannedEndAt,
+      });
+    }
+    let actualCost = decOrNull(body.actualCost);
+    if (actualCost == null && rateAmount && (actualStartAt || actualEndAt || actualQuantity)) {
+      actualCost = computeStaffActualCost({
+        rateType,
+        rateAmount,
+        plannedQuantity,
+        actualQuantity,
+        plannedStartAt,
+        plannedEndAt,
+        actualStartAt,
+        actualEndAt,
+      });
+    }
+    const roleLabel = await this.operationalRoles.resolveRoleLabel(
+      tenantId,
+      body.operationalRoleId,
+      body.roleLabel,
+    );
     return this.prisma.bchEventStaffAssignment.create({
       data: {
         tenantId,
@@ -448,15 +569,22 @@ export class BostonCityHallEventPlanningService {
         userId: body.userId?.trim() || null,
         contractorName: body.contractorName?.trim() || null,
         supplierId: body.supplierId?.trim() || null,
-        roleLabel: body.roleLabel.trim(),
+        operationalRoleId: body.operationalRoleId?.trim() || null,
+        roleLabel,
         responsibility: body.responsibility?.trim() || null,
         locationLabel: body.locationLabel?.trim() || null,
-        plannedStartAt: body.plannedStartAt ? new Date(body.plannedStartAt) : null,
-        plannedEndAt: body.plannedEndAt ? new Date(body.plannedEndAt) : null,
-        rateType: body.rateType?.trim() || null,
-        rateAmount: dec(body.rateAmount),
-        rateCurrency: body.rateCurrency?.trim() || null,
-        plannedCost: dec(body.plannedCost),
+        plannedStartAt,
+        plannedEndAt,
+        actualStartAt,
+        actualEndAt,
+        rateType,
+        rateAmount,
+        rateCurrency: body.rateCurrency?.trim()?.toUpperCase() || null,
+        plannedQuantity,
+        actualQuantity,
+        plannedCost,
+        actualCost,
+        paymentStatus: body.paymentStatus?.trim() || 'planned',
         status: 'planned',
         notes: body.notes?.trim() || null,
       },
@@ -476,36 +604,11 @@ export class BostonCityHallEventPlanningService {
     });
   }
 
-  private dec(v: number | string | null | undefined) {
-    return v == null || v === '' ? null : new Prisma.Decimal(String(v));
-  }
-
-  private computeCostFromRate(input: {
-    rateType?: string | null;
-    rateAmount?: Prisma.Decimal | null;
-    plannedStartAt?: Date | null;
-    plannedEndAt?: Date | null;
-    actualStartAt?: Date | null;
-    actualEndAt?: Date | null;
-    useActual?: boolean;
-  }): Prisma.Decimal | null {
-    const rate = input.rateAmount;
-    if (!rate) return null;
-    const start = input.useActual ? input.actualStartAt ?? input.plannedStartAt : input.plannedStartAt;
-    const end = input.useActual ? input.actualEndAt ?? input.plannedEndAt : input.plannedEndAt;
-    if (input.rateType === 'hourly' && start && end && end > start) {
-      const hours = (end.getTime() - start.getTime()) / 3600000;
-      return rate.mul(hours);
-    }
-    if (input.rateType === 'fixed' || !input.rateType) return rate;
-    return rate;
-  }
-
   async searchEmployees(q: string, limit = 15) {
     const tenantId = await this.tenantId();
     const term = q.trim();
     if (term.length < 1) return [];
-    return this.prisma.employee.findMany({
+    const rows = await this.prisma.employee.findMany({
       where: {
         tenantId,
         OR: [
@@ -514,10 +617,30 @@ export class BostonCityHallEventPlanningService {
           { email: { contains: term, mode: 'insensitive' } },
         ],
       },
-      select: { id: true, name: true, code: true },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        employments: {
+          where: { status: 'ativo' },
+          orderBy: { startDate: 'desc' },
+          take: 1,
+          select: {
+            jobRole: { select: { name: true } },
+            department: { select: { name: true } },
+          },
+        },
+      },
       take: Math.min(limit, 30),
       orderBy: { name: 'asc' },
     });
+    return rows.map((e) => ({
+      id: e.id,
+      name: e.name,
+      code: e.code,
+      jobRoleName: e.employments[0]?.jobRole?.name ?? null,
+      departmentName: e.employments[0]?.department?.name ?? null,
+    }));
   }
 
   async searchSuppliers(q: string, limit = 15) {
@@ -549,11 +672,15 @@ export class BostonCityHallEventPlanningService {
       plannedEndAt: string | null;
       actualStartAt: string | null;
       actualEndAt: string | null;
+      operationalRoleId: string | null;
       rateType: string | null;
       rateAmount: number | string | null;
       rateCurrency: string | null;
+      plannedQuantity: number | string | null;
+      actualQuantity: number | string | null;
       plannedCost: number | string | null;
       actualCost: number | string | null;
+      paymentStatus: string | null;
       status: string;
       notes: string | null;
     }>,
@@ -590,27 +717,41 @@ export class BostonCityHallEventPlanningService {
           : null
         : row.actualEndAt;
     const rateType = body.rateType !== undefined ? body.rateType?.trim() || null : row.rateType;
-    const rateAmount = body.rateAmount !== undefined ? this.dec(body.rateAmount) : row.rateAmount;
-    let plannedCost = body.plannedCost !== undefined ? this.dec(body.plannedCost) : row.plannedCost;
+    const rateAmount = body.rateAmount !== undefined ? decOrNull(body.rateAmount) : row.rateAmount;
+    const plannedQuantity =
+      body.plannedQuantity !== undefined ? decOrNull(body.plannedQuantity) : row.plannedQuantity;
+    const actualQuantity =
+      body.actualQuantity !== undefined ? decOrNull(body.actualQuantity) : row.actualQuantity;
+    let plannedCost = body.plannedCost !== undefined ? decOrNull(body.plannedCost) : row.plannedCost;
     if (plannedCost == null && rateAmount) {
-      plannedCost = this.computeCostFromRate({
+      plannedCost = computeStaffPlannedCost({
         rateType,
         rateAmount,
+        plannedQuantity,
         plannedStartAt,
         plannedEndAt,
       });
     }
-    let actualCost = body.actualCost !== undefined ? this.dec(body.actualCost) : row.actualCost;
-    if (actualCost == null && rateAmount && (actualStartAt || actualEndAt)) {
-      actualCost = this.computeCostFromRate({
+    let actualCost = body.actualCost !== undefined ? decOrNull(body.actualCost) : row.actualCost;
+    if (actualCost == null && rateAmount && (actualStartAt || actualEndAt || actualQuantity)) {
+      actualCost = computeStaffActualCost({
         rateType,
         rateAmount,
+        plannedQuantity,
+        actualQuantity,
         plannedStartAt,
         plannedEndAt,
         actualStartAt,
         actualEndAt,
-        useActual: true,
       });
+    }
+    let roleLabel = body.roleLabel;
+    if (body.operationalRoleId !== undefined || body.roleLabel !== undefined) {
+      roleLabel = await this.operationalRoles.resolveRoleLabel(
+        tenantId,
+        body.operationalRoleId !== undefined ? body.operationalRoleId : row.operationalRoleId,
+        body.roleLabel ?? row.roleLabel,
+      );
     }
     return this.prisma.bchEventStaffAssignment.update({
       where: { id: assignmentId },
@@ -618,7 +759,10 @@ export class BostonCityHallEventPlanningService {
         ...(body.employeeId !== undefined ? { employeeId: body.employeeId?.trim() || null } : {}),
         ...(body.contractorName !== undefined ? { contractorName: body.contractorName?.trim() || null } : {}),
         ...(body.supplierId !== undefined ? { supplierId: body.supplierId?.trim() || null } : {}),
-        ...(body.roleLabel !== undefined ? { roleLabel: body.roleLabel.trim() } : {}),
+        ...(body.operationalRoleId !== undefined
+          ? { operationalRoleId: body.operationalRoleId?.trim() || null }
+          : {}),
+        ...(roleLabel !== undefined ? { roleLabel } : {}),
         ...(body.responsibility !== undefined ? { responsibility: body.responsibility?.trim() || null } : {}),
         ...(body.locationLabel !== undefined ? { locationLabel: body.locationLabel?.trim() || null } : {}),
         ...(body.plannedStartAt !== undefined ? { plannedStartAt } : {}),
@@ -627,9 +771,12 @@ export class BostonCityHallEventPlanningService {
         ...(body.actualEndAt !== undefined ? { actualEndAt } : {}),
         ...(body.rateType !== undefined ? { rateType } : {}),
         ...(body.rateAmount !== undefined ? { rateAmount } : {}),
-        ...(body.rateCurrency !== undefined ? { rateCurrency: body.rateCurrency?.trim() || null } : {}),
+        ...(body.rateCurrency !== undefined ? { rateCurrency: body.rateCurrency?.trim()?.toUpperCase() || null } : {}),
+        ...(body.plannedQuantity !== undefined ? { plannedQuantity } : {}),
+        ...(body.actualQuantity !== undefined ? { actualQuantity } : {}),
         ...(body.plannedCost !== undefined || plannedCost !== row.plannedCost ? { plannedCost } : {}),
         ...(body.actualCost !== undefined || actualCost !== row.actualCost ? { actualCost } : {}),
+        ...(body.paymentStatus !== undefined ? { paymentStatus: body.paymentStatus?.trim() || null } : {}),
         ...(body.status !== undefined ? { status: body.status.trim() } : {}),
         ...(body.notes !== undefined ? { notes: body.notes?.trim() || null } : {}),
       },

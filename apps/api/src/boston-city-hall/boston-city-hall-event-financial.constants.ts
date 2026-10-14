@@ -95,6 +95,15 @@ export type BchEventFinancialResultDto = {
     barCogs: string | null;
     otherKnownOperationalCost: string | null;
     totalKnownOperationalCost: string | null;
+    labor?: {
+      byCurrency: {
+        currency: string;
+        planned: string;
+        incurred: string;
+        paid: string;
+        outstanding: string;
+      }[];
+    };
   };
 
   result: {

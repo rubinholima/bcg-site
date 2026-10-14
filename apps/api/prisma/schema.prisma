@@ -291,6 +291,25 @@ model Tenant {
   bchEventTeamMembers          BchEventTeamMember[]
   bchEventOperationalTasks     BchEventOperationalTask[]
   bchTicketBuyerProfiles       BchTicketBuyerProfile[]
+  bchOperationalRoles          BchOperationalRole[]
+}
+
+/// Catálogo tenant-scoped de funções operacionais de evento (BCH).
+model BchOperationalRole {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code      String
+  name      String
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  teamMembers       BchEventTeamMember[]
+  staffAssignments  BchEventStaffAssignment[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, active])
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -1063,6 +1082,8 @@ model BchEventTeamMember {
   contractorName   String?
   supplierId       String?
   supplier         Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  operationalRoleId String?
+  operationalRole   BchOperationalRole? @relation(fields: [operationalRoleId], references: [id], onDelete: SetNull)
   roleLabel        String
   areaLabel        String?
   responsibility   String?   @db.Text
@@ -1079,6 +1100,7 @@ model BchEventTeamMember {
 
   @@index([tenantId, eventId, status])
   @@index([employeeId])
+  @@index([operationalRoleId])
 }
 
 /// Cronograma operacional do evento (montagem, portas, show, desmontagem).
@@ -1122,6 +1144,8 @@ model BchEventStaffAssignment {
   contractorName   String?
   supplierId       String?
   supplier         Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  operationalRoleId String?
+  operationalRole   BchOperationalRole? @relation(fields: [operationalRoleId], references: [id], onDelete: SetNull)
   roleLabel        String
   responsibility   String?
   locationLabel    String?
@@ -1133,8 +1157,11 @@ model BchEventStaffAssignment {
   rateType         String?
   rateAmount       Decimal?  @db.Decimal(14, 4)
   rateCurrency     String?
+  plannedQuantity  Decimal?  @db.Decimal(14, 4)
+  actualQuantity   Decimal?  @db.Decimal(14, 4)
   plannedCost      Decimal?  @db.Decimal(14, 4)
   actualCost       Decimal?  @db.Decimal(14, 4)
+  paymentStatus    String?
   status           String    @default("planned")
   notes            String?   @db.Text
   createdAt        DateTime  @default(now())
@@ -1144,6 +1171,7 @@ model BchEventStaffAssignment {
   @@index([tenantId, eventId, plannedStartAt])
   @@index([employeeId])
   @@index([teamMemberId])
+  @@index([operationalRoleId])
 }
 
 /// Checklist / tarefa operacional do evento.

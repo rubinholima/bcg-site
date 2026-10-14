@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, X } from "lucide-react";
+import { computePlannedCostPreview, formatMoneyPreview } from "@/components/dashboard/boston-city-hall/bch-staff-cost";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,15 +51,25 @@ type ShiftRow = {
   plannedEndAt: string | null;
   actualStartAt: string | null;
   actualEndAt: string | null;
+  rateType: string | null;
   rateAmount: string | null;
+  rateCurrency: string | null;
+  plannedQuantity: string | null;
+  actualQuantity: string | null;
   plannedCost: string | null;
   actualCost: string | null;
+  paymentStatus: string | null;
   status: string;
 };
+
+type OperationalRoleOption = { id: string; code: string; name: string };
+
+type EmpLookup = Lookup & { jobRoleName?: string | null; departmentName?: string | null };
 
 type TeamMemberRow = {
   id: string;
   roleLabel: string;
+  operationalRole?: OperationalRoleOption | null;
   areaLabel: string | null;
   responsibility: string | null;
   contractorName: string | null;
@@ -146,12 +159,16 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
   const [editService, setEditService] = useState<ServiceRow | null>(null);
   const [cancelShiftId, setCancelShiftId] = useState<string | null>(null);
   const [empQuery, setEmpQuery] = useState("");
-  const [empHits, setEmpHits] = useState<Lookup[]>([]);
+  const [empHits, setEmpHits] = useState<EmpLookup[]>([]);
+  const [operationalRoles, setOperationalRoles] = useState<OperationalRoleOption[]>([]);
+  const [roleFilter, setRoleFilter] = useState("");
   const [supQuery, setSupQuery] = useState("");
   const [supHits, setSupHits] = useState<Lookup[]>([]);
   const [catQuery, setCatQuery] = useState("");
   const [catHits, setCatHits] = useState<Lookup[]>([]);
   const [memberForm, setMemberForm] = useState({
+    sourceType: "employee" as "employee" | "freelancer" | "supplier",
+    operationalRoleId: "",
     roleLabel: "",
     employeeId: "",
     contractorName: "",
@@ -159,16 +176,25 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
     areaLabel: "",
     responsibility: "",
     supervisorId: "",
+    rateType: "daily",
+    rateCurrency: "USD",
+    rateAmount: "",
+    plannedQuantity: "1",
+    paymentStatus: "planned",
   });
   const [shiftForm, setShiftForm] = useState({
     plannedStartAt: "",
     plannedEndAt: "",
     actualStartAt: "",
     actualEndAt: "",
-    rateType: "fixed",
+    rateType: "daily",
+    rateCurrency: "USD",
     rateAmount: "",
+    plannedQuantity: "",
+    actualQuantity: "",
     plannedCost: "",
     actualCost: "",
+    paymentStatus: "planned",
     status: "planned",
   });
   const [serviceForm, setServiceForm] = useState({
@@ -215,17 +241,40 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
   }, [reload]);
 
   useEffect(() => {
-    if (empQuery.trim().length < 2) {
+    void api
+      .get<OperationalRoleOption[]>("/boston-city-hall/operational-roles")
+      .then((r) => setOperationalRoles(Array.isArray(r.data) ? r.data : []))
+      .catch(() => setOperationalRoles([]));
+  }, []);
+
+  useEffect(() => {
+    if (empQuery.trim().length < 1) {
       setEmpHits([]);
       return;
     }
     const t = window.setTimeout(() => {
       void api
-        .get<Lookup[]>(`${base}/staff-lookups/employees?q=${encodeURIComponent(empQuery.trim())}`)
+        .get<EmpLookup[]>(`/boston-city-hall/rh/employees?q=${encodeURIComponent(empQuery.trim())}`)
         .then((r) => setEmpHits(Array.isArray(r.data) ? r.data : []));
     }, 250);
     return () => window.clearTimeout(t);
-  }, [base, empQuery]);
+  }, [empQuery]);
+
+  const filteredRoles = useMemo(() => {
+    const q = roleFilter.trim().toLowerCase();
+    if (!q) return operationalRoles;
+    return operationalRoles.filter((r) => r.name.toLowerCase().includes(q) || r.code.includes(q));
+  }, [operationalRoles, roleFilter]);
+
+  const memberPlannedPreview = useMemo(
+    () =>
+      computePlannedCostPreview({
+        rateType: memberForm.rateType,
+        rateAmount: memberForm.rateAmount,
+        plannedQuantity: memberForm.plannedQuantity,
+      }),
+    [memberForm.plannedQuantity, memberForm.rateAmount, memberForm.rateType],
+  );
 
   useEffect(() => {
     if (supQuery.trim().length < 2) {
@@ -256,6 +305,8 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
   const openNewMember = () => {
     setEditMember(null);
     setMemberForm({
+      sourceType: "employee",
+      operationalRoleId: "",
       roleLabel: "",
       employeeId: "",
       contractorName: "",
@@ -263,14 +314,22 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       areaLabel: "",
       responsibility: "",
       supervisorId: "",
+      rateType: "daily",
+      rateCurrency: "USD",
+      rateAmount: "",
+      plannedQuantity: "1",
+      paymentStatus: "planned",
     });
     setEmpQuery("");
+    setRoleFilter("");
     setMemberDialog(true);
   };
 
   const openEditMember = (m: TeamMemberRow) => {
     setEditMember(m);
     setMemberForm({
+      sourceType: m.employee ? "employee" : m.contractorName ? "freelancer" : "supplier",
+      operationalRoleId: m.operationalRole?.id ?? "",
       roleLabel: m.roleLabel,
       employeeId: m.employee?.id ?? "",
       contractorName: m.contractorName ?? "",
@@ -278,30 +337,52 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       areaLabel: m.areaLabel ?? "",
       responsibility: m.responsibility ?? "",
       supervisorId: m.supervisor?.id ?? "",
+      rateType: "daily",
+      rateCurrency: "USD",
+      rateAmount: "",
+      plannedQuantity: "1",
+      paymentStatus: "planned",
     });
     setMemberDialog(true);
   };
 
   const saveMember = async () => {
-    if (!memberForm.roleLabel.trim()) return;
+    const role = operationalRoles.find((r) => r.id === memberForm.operationalRoleId);
+    const roleLabel = role?.name ?? memberForm.roleLabel.trim();
+    if (!roleLabel && !memberForm.operationalRoleId) return;
     try {
       if (editMember) {
         await api.patch(`${base}/team-members/${editMember.id}`, {
-          roleLabel: memberForm.roleLabel.trim(),
+          operationalRoleId: memberForm.operationalRoleId || null,
+          roleLabel,
           areaLabel: memberForm.areaLabel.trim() || null,
           responsibility: memberForm.responsibility.trim() || null,
           supervisorId: memberForm.supervisorId || null,
         });
       } else {
-        await api.post(`${base}/team-members`, {
-          roleLabel: memberForm.roleLabel.trim(),
-          employeeId: memberForm.employeeId || null,
-          contractorName: memberForm.contractorName.trim() || null,
-          supplierId: memberForm.supplierId || null,
+        const payload: Record<string, unknown> = {
+          operationalRoleId: memberForm.operationalRoleId || null,
+          roleLabel,
           areaLabel: memberForm.areaLabel.trim() || null,
           responsibility: memberForm.responsibility.trim() || null,
           supervisorId: memberForm.supervisorId || null,
-        });
+          employeeId: null,
+          contractorName: null,
+          supplierId: null,
+        };
+        if (memberForm.sourceType === "employee") payload.employeeId = memberForm.employeeId || null;
+        if (memberForm.sourceType === "freelancer") payload.contractorName = memberForm.contractorName.trim() || null;
+        if (memberForm.sourceType === "supplier") payload.supplierId = memberForm.supplierId || null;
+        if (memberForm.rateAmount.trim()) {
+          payload.initialShift = {
+            rateType: memberForm.rateType,
+            rateCurrency: memberForm.rateCurrency,
+            rateAmount: memberForm.rateAmount,
+            plannedQuantity: memberForm.plannedQuantity || null,
+            paymentStatus: memberForm.paymentStatus,
+          };
+        }
+        await api.post(`${base}/team-members`, payload);
       }
       setMemberDialog(false);
       await reload();
@@ -318,10 +399,14 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       plannedEndAt: "",
       actualStartAt: "",
       actualEndAt: "",
-      rateType: "fixed",
+      rateType: "daily",
+      rateCurrency: "USD",
       rateAmount: "",
+      plannedQuantity: "1",
+      actualQuantity: "",
       plannedCost: "",
       actualCost: "",
+      paymentStatus: "planned",
       status: "planned",
     });
     setShiftDialog(true);
@@ -335,10 +420,14 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       plannedEndAt: isoToLocal(shift.plannedEndAt),
       actualStartAt: isoToLocal(shift.actualStartAt),
       actualEndAt: isoToLocal(shift.actualEndAt),
-      rateType: "fixed",
+      rateType: shift.rateType ?? "daily",
+      rateCurrency: shift.rateCurrency ?? "USD",
       rateAmount: shift.rateAmount ?? "",
+      plannedQuantity: shift.plannedQuantity ?? "",
+      actualQuantity: shift.actualQuantity ?? "",
       plannedCost: shift.plannedCost ?? "",
       actualCost: shift.actualCost ?? "",
+      paymentStatus: shift.paymentStatus ?? "planned",
       status: shift.status,
     });
     setShiftDialog(true);
@@ -352,9 +441,13 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       actualStartAt: localToIso(shiftForm.actualStartAt),
       actualEndAt: localToIso(shiftForm.actualEndAt),
       rateType: shiftForm.rateType,
+      rateCurrency: shiftForm.rateCurrency,
       rateAmount: shiftForm.rateAmount || null,
+      plannedQuantity: shiftForm.plannedQuantity || null,
+      actualQuantity: shiftForm.actualQuantity || null,
       plannedCost: shiftForm.plannedCost || null,
       actualCost: shiftForm.actualCost || null,
+      paymentStatus: shiftForm.paymentStatus,
       status: shiftForm.status,
     };
     try {
@@ -429,6 +522,9 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-100">Equipe do evento</h3>
           <div className="flex flex-wrap gap-2">
+            <Button asChild type="button" size="sm" variant="outline" className={cn("min-h-[36px]", BCH_BTN_SECONDARY)}>
+              <Link href={`${BCH_BASE}/config/funcoes-operacionais`}>Funções operacionais</Link>
+            </Button>
             <Button type="button" size="sm" className="min-h-[36px]" onClick={openNewMember}>
               <Plus className="mr-1 h-4 w-4" />
               Adicionar pessoa à equipe
@@ -606,76 +702,202 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       </section>
 
       <Dialog open={memberDialog} onOpenChange={setMemberDialog}>
-        <DialogContent className={BCH_DIALOG_CONTENT}>
+        <DialogContent className={cn(BCH_DIALOG_CONTENT, "max-w-[min(100vw-2rem,44rem)]")}>
           <DialogHeader>
             <DialogTitle>{editMember ? "Editar membro" : "Adicionar pessoa à equipe"}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid max-h-[min(60dvh,520px)] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
             <div className="space-y-1 sm:col-span-2">
               <Label>Função operacional *</Label>
               <Input
-                value={memberForm.roleLabel}
-                onChange={(e) => setMemberForm({ ...memberForm, roleLabel: e.target.value })}
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
                 className="text-foreground"
-                placeholder="Ex.: Bartender, Segurança, Produção"
+                placeholder="Buscar função…"
               />
+              <NativeSelect
+                className="mt-1 min-h-[44px] w-full"
+                value={memberForm.operationalRoleId}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  const name = operationalRoles.find((r) => r.id === id)?.name ?? "";
+                  setMemberForm({ ...memberForm, operationalRoleId: id, roleLabel: name });
+                }}
+              >
+                <option value="">Selecione a função…</option>
+                {filteredRoles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </NativeSelect>
             </div>
             {!editMember ? (
               <>
                 <div className="space-y-1 sm:col-span-2">
-                  <Label>Buscar colaborador (RH)</Label>
-                  <Input value={empQuery} onChange={(e) => setEmpQuery(e.target.value)} className="text-foreground" placeholder="Nome ou matrícula" />
-                  {empHits.length > 0 ? (
-                    <ul className="max-h-32 overflow-y-auto rounded border border-slate-700 text-sm">
-                      {empHits.map((h) => (
-                        <li key={h.id}>
-                          <button
-                            type="button"
-                            className="block w-full px-2 py-1.5 text-left hover:bg-slate-800"
-                            onClick={() => {
-                              setMemberForm({ ...memberForm, employeeId: h.id, contractorName: "", supplierId: "" });
-                              setEmpQuery(h.name);
-                              setEmpHits([]);
-                            }}
-                          >
-                            {h.name}
-                            {h.code ? ` · ${h.code}` : ""}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
+                  <Label>Origem da pessoa *</Label>
+                  <NativeSelect
+                    className="min-h-[44px] w-full"
+                    value={memberForm.sourceType}
+                    onChange={(e) =>
+                      setMemberForm({
+                        ...memberForm,
+                        sourceType: e.target.value as "employee" | "freelancer" | "supplier",
+                        employeeId: "",
+                        contractorName: "",
+                        supplierId: "",
+                      })
+                    }
+                  >
+                    <option value="employee">Colaborador RH</option>
+                    <option value="freelancer">Contratado avulso</option>
+                    <option value="supplier">Fornecedor (pessoa)</option>
+                  </NativeSelect>
                 </div>
-                <div className="space-y-1">
-                  <Label>Contratado avulso</Label>
-                  <Input
-                    value={memberForm.contractorName}
-                    onChange={(e) => setMemberForm({ ...memberForm, contractorName: e.target.value, employeeId: "" })}
-                    className="text-foreground"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Fornecedor (pessoa)</Label>
-                  <Input value={supQuery} onChange={(e) => setSupQuery(e.target.value)} className="text-foreground" placeholder="Buscar fornecedor" />
-                  {supHits.length > 0 ? (
-                    <ul className="max-h-24 overflow-y-auto rounded border border-slate-700 text-sm">
-                      {supHits.map((h) => (
-                        <li key={h.id}>
-                          <button
-                            type="button"
-                            className="block w-full px-2 py-1.5 text-left hover:bg-slate-800"
-                            onClick={() => {
-                              setMemberForm({ ...memberForm, supplierId: h.id, employeeId: "", contractorName: "" });
-                              setSupQuery(h.name);
-                              setSupHits([]);
-                            }}
-                          >
-                            {h.name}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
+                {memberForm.sourceType === "employee" ? (
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label>Buscar colaborador (RH)</Label>
+                    <Input
+                      value={empQuery}
+                      onChange={(e) => setEmpQuery(e.target.value)}
+                      className="text-foreground"
+                      placeholder="Nome, matrícula ou e-mail"
+                    />
+                    {memberForm.employeeId ? (
+                      <p className="text-xs text-emerald-300">Colaborador selecionado (ID vinculado ao RH).</p>
+                    ) : null}
+                    {empHits.length > 0 ? (
+                      <ul className="max-h-32 overflow-y-auto rounded border border-slate-700 text-sm">
+                        {empHits.map((h) => (
+                          <li key={h.id}>
+                            <button
+                              type="button"
+                              className="block w-full px-2 py-1.5 text-left hover:bg-slate-800"
+                              onClick={() => {
+                                setMemberForm({ ...memberForm, employeeId: h.id });
+                                setEmpQuery(h.name);
+                                setEmpHits([]);
+                              }}
+                            >
+                              <span className="font-medium">{h.name}</span>
+                              {h.code ? <span className="text-slate-400"> · {h.code}</span> : null}
+                              {h.jobRoleName ? (
+                                <span className="block text-xs text-slate-500">
+                                  {h.jobRoleName}
+                                  {h.departmentName ? ` · ${h.departmentName}` : ""}
+                                </span>
+                              ) : null}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+                {memberForm.sourceType === "freelancer" ? (
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label>Nome do contratado *</Label>
+                    <Input
+                      value={memberForm.contractorName}
+                      onChange={(e) => setMemberForm({ ...memberForm, contractorName: e.target.value })}
+                      className="text-foreground"
+                    />
+                  </div>
+                ) : null}
+                {memberForm.sourceType === "supplier" ? (
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label>Fornecedor *</Label>
+                    <Input
+                      value={supQuery}
+                      onChange={(e) => setSupQuery(e.target.value)}
+                      className="text-foreground"
+                      placeholder="Buscar fornecedor"
+                    />
+                    {supHits.length > 0 ? (
+                      <ul className="max-h-24 overflow-y-auto rounded border border-slate-700 text-sm">
+                        {supHits.map((h) => (
+                          <li key={h.id}>
+                            <button
+                              type="button"
+                              className="block w-full px-2 py-1.5 text-left hover:bg-slate-800"
+                              onClick={() => {
+                                setMemberForm({ ...memberForm, supplierId: h.id });
+                                setSupQuery(h.name);
+                                setSupHits([]);
+                              }}
+                            >
+                              {h.name}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+                <div className="space-y-2 rounded-lg border border-slate-800/80 bg-slate-950/40 p-3 sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Compensação (1º turno)</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Tipo de taxa</Label>
+                      <NativeSelect
+                        value={memberForm.rateType}
+                        onChange={(e) => setMemberForm({ ...memberForm, rateType: e.target.value })}
+                      >
+                        <option value="daily">Diária</option>
+                        <option value="hourly">Por hora</option>
+                        <option value="fixed">Valor fixo</option>
+                      </NativeSelect>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Moeda</Label>
+                      <NativeSelect
+                        value={memberForm.rateCurrency}
+                        onChange={(e) => setMemberForm({ ...memberForm, rateCurrency: e.target.value })}
+                      >
+                        <option value="USD">USD</option>
+                        <option value="BRL">BRL</option>
+                      </NativeSelect>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Valor da taxa</Label>
+                      <Input
+                        value={memberForm.rateAmount}
+                        onChange={(e) => setMemberForm({ ...memberForm, rateAmount: e.target.value })}
+                        className="text-foreground"
+                        inputMode="decimal"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">
+                        {memberForm.rateType === "hourly" ? "Horas previstas" : memberForm.rateType === "daily" ? "Dias previstos" : "Quantidade"}
+                      </Label>
+                      <Input
+                        value={memberForm.plannedQuantity}
+                        onChange={(e) => setMemberForm({ ...memberForm, plannedQuantity: e.target.value })}
+                        className="text-foreground"
+                        inputMode="decimal"
+                        disabled={memberForm.rateType === "fixed"}
+                      />
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label className="text-xs">Status de pagamento</Label>
+                      <NativeSelect
+                        value={memberForm.paymentStatus}
+                        onChange={(e) => setMemberForm({ ...memberForm, paymentStatus: e.target.value })}
+                      >
+                        <option value="planned">Planejado</option>
+                        <option value="incurred">Incorrido</option>
+                        <option value="outstanding">Em aberto</option>
+                        <option value="paid">Pago</option>
+                      </NativeSelect>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-200">
+                    Custo planejado:{" "}
+                    <span className="font-semibold tabular-nums">
+                      {formatMoneyPreview(memberPlannedPreview, memberForm.rateCurrency)}
+                    </span>
+                  </p>
                 </div>
               </>
             ) : null}
@@ -705,7 +927,7 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => setMemberDialog(false)}>
               Cancelar
             </Button>
@@ -741,21 +963,46 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
             <div className="space-y-1">
               <Label>Tipo de taxa</Label>
               <NativeSelect value={shiftForm.rateType} onChange={(e) => setShiftForm({ ...shiftForm, rateType: e.target.value })}>
-                <option value="fixed">Fixo</option>
+                <option value="daily">Diária</option>
                 <option value="hourly">Por hora</option>
+                <option value="fixed">Valor fixo</option>
+              </NativeSelect>
+            </div>
+            <div className="space-y-1">
+              <Label>Moeda</Label>
+              <NativeSelect value={shiftForm.rateCurrency} onChange={(e) => setShiftForm({ ...shiftForm, rateCurrency: e.target.value })}>
+                <option value="USD">USD</option>
+                <option value="BRL">BRL</option>
               </NativeSelect>
             </div>
             <div className="space-y-1">
               <Label>Valor taxa</Label>
-              <Input value={shiftForm.rateAmount} onChange={(e) => setShiftForm({ ...shiftForm, rateAmount: e.target.value })} className="text-foreground" />
+              <Input value={shiftForm.rateAmount} onChange={(e) => setShiftForm({ ...shiftForm, rateAmount: e.target.value })} className="text-foreground" inputMode="decimal" />
+            </div>
+            <div className="space-y-1">
+              <Label>{shiftForm.rateType === "hourly" ? "Horas previstas" : shiftForm.rateType === "daily" ? "Dias previstos" : "Qtd. prevista"}</Label>
+              <Input value={shiftForm.plannedQuantity} onChange={(e) => setShiftForm({ ...shiftForm, plannedQuantity: e.target.value })} className="text-foreground" inputMode="decimal" />
+            </div>
+            <div className="space-y-1">
+              <Label>{shiftForm.rateType === "hourly" ? "Horas reais" : shiftForm.rateType === "daily" ? "Dias reais" : "Qtd. real"}</Label>
+              <Input value={shiftForm.actualQuantity} onChange={(e) => setShiftForm({ ...shiftForm, actualQuantity: e.target.value })} className="text-foreground" inputMode="decimal" />
             </div>
             <div className="space-y-1">
               <Label>Custo planejado</Label>
-              <Input value={shiftForm.plannedCost} onChange={(e) => setShiftForm({ ...shiftForm, plannedCost: e.target.value })} className="text-foreground" />
+              <Input value={shiftForm.plannedCost} onChange={(e) => setShiftForm({ ...shiftForm, plannedCost: e.target.value })} className="text-foreground" placeholder="Auto se vazio" />
             </div>
             <div className="space-y-1">
               <Label>Custo real</Label>
-              <Input value={shiftForm.actualCost} onChange={(e) => setShiftForm({ ...shiftForm, actualCost: e.target.value })} className="text-foreground" />
+              <Input value={shiftForm.actualCost} onChange={(e) => setShiftForm({ ...shiftForm, actualCost: e.target.value })} className="text-foreground" placeholder="Auto se vazio" />
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <Label>Status de pagamento</Label>
+              <NativeSelect value={shiftForm.paymentStatus} onChange={(e) => setShiftForm({ ...shiftForm, paymentStatus: e.target.value })}>
+                <option value="planned">Planejado</option>
+                <option value="incurred">Incorrido</option>
+                <option value="outstanding">Em aberto</option>
+                <option value="paid">Pago</option>
+              </NativeSelect>
             </div>
           </div>
           <DialogFooter>

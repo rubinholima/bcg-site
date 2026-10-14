@@ -11,7 +11,12 @@ import {
   buildPerCurrencyAggregates,
   consolidatedFromGroups,
   moneyDec,
+  operationalMarginPct,
 } from './boston-city-hall-event-financial.util';
+import {
+  aggregateLaborCostsByCurrency,
+  laborOperationalCostForEvent,
+} from './boston-city-hall-staff-cost.util';
 import {
   BCH_TICKETING_FINANCE_SOURCE_MODULE,
   BCH_TICKETING_FINANCE_SOURCE_TYPE,
@@ -110,7 +115,12 @@ export class BostonCityHallEventFinancialService {
       this.loadTicketingFinanceProjectionStats(tenantId, eventId),
       this.prisma.bchEventStaffAssignment.findMany({
         where: { tenantId, eventId, status: { not: 'cancelled' } },
-        select: { actualCost: true, plannedCost: true },
+        select: {
+          actualCost: true,
+          plannedCost: true,
+          rateCurrency: true,
+          paymentStatus: true,
+        },
       }),
       this.prisma.bchEventServiceCommitment.findMany({
         where: { tenantId, eventId, operationalStatus: { not: 'cancelled' } },
@@ -136,18 +146,22 @@ export class BostonCityHallEventFinancialService {
     const barMarginIncomplete = barLineCount > 0 && missingBarCostLines > 0;
     const barMargin = barRevenue.minus(barCogs);
 
-    let laborCost = new Prisma.Decimal(0);
-    for (const row of staffCosts) {
-      const c = row.actualCost != null ? row.actualCost : row.plannedCost;
-      if (c) laborCost = laborCost.plus(c);
-    }
+    const laborByCurrency = laborOperationalCostForEvent(staffCosts);
+    const laborAgg = aggregateLaborCostsByCurrency(staffCosts).map((g) => ({
+      currency: g.currency,
+      planned: moneyDec(g.planned),
+      incurred: moneyDec(g.incurred),
+      paid: moneyDec(g.paid),
+      outstanding: moneyDec(g.outstanding),
+    }));
+
     let supplierCost = new Prisma.Decimal(0);
     for (const row of serviceCosts) {
       const c =
         row.actualCost != null ? row.actualCost : row.plannedCost ?? row.contractedAmount;
       if (c) supplierCost = supplierCost.plus(c);
     }
-    const eventOpsCost = laborCost.plus(supplierCost);
+    const eventOpsCost = supplierCost;
 
     const lossTypes = [
       'breakage',
@@ -239,7 +253,7 @@ export class BostonCityHallEventFinancialService {
     const ticketCollected = ticketApplicable ? moneyDec(ticketRevenueDec) : null;
     const barCollected = barSales.length > 0 ? moneyDec(barRevenue) : barApplicable ? '0.00' : null;
 
-    const perCurrency = buildPerCurrencyAggregates({
+    let perCurrency = buildPerCurrencyAggregates({
       ticketing: {
         applicable: ticketApplicable,
         currency: ticketingLine.currency,
@@ -263,6 +277,51 @@ export class BostonCityHallEventFinancialService {
         overdue: overdueAmount,
       },
     });
+
+    if (laborByCurrency.size > 0) {
+      const currencies = perCurrency.currencies.map((g) => {
+        const labor = laborByCurrency.get(g.currency);
+        if (!labor || labor.lte(0)) return g;
+        const known = new Prisma.Decimal(g.knownOperationalCost).plus(labor);
+        const gross = new Prisma.Decimal(g.grossOperationalRevenue);
+        const result = gross.minus(known);
+        return {
+          ...g,
+          knownOperationalCost: moneyDec(known),
+          operationalResult: moneyDec(result),
+          operationalMarginPct: operationalMarginPct(moneyDec(gross), moneyDec(known)),
+        };
+      });
+      for (const [currency, labor] of laborByCurrency) {
+        if (currencies.some((c) => c.currency === currency)) continue;
+        currencies.push({
+          currency,
+          ticketingRevenue: null,
+          barRevenue: null,
+          venueRevenue: null,
+          grossOperationalRevenue: '0.00',
+          knownOperationalCost: moneyDec(labor),
+          operationalResult: moneyDec(new Prisma.Decimal(0).minus(labor)),
+          operationalMarginPct: null,
+          marginIncomplete: false,
+          collected: '0.00',
+          outstanding: '0.00',
+          overdue: null,
+        });
+      }
+      currencies.sort((a, b) => a.currency.localeCompare(b.currency));
+      const sortedCodes = currencies.map((c) => c.currency);
+      perCurrency = {
+        ...perCurrency,
+        currencies,
+        multiCurrency: sortedCodes.length > 1,
+        currencyMismatch: sortedCodes.length > 1,
+        consolidatedCurrency: sortedCodes.length === 1 ? sortedCodes[0]! : null,
+      };
+    }
+
+    let laborOpsTotal = new Prisma.Decimal(0);
+    for (const v of laborByCurrency.values()) laborOpsTotal = laborOpsTotal.plus(v);
 
     const consolidated = consolidatedFromGroups(perCurrency.currencies, perCurrency.multiCurrency);
     const marginIncomplete = consolidated.marginIncomplete;
@@ -336,16 +395,21 @@ export class BostonCityHallEventFinancialService {
       cost: {
         barCogs: barSales.length > 0 ? moneyDec(barCogs) : null,
         otherKnownOperationalCost:
-          eventOpsCost.gt(0) ? moneyDec(eventOpsCost) : staffCosts.length + serviceCosts.length > 0 ? '0.00' : null,
+          eventOpsCost.gt(0) || laborOpsTotal.gt(0)
+            ? moneyDec(eventOpsCost.plus(laborOpsTotal))
+            : staffCosts.length + serviceCosts.length > 0
+              ? '0.00'
+              : null,
         totalKnownOperationalCost:
-          consolidated.knownOperationalCost != null || eventOpsCost.gt(0)
+          consolidated.knownOperationalCost != null || eventOpsCost.gt(0) || laborOpsTotal.gt(0)
             ? moneyDec(
                 (consolidated.knownOperationalCost
                   ? new Prisma.Decimal(consolidated.knownOperationalCost)
                   : new Prisma.Decimal(0)
-                ).plus(barCogs).plus(eventOpsCost),
+                ).plus(eventOpsCost),
               )
             : null,
+        labor: laborAgg.length ? { byCurrency: laborAgg } : undefined,
       },
       result: {
         grossOperationalRevenue: consolidated.grossOperationalRevenue,
