@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BchEventSelectField } from "@/components/dashboard/boston-city-hall/BchEventSelectField";
@@ -18,7 +18,6 @@ import {
 import type {
   EventTicketCheckinRecentItem,
   EventTicketCheckinResponse,
-  EventTicketingEventListItem,
 } from "@/types/boston-city-hall";
 import { EVENT_TICKET_CHECKIN_RESULT_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
@@ -33,16 +32,35 @@ const RESULT_STYLE: Record<string, string> = {
   wrong_event: "border-violet-500/50 bg-violet-500/10 text-violet-200",
 };
 
-export function BostonCityHallTicketCheckin() {
+type CheckinStation = { id: string; name: string; location: string | null; active: boolean };
+type CheckinSession = {
+  id: string;
+  status: string;
+  station: CheckinStation;
+  acceptedCount: number;
+  duplicateCount: number;
+  rejectedCount: number;
+};
+type CheckinSummary = { issued: number; accepted: number; duplicate: number; rejected: number };
+
+export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: string } = {}) {
+  const binding = useBchHubEventBinding();
   const {
     events,
-    eventId,
+    eventId: boundEventId,
     setEventId,
     loading: loadingEvents,
     error: eventsError,
     reload: reloadEvents,
-  } = useBchHubEventBinding();
-  const [stationLabel, setStationLabel] = useState("");
+  } = binding;
+  const eventId = fixedEventId ?? boundEventId;
+
+  const [stations, setStations] = useState<CheckinStation[]>([]);
+  const [session, setSession] = useState<CheckinSession | null>(null);
+  const [summary, setSummary] = useState<CheckinSummary | null>(null);
+  const [newStationName, setNewStationName] = useState("");
+  const [newStationLocation, setNewStationLocation] = useState("");
+  const [selectedStationId, setSelectedStationId] = useState("");
   const [scanValue, setScanValue] = useState("");
   const [processing, setProcessing] = useState(false);
   const [lastResult, setLastResult] = useState<EventTicketCheckinResponse | null>(null);
@@ -54,6 +72,44 @@ export function BostonCityHallTicketCheckin() {
     window.requestAnimationFrame(() => scanRef.current?.focus());
   }, []);
 
+  const loadSummary = useCallback(async (ev: string) => {
+    if (!ev) return;
+    try {
+      const res = await api.get<CheckinSummary>(
+        `/boston-city-hall/events/${encodeURIComponent(ev)}/checkin/summary`,
+      );
+      setSummary(res.data);
+    } catch {
+      setSummary(null);
+    }
+  }, []);
+
+  const loadStations = useCallback(async (ev: string) => {
+    if (!ev) {
+      setStations([]);
+      return;
+    }
+    const res = await api.get<CheckinStation[]>(
+      `/boston-city-hall/events/${encodeURIComponent(ev)}/checkin/stations`,
+    );
+    setStations(Array.isArray(res.data) ? res.data.filter((s) => s.active) : []);
+  }, []);
+
+  const loadSession = useCallback(async (ev: string) => {
+    if (!ev) {
+      setSession(null);
+      return;
+    }
+    try {
+      const res = await api.get<CheckinSession | null>(
+        `/boston-city-hall/events/${encodeURIComponent(ev)}/checkin/sessions/active`,
+      );
+      setSession(res.data ?? null);
+    } catch {
+      setSession(null);
+    }
+  }, []);
+
   const loadRecent = useCallback(async (ev: string) => {
     if (!ev) {
       setRecent([]);
@@ -62,7 +118,7 @@ export function BostonCityHallTicketCheckin() {
     setLoadingRecent(true);
     try {
       const res = await api.get<EventTicketCheckinRecentItem[]>(
-        `/boston-city-hall/ticketing/checkins/recent?eventId=${encodeURIComponent(ev)}&limit=30`,
+        `/boston-city-hall/ticketing/checkins/recent?eventId=${encodeURIComponent(ev)}&limit=20`,
       );
       setRecent(Array.isArray(res.data) ? res.data : []);
     } finally {
@@ -71,27 +127,105 @@ export function BostonCityHallTicketCheckin() {
   }, []);
 
   useEffect(() => {
+    if (!eventId) return;
+    void loadStations(eventId);
+    void loadSession(eventId);
+    void loadSummary(eventId);
     void loadRecent(eventId);
-  }, [eventId, loadRecent]);
+  }, [eventId, loadStations, loadSession, loadSummary, loadRecent]);
+
+  useEffect(() => {
+    if (!eventId) return;
+    const id = window.setInterval(() => void loadSummary(eventId), 8000);
+    return () => window.clearInterval(id);
+  }, [eventId, loadSummary]);
+
+  useEffect(() => {
+    focusScan();
+  }, [focusScan, eventId, session?.id]);
+
+  const createStation = async () => {
+    if (!eventId || !newStationName.trim()) return;
+    await api.post(`/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/stations`, {
+      name: newStationName.trim(),
+      location: newStationLocation.trim() || null,
+    });
+    setNewStationName("");
+    setNewStationLocation("");
+    await loadStations(eventId);
+  };
+
+  const openSession = async () => {
+    if (!eventId || !selectedStationId) return;
+    const res = await api.post<CheckinSession>(
+      `/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/sessions/open`,
+      { stationId: selectedStationId },
+    );
+    setSession(res.data);
+    focusScan();
+  };
+
+  const closeSession = async () => {
+    if (!eventId || !session) return;
+    await api.post(
+      `/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/sessions/${session.id}/close`,
+      {},
+    );
+    setSession(null);
+    await loadSummary(eventId);
+  };
 
   const submitScan = async (raw: string) => {
     const input = raw.trim();
-    if (!eventId) return;
-    if (!input || processing) return;
+    if (!eventId || !input || processing) return;
 
     setProcessing(true);
     try {
-      const body: { eventId: string; credential?: string; ticketCode?: string; stationLabel?: string } =
-        {
-          eventId,
-          stationLabel: stationLabel.trim() || undefined,
-        };
-      if (/^BCH-/i.test(input)) body.ticketCode = input;
-      else body.credential = input;
-
-      const res = await api.post<EventTicketCheckinResponse>("/boston-city-hall/ticketing/checkin", body);
+      let res: { data: EventTicketCheckinResponse };
+      if (session?.id) {
+        const body: { credential?: string; ticketCode?: string } = {};
+        if (/^BCH-/i.test(input)) body.ticketCode = input;
+        else body.credential = input;
+        res = await api.post<EventTicketCheckinResponse>(
+          `/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/sessions/${session.id}/scan`,
+          body,
+        );
+      } else {
+        const body: { eventId: string; credential?: string; ticketCode?: string } = { eventId };
+        if (/^BCH-/i.test(input)) body.ticketCode = input;
+        else body.credential = input;
+        res = await api.post<EventTicketCheckinResponse>("/boston-city-hall/ticketing/checkin", body);
+      }
       setLastResult(res.data);
-      await loadRecent(eventId);
+      setRecent((prev) => [
+        {
+          id: res.data.checkinId || `local-${Date.now()}`,
+          result: res.data.result,
+          ticketCode: res.data.ticket?.ticketCode ?? null,
+          ticketTypeName: res.data.ticket?.ticketTypeName ?? null,
+          holderName: res.data.ticket?.holderName ?? null,
+          stationLabel: session?.station.name ?? null,
+          createdAt: res.data.scannedAt,
+        },
+        ...prev.slice(0, 19),
+      ]);
+      void loadSummary(eventId);
+      if (session) {
+        setSession((s) =>
+          s
+            ? {
+                ...s,
+                acceptedCount:
+                  s.acceptedCount + (res.data.result === "accepted" ? 1 : 0),
+                duplicateCount:
+                  s.duplicateCount + (res.data.result === "already_used" ? 1 : 0),
+                rejectedCount:
+                  s.rejectedCount +
+                  (["invalid", "cancelled", "wrong_event"].includes(res.data.result) ? 1 : 0),
+              }
+            : s,
+        );
+      }
     } catch {
       setLastResult({
         result: "invalid",
@@ -106,142 +240,184 @@ export function BostonCityHallTicketCheckin() {
     }
   };
 
-  useEffect(() => {
-    focusScan();
-  }, [focusScan, eventId]);
-
   return (
-    <div className="space-y-4">
-      {eventsError || (!loadingEvents && events.length === 0) ? (
+    <div className="mx-auto max-w-5xl space-y-4">
+      {!fixedEventId && (eventsError || (!loadingEvents && events.length === 0)) ? (
         <BchEventListDiagnostics
           error={eventsError}
           eventCount={events.length}
           onRetry={() => void reloadEvents()}
         />
       ) : null}
-      <Card>
-        <CardContent className="space-y-4 pt-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label>Evento</Label>
-              <BchEventSelectField events={events} value={eventId} onChange={setEventId} />
+
+      {!fixedEventId ? (
+        <div className="max-w-md">
+          <Label className="text-xs">Evento</Label>
+          <BchEventSelectField events={events} value={eventId} onChange={setEventId} />
+        </div>
+      ) : null}
+
+      {summary ? (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            { label: "Emitidos", value: summary.issued },
+            { label: "Entradas", value: summary.accepted },
+            { label: "Duplicadas", value: summary.duplicate },
+            { label: "Rejeitadas", value: summary.rejected },
+          ].map((k) => (
+            <div key={k.label} className="rounded-lg border border-slate-800/80 px-3 py-2 text-center">
+              <p className="text-xs text-slate-400">{k.label}</p>
+              <p className="text-lg font-semibold text-slate-100">{k.value}</p>
             </div>
-            <div className="space-y-1">
-              <Label>Estação / scanner</Label>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="rounded-lg border border-slate-800/80 bg-slate-950/30 p-4 space-y-3">
+        <p className="text-sm font-medium text-slate-200">Estação e sessão</p>
+        {session ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span>
+              Sessão aberta · <strong>{session.station.name}</strong>
+              {session.station.location ? ` · ${session.station.location}` : ""}
+            </span>
+            <Button type="button" size="sm" variant="outline" className="min-h-[36px]" onClick={() => void closeSession()}>
+              Encerrar sessão
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-[120px] flex-1 space-y-1">
+              <Label className="text-xs">Nova estação</Label>
               <Input
-                value={stationLabel}
-                onChange={(e) => setStationLabel(e.target.value)}
-                placeholder="Ex.: Entrada principal"
-                className="text-foreground"
+                value={newStationName}
+                onChange={(e) => setNewStationName(e.target.value)}
+                className="h-9 text-foreground"
+                placeholder="Nome"
               />
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label>Leitura QR / código</Label>
-            <Input
-              ref={scanRef}
-              value={scanValue}
-              disabled={!eventId || processing}
-              autoComplete="off"
-              spellCheck={false}
-              className="min-h-[52px] text-lg text-foreground"
-              placeholder={eventId ? "Aponte o scanner e leia…" : "Selecione um evento primeiro"}
-              onChange={(e) => setScanValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  void submitScan(scanValue);
-                }
-              }}
-            />
-          </div>
-
-          {processing ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Processando…
+            <div className="min-w-[120px] flex-1 space-y-1">
+              <Label className="text-xs">Local físico</Label>
+              <Input
+                value={newStationLocation}
+                onChange={(e) => setNewStationLocation(e.target.value)}
+                className="h-9 text-foreground"
+                placeholder="Ex.: Entrada principal"
+              />
             </div>
-          ) : null}
-
-          {lastResult ? (
-            <div
-              className={cn(
-                "rounded-lg border p-4 space-y-2",
-                RESULT_STYLE[lastResult.result] ?? RESULT_STYLE.invalid,
-              )}
+            <Button type="button" size="sm" className="min-h-[36px]" disabled={!eventId} onClick={() => void createStation()}>
+              Criar estação
+            </Button>
+          </div>
+        )}
+        {!session && stations.length > 0 ? (
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="w-48 space-y-1">
+              <Label className="text-xs">Estação</Label>
+              <select
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                value={selectedStationId}
+                onChange={(e) => setSelectedStationId(e.target.value)}
+              >
+                <option value="">Selecione…</option>
+                {stations.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                    {s.location ? ` — ${s.location}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              className="min-h-[36px]"
+              disabled={!selectedStationId}
+              onClick={() => void openSession()}
             >
-              <p className="text-lg font-bold tracking-wide">
-                {EVENT_TICKET_CHECKIN_RESULT_LABEL[lastResult.result] ?? lastResult.result}
-              </p>
-              {lastResult.ticket ? (
-                <>
-                  <p className="font-mono text-sm">{lastResult.ticket.ticketCode}</p>
-                  <p className="text-sm">
-                    {lastResult.ticket.ticketTypeName}
-                    {lastResult.ticket.lotName ? ` · ${lastResult.ticket.lotName}` : ""}
-                  </p>
-                  <p className="text-sm">{lastResult.ticket.holderName}</p>
-                  {lastResult.ticket.tableName || lastResult.ticket.seatLabel ? (
-                    <p className="text-sm">
-                      {lastResult.ticket.tableName ? `Mesa: ${lastResult.ticket.tableName}` : ""}
-                      {lastResult.ticket.seatLabel ? ` · Assento: ${lastResult.ticket.seatLabel}` : ""}
-                    </p>
-                  ) : null}
-                  {lastResult.ticket.usedAt ? (
-                    <p className="text-xs opacity-90">
-                      Utilizado em: {new Date(lastResult.ticket.usedAt).toLocaleString("pt-BR")}
-                    </p>
-                  ) : null}
-                </>
-              ) : null}
-              <p className="text-xs opacity-80">
-                {new Date(lastResult.scannedAt).toLocaleString("pt-BR")}
-              </p>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+              Abrir sessão
+            </Button>
+          </div>
+        ) : null}
+      </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <p className="mb-3 font-medium">Últimas leituras</p>
-          {loadingRecent ? (
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          ) : recent.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma leitura neste evento.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Resultado</TableHead>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Titular</TableHead>
-                    <TableHead>Horário</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recent.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="text-xs font-medium">
-                        {EVENT_TICKET_CHECKIN_RESULT_LABEL[r.result] ?? r.result}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{r.ticketCode ?? "—"}</TableCell>
-                      <TableCell className="text-sm">{r.ticketTypeName ?? "—"}</TableCell>
-                      <TableCell className="text-sm">{r.holderName ?? "—"}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(r.createdAt).toLocaleString("pt-BR")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="rounded-lg border border-slate-800/80 bg-slate-950/30 p-4 space-y-3">
+        <Label>Leitura QR / código</Label>
+        <Input
+          ref={scanRef}
+          value={scanValue}
+          disabled={!eventId || processing}
+          autoComplete="off"
+          spellCheck={false}
+          className="max-w-xl min-h-[52px] text-lg text-foreground"
+          placeholder={eventId ? "Aponte o scanner e leia…" : "Selecione um evento"}
+          onChange={(e) => setScanValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void submitScan(scanValue);
+            }
+          }}
+        />
+        {processing ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Processando…
+          </div>
+        ) : null}
+        {lastResult ? (
+          <div
+            className={cn(
+              "max-w-xl rounded-lg border p-4 space-y-2",
+              RESULT_STYLE[lastResult.result] ?? RESULT_STYLE.invalid,
+            )}
+          >
+            <p className="text-lg font-bold">
+              {EVENT_TICKET_CHECKIN_RESULT_LABEL[lastResult.result] ?? lastResult.result}
+            </p>
+            {lastResult.ticket ? (
+              <>
+                <p className="font-mono text-sm">{lastResult.ticket.ticketCode}</p>
+                <p className="text-sm">{lastResult.ticket.holderName}</p>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="rounded-lg border border-slate-800/80 p-4">
+        <p className="mb-3 text-sm font-medium">Últimas leituras</p>
+        {loadingRecent ? (
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        ) : recent.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma leitura neste evento.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Resultado</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead>Titular</TableHead>
+                <TableHead>Horário</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recent.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="text-xs">
+                    {EVENT_TICKET_CHECKIN_RESULT_LABEL[r.result] ?? r.result}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{r.ticketCode ?? "—"}</TableCell>
+                  <TableCell className="text-sm">{r.holderName ?? "—"}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                    {new Date(r.createdAt).toLocaleString("pt-BR")}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
     </div>
   );
 }

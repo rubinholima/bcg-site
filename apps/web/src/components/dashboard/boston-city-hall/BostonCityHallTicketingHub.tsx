@@ -112,8 +112,8 @@ function BostonCityHallTicketingHubInner({
       {tab === "config" ? <BostonCityHallTicketing /> : null}
       {tab === "orders" ? <BostonCityHallTicketOrders /> : null}
       {tab === "complimentary" ? <BostonCityHallTicketComplimentary /> : null}
-      {tab === "seating" ? <BostonCityHallTicketSeating /> : null}
-      {tab === "checkin" ? <BostonCityHallTicketCheckin /> : null}
+      {tab === "seating" ? <BostonCityHallTicketSeating fixedEventId={fixedEventId} /> : null}
+      {tab === "checkin" ? <BostonCityHallTicketCheckin fixedEventId={fixedEventId} /> : null}
       {tab === "reports" ? <BostonCityHallTicketReports /> : null}
       {tab === "checkout" ? <BostonCityHallTicketCheckoutDev /> : null}
     </div>

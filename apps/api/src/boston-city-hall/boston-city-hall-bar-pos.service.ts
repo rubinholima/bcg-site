@@ -256,11 +256,24 @@ export class BostonCityHallBarPosService {
       terminalLabel?: string | null;
       notes?: string | null;
       currency?: string;
+      cashSessionId?: string | null;
     },
   ): Promise<BchBarSaleDto> {
     await this.assertLocation(tenantId, input.locationId);
     const eventId = await this.assertEvent(tenantId, input.eventId);
     await this.eventInventory.assertPosSaleLocation(tenantId, input.locationId, eventId);
+    if (input.cashSessionId?.trim()) {
+      const session = await this.prisma.bchPosCashSession.findFirst({
+        where: {
+          id: input.cashSessionId.trim(),
+          tenantId,
+          status: 'open',
+          locationId: input.locationId,
+          ...(eventId ? { eventId } : {}),
+        },
+      });
+      if (!session) throw new BadRequestException('Sessão de caixa inválida ou fechada.');
+    }
     const saleNumber = await this.nextSaleNumber(tenantId);
     const currency = input.currency?.trim() || 'BRL';
     const sale = await this.prisma.bchBarSale.create({
@@ -278,6 +291,7 @@ export class BostonCityHallBarPosService {
         terminalLabel: input.terminalLabel?.trim() || null,
         notes: input.notes?.trim() || null,
         openedByUserId: userId,
+        cashSessionId: input.cashSessionId?.trim() || null,
       },
       include: {
         location: true,

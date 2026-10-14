@@ -45,12 +45,16 @@ function availabilityBadge(a: BchBarPosCatalogItem["availability"]) {
   return <span className={cn("text-xs font-medium", map[a])}>{labels[a]}</span>;
 }
 
+type PosCashSession = { id: string; status: string; openingFloat: string };
+
 export function BostonCityHallBarPos({
   fixedEventId,
   embedded,
+  tabletMode,
 }: {
   fixedEventId?: string;
   embedded?: boolean;
+  tabletMode?: boolean;
 } = {}) {
   const [locations, setLocations] = useState<BchBarInventoryLocation[]>([]);
   const [locationId, setLocationId] = useState("");
@@ -62,6 +66,8 @@ export function BostonCityHallBarPos({
   const [paymentMethod, setPaymentMethod] = useState<(typeof BCH_BAR_POS_PAYMENT_METHODS)[number]>("cash");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [cashReceived, setCashReceived] = useState("");
+  const [cashSession, setCashSession] = useState<PosCashSession | null>(null);
+  const [openingFloat, setOpeningFloat] = useState("0");
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -75,12 +81,50 @@ export function BostonCityHallBarPos({
   );
 
   const saleCreateBody = useMemo(() => {
-    const body: { locationId: string; eventId?: string } = { locationId };
-    if (selectedLocation?.kind === "event_bar" && selectedLocation.eventId) {
-      body.eventId = selectedLocation.eventId;
-    }
+    const body: { locationId: string; eventId?: string; cashSessionId?: string } = { locationId };
+    const ev = fixedEventId?.trim() || selectedLocation?.eventId;
+    if (ev) body.eventId = ev;
+    if (cashSession?.id) body.cashSessionId = cashSession.id;
     return body;
-  }, [locationId, selectedLocation]);
+  }, [locationId, selectedLocation, fixedEventId, cashSession?.id]);
+
+  const loadCashSession = useCallback(async () => {
+    const ev = fixedEventId?.trim();
+    if (!ev || !locationId) {
+      setCashSession(null);
+      return;
+    }
+    try {
+      const { data } = await api.get<PosCashSession | null>(
+        `/boston-city-hall/events/${encodeURIComponent(ev)}/pos/cash-sessions/active?locationId=${encodeURIComponent(locationId)}`,
+      );
+      setCashSession(data ?? null);
+    } catch {
+      setCashSession(null);
+    }
+  }, [fixedEventId, locationId]);
+
+  const openCashSession = async () => {
+    const ev = fixedEventId?.trim();
+    if (!ev || !locationId) return;
+    setBusy(true);
+    try {
+      const { data } = await api.post<PosCashSession>(
+        `/boston-city-hall/events/${encodeURIComponent(ev)}/pos/cash-sessions/open`,
+        { locationId, openingFloat: openingFloat || "0" },
+      );
+      setCashSession(data);
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Caixa",
+        message: e instanceof Error ? e.message : "Não foi possível abrir o caixa.",
+        variant: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const loadLocations = useCallback(async () => {
     const { data: locs } = await api.get<BchBarInventoryLocation[]>("/boston-city-hall/bar/locations");
@@ -154,7 +198,8 @@ export function BostonCityHallBarPos({
   useEffect(() => {
     if (!locationId) return;
     void loadCatalog(locationId).catch(() => setCatalog([]));
-  }, [locationId, loadCatalog]);
+    void loadCashSession();
+  }, [locationId, loadCatalog, loadCashSession]);
 
   const filteredCatalog = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -327,15 +372,17 @@ export function BostonCityHallBarPos({
   const showReceipt = sale?.status === "completed";
 
   return (
-    <div className="space-y-4">
+    <div className={cn("space-y-4", tabletMode && "lg:grid lg:grid-cols-[1fr_320px] lg:gap-4 lg:space-y-0")}>
       <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href="/dashboard/eventos/boston-city-hall/bar"
-          className="inline-flex min-h-[44px] items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar ao bar
-        </Link>
+        {!embedded && !tabletMode ? (
+          <Link
+            href="/dashboard/eventos/boston-city-hall/bar"
+            className="inline-flex min-h-[44px] items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao bar
+          </Link>
+        ) : null}
         <NativeSelect
           className="min-h-[44px] max-w-xs flex-1"
           value={locationId}
@@ -349,6 +396,25 @@ export function BostonCityHallBarPos({
             </option>
           ))}
         </NativeSelect>
+        {fixedEventId && locationId && !cashSession ? (
+          <>
+            <Input
+              className="h-11 w-24 text-foreground"
+              type="number"
+              min={0}
+              step="0.01"
+              value={openingFloat}
+              onChange={(e) => setOpeningFloat(e.target.value)}
+              placeholder="Fundo"
+            />
+            <Button type="button" className="min-h-[44px]" disabled={busy} onClick={() => void openCashSession()}>
+              Abrir caixa
+            </Button>
+          </>
+        ) : null}
+        {cashSession ? (
+          <span className="text-xs text-emerald-300/90">Caixa aberto</span>
+        ) : null}
         {sale?.status === "open" ? (
           <Button type="button" variant="outline" className="min-h-[44px]" onClick={() => void cancelSale()} disabled={busy}>
             Cancelar venda

@@ -60,6 +60,9 @@ export class BostonCityHallEventFinancialService {
       physicalCount,
       booking,
       financeProjections,
+      staffCosts,
+      serviceCosts,
+      openCashSessions,
     ] = await Promise.all([
       this.prisma.eventTicketOrder.aggregate({
         where: { tenantId, eventId, status: 'confirmed' },
@@ -105,6 +108,17 @@ export class BostonCityHallEventFinancialService {
         include: bookingInclude,
       }),
       this.loadTicketingFinanceProjectionStats(tenantId, eventId),
+      this.prisma.bchEventStaffAssignment.findMany({
+        where: { tenantId, eventId },
+        select: { actualCost: true, plannedCost: true },
+      }),
+      this.prisma.bchEventServiceCommitment.findMany({
+        where: { tenantId, eventId },
+        select: { actualCost: true, plannedCost: true, contractedAmount: true },
+      }),
+      this.prisma.bchPosCashSession.count({
+        where: { tenantId, eventId, status: 'open' },
+      }),
     ]);
 
     let barRevenue = new Prisma.Decimal(0);
@@ -121,6 +135,18 @@ export class BostonCityHallEventFinancialService {
     }
     const barMarginIncomplete = barLineCount > 0 && missingBarCostLines > 0;
     const barMargin = barRevenue.minus(barCogs);
+
+    let laborCost = new Prisma.Decimal(0);
+    for (const row of staffCosts) {
+      const c = row.actualCost ?? row.plannedCost;
+      if (c) laborCost = laborCost.plus(c);
+    }
+    let supplierCost = new Prisma.Decimal(0);
+    for (const row of serviceCosts) {
+      const c = row.actualCost ?? row.plannedCost ?? row.contractedAmount;
+      if (c) supplierCost = supplierCost.plus(c);
+    }
+    const eventOpsCost = laborCost.plus(supplierCost);
 
     const lossTypes = [
       'breakage',
@@ -254,7 +280,8 @@ export class BostonCityHallEventFinancialService {
         !perCurrency.multiCurrency &&
         (!barSales.length || !barMarginIncomplete) &&
         (!booking || !!signedContract) &&
-        (ticketingConfigured || ticketAgg._count === 0),
+        (ticketingConfigured || ticketAgg._count === 0) &&
+        openCashSessions === 0,
     };
 
     const attendance = uniqueCheckedInFromTickets(
@@ -307,8 +334,17 @@ export class BostonCityHallEventFinancialService {
       },
       cost: {
         barCogs: barSales.length > 0 ? moneyDec(barCogs) : null,
-        otherKnownOperationalCost: null,
-        totalKnownOperationalCost: consolidated.knownOperationalCost,
+        otherKnownOperationalCost:
+          eventOpsCost.gt(0) ? moneyDec(eventOpsCost) : staffCosts.length + serviceCosts.length > 0 ? '0.00' : null,
+        totalKnownOperationalCost:
+          consolidated.knownOperationalCost != null || eventOpsCost.gt(0)
+            ? moneyDec(
+                (consolidated.knownOperationalCost
+                  ? new Prisma.Decimal(consolidated.knownOperationalCost)
+                  : new Prisma.Decimal(0)
+                ).plus(barCogs).plus(eventOpsCost),
+              )
+            : null,
       },
       result: {
         grossOperationalRevenue: consolidated.grossOperationalRevenue,

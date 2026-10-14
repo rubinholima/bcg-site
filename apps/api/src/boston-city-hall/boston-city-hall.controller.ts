@@ -55,6 +55,7 @@ import { BostonCityHallOperationalAlertService } from './boston-city-hall-operat
 import { BostonCityHallEventWorkspaceService } from './boston-city-hall-event-workspace.service';
 import { BostonCityHallEventPlanningService } from './boston-city-hall-event-planning.service';
 import { BostonCityHallCheckinSessionsService } from './boston-city-hall-checkin-sessions.service';
+import { BostonCityHallPosCashService } from './boston-city-hall-pos-cash.service';
 import type { BchAlertListQuery } from './boston-city-hall-operational-alert.constants';
 
 @Controller('boston-city-hall')
@@ -94,6 +95,7 @@ export class BostonCityHallController {
     private readonly eventWorkspace: BostonCityHallEventWorkspaceService,
     private readonly eventPlanning: BostonCityHallEventPlanningService,
     private readonly checkinSessions: BostonCityHallCheckinSessionsService,
+    private readonly posCash: BostonCityHallPosCashService,
   ) {}
 
   private async bchTenantId(): Promise<string> {
@@ -874,6 +876,50 @@ export class BostonCityHallController {
     return this.checkinSessions.searchTickets(eventId.trim(), q ?? '');
   }
 
+  @Get('events/:eventId/pos/cash-sessions/active')
+  getActivePosCash(
+    @Param('eventId') eventId: string,
+    @Query('locationId') locationId: string,
+    @Req() req: Request & { user: CognitoJwtPayload },
+  ) {
+    if (!locationId?.trim()) throw new BadRequestException('locationId é obrigatório.');
+    return this.tenantAccess.resolveInternalUserId(req.user.sub).then((operatorUserId) =>
+      this.posCash.getActiveSession(eventId.trim(), locationId.trim(), operatorUserId),
+    );
+  }
+
+  @Post('events/:eventId/pos/cash-sessions/open')
+  openPosCash(
+    @Param('eventId') eventId: string,
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body()
+    body: {
+      locationId: string;
+      openingFloat?: number | string;
+      terminalLabel?: string | null;
+      currency?: string;
+    },
+  ) {
+    return this.tenantAccess.resolveInternalUserId(req.user.sub).then((operatorUserId) =>
+      this.posCash.openSession(eventId.trim(), body, operatorUserId),
+    );
+  }
+
+  @Post('events/:eventId/pos/cash-sessions/:sessionId/close')
+  closePosCash(
+    @Param('eventId') eventId: string,
+    @Param('sessionId') sessionId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.posCash.closeSession(eventId.trim(), sessionId, body as never);
+  }
+
+  @Get('events/:eventId/pos/cash-sessions')
+  listPosCash(@Param('eventId') eventId: string, @Query('limit') limit?: string) {
+    const n = limit ? Number.parseInt(limit, 10) : 20;
+    return this.posCash.listSessions(eventId.trim(), Number.isFinite(n) ? n : 20);
+  }
+
   /** BCH — resultado financeiro executivo por evento (Fase 5.1) */
   @Get('events/:eventId/financial-result')
   async getEventFinancialResult(@Param('eventId') eventId: string) {
@@ -1647,6 +1693,7 @@ export class BostonCityHallController {
       eventId?: string | null;
       terminalLabel?: string | null;
       notes?: string | null;
+      cashSessionId?: string | null;
     },
   ) {
     const tenantId = await this.bchTenantId();
@@ -1657,6 +1704,7 @@ export class BostonCityHallController {
       eventId: body.eventId,
       terminalLabel: body.terminalLabel,
       notes: body.notes,
+      cashSessionId: body.cashSessionId,
     });
   }
 

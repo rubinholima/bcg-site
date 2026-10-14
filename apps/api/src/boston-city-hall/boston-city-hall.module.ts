@@ -45,6 +45,7 @@ import { BostonCityHallOperationalAlertService } from './boston-city-hall-operat
 import { BostonCityHallEventWorkspaceService } from './boston-city-hall-event-workspace.service';
 import { BostonCityHallEventPlanningService } from './boston-city-hall-event-planning.service';
 import { BostonCityHallCheckinSessionsService } from './boston-city-hall-checkin-sessions.service';
+import { BostonCityHallPosCashService } from './boston-city-hall-pos-cash.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule, PaymentsModule, FinanceiroModule, HomeContentModule],
@@ -89,6 +90,7 @@ import { BostonCityHallCheckinSessionsService } from './boston-city-hall-checkin
     BostonCityHallEventWorkspaceService,
     BostonCityHallEventPlanningService,
     BostonCityHallCheckinSessionsService,
+    BostonCityHallPosCashService,
   ],
   exports: [
     BostonCityHallService,

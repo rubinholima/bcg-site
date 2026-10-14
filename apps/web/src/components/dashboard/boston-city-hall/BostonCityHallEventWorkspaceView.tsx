@@ -15,6 +15,7 @@ import { BostonCityHallEventAlertsBanner } from "@/components/dashboard/boston-c
 import { BostonCityHallEventFinancial } from "@/components/dashboard/boston-city-hall/BostonCityHallEventFinancial";
 import { BostonCityHallEventSetup } from "@/components/dashboard/boston-city-hall/BostonCityHallEventSetup";
 import { BostonCityHallEventStaffAndServices } from "@/components/dashboard/boston-city-hall/BostonCityHallEventStaffAndServices";
+import { BostonCityHallEventClosingPanel } from "@/components/dashboard/boston-city-hall/BostonCityHallEventClosingPanel";
 import { BostonCityHallEventWorkspaceBarTab } from "@/components/dashboard/boston-city-hall/BostonCityHallEventWorkspaceBarTab";
 import { BostonCityHallTicketingHub } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketingHub";
 import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
@@ -482,17 +483,7 @@ export function BostonCityHallEventWorkspaceView({ snapshot }: { snapshot: Snaps
 
       {section === "fechamento" ? (
         <div className="space-y-4">
-          <Panel title="Estado do fechamento">
-            <p className="text-sm text-slate-400">
-              Fechamento global do evento (bilheteria, caixa, fornecedores e aprovação final) ainda não está implementado.
-              O fechamento de bar e contagem física estão disponíveis na aba Bar e estoque.
-            </p>
-            {financial?.completeness.barCloseFinalized ? (
-              <p className="mt-2 text-sm text-emerald-300/90">Fechamento de bar finalizado para este evento.</p>
-            ) : (
-              <p className="mt-2 text-sm text-amber-200/90">Fechamento de bar pendente ou não aplicável.</p>
-            )}
-          </Panel>
+          <BostonCityHallEventClosingPanel eventId={event.id} />
           <BostonCityHallEventAlertsBanner eventId={event.id} />
         </div>
       ) : null}
