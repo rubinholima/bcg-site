@@ -30,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
 import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
@@ -288,19 +289,18 @@ export function BostonCityHallTicketOrders() {
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Hold até</TableHead>
-                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="p-0">
+                    <TableCell colSpan={6} className="p-0">
                       <BchEmptyState message="Nenhum pedido com estes filtros." className="py-8" />
                     </TableCell>
                   </TableRow>
                 ) : (
                   orders.map((o) => (
-                    <TableRow key={o.id}>
+                    <ClickableTableRow key={o.id} onClick={() => void openDetail(o.id)}>
                       <TableCell className="font-medium">{o.orderNumber}</TableCell>
                       <TableCell>{o.eventName}</TableCell>
                       <TableCell>
@@ -314,12 +314,7 @@ export function BostonCityHallTicketOrders() {
                           ? new Date(o.holdExpiresAt).toLocaleString("pt-BR")
                           : "—"}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => void openDetail(o.id)}>
-                          Abrir
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                    </ClickableTableRow>
                   ))
                 )}
               </TableBody>

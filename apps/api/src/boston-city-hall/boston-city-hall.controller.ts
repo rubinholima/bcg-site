@@ -930,8 +930,9 @@ export class BostonCityHallController {
   }
 
   @Get('rh/employees')
-  lookupRhEmployees(@Query('q') q?: string) {
-    return this.eventPlanning.searchEmployees(q ?? '');
+  async lookupRhEmployees(@Req() req: Request & { user: CognitoJwtPayload }, @Query('q') q?: string) {
+    const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, req.user.role);
+    return this.eventPlanning.searchEmployees(q ?? '', allowed);
   }
 
   @Get('operational-roles')
@@ -953,8 +954,12 @@ export class BostonCityHallController {
   }
 
   @Get('events/:eventId/staff-lookups/employees')
-  lookupEventEmployees(@Query('q') q?: string) {
-    return this.eventPlanning.searchEmployees(q ?? '');
+  async lookupEventEmployees(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('q') q?: string,
+  ) {
+    const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, req.user.role);
+    return this.eventPlanning.searchEmployees(q ?? '', allowed);
   }
 
   @Get('events/:eventId/staff-lookups/suppliers')

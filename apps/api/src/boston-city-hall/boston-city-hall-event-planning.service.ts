@@ -8,6 +8,7 @@ import {
   computeStaffPlannedCost,
   decOrNull,
 } from './boston-city-hall-staff-cost.util';
+import { employeeVisibleInRhListFilter } from '../rh/rh-employee-visibility.util';
 
 const SCHEDULE_PRESETS = [
   'setup',
@@ -579,7 +580,7 @@ export class BostonCityHallEventPlanningService {
         actualEndAt,
         rateType,
         rateAmount,
-        rateCurrency: body.rateCurrency?.trim()?.toUpperCase() || null,
+        rateCurrency: body.rateCurrency?.trim()?.toUpperCase() || 'BRL',
         plannedQuantity,
         actualQuantity,
         plannedCost,
@@ -604,13 +605,14 @@ export class BostonCityHallEventPlanningService {
     });
   }
 
-  async searchEmployees(q: string, limit = 15) {
-    const tenantId = await this.tenantId();
+  async searchEmployees(q: string, allowedTenantIds: string[] | null, limit = 15) {
     const term = q.trim();
     if (term.length < 1) return [];
+    if (Array.isArray(allowedTenantIds) && allowedTenantIds.length === 0) return [];
     const rows = await this.prisma.employee.findMany({
       where: {
-        tenantId,
+        ...employeeVisibleInRhListFilter,
+        ...(allowedTenantIds === null ? {} : { tenantId: { in: allowedTenantIds } }),
         OR: [
           { name: { contains: term, mode: 'insensitive' } },
           { code: { contains: term, mode: 'insensitive' } },

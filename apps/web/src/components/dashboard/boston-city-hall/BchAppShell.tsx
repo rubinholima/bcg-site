@@ -30,7 +30,7 @@ export function BchAppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <BchAppShellEventContext.Provider value={ctx}>
-      <div className="flex min-h-[calc(100dvh-0px)] min-w-0 flex-col bg-[#070b12] text-slate-200">
+      <div className="flex h-[100dvh] min-h-0 min-w-0 flex-col overflow-hidden bg-[#070b12] text-slate-200">
         <BchAppShellHeader
           pathname={pathname}
           eventName={eventName}

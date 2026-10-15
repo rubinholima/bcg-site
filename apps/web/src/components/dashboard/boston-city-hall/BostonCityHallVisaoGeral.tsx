@@ -153,7 +153,7 @@ export function BostonCityHallVisaoGeral({ overview }: Props) {
       ];
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-5">
+    <div className="w-full min-w-0 space-y-5">
       <section
         className={cn(
           BCH_CARD,

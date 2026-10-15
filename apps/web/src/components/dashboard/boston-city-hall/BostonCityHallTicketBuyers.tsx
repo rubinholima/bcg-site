@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { formatTicketingMoney } from "@/types/boston-city-hall";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
@@ -225,12 +226,11 @@ export function BostonCityHallTicketBuyers() {
                   <TableHead>Gasto</TableHead>
                   <TableHead>Última compra</TableHead>
                   <TableHead>Marketing</TableHead>
-                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.map((r) => (
-                  <TableRow key={r.id}>
+                  <ClickableTableRow key={r.id} onClick={() => void openDetail(r.id)}>
                     <TableCell>
                       <div className="font-medium">{r.displayName ?? r.email}</div>
                       <div className="text-xs text-slate-400">{r.email}</div>
@@ -242,12 +242,7 @@ export function BostonCityHallTicketBuyers() {
                       {r.lastPurchaseAt ? new Date(r.lastPurchaseAt).toLocaleDateString("pt-BR") : "—"}
                     </TableCell>
                     <TableCell>{r.marketingOptIn ? "Opt-in" : "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => void openDetail(r.id)}>
-                        Abrir
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

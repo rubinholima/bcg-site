@@ -13,9 +13,11 @@ import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyS
 import {
   BCH_BTN_SECONDARY,
   BCH_CARD,
+  BCH_DEFAULT_CURRENCY,
   BCH_DIALOG_CONTENT,
   BCH_TABLE_WRAP,
 } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BchDialogContent } from "@/components/dashboard/boston-city-hall/BchDialogContent";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   Table,
@@ -160,6 +163,9 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
   const [cancelShiftId, setCancelShiftId] = useState<string | null>(null);
   const [empQuery, setEmpQuery] = useState("");
   const [empHits, setEmpHits] = useState<EmpLookup[]>([]);
+  const [empLoading, setEmpLoading] = useState(false);
+  const [empSearchError, setEmpSearchError] = useState<string | null>(null);
+  const [empSelectedName, setEmpSelectedName] = useState("");
   const [operationalRoles, setOperationalRoles] = useState<OperationalRoleOption[]>([]);
   const [roleFilter, setRoleFilter] = useState("");
   const [supQuery, setSupQuery] = useState("");
@@ -177,7 +183,7 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
     responsibility: "",
     supervisorId: "",
     rateType: "daily",
-    rateCurrency: "USD",
+    rateCurrency: BCH_DEFAULT_CURRENCY,
     rateAmount: "",
     plannedQuantity: "1",
     paymentStatus: "planned",
@@ -188,7 +194,7 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
     actualStartAt: "",
     actualEndAt: "",
     rateType: "daily",
-    rateCurrency: "USD",
+    rateCurrency: BCH_DEFAULT_CURRENCY,
     rateAmount: "",
     plannedQuantity: "",
     actualQuantity: "",
@@ -250,15 +256,27 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
   useEffect(() => {
     if (empQuery.trim().length < 1) {
       setEmpHits([]);
+      setEmpSearchError(null);
+      setEmpLoading(false);
+      return;
+    }
+    if (empSelectedName && empQuery.trim() === empSelectedName.trim()) {
       return;
     }
     const t = window.setTimeout(() => {
+      setEmpLoading(true);
+      setEmpSearchError(null);
       void api
         .get<EmpLookup[]>(`/boston-city-hall/rh/employees?q=${encodeURIComponent(empQuery.trim())}`)
-        .then((r) => setEmpHits(Array.isArray(r.data) ? r.data : []));
-    }, 250);
+        .then((r) => setEmpHits(Array.isArray(r.data) ? r.data : []))
+        .catch(() => {
+          setEmpHits([]);
+          setEmpSearchError("Não foi possível buscar colaboradores. Tente novamente.");
+        })
+        .finally(() => setEmpLoading(false));
+    }, 300);
     return () => window.clearTimeout(t);
-  }, [empQuery]);
+  }, [empQuery, empSelectedName]);
 
   const filteredRoles = useMemo(() => {
     const q = roleFilter.trim().toLowerCase();
@@ -315,12 +333,15 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       responsibility: "",
       supervisorId: "",
       rateType: "daily",
-      rateCurrency: "USD",
+      rateCurrency: BCH_DEFAULT_CURRENCY,
       rateAmount: "",
       plannedQuantity: "1",
       paymentStatus: "planned",
     });
     setEmpQuery("");
+    setEmpHits([]);
+    setEmpSelectedName("");
+    setEmpSearchError(null);
     setRoleFilter("");
     setMemberDialog(true);
   };
@@ -338,18 +359,46 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       responsibility: m.responsibility ?? "",
       supervisorId: m.supervisor?.id ?? "",
       rateType: "daily",
-      rateCurrency: "USD",
+      rateCurrency: BCH_DEFAULT_CURRENCY,
       rateAmount: "",
       plannedQuantity: "1",
       paymentStatus: "planned",
     });
+    if (m.employee?.name) {
+      setEmpQuery(m.employee.name);
+      setEmpSelectedName(m.employee.name);
+    } else {
+      setEmpQuery("");
+      setEmpSelectedName("");
+    }
     setMemberDialog(true);
   };
 
   const saveMember = async () => {
     const role = operationalRoles.find((r) => r.id === memberForm.operationalRoleId);
     const roleLabel = role?.name ?? memberForm.roleLabel.trim();
-    if (!roleLabel && !memberForm.operationalRoleId) return;
+    if (!roleLabel && !memberForm.operationalRoleId) {
+      setFeedback({ title: "Função obrigatória", message: "Selecione a função operacional.", variant: "error" });
+      return;
+    }
+    if (!editMember) {
+      if (memberForm.sourceType === "employee" && !memberForm.employeeId.trim()) {
+        setFeedback({
+          title: "Colaborador obrigatório",
+          message: "Busque e selecione um colaborador do RH na lista de resultados.",
+          variant: "error",
+        });
+        return;
+      }
+      if (memberForm.sourceType === "freelancer" && !memberForm.contractorName.trim()) {
+        setFeedback({ title: "Nome obrigatório", message: "Informe o nome do contratado.", variant: "error" });
+        return;
+      }
+      if (memberForm.sourceType === "supplier" && !memberForm.supplierId.trim()) {
+        setFeedback({ title: "Fornecedor obrigatório", message: "Selecione um fornecedor na busca.", variant: "error" });
+        return;
+      }
+    }
     try {
       if (editMember) {
         await api.patch(`${base}/team-members/${editMember.id}`, {
@@ -400,7 +449,7 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       actualStartAt: "",
       actualEndAt: "",
       rateType: "daily",
-      rateCurrency: "USD",
+      rateCurrency: BCH_DEFAULT_CURRENCY,
       rateAmount: "",
       plannedQuantity: "1",
       actualQuantity: "",
@@ -421,7 +470,7 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       actualStartAt: isoToLocal(shift.actualStartAt),
       actualEndAt: isoToLocal(shift.actualEndAt),
       rateType: shift.rateType ?? "daily",
-      rateCurrency: shift.rateCurrency ?? "USD",
+      rateCurrency: shift.rateCurrency ?? BCH_DEFAULT_CURRENCY,
       rateAmount: shift.rateAmount ?? "",
       plannedQuantity: shift.plannedQuantity ?? "",
       actualQuantity: shift.actualQuantity ?? "",
@@ -551,7 +600,7 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
               </TableHeader>
               <TableBody>
                 {team.map((m) => (
-                  <TableRow key={m.id}>
+                  <ClickableTableRow key={m.id} onClick={() => openEditMember(m)}>
                     <TableCell className="font-medium">{personLabel(m)}</TableCell>
                     <TableCell>{m.roleLabel}</TableCell>
                     <TableCell className="text-slate-400">{m.areaLabel ?? "—"}</TableCell>
@@ -564,9 +613,16 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
                     <TableCell>{m.shifts.length}</TableCell>
                     <TableCell className="text-xs">{shiftCost(m)}</TableCell>
                     <TableCell>{m.status}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button type="button" size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEditMember(m)}>
+                    <TableRowActions>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          aria-label="Editar membro"
+                          onClick={() => openEditMember(m)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
@@ -579,8 +635,8 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
                           Turno
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </TableRowActions>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>
@@ -702,80 +758,88 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
       </section>
 
       <Dialog open={memberDialog} onOpenChange={setMemberDialog}>
-        <DialogContent className={cn(BCH_DIALOG_CONTENT, "max-w-[min(100vw-2rem,44rem)]")}>
-          <DialogHeader>
+        <BchDialogContent
+          size="xl"
+          header={
             <DialogTitle>{editMember ? "Editar membro" : "Adicionar pessoa à equipe"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid max-h-[min(60dvh,520px)] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
-            <div className="space-y-1 sm:col-span-2">
-              <Label>Função operacional *</Label>
-              <Input
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="text-foreground"
-                placeholder="Buscar função…"
-              />
-              <NativeSelect
-                className="mt-1 min-h-[44px] w-full"
-                value={memberForm.operationalRoleId}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  const name = operationalRoles.find((r) => r.id === id)?.name ?? "";
-                  setMemberForm({ ...memberForm, operationalRoleId: id, roleLabel: name });
-                }}
-              >
-                <option value="">Selecione a função…</option>
-                {filteredRoles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-            {!editMember ? (
-              <>
-                <div className="space-y-1 sm:col-span-2">
-                  <Label>Origem da pessoa *</Label>
-                  <NativeSelect
-                    className="min-h-[44px] w-full"
-                    value={memberForm.sourceType}
-                    onChange={(e) =>
-                      setMemberForm({
-                        ...memberForm,
-                        sourceType: e.target.value as "employee" | "freelancer" | "supplier",
-                        employeeId: "",
-                        contractorName: "",
-                        supplierId: "",
-                      })
-                    }
-                  >
-                    <option value="employee">Colaborador RH</option>
-                    <option value="freelancer">Contratado avulso</option>
-                    <option value="supplier">Fornecedor (pessoa)</option>
-                  </NativeSelect>
-                </div>
-                {memberForm.sourceType === "employee" ? (
+          }
+          footer={
+            <>
+              <Button type="button" variant="outline" onClick={() => setMemberDialog(false)}>
+                Cancelar
+              </Button>
+              <Button type="button" onClick={() => void saveMember()}>
+                Salvar
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-6">
+            <section className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Pessoa</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {!editMember ? (
                   <div className="space-y-1 sm:col-span-2">
-                    <Label>Buscar colaborador (RH)</Label>
+                    <Label>Origem da pessoa *</Label>
+                    <NativeSelect
+                      className="min-h-[44px] w-full"
+                      value={memberForm.sourceType}
+                      onChange={(e) => {
+                        setMemberForm({
+                          ...memberForm,
+                          sourceType: e.target.value as "employee" | "freelancer" | "supplier",
+                          employeeId: "",
+                          contractorName: "",
+                          supplierId: "",
+                        });
+                        setEmpQuery("");
+                        setEmpSelectedName("");
+                        setEmpHits([]);
+                      }}
+                    >
+                      <option value="employee">Colaborador RH</option>
+                      <option value="freelancer">Contratado avulso</option>
+                      <option value="supplier">Fornecedor (pessoa)</option>
+                    </NativeSelect>
+                  </div>
+                ) : null}
+                {!editMember && memberForm.sourceType === "employee" ? (
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label>Buscar colaborador (RH) *</Label>
                     <Input
                       value={empQuery}
-                      onChange={(e) => setEmpQuery(e.target.value)}
+                      onChange={(e) => {
+                        setEmpQuery(e.target.value);
+                        setEmpSelectedName("");
+                        setMemberForm({ ...memberForm, employeeId: "" });
+                      }}
                       className="text-foreground"
                       placeholder="Nome, matrícula ou e-mail"
                     />
+                    {empLoading ? (
+                      <p className="flex items-center gap-2 text-xs text-slate-400">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                        Buscando…
+                      </p>
+                    ) : null}
+                    {empSearchError ? <p className="text-xs text-red-300">{empSearchError}</p> : null}
                     {memberForm.employeeId ? (
-                      <p className="text-xs text-emerald-300">Colaborador selecionado (ID vinculado ao RH).</p>
+                      <p className="text-xs text-emerald-300">Selecionado: {empSelectedName || empQuery}</p>
+                    ) : null}
+                    {!empLoading && empQuery.trim().length >= 1 && !memberForm.employeeId && empHits.length === 0 && !empSearchError ? (
+                      <p className="text-xs text-slate-500">Nenhum colaborador encontrado para esta busca.</p>
                     ) : null}
                     {empHits.length > 0 ? (
-                      <ul className="max-h-32 overflow-y-auto rounded border border-slate-700 text-sm">
+                      <ul className="max-h-40 overflow-y-auto rounded-md border border-slate-700 text-sm">
                         {empHits.map((h) => (
                           <li key={h.id}>
                             <button
                               type="button"
-                              className="block w-full px-2 py-1.5 text-left hover:bg-slate-800"
+                              className="block w-full px-3 py-2 text-left hover:bg-slate-800/80"
                               onClick={() => {
                                 setMemberForm({ ...memberForm, employeeId: h.id });
                                 setEmpQuery(h.name);
+                                setEmpSelectedName(h.name);
                                 setEmpHits([]);
                               }}
                             >
@@ -794,7 +858,7 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
                     ) : null}
                   </div>
                 ) : null}
-                {memberForm.sourceType === "freelancer" ? (
+                {!editMember && memberForm.sourceType === "freelancer" ? (
                   <div className="space-y-1 sm:col-span-2">
                     <Label>Nome do contratado *</Label>
                     <Input
@@ -804,7 +868,7 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
                     />
                   </div>
                 ) : null}
-                {memberForm.sourceType === "supplier" ? (
+                {!editMember && memberForm.sourceType === "supplier" ? (
                   <div className="space-y-1 sm:col-span-2">
                     <Label>Fornecedor *</Label>
                     <Input
@@ -834,108 +898,145 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
                     ) : null}
                   </div>
                 ) : null}
-                <div className="space-y-2 rounded-lg border border-slate-800/80 bg-slate-950/40 p-3 sm:col-span-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Compensação (1º turno)</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Tipo de taxa</Label>
-                      <NativeSelect
-                        value={memberForm.rateType}
-                        onChange={(e) => setMemberForm({ ...memberForm, rateType: e.target.value })}
-                      >
-                        <option value="daily">Diária</option>
-                        <option value="hourly">Por hora</option>
-                        <option value="fixed">Valor fixo</option>
-                      </NativeSelect>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Moeda</Label>
-                      <NativeSelect
-                        value={memberForm.rateCurrency}
-                        onChange={(e) => setMemberForm({ ...memberForm, rateCurrency: e.target.value })}
-                      >
-                        <option value="USD">USD</option>
-                        <option value="BRL">BRL</option>
-                      </NativeSelect>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Valor da taxa</Label>
-                      <Input
-                        value={memberForm.rateAmount}
-                        onChange={(e) => setMemberForm({ ...memberForm, rateAmount: e.target.value })}
-                        className="text-foreground"
-                        inputMode="decimal"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">
-                        {memberForm.rateType === "hourly" ? "Horas previstas" : memberForm.rateType === "daily" ? "Dias previstos" : "Quantidade"}
-                      </Label>
-                      <Input
-                        value={memberForm.plannedQuantity}
-                        onChange={(e) => setMemberForm({ ...memberForm, plannedQuantity: e.target.value })}
-                        className="text-foreground"
-                        inputMode="decimal"
-                        disabled={memberForm.rateType === "fixed"}
-                      />
-                    </div>
-                    <div className="space-y-1 sm:col-span-2">
-                      <Label className="text-xs">Status de pagamento</Label>
-                      <NativeSelect
-                        value={memberForm.paymentStatus}
-                        onChange={(e) => setMemberForm({ ...memberForm, paymentStatus: e.target.value })}
-                      >
-                        <option value="planned">Planejado</option>
-                        <option value="incurred">Incorrido</option>
-                        <option value="outstanding">Em aberto</option>
-                        <option value="paid">Pago</option>
-                      </NativeSelect>
-                    </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <Label>Função operacional *</Label>
+                  <Input
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="text-foreground"
+                    placeholder="Buscar função…"
+                  />
+                  <NativeSelect
+                    className="mt-1 min-h-[44px] w-full"
+                    value={memberForm.operationalRoleId}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      const name = operationalRoles.find((r) => r.id === id)?.name ?? "";
+                      setMemberForm({ ...memberForm, operationalRoleId: id, roleLabel: name });
+                    }}
+                  >
+                    <option value="">Selecione a função…</option>
+                    {filteredRoles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <Label>Supervisor</Label>
+                  <NativeSelect
+                    value={memberForm.supervisorId}
+                    onChange={(e) => setMemberForm({ ...memberForm, supervisorId: e.target.value })}
+                  >
+                    <option value="">Nenhum</option>
+                    {supervisors
+                      .filter((s) => s.id !== editMember?.id)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {personLabel(s)} · {s.roleLabel}
+                        </option>
+                      ))}
+                  </NativeSelect>
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Alocação</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label>Área / local</Label>
+                  <Input
+                    value={memberForm.areaLabel}
+                    onChange={(e) => setMemberForm({ ...memberForm, areaLabel: e.target.value })}
+                    className="text-foreground"
+                  />
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <Label>Responsabilidades</Label>
+                  <Input
+                    value={memberForm.responsibility}
+                    onChange={(e) => setMemberForm({ ...memberForm, responsibility: e.target.value })}
+                    className="text-foreground"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {!editMember ? (
+              <section className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Compensação (1º turno)</p>
+                <div className="grid gap-3 rounded-lg border border-slate-800/80 bg-slate-950/40 p-4 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Tipo de taxa</Label>
+                    <NativeSelect
+                      value={memberForm.rateType}
+                      onChange={(e) => setMemberForm({ ...memberForm, rateType: e.target.value })}
+                    >
+                      <option value="daily">Diária</option>
+                      <option value="hourly">Por hora</option>
+                      <option value="fixed">Valor fixo</option>
+                    </NativeSelect>
                   </div>
-                  <p className="text-sm text-slate-200">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Moeda</Label>
+                    <NativeSelect
+                      value={memberForm.rateCurrency}
+                      onChange={(e) => setMemberForm({ ...memberForm, rateCurrency: e.target.value })}
+                    >
+                      <option value="BRL">BRL (R$)</option>
+                      <option value="USD">USD</option>
+                    </NativeSelect>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Valor da taxa</Label>
+                    <Input
+                      value={memberForm.rateAmount}
+                      onChange={(e) => setMemberForm({ ...memberForm, rateAmount: e.target.value })}
+                      className="text-foreground"
+                      inputMode="decimal"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">
+                      {memberForm.rateType === "hourly"
+                        ? "Horas previstas"
+                        : memberForm.rateType === "daily"
+                          ? "Dias previstos"
+                          : "Quantidade"}
+                    </Label>
+                    <Input
+                      value={memberForm.plannedQuantity}
+                      onChange={(e) => setMemberForm({ ...memberForm, plannedQuantity: e.target.value })}
+                      className="text-foreground"
+                      inputMode="decimal"
+                      disabled={memberForm.rateType === "fixed"}
+                    />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label className="text-xs">Status de pagamento</Label>
+                    <NativeSelect
+                      value={memberForm.paymentStatus}
+                      onChange={(e) => setMemberForm({ ...memberForm, paymentStatus: e.target.value })}
+                    >
+                      <option value="planned">Planejado</option>
+                      <option value="incurred">Incorrido</option>
+                      <option value="outstanding">Em aberto</option>
+                      <option value="paid">Pago</option>
+                    </NativeSelect>
+                  </div>
+                  <p className="text-sm text-slate-200 sm:col-span-2">
                     Custo planejado:{" "}
                     <span className="font-semibold tabular-nums">
                       {formatMoneyPreview(memberPlannedPreview, memberForm.rateCurrency)}
                     </span>
                   </p>
                 </div>
-              </>
+              </section>
             ) : null}
-            <div className="space-y-1">
-              <Label>Área / local</Label>
-              <Input value={memberForm.areaLabel} onChange={(e) => setMemberForm({ ...memberForm, areaLabel: e.target.value })} className="text-foreground" />
-            </div>
-            <div className="space-y-1">
-              <Label>Supervisor</Label>
-              <NativeSelect value={memberForm.supervisorId} onChange={(e) => setMemberForm({ ...memberForm, supervisorId: e.target.value })}>
-                <option value="">Nenhum</option>
-                {supervisors
-                  .filter((s) => s.id !== editMember?.id)
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {personLabel(s)} · {s.roleLabel}
-                    </option>
-                  ))}
-              </NativeSelect>
-            </div>
-            <div className="space-y-1 sm:col-span-2">
-              <Label>Responsabilidades</Label>
-              <Input
-                value={memberForm.responsibility}
-                onChange={(e) => setMemberForm({ ...memberForm, responsibility: e.target.value })}
-                className="text-foreground"
-              />
-            </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => setMemberDialog(false)}>
-              Cancelar
-            </Button>
-            <Button type="button" onClick={() => void saveMember()}>
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        </BchDialogContent>
       </Dialog>
 
       <Dialog open={shiftDialog} onOpenChange={setShiftDialog}>
@@ -971,8 +1072,8 @@ export function BostonCityHallEventStaffAndServices({ eventId }: { eventId: stri
             <div className="space-y-1">
               <Label>Moeda</Label>
               <NativeSelect value={shiftForm.rateCurrency} onChange={(e) => setShiftForm({ ...shiftForm, rateCurrency: e.target.value })}>
+                <option value="BRL">BRL (R$)</option>
                 <option value="USD">USD</option>
-                <option value="BRL">BRL</option>
               </NativeSelect>
             </div>
             <div className="space-y-1">

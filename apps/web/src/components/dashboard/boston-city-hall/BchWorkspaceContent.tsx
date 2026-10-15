@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { BCH_WORKSPACE_CONTENT } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BchPageShell } from "@/components/dashboard/boston-city-hall/BchPageShell";
 
+/** @deprecated Prefer BchPageShell — mantido para workspace de evento. */
 export function BchWorkspaceContent({
   children,
   className,
@@ -10,5 +10,5 @@ export function BchWorkspaceContent({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn(BCH_WORKSPACE_CONTENT, className)}>{children}</div>;
+  return <BchPageShell className={className}>{children}</BchPageShell>;
 }

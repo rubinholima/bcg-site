@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   Archive,
@@ -27,6 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import { BchPageShell } from "@/components/dashboard/boston-city-hall/BchPageShell";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
 import { BostonCityHallCreateBchEventDialog } from "@/components/dashboard/boston-city-hall/BostonCityHallCreateBchEventDialog";
 import { bchEventWorkspacePath } from "@/components/dashboard/boston-city-hall/bch-app-shell.config";
@@ -72,7 +73,6 @@ function parseDateInput(isoDay: string): Date | null {
 }
 
 export function BostonCityHallEventsIndex() {
-  const router = useRouter();
   const [rawEvents, setRawEvents] = useState<EventTicketingEventListItem[]>([]);
   const [metaByEventId, setMetaByEventId] = useState<Record<string, EventMeta>>({});
   const [loading, setLoading] = useState(true);
@@ -225,7 +225,7 @@ export function BostonCityHallEventsIndex() {
   };
 
   return (
-    <div className="w-full space-y-4 pb-4">
+    <BchPageShell>
       <header className="flex flex-col gap-3 rounded-xl border border-slate-800/80 bg-gradient-to-r from-[#0a101c] via-[#0c1222] to-[#0a101c] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <img
@@ -509,7 +509,6 @@ export function BostonCityHallEventsIndex() {
                 <TableHead className="hidden text-slate-400 xl:table-cell">Tipo</TableHead>
                 <TableHead className="text-slate-400">Status</TableHead>
                 <TableHead className="hidden text-slate-400 sm:table-cell">Bilheteria</TableHead>
-                <TableHead className="w-[100px] text-right text-slate-400">Ação</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -517,16 +516,15 @@ export function BostonCityHallEventsIndex() {
                 const meta = metaByEventId[ev.id];
                 const workspace = bchEventWorkspacePath(ev.id);
                 const noDate = !ev.startDate;
+                const rowHref = noDate ? bchEventSetupPath(ev.id) : workspace;
                 return (
-                  <TableRow
+                  <ClickableTableRow
                     key={ev.id}
-                    className="border-slate-800/80 cursor-pointer hover:bg-slate-900/50"
-                    onClick={() => router.push(workspace)}
+                    href={rowHref}
+                    className="border-slate-800/80 hover:bg-slate-900/50"
                   >
                     <TableCell className="max-w-[200px] font-medium text-slate-100 sm:max-w-none">
-                      <Link href={workspace} className="hover:text-sky-200" onClick={(e) => e.stopPropagation()}>
-                        {bchEventDisplayName(ev.name)}
-                      </Link>
+                      {bchEventDisplayName(ev.name)}
                       <p className="mt-0.5 text-xs text-slate-500 md:hidden">{formatSchedule(ev)}</p>
                     </TableCell>
                     <TableCell className="hidden text-sm text-slate-400 md:table-cell">
@@ -555,22 +553,7 @@ export function BostonCityHallEventsIndex() {
                         {ev.ticketingEnabled ? "Ativa" : "Off"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">
-                      {noDate ? (
-                        <Button asChild size="sm" variant="outline" className="h-8 border-slate-700 text-xs">
-                          <Link href={bchEventSetupPath(ev.id)} onClick={(e) => e.stopPropagation()}>
-                            Completar
-                          </Link>
-                        </Button>
-                      ) : (
-                        <Button asChild size="sm" className="h-8 bg-sky-600 text-xs hover:bg-sky-500">
-                          <Link href={workspace} onClick={(e) => e.stopPropagation()}>
-                            Abrir
-                          </Link>
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
+                  </ClickableTableRow>
                 );
               })}
             </TableBody>
@@ -579,6 +562,6 @@ export function BostonCityHallEventsIndex() {
       )}
 
       <BostonCityHallCreateBchEventDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={load} />
-    </div>
+    </BchPageShell>
   );
 }
