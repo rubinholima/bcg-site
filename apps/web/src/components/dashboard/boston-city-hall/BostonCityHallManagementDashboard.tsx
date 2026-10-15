@@ -2,31 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  BarChart3,
-  CalendarDays,
-  ClipboardList,
-  ContactRound,
-  FileText,
-  Loader2,
-  Plus,
-  Wallet,
-} from "lucide-react";
+import { BarChart3, CalendarDays, ClipboardList, ContactRound, Loader2, Plus } from "lucide-react";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
 import { BostonCityHallCreateBchEventDialog } from "@/components/dashboard/boston-city-hall/BostonCityHallCreateBchEventDialog";
 import {
   BchActivityTimeline,
-  BchExecutiveKpiCard,
-  BchExecutiveManagementHeader,
-  BchExecutivePanel,
   BchFinanceProgress,
   BchPipelineDonut,
-  leadSparklineFromOverview,
-  leadsWeekOverWeekHint,
   type BchActivityItem,
-  type BchExecutiveHeaderStat,
 } from "@/components/dashboard/boston-city-hall/bch-executive-dashboard-ui";
+import { BchPageHeader } from "@/components/dashboard/boston-city-hall/BchPageHeader";
+import { BchPageShell } from "@/components/dashboard/boston-city-hall/BchPageShell";
+import { BchSection } from "@/components/dashboard/boston-city-hall/BchSection";
 import {
   BCH_EXEC_KPI_LINKS,
   BCH_EXEC_KPI_NAV_HINTS,
@@ -37,6 +24,7 @@ import { bchEventWorkspacePath } from "@/components/dashboard/boston-city-hall/b
 import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { useBchTicketingEvents } from "@/components/dashboard/boston-city-hall/use-bch-ticketing-events";
 import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
+import { BCH_BTN_PRIMARY, BCH_CARD, BCH_BTN_SECONDARY } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type {
@@ -221,9 +209,6 @@ export function BostonCityHallManagementDashboard({ overview }: Props) {
   }, [operationalEvents]);
 
   const finance = overview.finance;
-  const leadSpark = leadSparklineFromOverview(overview.leadsLast30Days ?? []);
-  const leadHint = leadsWeekOverWeekHint(overview.leadsLast30Days ?? []);
-
   const holdCount = overview.bookingsByStatus?.hold ?? 0;
 
   const openProposals = useMemo(
@@ -273,46 +258,6 @@ export function BostonCityHallManagementDashboard({ overview }: Props) {
     return parts.join(" · ");
   }, [todayBookings.length, eventsTodayCount, holdCount]);
 
-  const headerStats = useMemo((): BchExecutiveHeaderStat[] => {
-    const stats: BchExecutiveHeaderStat[] = [
-      {
-        label: "Reservas hoje",
-        value: String(todayBookings.length),
-        href: BCH_EXEC_PANEL_LINKS.calendar,
-        title: "Abre o calendário do mês corrente.",
-      },
-      {
-        label: "Confirmadas à frente",
-        value: String(overview.confirmedUpcoming ?? 0),
-        href: BCH_EXEC_KPI_LINKS.confirmedBookings,
-        title: BCH_EXEC_KPI_NAV_HINTS.confirmedBookings,
-      },
-      {
-        label: "Alertas abertos",
-        value: String(alerts.length),
-        href: BCH_EXEC_KPI_LINKS.operationalAlerts,
-        title: BCH_EXEC_KPI_NAV_HINTS.operationalAlerts,
-      },
-    ];
-    const overdue = finance ? Number.parseFloat(finance.overdueBalance) : 0;
-    if (overdue > 0) {
-      stats.push({
-        label: "Recebível vencido",
-        value: formatMoneyUsd(finance!.overdueBalance),
-        href: BCH_EXEC_PANEL_LINKS.finance,
-        title: "Abre Financeiro. Filtro vencido é na página.",
-      });
-    } else if (overview.leadsNeedingAttention?.length) {
-      stats.push({
-        label: "Leads em atenção",
-        value: String(overview.leadsNeedingAttention.length),
-        href: BCH_EXEC_PANEL_LINKS.pipeline,
-        title: "Abre o funil comercial.",
-      });
-    }
-    return stats;
-  }, [todayBookings.length, overview, alerts.length, finance]);
-
   const pipelineSegments = useMemo(
     () =>
       PIPELINE_STAGES.filter((stage) => stage !== "perdido" && stage !== "confirmado").map(
@@ -327,8 +272,6 @@ export function BostonCityHallManagementDashboard({ overview }: Props) {
   );
 
   const upcoming = overview.upcomingBookings ?? [];
-  const featuredToday = todayBookings[0] ?? null;
-  const restToday = todayBookings.slice(1);
 
   const activities = useMemo(
     () => buildRecentActivities(proposals, contracts, alerts),
@@ -351,181 +294,160 @@ export function BostonCityHallManagementDashboard({ overview }: Props) {
     };
   }, [finance]);
 
+  const summaryMetrics = [
+    {
+      label: "Reservas hoje",
+      value: String(todayBookings.length),
+      href: BCH_EXEC_PANEL_LINKS.calendar,
+    },
+    {
+      label: "Eventos hoje",
+      value: String(eventsTodayCount),
+      href: BCH_EXEC_KPI_LINKS.eventsToday,
+    },
+    {
+      label: "Confirmadas à frente",
+      value: String(overview.confirmedUpcoming ?? 0),
+      href: BCH_EXEC_KPI_LINKS.confirmedBookings,
+    },
+    {
+      label: "Oportunidades",
+      value: String(overview.leadsOpen),
+      href: BCH_EXEC_KPI_LINKS.openOpportunities,
+    },
+    {
+      label: "Em aberto",
+      value: finance ? formatMoneyUsd(finance.openBalance) : "—",
+      href: BCH_EXEC_PANEL_LINKS.finance,
+    },
+    {
+      label: "Alertas",
+      value: String(alerts.length),
+      href: BCH_EXEC_KPI_LINKS.operationalAlerts,
+    },
+  ];
+
   return (
-    <div className="w-full space-y-4 pb-2">
-      <BchExecutiveManagementHeader
-        dateLabel={dateLabel}
-        operationSummary={operationSummary}
-        pendingActionsCount={pendingCommercialCount}
-        pendingActionsHref={pendingActionsHref}
-        stats={headerStats}
+    <BchPageShell className="space-y-5">
+      <BchPageHeader
+        title="Visão geral"
+        breadcrumbs={[
+          { href: BCH_BASE, label: "Boston City Hall" },
+          { label: "Visão geral" },
+        ]}
+        actions={
+          <>
+            <Button asChild variant="outline" className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}>
+              <Link href={BCH_EXEC_PANEL_LINKS.events}>Eventos</Link>
+            </Button>
+            <Button
+              type="button"
+              className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              Novo evento
+            </Button>
+          </>
+        }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        <BchExecutiveKpiCard
-          href={BCH_EXEC_KPI_LINKS.eventsToday}
-          navHint={BCH_EXEC_KPI_NAV_HINTS.eventsToday}
-          label="Eventos hoje"
-          value={eventsTodayCount}
-          icon={CalendarDays}
-          accent="emerald"
-          footerStatus={eventsTodayCount === 0 ? "Nenhum evento com data hoje" : undefined}
-        />
-        <BchExecutiveKpiCard
-          href={BCH_EXEC_KPI_LINKS.upcomingBookings}
-          navHint={BCH_EXEC_KPI_NAV_HINTS.upcomingBookings}
-          label="Próximas reservas"
-          value={overview.upcomingBookingsTotal ?? 0}
-          hint="Ativas à frente"
-          icon={ClipboardList}
-          accent="sky"
-        />
-        <BchExecutiveKpiCard
-          href={BCH_EXEC_KPI_LINKS.confirmedBookings}
-          navHint={BCH_EXEC_KPI_NAV_HINTS.confirmedBookings}
-          label="Reservas confirmadas"
-          value={overview.confirmedUpcoming ?? 0}
-          icon={CalendarDays}
-          accent="violet"
-          footerStatus={
-            holdCount > 0 ? `${holdCount} pré-reserva${holdCount === 1 ? "" : "s"} (hold)` : undefined
-          }
-        />
-        <BchExecutiveKpiCard
-          href={BCH_EXEC_KPI_LINKS.openOpportunities}
-          navHint={BCH_EXEC_KPI_NAV_HINTS.openOpportunities}
-          label="Oportunidades abertas"
-          value={overview.leadsOpen}
-          hint={leadHint}
-          icon={ContactRound}
-          accent="amber"
-          sparkline={leadSpark}
-        />
-        <BchExecutiveKpiCard
-          href={BCH_EXEC_KPI_LINKS.openReceivables}
-          navHint={BCH_EXEC_KPI_NAV_HINTS.openReceivables}
-          label="Recebíveis em aberto"
-          value={finance ? formatMoneyUsd(finance.openBalance) : "—"}
-          icon={Wallet}
-          accent="teal"
-          barChart={
-            financeNumbers && (financeNumbers.received > 0 || financeNumbers.open > 0)
-              ? { received: financeNumbers.received, open: financeNumbers.open }
-              : undefined
-          }
-          footerStatus={!finance ? "Sem dados financeiros agregados" : undefined}
-        />
-        <BchExecutiveKpiCard
-          href={BCH_EXEC_KPI_LINKS.operationalAlerts}
-          navHint={BCH_EXEC_KPI_NAV_HINTS.operationalAlerts}
-          label="Alertas operacionais"
-          value={alerts.length}
-          icon={AlertTriangle}
-          accent="rose"
-          footerStatus={alerts.length === 0 ? "Nenhum alerta aberto" : undefined}
-        />
+      <div className="space-y-1">
+        <p className="text-sm capitalize text-slate-400">{dateLabel}</p>
+        <p className="text-sm text-slate-300">{operationSummary}</p>
+        {pendingCommercialCount > 0 ? (
+          <Link
+            href={pendingActionsHref}
+            className="inline-flex min-h-[36px] items-center rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 text-xs font-medium text-amber-100 hover:bg-amber-500/15"
+          >
+            {pendingCommercialCount} ação{pendingCommercialCount === 1 ? "" : "ões"} comercial
+            {pendingCommercialCount === 1 ? "" : " pendente"}
+          </Link>
+        ) : null}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr]">
-        <BchExecutivePanel title="Operação de hoje" href={BCH_EXEC_PANEL_LINKS.calendar} linkLabel="Calendário">
+      <section className={cn(BCH_CARD, "p-3 sm:p-4")}>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Resumo do dia</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          {summaryMetrics.map((m) => (
+            <Link
+              key={m.label}
+              href={m.href}
+              className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2.5 transition-colors hover:border-sky-500/35 hover:bg-slate-900/50"
+            >
+              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500">{m.label}</p>
+              <p className="mt-0.5 truncate text-base font-semibold tabular-nums text-slate-100">{m.value}</p>
+            </Link>
+          ))}
+        </div>
+        {holdCount > 0 ? (
+          <p className="mt-2 text-[11px] text-slate-500">
+            {holdCount} pré-reserva{holdCount === 1 ? "" : "s"} em hold.
+          </p>
+        ) : null}
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <BchSection title="Operação de hoje" actionHref={BCH_EXEC_PANEL_LINKS.calendar} actionLabel="Calendário">
           {auxLoading ? (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center py-6">
               <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
             </div>
           ) : todayBookings.length === 0 ? (
-            <BchEmptyState message="Nenhuma reserva agendada para hoje." />
-          ) : (
             <div className="space-y-3">
-              {featuredToday ? (
-                <Link
-                  href={resolveEventHref(featuredToday.id, featuredToday.event?.id)}
-                  className="block overflow-hidden rounded-xl border border-slate-800/90 bg-slate-950/50 transition-colors hover:border-sky-500/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/45"
-                >
-                  <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium tabular-nums text-sky-400/90">
-                        {formatBookingTime(featuredToday.startAt, featuredToday.endAt)}
-                      </p>
-                      <p className="mt-1 text-lg font-semibold text-slate-50">
-                        {bchEventDisplayName(featuredToday.event?.name ?? featuredToday.title)}
-                      </p>
-                      <p className="mt-0.5 text-sm text-slate-500">
-                        {featuredToday.spaceName ?? "Espaço do venue"}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      <span
-                        className={cn(
-                          "rounded-md border px-2.5 py-0.5 text-xs font-medium",
-                          BOOKING_STATUS_COLOR[featuredToday.status],
-                        )}
-                      >
-                        {BOOKING_STATUS_LABEL[featuredToday.status] ?? featuredToday.status}
-                      </span>
-                      <span className="min-h-[36px] rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white">
-                        Abrir registro
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ) : null}
-              {restToday.length > 0 ? (
-                <ul className="space-y-2">
-                  {restToday.map((b) => (
-                    <li key={b.id}>
-                      <Link
-                        href={resolveEventHref(b.id, b.event?.id)}
-                        className="flex min-h-[44px] items-center justify-between gap-2 rounded-lg border border-slate-800/70 bg-slate-950/30 px-3 py-2.5 hover:border-sky-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-slate-100">
-                            {bchEventDisplayName(b.event?.name ?? b.title)}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {formatBookingTime(b.startAt, b.endAt)}
-                          </p>
-                        </div>
-                        <span
-                          className={cn(
-                            "shrink-0 rounded-md border px-2 py-0.5 text-[10px]",
-                            BOOKING_STATUS_COLOR[b.status],
-                          )}
-                        >
-                          {BOOKING_STATUS_LABEL[b.status] ?? b.status}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+              <BchEmptyState message="Nenhuma reserva agendada para hoje." />
+              <Button asChild variant="outline" size="sm" className={cn("min-h-[40px]", BCH_BTN_SECONDARY)}>
+                <Link href={BCH_EXEC_PANEL_LINKS.reservas}>Nova reserva</Link>
+              </Button>
             </div>
+          ) : (
+            <ul className="space-y-2">
+              {todayBookings.map((b) => (
+                <li key={b.id}>
+                  <Link
+                    href={resolveEventHref(b.id, b.event?.id)}
+                    className="flex min-h-[48px] items-center gap-3 rounded-lg border border-slate-800/70 bg-slate-950/30 px-3 py-2.5 hover:border-sky-500/25"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-100">
+                        {bchEventDisplayName(b.event?.name ?? b.title)}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {formatBookingTime(b.startAt, b.endAt)}
+                        {b.spaceName ? ` · ${b.spaceName}` : ""}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-medium",
+                        BOOKING_STATUS_COLOR[b.status],
+                      )}
+                    >
+                      {BOOKING_STATUS_LABEL[b.status] ?? b.status}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           )}
-        </BchExecutivePanel>
+        </BchSection>
 
-        <BchExecutivePanel
-          title="Próximos eventos e reservas"
-          href={BCH_EXEC_PANEL_LINKS.events}
-          linkLabel="Eventos"
-        >
+        <BchSection title="Próximos eventos e reservas" actionHref={BCH_EXEC_PANEL_LINKS.events} actionLabel="Eventos">
           {upcoming.length === 0 ? (
             <BchEmptyState message="Nenhuma reserva futura." />
           ) : (
             <ul className="space-y-2">
-              {upcoming.slice(0, 7).map((b) => {
+              {upcoming.slice(0, 8).map((b) => {
                 const pill = formatDatePill(b.startAt);
                 return (
                   <li key={b.id}>
                     <Link
                       href={resolveEventHref(b.id)}
-                      className="flex min-h-[44px] gap-3 rounded-lg border border-slate-800/70 bg-slate-950/25 px-2 py-2.5 transition-colors hover:border-sky-500/30 sm:px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+                      className="flex min-h-[48px] gap-3 rounded-lg border border-slate-800/70 bg-slate-950/25 px-3 py-2.5 hover:border-sky-500/30"
                     >
-                      <div className="flex w-11 shrink-0 flex-col items-center justify-center rounded-md bg-slate-900/80 py-1 text-center ring-1 ring-slate-800/80">
-                        <span className="text-[9px] font-bold tracking-wide text-sky-400/90">
-                          {pill.month}
-                        </span>
-                        <span className="text-sm font-semibold tabular-nums text-slate-100">
-                          {pill.day}
-                        </span>
+                      <div className="flex w-10 shrink-0 flex-col items-center justify-center rounded-md bg-slate-900/80 py-0.5 text-center">
+                        <span className="text-[9px] font-bold text-sky-400/90">{pill.month}</span>
+                        <span className="text-sm font-semibold tabular-nums text-slate-100">{pill.day}</span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-slate-100">{b.title}</p>
@@ -537,28 +459,25 @@ export function BostonCityHallManagementDashboard({ overview }: Props) {
                           {b.spaceName ? ` · ${b.spaceName}` : ""}
                         </p>
                       </div>
-                      <div className="flex shrink-0 flex-col items-end justify-center gap-1">
-                        <span
-                          className={cn(
-                            "rounded-md border px-2 py-0.5 text-[10px]",
-                            BOOKING_STATUS_COLOR[b.status],
-                          )}
-                        >
-                          {BOOKING_STATUS_LABEL[b.status] ?? b.status}
-                        </span>
-                        <span className="text-[10px] font-medium text-sky-400/90">Abrir →</span>
-                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 self-center rounded-md border px-2 py-0.5 text-[10px]",
+                          BOOKING_STATUS_COLOR[b.status],
+                        )}
+                      >
+                        {BOOKING_STATUS_LABEL[b.status] ?? b.status}
+                      </span>
                     </Link>
                   </li>
                 );
               })}
             </ul>
           )}
-        </BchExecutivePanel>
+        </BchSection>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-4">
-        <BchExecutivePanel title="Comercial" href={BCH_EXEC_PANEL_LINKS.pipeline} linkLabel="Funil">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <BchSection title="Comercial" actionHref={BCH_EXEC_PANEL_LINKS.pipeline} actionLabel="Funil">
           <BchPipelineDonut
             segments={pipelineSegments}
             totalLabel="Oportunidades"
@@ -613,9 +532,9 @@ export function BostonCityHallManagementDashboard({ overview }: Props) {
               ) : null}
             </div>
           ) : null}
-        </BchExecutivePanel>
+        </BchSection>
 
-        <BchExecutivePanel title="Financeiro do venue" href={BCH_EXEC_PANEL_LINKS.finance} linkLabel="Financeiro">
+        <BchSection title="Financeiro do venue" actionHref={BCH_EXEC_PANEL_LINKS.finance} actionLabel="Financeiro">
           {!finance || !financeNumbers ? (
             <BchEmptyState message="Sem dados financeiros agregados." />
           ) : (
@@ -629,38 +548,25 @@ export function BostonCityHallManagementDashboard({ overview }: Props) {
               financeNavHint={BCH_EXEC_KPI_NAV_HINTS.openReceivables}
             />
           )}
-        </BchExecutivePanel>
+        </BchSection>
 
-        <BchExecutivePanel title="Atividades recentes" href={BCH_EXEC_PANEL_LINKS.pipeline} linkLabel="Funil">
+        <BchSection title="Atividades e atalhos" actionHref={BCH_EXEC_PANEL_LINKS.pipeline} actionLabel="Funil">
           {auxLoading ? (
             <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
           ) : (
-            <BchActivityTimeline items={activities} />
+            <BchActivityTimeline items={activities.slice(0, 5)} />
           )}
-        </BchExecutivePanel>
-
-        <BchExecutivePanel title="Ações rápidas">
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              className="col-span-2 min-h-[44px] gap-2 bg-sky-600 text-white hover:bg-sky-500"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              Novo evento
-            </Button>
-            <QuickAction href={BCH_EXEC_PANEL_LINKS.reservas} icon={ClipboardList} label="Nova reserva" />
+          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-800/70 pt-4">
+            <QuickAction href={BCH_EXEC_PANEL_LINKS.reservas} icon={ClipboardList} label="Reservas" />
             <QuickAction href={BCH_EXEC_PANEL_LINKS.calendar} icon={CalendarDays} label="Calendário" />
-            <QuickAction href={BCH_EXEC_PANEL_LINKS.crm} icon={ContactRound} label="Comercial" />
-            <QuickAction href={BCH_EXEC_PANEL_LINKS.finance} icon={Wallet} label="Financeiro" />
+            <QuickAction href={BCH_EXEC_PANEL_LINKS.crm} icon={ContactRound} label="CRM" />
             <QuickAction href={BCH_EXEC_PANEL_LINKS.reports} icon={BarChart3} label="Relatórios" />
-            <QuickAction href={BCH_EXEC_PANEL_LINKS.proposals} icon={FileText} label="Propostas" />
           </div>
-        </BchExecutivePanel>
+        </BchSection>
       </div>
 
       <BostonCityHallCreateBchEventDialog open={createOpen} onOpenChange={setCreateOpen} />
-    </div>
+    </BchPageShell>
   );
 }
 
