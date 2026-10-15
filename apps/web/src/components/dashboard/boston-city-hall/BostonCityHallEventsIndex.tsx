@@ -2,18 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Archive,
-  CalendarDays,
-  CheckCircle2,
-  Clock,
-  LayoutGrid,
-  List,
-  Loader2,
-  PlayCircle,
-  Plus,
-  Search,
-} from "lucide-react";
+import { CalendarDays, List, Loader2, Plus, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +22,8 @@ import { BostonCityHallCreateBchEventDialog } from "@/components/dashboard/bosto
 import { bchEventWorkspacePath } from "@/components/dashboard/boston-city-hall/bch-app-shell.config";
 import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
-import { BchExecutiveKpiCard } from "@/components/dashboard/boston-city-hall/bch-executive-dashboard-ui";
+import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
+import { BchPageHeader } from "@/components/dashboard/boston-city-hall/BchPageHeader";
 import {
   bchEventCancelledKpiCount,
   classifyBchEventLifecycle,
@@ -41,7 +31,8 @@ import {
   dedupeEventsById,
   type BchEventLifecycleBucket,
 } from "@/components/dashboard/boston-city-hall/bch-events-lifecycle";
-import { BCH_BTN_PRIMARY, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
+import { BCH_BTN_PRIMARY, BCH_CARD, BCH_INPUT, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import type { EventTicketingEventListItem, VenueOperationListItem } from "@/types/boston-city-hall";
 import { EVENT_STATUS_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
@@ -72,6 +63,24 @@ function parseDateInput(isoDay: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+const LIFECYCLE_LABEL: Record<BchEventLifecycleBucket, string> = {
+  upcoming: "Próximo",
+  preparation: "Preparação",
+  in_progress: "Em andamento",
+  completed: "Concluído",
+  archived: "Arquivado",
+};
+
+const LIFECYCLE_CHIP: Record<BchEventLifecycleBucket, string> = {
+  upcoming: "border-violet-500/35 bg-violet-500/10 text-violet-200",
+  preparation: "border-amber-500/35 bg-amber-500/10 text-amber-100",
+  in_progress: "border-emerald-500/35 bg-emerald-500/10 text-emerald-200",
+  completed: "border-teal-500/35 bg-teal-500/10 text-teal-200",
+  archived: "border-slate-600 bg-slate-900/60 text-slate-400",
+};
+
+type LifecycleFilter = BchEventLifecycleBucket | "all";
+
 export function BostonCityHallEventsIndex() {
   const [rawEvents, setRawEvents] = useState<EventTicketingEventListItem[]>([]);
   const [metaByEventId, setMetaByEventId] = useState<Record<string, EventMeta>>({});
@@ -86,7 +95,7 @@ export function BostonCityHallEventsIndex() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [sort, setSort] = useState("dateDesc");
-  const [lifecycleFilter, setLifecycleFilter] = useState<BchEventLifecycleBucket | "all">("all");
+  const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>("all");
   const [view, setView] = useState<"list" | "calendar">("list");
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const n = new Date();
@@ -217,138 +226,133 @@ export function BostonCityHallEventsIndex() {
     };
   }, [filtered, calendarMonth]);
 
-  const setLifecycle = (bucket: BchEventLifecycleBucket | "all") => {
+  const setLifecycle = (bucket: LifecycleFilter) => {
     setLifecycleFilter(bucket);
     if (bucket === "archived") setStatusFilter("archived");
     else if (bucket === "preparation") setStatusFilter("draft");
     else setStatusFilter("all");
   };
 
+  const lifecycleFilters: { id: LifecycleFilter; label: string; count: number }[] = [
+    { id: "all", label: "Todos", count: kpi.total },
+    { id: "upcoming", label: "Próximos", count: kpi.upcoming },
+    { id: "preparation", label: "Preparação", count: kpi.preparation },
+    { id: "in_progress", label: "Em andamento", count: kpi.in_progress },
+    { id: "completed", label: "Concluídos", count: kpi.completed },
+    {
+      id: "archived",
+      label: "Arquivados",
+      count: kpi.archived + kpi.cancelled,
+    },
+  ];
+
+  const showSpaceColumn = spaceOptions.length > 0;
+  const showTypeColumn = typeOptions.length > 0;
+
   return (
     <BchPageShell>
-      <header className="flex flex-col gap-3 rounded-xl border border-slate-800/80 bg-gradient-to-r from-[#0a101c] via-[#0c1222] to-[#0a101c] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <img
-            src="/boston-city-hall-logo.png"
-            alt=""
-            className="h-11 w-11 shrink-0 rounded-full object-contain ring-2 ring-amber-500/25"
-          />
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-500/90">
-              Boston City Hall
-            </p>
-            <h1 className="text-xl font-bold text-slate-50 sm:text-2xl">Eventos</h1>
-            <p className="text-sm text-slate-400">Gestão operacional de eventos do venue</p>
-          </div>
+      <BchPageHeader
+        title="Eventos"
+        breadcrumbs={[
+          { href: BCH_BASE, label: "Boston City Hall" },
+          { label: "Eventos" },
+        ]}
+        actions={
+          <Button
+            type="button"
+            className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Novo evento
+          </Button>
+        }
+      />
+
+      <section className={cn(BCH_CARD, "space-y-3 py-3 sm:py-4")}>
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Fase operacional</p>
+        <div className="flex flex-wrap gap-1.5">
+          {lifecycleFilters.map((item) => {
+            const active = lifecycleFilter === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={cn(
+                  "inline-flex min-h-[40px] items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                  active
+                    ? "border-sky-500/45 bg-sky-500/10 text-sky-100"
+                    : "border-slate-800 bg-slate-950/50 text-slate-300 hover:border-slate-700 hover:bg-slate-900/50",
+                )}
+                onClick={() => setLifecycle(item.id)}
+              >
+                <span>{item.label}</span>
+                <span className={cn("tabular-nums text-xs", active ? "text-sky-200/80" : "text-slate-500")}>
+                  {item.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <Button
-          type="button"
-          className={cn("min-h-[44px] shrink-0 gap-2", BCH_BTN_PRIMARY)}
-          onClick={() => setCreateOpen(true)}
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-          Novo evento
-        </Button>
-      </header>
+        {kpi.cancelled > 0 ? (
+          <p className="text-[11px] text-slate-500">{kpi.cancelled} evento(s) com status cancelado no cadastro.</p>
+        ) : null}
+      </section>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        <BchExecutiveKpiCard
-          onFilterClick={() => setLifecycle("all")}
-          navHint="Mostrar todos os eventos"
-          label="Total"
-          value={kpi.total}
-          icon={LayoutGrid}
-          accent="sky"
-        />
-        <BchExecutiveKpiCard
-          onFilterClick={() => setLifecycle("upcoming")}
-          navHint="Eventos com data futura"
-          label="Próximos"
-          value={kpi.upcoming}
-          icon={CalendarDays}
-          accent="violet"
-        />
-        <BchExecutiveKpiCard
-          onFilterClick={() => setLifecycle("preparation")}
-          navHint="Rascunhos e sem data"
-          label="Em preparação"
-          value={kpi.preparation}
-          icon={Clock}
-          accent="amber"
-        />
-        <BchExecutiveKpiCard
-          onFilterClick={() => setLifecycle("in_progress")}
-          navHint="Em andamento agora"
-          label="Em progresso"
-          value={kpi.in_progress}
-          icon={PlayCircle}
-          accent="emerald"
-        />
-        <BchExecutiveKpiCard
-          onFilterClick={() => setLifecycle("completed")}
-          navHint="Data encerrada"
-          label="Concluídos"
-          value={kpi.completed}
-          icon={CheckCircle2}
-          accent="teal"
-        />
-        <BchExecutiveKpiCard
-          onFilterClick={() => setLifecycle("archived")}
-          navHint="Status arquivado (não há cancelado no cadastro)"
-          label="Arquivados"
-          value={kpi.archived + kpi.cancelled}
-          icon={Archive}
-          accent="rose"
-          footerStatus={kpi.cancelled > 0 ? `${kpi.cancelled} cancelado(s)` : undefined}
-        />
-      </div>
-
-      <div className="rounded-xl border border-slate-800/80 bg-[#0c1222]/55 p-3 xl:p-3">
-        <div
-          className={cn(
-            "grid grid-cols-1 gap-2",
-            "md:grid-cols-2 md:gap-2.5",
-            "xl:flex xl:flex-nowrap xl:items-center xl:gap-2.5",
-          )}
-        >
-          <div className="relative min-w-0 md:col-span-2 xl:col-auto xl:w-[min(100%,280px)] xl:min-w-[240px] xl:max-w-[300px] xl:shrink-0">
+      <BchFilterBar className="!p-3 sm:!p-4">
+        <div className="grid w-full gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-end">
+          <div className="relative min-w-0 lg:col-span-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar evento…"
-              className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 pl-9 text-foreground"
+              placeholder="Buscar por nome, slug ou espaço…"
+              className={cn("min-h-[44px] w-full pl-9 text-foreground", BCH_INPUT)}
             />
           </div>
           <NativeSelect
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[150px] xl:max-w-[170px] xl:shrink-0"
+            className={cn("min-h-[44px] w-full sm:w-[160px] text-foreground", BCH_INPUT)}
           >
-            <option value="all">Status: todos</option>
+            <option value="all">Publicação: todas</option>
             <option value="draft">Rascunho</option>
             <option value="published">Publicado</option>
             <option value="archived">Arquivado</option>
           </NativeSelect>
           <NativeSelect
-            value={spaceFilter}
-            onChange={(e) => setSpaceFilter(e.target.value)}
-            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[150px] xl:max-w-[170px] xl:shrink-0"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className={cn("min-h-[44px] w-full sm:w-[160px] text-foreground", BCH_INPUT)}
           >
-            <option value="all">Espaço: todos</option>
-            {spaceOptions.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
+            <option value="dateDesc">Data · mais recente</option>
+            <option value="dateAsc">Data · mais antiga</option>
+            <option value="nameAsc">Nome A–Z</option>
+            <option value="status">Status</option>
           </NativeSelect>
-          {typeOptions.length > 0 ? (
+        </div>
+        <div className="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+          {showSpaceColumn ? (
+            <NativeSelect
+              value={spaceFilter}
+              onChange={(e) => setSpaceFilter(e.target.value)}
+              className={cn("min-h-[44px] w-full text-foreground", BCH_INPUT)}
+            >
+              <option value="all">Espaço · todos</option>
+              {spaceOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </NativeSelect>
+          ) : null}
+          {showTypeColumn ? (
             <NativeSelect
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[150px] xl:max-w-[170px] xl:shrink-0"
+              className={cn("min-h-[44px] w-full text-foreground", BCH_INPUT)}
             >
-              <option value="all">Tipo: todos</option>
+              <option value="all">Tipo · todos</option>
               {typeOptions.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -360,32 +364,27 @@ export function BostonCityHallEventsIndex() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[145px] xl:shrink-0"
+            className={cn("min-h-[44px] text-foreground", BCH_INPUT)}
             aria-label="Data inicial"
           />
           <Input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[145px] xl:shrink-0"
+            className={cn("min-h-[44px] text-foreground", BCH_INPUT)}
             aria-label="Data final"
           />
-          <NativeSelect
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="h-10 min-h-0 w-full border-slate-700 bg-slate-950/50 text-foreground md:w-auto xl:w-[150px] xl:shrink-0"
-          >
-            <option value="dateDesc">Ordenar: data ↓</option>
-            <option value="dateAsc">Ordenar: data ↑</option>
-            <option value="nameAsc">Ordenar: nome</option>
-            <option value="status">Ordenar: status</option>
-          </NativeSelect>
-          <div className="flex shrink-0 gap-1 rounded-lg border border-slate-800 p-0.5 md:col-span-2 md:justify-self-start xl:col-auto xl:ml-auto xl:justify-self-auto">
+        </div>
+        <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t border-slate-800/70 pt-3">
+          <p className="text-xs text-slate-500">
+            {loading ? "Carregando…" : `${filtered.length} de ${events.length} evento(s) na lista`}
+          </p>
+          <div className="flex gap-1 rounded-lg border border-slate-800 p-0.5">
             <Button
               type="button"
               size="sm"
               variant={view === "list" ? "secondary" : "ghost"}
-              className="h-9 min-h-0 gap-1 px-2.5"
+              className="min-h-[36px] gap-1 px-2.5"
               onClick={() => setView("list")}
             >
               <List className="h-4 w-4" aria-hidden />
@@ -395,7 +394,7 @@ export function BostonCityHallEventsIndex() {
               type="button"
               size="sm"
               variant={view === "calendar" ? "secondary" : "ghost"}
-              className="h-9 min-h-0 gap-1 px-2.5"
+              className="min-h-[36px] gap-1 px-2.5"
               onClick={() => setView("calendar")}
             >
               <CalendarDays className="h-4 w-4" aria-hidden />
@@ -403,7 +402,7 @@ export function BostonCityHallEventsIndex() {
             </Button>
           </div>
         </div>
-      </div>
+      </BchFilterBar>
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -499,66 +498,95 @@ export function BostonCityHallEventsIndex() {
       ) : filtered.length === 0 ? (
         <BchEmptyState message="Nenhum evento corresponde aos filtros." />
       ) : (
-        <div className={BCH_TABLE_WRAP}>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-slate-800 hover:bg-transparent">
-                <TableHead className="text-slate-400">Evento</TableHead>
-                <TableHead className="hidden text-slate-400 md:table-cell">Data / horário</TableHead>
-                <TableHead className="hidden text-slate-400 lg:table-cell">Espaço</TableHead>
-                <TableHead className="hidden text-slate-400 xl:table-cell">Tipo</TableHead>
-                <TableHead className="text-slate-400">Status</TableHead>
-                <TableHead className="hidden text-slate-400 sm:table-cell">Bilheteria</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((ev) => {
-                const meta = metaByEventId[ev.id];
-                const workspace = bchEventWorkspacePath(ev.id);
-                const noDate = !ev.startDate;
-                const rowHref = noDate ? bchEventSetupPath(ev.id) : workspace;
-                return (
-                  <ClickableTableRow
-                    key={ev.id}
-                    href={rowHref}
-                    className="border-slate-800/80 hover:bg-slate-900/50"
-                  >
-                    <TableCell className="max-w-[200px] font-medium text-slate-100 sm:max-w-none">
-                      {bchEventDisplayName(ev.name)}
-                      <p className="mt-0.5 text-xs text-slate-500 md:hidden">{formatSchedule(ev)}</p>
-                    </TableCell>
-                    <TableCell className="hidden text-sm text-slate-400 md:table-cell">
-                      {formatSchedule(ev)}
-                    </TableCell>
-                    <TableCell className="hidden text-sm text-slate-400 lg:table-cell">
-                      {meta?.spaceName ?? "—"}
-                    </TableCell>
-                    <TableCell className="hidden text-sm capitalize text-slate-400 xl:table-cell">
-                      {meta?.eventType?.trim() ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <span className="rounded-md border border-slate-700 bg-slate-900/50 px-2 py-0.5 text-[11px] text-slate-300">
-                        {EVENT_STATUS_LABEL[ev.status] ?? ev.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <span
-                        className={cn(
-                          "rounded-md border px-2 py-0.5 text-[11px]",
-                          ev.ticketingEnabled
-                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
-                            : "border-slate-700 text-slate-500",
-                        )}
-                      >
-                        {ev.ticketingEnabled ? "Ativa" : "Off"}
-                      </span>
-                    </TableCell>
-                  </ClickableTableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+        <section className={cn(BCH_CARD, "overflow-hidden p-0")}>
+          <div className="border-b border-slate-800/80 px-4 py-3 sm:px-5">
+            <p className="text-sm font-semibold text-slate-100">Lista operacional</p>
+            <p className="text-xs text-slate-500">Clique na linha para abrir o workspace do evento.</p>
+          </div>
+          <div className={cn(BCH_TABLE_WRAP, "rounded-none border-0")}>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-800 hover:bg-transparent">
+                  <TableHead className="h-10 text-slate-400">Evento</TableHead>
+                  <TableHead className="hidden h-10 text-slate-400 md:table-cell">Agenda</TableHead>
+                  {showSpaceColumn ? (
+                    <TableHead className="hidden h-10 text-slate-400 lg:table-cell">Espaço</TableHead>
+                  ) : null}
+                  {showTypeColumn ? (
+                    <TableHead className="hidden h-10 text-slate-400 xl:table-cell">Tipo</TableHead>
+                  ) : null}
+                  <TableHead className="h-10 text-slate-400">Fase</TableHead>
+                  <TableHead className="h-10 text-slate-400">Publicação</TableHead>
+                  <TableHead className="hidden h-10 text-slate-400 sm:table-cell">Ingressos</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((ev) => {
+                  const meta = metaByEventId[ev.id];
+                  const workspace = bchEventWorkspacePath(ev.id);
+                  const noDate = !ev.startDate;
+                  const rowHref = noDate ? bchEventSetupPath(ev.id) : workspace;
+                  const lifecycle = classifyBchEventLifecycle(ev);
+                  const sublineParts = [formatSchedule(ev)];
+                  if (meta?.spaceName && !showSpaceColumn) sublineParts.push(meta.spaceName);
+                  if (noDate) sublineParts.push("Completar cadastro");
+                  return (
+                    <ClickableTableRow
+                      key={ev.id}
+                      href={rowHref}
+                      className="border-slate-800/80 hover:bg-slate-900/50"
+                    >
+                      <TableCell className="py-3">
+                        <p className="font-medium text-slate-100">{bchEventDisplayName(ev.name)}</p>
+                        <p className="mt-0.5 truncate text-xs text-slate-500">{sublineParts.join(" · ")}</p>
+                      </TableCell>
+                      <TableCell className="hidden py-3 text-sm text-slate-400 md:table-cell">
+                        {formatSchedule(ev)}
+                      </TableCell>
+                      {showSpaceColumn ? (
+                        <TableCell className="hidden py-3 text-sm text-slate-400 lg:table-cell">
+                          {meta?.spaceName ?? "—"}
+                        </TableCell>
+                      ) : null}
+                      {showTypeColumn ? (
+                        <TableCell className="hidden py-3 text-sm capitalize text-slate-400 xl:table-cell">
+                          {meta?.eventType?.trim() ?? "—"}
+                        </TableCell>
+                      ) : null}
+                      <TableCell className="py-3">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-md border px-2 py-0.5 text-[11px] font-medium",
+                            LIFECYCLE_CHIP[lifecycle],
+                          )}
+                        >
+                          {LIFECYCLE_LABEL[lifecycle]}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <span className="rounded-md border border-slate-700 bg-slate-900/50 px-2 py-0.5 text-[11px] text-slate-300">
+                          {EVENT_STATUS_LABEL[ev.status] ?? ev.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="hidden py-3 sm:table-cell">
+                        <span
+                          className={cn(
+                            "rounded-md border px-2 py-0.5 text-[11px]",
+                            ev.ticketingEnabled
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                              : "border-slate-700 text-slate-500",
+                          )}
+                        >
+                          {ev.ticketingEnabled ? "Ativa" : "Off"}
+                        </span>
+                      </TableCell>
+                    </ClickableTableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
       )}
 
       <BostonCityHallCreateBchEventDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={load} />
