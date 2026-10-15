@@ -81,20 +81,100 @@ export class BostonCityHallCheckinSessionsService {
     });
   }
 
-  async getActiveSession(eventId: string, operatorUserId: string | null) {
+  async getActiveSession(
+    eventId: string,
+    operatorUserId: string | null,
+    stationId?: string | null,
+  ) {
     const tenantId = await this.tenantId();
     await this.assertEvent(tenantId, eventId);
+    const evId = eventId.trim();
+    const stationFilter = stationId?.trim();
     const row = await this.prisma.bchCheckinSession.findFirst({
       where: {
         tenantId,
-        eventId: eventId.trim(),
+        eventId: evId,
         status: 'open',
-        ...(operatorUserId ? { operatorUserId } : {}),
+        ...(stationFilter ? { stationId: stationFilter } : operatorUserId ? { operatorUserId } : {}),
       },
       include: { station: true },
       orderBy: { openedAt: 'desc' },
     });
     return mapCheckinSession(row);
+  }
+
+  /** Mapa de portarias (estações) + sessão aberta — pareamento multi-gate. */
+  async listPortariaBoard(eventId: string) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    const evId = eventId.trim();
+    const [stations, openSessions] = await Promise.all([
+      this.prisma.bchCheckinStation.findMany({
+        where: { tenantId, eventId: evId, active: true },
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.bchCheckinSession.findMany({
+        where: { tenantId, eventId: evId, status: 'open' },
+        include: {
+          station: true,
+          operatorUser: { select: { id: true, name: true, username: true } },
+        },
+      }),
+    ]);
+    const sessionByStation = new Map(openSessions.map((s) => [s.stationId, s]));
+    return stations.map((station) => {
+      const open = sessionByStation.get(station.id);
+      return {
+        station: {
+          id: station.id,
+          name: station.name,
+          location: station.location,
+          active: station.active,
+          deviceLabel: station.deviceLabel,
+        },
+        openSession: open
+          ? {
+              id: open.id,
+              deviceLabel: open.deviceLabel,
+              acceptedCount: open.acceptedCount,
+              duplicateCount: open.duplicateCount,
+              rejectedCount: open.rejectedCount,
+              openedAt: open.openedAt.toISOString(),
+              operatorLabel:
+                open.operatorUser?.name?.trim() ||
+                open.operatorUser?.username?.trim() ||
+                null,
+            }
+          : null,
+      };
+    });
+  }
+
+  async ensureDefaultPortarias(eventId: string, count = 4) {
+    const tenantId = await this.tenantId();
+    await this.assertEvent(tenantId, eventId);
+    const evId = eventId.trim();
+    const existing = await this.prisma.bchCheckinStation.findMany({
+      where: { tenantId, eventId: evId },
+    });
+    const names = new Set(existing.map((s) => s.name.toLowerCase()));
+    const created: typeof existing = [];
+    for (let i = 1; i <= count; i += 1) {
+      const name = `Portaria ${i}`;
+      if (names.has(name.toLowerCase())) continue;
+      const row = await this.prisma.bchCheckinStation.create({
+        data: {
+          tenantId,
+          eventId: evId,
+          name,
+          location: `Saída ${i}`,
+          active: true,
+        },
+      });
+      created.push(row);
+      names.add(name.toLowerCase());
+    }
+    return this.listPortariaBoard(evId);
   }
 
   async openSession(

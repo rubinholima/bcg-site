@@ -1022,13 +1022,24 @@ export class BostonCityHallController {
     return this.checkinSessions.patchStation(eventId.trim(), stationId, body as never);
   }
 
+  @Get('events/:eventId/checkin/portarias')
+  listCheckinPortarias(@Param('eventId') eventId: string) {
+    return this.checkinSessions.listPortariaBoard(eventId.trim());
+  }
+
+  @Post('events/:eventId/checkin/portarias/seed-default')
+  seedCheckinPortarias(@Param('eventId') eventId: string) {
+    return this.checkinSessions.ensureDefaultPortarias(eventId.trim(), 4);
+  }
+
   @Get('events/:eventId/checkin/sessions/active')
   getActiveCheckinSession(
     @Param('eventId') eventId: string,
+    @Query('stationId') stationId: string | undefined,
     @Req() req: Request & { user: CognitoJwtPayload },
   ) {
     return this.tenantAccess.resolveInternalUserId(req.user.sub).then((operatorUserId) =>
-      this.checkinSessions.getActiveSession(eventId.trim(), operatorUserId),
+      this.checkinSessions.getActiveSession(eventId.trim(), operatorUserId, stationId),
     );
   }
 

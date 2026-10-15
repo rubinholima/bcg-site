@@ -24,15 +24,15 @@ import { EVENT_TICKET_CHECKIN_RESULT_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
 import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
 import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
+import { BchCheckinPairingPanel } from "@/components/dashboard/boston-city-hall/BchCheckinPairingPanel";
+import { readCheckinPairing } from "@/components/dashboard/boston-city-hall/bch-checkin-pairing-store";
 import {
   checkinStationDisplay,
   normalizeCheckinSession,
   type CheckinSessionDto,
-  type CheckinStationDto,
 } from "@/components/dashboard/boston-city-hall/bch-checkin-session";
 import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 import { BCH_BTN_SECONDARY, BCH_CARD, BCH_INPUT, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
-import { NativeSelect } from "@/components/ui/native-select";
 
 const RESULT_STYLE: Record<string, string> = {
   accepted: "border-emerald-500/50 bg-emerald-500/10 text-emerald-200",
@@ -62,14 +62,10 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
     return hit?.name?.trim() || eventId;
   }, [eventId, events]);
 
-  const [stations, setStations] = useState<CheckinStationDto[]>([]);
   const [session, setSession] = useState<CheckinSessionDto | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [loadingSession, setLoadingSession] = useState(false);
   const [summary, setSummary] = useState<CheckinSummary | null>(null);
-  const [newStationName, setNewStationName] = useState("");
-  const [newStationLocation, setNewStationLocation] = useState("");
-  const [selectedStationId, setSelectedStationId] = useState("");
   const [scanValue, setScanValue] = useState("");
   const [processing, setProcessing] = useState(false);
   const [lastResult, setLastResult] = useState<EventTicketCheckinResponse | null>(null);
@@ -98,17 +94,6 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
     }
   }, []);
 
-  const loadStations = useCallback(async (ev: string) => {
-    if (!ev) {
-      setStations([]);
-      return;
-    }
-    const res = await api.get<CheckinStationDto[]>(
-      `/boston-city-hall/events/${encodeURIComponent(ev)}/checkin/stations`,
-    );
-    setStations(Array.isArray(res.data) ? res.data.filter((s) => s.active) : []);
-  }, []);
-
   const loadSession = useCallback(async (ev: string) => {
     if (!ev) {
       setSession(null);
@@ -118,8 +103,12 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
     setLoadingSession(true);
     setSessionError(null);
     try {
+      const paired = readCheckinPairing(ev);
+      const qs = paired?.stationId
+        ? `?stationId=${encodeURIComponent(paired.stationId)}`
+        : "";
       const res = await api.get<CheckinSessionDto | null>(
-        `/boston-city-hall/events/${encodeURIComponent(ev)}/checkin/sessions/active`,
+        `/boston-city-hall/events/${encodeURIComponent(ev)}/checkin/sessions/active${qs}`,
       );
       setSession(normalizeCheckinSession(res.data));
     } catch {
@@ -148,11 +137,10 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
 
   useEffect(() => {
     if (!eventId) return;
-    void loadStations(eventId);
     void loadSession(eventId);
     void loadSummary(eventId);
     void loadRecent(eventId);
-  }, [eventId, loadStations, loadSession, loadSummary, loadRecent]);
+  }, [eventId, loadSession, loadSummary, loadRecent]);
 
   useEffect(() => {
     if (!eventId) return;
@@ -178,42 +166,6 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
     }, 300);
     return () => window.clearTimeout(t);
   }, [eventId, manualQ]);
-
-  const createStation = async () => {
-    if (!eventId || !newStationName.trim()) return;
-    await api.post(`/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/stations`, {
-      name: newStationName.trim(),
-      location: newStationLocation.trim() || null,
-    });
-    setNewStationName("");
-    setNewStationLocation("");
-    await loadStations(eventId);
-  };
-
-  const openSession = async () => {
-    if (!eventId || !selectedStationId) return;
-    try {
-      setSessionError(null);
-      const res = await api.post<CheckinSessionDto>(
-        `/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/sessions/open`,
-        { stationId: selectedStationId },
-      );
-      setSession(normalizeCheckinSession(res.data));
-      focusScan();
-    } catch {
-      setSessionError("Não foi possível abrir a sessão nesta estação.");
-    }
-  };
-
-  const closeSession = async () => {
-    if (!eventId || !session) return;
-    await api.post(
-      `/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/sessions/${session.id}/close`,
-      {},
-    );
-    setSession(null);
-    await loadSummary(eventId);
-  };
 
   const submitScan = async (raw: string) => {
     const input = raw.trim();
@@ -374,112 +326,26 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
         </div>
       ) : null}
 
-      <section className={cn(BCH_CARD, "space-y-3")}>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Operação</p>
-            {fixedEventId && eventLabel ? (
-              <p className="truncate text-base font-semibold text-slate-100">{eventLabel}</p>
-            ) : (
-              <p className="text-sm text-slate-400">{eventId ? "Evento selecionado" : "Selecione um evento"}</p>
-            )}
-            {loadingSession ? (
-              <p className="flex items-center gap-2 text-xs text-slate-400">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                Carregando sessão…
-              </p>
-            ) : session ? (
-              <p className="text-sm text-emerald-200/90">
-                Sessão aberta · {sessionStationLine ?? "Estação não informada"}
-              </p>
-            ) : (
-              <p className="text-sm text-slate-400">Nenhuma sessão aberta para você neste evento.</p>
-            )}
-            {session?.stationMissing ? (
-              <p className="text-xs text-amber-200/90">
-                A estação vinculada não foi encontrada. Encerre a sessão e abra outra estação válida.
-              </p>
-            ) : null}
-            {sessionError ? <p className="text-xs text-red-300">{sessionError}</p> : null}
-          </div>
-          {session ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className={cn("min-h-[44px] shrink-0", BCH_BTN_SECONDARY)}
-              onClick={() => void closeSession()}
-            >
-              Encerrar sessão
-            </Button>
-          ) : null}
-        </div>
+      {eventId ? (
+        <BchCheckinPairingPanel
+          eventId={eventId}
+          session={session}
+          onSessionChange={(s) => {
+            setSession(s);
+            if (s) void loadSummary(eventId);
+          }}
+          onPairedFocusScan={focusScan}
+        />
+      ) : null}
 
-        {!session ? (
-          <div className="grid gap-3 border-t border-slate-800/70 pt-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-slate-400">Abrir sessão</p>
-              {stations.length > 0 ? (
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <Label className="text-xs">Estação</Label>
-                    <NativeSelect
-                      className={cn("min-h-[44px] w-full", BCH_INPUT)}
-                      value={selectedStationId}
-                      onChange={(e) => setSelectedStationId(e.target.value)}
-                    >
-                      <option value="">Selecione…</option>
-                      {stations.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                          {s.location ? ` — ${s.location}` : ""}
-                        </option>
-                      ))}
-                    </NativeSelect>
-                  </div>
-                  <Button
-                    type="button"
-                    className="min-h-[44px] shrink-0"
-                    disabled={!selectedStationId || !eventId}
-                    onClick={() => void openSession()}
-                  >
-                    Abrir sessão
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500">Crie uma estação abaixo para iniciar.</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-slate-400">Nova estação</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Input
-                  value={newStationName}
-                  onChange={(e) => setNewStationName(e.target.value)}
-                  className={cn("min-h-[44px] text-foreground", BCH_INPUT)}
-                  placeholder="Nome"
-                />
-                <Input
-                  value={newStationLocation}
-                  onChange={(e) => setNewStationLocation(e.target.value)}
-                  className={cn("min-h-[44px] text-foreground", BCH_INPUT)}
-                  placeholder="Local físico"
-                />
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}
-                disabled={!eventId || !newStationName.trim()}
-                onClick={() => void createStation()}
-              >
-                Criar estação
-              </Button>
-            </div>
-          </div>
-        ) : null}
-      </section>
+      {sessionError ? (
+        <p className="text-xs text-red-300">{sessionError}</p>
+      ) : loadingSession ? (
+        <p className="flex items-center gap-2 text-xs text-slate-400">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+          Carregando sessão…
+        </p>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
