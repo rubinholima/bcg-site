@@ -16,8 +16,14 @@ export const BCH_BTN_SECONDARY =
 export const BCH_INPUT =
   "border-slate-700 bg-slate-950/50 text-foreground placeholder:text-slate-500";
 
-/** Container de página BCH — largura útil do shell CUP360 (sem max-width arbitrário). */
-export const BCH_PAGE_SHELL = "w-full min-w-0 space-y-4 pb-8 sm:space-y-5";
+/**
+ * Região de conteúdo BCH — centralizada, margens do shell + largura máxima confortável
+ * (caixas proporcionais; não full-bleed nem coluna estreita).
+ */
+export const BCH_CONTENT_REGION = "mx-auto w-full min-w-0 max-w-[72rem]";
+
+/** Container de página BCH — use via BchPageShell. */
+export const BCH_PAGE_SHELL = `${BCH_CONTENT_REGION} space-y-4 pb-8 sm:space-y-5`;
 
 /** @deprecated Use BCH_PAGE_SHELL */
 export const BCH_EVENT_WORKSPACE_SHELL = BCH_PAGE_SHELL;

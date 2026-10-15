@@ -3,6 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BostonCityHallBarService } from './boston-city-hall-bar.service';
 import { BostonCityHallTicketCheckinService } from './boston-city-hall-ticket-checkin.service';
 import { BostonCityHallSeatingService } from './boston-city-hall-seating.service';
+import {
+  checkinStationLabel,
+  mapCheckinSession,
+} from './boston-city-hall-checkin-session.mapper';
 
 @Injectable()
 export class BostonCityHallCheckinSessionsService {
@@ -80,7 +84,7 @@ export class BostonCityHallCheckinSessionsService {
   async getActiveSession(eventId: string, operatorUserId: string | null) {
     const tenantId = await this.tenantId();
     await this.assertEvent(tenantId, eventId);
-    return this.prisma.bchCheckinSession.findFirst({
+    const row = await this.prisma.bchCheckinSession.findFirst({
       where: {
         tenantId,
         eventId: eventId.trim(),
@@ -90,6 +94,7 @@ export class BostonCityHallCheckinSessionsService {
       include: { station: true },
       orderBy: { openedAt: 'desc' },
     });
+    return mapCheckinSession(row);
   }
 
   async openSession(
@@ -107,7 +112,7 @@ export class BostonCityHallCheckinSessionsService {
       where: { tenantId, stationId: station.id, status: 'open' },
     });
     if (existing) throw new BadRequestException('Já existe sessão aberta nesta estação.');
-    return this.prisma.bchCheckinSession.create({
+    const created = await this.prisma.bchCheckinSession.create({
       data: {
         tenantId,
         eventId: eventId.trim(),
@@ -118,6 +123,7 @@ export class BostonCityHallCheckinSessionsService {
       },
       include: { station: true },
     });
+    return mapCheckinSession(created);
   }
 
   async closeSession(eventId: string, sessionId: string, notes?: string | null) {
@@ -127,7 +133,7 @@ export class BostonCityHallCheckinSessionsService {
       where: { id: sessionId, tenantId, eventId: eventId.trim(), status: 'open' },
     });
     if (!session) throw new NotFoundException('Sessão não encontrada ou já encerrada.');
-    return this.prisma.bchCheckinSession.update({
+    const closed = await this.prisma.bchCheckinSession.update({
       where: { id: sessionId },
       data: {
         status: 'closed',
@@ -136,6 +142,7 @@ export class BostonCityHallCheckinSessionsService {
       },
       include: { station: true },
     });
+    return mapCheckinSession(closed);
   }
 
   async scanInSession(
@@ -151,7 +158,16 @@ export class BostonCityHallCheckinSessionsService {
       include: { station: true },
     });
     if (!session) throw new BadRequestException('Sessão encerrada ou inválida.');
-    const stationLabel = [session.station.name, session.station.location].filter(Boolean).join(' · ');
+    const stationLabel = checkinStationLabel(
+      session.station
+        ? {
+            id: session.station.id,
+            name: session.station.name,
+            location: session.station.location,
+            active: session.station.active,
+          }
+        : null,
+    );
     const result = await this.checkin.performCheckin({
       tenantId,
       eventId: eventId.trim(),

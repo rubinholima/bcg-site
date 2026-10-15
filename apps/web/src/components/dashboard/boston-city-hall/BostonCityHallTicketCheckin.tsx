@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,14 @@ import { EVENT_TICKET_CHECKIN_RESULT_LABEL } from "@/types/boston-city-hall";
 import { cn } from "@/lib/utils";
 import { BchEventListDiagnostics } from "@/components/dashboard/boston-city-hall/BchEventListDiagnostics";
 import { useBchHubEventBinding } from "@/components/dashboard/boston-city-hall/use-bch-hub-event-binding";
+import {
+  checkinStationDisplay,
+  normalizeCheckinSession,
+  type CheckinSessionDto,
+  type CheckinStationDto,
+} from "@/components/dashboard/boston-city-hall/bch-checkin-session";
+import { BCH_BTN_SECONDARY, BCH_CARD, BCH_INPUT, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { NativeSelect } from "@/components/ui/native-select";
 
 const RESULT_STYLE: Record<string, string> = {
   accepted: "border-emerald-500/50 bg-emerald-500/10 text-emerald-200",
@@ -32,15 +40,6 @@ const RESULT_STYLE: Record<string, string> = {
   wrong_event: "border-violet-500/50 bg-violet-500/10 text-violet-200",
 };
 
-type CheckinStation = { id: string; name: string; location: string | null; active: boolean };
-type CheckinSession = {
-  id: string;
-  status: string;
-  station: CheckinStation;
-  acceptedCount: number;
-  duplicateCount: number;
-  rejectedCount: number;
-};
 type CheckinSummary = { issued: number; accepted: number; duplicate: number; rejected: number };
 
 export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: string } = {}) {
@@ -55,8 +54,16 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
   } = binding;
   const eventId = fixedEventId ?? boundEventId;
 
-  const [stations, setStations] = useState<CheckinStation[]>([]);
-  const [session, setSession] = useState<CheckinSession | null>(null);
+  const eventLabel = useMemo(() => {
+    if (!eventId) return "";
+    const hit = events.find((e) => e.id === eventId);
+    return hit?.name?.trim() || eventId;
+  }, [eventId, events]);
+
+  const [stations, setStations] = useState<CheckinStationDto[]>([]);
+  const [session, setSession] = useState<CheckinSessionDto | null>(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [loadingSession, setLoadingSession] = useState(false);
   const [summary, setSummary] = useState<CheckinSummary | null>(null);
   const [newStationName, setNewStationName] = useState("");
   const [newStationLocation, setNewStationLocation] = useState("");
@@ -94,7 +101,7 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
       setStations([]);
       return;
     }
-    const res = await api.get<CheckinStation[]>(
+    const res = await api.get<CheckinStationDto[]>(
       `/boston-city-hall/events/${encodeURIComponent(ev)}/checkin/stations`,
     );
     setStations(Array.isArray(res.data) ? res.data.filter((s) => s.active) : []);
@@ -103,15 +110,21 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
   const loadSession = useCallback(async (ev: string) => {
     if (!ev) {
       setSession(null);
+      setSessionError(null);
       return;
     }
+    setLoadingSession(true);
+    setSessionError(null);
     try {
-      const res = await api.get<CheckinSession | null>(
+      const res = await api.get<CheckinSessionDto | null>(
         `/boston-city-hall/events/${encodeURIComponent(ev)}/checkin/sessions/active`,
       );
-      setSession(res.data ?? null);
+      setSession(normalizeCheckinSession(res.data));
     } catch {
       setSession(null);
+      setSessionError("Não foi possível carregar a sessão de check-in.");
+    } finally {
+      setLoadingSession(false);
     }
   }, []);
 
@@ -177,12 +190,17 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
 
   const openSession = async () => {
     if (!eventId || !selectedStationId) return;
-    const res = await api.post<CheckinSession>(
-      `/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/sessions/open`,
-      { stationId: selectedStationId },
-    );
-    setSession(res.data);
-    focusScan();
+    try {
+      setSessionError(null);
+      const res = await api.post<CheckinSessionDto>(
+        `/boston-city-hall/events/${encodeURIComponent(eventId)}/checkin/sessions/open`,
+        { stationId: selectedStationId },
+      );
+      setSession(normalizeCheckinSession(res.data));
+      focusScan();
+    } catch {
+      setSessionError("Não foi possível abrir a sessão nesta estação.");
+    }
   };
 
   const closeSession = async () => {
@@ -224,27 +242,26 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
           ticketCode: res.data.ticket?.ticketCode ?? null,
           ticketTypeName: res.data.ticket?.ticketTypeName ?? null,
           holderName: res.data.ticket?.holderName ?? null,
-          stationLabel: session?.station.name ?? null,
+          stationLabel: session?.station ? checkinStationDisplay(session.station) : null,
           createdAt: res.data.scannedAt,
         },
         ...prev.slice(0, 19),
       ]);
       void loadSummary(eventId);
       if (session) {
-        setSession((s) =>
-          s
-            ? {
-                ...s,
-                acceptedCount:
-                  s.acceptedCount + (res.data.result === "accepted" ? 1 : 0),
-                duplicateCount:
-                  s.duplicateCount + (res.data.result === "already_used" ? 1 : 0),
-                rejectedCount:
-                  s.rejectedCount +
-                  (["invalid", "cancelled", "wrong_event"].includes(res.data.result) ? 1 : 0),
-              }
-            : s,
-        );
+        setSession((s) => {
+          if (!s) return s;
+          const accepted = s.acceptedCount ?? 0;
+          const duplicate = s.duplicateCount ?? 0;
+          const rejected = s.rejectedCount ?? 0;
+          return {
+            ...s,
+            acceptedCount: accepted + (res.data.result === "accepted" ? 1 : 0),
+            duplicateCount: duplicate + (res.data.result === "already_used" ? 1 : 0),
+            rejectedCount:
+              rejected + (["invalid", "cancelled", "wrong_event"].includes(res.data.result) ? 1 : 0),
+          };
+        });
       }
     } catch {
       setLastResult({
@@ -309,8 +326,28 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
     };
   }, [cameraOn, session?.id, processing]);
 
+  const sessionStationLine = session?.station ? checkinStationDisplay(session.station) : null;
+
+  const kpiTiles = [
+    ...(summary
+      ? [
+          { label: "Emitidos", value: summary.issued },
+          { label: "Entradas (evento)", value: summary.accepted },
+          { label: "Duplicadas", value: summary.duplicate },
+          { label: "Rejeitadas", value: summary.rejected },
+        ]
+      : []),
+    ...(session
+      ? [
+          { label: "Sessão · OK", value: session.acceptedCount ?? 0 },
+          { label: "Sessão · dup.", value: session.duplicateCount ?? 0 },
+          { label: "Sessão · rej.", value: session.rejectedCount ?? 0 },
+        ]
+      : []),
+  ];
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {!fixedEventId && (eventsError || (!loadingEvents && events.length === 0)) ? (
         <BchEventListDiagnostics
           error={eventsError}
@@ -320,213 +357,271 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
       ) : null}
 
       {!fixedEventId ? (
-        <div className="max-w-md">
-          <Label className="text-xs">Evento</Label>
+        <div className="max-w-md space-y-1">
+          <Label className="text-xs text-slate-400">Evento</Label>
           <BchEventSelectField events={events} value={eventId} onChange={setEventId} />
         </div>
       ) : null}
 
-      {summary ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {[
-            { label: "Emitidos", value: summary.issued },
-            { label: "Entradas", value: summary.accepted },
-            { label: "Duplicadas", value: summary.duplicate },
-            { label: "Rejeitadas", value: summary.rejected },
-          ].map((k) => (
-            <div key={k.label} className="rounded-lg border border-slate-800/80 px-3 py-2 text-center">
-              <p className="text-xs text-slate-400">{k.label}</p>
-              <p className="text-lg font-semibold text-slate-100">{k.value}</p>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      <div className="rounded-lg border border-slate-800/80 bg-slate-950/30 p-4 space-y-3">
-        <p className="text-sm font-medium text-slate-200">Estação e sessão</p>
-        {session ? (
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span>
-              Sessão aberta · <strong>{session.station.name}</strong>
-              {session.station.location ? ` · ${session.station.location}` : ""}
-            </span>
-            <Button type="button" size="sm" variant="outline" className="min-h-[36px]" onClick={() => void closeSession()}>
-              Encerrar sessão
-            </Button>
+      <section className={cn(BCH_CARD, "space-y-3")}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Operação</p>
+            {fixedEventId && eventLabel ? (
+              <p className="truncate text-base font-semibold text-slate-100">{eventLabel}</p>
+            ) : (
+              <p className="text-sm text-slate-400">{eventId ? "Evento selecionado" : "Selecione um evento"}</p>
+            )}
+            {loadingSession ? (
+              <p className="flex items-center gap-2 text-xs text-slate-400">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                Carregando sessão…
+              </p>
+            ) : session ? (
+              <p className="text-sm text-emerald-200/90">
+                Sessão aberta · {sessionStationLine ?? "Estação não informada"}
+              </p>
+            ) : (
+              <p className="text-sm text-slate-400">Nenhuma sessão aberta para você neste evento.</p>
+            )}
+            {session?.stationMissing ? (
+              <p className="text-xs text-amber-200/90">
+                A estação vinculada não foi encontrada. Encerre a sessão e abra outra estação válida.
+              </p>
+            ) : null}
+            {sessionError ? <p className="text-xs text-red-300">{sessionError}</p> : null}
           </div>
-        ) : (
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-[120px] flex-1 space-y-1">
-              <Label className="text-xs">Nova estação</Label>
-              <Input
-                value={newStationName}
-                onChange={(e) => setNewStationName(e.target.value)}
-                className="h-9 text-foreground"
-                placeholder="Nome"
-              />
-            </div>
-            <div className="min-w-[120px] flex-1 space-y-1">
-              <Label className="text-xs">Local físico</Label>
-              <Input
-                value={newStationLocation}
-                onChange={(e) => setNewStationLocation(e.target.value)}
-                className="h-9 text-foreground"
-                placeholder="Ex.: Entrada principal"
-              />
-            </div>
-            <Button type="button" size="sm" className="min-h-[36px]" disabled={!eventId} onClick={() => void createStation()}>
-              Criar estação
-            </Button>
-          </div>
-        )}
-        {!session && stations.length > 0 ? (
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="w-48 space-y-1">
-              <Label className="text-xs">Estação</Label>
-              <select
-                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm text-foreground"
-                value={selectedStationId}
-                onChange={(e) => setSelectedStationId(e.target.value)}
-              >
-                <option value="">Selecione…</option>
-                {stations.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                    {s.location ? ` — ${s.location}` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              className="min-h-[36px]"
-              disabled={!selectedStationId}
-              onClick={() => void openSession()}
-            >
-              Abrir sessão
-            </Button>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="rounded-lg border border-slate-800/80 bg-slate-950/30 p-4 space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Label>Leitura QR / código</Label>
           {session ? (
             <Button
               type="button"
               size="sm"
-              variant={cameraOn ? "default" : "outline"}
-              className="min-h-[36px]"
-              onClick={() => setCameraOn((v) => !v)}
+              variant="outline"
+              className={cn("min-h-[44px] shrink-0", BCH_BTN_SECONDARY)}
+              onClick={() => void closeSession()}
             >
-              {cameraOn ? "Desligar câmera" : "Câmera (Android/tablet)"}
+              Encerrar sessão
             </Button>
           ) : null}
         </div>
-        {cameraOn ? (
-          <video ref={videoRef} className="max-h-48 w-full max-w-md rounded-md bg-black object-cover" muted playsInline />
-        ) : null}
-        <Input
-          ref={scanRef}
-          value={scanValue}
-          disabled={!eventId || processing}
-          autoComplete="off"
-          spellCheck={false}
-          className="max-w-xl min-h-[52px] text-lg text-foreground"
-          placeholder={eventId ? "Aponte o scanner e leia…" : "Selecione um evento"}
-          onChange={(e) => setScanValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              void submitScan(scanValue);
-            }
-          }}
-        />
-        {processing ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Processando…
-          </div>
-        ) : null}
-        {lastResult ? (
-          <div
-            className={cn(
-              "max-w-xl rounded-lg border p-4 space-y-2",
-              RESULT_STYLE[lastResult.result] ?? RESULT_STYLE.invalid,
-            )}
-          >
-            <p className="text-lg font-bold">
-              {EVENT_TICKET_CHECKIN_RESULT_LABEL[lastResult.result] ?? lastResult.result}
-            </p>
-            {lastResult.ticket ? (
-              <>
-                <p className="font-mono text-sm">{lastResult.ticket.ticketCode}</p>
-                <p className="text-sm">{lastResult.ticket.holderName}</p>
-              </>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
 
-      <div className="rounded-lg border border-slate-800/80 p-4 space-y-2">
-        <p className="text-sm font-medium">Busca manual</p>
-        <Input
-          value={manualQ}
-          onChange={(e) => setManualQ(e.target.value)}
-          className="max-w-md text-foreground"
-          placeholder="Código, titular, e-mail ou pedido"
-        />
-        {manualHits.length > 0 ? (
-          <ul className="max-h-36 overflow-y-auto rounded border border-slate-700 text-sm">
-            {manualHits.map((h) => (
-              <li key={h.id}>
-                <button
+        {!session ? (
+          <div className="grid gap-3 border-t border-slate-800/70 pt-3 md:grid-cols-2">
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-slate-400">Abrir sessão</p>
+              {stations.length > 0 ? (
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <Label className="text-xs">Estação</Label>
+                    <NativeSelect
+                      className={cn("min-h-[44px] w-full", BCH_INPUT)}
+                      value={selectedStationId}
+                      onChange={(e) => setSelectedStationId(e.target.value)}
+                    >
+                      <option value="">Selecione…</option>
+                      {stations.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                          {s.location ? ` — ${s.location}` : ""}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </div>
+                  <Button
+                    type="button"
+                    className="min-h-[44px] shrink-0"
+                    disabled={!selectedStationId || !eventId}
+                    onClick={() => void openSession()}
+                  >
+                    Abrir sessão
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">Crie uma estação abaixo para iniciar.</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-slate-400">Nova estação</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input
+                  value={newStationName}
+                  onChange={(e) => setNewStationName(e.target.value)}
+                  className={cn("min-h-[44px] text-foreground", BCH_INPUT)}
+                  placeholder="Nome"
+                />
+                <Input
+                  value={newStationLocation}
+                  onChange={(e) => setNewStationLocation(e.target.value)}
+                  className={cn("min-h-[44px] text-foreground", BCH_INPUT)}
+                  placeholder="Local físico"
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}
+                disabled={!eventId || !newStationName.trim()}
+                onClick={() => void createStation()}
+              >
+                Criar estação
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
+          <section className={cn(BCH_CARD, "space-y-3")}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-slate-100">Leitura QR / código</p>
+              {session ? (
+                <Button
                   type="button"
-                  className="block w-full px-3 py-2 text-left hover:bg-slate-800/60"
-                  onClick={() => void submitScan(h.ticketCode)}
+                  size="sm"
+                  variant={cameraOn ? "default" : "outline"}
+                  className="min-h-[44px]"
+                  onClick={() => setCameraOn((v) => !v)}
                 >
-                  {h.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
+                  {cameraOn ? "Desligar câmera" : "Câmera"}
+                </Button>
+              ) : null}
+            </div>
+            {cameraOn ? (
+              <video
+                ref={videoRef}
+                className="max-h-52 w-full rounded-lg bg-black object-cover sm:max-w-lg"
+                muted
+                playsInline
+              />
+            ) : null}
+            <Input
+              ref={scanRef}
+              value={scanValue}
+              disabled={!eventId || processing}
+              autoComplete="off"
+              spellCheck={false}
+              className="min-h-[52px] text-lg text-foreground sm:max-w-2xl"
+              placeholder={
+                !eventId
+                  ? "Selecione um evento"
+                  : session
+                    ? "Aponte o scanner e leia…"
+                    : "Abra uma sessão ou leia sem sessão (modo avulso)"
+              }
+              onChange={(e) => setScanValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void submitScan(scanValue);
+                }
+              }}
+            />
+            {processing ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processando…
+              </div>
+            ) : null}
+            {lastResult ? (
+              <div
+                className={cn(
+                  "rounded-lg border p-4 space-y-2 sm:max-w-2xl",
+                  RESULT_STYLE[lastResult.result] ?? RESULT_STYLE.invalid,
+                )}
+              >
+                <p className="text-lg font-bold">
+                  {EVENT_TICKET_CHECKIN_RESULT_LABEL[lastResult.result] ?? lastResult.result}
+                </p>
+                {lastResult.ticket ? (
+                  <>
+                    <p className="font-mono text-sm">{lastResult.ticket.ticketCode}</p>
+                    <p className="text-sm">{lastResult.ticket.holderName}</p>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
 
-      <div className="rounded-lg border border-slate-800/80 p-4">
-        <p className="mb-3 text-sm font-medium">Últimas leituras</p>
-        {loadingRecent ? (
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        ) : recent.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhuma leitura neste evento.</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Resultado</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Titular</TableHead>
-                <TableHead>Horário</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recent.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="text-xs">
-                    {EVENT_TICKET_CHECKIN_RESULT_LABEL[r.result] ?? r.result}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{r.ticketCode ?? "—"}</TableCell>
-                  <TableCell className="text-sm">{r.holderName ?? "—"}</TableCell>
-                  <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                    {new Date(r.createdAt).toLocaleString("pt-BR")}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+          <section className={cn(BCH_CARD, "space-y-2")}>
+            <p className="text-sm font-semibold text-slate-100">Busca manual</p>
+            <Input
+              value={manualQ}
+              onChange={(e) => setManualQ(e.target.value)}
+              className={cn("min-h-[44px] text-foreground sm:max-w-xl", BCH_INPUT)}
+              placeholder="Código, titular, e-mail ou pedido"
+              disabled={!eventId}
+            />
+            {manualQ.trim().length >= 2 && manualHits.length === 0 ? (
+              <p className="text-xs text-slate-500">Nenhum ingresso encontrado.</p>
+            ) : null}
+            {manualHits.length > 0 ? (
+              <ul className="max-h-40 overflow-y-auto rounded-md border border-slate-700 text-sm sm:max-w-xl">
+                {manualHits.map((h) => (
+                  <li key={h.id}>
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-2.5 text-left hover:bg-slate-800/60"
+                      onClick={() => void submitScan(h.ticketCode)}
+                    >
+                      {h.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        </div>
+
+        <aside className="space-y-4">
+          {kpiTiles.length > 0 ? (
+            <section className={cn(BCH_CARD, "space-y-3")}>
+              <p className="text-sm font-semibold text-slate-100">Presença</p>
+              <div className="grid grid-cols-2 gap-2">
+                {kpiTiles.map((k) => (
+                  <div key={k.label} className="rounded-lg border border-slate-800/80 px-2 py-2 text-center">
+                    <p className="text-[10px] leading-tight text-slate-500">{k.label}</p>
+                    <p className="text-lg font-semibold tabular-nums text-slate-100">{k.value}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <section className={cn(BCH_CARD, "space-y-2")}>
+            <p className="text-sm font-semibold text-slate-100">Últimas leituras</p>
+            {loadingRecent ? (
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            ) : recent.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma leitura neste evento.</p>
+            ) : (
+              <div className={BCH_TABLE_WRAP}>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Resultado</TableHead>
+                      <TableHead>Código</TableHead>
+                      <TableHead className="hidden sm:table-cell">Titular</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recent.slice(0, 12).map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-xs">
+                          {EVENT_TICKET_CHECKIN_RESULT_LABEL[r.result] ?? r.result}
+                        </TableCell>
+                        <TableCell className="max-w-[88px] truncate font-mono text-xs">{r.ticketCode ?? "—"}</TableCell>
+                        <TableCell className="hidden max-w-[120px] truncate text-sm sm:table-cell">
+                          {r.holderName ?? "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </section>
+        </aside>
       </div>
     </div>
   );

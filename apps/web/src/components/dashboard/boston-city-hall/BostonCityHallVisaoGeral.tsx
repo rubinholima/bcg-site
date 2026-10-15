@@ -19,6 +19,7 @@ import { pickFeaturedTicketingEvent } from "@/components/dashboard/boston-city-h
 import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { useBchTicketingEvents } from "@/components/dashboard/boston-city-hall/use-bch-ticketing-events";
 import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
+import { BchPageShell } from "@/components/dashboard/boston-city-hall/BchPageShell";
 import { BCH_BTN_PRIMARY, BCH_CARD } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { api } from "@/lib/api";
 import type { BchOperationalAlert, VenueOverview } from "@/types/boston-city-hall";
@@ -153,7 +154,7 @@ export function BostonCityHallVisaoGeral({ overview }: Props) {
       ];
 
   return (
-    <div className="w-full min-w-0 space-y-5">
+    <BchPageShell className="space-y-5">
       <section
         className={cn(
           BCH_CARD,
@@ -378,7 +379,7 @@ export function BostonCityHallVisaoGeral({ overview }: Props) {
           )}
         </BchSection>
       </div>
-    </div>
+    </BchPageShell>
   );
 }
 
