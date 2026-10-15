@@ -3,7 +3,6 @@
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
 import { BostonCityHallAlertCenter } from "@/components/dashboard/boston-city-hall/BostonCityHallAlertCenter";
 import { useAuth } from "@/context/AuthContext";
 
@@ -31,8 +30,7 @@ export default function BostonCityHallAlertsPage() {
   }
 
   return (
-    <BostonCityHallShell>
-      <Suspense
+    <Suspense
         fallback={
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -41,6 +39,5 @@ export default function BostonCityHallAlertsPage() {
       >
         <AlertsInner />
       </Suspense>
-    </BostonCityHallShell>
   );
 }

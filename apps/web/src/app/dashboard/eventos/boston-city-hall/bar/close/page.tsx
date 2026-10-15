@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
 import { BostonCityHallBarClose } from "@/components/dashboard/boston-city-hall/BostonCityHallBarClose";
 import { useAuth } from "@/context/AuthContext";
 
@@ -25,8 +24,6 @@ export default function BostonCityHallBarClosePage() {
   }
 
   return (
-    <BostonCityHallShell>
-      <BostonCityHallBarClose />
-    </BostonCityHallShell>
+    <BostonCityHallBarClose />
   );
 }

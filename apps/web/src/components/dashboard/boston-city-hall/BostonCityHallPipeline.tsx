@@ -33,6 +33,11 @@ import {
 import { cn } from "@/lib/utils";
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
 import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
+import { BchModuleSubNav } from "@/components/dashboard/boston-city-hall/BchModuleSubNav";
+import { BCH_COMMERCIAL_SUBNAV } from "@/components/dashboard/boston-city-hall/bch-subnav.config";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 import { BCH_BTN_PRIMARY, BCH_CARD } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { BostonCityHallLeadDetailDialog } from "./BostonCityHallLeadDetailDialog";
 import {
@@ -278,21 +283,41 @@ export function BostonCityHallPipeline() {
     void moveStage(lead.id, stage);
   };
 
+  const openCount = leads.filter((l) => !["confirmado", "perdido"].includes(l.stage)).length;
+
   return (
     <>
-      <div className={cn(BCH_CARD, "space-y-4")}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+      <BchDestinationPageShell
+        title="Funil"
+        breadcrumbs={[
+          { href: BCH_BASE, label: "Boston City Hall" },
+          { label: "Comercial" },
+          { label: "Funil" },
+        ]}
+        subNav={<BchModuleSubNav items={BCH_COMMERCIAL_SUBNAV} ariaLabel="Comercial" />}
+        actions={
           <Button
             onClick={() => {
               setForm(emptyLead());
               setOpenCreate(true);
             }}
-            className={cn("min-h-[44px] w-full sm:w-auto", BCH_BTN_PRIMARY)}
+            className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             Novo lead
           </Button>
-        </div>
+        }
+      >
+        <BchMetricsStrip
+          title="Pipeline"
+          items={[
+            { label: "Leads (filtro)", value: leads.length },
+            { label: "Em aberto", value: openCount },
+            { label: "Estágios", value: PIPELINE_STAGES.length },
+          ]}
+        />
+
+      <div className={cn(BCH_CARD, "space-y-4")}>
         {loadError ? <BchInlineError message={loadError} onRetry={() => void load()} /> : null}
         <BchFilterBar className="border-0 bg-transparent p-0">
           <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center w-full">
@@ -499,6 +524,7 @@ export function BostonCityHallPipeline() {
             </p>
           ) : null}
       </div>
+      </BchDestinationPageShell>
 
       <BostonCityHallLeadDetailDialog
         open={!!selected && !!detailForm}

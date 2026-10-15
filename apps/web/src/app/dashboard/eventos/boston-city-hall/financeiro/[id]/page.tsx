@@ -3,7 +3,6 @@
 import { Suspense, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
 import { BostonCityHallFinanceDetail } from "@/components/dashboard/boston-city-hall/BostonCityHallFinanceDetail";
 import { useAuth } from "@/context/AuthContext";
 
@@ -31,16 +30,14 @@ export default function BostonCityHallFinanceDetailPage() {
   }
 
   return (
-    <BostonCityHallShell>
-      <Suspense
-        fallback={
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        }
-      >
-        <DetailInner />
-      </Suspense>
-    </BostonCityHallShell>
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <DetailInner />
+    </Suspense>
   );
 }

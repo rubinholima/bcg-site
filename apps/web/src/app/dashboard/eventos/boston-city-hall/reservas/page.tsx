@@ -3,7 +3,6 @@
 import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
 import { BostonCityHallReservas } from "@/components/dashboard/boston-city-hall/BostonCityHallReservas";
 import { useAuth } from "@/context/AuthContext";
 
@@ -25,8 +24,7 @@ export default function BostonCityHallReservasPage() {
   }
 
   return (
-    <BostonCityHallShell>
-      <Suspense
+    <Suspense
         fallback={
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -35,6 +33,5 @@ export default function BostonCityHallReservasPage() {
       >
         <BostonCityHallReservas />
       </Suspense>
-    </BostonCityHallShell>
   );
 }

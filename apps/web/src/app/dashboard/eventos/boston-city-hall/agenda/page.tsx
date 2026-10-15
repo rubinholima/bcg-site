@@ -3,11 +3,7 @@
 import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import {
-  BostonCityHallAgenda,
-  BostonCityHallAgendaLegend,
-} from "@/components/dashboard/boston-city-hall/BostonCityHallAgenda";
-import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
+import { BostonCityHallAgenda } from "@/components/dashboard/boston-city-hall/BostonCityHallAgenda";
 import { useAuth } from "@/context/AuthContext";
 
 export default function BostonCityHallAgendaPage() {
@@ -27,17 +23,14 @@ export default function BostonCityHallAgendaPage() {
   }
 
   return (
-    <BostonCityHallShell>
-      <Suspense
-        fallback={
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        }
-      >
-        <BostonCityHallAgenda />
-      </Suspense>
-      <BostonCityHallAgendaLegend />
-    </BostonCityHallShell>
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <BostonCityHallAgenda />
+    </Suspense>
   );
 }

@@ -13,6 +13,9 @@ import {
   BostonCityHallTicketSalesOverview,
   type BchTicketingHubTabId,
 } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketSalesOverview";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchModuleSubNav } from "@/components/dashboard/boston-city-hall/BchModuleSubNav";
+import { BCH_TICKETING_SUBNAV } from "@/components/dashboard/boston-city-hall/bch-subnav.config";
 import { BchTabBar, type BchTabItem } from "@/components/dashboard/boston-city-hall/BchTabBar";
 import {
   BchTicketingSelectionProvider,
@@ -105,8 +108,8 @@ function BostonCityHallTicketingHubInner({
     [setEventId, setTab],
   );
 
-  return (
-    <div className="space-y-4">
+  const inner = (
+    <>
       <BchTabBar tabs={tabs} active={tab} onChange={(id) => setTab(id as TabId)} />
       {tab === "overview" ? <BostonCityHallTicketSalesOverview onNavigateTab={onNavigateTab} /> : null}
       {tab === "config" ? <BostonCityHallTicketing /> : null}
@@ -116,7 +119,20 @@ function BostonCityHallTicketingHubInner({
       {tab === "checkin" ? <BostonCityHallTicketCheckin fixedEventId={fixedEventId} /> : null}
       {tab === "reports" ? <BostonCityHallTicketReports /> : null}
       {tab === "checkout" ? <BostonCityHallTicketCheckoutDev /> : null}
-    </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="space-y-4">{inner}</div>;
+  }
+
+  return (
+    <BchDestinationPageShell
+      title="Bilheteria e entrada"
+      subNav={<BchModuleSubNav items={BCH_TICKETING_SUBNAV} ariaLabel="Bilheteria" />}
+    >
+      {inner}
+    </BchDestinationPageShell>
   );
 }
 

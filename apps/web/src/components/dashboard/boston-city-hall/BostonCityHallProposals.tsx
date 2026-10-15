@@ -5,12 +5,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
 import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
 import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
-import { BCH_BTN_PRIMARY, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
+import { BchModuleSubNav } from "@/components/dashboard/boston-city-hall/BchModuleSubNav";
+import { BCH_COMMERCIAL_SUBNAV } from "@/components/dashboard/boston-city-hall/bch-subnav.config";
+import { BCH_BASE as BCH_NAV_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
+import { BCH_BTN_PRIMARY, BCH_CARD, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -35,7 +40,6 @@ import {
   VENUE_PROPOSAL_STATUS_COLOR,
   VENUE_PROPOSAL_STATUS_LABEL,
 } from "@/types/boston-city-hall";
-import { cn } from "@/lib/utils";
 import { BCH_BASE } from "./boston-city-hall-lead-shared";
 
 export function BostonCityHallProposals() {
@@ -93,16 +97,29 @@ export function BostonCityHallProposals() {
   }, [load]);
 
   return (
-    <BchCard
+    <BchDestinationPageShell
+      title="Propostas"
+      breadcrumbs={[
+        { href: BCH_NAV_BASE, label: "Boston City Hall" },
+        { label: "Comercial" },
+        { label: "Propostas" },
+      ]}
+      subNav={<BchModuleSubNav items={BCH_COMMERCIAL_SUBNAV} ariaLabel="Comercial" />}
       actions={
-        <Button asChild className={cn("min-h-[44px]", BCH_BTN_PRIMARY)}>
+        <Button asChild className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}>
           <Link href={`${BCH_BASE}/propostas/new`}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             Nova proposta
           </Link>
         </Button>
       }
     >
+      <BchMetricsStrip
+        title="Lista"
+        items={[{ label: "Propostas (filtro)", value: rows.length }]}
+      />
+
+    <div className={cn(BCH_CARD, "space-y-4 p-4 sm:p-5")}>
         <BchFilterBar className="mb-4 border-0 bg-transparent p-0">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap w-full">
           <div className="relative min-w-0 flex-1 sm:max-w-xs">
@@ -220,6 +237,7 @@ export function BostonCityHallProposals() {
             </Table>
           </div>
         )}
-    </BchCard>
+    </div>
+    </BchDestinationPageShell>
   );
 }

@@ -16,14 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { BchPageShell } from "@/components/dashboard/boston-city-hall/BchPageShell";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
 import { BostonCityHallCreateBchEventDialog } from "@/components/dashboard/boston-city-hall/BostonCityHallCreateBchEventDialog";
 import { bchEventWorkspacePath } from "@/components/dashboard/boston-city-hall/bch-app-shell.config";
 import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { bchEventSetupPath } from "@/components/dashboard/boston-city-hall/bch-event-setup-path";
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
-import { BchPageHeader } from "@/components/dashboard/boston-city-hall/BchPageHeader";
 import {
   bchEventCancelledKpiCount,
   classifyBchEventLifecycle,
@@ -250,25 +249,23 @@ export function BostonCityHallEventsIndex() {
   const showTypeColumn = typeOptions.length > 0;
 
   return (
-    <BchPageShell>
-      <BchPageHeader
-        title="Eventos"
-        breadcrumbs={[
-          { href: BCH_BASE, label: "Boston City Hall" },
-          { label: "Eventos" },
-        ]}
-        actions={
-          <Button
-            type="button"
-            className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}
-            onClick={() => setCreateOpen(true)}
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-            Novo evento
-          </Button>
-        }
-      />
-
+    <BchDestinationPageShell
+      title="Eventos"
+      breadcrumbs={[
+        { href: BCH_BASE, label: "Boston City Hall" },
+        { label: "Eventos" },
+      ]}
+      actions={
+        <Button
+          type="button"
+          className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}
+          onClick={() => setCreateOpen(true)}
+        >
+          <Plus className="h-4 w-4" aria-hidden />
+          Novo evento
+        </Button>
+      }
+    >
       <section className={cn(BCH_CARD, "space-y-3 py-3 sm:py-4")}>
         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Fase operacional</p>
         <div className="flex flex-wrap gap-1.5">
@@ -590,6 +587,6 @@ export function BostonCityHallEventsIndex() {
       )}
 
       <BostonCityHallCreateBchEventDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={load} />
-    </BchPageShell>
+    </BchDestinationPageShell>
   );
 }

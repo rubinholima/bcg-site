@@ -36,7 +36,7 @@ export function BchTabBar<T extends string>({
             className={cn(
               "min-h-[44px] shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:px-4",
               selected
-                ? "bg-amber-500/15 text-amber-100 ring-1 ring-amber-500/30 shadow-sm"
+                ? "bg-sky-500/15 text-sky-50 ring-1 ring-sky-500/35 shadow-sm"
                 : "text-slate-400 hover:bg-slate-900/50 hover:text-slate-100",
             )}
           >

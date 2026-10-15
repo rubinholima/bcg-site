@@ -38,8 +38,12 @@ import {
 import { cn } from "@/lib/utils";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
-import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
+import { BchModuleSubNav } from "@/components/dashboard/boston-city-hall/BchModuleSubNav";
+import { BCH_COMMERCIAL_SUBNAV } from "@/components/dashboard/boston-city-hall/bch-subnav.config";
 import { BCH_BTN_PRIMARY, BCH_CARD, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 import { BostonCityHallLeadDetailDialog } from "./BostonCityHallLeadDetailDialog";
 import {
   buildPipelineListQuery,
@@ -229,26 +233,38 @@ export function BostonCityHallCrm() {
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <BchKpiCard label="Total (filtros)" value={stats.total} tone="gold" />
-        <BchKpiCard label="Em aberto" value={stats.open} tone="info" />
-        <BchKpiCard label="Do site" value={stats.website} />
-        <BchKpiCard label="Confirmados" value={stats.won} tone="success" />
-      </div>
+    <BchDestinationPageShell
+      title="Leads"
+      breadcrumbs={[
+        { href: BCH_BASE, label: "Boston City Hall" },
+        { label: "Comercial" },
+        { label: "Leads" },
+      ]}
+      subNav={<BchModuleSubNav items={BCH_COMMERCIAL_SUBNAV} ariaLabel="Comercial" />}
+      actions={
+        <Button
+          onClick={() => {
+            setForm(emptyLead());
+            setOpenCreate(true);
+          }}
+          className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}
+        >
+          <Plus className="h-4 w-4" />
+          Novo lead
+        </Button>
+      }
+    >
+      <BchMetricsStrip
+        title="Funil (filtros atuais)"
+        items={[
+          { label: "Total", value: stats.total },
+          { label: "Em aberto", value: stats.open, href: `${BCH_BASE}/pipeline` },
+          { label: "Do site", value: stats.website },
+          { label: "Confirmados", value: stats.won },
+        ]}
+      />
 
       <div className={cn(BCH_CARD, "space-y-4")}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-          <Button
-            onClick={() => {
-              setForm(emptyLead());
-              setOpenCreate(true);
-            }}
-            className={cn("min-h-[44px] w-full sm:w-auto", BCH_BTN_PRIMARY)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Novo lead
-          </Button>
-        </div>
         <BchFilterBar className="border-0 bg-transparent p-0">
           <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center w-full">
             <div className="relative min-w-0 flex-1 lg:max-w-xs">
@@ -402,6 +418,7 @@ export function BostonCityHallCrm() {
             {leads.length} lead(s) — clique na linha para ver e editar o contato.
           </p>
       </div>
+    </BchDestinationPageShell>
 
       <BostonCityHallLeadDetailDialog
         open={!!selected && !!detailForm}

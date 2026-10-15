@@ -3,7 +3,6 @@
 import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
 import { BostonCityHallTicketingHub } from "@/components/dashboard/boston-city-hall/BostonCityHallTicketingHub";
 import { useAuth } from "@/context/AuthContext";
 
@@ -39,8 +38,6 @@ export default function BostonCityHallTicketingPage() {
   }
 
   return (
-    <BostonCityHallShell>
-      <TicketingContent />
-    </BostonCityHallShell>
+    <TicketingContent />
   );
 }

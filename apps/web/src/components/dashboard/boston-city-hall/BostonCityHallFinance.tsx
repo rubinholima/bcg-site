@@ -8,8 +8,10 @@ import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
 import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
-import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
 import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
+import { BCH_BASE as BCH_NAV_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 import { BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { Input } from "@/components/ui/input";
 import {
@@ -100,19 +102,23 @@ export function BostonCityHallFinance() {
   }, [load]);
 
   return (
-    <div className="space-y-6">
+    <BchDestinationPageShell title="Financeiro">
       {kpis ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          <BchKpiCard label="A receber (contratado)" value={formatCatalogMoney(kpis.totalContracted)} tone="gold" />
-          <BchKpiCard label="Recebido" value={formatCatalogMoney(kpis.totalReceived)} tone="success" />
-          <BchKpiCard label="Saldo em aberto" value={formatCatalogMoney(kpis.openBalance)} tone="warning" />
-          <BchKpiCard
-            label="Vencido"
-            value={formatCatalogMoney(kpis.overdueBalance)}
-            tone={Number.parseFloat(kpis.overdueBalance) > 0 ? "danger" : "default"}
-          />
-          <BchKpiCard label="A vencer (14 dias)" value={formatCatalogMoney(kpis.dueSoonBalance)} tone="info" />
-        </div>
+        <BchMetricsStrip
+          title="Recebíveis do venue"
+          items={[
+            { label: "Contratado", value: formatCatalogMoney(kpis.totalContracted) },
+            { label: "Recebido", value: formatCatalogMoney(kpis.totalReceived) },
+            { label: "Em aberto", value: formatCatalogMoney(kpis.openBalance) },
+            {
+              label: "Vencido",
+              value: formatCatalogMoney(kpis.overdueBalance),
+              href: `${BCH_NAV_BASE}/financeiro`,
+            },
+            { label: "14 dias", value: formatCatalogMoney(kpis.dueSoonBalance) },
+            { label: "Na lista", value: rows.length },
+          ]}
+        />
       ) : null}
 
       <BchCard>
@@ -245,6 +251,6 @@ export function BostonCityHallFinance() {
             </div>
           )}
       </BchCard>
-    </div>
+    </BchDestinationPageShell>
   );
 }

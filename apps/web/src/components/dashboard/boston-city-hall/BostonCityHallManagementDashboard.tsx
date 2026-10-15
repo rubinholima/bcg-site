@@ -11,8 +11,9 @@ import {
   BchPipelineDonut,
   type BchActivityItem,
 } from "@/components/dashboard/boston-city-hall/bch-executive-dashboard-ui";
-import { BchPageHeader } from "@/components/dashboard/boston-city-hall/BchPageHeader";
-import { BchPageShell } from "@/components/dashboard/boston-city-hall/BchPageShell";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
+import { BchQuickLinkGrid } from "@/components/dashboard/boston-city-hall/BchQuickLinkGrid";
 import { BchSection } from "@/components/dashboard/boston-city-hall/BchSection";
 import {
   BCH_EXEC_KPI_LINKS,
@@ -24,7 +25,7 @@ import { bchEventWorkspacePath } from "@/components/dashboard/boston-city-hall/b
 import { bchEventDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
 import { useBchTicketingEvents } from "@/components/dashboard/boston-city-hall/use-bch-ticketing-events";
 import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
-import { BCH_BTN_PRIMARY, BCH_CARD, BCH_BTN_SECONDARY } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BCH_BTN_PRIMARY, BCH_BTN_SECONDARY } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type {
@@ -328,64 +329,55 @@ export function BostonCityHallManagementDashboard({ overview }: Props) {
   ];
 
   return (
-    <BchPageShell className="space-y-5">
-      <BchPageHeader
-        title="Visão geral"
-        breadcrumbs={[
-          { href: BCH_BASE, label: "Boston City Hall" },
-          { label: "Visão geral" },
-        ]}
-        actions={
-          <>
-            <Button asChild variant="outline" className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}>
-              <Link href={BCH_EXEC_PANEL_LINKS.events}>Eventos</Link>
-            </Button>
-            <Button
-              type="button"
-              className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}
-              onClick={() => setCreateOpen(true)}
+    <BchDestinationPageShell
+      className="space-y-5"
+      title="Visão geral"
+      breadcrumbs={[
+        { href: BCH_BASE, label: "Boston City Hall" },
+        { label: "Visão geral" },
+      ]}
+      actions={
+        <>
+          <Button asChild variant="outline" className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}>
+            <Link href={BCH_EXEC_PANEL_LINKS.events}>Eventos</Link>
+          </Button>
+          <Button
+            type="button"
+            className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Novo evento
+          </Button>
+        </>
+      }
+      lead={
+        <>
+          <p className="capitalize text-slate-400">{dateLabel}</p>
+          <p className="text-slate-300">{operationSummary}</p>
+          {pendingCommercialCount > 0 ? (
+            <Link
+              href={pendingActionsHref}
+              className="inline-flex min-h-[36px] items-center rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 text-xs font-medium text-amber-100 hover:bg-amber-500/15"
             >
-              <Plus className="h-4 w-4" aria-hidden />
-              Novo evento
-            </Button>
-          </>
+              {pendingCommercialCount} ação{pendingCommercialCount === 1 ? "" : "ões"} comercial
+              {pendingCommercialCount === 1 ? "" : " pendente"}
+            </Link>
+          ) : null}
+        </>
+      }
+    >
+      <BchMetricsStrip
+        title="Resumo do dia"
+        items={summaryMetrics}
+        footer={
+          holdCount > 0 ? (
+            <p className="text-[11px] text-slate-500">
+              {holdCount} pré-reserva{holdCount === 1 ? "" : "s"} em hold.
+            </p>
+          ) : null
         }
       />
-
-      <div className="space-y-1">
-        <p className="text-sm capitalize text-slate-400">{dateLabel}</p>
-        <p className="text-sm text-slate-300">{operationSummary}</p>
-        {pendingCommercialCount > 0 ? (
-          <Link
-            href={pendingActionsHref}
-            className="inline-flex min-h-[36px] items-center rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 text-xs font-medium text-amber-100 hover:bg-amber-500/15"
-          >
-            {pendingCommercialCount} ação{pendingCommercialCount === 1 ? "" : "ões"} comercial
-            {pendingCommercialCount === 1 ? "" : " pendente"}
-          </Link>
-        ) : null}
-      </div>
-
-      <section className={cn(BCH_CARD, "p-3 sm:p-4")}>
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Resumo do dia</p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-          {summaryMetrics.map((m) => (
-            <Link
-              key={m.label}
-              href={m.href}
-              className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2.5 transition-colors hover:border-sky-500/35 hover:bg-slate-900/50"
-            >
-              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500">{m.label}</p>
-              <p className="mt-0.5 truncate text-base font-semibold tabular-nums text-slate-100">{m.value}</p>
-            </Link>
-          ))}
-        </div>
-        {holdCount > 0 ? (
-          <p className="mt-2 text-[11px] text-slate-500">
-            {holdCount} pré-reserva{holdCount === 1 ? "" : "s"} em hold.
-          </p>
-        ) : null}
-      </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <BchSection title="Operação de hoje" actionHref={BCH_EXEC_PANEL_LINKS.calendar} actionLabel="Calendário">
@@ -556,39 +548,19 @@ export function BostonCityHallManagementDashboard({ overview }: Props) {
           ) : (
             <BchActivityTimeline items={activities.slice(0, 5)} />
           )}
-          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-800/70 pt-4">
-            <QuickAction href={BCH_EXEC_PANEL_LINKS.reservas} icon={ClipboardList} label="Reservas" />
-            <QuickAction href={BCH_EXEC_PANEL_LINKS.calendar} icon={CalendarDays} label="Calendário" />
-            <QuickAction href={BCH_EXEC_PANEL_LINKS.crm} icon={ContactRound} label="CRM" />
-            <QuickAction href={BCH_EXEC_PANEL_LINKS.reports} icon={BarChart3} label="Relatórios" />
-          </div>
+          <BchQuickLinkGrid
+            className="mt-4 border-t border-slate-800/70 pt-4"
+            links={[
+              { href: BCH_EXEC_PANEL_LINKS.reservas, icon: ClipboardList, label: "Reservas" },
+              { href: BCH_EXEC_PANEL_LINKS.calendar, icon: CalendarDays, label: "Calendário" },
+              { href: BCH_EXEC_PANEL_LINKS.crm, icon: ContactRound, label: "CRM" },
+              { href: BCH_EXEC_PANEL_LINKS.reports, icon: BarChart3, label: "Relatórios" },
+            ]}
+          />
         </BchSection>
       </div>
 
       <BostonCityHallCreateBchEventDialog open={createOpen} onOpenChange={setCreateOpen} />
-    </BchPageShell>
-  );
-}
-
-function QuickAction({
-  href,
-  icon: Icon,
-  label,
-}: {
-  href: string;
-  icon: typeof CalendarDays;
-  label: string;
-}) {
-  return (
-    <Button
-      asChild
-      variant="outline"
-      className="min-h-[44px] justify-start gap-2 border-slate-700/90 bg-slate-950/30 text-slate-200 hover:border-sky-500/30 hover:bg-slate-900/60"
-    >
-      <Link href={href}>
-        <Icon className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
-        <span className="truncate text-xs sm:text-sm">{label}</span>
-      </Link>
-    </Button>
+    </BchDestinationPageShell>
   );
 }

@@ -48,13 +48,25 @@ export function BchAppShellNav({ onNavigate }: { onNavigate?: () => void }) {
                   href={dest.href}
                   onClick={onNavigate}
                   className={cn(
-                    "flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "relative flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-[background,color,box-shadow] duration-150",
                     active
-                      ? "bg-sky-500/15 text-sky-100 ring-1 ring-sky-500/35"
-                      : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100",
+                      ? "bg-gradient-to-r from-sky-500/20 via-sky-500/10 to-transparent pl-3.5 text-sky-50 shadow-[inset_0_1px_0_0_rgba(56,189,248,0.12)] ring-1 ring-sky-500/30"
+                      : "text-slate-400 hover:bg-slate-800/55 hover:text-slate-100",
                   )}
                 >
-                  <Icon className="h-[18px] w-[18px] shrink-0 opacity-90" aria-hidden />
+                  {active ? (
+                    <span
+                      className="absolute bottom-2 left-0 top-2 w-0.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.45)]"
+                      aria-hidden
+                    />
+                  ) : null}
+                  <Icon
+                    className={cn(
+                      "h-[18px] w-[18px] shrink-0",
+                      active ? "text-sky-300" : "opacity-85",
+                    )}
+                    aria-hidden
+                  />
                   <span className="truncate">{dest.label}</span>
                 </Link>
               </li>

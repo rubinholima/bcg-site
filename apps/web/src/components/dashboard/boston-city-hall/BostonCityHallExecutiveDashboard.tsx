@@ -16,7 +16,8 @@ import {
   YAxis,
 } from "recharts";
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
-import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
 import { BCH_BTN_PRIMARY, BCH_CARD } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -177,28 +178,31 @@ export function BostonCityHallExecutiveDashboard() {
 
   if (loading && !summary) {
     return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <BchDestinationPageShell title="Relatórios">
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </BchDestinationPageShell>
     );
   }
 
   if (error && !summary) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-start gap-3 py-8">
+      <BchDestinationPageShell title="Relatórios">
+        <div className={cn(BCH_CARD, "flex flex-col items-start gap-3 p-6")}>
           <p className="text-sm text-red-300">{error}</p>
           <Button type="button" variant="outline" onClick={() => void load()}>
             Tentar novamente
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </BchDestinationPageShell>
     );
   }
 
   if (!summary || !events) return null;
 
   return (
+    <BchDestinationPageShell title="Relatórios">
     <div className="space-y-6">
       <BchFilterBar>
         <div className="min-w-[160px]">
@@ -243,23 +247,29 @@ export function BostonCityHallExecutiveDashboard() {
         </p>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <BchKpiCard label="Eventos no período" value={String(summary.events.inPeriod)} tone="gold" />
-        <BchKpiCard label="Próximos (no período)" value={String(summary.events.upcoming)} tone="info" />
-        <BchKpiCard label="Ingressos vendidos" value={String(summary.ticketing.ticketsSold)} tone="gold" />
-        <BchKpiCard
-          label="Comparecimento"
-          value={String(summary.ticketing.attendance)}
-          hint={summary.ticketing.attendanceRatePct ? `${summary.ticketing.attendanceRatePct}%` : undefined}
-          tone="success"
-        />
-        <BchKpiCard label="Pedidos confirmados" value={String(summary.ticketing.confirmedOrderCount)} />
-        <BchKpiCard label="Cortesias" value={String(summary.ticketing.complimentaryCount)} />
-        <BchKpiCard label="Vendas bar (POS)" value={String(summary.bar.completedSalesCount)} tone="gold" />
-        <BchKpiCard label="Críticos abertos" value={String(summary.alertSummary.openCritical)} tone="danger" />
-        <BchKpiCard label="Avisos abertos" value={String(summary.alertSummary.openWarning)} tone="warning" />
-        <BchKpiCard label="Reconhecidos" value={String(summary.alertSummary.acknowledgedUnresolved)} tone="info" />
-      </div>
+      <BchMetricsStrip
+        title="Período selecionado"
+        items={[
+          { label: "Eventos", value: summary.events.inPeriod },
+          { label: "Próximos", value: summary.events.upcoming },
+          { label: "Ingressos", value: summary.ticketing.ticketsSold },
+          {
+            label: "Presença",
+            value: summary.ticketing.attendance,
+            title: summary.ticketing.attendanceRatePct
+              ? `${summary.ticketing.attendanceRatePct}% comparecimento`
+              : undefined,
+          },
+          { label: "Pedidos", value: summary.ticketing.confirmedOrderCount },
+          { label: "Bar (POS)", value: summary.bar.completedSalesCount },
+          {
+            label: "Alertas",
+            value: summary.alertSummary.openCritical + summary.alertSummary.openWarning,
+            href: `${BCH}/alerts`,
+            title: `${summary.alertSummary.openCritical} críticos · ${summary.alertSummary.openWarning} avisos`,
+          },
+        ]}
+      />
 
       <div className="flex justify-end">
         <Button variant="outline" size="sm" className="min-h-[44px]" asChild>
@@ -514,5 +524,6 @@ export function BostonCityHallExecutiveDashboard() {
         </section>
       ) : null}
     </div>
+    </BchDestinationPageShell>
   );
 }

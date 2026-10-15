@@ -1,13 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
 import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
-import { BchKpiCard } from "@/components/dashboard/boston-city-hall/BchKpiCard";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
+import { BchModuleSubNav } from "@/components/dashboard/boston-city-hall/BchModuleSubNav";
+import { BCH_BAR_SUBNAV } from "@/components/dashboard/boston-city-hall/bch-subnav.config";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
 import { BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { bchProductDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
@@ -69,18 +71,31 @@ export function BostonCityHallBarReports() {
   }, [load]);
 
   if (loading) {
-    return <BchLoadingBlock label="Carregando relatórios…" />;
+    return (
+      <BchDestinationPageShell
+        title="Relatórios"
+        breadcrumbs={[
+          { href: BCH_BASE, label: "Boston City Hall" },
+          { label: "Bar e estoque" },
+          { label: "Relatórios" },
+        ]}
+        subNav={<BchModuleSubNav items={BCH_BAR_SUBNAV} ariaLabel="Bar" />}
+      >
+        <BchLoadingBlock label="Carregando relatórios…" />
+      </BchDestinationPageShell>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <Link
-        href="/dashboard/eventos/boston-city-hall/bar"
-        className="inline-flex min-h-[44px] items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar ao bar
-      </Link>
+    <BchDestinationPageShell
+      title="Relatórios"
+      breadcrumbs={[
+        { href: BCH_BASE, label: "Boston City Hall" },
+        { label: "Bar e estoque" },
+        { label: "Relatórios" },
+      ]}
+      subNav={<BchModuleSubNav items={BCH_BAR_SUBNAV} ariaLabel="Bar" />}
+    >
       <BchFilterBar>
         <div className="min-w-[200px]">
           <label className="mb-1 block text-xs text-muted-foreground">Visão</label>
@@ -94,16 +109,18 @@ export function BostonCityHallBarReports() {
       </BchFilterBar>
 
       {view === "sales" && sales ? (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <BchKpiCard label="Vendas concluídas" value={sales.salesCount} tone="gold" />
-          <BchKpiCard label="Receita líquida" value={`R$ ${sales.netSales}`} tone="gold" />
-          <BchKpiCard
-            label="Margem bruta est."
-            value={`R$ ${sales.estimatedGrossMargin}`}
-            hint={sales.marginIncomplete ? "Custos ausentes em vendas antigas" : undefined}
-            tone="success"
-          />
-        </div>
+        <BchMetricsStrip
+          title="Vendas (período)"
+          items={[
+            { label: "Concluídas", value: sales.salesCount },
+            { label: "Receita líquida", value: `R$ ${sales.netSales}` },
+            {
+              label: "Margem bruta est.",
+              value: `R$ ${sales.estimatedGrossMargin}`,
+              title: sales.marginIncomplete ? "Custos ausentes em vendas antigas" : undefined,
+            },
+          ]}
+        />
       ) : null}
 
       {view === "products" ? (
@@ -194,6 +211,6 @@ export function BostonCityHallBarReports() {
           </BchCard>
         )
       ) : null}
-    </div>
+    </BchDestinationPageShell>
   );
 }

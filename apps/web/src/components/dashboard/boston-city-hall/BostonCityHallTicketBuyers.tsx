@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, Search, Users } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,11 @@ import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { formatTicketingMoney } from "@/types/boston-city-hall";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
+import { BchModuleSubNav } from "@/components/dashboard/boston-city-hall/BchModuleSubNav";
+import { BCH_TICKETING_SUBNAV } from "@/components/dashboard/boston-city-hall/bch-subnav.config";
+import { cn } from "@/lib/utils";
 
 type BuyerRow = {
   id: string;
@@ -145,18 +150,21 @@ export function BostonCityHallTicketBuyers() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-amber-400/80" />
-          <h1 className="text-lg font-semibold text-slate-100">Compradores de ingressos</h1>
-        </div>
+    <>
+    <BchDestinationPageShell
+      title="Compradores"
+      breadcrumbs={[
+        { href: BCH_BASE, label: "Boston City Hall" },
+        { label: "Bilheteria e entrada" },
+        { label: "Compradores" },
+      ]}
+      subNav={<BchModuleSubNav items={BCH_TICKETING_SUBNAV} ariaLabel="Bilheteria" />}
+      actions={
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className={BCH_BTN_SECONDARY}
+            className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}
             disabled={syncing}
             onClick={() => {
               setSyncing(true);
@@ -171,8 +179,7 @@ export function BostonCityHallTicketBuyers() {
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className={BCH_BTN_SECONDARY}
+            className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}
             onClick={() => {
               void api.get<{ email: string; name: string; phone: string }[]>(
                 "/boston-city-hall/buyers/export/marketing-opt-in",
@@ -190,7 +197,13 @@ export function BostonCityHallTicketBuyers() {
             Exportar opt-in
           </Button>
         </div>
-      </div>
+      }
+    >
+      <BchMetricsStrip
+        title="Base"
+        items={[{ label: "Compradores (filtro)", value: loading ? "…" : rows.length }]}
+      />
+
       <p className="text-xs text-slate-500">
         CRM de compradores (distinto de leads comerciais do venue). Opt-in de marketing só com registro explícito.
         Leads comerciais:{" "}
@@ -249,6 +262,7 @@ export function BostonCityHallTicketBuyers() {
           </div>
         )}
       </div>
+    </BchDestinationPageShell>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className={BCH_DIALOG_CONTENT}>
@@ -308,6 +322,6 @@ export function BostonCityHallTicketBuyers() {
         title={feedback?.title ?? ""}
         message={feedback?.message ?? ""}
       />
-    </div>
+    </>
   );
 }

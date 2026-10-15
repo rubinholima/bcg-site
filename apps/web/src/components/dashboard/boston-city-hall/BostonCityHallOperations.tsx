@@ -9,7 +9,11 @@ import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyS
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
 import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
 import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
-import { BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
+import { BCH_BASE as BCH_NAV_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
+import { BCH_BTN_SECONDARY, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -109,6 +113,27 @@ export function BostonCityHallOperations() {
   }, [load]);
 
   return (
+    <BchDestinationPageShell
+      title="Equipe e operação"
+      actions={
+        <>
+          <Button asChild variant="outline" className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}>
+            <Link href={`${BCH_NAV_BASE}/agenda`}>Calendário</Link>
+          </Button>
+          <Button asChild variant="outline" className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}>
+            <Link href={`${BCH_NAV_BASE}/reservas`}>Reservas</Link>
+          </Button>
+        </>
+      }
+    >
+      <BchMetricsStrip
+        title="Operação"
+        items={[
+          { label: "Registros", value: loading ? "…" : rows.length },
+          { label: "Espaços", value: spaces.length },
+        ]}
+      />
+
     <BchCard contentClassName="space-y-4">
         <BchFilterBar>
           <div className="relative min-w-0 flex-1 sm:max-w-xs">
@@ -274,5 +299,6 @@ export function BostonCityHallOperations() {
           </div>
         )}
     </BchCard>
+    </BchDestinationPageShell>
   );
 }

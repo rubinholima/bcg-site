@@ -5,9 +5,13 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
+import { BCH_BTN_SECONDARY, BCH_CARD } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import type { VenueBooking } from "@/types/boston-city-hall";
 import { BOOKING_STATUS_COLOR, BOOKING_STATUS_LABEL } from "@/types/boston-city-hall";
+import { cn } from "@/lib/utils";
 
 function monthRange(year: number, month: number) {
   const from = new Date(year, month, 1);
@@ -67,45 +71,70 @@ export function BostonCityHallAgenda() {
   const daysInMonth = new Date(cursor.year, cursor.month + 1, 0).getDate();
   const startWeekday = new Date(cursor.year, cursor.month, 1).getDay();
 
+  const activeCount = bookings.filter((b) => b.status !== "cancelled").length;
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 pb-3">
-        <CardTitle className="text-lg capitalize">{monthLabel}</CardTitle>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9"
-            onClick={() =>
-              setCursor((c) =>
-                c.month === 0 ? { year: c.year - 1, month: 11 } : { year: c.year, month: c.month - 1 },
-              )
-            }
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9"
-            onClick={() =>
-              setCursor((c) =>
-                c.month === 11 ? { year: c.year + 1, month: 0 } : { year: c.year, month: c.month + 1 },
-              )
-            }
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+    <BchDestinationPageShell
+      title="Calendário"
+      actions={
+        <Button asChild variant="outline" className={cn("min-h-[44px]", BCH_BTN_SECONDARY)}>
+          <Link href={`${BCH_BASE}/reservas`}>Reservas</Link>
+        </Button>
+      }
+    >
+      <BchMetricsStrip
+        title="Resumo do mês"
+        items={[
+          {
+            label: "Reservas ativas",
+            value: activeCount,
+            href: `${BCH_BASE}/reservas`,
+          },
+          {
+            label: "Mês",
+            value: monthLabel,
+          },
+        ]}
+      />
+
+      <section className={cn(BCH_CARD, "overflow-hidden p-4 sm:p-5")}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold capitalize text-slate-100">{monthLabel}</h2>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className={cn("h-9 w-9", BCH_BTN_SECONDARY)}
+              onClick={() =>
+                setCursor((c) =>
+                  c.month === 0 ? { year: c.year - 1, month: 11 } : { year: c.year, month: c.month - 1 },
+                )
+              }
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className={cn("h-9 w-9", BCH_BTN_SECONDARY)}
+              onClick={() =>
+                setCursor((c) =>
+                  c.month === 11 ? { year: c.year + 1, month: 0 } : { year: c.year, month: c.month + 1 },
+                )
+              }
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </CardHeader>
-      <CardContent>
+
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
           </div>
         ) : (
           <>
-            <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
+            <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-500">
               {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
                 <div key={d} className="py-1">
                   {d}
@@ -114,7 +143,7 @@ export function BostonCityHallAgenda() {
             </div>
             <div className="grid grid-cols-7 gap-1">
               {Array.from({ length: startWeekday }).map((_, i) => (
-                <div key={`empty-${i}`} className="min-h-[88px] rounded-lg bg-muted/20" />
+                <div key={`empty-${i}`} className="min-h-[88px] rounded-lg bg-slate-950/40" />
               ))}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
@@ -126,40 +155,42 @@ export function BostonCityHallAgenda() {
                 return (
                   <div
                     key={dateKey}
-                    className={`min-h-[88px] rounded-lg border p-1.5 text-left ${
-                      isToday ? "border-primary/50 bg-primary/5" : "border-border/60 bg-card"
-                    }`}
+                    className={cn(
+                      "min-h-[88px] rounded-lg border p-1.5 text-left",
+                      isToday
+                        ? "border-sky-500/45 bg-sky-500/5"
+                        : "border-slate-800/70 bg-slate-950/30",
+                    )}
                   >
-                    <span className="text-xs font-semibold text-muted-foreground">{day}</span>
+                    <span className="text-xs font-semibold text-slate-400">{day}</span>
                     <div className="mt-1 space-y-0.5">
                       {items.slice(0, 3).map((b) => (
-                        <div
+                        <Link
                           key={b.id}
-                          className={`truncate rounded border px-1 py-0.5 text-[10px] leading-tight sm:text-[11px] ${BOOKING_STATUS_COLOR[b.status] ?? ""}`}
+                          href={`${BCH_BASE}/operacao/${b.id}`}
+                          className={cn(
+                            "block truncate rounded border px-1 py-0.5 text-[10px] leading-tight sm:text-[11px] hover:ring-1 hover:ring-sky-500/30",
+                            BOOKING_STATUS_COLOR[b.status] ?? "",
+                          )}
                           title={`${b.title} — ${b.spaceName ?? ""}`}
                         >
                           {formatDayLabel(b.startAt)} {b.title}
-                        </div>
+                        </Link>
                       ))}
                       {items.length > 3 ? (
-                        <p className="text-[10px] text-muted-foreground">+{items.length - 3}</p>
+                        <p className="text-[10px] text-slate-500">+{items.length - 3}</p>
                       ) : null}
                     </div>
                   </div>
                 );
               })}
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              Gerencie detalhes em{" "}
-              <Link href="/dashboard/eventos/boston-city-hall/reservas" className="text-primary hover:underline">
-                Reservas
-              </Link>
-              .
-            </p>
           </>
         )}
-      </CardContent>
-    </Card>
+      </section>
+
+      <BostonCityHallAgendaLegend />
+    </BchDestinationPageShell>
   );
 }
 
@@ -169,7 +200,7 @@ export function BostonCityHallAgendaLegend() {
       {Object.entries(BOOKING_STATUS_LABEL).map(([key, label]) => (
         <span
           key={key}
-          className={`rounded-full border px-2 py-0.5 ${BOOKING_STATUS_COLOR[key] ?? ""}`}
+          className={cn("rounded-full border px-2 py-0.5", BOOKING_STATUS_COLOR[key] ?? "")}
         >
           {label}
         </span>

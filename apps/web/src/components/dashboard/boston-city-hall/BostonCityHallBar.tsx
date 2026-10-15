@@ -43,6 +43,10 @@ import {
 } from "@/types/bch-bar";
 import { cn } from "@/lib/utils";
 import { bchProductDisplayName } from "@/components/dashboard/boston-city-hall/bch-operational-display";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchModuleSubNav } from "@/components/dashboard/boston-city-hall/BchModuleSubNav";
+import { BCH_BAR_SUBNAV } from "@/components/dashboard/boston-city-hall/bch-subnav.config";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 import { BchTabBar } from "@/components/dashboard/boston-city-hall/BchTabBar";
 import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
 import { BCH_BTN_PRIMARY } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
@@ -611,43 +615,44 @@ export function BostonCityHallBar() {
     }
   };
 
+  const shellProps = {
+    title: "Cadastro",
+    breadcrumbs: [
+      { href: BCH_BASE, label: "Boston City Hall" },
+      { label: "Bar e estoque" },
+      { label: "Cadastro" },
+    ],
+    subNav: <BchModuleSubNav items={BCH_BAR_SUBNAV} ariaLabel="Bar" />,
+    actions: (
+      <Button asChild className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}>
+        <Link href={`${BCH_BASE}/bar/pos`}>
+          <ShoppingCart className="h-4 w-4" aria-hidden />
+          POS
+        </Link>
+      </Button>
+    ),
+  };
+
   if (loading) {
     return (
-      <div className="flex min-h-[200px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <BchDestinationPageShell {...shellProps}>
+        <div className="flex min-h-[200px] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </BchDestinationPageShell>
     );
   }
 
   if (loadError) {
-    return <BchInlineError message={loadError} onRetry={() => void loadAll()} />;
+    return (
+      <BchDestinationPageShell {...shellProps}>
+        <BchInlineError message={loadError} onRetry={() => void loadAll()} />
+      </BchDestinationPageShell>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button asChild variant="outline" className="min-h-[44px]">
-          <Link href="/dashboard/eventos/boston-city-hall/bar/dashboard">Painel</Link>
-        </Button>
-        <Button asChild variant="outline" className="min-h-[44px]">
-          <Link href="/dashboard/eventos/boston-city-hall/bar/reports">Relatórios</Link>
-        </Button>
-        <Button asChild variant="outline" className="min-h-[44px]">
-          <Link href="/dashboard/eventos/boston-city-hall/bar/close">Fechamento</Link>
-        </Button>
-        <Button asChild variant="outline" className="min-h-[44px]">
-          <Link href="/dashboard/eventos/boston-city-hall/bar/event-inventory">Estoque evento</Link>
-        </Button>
-        <Button asChild variant="outline" className="min-h-[44px]">
-          <Link href="/dashboard/eventos/boston-city-hall/bar/physical-counts">Contagem física</Link>
-        </Button>
-        <Button asChild className={cn("min-h-[44px] gap-2", BCH_BTN_PRIMARY)}>
-          <Link href="/dashboard/eventos/boston-city-hall/bar/pos">
-            <ShoppingCart className="h-4 w-4" />
-            POS
-          </Link>
-        </Button>
-      </div>
+    <BchDestinationPageShell {...shellProps}>
       <BchTabBar tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === "products" && (
@@ -1659,6 +1664,6 @@ export function BostonCityHallBar() {
         message={feedback.message}
         variant={feedback.variant}
       />
-    </div>
+    </BchDestinationPageShell>
   );
 }

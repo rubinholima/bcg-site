@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
 import { BostonCityHallCrm } from "@/components/dashboard/boston-city-hall/BostonCityHallCrm";
 import { useAuth } from "@/context/AuthContext";
 
@@ -27,8 +26,6 @@ export default function BostonCityHallCrmPage() {
   }
 
   return (
-    <BostonCityHallShell>
-      <BostonCityHallCrm />
-    </BostonCityHallShell>
+    <BostonCityHallCrm />
   );
 }

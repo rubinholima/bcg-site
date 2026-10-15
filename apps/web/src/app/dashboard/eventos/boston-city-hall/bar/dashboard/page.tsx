@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
 import { BostonCityHallBarDashboard } from "@/components/dashboard/boston-city-hall/BostonCityHallBarDashboard";
 import { useAuth } from "@/context/AuthContext";
 
@@ -25,8 +24,6 @@ export default function BostonCityHallBarDashboardPage() {
   }
 
   return (
-    <BostonCityHallShell>
-      <BostonCityHallBarDashboard />
-    </BostonCityHallShell>
+    <BostonCityHallBarDashboard />
   );
 }

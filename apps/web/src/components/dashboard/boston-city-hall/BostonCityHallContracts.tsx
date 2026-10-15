@@ -4,12 +4,16 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { api } from "@/lib/api";
-import { BchCard } from "@/components/dashboard/boston-city-hall/BchCard";
 import { BchEmptyState } from "@/components/dashboard/boston-city-hall/BchEmptyState";
 import { BchFilterBar } from "@/components/dashboard/boston-city-hall/BchFilterBar";
 import { BchInlineError } from "@/components/dashboard/boston-city-hall/BchInlineError";
 import { BchLoadingBlock } from "@/components/dashboard/boston-city-hall/BchLoadingBlock";
-import { BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
+import { BchDestinationPageShell } from "@/components/dashboard/boston-city-hall/BchDestinationPageShell";
+import { BchMetricsStrip } from "@/components/dashboard/boston-city-hall/BchMetricsStrip";
+import { BchModuleSubNav } from "@/components/dashboard/boston-city-hall/BchModuleSubNav";
+import { BCH_COMMERCIAL_SUBNAV } from "@/components/dashboard/boston-city-hall/bch-subnav.config";
+import { BCH_BASE as BCH_NAV_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
+import { BCH_CARD, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -92,7 +96,18 @@ export function BostonCityHallContracts() {
   }, [load]);
 
   return (
-    <BchCard>
+    <BchDestinationPageShell
+      title="Contratos"
+      breadcrumbs={[
+        { href: BCH_NAV_BASE, label: "Boston City Hall" },
+        { label: "Comercial" },
+        { label: "Contratos" },
+      ]}
+      subNav={<BchModuleSubNav items={BCH_COMMERCIAL_SUBNAV} ariaLabel="Comercial" />}
+    >
+      <BchMetricsStrip title="Lista" items={[{ label: "Contratos (filtro)", value: rows.length }]} />
+
+    <div className={cn(BCH_CARD, "space-y-4 p-4 sm:p-5")}>
         <BchFilterBar className="mb-4 border-0 bg-transparent p-0">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap w-full">
           <div className="relative min-w-0 flex-1 sm:max-w-xs">
@@ -209,6 +224,7 @@ export function BostonCityHallContracts() {
             </Table>
           </div>
         )}
-    </BchCard>
+    </div>
+    </BchDestinationPageShell>
   );
 }
