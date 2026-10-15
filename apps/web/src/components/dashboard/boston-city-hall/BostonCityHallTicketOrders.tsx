@@ -127,14 +127,14 @@ export function BostonCityHallTicketOrders() {
       const res = await fetch(`/api/boston-city-hall/ticketing/tickets/${ticket.id}/qr`, {
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Não foi possível carregar o QR.");
+      if (!res.ok) throw new Error("Não foi possível carregar o código de barras.");
       const blob = await res.blob();
       setQrImageUrl(URL.createObjectURL(blob));
     } catch (e) {
       setFeedback({
         open: true,
         title: "Erro",
-        message: e instanceof Error ? e.message : "Falha ao carregar QR.",
+        message: e instanceof Error ? e.message : "Falha ao carregar código de barras.",
         variant: "error",
       });
       setQrOpen(false);
@@ -425,7 +425,7 @@ export function BostonCityHallTicketOrders() {
                           className="shrink-0"
                           onClick={() => void openTicketQr(t)}
                         >
-                          Ver QR
+                          Ver código de barras
                         </Button>
                       </div>
                     ))}
@@ -492,16 +492,20 @@ export function BostonCityHallTicketOrders() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{qrTicket?.ticketCode ?? "QR do ingresso"}</DialogTitle>
+            <DialogTitle>{qrTicket?.ticketCode ?? "Código de barras"}</DialogTitle>
           </DialogHeader>
           {qrLoading ? (
             <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
           ) : qrImageUrl ? (
             <div className="flex flex-col items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrImageUrl} alt="QR do ingresso" className="h-64 w-64 rounded-md bg-white p-2" />
+              <img
+                src={qrImageUrl}
+                alt="Código de barras do ingresso"
+                className="max-w-full rounded-md bg-white p-2"
+              />
               <p className="break-all text-center font-mono text-xs text-muted-foreground">
-                {qrTicket?.qrPayload}
+                {qrTicket?.ticketCode}
               </p>
             </div>
           ) : null}

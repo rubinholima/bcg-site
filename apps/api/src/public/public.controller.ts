@@ -145,7 +145,7 @@ export class PublicController {
     return this.bostonCityHallPublicCheckout.createOrderForEventSlug(slug, body, ip);
   }
 
-  /** QR PNG — exige token do pedido + referência pública do ingresso. */
+  /** Code 128 PNG (ticketCode) — token do pedido + ref. pública do ingresso. */
   @Get('boston-city-hall/orders/:token/tickets/:ticketRef/qr')
   async getBchPublicTicketQr(
     @Param('token') token: string,

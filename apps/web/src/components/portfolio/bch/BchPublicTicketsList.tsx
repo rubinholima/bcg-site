@@ -47,10 +47,10 @@ export function BchPublicTicketsList({ tickets, lang }: Props) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={ticket.qrPath}
-                  alt={lang === "pt" ? "QR do ingresso" : "Ticket QR"}
-                  width={200}
-                  height={200}
-                  className="rounded-lg bg-white p-2"
+                  alt={lang === "pt" ? "Código de barras do ingresso" : "Ticket barcode"}
+                  width={280}
+                  height={120}
+                  className="max-w-full rounded-lg bg-white p-2"
                 />
                 <a
                   href={ticket.qrPath}

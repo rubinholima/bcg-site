@@ -118,7 +118,7 @@ export function BostonCityHallTicketCheckoutDev() {
       showFeedback(
         "Ingressos emitidos",
         ticketCount > 0
-          ? `${ticketCount} ingresso(s) prontos. Use o código ou o payload QR no check-in (ou escaneie com o leitor NETUM).`
+          ? `${ticketCount} ingresso(s) prontos. Imprima o código de barras ou escaneie com leitor 1D (NETUM).`
           : "Pagamento registrado. Abra o pedido em Pedidos se não vir ingressos.",
       );
     } catch (e) {
@@ -141,10 +141,10 @@ export function BostonCityHallTicketCheckoutDev() {
         <p className="font-medium text-slate-100">Laboratório — venda + chegada no evento</p>
         <ol className="list-decimal space-y-1 pl-5 text-slate-400">
           <li>Crie o pedido e confirme com pagamento manual (emite ingressos).</li>
-          <li>Copie o <strong className="text-slate-200">payload QR</strong> ou imprima o QR do pedido.</li>
+          <li>Imprima o <strong className="text-slate-200">código de barras</strong> (Code 128 do BCH-…).</li>
           <li>
-            No check-in, foque o campo <strong className="text-slate-200">Leitura QR / código</strong> e escaneie
-            (leitor NETUM envia o texto + Enter).
+            No check-in, foque o campo <strong className="text-slate-200">Leitura / código</strong> e escaneie
+            (leitor envia BCH-… + Enter).
           </li>
         </ol>
         <Button asChild variant="outline" size="sm" className={cn("min-h-[40px]", BCH_BTN_SECONDARY)}>
@@ -301,7 +301,12 @@ export function BostonCityHallTicketCheckoutDev() {
                       {t.ticketTypeName} · {t.holderName}
                     </p>
                     <p className="mt-1 font-mono text-xs text-sky-200/90 break-all">{t.ticketCode}</p>
-                    <p className="mt-2 font-mono text-[11px] text-slate-400 break-all">{t.qrPayload}</p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/api/boston-city-hall/ticketing/tickets/${encodeURIComponent(t.id)}/qr`}
+                      alt={`Código de barras ${t.ticketCode}`}
+                      className="mt-3 max-w-full rounded-md bg-white p-2 print:block"
+                    />
                     <div className="mt-2 flex flex-wrap gap-2">
                       <Button
                         type="button"
@@ -311,25 +316,14 @@ export function BostonCityHallTicketCheckoutDev() {
                         onClick={() => void copyText("Código BCH", t.ticketCode)}
                       >
                         <Copy className="h-3.5 w-3.5" />
-                        Código
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className={cn("min-h-[40px] gap-1", BCH_BTN_SECONDARY)}
-                        onClick={() => void copyText("Payload QR", t.qrPayload)}
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                        Payload QR
+                        Copiar BCH
                       </Button>
                     </div>
                   </li>
                 ))}
               </ul>
               <p className="text-xs text-slate-500">
-                O QR impresso contém o payload <code className="text-slate-400">CUP360-T1:…</code>. O escaner NETUM
-                deve digitar essa string no campo de leitura (modo teclado USB).
+                Code 128 com <code className="text-slate-400">{`BCH-…`}</code> — compatível com NETUM NT-1228BC (1D).
               </p>
             </div>
           ) : null}

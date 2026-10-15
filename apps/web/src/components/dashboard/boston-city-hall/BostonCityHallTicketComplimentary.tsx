@@ -117,7 +117,7 @@ export function BostonCityHallTicketComplimentary() {
       setFeedback({
         open: true,
         title: "Cortesia emitida",
-        message: "Ingressos individuais gerados com QR.",
+        message: "Ingressos individuais gerados com código de barras.",
         variant: "success",
       });
     } catch (e) {

@@ -351,7 +351,7 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
         <div className="space-y-4 lg:col-span-2">
           <section className={cn(BCH_CARD, "space-y-3")}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-100">Leitura QR / código</p>
+              <p className="text-sm font-semibold text-slate-100">Leitura / código</p>
               {session ? (
                 <Button
                   type="button"
@@ -396,8 +396,8 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
             />
             {session && eventId ? (
               <p className="text-xs text-slate-500 sm:max-w-2xl">
-                Leitor USB (NETUM): não precisa parear no sistema. Clique neste campo, escaneie o QR — o
-                aparelho digita o código e confirma com Enter. As leituras entram nesta sessão (
+                Leitor 1D (Code 128 / BCH-…): clique neste campo, escaneie o ingresso — o aparelho digita e
+                confirma com Enter. Leituras nesta sessão (
                 {sessionStationLine ?? "estação ativa"}).
               </p>
             ) : null}

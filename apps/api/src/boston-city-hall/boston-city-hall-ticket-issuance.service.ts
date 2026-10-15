@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import * as QRCode from 'qrcode';
+import { renderTicketCode128Png } from './boston-city-hall-ticket-barcode.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { BCH_VENUE_SLUG } from './boston-city-hall.constants';
 import type { ConfirmTicketOrderFromPaymentResult } from './boston-city-hall-ticket-payment.service';
@@ -244,14 +244,9 @@ export class BostonCityHallTicketIssuanceService {
   async renderQrPng(tenantId: string, ticketId: string): Promise<Buffer> {
     const row = await this.prisma.eventTicket.findFirst({
       where: { id: ticketId, tenantId },
+      select: { ticketCode: true },
     });
     if (!row) throw new NotFoundException('Ingresso não encontrado.');
-    const payload = buildCup360TicketQrPayload(row.qrToken);
-    return QRCode.toBuffer(payload, {
-      type: 'png',
-      errorCorrectionLevel: 'M',
-      margin: 2,
-      width: 280,
-    });
+    return renderTicketCode128Png(row.ticketCode);
   }
 }

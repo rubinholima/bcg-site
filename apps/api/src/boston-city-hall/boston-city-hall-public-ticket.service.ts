@@ -1,11 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import * as QRCode from 'qrcode';
+import { renderTicketCode128Png } from './boston-city-hall-ticket-barcode.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { BCH_VENUE_SLUG } from './boston-city-hall.constants';
-import {
-  buildCup360TicketQrPayload,
-  generatePublicTicketRef,
-} from './boston-city-hall-ticket-credential.util';
+import { generatePublicTicketRef } from './boston-city-hall-ticket-credential.util';
 import {
   type BchPublicTicketDto,
   bchPublicTicketQrPath,
@@ -149,7 +146,7 @@ export class BostonCityHallPublicTicketService {
   async assertOrderOwnsTicket(
     orderPublicToken: string,
     publicTicketRef: string,
-  ): Promise<{ tenantId: string; qrToken: string }> {
+  ): Promise<{ tenantId: string; ticketCode: string }> {
     const tenantId = await this.resolveTenantId();
     const order = await this.prisma.eventTicketOrder.findFirst({
       where: { tenantId, publicAccessToken: orderPublicToken.trim() },
@@ -167,21 +164,15 @@ export class BostonCityHallPublicTicketService {
         publicTicketRef: publicTicketRef.trim(),
         admissionSource: 'paid_order',
       },
-      select: { qrToken: true },
+      select: { ticketCode: true },
     });
     if (!ticket) throw new NotFoundException('Ingresso não encontrado.');
-    return { tenantId, qrToken: ticket.qrToken };
+    return { tenantId, ticketCode: ticket.ticketCode };
   }
 
   async renderQrPngForOrderTicket(orderPublicToken: string, publicTicketRef: string): Promise<Buffer> {
-    const { qrToken } = await this.assertOrderOwnsTicket(orderPublicToken, publicTicketRef);
-    const payload = buildCup360TicketQrPayload(qrToken);
-    return QRCode.toBuffer(payload, {
-      type: 'png',
-      errorCorrectionLevel: 'M',
-      margin: 2,
-      width: 280,
-    });
+    const { ticketCode } = await this.assertOrderOwnsTicket(orderPublicToken, publicTicketRef);
+    return renderTicketCode128Png(ticketCode);
   }
 
   async buildEventDtoForOrder(eventId: string): Promise<{

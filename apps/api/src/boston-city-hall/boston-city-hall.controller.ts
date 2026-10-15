@@ -1288,6 +1288,7 @@ export class BostonCityHallController {
     throw new BadRequestException('Informe code ou credential.');
   }
 
+  /** PNG Code 128 do ticketCode (BCH-…). Rota /qr mantida por compatibilidade. */
   @Get('ticketing/tickets/:id/qr')
   @Header('Content-Type', 'image/png')
   @Header('Cache-Control', 'private, no-store')

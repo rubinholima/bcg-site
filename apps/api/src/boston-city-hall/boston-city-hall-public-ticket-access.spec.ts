@@ -149,11 +149,11 @@ describe('BCH public ticket access (Phase 3.3)', () => {
       await expect(service.renderQrPngForOrderTicket('tok-a', 'ref-x')).rejects.toThrow();
     });
 
-    it('4 — assertOrderOwnsTicket não retorna qrToken em DTO público (serviço interno)', async () => {
+    it('4 — assertOrderOwnsTicket retorna ticketCode para render do código de barras', async () => {
       prisma.eventTicketOrder.findFirst.mockResolvedValue({ id: 'ord-a', status: 'confirmed' });
-      prisma.eventTicket.findFirst.mockResolvedValue({ qrToken: 'secret-qr' });
+      prisma.eventTicket.findFirst.mockResolvedValue({ ticketCode: 'BCH-26-ABC' });
       const internal = await service.assertOrderOwnsTicket('tok-a', 'ref-x');
-      expect(internal.qrToken).toBe('secret-qr');
+      expect(internal.ticketCode).toBe('BCH-26-ABC');
     });
   });
 
