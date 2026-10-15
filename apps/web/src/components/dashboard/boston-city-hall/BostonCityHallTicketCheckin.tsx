@@ -528,6 +528,13 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
                 }
               }}
             />
+            {session && eventId ? (
+              <p className="text-xs text-slate-500 sm:max-w-2xl">
+                Leitor USB (NETUM): não precisa parear no sistema. Clique neste campo, escaneie o QR — o
+                aparelho digita o código e confirma com Enter. As leituras entram nesta sessão (
+                {sessionStationLine ?? "estação ativa"}).
+              </p>
+            ) : null}
             {processing ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
