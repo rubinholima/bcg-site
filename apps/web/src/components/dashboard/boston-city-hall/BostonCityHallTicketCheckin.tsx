@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -29,6 +30,7 @@ import {
   type CheckinSessionDto,
   type CheckinStationDto,
 } from "@/components/dashboard/boston-city-hall/bch-checkin-session";
+import { BCH_BASE } from "@/components/dashboard/boston-city-hall/bch-navigation.config";
 import { BCH_BTN_SECONDARY, BCH_CARD, BCH_INPUT, BCH_TABLE_WRAP } from "@/components/dashboard/boston-city-hall/bch-ui-classes";
 import { NativeSelect } from "@/components/ui/native-select";
 
@@ -357,9 +359,18 @@ export function BostonCityHallTicketCheckin({ fixedEventId }: { fixedEventId?: s
       ) : null}
 
       {!fixedEventId ? (
-        <div className="max-w-md space-y-1">
-          <Label className="text-xs text-slate-400">Evento</Label>
-          <BchEventSelectField events={events} value={eventId} onChange={setEventId} />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-md flex-1 space-y-1">
+            <Label className="text-xs text-slate-400">Evento</Label>
+            <BchEventSelectField events={events} value={eventId} onChange={setEventId} />
+          </div>
+          <Button asChild variant="outline" size="sm" className={cn("min-h-[40px] shrink-0", BCH_BTN_SECONDARY)}>
+            <Link
+              href={`${BCH_BASE}/ticketing?tab=checkout${eventId ? `&eventId=${encodeURIComponent(eventId)}` : ""}`}
+            >
+              Laboratório de venda
+            </Link>
+          </Button>
         </div>
       ) : null}
 
