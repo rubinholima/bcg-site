@@ -10,6 +10,8 @@ import { BlockRenderer } from "@/components/portfolio/modules/BlockRenderer";
 import { PublicFooter } from "@/components/portfolio/PublicFooter";
 import { buildBackendUrl } from "@/lib/apiProxy";
 import { getImprensaMenuLinks, isImprensaPageOnlyBlock } from "@/lib/imprensa-display";
+import { BCH_SLUG } from "@/lib/boston-city-hall";
+import { BchPublicVenueHome } from "@/components/portfolio/bch/BchPublicVenueHome";
 
 async function getTenantBySlug(slug: string): Promise<{ id: string; name: string; slug: string; logoUrl: string | null } | null> {
   try {
@@ -45,7 +47,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const page = await getPageBySlug(slug);
-  const name = page?.tenant?.name ?? slug;
+  const tenantFallback = slug === BCH_SLUG && !page?.tenant ? await getTenantBySlug(slug) : null;
+  const name = page?.tenant?.name ?? tenantFallback?.name ?? (slug === BCH_SLUG ? "Boston City Hall" : slug);
   const logoUrl = page?.tenant?.logoUrl;
   // Favicon: sempre o logo do clube/empresa (nunca trocar por outro)
   const iconUrl = logoUrl ? getPublicImageUrl(logoUrl) : "/favicon.ico";
@@ -114,6 +117,21 @@ export default async function PortfolioSlugPage({
   const page = await getPageBySlug(slug);
   const defaultLang = (page?.content?.theme as { defaultLang?: "pt" | "en" } | undefined)?.defaultLang ?? "pt";
   const lang = langParam === "en" ? "en" : langParam === "pt" ? "pt" : defaultLang;
+
+  if (slug === BCH_SLUG && !page?.content?.blocks?.length) {
+    const tenant =
+      page?.tenant ??
+      (await getTenantBySlug(slug)) ??
+      ({ id: "", name: "Boston City Hall", slug: BCH_SLUG, logoUrl: null } as const);
+    return (
+      <BchPublicVenueHome
+        slug={slug}
+        lang={lang}
+        tenantName={tenant.name}
+        logoUrl={tenant.logoUrl}
+      />
+    );
+  }
 
   if (!page?.content?.blocks?.length) {
     const emptyTheme = page?.content?.theme ?? {};

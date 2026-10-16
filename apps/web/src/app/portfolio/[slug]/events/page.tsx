@@ -14,6 +14,7 @@ import {
   formatBchEventDateTime,
   type BchPublicEventListItem,
 } from "@/lib/bch-public-events";
+import { bchPublicNavLinks } from "@/lib/bch-public-nav";
 
 const BCH_SLUG = "boston-city-hall";
 
@@ -103,6 +104,7 @@ export default async function PortfolioEventsListPage({
         headerBlock={headerBlock}
         lang={lang}
         basePath={`/portfolio/${slug}`}
+        extraNavLinks={headerBlock ? undefined : bchPublicNavLinks(lang, `/portfolio/${slug}`)}
       />
       <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
