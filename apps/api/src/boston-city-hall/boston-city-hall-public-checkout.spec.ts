@@ -6,6 +6,7 @@ import { BostonCityHallPublicEventsService } from './boston-city-hall-public-eve
 import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-orders.service';
 import { mapPaymentToPublicStatus } from './boston-city-hall-public-checkout.constants';
 import { BostonCityHallPublicTicketService } from './boston-city-hall-public-ticket.service';
+import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
 
 describe('BostonCityHallPublicCheckoutService', () => {
   let service: BostonCityHallPublicCheckoutService;
@@ -15,7 +16,12 @@ describe('BostonCityHallPublicCheckoutService', () => {
     eventTicketOrder: { findFirst: jest.Mock };
   };
   let publicEvents: { getBySlug: jest.Mock };
-  let ticketOrders: { createOrder: jest.Mock; getOrderByPublicAccessToken: jest.Mock };
+  let ticketOrders: {
+    createOrder: jest.Mock;
+    getOrder: jest.Mock;
+    getOrderByPublicAccessToken: jest.Mock;
+  };
+  let ticketPayment: { recordManualPaymentForOrder: jest.Mock };
   let publicTickets: { listPublicTicketsForConfirmedOrder: jest.Mock };
 
   beforeEach(async () => {
@@ -27,8 +33,10 @@ describe('BostonCityHallPublicCheckoutService', () => {
     publicEvents = { getBySlug: jest.fn() };
     ticketOrders = {
       createOrder: jest.fn(),
+      getOrder: jest.fn(),
       getOrderByPublicAccessToken: jest.fn(),
     };
+    ticketPayment = { recordManualPaymentForOrder: jest.fn().mockResolvedValue({}) };
     publicTickets = {
       listPublicTicketsForConfirmedOrder: jest.fn().mockResolvedValue({ tickets: [], ticketCount: 0 }),
     };
@@ -39,6 +47,7 @@ describe('BostonCityHallPublicCheckoutService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: BostonCityHallPublicEventsService, useValue: publicEvents },
         { provide: BostonCityHallTicketOrdersService, useValue: ticketOrders },
+        { provide: BostonCityHallTicketPaymentService, useValue: ticketPayment },
         { provide: BostonCityHallPublicTicketService, useValue: publicTickets },
       ],
     }).compile();
@@ -119,6 +128,7 @@ describe('BostonCityHallPublicCheckoutService', () => {
     prisma.eventTicketOrder.findFirst.mockResolvedValue({
       publicAccessToken: 'tok-public-abc',
     });
+    ticketOrders.getOrder.mockImplementation(async () => ticketOrders.createOrder.mock.results[0]?.value);
 
     const result = await service.createOrderForEventSlug(
       'gala',

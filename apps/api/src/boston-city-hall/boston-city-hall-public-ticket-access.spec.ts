@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BostonCityHallPublicCheckoutService } from './boston-city-hall-public-checkout.service';
+import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
 import { BostonCityHallPublicTicketService } from './boston-city-hall-public-ticket.service';
 import { BostonCityHallMyTicketsService } from './boston-city-hall-my-tickets.service';
 import { BostonCityHallPublicNotificationService } from './boston-city-hall-public-notification.service';
@@ -47,6 +48,10 @@ describe('BCH public ticket access (Phase 3.3)', () => {
           { provide: PrismaService, useValue: prisma },
           { provide: BostonCityHallPublicEventsService, useValue: {} },
           { provide: BostonCityHallTicketOrdersService, useValue: ticketOrders },
+          {
+            provide: BostonCityHallTicketPaymentService,
+            useValue: { recordManualPaymentForOrder: jest.fn() },
+          },
         ],
       }).compile();
 

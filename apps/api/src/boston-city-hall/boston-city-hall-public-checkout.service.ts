@@ -4,11 +4,14 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BostonCityHallPublicEventsService } from './boston-city-hall-public-events.service';
 import { BostonCityHallTicketOrdersService } from './boston-city-hall-ticket-orders.service';
+import { BostonCityHallTicketPaymentService } from './boston-city-hall-ticket-payment.service';
 import { BostonCityHallPublicTicketService } from './boston-city-hall-public-ticket.service';
 import type { EventTicketOrderDetailDto } from './boston-city-hall-ticket-orders.constants';
 import {
@@ -42,12 +45,47 @@ export type CreatePublicCheckoutOrderBody = {
 
 @Injectable()
 export class BostonCityHallPublicCheckoutService {
+  private readonly logger = new Logger(BostonCityHallPublicCheckoutService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly publicEvents: BostonCityHallPublicEventsService,
     private readonly ticketOrders: BostonCityHallTicketOrdersService,
+    private readonly ticketPayment: BostonCityHallTicketPaymentService,
     private readonly publicTickets: BostonCityHallPublicTicketService,
   ) {}
+
+  /** Gratuito sempre; pago só com BCH_PUBLIC_AUTO_CONFIRM_CHECKOUT=1 (até gateway online). */
+  private shouldAutoConfirmPublicCheckout(orderTotal: string): boolean {
+    const total = new Prisma.Decimal(orderTotal || '0');
+    if (total.lte(0)) return true;
+    const flag = process.env.BCH_PUBLIC_AUTO_CONFIRM_CHECKOUT?.trim().toLowerCase();
+    return flag === '1' || flag === 'true' || flag === 'yes';
+  }
+
+  private async tryAutoConfirmPublicOrder(
+    orderId: string,
+    tenantId: string,
+    orderTotal: string,
+  ): Promise<void> {
+    if (!this.shouldAutoConfirmPublicCheckout(orderTotal)) return;
+    try {
+      await this.ticketPayment.recordManualPaymentForOrder(orderId, tenantId, {
+        paymentMethod: 'other',
+        manualReference: 'bch-public-checkout',
+        externalProviderLabel:
+          new Prisma.Decimal(orderTotal || '0').lte(0)
+            ? 'Ingresso gratuito'
+            : 'Checkout público',
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Auto-confirmação checkout público falhou (pedido ${orderId}): ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
+  }
 
   private rejectForbiddenBodyKeys(body: Record<string, unknown>): void {
     for (const key of BCH_PUBLIC_CHECKOUT_FORBIDDEN_BODY_KEYS) {
@@ -212,7 +250,7 @@ export class BostonCityHallPublicCheckoutService {
       throw new BadRequestException('Nome e e-mail são obrigatórios.');
     }
 
-    const detail = await this.ticketOrders.createOrder({
+    let detail = await this.ticketOrders.createOrder({
       eventId: event.id,
       customer: {
         name: customerName,
@@ -226,6 +264,15 @@ export class BostonCityHallPublicCheckoutService {
       })),
       checkoutIdempotencyKey: idempotencyKey,
     });
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { slug: BCH_VENUE_SLUG },
+      select: { id: true },
+    });
+    if (tenant) {
+      await this.tryAutoConfirmPublicOrder(detail.id, tenant.id, detail.total);
+      detail = await this.ticketOrders.getOrder(detail.id);
+    }
 
     const tokenRow = await this.prisma.eventTicketOrder.findFirst({
       where: { id: detail.id },

@@ -38,6 +38,7 @@ function blockOverlayOpacity(block: HomeContentBlock): number {
 const DEFAULT_TITLE = { pt: "Próximos eventos", en: "Upcoming events" };
 const VIEW_LABEL = { pt: "Ver detalhes", en: "View details" };
 const ALL_LABEL = { pt: "Ver todos", en: "View all" };
+const BUY_LABEL = { pt: "Comprar", en: "Buy" };
 
 function availabilityClass(state: BchPublicEventListItem["ticketAvailability"]): string {
   switch (state) {
@@ -207,13 +208,23 @@ export function BchUpcomingEventsSection({
                       {BCH_TICKET_AVAILABILITY_LABEL[item.ticketAvailability]}
                     </p>
                   )}
-                  <div className="mt-4 pt-2">
+                  <div className="mt-4 flex flex-wrap gap-2 pt-2">
                     <Link
                       href={item.detailPath}
                       className="inline-flex min-h-[44px] items-center rounded-lg bg-white/5 px-4 py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:bg-white/10 hover:text-white"
                     >
                       {viewLabel}
                     </Link>
+                    {item.ticketingEnabled &&
+                    (item.ticketAvailability === "AVAILABLE" ||
+                      item.ticketAvailability === "LOW_AVAILABILITY") ? (
+                      <Link
+                        href={`/portfolio/${tenantSlug}/events/${encodeURIComponent(item.slug)}/checkout?lang=${lang}`}
+                        className="inline-flex min-h-[44px] items-center rounded-lg bg-amber-500/90 px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-amber-400"
+                      >
+                        {BUY_LABEL[lang]}
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
               </article>

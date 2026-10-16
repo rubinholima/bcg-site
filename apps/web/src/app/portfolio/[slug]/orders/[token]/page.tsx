@@ -5,7 +5,7 @@ import { buildBackendUrl, getAppBaseUrl, getBackendOriginForServerFetch } from "
 import { PortfolioFavicon } from "@/components/portfolio/PortfolioFavicon";
 import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHeader";
 import { formatCheckoutMoney, type BchPublicOrder } from "@/lib/bch-public-checkout";
-import { BchPublicTicketsList } from "@/components/portfolio/bch/BchPublicTicketsList";
+import { BchPublicOrderPoll } from "@/components/portfolio/bch/BchPublicOrderPoll";
 import type { Page } from "@/types/page";
 
 const BCH_SLUG = "boston-city-hall";
@@ -47,14 +47,14 @@ function statusCopy(order: BchPublicOrder, lang: "pt" | "en"): { title: string; 
       ? {
           title: "Pedido confirmado",
           body: withTickets
-            ? "Pagamento confirmado. Seus ingressos estão abaixo — apresente o QR na entrada."
-            : "Pagamento confirmado. Os ingressos serão emitidos em instantes; atualize esta página.",
+            ? "Pagamento confirmado. Seus ingressos estão abaixo — apresente o código de barras na entrada."
+            : "Pagamento confirmado. Os ingressos serão emitidos em instantes; use Atualizar abaixo.",
         }
       : {
           title: "Order confirmed",
           body: withTickets
-            ? "Payment confirmed. Your tickets are below — show the QR at entry."
-            : "Payment confirmed. Tickets will appear shortly; refresh this page.",
+            ? "Payment confirmed. Your tickets are below — show the barcode at entry."
+            : "Payment confirmed. Tickets will appear shortly; tap Refresh below.",
         };
   }
   if (order.status === "expired" || order.paymentStatus === "expired") {
@@ -70,7 +70,7 @@ function statusCopy(order: BchPublicOrder, lang: "pt" | "en"): { title: string; 
   return lang === "pt"
     ? {
         title: "Pedido criado. Aguardando pagamento.",
-        body: "Guarde esta página. O pagamento online será habilitado em uma fase futura; por enquanto, aguarde instruções do evento se aplicável.",
+        body: "Guarde esta página. Se o pagamento online ainda não estiver ativo, aguarde confirmação do evento ou use ingresso gratuito (confirmação automática).",
       }
     : {
         title: "Order created. Awaiting payment.",
@@ -189,14 +189,7 @@ export default async function BchPublicOrderPage({
           </div>
         </dl>
 
-        {order.status === "confirmed" && order.tickets?.length ? (
-          <section className="mt-8">
-            <h2 className="text-lg font-semibold text-white">
-              {lang === "pt" ? `Ingressos (${order.ticketCount})` : `Tickets (${order.ticketCount})`}
-            </h2>
-            <BchPublicTicketsList tickets={order.tickets} lang={lang} />
-          </section>
-        ) : null}
+        <BchPublicOrderPoll token={token} lang={lang} initialOrder={order} />
 
         <p className="mt-8 text-center text-sm">
           <Link
