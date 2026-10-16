@@ -52,9 +52,13 @@ export async function generateMetadata({
   const logoUrl = page?.tenant?.logoUrl;
   // Favicon: sempre o logo do clube/empresa (nunca trocar por outro)
   const iconUrl = logoUrl ? getPublicImageUrl(logoUrl) : "/favicon.ico";
+  const bchDescription =
+    slug === BCH_SLUG
+      ? "Arena multiuso em Manhuaçu (MG): shows, eventos corporativos, esportes, galeria do espaço e solicitação de aluguel — Boston City Group."
+      : undefined;
   return {
     title: name,
-    description: page ? `Página oficial — ${name}` : undefined,
+    description: page ? `Página oficial — ${name}` : bchDescription,
     icons: { icon: iconUrl },
   };
 }
