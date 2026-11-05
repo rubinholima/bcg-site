@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Printer, RefreshCw } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Printer, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,7 @@ import {
   type PsychologyGroupAbsentPrintInput,
 } from "@/lib/print-psychology-group-absent";
 import type { PsychologySession } from "@/types/psychology-session";
+import { PsychologyAbsentAfterRollCallDialog } from "@/components/dashboard/psychology/PsychologyAbsentAfterRollCallDialog";
 
 type TenantOption = { id: string; name: string; categories?: string[] | null };
 
@@ -66,6 +67,7 @@ export function PsicologiaGrupoAusentesReport() {
   const [to, setTo] = useState(defaultRange.to);
   const [rows, setRows] = useState<PsychologySession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewSession, setViewSession] = useState<PsychologySession | null>(null);
 
   useEffect(() => {
     api.get<TenantOption[]>("/tenants?clubsOnly=1").then(({ data }) => {
@@ -182,16 +184,28 @@ export function PsicologiaGrupoAusentesReport() {
                         {absent.length !== 1 ? "s" : ""} · {attendance.length} na chamada
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="min-h-[40px] shrink-0"
-                      onClick={() => printPsychologyGroupAbsentReport(printInput)}
-                    >
-                      <Printer className="mr-1.5 h-3.5 w-3.5" />
-                      Imprimir
-                    </Button>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="min-h-[40px]"
+                        onClick={() => setViewSession(session)}
+                      >
+                        <Eye className="mr-1.5 h-3.5 w-3.5" />
+                        Ver lista
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="min-h-[40px]"
+                        onClick={() => printPsychologyGroupAbsentReport(printInput)}
+                      >
+                        <Printer className="mr-1.5 h-3.5 w-3.5" />
+                        Imprimir
+                      </Button>
+                    </div>
                   </DashboardListRow>
                 </li>
               );
@@ -199,6 +213,25 @@ export function PsicologiaGrupoAusentesReport() {
           </ul>
         )}
       </DashboardDeptSection>
+
+      {viewSession ? (
+        <PsychologyAbsentAfterRollCallDialog
+          open={viewSession != null}
+          onOpenChange={(open) => !open && setViewSession(null)}
+          date={viewSession.date}
+          time={viewSession.time}
+          categoryLabel={getCategoryLabel(viewSession.category ?? "", "pt", allFixtureCategories)}
+          tenantName={viewSession.tenant?.name}
+          psychologistName={viewSession.psychologistName}
+          estagiarioName={viewSession.estagiarioName}
+          location={viewSession.location}
+          groupSummary={viewSession.groupSummary}
+          absent={listPsychologyAbsentAttendance(
+            Array.isArray(viewSession.attendance) ? viewSession.attendance : [],
+          )}
+          totalRoster={Array.isArray(viewSession.attendance) ? viewSession.attendance.length : 0}
+        />
+      ) : null}
     </div>
   );
 }

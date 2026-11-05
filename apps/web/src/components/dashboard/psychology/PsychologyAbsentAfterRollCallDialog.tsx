@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Copy, Check, Printer } from "lucide-react";
 import {
   Dialog,
@@ -138,6 +139,25 @@ export function PsychologyAbsentAfterRollCallDialog({
             Fechar
           </Button>
         </DialogFooter>
+        <p className="text-center text-xs text-muted-foreground">
+          Depois, consulte em{" "}
+          <Link
+            href="/dashboard/psicologia/relatorios/ausentes-grupo"
+            className="font-medium text-primary underline-offset-2 hover:underline"
+            onClick={() => onOpenChange(false)}
+          >
+            Psicologia → Relatórios → Ausentes em grupo
+          </Link>
+          {" "}ou na{" "}
+          <Link
+            href="/dashboard/psicologia/agenda"
+            className="font-medium text-primary underline-offset-2 hover:underline"
+            onClick={() => onOpenChange(false)}
+          >
+            Agenda Psicologia
+          </Link>
+          .
+        </p>
       </DialogContent>
     </Dialog>
   );

@@ -735,6 +735,17 @@ export function PsychologySchedulingCard({
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />}
             Registrar sessão em grupo
           </Button>
+          <p className="text-xs text-muted-foreground">
+            A lista de ausentes fica salva. Consulte depois em{" "}
+            <Link href="/dashboard/psicologia/relatorios/ausentes-grupo" className="font-medium text-primary underline-offset-2 hover:underline">
+              Relatórios → Ausentes em grupo
+            </Link>
+            {" "}ou abra a sessão na{" "}
+            <Link href="/dashboard/psicologia/agenda" className="font-medium text-primary underline-offset-2 hover:underline">
+              Agenda Psicologia
+            </Link>
+            .
+          </p>
         </div>
       )}
 

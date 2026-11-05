@@ -504,6 +504,31 @@ export function PsicologiaAgendaOperacional() {
     }
   };
 
+  const openSessionDetail = useCallback(async (event: AgendaEvent) => {
+    setDetailEvent(event);
+    if (event.source !== "session" || event.sessionType !== "grupo") return;
+    const sessionId = event.id.replace(/^session-/, "");
+    try {
+      const { data } = await api.get<PsychologySession>(`/psychology-sessions/${sessionId}`);
+      const attendance = Array.isArray(data.attendance) ? data.attendance : [];
+      setDetailEvent((prev) =>
+        prev && prev.id === event.id
+          ? {
+              ...prev,
+              attendance,
+              status: data.status,
+              groupSummary: data.groupSummary ?? prev.groupSummary,
+              psychologistName: data.psychologistName ?? prev.psychologistName,
+              estagiarioName: data.estagiarioName ?? prev.estagiarioName,
+              location: data.location ?? prev.location,
+            }
+          : prev,
+      );
+    } catch {
+      /* mantém dados da listagem */
+    }
+  }, []);
+
   const handleTogglePrivate = async (event: AgendaEvent) => {
     if (event.source !== "session") {
       showFeedback("Aviso", "Privacidade de consultas online é definida no agendamento.", "info");
@@ -529,7 +554,7 @@ export function PsicologiaAgendaOperacional() {
       <button
         key={event.id}
         type="button"
-        onClick={() => setDetailEvent(event)}
+        onClick={() => void openSessionDetail(event)}
         className={cn(
           "w-full rounded-md border px-2 py-1.5 text-left text-xs transition hover:opacity-90",
           TYPE_COLORS[typeKey] ?? "bg-secondary/40 text-foreground border-border/60",
@@ -825,7 +850,7 @@ export function PsicologiaAgendaOperacional() {
                         {ev.subtitle ? ` · ${ev.subtitle}` : ""}
                       </p>
                     </div>
-                    <Button type="button" variant="outline" size="sm" className="min-h-[36px]" onClick={() => setDetailEvent(ev)}>
+                    <Button type="button" variant="outline" size="sm" className="min-h-[36px]" onClick={() => void openSessionDetail(ev)}>
                       Detalhes
                     </Button>
                   </div>
@@ -906,9 +931,11 @@ export function PsicologiaAgendaOperacional() {
                 {detailEvent.notes ? (
                   <p className="whitespace-pre-wrap text-muted-foreground">{detailEvent.notes}</p>
                 ) : null}
-                {detailEvent.sessionType === "grupo" && detailEvent.attendance?.length ? (
+                {detailEvent.sessionType === "grupo" &&
+                (detailEvent.status === "completed" || (detailEvent.attendance?.length ?? 0) > 0) ? (
                   (() => {
-                    const absent = listPsychologyAbsentAttendance(detailEvent.attendance);
+                    const roster = detailEvent.attendance ?? [];
+                    const absent = listPsychologyAbsentAttendance(roster);
                     const catLabel = getCategoryLabel(
                       detailEvent.category ?? "",
                       "pt",
@@ -919,7 +946,11 @@ export function PsicologiaAgendaOperacional() {
                         <p className="font-medium text-foreground">
                           Ausentes na chamada ({absent.length})
                         </p>
-                        {absent.length > 0 ? (
+                        {roster.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            Sessão finalizada sem lista de presença salva.
+                          </p>
+                        ) : absent.length > 0 ? (
                           <ol className="max-h-40 list-decimal space-y-1 overflow-y-auto pl-5 text-sm">
                             {absent.map((row) => (
                               <li key={row.playerId}>{row.playerName?.trim() || "Atleta"}</li>
@@ -928,6 +959,16 @@ export function PsicologiaAgendaOperacional() {
                         ) : (
                           <p className="text-sm text-muted-foreground">Nenhum ausente registrado.</p>
                         )}
+                        <p className="text-xs text-muted-foreground">
+                          Histórico completo em{" "}
+                          <Link
+                            href="/dashboard/psicologia/relatorios/ausentes-grupo"
+                            className="font-medium text-primary underline-offset-2 hover:underline"
+                          >
+                            Relatórios → Ausentes em grupo
+                          </Link>
+                          .
+                        </p>
                         <div className="flex flex-wrap gap-2">
                           <Button
                             type="button"
