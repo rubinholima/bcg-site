@@ -2,11 +2,13 @@
 
 import { formatDateDayMonYear } from "@/lib/format-date";
 
-import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Check,
   Copy,
   Loader2,
+  Mail,
   Plus,
   RefreshCw,
   Send,
@@ -46,6 +48,16 @@ import {
   type QuoteComparisonResult,
 } from "@/lib/purchase-workflow-types";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { type SupplierRow } from "@/app/dashboard/adm/compras/components/SupplierFormDialog";
 
 export type WorkflowMode = "compras" | "requester" | "financeiro" | "diretoria";
@@ -122,6 +134,8 @@ export function PurchaseRequisitionWorkflowPanel({
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteSupplierIds, setInviteSupplierIds] = useState<string[]>([]);
   const [inviteExpiresDays, setInviteExpiresDays] = useState("7");
+  const [inviteSendEmail, setInviteSendEmail] = useState(true);
+  const [cancelInviteId, setCancelInviteId] = useState<string | null>(null);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [comparison, setComparison] = useState<QuoteComparisonResult | null>(null);
   const [comparisonLoading, setComparisonLoading] = useState(false);
@@ -276,9 +290,15 @@ export function PurchaseRequisitionWorkflowPanel({
     }
   };
 
+  const inviteSupplierOptions = useMemo(
+    () => suppliers.filter((s) => !selected || s.tenant.id === selected.tenantId),
+    [suppliers, selected],
+  );
+
   const openInviteDialog = () => {
     setInviteSupplierIds([]);
     setInviteExpiresDays("7");
+    setInviteSendEmail(true);
     setInviteOpen(true);
   };
 
@@ -292,22 +312,98 @@ export function PurchaseRequisitionWorkflowPanel({
     if (!selected || !inviteSupplierIds.length) return;
     setActionLoading(true);
     try {
-      await api.post(`/compras/workflow/requisitions/${selected.id}/quote-invites`, {
+      const { data } = await api.post<{
+        emails?: Array<{ supplierName: string; emailSent: boolean; emailError?: string }>;
+      }>(`/compras/workflow/requisitions/${selected.id}/quote-invites`, {
         supplierIds: inviteSupplierIds,
         expiresInDays: inviteExpiresDays ? parseInt(inviteExpiresDays, 10) : undefined,
+        sendEmail: inviteSendEmail,
       });
       setInviteOpen(false);
       await refreshSelected();
-      setFeedback({
-        open: true,
-        title: "Links gerados",
-        message: "Envie cada link ao fornecedor correspondente.",
-      });
+      const sent = data.emails?.filter((e) => e.emailSent).length ?? 0;
+      const failed = data.emails?.filter((e) => !e.emailSent) ?? [];
+      let message = "Links prontos. Copie ou reenvie e-mail quando necessário.";
+      if (inviteSendEmail) {
+        message =
+          sent > 0
+            ? `${sent} e-mail(s) enviado(s).${failed.length ? ` ${failed.length} sem envio (verifique e-mail do fornecedor).` : ""}`
+            : failed.length
+              ? "Nenhum e-mail enviado — cadastre e-mail nos fornecedores ou copie o link."
+              : message;
+      }
+      setFeedback({ open: true, title: "Links gerados", message });
     } catch (err) {
       setFeedback({
         open: true,
         title: "Erro",
         message: err instanceof Error ? err.message : "Falha ao gerar links.",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const resendInviteEmail = async (inviteId: string) => {
+    if (!selected) return;
+    setActionLoading(true);
+    try {
+      const { data } = await api.post<{ emailSent: boolean; emailError?: string }>(
+        `/compras/workflow/requisitions/${selected.id}/quote-invites/${inviteId}/send-email`,
+      );
+      setFeedback({
+        open: true,
+        title: data.emailSent ? "E-mail enviado" : "E-mail não enviado",
+        message: data.emailSent
+          ? "O fornecedor recebeu o link por e-mail."
+          : data.emailError ?? "Verifique o e-mail do fornecedor.",
+      });
+    } catch (err) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: err instanceof Error ? err.message : "Falha ao enviar e-mail.",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const renewInviteLink = async (inviteId: string) => {
+    if (!selected) return;
+    setActionLoading(true);
+    try {
+      await api.post(
+        `/compras/workflow/requisitions/${selected.id}/quote-invites/${inviteId}/renew`,
+        { expiresInDays: inviteExpiresDays ? parseInt(inviteExpiresDays, 10) : 7 },
+      );
+      await refreshSelected();
+      setFeedback({ open: true, title: "Link renovado", message: "Novo link gerado para o fornecedor." });
+    } catch (err) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: err instanceof Error ? err.message : "Falha ao renovar link.",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmCancelInvite = async () => {
+    if (!selected || !cancelInviteId) return;
+    setActionLoading(true);
+    try {
+      await api.delete(
+        `/compras/workflow/requisitions/${selected.id}/quote-invites/${cancelInviteId}`,
+      );
+      setCancelInviteId(null);
+      await refreshSelected();
+    } catch (err) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: err instanceof Error ? err.message : "Falha ao cancelar convite.",
       });
     } finally {
       setActionLoading(false);
@@ -545,19 +641,53 @@ export function PurchaseRequisitionWorkflowPanel({
                                     ? "Cancelado"
                                     : "Aguardando"}
                               </span>
-                              {inv.status === "pending" ? (
-                                <div className="flex gap-1">
+                              <div className="flex flex-wrap gap-1">
+                                {inv.status === "pending" ? (
+                                  <>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={actionLoading}
+                                      onClick={() => void copyText(url)}
+                                    >
+                                      <Copy className="h-3.5 w-3.5 mr-1" />
+                                      Copiar
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={actionLoading}
+                                      onClick={() => void resendInviteEmail(inv.id)}
+                                    >
+                                      <Mail className="h-3.5 w-3.5 mr-1" />
+                                      E-mail
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      disabled={actionLoading}
+                                      onClick={() => setCancelInviteId(inv.id)}
+                                    >
+                                      Cancelar
+                                    </Button>
+                                  </>
+                                ) : null}
+                                {inv.status === "cancelled" ? (
                                   <Button
                                     type="button"
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => void copyText(url)}
+                                    disabled={actionLoading}
+                                    onClick={() => void renewInviteLink(inv.id)}
                                   >
-                                    <Copy className="h-3.5 w-3.5 mr-1" />
-                                    Copiar link
+                                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                                    Novo link
                                   </Button>
-                                </div>
-                              ) : null}
+                                ) : null}
+                              </div>
                             </li>
                           );
                         })}
@@ -867,10 +997,24 @@ export function PurchaseRequisitionWorkflowPanel({
                 onChange={(e) => setInviteExpiresDays(e.target.value)}
               />
             </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={inviteSendEmail}
+                onChange={(e) => setInviteSendEmail(e.target.checked)}
+              />
+              Enviar link por e-mail (fornecedor precisa ter e-mail cadastrado)
+            </label>
             <div className="space-y-2 max-h-[40vh] overflow-y-auto rounded border p-2">
-              {suppliers
-                .filter((s) => !selected || s.tenant.id === selected.tenantId)
-                .map((s) => (
+              {inviteSupplierOptions.length === 0 ? (
+                <p className="text-sm text-muted-foreground p-2">
+                  Nenhum fornecedor para {selected?.tenant.name ?? "esta empresa"}.{" "}
+                  <Link href="/dashboard/adm/fornecedores" className="text-primary underline">
+                    Cadastrar fornecedores
+                  </Link>
+                </p>
+              ) : (
+                inviteSupplierOptions.map((s) => (
                   <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
                       type="checkbox"
@@ -880,9 +1024,12 @@ export function PurchaseRequisitionWorkflowPanel({
                     <span className="min-w-0 truncate">{s.name}</span>
                     {s.email ? (
                       <span className="text-xs text-muted-foreground lowercase truncate">{s.email}</span>
-                    ) : null}
+                    ) : (
+                      <span className="text-xs text-amber-600 dark:text-amber-400">sem e-mail</span>
+                    )}
                   </label>
-                ))}
+                ))
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -905,6 +1052,52 @@ export function PurchaseRequisitionWorkflowPanel({
           </DialogHeader>
           {comparisonLoading ? (
             <Loader2 className="h-8 w-8 animate-spin mx-auto my-6" />
+          ) : comparison?.matrix?.suppliers?.length && comparison.matrix.rows.length ? (
+            <div className="py-2 overflow-x-auto -mx-1 px-1">
+              <Table className="min-w-[520px] text-xs sm:text-sm">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[140px]">Item</TableHead>
+                    {comparison.matrix.suppliers.map((s) => (
+                      <TableHead key={s.quoteId} className="text-right min-w-[100px]">
+                        <span className="block truncate max-w-[120px]" title={s.supplierName}>
+                          {s.supplierName}
+                        </span>
+                        <span className="text-[10px] font-normal text-muted-foreground block">
+                          {s.totalAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </span>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {comparison.matrix.rows.map((row) => (
+                    <TableRow key={row.lineId}>
+                      <TableCell>
+                        <span className="font-medium">{row.description}</span>
+                        <span className="block text-muted-foreground">
+                          {row.quantity} {row.unit ?? "un"}
+                        </span>
+                      </TableCell>
+                      {comparison.matrix!.suppliers.map((s) => {
+                        const price = row.prices[s.quoteId];
+                        const isLow = row.lowestQuoteId === s.quoteId && price != null;
+                        return (
+                          <TableCell
+                            key={`${row.lineId}-${s.quoteId}`}
+                            className={`text-right tabular-nums ${isLow ? "text-green-600 dark:text-green-400 font-semibold" : ""}`}
+                          >
+                            {price != null
+                              ? price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                              : "—"}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : comparison?.lines?.length ? (
             <div className="space-y-4 py-2 text-sm">
               {comparison.lines.map((line) => (
@@ -921,16 +1114,6 @@ export function PurchaseRequisitionWorkflowPanel({
                   ) : (
                     <p className="text-muted-foreground">Sem preços informados.</p>
                   )}
-                  {line.offers.length > 1 ? (
-                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                      {line.offers.map((o) => (
-                        <li key={`${line.lineId}-${o.quoteId}`}>
-                          {o.supplierName}:{" "}
-                          {o.unitPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
                 </div>
               ))}
             </div>
@@ -942,6 +1125,21 @@ export function PurchaseRequisitionWorkflowPanel({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!cancelInviteId} onOpenChange={(o) => !o && setCancelInviteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar convite?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O link deixará de funcionar. Você pode gerar um novo link depois.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmCancelInvite()}>Cancelar convite</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FeedbackModal
         open={feedback.open}

@@ -11,6 +11,7 @@ import {
   REQUISITION_STATUS,
 } from './purchase-workflow.constants';
 import { cadastroUpperRequired } from '../common/cadastro-text';
+import { WorkflowNotifyService } from './workflow-notify.service';
 import {
   buildItemsSnapshotFromRequisition,
   type QuoteInviteItemLine,
@@ -60,7 +61,10 @@ function unitPriceForLine(
 
 @Injectable()
 export class PurchaseQuoteInviteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notify: WorkflowNotifyService,
+  ) {}
 
   private async getSettingsMaxQuotes(tenantId: string): Promise<number> {
     const row = await this.prisma.purchaseSetting.findUnique({ where: { tenantId } });
@@ -79,11 +83,36 @@ export class PurchaseQuoteInviteService {
     return req;
   }
 
+  private async sendInviteEmail(inviteId: string) {
+    const invite = await this.prisma.purchaseQuoteInvite.findUnique({
+      where: { id: inviteId },
+      include: {
+        tenant: { select: { name: true } },
+        requisition: { select: { departmentName: true } },
+        supplier: { select: { email: true } },
+      },
+    });
+    if (!invite) throw new NotFoundException('Convite não encontrado');
+    const toEmail = invite.supplierEmail?.trim() || invite.supplier?.email?.trim();
+    if (!toEmail) {
+      return { emailSent: false, emailError: 'Fornecedor sem e-mail cadastrado' };
+    }
+    return this.notify.notifySupplierQuoteInvite({
+      toEmail,
+      tenantName: invite.tenant.name,
+      supplierName: invite.supplierName,
+      departmentName: invite.requisition.departmentName,
+      publicUrl: publicQuoteUrl(invite.token),
+      expiresAt: invite.expiresAt,
+    });
+  }
+
   async createInvites(
     requisitionId: string,
-    input: { supplierIds: string[]; expiresInDays?: number },
+    input: { supplierIds: string[]; expiresInDays?: number; sendEmail?: boolean },
   ) {
     const req = await this.assertRequisitionInQuotation(requisitionId);
+    const sendEmail = input.sendEmail !== false;
     const supplierIds = [...new Set(input.supplierIds.filter(Boolean))];
     if (!supplierIds.length) {
       throw new BadRequestException('Selecione ao menos um fornecedor.');
@@ -106,6 +135,12 @@ export class PurchaseQuoteInviteService {
       supplierId: string | null;
       supplierName: string;
       status: string;
+    }> = [];
+    const emails: Array<{
+      inviteId: string;
+      supplierName: string;
+      emailSent: boolean;
+      emailError?: string;
     }> = [];
 
     for (const supplierId of supplierIds) {
@@ -130,6 +165,15 @@ export class PurchaseQuoteInviteService {
           supplierName: pending.supplierName,
           status: pending.status,
         });
+        if (sendEmail) {
+          const mail = await this.sendInviteEmail(pending.id);
+          emails.push({
+            inviteId: pending.id,
+            supplierName: pending.supplierName,
+            emailSent: mail.emailSent,
+            emailError: mail.emailError,
+          });
+        }
         continue;
       }
 
@@ -154,9 +198,62 @@ export class PurchaseQuoteInviteService {
         supplierName: row.supplierName,
         status: row.status,
       });
+      if (sendEmail) {
+        const mail = await this.sendInviteEmail(row.id);
+        emails.push({
+          inviteId: row.id,
+          supplierName: row.supplierName,
+          emailSent: mail.emailSent,
+          emailError: mail.emailError,
+        });
+      }
     }
 
-    return { invites: created };
+    return { invites: created, emails };
+  }
+
+  async resendInviteEmail(requisitionId: string, inviteId: string) {
+    await this.assertRequisitionInQuotation(requisitionId);
+    const invite = await this.prisma.purchaseQuoteInvite.findFirst({
+      where: { id: inviteId, requisitionId },
+    });
+    if (!invite) throw new NotFoundException('Convite não encontrado');
+    if (invite.status !== 'pending') {
+      throw new BadRequestException('Só é possível reenviar e-mail de convites pendentes.');
+    }
+    const mail = await this.sendInviteEmail(inviteId);
+    return mail;
+  }
+
+  async renewInvite(requisitionId: string, inviteId: string, expiresInDays?: number) {
+    const req = await this.assertRequisitionInQuotation(requisitionId);
+    const invite = await this.prisma.purchaseQuoteInvite.findFirst({
+      where: { id: inviteId, requisitionId },
+    });
+    if (!invite) throw new NotFoundException('Convite não encontrado');
+    if (invite.status === 'submitted') {
+      throw new BadRequestException('Cotação já enviada. Gere um novo convite para outro ciclo.');
+    }
+    const expiresAt =
+      expiresInDays != null && expiresInDays > 0
+        ? new Date(Date.now() + expiresInDays * 86400000)
+        : invite.expiresAt;
+    const token = newInviteToken();
+    const updated = await this.prisma.purchaseQuoteInvite.update({
+      where: { id: inviteId },
+      data: {
+        token,
+        status: 'pending',
+        expiresAt,
+        itemsSnapshot: buildItemsSnapshotFromRequisition(req.items) as object,
+      },
+    });
+    return {
+      id: updated.id,
+      token: updated.token,
+      publicUrl: publicQuoteUrl(updated.token),
+      status: updated.status,
+    };
   }
 
   async listInvites(requisitionId: string) {
@@ -240,10 +337,41 @@ export class PurchaseQuoteInviteService {
       };
     });
 
+    const suppliers = req.quotes.map((q) => ({
+      quoteId: q.id,
+      supplierName: q.supplierName,
+      totalAmount: q.totalAmount,
+      deliveryDays: q.deliveryDays,
+    }));
+
+    const matrixRows = lines.map((line, lineIndex) => {
+      const prices: Record<string, number | null> = {};
+      let lowestQuoteId: string | null = null;
+      let lowestPrice = Infinity;
+      for (const quote of req.quotes) {
+        const quoteItems = parseQuoteItems(quote.items);
+        const unitPrice = unitPriceForLine(quoteItems, line, lineIndex);
+        prices[quote.id] = unitPrice;
+        if (unitPrice != null && unitPrice < lowestPrice) {
+          lowestPrice = unitPrice;
+          lowestQuoteId = quote.id;
+        }
+      }
+      return {
+        lineId: line.lineId,
+        description: line.description,
+        quantity: line.quantity,
+        unit: line.unit,
+        prices,
+        lowestQuoteId,
+      };
+    });
+
     return {
       requisitionId: req.id,
       status: req.status,
       lines: comparisonLines,
+      matrix: { suppliers, rows: matrixRows },
     };
   }
 
@@ -259,6 +387,14 @@ export class PurchaseQuoteInviteService {
           },
         },
         tenant: { select: { name: true } },
+        purchaseQuote: {
+          select: {
+            totalAmount: true,
+            deliveryDays: true,
+            notes: true,
+            items: true,
+          },
+        },
       },
     });
     if (!invite) throw new NotFoundException('Link inválido.');
@@ -273,6 +409,15 @@ export class PurchaseQuoteInviteService {
     }
 
     const items = parseSnapshot(invite.itemsSnapshot);
+    const submittedQuote =
+      invite.status === 'submitted' && invite.purchaseQuote
+        ? {
+            totalAmount: invite.purchaseQuote.totalAmount,
+            deliveryDays: invite.purchaseQuote.deliveryDays,
+            notes: invite.purchaseQuote.notes,
+            lines: parseQuoteItems(invite.purchaseQuote.items),
+          }
+        : null;
     return {
       tenantName: invite.tenant.name,
       supplierName: invite.supplierName,
@@ -282,6 +427,7 @@ export class PurchaseQuoteInviteService {
       status: invite.status,
       alreadySubmitted: invite.status === 'submitted',
       expiresAt: invite.expiresAt,
+      submittedQuote,
     };
   }
 
@@ -352,6 +498,11 @@ export class PurchaseQuoteInviteService {
         ? Math.max(0, Math.trunc(Number(body.deliveryDays)))
         : null;
 
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: invite.tenantId },
+      select: { name: true },
+    });
+
     const result = await this.prisma.$transaction(async (tx) => {
       const quote = await tx.purchaseQuote.create({
         data: {
@@ -374,6 +525,16 @@ export class PurchaseQuoteInviteService {
       });
       return quote;
     });
+
+    if (tenant) {
+      void this.notify.notifyComprasQuoteReceived({
+        tenantId: invite.tenantId,
+        tenantName: tenant.name,
+        supplierName: invite.supplierName,
+        totalAmount,
+        requisitionId: invite.requisitionId,
+      });
+    }
 
     return {
       ok: true,

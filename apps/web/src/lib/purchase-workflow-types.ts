@@ -57,10 +57,30 @@ export interface QuoteComparisonLine {
   } | null;
 }
 
+export interface QuoteComparisonMatrixSupplier {
+  quoteId: string;
+  supplierName: string;
+  totalAmount: number;
+  deliveryDays: number | null;
+}
+
+export interface QuoteComparisonMatrixRow {
+  lineId: string;
+  description: string;
+  quantity: number;
+  unit?: string;
+  prices: Record<string, number | null>;
+  lowestQuoteId: string | null;
+}
+
 export interface QuoteComparisonResult {
   requisitionId: string;
   status: string;
   lines: QuoteComparisonLine[];
+  matrix?: {
+    suppliers: QuoteComparisonMatrixSupplier[];
+    rows: QuoteComparisonMatrixRow[];
+  };
 }
 
 export interface PurchaseQuoteRow {

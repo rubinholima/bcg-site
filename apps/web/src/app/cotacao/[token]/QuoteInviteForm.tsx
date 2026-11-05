@@ -17,6 +17,14 @@ export type QuoteInviteItem = {
   unit?: string;
 };
 
+export type QuoteInviteSubmittedLine = {
+  lineId?: string;
+  description: string;
+  quantity: number;
+  unit?: string;
+  unitPrice: number;
+};
+
 export type QuoteInviteFormData = {
   tenantName: string;
   supplierName: string;
@@ -26,6 +34,12 @@ export type QuoteInviteFormData = {
   status: string;
   alreadySubmitted: boolean;
   expiresAt: string | null;
+  submittedQuote?: {
+    totalAmount: number;
+    deliveryDays: number | null;
+    notes: string | null;
+    lines: QuoteInviteSubmittedLine[];
+  } | null;
 };
 
 export function QuoteInviteForm({ token, initial }: { token: string; initial: QuoteInviteFormData }) {
@@ -116,9 +130,55 @@ export function QuoteInviteForm({ token, initial }: { token: string; initial: Qu
         </CardHeader>
         <CardContent className="space-y-4">
           {submitted ? (
-            <p className="text-sm text-green-600 dark:text-green-400">
-              Cotação já enviada. Obrigado pela participação.
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-green-600 dark:text-green-400">
+                Cotação enviada. Obrigado pela participação.
+              </p>
+              {initial.submittedQuote ? (
+                <>
+                  <div className="space-y-2">
+                    {(initial.submittedQuote.lines.length
+                      ? initial.submittedQuote.lines
+                      : initial.items.map((it) => ({
+                          ...it,
+                          unitPrice: 0,
+                        }))
+                    ).map((line) => (
+                      <div
+                        key={line.lineId ?? line.description}
+                        className="flex flex-wrap justify-between gap-2 rounded-md border border-border/70 px-3 py-2 text-sm"
+                      >
+                        <span>
+                          {line.description} — {line.quantity} {line.unit ?? "un"}
+                        </span>
+                        <span className="font-medium">
+                          {line.unitPrice.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}{" "}
+                          / un
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm font-semibold">
+                    Total:{" "}
+                    {initial.submittedQuote.totalAmount.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </p>
+                  {initial.submittedQuote.deliveryDays != null ? (
+                    <p className="text-xs text-muted-foreground">
+                      Prazo de entrega: {initial.submittedQuote.deliveryDays} dias
+                    </p>
+                  ) : null}
+                  {initial.submittedQuote.notes ? (
+                    <p className="text-xs text-muted-foreground">Obs.: {initial.submittedQuote.notes}</p>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
           ) : (
             <>
               <div className="space-y-3">

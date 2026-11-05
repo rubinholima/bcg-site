@@ -339,6 +339,15 @@ export default function ManualPage() {
               ). Telefone cadastrado aparece no e-mail como referência; SMS/WhatsApp automático ainda não
               está disponível.
             </p>
+            <p>
+              <strong>Cotação online (grupo):</strong> em Compras, com a requisição em cotação, use{" "}
+              <em>Links para fornecedores</em> — vale para qualquer clube/empresa. Cadastre fornecedores
+              por empresa em Administrativo → Fornecedores (CNPJ, telefone, e-mail, endereço). O sistema
+              gera um link por fornecedor; pode enviar por e-mail (SMTP) ou copiar o link. O fornecedor
+              informa preço unitário de cada item; as respostas entram como cotações na requisição. Use{" "}
+              <em>Menor preço por item</em> para ver a matriz comparativa. Fluxo de aprovação e limites
+              (mín./máx. cotações) continuam iguais para todas as empresas.
+            </p>
           </Section>
 
           <Section id="futebol" title="Depto Futebol">

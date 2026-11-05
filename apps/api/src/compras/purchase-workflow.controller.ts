@@ -130,7 +130,7 @@ export class PurchaseWorkflowController {
   @RequireModule('adm_compras')
   createQuoteInvites(
     @Param('id') id: string,
-    @Body() body: { supplierIds: string[]; expiresInDays?: number },
+    @Body() body: { supplierIds: string[]; expiresInDays?: number; sendEmail?: boolean },
   ) {
     return this.quoteInvites.createInvites(id, body);
   }
@@ -145,6 +145,22 @@ export class PurchaseWorkflowController {
   @RequireModule('adm_compras')
   cancelQuoteInvite(@Param('id') id: string, @Param('inviteId') inviteId: string) {
     return this.quoteInvites.cancelInvite(id, inviteId);
+  }
+
+  @Post('requisitions/:id/quote-invites/:inviteId/send-email')
+  @RequireModule('adm_compras')
+  resendQuoteInviteEmail(@Param('id') id: string, @Param('inviteId') inviteId: string) {
+    return this.quoteInvites.resendInviteEmail(id, inviteId);
+  }
+
+  @Post('requisitions/:id/quote-invites/:inviteId/renew')
+  @RequireModule('adm_compras')
+  renewQuoteInvite(
+    @Param('id') id: string,
+    @Param('inviteId') inviteId: string,
+    @Body() body: { expiresInDays?: number },
+  ) {
+    return this.quoteInvites.renewInvite(id, inviteId, body.expiresInDays);
   }
 
   @Get('requisitions/:id/quote-comparison')

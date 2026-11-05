@@ -197,6 +197,67 @@ export class WorkflowNotifyService {
     );
   }
 
+  async notifyComprasQuoteReceived(input: {
+    tenantId: string;
+    tenantName: string;
+    supplierName: string;
+    totalAmount: number;
+    requisitionId: string;
+  }) {
+    const settings = await this.loadSettings(input.tenantId);
+    const total = input.totalAmount.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+    return this.notify(
+      settings.comprasNotifyEmail,
+      `[Compras] Cotação online recebida — ${input.tenantName}`,
+      [
+        'Um fornecedor respondeu a cotação online.',
+        '',
+        `Empresa: ${input.tenantName}`,
+        `Fornecedor: ${input.supplierName}`,
+        `Total informado: ${total}`,
+        '',
+        `Abrir Compras: ${this.dashboardUrl('/dashboard/adm/compras')}`,
+      ],
+    );
+  }
+
+  async notifySupplierQuoteInvite(input: {
+    toEmail: string;
+    tenantName: string;
+    supplierName: string;
+    departmentName?: string | null;
+    publicUrl: string;
+    expiresAt?: Date | null;
+  }): Promise<{ emailSent: boolean; emailError?: string }> {
+    const expiry =
+      input.expiresAt != null
+        ? input.expiresAt.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+        : null;
+    return this.notify(
+      input.toEmail,
+      `[Cotação] ${input.tenantName} — solicitação de preços`,
+      [
+        `Olá, ${input.supplierName}.`,
+        '',
+        `${input.tenantName} (Boston City Group) convida você a informar preços para uma requisição de compra.`,
+        input.departmentName ? `Departamento / área: ${input.departmentName}` : null,
+        expiry ? `Validade do link: ${expiry}` : null,
+        '',
+        'Abra o link abaixo, informe o preço unitário de cada item e envie:',
+        input.publicUrl,
+        '',
+        'Se o link não abrir, copie e cole no navegador.',
+      ],
+    );
+  }
+
   async getInboxCounts(tenantId?: string) {
     const tenantFilter = tenantId?.trim() ? { tenantId: tenantId.trim() } : {};
     const [comprasEnviadas, financeiroPendentes, diretoriaPendentes, tiAbertos] =

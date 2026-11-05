@@ -169,23 +169,27 @@ export default function FornecedoresAdmPage() {
                   <TableRow>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Nome</TableHead>
+                    <TableHead>CNPJ/CPF</TableHead>
                     <TableHead>Contato</TableHead>
                     <TableHead>E-mail</TableHead>
+                    <TableHead className="hidden md:table-cell">Telefone</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-muted-foreground">Nenhum fornecedor cadastrado.</TableCell>
+                      <TableCell colSpan={7} className="text-muted-foreground">Nenhum fornecedor cadastrado.</TableCell>
                     </TableRow>
                   ) : (
                     rows.map((row) => (
                       <TableRow key={row.id}>
                         <TableCell>{row.tenant.name}</TableCell>
                         <TableCell className="font-medium">{row.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{row.document ?? "—"}</TableCell>
                         <TableCell>{row.contactName ?? "—"}</TableCell>
-                        <TableCell>{row.email ?? "—"}</TableCell>
+                        <TableCell className="lowercase">{row.email ?? "—"}</TableCell>
+                        <TableCell className="hidden md:table-cell">{row.phone ?? "—"}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => { setEdit(row); setDialogOpen(true); }}>
