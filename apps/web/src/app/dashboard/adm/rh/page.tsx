@@ -51,6 +51,7 @@ import { EmploymentFormDialog, type EmploymentRow } from "./components/Employmen
 import { EmploymentContractsDialog } from "./components/EmploymentContractsDialog";
 import { LeavePeriodFormDialog, type LeavePeriodRow } from "./components/LeavePeriodFormDialog";
 import { FuncionariosGroupedList } from "@/components/dashboard/rh/FuncionariosGroupedList";
+import { rhRecordTenantId } from "@/lib/rh-tenant";
 import { RegistrationApprovalsPanel } from "./components/RegistrationApprovalsPanel";
 
 type TabId = "departamentos" | "cargos" | "colaboradores" | "vinculos" | "ferias" | "aprovacoes";
@@ -225,7 +226,9 @@ export default function AdmRHPage() {
     return null;
   }
 
-  const distinctTeams = new Set(employees.map((e) => e.tenant.id)).size;
+  const distinctTeams = new Set(
+    employees.map((e) => rhRecordTenantId(e)).filter((id): id is string => Boolean(id)),
+  ).size;
 
   return (
     <div className="space-y-6">

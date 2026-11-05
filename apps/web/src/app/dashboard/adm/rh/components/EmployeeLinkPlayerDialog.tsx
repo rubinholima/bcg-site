@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
+import { rhRecordTenantId, rhRecordTenantName } from "@/lib/rh-tenant";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import { cadastroDisplayUpper } from "@/lib/rh-employee-display";
 import { type EmployeeRow } from "./EmployeeFormDialog";
@@ -45,7 +46,7 @@ export function EmployeeLinkPlayerDialog({
   const [playerId, setPlayerId] = useState("");
   const [playerOptions, setPlayerOptions] = useState<PlayerOption[]>([]);
 
-  const tenantId = employee?.tenant.id ?? "";
+  const tenantId = employee ? (rhRecordTenantId(employee) ?? "") : "";
   const linkedPlayerId = employee?.playerId ?? "";
   const linkedPlayerName = employee?.player?.name ?? "";
 
@@ -71,7 +72,7 @@ export function EmployeeLinkPlayerDialog({
     if (!open || !employee) return;
     setPlayerId(employee.playerId ?? "");
     setPlayerSearch("");
-    loadPlayers(employee.tenant.id, "");
+    loadPlayers(rhRecordTenantId(employee) ?? "", "");
   }, [open, employee, loadPlayers]);
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export function EmployeeLinkPlayerDialog({
           <div className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-sm">
             <p className="text-xs text-muted-foreground">Colaborador RH</p>
             <p className="font-medium uppercase">{cadastroDisplayUpper(employee.name)}</p>
-            <p className="text-xs text-muted-foreground mt-1">{cadastroDisplayUpper(employee.tenant.name)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{cadastroDisplayUpper(rhRecordTenantName(employee))}</p>
           </div>
 
           <p className="text-sm text-muted-foreground">

@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
+import { rhRecordTenantId } from "@/lib/rh-tenant";
 import { Tenant } from "@/types/tenant";
 
 export interface DepartmentRow {
@@ -45,7 +46,7 @@ export function DepartmentFormDialog({
   useEffect(() => {
     if (!open) return;
     if (edit) {
-      setTenantId(edit.tenant.id);
+      setTenantId(rhRecordTenantId(edit) ?? "");
       setName(edit.name);
       setCode(edit.code ?? "");
     } else {

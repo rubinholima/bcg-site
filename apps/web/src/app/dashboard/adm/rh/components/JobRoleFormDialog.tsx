@@ -15,6 +15,7 @@ import {
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { NativeSelect } from "@/components/ui/native-select";
 import { api } from "@/lib/api";
+import { rhRecordTenantId } from "@/lib/rh-tenant";
 import { Tenant } from "@/types/tenant";
 import { type DepartmentRow } from "./DepartmentFormDialog";
 
@@ -63,12 +64,12 @@ export function JobRoleFormDialog({
     variant: FeedbackVariant;
   }>({ open: false, title: "", message: "", variant: "error" });
 
-  const tenantDepts = departments.filter((d) => d.tenant.id === tenantId);
+  const tenantDepts = departments.filter((d) => rhRecordTenantId(d) === tenantId);
 
   useEffect(() => {
     if (!open) return;
     if (edit) {
-      setTenantId(edit.tenant.id);
+      setTenantId(rhRecordTenantId(edit) ?? "");
       setDepartmentId(edit.departmentId ?? "");
       setName(edit.name);
       setCode(edit.code ?? "");

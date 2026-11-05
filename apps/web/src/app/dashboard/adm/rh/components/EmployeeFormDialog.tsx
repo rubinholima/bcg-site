@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
+import { rhRecordTenantId } from "@/lib/rh-tenant";
 import { formatCpfForDisplay, formatCpfInput } from "@/lib/format-cpf";
 import { formatPhoneForDisplay } from "@/lib/format-phone";
 import { EMPLOYEE_TYPES, EMPTY_EMPLOYEE_ADDRESS, parseEmployeeAddress, type EmployeeAddress, type EmployeeDependentRow } from "@/lib/employee-types";
@@ -61,7 +62,8 @@ export interface EmployeeRow {
   hasMinorChildren?: boolean;
   dependents?: EmployeeDependentRow[];
   player?: { id: string; name: string; category: string | null; position: string | null } | null;
-  tenant: { id: string; name: string; slug: string; logoUrl?: string | null };
+  tenantId?: string;
+  tenant: { id: string; name: string; slug: string; logoUrl?: string | null } | null;
 }
 
 interface ActiveEmployment {
@@ -124,8 +126,8 @@ export function EmployeeFormDialog({
   /** Colaborador já gravado ao enviar convite antes de clicar em Salvar */
   const [persistedEmployeeId, setPersistedEmployeeId] = useState<string | null>(null);
 
-  const tenantJobRoles = jobRoles.filter((r) => r.tenant.id === tenantId);
-  const tenantDepartments = departments.filter((d) => d.tenant.id === tenantId);
+  const tenantJobRoles = jobRoles.filter((r) => rhRecordTenantId(r) === tenantId);
+  const tenantDepartments = departments.filter((d) => rhRecordTenantId(d) === tenantId);
 
   const resetDocumentation = () => {
     setAddress({ ...EMPTY_EMPLOYEE_ADDRESS });
@@ -182,7 +184,7 @@ export function EmployeeFormDialog({
 
     if (edit) {
       setPersistedEmployeeId(edit.id);
-      setTenantId(edit.tenant.id);
+      setTenantId(rhRecordTenantId(edit) ?? "");
       setType(edit.type);
       setName(edit.name);
       setCpf(formatCpfForDisplay(edit.cpf));

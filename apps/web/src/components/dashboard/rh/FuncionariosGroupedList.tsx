@@ -314,8 +314,8 @@ export function FuncionariosGroupedList({
       { name: string; logoUrl?: string | null; employees: EmployeeRow[] }
     >();
     for (const emp of employees) {
-      const key = emp.tenant.id;
-      const name = emp.tenant?.name ?? key;
+      const key = emp.tenant?.id ?? emp.tenantId ?? "__sem_tenant__";
+      const name = emp.tenant?.name ?? "Sem clube/empresa";
       const entry = teamMap.get(key) ?? { name, logoUrl: emp.tenant?.logoUrl ?? null, employees: [] };
       if (!entry.logoUrl && emp.tenant?.logoUrl) entry.logoUrl = emp.tenant.logoUrl;
       entry.employees.push(emp);

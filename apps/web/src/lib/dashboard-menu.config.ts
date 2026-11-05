@@ -1198,6 +1198,13 @@ const DASHBOARD_MENU_LEGACY: MenuItemConfig[] = [
             moduleSlug: "saude",
           },
           {
+            slug: "psicologia_ausentes_grupo",
+            label: "Ausentes em grupo",
+            href: "/dashboard/psicologia/relatorios/ausentes-grupo",
+            icon: UserCheck,
+            moduleSlug: "psicologia",
+          },
+          {
             slug: "psicologia_material_apoio",
             label: "Material de apoio",
             href: "/dashboard/psicologia/material-apoio",

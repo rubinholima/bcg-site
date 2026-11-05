@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { maskBrlInput, parseBrlAmount, formatBrlAmount } from "@/lib/format-money-brl";
 import { api } from "@/lib/api";
+import { rhRecordTenantId } from "@/lib/rh-tenant";
 import { getEmployeeTypeLabel } from "@/lib/employee-types";
 import { Tenant } from "@/types/tenant";
 import { type DepartmentRow } from "./DepartmentFormDialog";
@@ -109,9 +110,9 @@ export function EmploymentFormDialog({
   const [loadingCadastro, setLoadingCadastro] = useState(false);
   const [cadastroMissing, setCadastroMissing] = useState(false);
 
-  const tenantEmployees = employees.filter((e) => e.tenant.id === tenantId);
-  const tenantJobRoles = jobRoles.filter((r) => r.tenant.id === tenantId);
-  const tenantDepartments = departments.filter((d) => d.tenant.id === tenantId);
+  const tenantEmployees = employees.filter((e) => rhRecordTenantId(e) === tenantId);
+  const tenantJobRoles = jobRoles.filter((r) => rhRecordTenantId(r) === tenantId);
+  const tenantDepartments = departments.filter((d) => rhRecordTenantId(d) === tenantId);
 
   const selectedJobRoleName =
     edit?.jobRole?.name ?? tenantJobRoles.find((r) => r.id === jobRoleId)?.name ?? "";

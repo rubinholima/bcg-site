@@ -380,6 +380,13 @@ export class FutebolAgendaService {
 
     const travels = dedupeTravelLogisticsList(travelsRawDeduped);
 
+    const agendaJogoEntryByTravelId = new Map<string, AgendaEntryCalendarRow>();
+    for (const e of entries) {
+      if (e.type === 'jogo' && e.travelLogisticsId) {
+        agendaJogoEntryByTravelId.set(e.travelLogisticsId, e);
+      }
+    }
+
     const travelIdsInCalendar = new Set(travels.map((t) => t.id));
     const travelMatchKeys = new Set(
       travels.map((t) => buildTravelMatchKey(t.tenantId, t.matchDate, t.opponentName, t.category)),
@@ -411,20 +418,28 @@ export class FutebolAgendaService {
           : isHome
             ? t.championshipName ?? 'Jogo em casa'
             : t.championshipName ?? 'Viagem';
+        const linkedAgendaEntry = agendaJogoEntryByTravelId.get(t.id);
         const departureAt = t.estimatedDeparture;
-        const start = matchAt;
         const matchTime = formatTimeBrazil(matchAt);
         const hasClock =
           Boolean(departureAt) ||
           (matchTime !== '12:00' && matchTime !== '00:00');
+        const start = linkedAgendaEntry?.startAt ?? matchAt;
+        const end =
+          linkedAgendaEntry?.endAt ??
+          (linkedAgendaEntry ? linkedAgendaEntry.startAt : matchAt);
+        const allDay = linkedAgendaEntry
+          ? linkedAgendaEntry.allDay && !linkedAgendaEntry.dayPeriod
+          : !hasClock;
         items.push({
           id: `travel-${t.id}`,
           source: 'travel',
           type: calendarType,
           title,
           startAt: start.toISOString(),
-          endAt: matchAt.toISOString(),
-          allDay: !hasClock,
+          endAt: end.toISOString(),
+          allDay,
+          dayPeriod: linkedAgendaEntry?.dayPeriod ?? null,
           tenantId: t.tenantId,
           tenantName: t.tenant.name,
           category: t.category,
@@ -903,8 +918,19 @@ export class FutebolAgendaService {
     if (dto.location !== undefined) data.location = dto.location.trim() || null;
     data.agendaLocked = true;
 
-    await this.prisma.footballAgendaEntry.update({ where: { id }, data });
+    const row = await this.prisma.footballAgendaEntry.update({ where: { id }, data });
     if (dto.playerIds !== undefined) await this.syncParticipants(id, dto.playerIds);
+    if (
+      row.type === 'jogo' &&
+      row.travelLogisticsId &&
+      dto.startAt !== undefined &&
+      startAt
+    ) {
+      await this.prisma.travelLogistics.updateMany({
+        where: { id: row.travelLogisticsId, tenantId: row.tenantId },
+        data: { matchDate: startAt },
+      });
+    }
     return this.findEntry(id);
   }
 
@@ -1122,8 +1148,8 @@ export class FutebolAgendaService {
       (tenant as { categories?: string[] | null }).categories ?? [];
 
     const entryIdFilter = dto.entryIds?.map((id) => id.trim()).filter(Boolean) ?? [];
-    const rangeStart = parseDateOnlyBrazil(sourceDate);
-    const sourceDayEnd = new Date(`${sourceDate}T23:59:59-03:00`);
+    const rangeStart = new Date(`${sourceDate}T00:00:00-03:00`);
+    const sourceDayEnd = new Date(`${sourceDate}T23:59:59.999-03:00`);
 
     const sourceEntries = await this.prisma.footballAgendaEntry.findMany({
       where: {
@@ -1140,7 +1166,7 @@ export class FutebolAgendaService {
     let sources = sourceEntries.filter(
       (row) => dateKeyInBrazil(row.startAt) === sourceDate,
     );
-    if (categoryFilter) {
+    if (categoryFilter && entryIdFilter.length === 0) {
       sources = sources.filter((row) =>
         entryMatchesOperationalCategoryFilter(
           row.category,
@@ -1281,6 +1307,12 @@ export class FutebolAgendaService {
         where: { id: existing.travelLogisticsId, tenantId: existing.tenantId },
       });
       if (linked) {
+        if (linked.matchDate.getTime() !== existing.startAt.getTime()) {
+          await this.prisma.travelLogistics.update({
+            where: { id: linked.id },
+            data: { matchDate: existing.startAt },
+          });
+        }
         return {
           entry: toEntryDto(existing),
           travelId: linked.id,
@@ -1299,8 +1331,7 @@ export class FutebolAgendaService {
       dto?.isHomeMatch ?? inferIsHomeFromJogoTitle(existing.title) ?? true;
     const championshipName =
       dto?.championshipName?.trim() || FRIENDLY_CHAMPIONSHIP_NAME;
-    const matchDate =
-      parseDateOnlyBrazil(dateKeyInBrazil(existing.startAt)) ?? existing.startAt;
+    const matchDate = existing.startAt;
 
     const travel = await this.prisma.travelLogistics.create({
       data: {
