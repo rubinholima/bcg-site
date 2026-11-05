@@ -78,6 +78,8 @@ export type AnalysisEventRow = {
   analysisClass?: string | null;
   fieldX?: number | null;
   fieldY?: number | null;
+  fieldZoneKey?: string | null;
+  teamSide?: string | null;
   tagDefinition?: { key: string; label: string };
   player?: { id: string; name: string } | null;
 };
@@ -92,6 +94,15 @@ export type TeamMetrics = {
   passAccuracyPct: number | null;
   shots: number;
   shotsOnGoal: number;
+  shotsBlocked?: number;
+  shotsOffTarget?: number;
+  goals?: number;
+  fouls?: number;
+  cornersFor?: number;
+  cornersAgainst?: number;
+  yellowCards?: number;
+  redCards?: number;
+  possessionMarks?: number;
   recoveries: number;
   losses: number;
   duels?: number;

@@ -14,7 +14,9 @@ import {
 import {
   computePlayerMetrics,
   computeTeamMetrics,
+  computeTeamMetricsBySide,
 } from './performance-analysis-metrics.util';
+import { buildZoneHeatCounts } from './analysis-pitch-zones.util';
 import {
   applyClockCommand,
   effectiveClockSeconds,
@@ -23,6 +25,12 @@ import {
   type LiveClockState,
 } from './performance-analysis-live-clock.util';
 import { normalizeTenantAnalysisTags } from './performance-analysis-tag-normalization.util';
+import {
+  type AnalysisPitchZoneKey,
+  isValidPitchZoneKey,
+  pitchZoneCentroid,
+} from './analysis-pitch-zones.util';
+import { ANALYSIS_TEAM_SIDES } from './performance-analysis.constants';
 
 import { mapPublicVideoSource } from './performance-analysis-video-public.util';
 
@@ -53,10 +61,15 @@ export class PerformanceAnalysisService {
   ) {}
 
   async ensureDefaultTags(tenantId: string) {
-    const count = await this.prisma.analysisTagDefinition.count({ where: { tenantId } });
-    if (count === 0) {
+    const existing = await this.prisma.analysisTagDefinition.findMany({
+      where: { tenantId },
+      select: { key: true },
+    });
+    const have = new Set(existing.map((r) => r.key));
+    const missing = DEFAULT_ANALYSIS_TAGS.filter((t) => !have.has(t.key));
+    if (missing.length > 0) {
       await this.prisma.analysisTagDefinition.createMany({
-        data: DEFAULT_ANALYSIS_TAGS.map((t) => ({
+        data: missing.map((t) => ({
           tenantId,
           key: t.key,
           label: t.label,
@@ -323,6 +336,7 @@ export class PerformanceAnalysisService {
       matchClockSeconds?: number | null;
       fieldX?: number | null;
       fieldY?: number | null;
+      fieldZoneKey?: string | null;
       notes?: string | null;
       source?: string | null;
       clientEventKey?: string | null;
@@ -360,6 +374,27 @@ export class PerformanceAnalysisService {
     if (dto.fieldY != null && (dto.fieldY < 0 || dto.fieldY > 1)) {
       throw new BadRequestException('fieldY deve estar entre 0 e 1.');
     }
+    let fieldZoneKey = dto.fieldZoneKey?.trim() || null;
+    if (fieldZoneKey && !isValidPitchZoneKey(fieldZoneKey)) {
+      throw new BadRequestException('Zona de campo inválida.');
+    }
+    if (dto.teamSide?.trim()) {
+      const side = dto.teamSide.trim().toLowerCase();
+      if (!(ANALYSIS_TEAM_SIDES as readonly string[]).includes(side)) {
+        throw new BadRequestException('Lado inválido (proprio ou adversario).');
+      }
+    }
+    const source = dto.source?.trim() || 'MANUAL';
+    if (source === 'LIVE' && !fieldZoneKey && dto.fieldX == null) {
+      throw new BadRequestException('Selecione a zona do campo (grade 3×3).');
+    }
+    let fieldX = dto.fieldX ?? null;
+    let fieldY = dto.fieldY ?? null;
+    if (fieldZoneKey) {
+      const c = pitchZoneCentroid(fieldZoneKey as AnalysisPitchZoneKey);
+      fieldX = c.x;
+      fieldY = c.y;
+    }
     if (dto.clientEventKey?.trim()) {
       const existing = await this.prisma.analysisEvent.findFirst({
         where: {
@@ -384,10 +419,11 @@ export class PerformanceAnalysisService {
         endMs: dto.endMs ?? null,
         matchPeriod: dto.matchPeriod?.trim() || null,
         matchClockSeconds: dto.matchClockSeconds ?? null,
-        fieldX: dto.fieldX ?? null,
-        fieldY: dto.fieldY ?? null,
+        fieldX,
+        fieldY,
+        fieldZoneKey,
         notes: dto.notes?.trim() || null,
-        source: dto.source?.trim() || 'MANUAL',
+        source,
         clientEventKey: dto.clientEventKey?.trim() || null,
         authorUserId: dto.authorUserId ?? null,
         analysisClass: dto.analysisClass?.trim().toLowerCase() || null,
@@ -622,7 +658,9 @@ export class PerformanceAnalysisService {
       this.listClips(sessionId, allowedTenantIds),
       this.getMetrics(sessionId, allowedTenantIds),
     ]);
-    const withField = events.filter((e) => e.fieldX != null && e.fieldY != null);
+    const withField = events.filter(
+      (e) => e.fieldZoneKey || (e.fieldX != null && e.fieldY != null),
+    );
     return {
       session: {
         id: session.id,
@@ -633,10 +671,12 @@ export class PerformanceAnalysisService {
       metrics,
       events,
       clips,
+      zoneHeat: buildZoneHeatCounts(events),
       fieldPoints: withField.map((e) => ({
         eventId: e.id,
         x: e.fieldX,
         y: e.fieldY,
+        fieldZoneKey: e.fieldZoneKey,
         tagKey: e.tagDefinition?.key,
         playerId: e.playerId,
       })),
@@ -683,7 +723,14 @@ export class PerformanceAnalysisService {
       material,
       fieldPoints: events
         .filter((e) => e.fieldX != null && e.fieldY != null)
-        .map((e) => ({ eventId: e.id, x: e.fieldX, y: e.fieldY, tagKey: e.tagDefinition?.key })),
+        .map((e) => ({
+          eventId: e.id,
+          x: e.fieldX,
+          y: e.fieldY,
+          fieldZoneKey: e.fieldZoneKey,
+          tagKey: e.tagDefinition?.key,
+        })),
+      zoneHeat: buildZoneHeatCounts(events),
     };
   }
 
@@ -774,6 +821,7 @@ export class PerformanceAnalysisService {
       tagLabel: e.tagDefinition.label,
       outcome: e.outcome,
       playerId: e.playerId,
+      teamSide: e.teamSide,
     }));
     const playerMetrics = computePlayerMetrics(tagged);
     const playerIds = playerMetrics.map((p) => p.playerId);
@@ -785,8 +833,12 @@ export class PerformanceAnalysisService {
           })
         : [];
     const nameById = new Map(players.map((p) => [p.id, p.name]));
+    const bySide = computeTeamMetricsBySide(tagged);
     return {
-      team: computeTeamMetrics(tagged),
+      team: bySide.all,
+      teamProprio: bySide.proprio,
+      teamAdversario: bySide.adversario,
+      zoneHeat: buildZoneHeatCounts(events),
       players: playerMetrics.map((p) => ({
         ...p,
         playerName: nameById.get(p.playerId) ?? null,
@@ -911,6 +963,7 @@ export class PerformanceAnalysisService {
       tagLabel: e.tagDefinition.label,
       outcome: e.outcome,
       playerId: e.playerId,
+      teamSide: e.teamSide,
     }));
     const sessions = await this.prisma.analysisSession.findMany({
       where: {
@@ -952,5 +1005,157 @@ export class PerformanceAnalysisService {
       },
       videoSource: mapPublicVideoSource(clip.videoSource),
     };
+  }
+
+  async getSeasonDashboard(
+    tenantId: string,
+    season: number,
+    allowedTenantIds: string[] | null,
+    category?: string,
+  ) {
+    this.access.assertTenant(allowedTenantIds, tenantId);
+    const sessions = await this.prisma.analysisSession.findMany({
+      where: {
+        tenantId,
+        kind: 'MATCH',
+        season,
+        ...(category?.trim() ? { category: category.trim() } : {}),
+      },
+      orderBy: { updatedAt: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        liveClock: true,
+        updatedAt: true,
+        createdAt: true,
+      },
+    });
+    const sessionIds = sessions.map((s) => s.id);
+    const events =
+      sessionIds.length === 0
+        ? []
+        : await this.prisma.analysisEvent.findMany({
+            where: { tenantId, analysisSessionId: { in: sessionIds } },
+            include: { tagDefinition: { select: { key: true, label: true } } },
+          });
+    const tagged = events.map((e) => ({
+      tagKey: e.tagDefinition.key,
+      tagLabel: e.tagDefinition.label,
+      outcome: e.outcome,
+      playerId: e.playerId,
+      teamSide: e.teamSide,
+    }));
+    const bySide = computeTeamMetricsBySide(tagged);
+
+    type MatchRow = {
+      sessionId: string;
+      title: string;
+      scoreUs: number | null;
+      scoreThem: number | null;
+      result: 'V' | 'E' | 'D' | null;
+      playedAt: string;
+    };
+    const matchRows: MatchRow[] = sessions.map((s) => {
+      const clock = parseLiveClock(s.liveClock);
+      const scoreUs = clock.scoreHome;
+      const scoreThem = clock.scoreAway;
+      let result: MatchRow['result'] = null;
+      if (scoreUs != null && scoreThem != null) {
+        if (scoreUs > scoreThem) result = 'V';
+        else if (scoreUs < scoreThem) result = 'D';
+        else result = 'E';
+      }
+      return {
+        sessionId: s.id,
+        title: s.title,
+        scoreUs,
+        scoreThem,
+        result,
+        playedAt: s.updatedAt.toISOString(),
+      };
+    });
+    const wins = matchRows.filter((m) => m.result === 'V').length;
+    const draws = matchRows.filter((m) => m.result === 'E').length;
+    const losses = matchRows.filter((m) => m.result === 'D').length;
+    const decided = wins + draws + losses;
+    const pointsPct =
+      decided > 0 ? Math.round(((wins * 3 + draws) / (decided * 3)) * 1000) / 10 : null;
+    const goalsFor = matchRows.reduce((a, m) => a + (m.scoreUs ?? 0), 0);
+    const goalsAgainst = matchRows.reduce((a, m) => a + (m.scoreThem ?? 0), 0);
+
+    return {
+      season,
+      category: category?.trim() || null,
+      matchesPlayed: sessions.length,
+      wins,
+      draws,
+      losses,
+      pointsPct,
+      goalsFor,
+      goalsAgainst,
+      goalDifference: goalsFor - goalsAgainst,
+      metrics: bySide.all,
+      metricsProprio: bySide.proprio,
+      metricsAdversario: bySide.adversario,
+      zoneHeat: buildZoneHeatCounts(events),
+      matches: matchRows,
+    };
+  }
+
+  async listVideoAnnotations(
+    sessionId: string,
+    videoSourceId: string,
+    allowedTenantIds: string[] | null,
+  ) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    await this.access.assertVideoSourceInSession(videoSourceId, session.id, session.tenantId);
+    return this.prisma.analysisVideoAnnotation.findMany({
+      where: { analysisSessionId: session.id, videoSourceId },
+      orderBy: { startMs: 'asc' },
+    });
+  }
+
+  async createVideoAnnotation(
+    sessionId: string,
+    dto: {
+      videoSourceId: string;
+      startMs: number;
+      endMs?: number | null;
+      label?: string | null;
+      strokes: unknown;
+      authorUserId?: string | null;
+    },
+    allowedTenantIds: string[] | null,
+  ) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    await this.access.assertVideoSourceInSession(
+      dto.videoSourceId,
+      session.id,
+      session.tenantId,
+    );
+    if (!Array.isArray(dto.strokes) && typeof dto.strokes !== 'object') {
+      throw new BadRequestException('Desenho inválido.');
+    }
+    return this.prisma.analysisVideoAnnotation.create({
+      data: {
+        tenantId: session.tenantId,
+        analysisSessionId: session.id,
+        videoSourceId: dto.videoSourceId,
+        startMs: dto.startMs,
+        endMs: dto.endMs ?? null,
+        label: dto.label?.trim() || null,
+        strokes: dto.strokes as object,
+        authorUserId: dto.authorUserId ?? null,
+      },
+    });
+  }
+
+  async deleteVideoAnnotation(id: string, allowedTenantIds: string[] | null) {
+    const row = await this.prisma.analysisVideoAnnotation.findUnique({ where: { id } });
+    if (!row) throw new NotFoundException('Anotação não encontrada.');
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    await this.prisma.analysisVideoAnnotation.delete({ where: { id } });
+    return { ok: true };
   }
 }

@@ -6651,6 +6651,7 @@ model AnalysisSession {
   videoSources       AnalysisVideoSource[]
   events             AnalysisEvent[]
   clips              AnalysisClip[]
+  videoAnnotations   AnalysisVideoAnnotation[]
   playerMaterial     AnalysisPlayerMaterialItem[]
   clipCollections    AnalysisClipCollection[]
   @@index([tenantId, kind])
@@ -6683,6 +6684,7 @@ model AnalysisVideoSource {
   updatedAt          DateTime @updatedAt
   events             AnalysisEvent[]
   clips              AnalysisClip[]
+  videoAnnotations   AnalysisVideoAnnotation[]
   observedMatchLinks AnalysisOpponentObservedMatchVideo[]
   @@index([tenantId, analysisSessionId])
 }
@@ -6730,6 +6732,8 @@ model AnalysisEvent {
   matchClockSeconds  Int?
   fieldX             Float?
   fieldY             Float?
+  /// Grade 3×3 (corredor × terço) — ex.: esq_meio
+  fieldZoneKey       String?
   notes              String?  @db.Text
   authorUserId       String?
   source             String   @default("MANUAL") // MANUAL | LIVE | IMPORTED
@@ -6751,6 +6755,26 @@ model AnalysisEvent {
   @@index([playerId])
   @@index([observedMatchId])
   @@index([opponentPlayerId])
+  @@index([fieldZoneKey])
+}
+
+/// Telestracao (desenho sobre o vídeo) vinculada ao timestamp
+model AnalysisVideoAnnotation {
+  id                String   @id @default(cuid())
+  tenantId          String
+  analysisSessionId String
+  analysisSession   AnalysisSession @relation(fields: [analysisSessionId], references: [id], onDelete: Cascade)
+  videoSourceId     String
+  videoSource       AnalysisVideoSource @relation(fields: [videoSourceId], references: [id], onDelete: Cascade)
+  startMs           Int
+  endMs             Int?
+  label             String?
+  strokes           Json
+  authorUserId      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@index([tenantId, analysisSessionId])
+  @@index([videoSourceId, startMs])
 }
 
 model AnalysisClip {

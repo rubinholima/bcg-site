@@ -30,6 +30,15 @@ export const DEFAULT_ANALYSIS_TAGS: Array<{
   autoClipPostMs?: number;
 }> = [
   {
+    key: 'posse_bola',
+    label: 'Posse de bola',
+    category: 'posse',
+    sortOrder: 5,
+    outcomes: ['neutro'],
+    shortcutKey: 'o',
+    requiresPlayer: true,
+  },
+  {
     key: 'passe',
     label: 'Passe',
     category: 'posse',
@@ -37,6 +46,18 @@ export const DEFAULT_ANALYSIS_TAGS: Array<{
     outcomes: ['certo', 'errado'],
     shortcutKey: 'p',
     requiresPlayer: true,
+  },
+  {
+    key: 'gol',
+    label: 'Gol',
+    category: 'ataque',
+    sortOrder: 12,
+    outcomes: ['neutro'],
+    shortcutKey: 'g',
+    requiresPlayer: true,
+    autoClipEnabled: true,
+    autoClipPreMs: 12000,
+    autoClipPostMs: 6000,
   },
   {
     key: 'finalizacao',
@@ -96,6 +117,14 @@ export const DEFAULT_ANALYSIS_TAGS: Array<{
     requiresPlayer: true,
   },
   {
+    key: 'escanteio',
+    label: 'Escanteio',
+    category: 'bola_parada',
+    sortOrder: 75,
+    outcomes: ['a_favor', 'contra'],
+    shortcutKey: 'e',
+  },
+  {
     key: 'bola_parada',
     label: 'Bola parada',
     category: 'bola_parada',
@@ -103,4 +132,31 @@ export const DEFAULT_ANALYSIS_TAGS: Array<{
     outcomes: ['neutro'],
     shortcutKey: 's',
   },
+  {
+    key: 'falta',
+    label: 'Falta cometida',
+    category: 'disciplina',
+    sortOrder: 83,
+    outcomes: ['neutro'],
+    requiresPlayer: true,
+  },
+  {
+    key: 'cartao_amarelo',
+    label: 'Cartão amarelo',
+    category: 'disciplina',
+    sortOrder: 88,
+    outcomes: ['neutro'],
+    requiresPlayer: true,
+  },
+  {
+    key: 'cartao_vermelho',
+    label: 'Cartão vermelho',
+    category: 'disciplina',
+    sortOrder: 89,
+    outcomes: ['neutro'],
+    requiresPlayer: true,
+  },
 ];
+
+export const ANALYSIS_TEAM_SIDES = ['proprio', 'adversario'] as const;
+export type AnalysisTeamSide = (typeof ANALYSIS_TEAM_SIDES)[number];

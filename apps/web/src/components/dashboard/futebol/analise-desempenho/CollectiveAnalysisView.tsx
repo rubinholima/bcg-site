@@ -7,7 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { KpiCard } from "@/components/dashboard/cup360/KpiCard";
 import { NativeSelectField } from "@/components/ui/native-select";
 import { api } from "@/lib/api";
+import { AnalysisPitchHeatmap } from "./AnalysisPitchHeatmap";
 import { AnalysisPitchMap } from "./AnalysisPitchMap";
+import type { AnalysisPitchZoneKey } from "@/lib/analysis-pitch-zones";
 
 type Props = { sessionId: string };
 
@@ -21,7 +23,8 @@ export function CollectiveAnalysisView({ sessionId }: Props) {
     const { data: d } = await api.get<{
       metrics: { team: Record<string, unknown> };
       events: Array<{ id: string; analysisClass?: string | null; tagDefinition?: { label: string }; outcome?: string | null }>;
-      fieldPoints: Array<{ eventId: string; x: number; y: number }>;
+      fieldPoints: Array<{ eventId: string; x: number; y: number; fieldZoneKey?: string | null }>;
+      zoneHeat?: Partial<Record<AnalysisPitchZoneKey, number>>;
       session: { collectiveNotes?: string | null };
     }>(`/performance-analysis/sessions/${sessionId}/collective`);
     return d;
@@ -72,10 +75,18 @@ export function CollectiveAnalysisView({ sessionId }: Props) {
         <KpiCard label="Cruzamentos" value={team.crosses} />
         <KpiCard label="Duelos" value={team.duels} />
       </div>
-      <AnalysisPitchMap
-        points={data.fieldPoints.map((p) => ({ ...p, eventId: p.eventId }))}
-        className="max-w-lg"
-      />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <AnalysisPitchHeatmap
+          title="Mapa de calor — equipe"
+          counts={data.zoneHeat ?? {}}
+          className="max-w-lg"
+        />
+        <AnalysisPitchMap
+          points={data.fieldPoints.map((p) => ({ ...p, eventId: p.eventId }))}
+          className="max-w-lg"
+          showZoneLabels={false}
+        />
+      </div>
       <NativeSelectField
         value={classFilter}
         onChange={(e) => setClassFilter(e.target.value)}

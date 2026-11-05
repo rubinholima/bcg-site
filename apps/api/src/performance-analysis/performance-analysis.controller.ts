@@ -702,4 +702,56 @@ export class PerformanceAnalysisController {
       await this.allowed(req),
     );
   }
+
+  @Get('season-dashboard')
+  async seasonDashboard(
+    @Req() req: AuthedRequest,
+    @Query('tenantId') tenantId: string,
+    @Query('season') seasonRaw: string,
+    @Query('category') category?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório.');
+    const season = Number(seasonRaw);
+    if (!Number.isFinite(season)) throw new BadRequestException('season inválida.');
+    return this.service.getSeasonDashboard(
+      tenantId.trim(),
+      season,
+      await this.allowed(req),
+      category,
+    );
+  }
+
+  @Get('sessions/:sessionId/video-annotations')
+  async listVideoAnnotations(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Query('videoSourceId') videoSourceId: string,
+  ) {
+    if (!videoSourceId?.trim()) throw new BadRequestException('videoSourceId é obrigatório.');
+    return this.service.listVideoAnnotations(
+      sessionId,
+      videoSourceId.trim(),
+      await this.allowed(req),
+    );
+  }
+
+  @Post('sessions/:sessionId/video-annotations')
+  async createVideoAnnotation(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.createVideoAnnotation(
+      sessionId,
+      { ...(body as object), authorUserId: this.userId(req) } as Parameters<
+        PerformanceAnalysisService['createVideoAnnotation']
+      >[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Delete('video-annotations/:id')
+  async deleteVideoAnnotation(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.service.deleteVideoAnnotation(id, await this.allowed(req));
+  }
 }

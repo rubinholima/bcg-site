@@ -8,6 +8,7 @@ import { ANALISE_DESEMPENHO_BASE, useAnaliseDesempenhoQuery } from "./AnaliseDes
 const ITEMS = [
   { href: "", label: "Visão geral" },
   { href: "/sessoes", label: "Partidas" },
+  { href: "/campeonato", label: "Campeonato" },
   { href: "/sessoes?status=live", label: "Ao vivo" },
   { href: "/sessoes?status=review", label: "Pós-jogo" },
   { href: "/treinos", label: "Treinos" },

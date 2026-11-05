@@ -8,6 +8,8 @@ import { KpiCard } from "@/components/dashboard/cup360/KpiCard";
 import { NativeSelectField } from "@/components/ui/native-select";
 import { api } from "@/lib/api";
 import type { AnalysisEventRow } from "@/lib/performance-analysis-types";
+import { AnalysisPitchHeatmap } from "./AnalysisPitchHeatmap";
+import type { AnalysisPitchZoneKey } from "@/lib/analysis-pitch-zones";
 
 type RosterPlayer = { id: string; name: string; jerseyNumber: number | null };
 
@@ -30,6 +32,7 @@ export function IndividualAnalysisView({ sessionId, tenantId }: Props) {
     events: AnalysisEventRow[];
     clips: Array<{ id: string; title: string; startMs: number; endMs: number }>;
     material: MaterialRow[];
+    zoneHeat?: Partial<Record<AnalysisPitchZoneKey, number>>;
   } | null>(null);
 
   const loadIndividual = useCallback(async (pid: string) => {
@@ -131,6 +134,9 @@ export function IndividualAnalysisView({ sessionId, tenantId }: Props) {
             Material do atleta (dossiê): {materialCount} item(ns) curado(s) nesta sessão. Só entram no
             dossiê após adicionar aqui.
           </p>
+          {payload.zoneHeat ? (
+            <AnalysisPitchHeatmap title="Mapa de calor — atleta" counts={payload.zoneHeat} />
+          ) : null}
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard label="Ações" value={m?.totalTagged ?? 0} />
             <KpiCard label="Passes" value={m?.passAttempts ?? 0} />

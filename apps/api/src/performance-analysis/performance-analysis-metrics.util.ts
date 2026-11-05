@@ -3,6 +3,7 @@ type TaggedEvent = {
   tagLabel: string;
   outcome: string | null;
   playerId: string | null;
+  teamSide?: string | null;
 };
 
 export type TeamMetrics = {
@@ -15,12 +16,21 @@ export type TeamMetrics = {
   passAccuracyPct: number | null;
   shots: number;
   shotsOnGoal: number;
+  shotsBlocked: number;
+  shotsOffTarget: number;
+  goals: number;
+  fouls: number;
+  cornersFor: number;
+  cornersAgainst: number;
+  yellowCards: number;
+  redCards: number;
   recoveries: number;
   losses: number;
   duels: number;
   duelsWon: number;
   crosses: number;
   crossesSuccess: number;
+  possessionMarks: number;
 };
 
 export type PlayerMetrics = TeamMetrics & {
@@ -53,12 +63,21 @@ function aggregate(events: TaggedEvent[]): TeamMetrics {
   let passFailure = 0;
   let shots = 0;
   let shotsOnGoal = 0;
+  let shotsBlocked = 0;
+  let shotsOffTarget = 0;
+  let goals = 0;
+  let fouls = 0;
+  let cornersFor = 0;
+  let cornersAgainst = 0;
+  let yellowCards = 0;
+  let redCards = 0;
   let recoveries = 0;
   let losses = 0;
   let duels = 0;
   let duelsWon = 0;
   let crosses = 0;
   let crossesSuccess = 0;
+  let possessionMarks = 0;
 
   for (const ev of events) {
     byTag[ev.tagKey] = (byTag[ev.tagKey] ?? 0) + 1;
@@ -73,8 +92,22 @@ function aggregate(events: TaggedEvent[]): TeamMetrics {
     }
     if (isShotKey(ev.tagKey)) {
       shots += 1;
-      if (ev.outcome === 'gol' || ev.outcome === 'no_gol' || ev.outcome === 'defesa') shotsOnGoal += 1;
+      if (ev.outcome === 'gol') {
+        shotsOnGoal += 1;
+        goals += 1;
+      } else if (ev.outcome === 'defesa') shotsOnGoal += 1;
+      else if (ev.outcome === 'bloqueada') shotsBlocked += 1;
+      else if (ev.outcome === 'fora') shotsOffTarget += 1;
     }
+    if (ev.tagKey === 'gol') goals += 1;
+    if (ev.tagKey === 'falta') fouls += 1;
+    if (ev.tagKey === 'escanteio') {
+      if (ev.outcome === 'contra') cornersAgainst += 1;
+      else cornersFor += 1;
+    }
+    if (ev.tagKey === 'cartao_amarelo') yellowCards += 1;
+    if (ev.tagKey === 'cartao_vermelho') redCards += 1;
+    if (ev.tagKey === 'posse_bola') possessionMarks += 1;
     if (ev.tagKey === 'recuperacao') recoveries += 1;
     if (ev.tagKey === 'perda') losses += 1;
     if (ev.tagKey === 'duelo') {
@@ -100,17 +133,38 @@ function aggregate(events: TaggedEvent[]): TeamMetrics {
     passAccuracyPct,
     shots,
     shotsOnGoal,
+    shotsBlocked,
+    shotsOffTarget,
+    goals,
+    fouls,
+    cornersFor,
+    cornersAgainst,
+    yellowCards,
+    redCards,
     recoveries,
     losses,
     duels,
     duelsWon,
     crosses,
     crossesSuccess,
+    possessionMarks,
   };
 }
 
 export function computeTeamMetrics(events: TaggedEvent[]): TeamMetrics {
   return aggregate(events);
+}
+
+export function computeTeamMetricsBySide(
+  events: TaggedEvent[],
+): { proprio: TeamMetrics; adversario: TeamMetrics; all: TeamMetrics } {
+  const proprio = events.filter((e) => !e.teamSide || e.teamSide === 'proprio');
+  const adversario = events.filter((e) => e.teamSide === 'adversario');
+  return {
+    proprio: aggregate(proprio),
+    adversario: aggregate(adversario),
+    all: aggregate(events),
+  };
 }
 
 export function computePlayerMetrics(events: TaggedEvent[]): PlayerMetrics[] {
