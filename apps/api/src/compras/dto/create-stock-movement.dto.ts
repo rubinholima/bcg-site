@@ -29,4 +29,9 @@ export class CreateStockMovementDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  /** Saída manual — departamento destino (cadastro em Estoque). */
+  @IsString()
+  @IsOptional()
+  departmentId?: string;
 }

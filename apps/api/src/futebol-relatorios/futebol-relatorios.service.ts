@@ -1455,6 +1455,11 @@ export class FutebolRelatoriosService {
       mapNamed(raw?.referees, DEFAULT_PRESS_KIT_REFEREE_ROLES),
     );
 
+    const directors = await this.enrichDirectors(
+      tenantId,
+      mapNamed(raw?.directors, DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
+    );
+
     const staffRoleOverrides: Record<string, string> = {};
     if (raw?.staffRoleOverrides && typeof raw.staffRoleOverrides === 'object') {
       for (const [staffId, roleVal] of Object.entries(raw.staffRoleOverrides)) {
@@ -1483,7 +1488,7 @@ export class FutebolRelatoriosService {
           ? raw.matchTime.trim()
           : matchTimeFromDate,
       referees,
-      directors: mapNamed(raw?.directors, DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
+      directors,
       starterPlayerIds,
       captainPlayerId,
       staffRoleOverrides,
@@ -1499,6 +1504,46 @@ export class FutebolRelatoriosService {
           ? raw.persistedAt.trim()
           : null,
     };
+  }
+
+  private async enrichDirectors(
+    tenantId: string,
+    directors: PressKitNamedRole[],
+  ): Promise<PressKitNamedRole[]> {
+    const names = directors
+      .map((d) => d.name.trim())
+      .filter(Boolean)
+      .map((n) => n.toLocaleUpperCase('pt-BR'));
+    if (names.length === 0) return directors;
+
+    const nameOr = names.map((n) => ({
+      name: { equals: n, mode: 'insensitive' as const },
+    }));
+
+    const [staffRows, employeeRows] = await Promise.all([
+      this.prisma.technicalStaff.findMany({
+        where: { tenantId, OR: nameOr },
+        select: { name: true, photoUrl: true },
+      }),
+      this.prisma.employee.findMany({
+        where: { tenantId, OR: nameOr },
+        select: { name: true, photoUrl: true },
+      }),
+    ]);
+
+    const photoByName = new Map<string, string>();
+    for (const row of [...staffRows, ...employeeRows]) {
+      const key = row.name.toLocaleUpperCase('pt-BR');
+      const url = row.photoUrl?.trim();
+      if (url && !photoByName.has(key)) photoByName.set(key, url);
+    }
+
+    return directors.map((d) => {
+      if (d.photoUrl?.trim()) return d;
+      const key = d.name.trim().toLocaleUpperCase('pt-BR');
+      const photoUrl = photoByName.get(key) ?? null;
+      return photoUrl ? { ...d, photoUrl } : d;
+    });
   }
 
   private async enrichReferees(

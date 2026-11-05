@@ -20,6 +20,8 @@ import { InventoryCategoriesController } from './inventory-categories.controller
 import { InventoryCategoriesService } from './inventory-categories.service';
 import { ComprasReportsController } from './compras-reports.controller';
 import { ComprasReportsService } from './compras-reports.service';
+import { InventoryDepartmentsController } from './inventory-departments.controller';
+import { InventoryDepartmentsService } from './inventory-departments.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { MailService } from '../common/mail.service';
 import { WorkflowNotifyService } from './workflow-notify.service';
@@ -38,6 +40,7 @@ import { WorkflowNotifyService } from './workflow-notify.service';
     TiPublicController,
     InventoryCategoriesController,
     ComprasReportsController,
+    InventoryDepartmentsController,
   ],
   providers: [
     SuppliersService,
@@ -49,6 +52,7 @@ import { WorkflowNotifyService } from './workflow-notify.service';
     PurchaseWorkflowService,
     TiSupportService,
     ComprasReportsService,
+    InventoryDepartmentsService,
     ModuleAccessGuard,
     MailService,
     WorkflowNotifyService,

@@ -43,6 +43,24 @@ export class StockMovementsService {
       throw new BadRequestException('Informe o preço unitário na entrada de estoque');
     }
 
+    let departmentId: string | null = null;
+    if (!isEntry && dto.type === 'adjustment') {
+      const depId = dto.departmentId?.trim();
+      if (!depId) {
+        throw new BadRequestException('Selecione o departamento para registrar a saída.');
+      }
+      const dep = await this.prisma.inventoryDepartment.findFirst({
+        where: { id: depId, tenantId: product.tenantId, active: true },
+      });
+      if (!dep) throw new BadRequestException('Departamento inválido ou inativo.');
+      departmentId = dep.id;
+    } else if (dto.departmentId?.trim()) {
+      const dep = await this.prisma.inventoryDepartment.findFirst({
+        where: { id: dto.departmentId.trim(), tenantId: product.tenantId, active: true },
+      });
+      if (dep) departmentId = dep.id;
+    }
+
     const newStock = product.currentStock + qty;
     if (newStock < 0) throw new BadRequestException('Estoque insuficiente para esta baixa');
 
@@ -74,6 +92,7 @@ export class StockMovementsService {
           unitPrice: isEntry && dto.unitPrice != null ? toDecimal(dto.unitPrice) : null,
           referenceType: dto.referenceType ?? null,
           referenceId: dto.referenceId ?? null,
+          departmentId,
           notes: dto.notes ?? null,
         },
         include: {

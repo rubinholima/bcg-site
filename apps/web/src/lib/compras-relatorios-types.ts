@@ -2,6 +2,8 @@ export const COMPRAS_REPORT_SCOPES = [
   { value: 'geral', label: 'Geral — movimentos, requisições e compras' },
   { value: 'entradas', label: 'Entradas de estoque' },
   { value: 'saidas', label: 'Saídas de estoque' },
+  { value: 'entradas_categoria', label: 'Entradas por categoria de produto' },
+  { value: 'saidas_categoria', label: 'Saídas por categoria de produto' },
   { value: 'saidas_departamento', label: 'Saídas por departamento' },
   { value: 'cozinha', label: 'Saídas / itens — cozinha' },
   { value: 'requisicoes', label: 'Requisições de compra' },

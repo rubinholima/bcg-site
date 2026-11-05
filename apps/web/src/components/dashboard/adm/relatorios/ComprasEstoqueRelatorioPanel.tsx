@@ -34,6 +34,7 @@ import {
   type ComprasReportScope,
 } from "@/lib/compras-relatorios-types";
 import { useAdmRelatorioTenants } from "./adm-relatorio-shared";
+import { useInventoryCategories } from "@/hooks/useInventoryCategories";
 
 function fmtMoney(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "—";
@@ -55,7 +56,9 @@ export function ComprasEstoqueRelatorioPanel() {
   const [from, setFrom] = useState(defaultPeriod.from);
   const [to, setTo] = useState(defaultPeriod.to);
   const [departmentName, setDepartmentName] = useState("");
+  const [inventoryKind, setInventoryKind] = useState("");
   const [departments, setDepartments] = useState<string[]>([]);
+  const { options: categoryOptions } = useInventoryCategories(tenantId || undefined);
   const [loadingDepts, setLoadingDepts] = useState(false);
   const [busy, setBusy] = useState(false);
   const [report, setReport] = useState<ComprasEstoqueReport | null>(null);
@@ -99,6 +102,7 @@ export function ComprasEstoqueRelatorioPanel() {
 
   useEffect(() => {
     if (scope !== "saidas_departamento") setDepartmentName("");
+    if (scope !== "entradas_categoria" && scope !== "saidas_categoria") setInventoryKind("");
   }, [scope]);
 
   const fetchReport = async (): Promise<ComprasEstoqueReport | null> => {
@@ -120,6 +124,18 @@ export function ComprasEstoqueRelatorioPanel() {
       });
       return null;
     }
+    if (
+      (scope === "entradas_categoria" || scope === "saidas_categoria") &&
+      !inventoryKind.trim()
+    ) {
+      setFeedback({
+        open: true,
+        title: "Categoria obrigatória",
+        message: "Selecione a categoria de produto do relatório.",
+        variant: "warning",
+      });
+      return null;
+    }
     try {
       const params = new URLSearchParams({
         tenantId,
@@ -128,6 +144,7 @@ export function ComprasEstoqueRelatorioPanel() {
       if (from) params.set("from", from);
       if (to) params.set("to", to);
       if (departmentName.trim()) params.set("departmentName", departmentName.trim());
+      if (inventoryKind.trim()) params.set("inventoryKind", inventoryKind.trim());
       const { data } = await api.get<ComprasEstoqueReport>(
         `/compras/reports/estoque-compras?${params.toString()}`,
       );
@@ -176,6 +193,8 @@ export function ComprasEstoqueRelatorioPanel() {
     report.scope === "geral" ||
     report.scope === "entradas" ||
     report.scope === "saidas" ||
+    report.scope === "entradas_categoria" ||
+    report.scope === "saidas_categoria" ||
     report.scope === "saidas_departamento" ||
     report.scope === "cozinha";
   const showRequisitions = report && (report.scope === "geral" || report.scope === "requisicoes");
@@ -260,6 +279,18 @@ export function ComprasEstoqueRelatorioPanel() {
               onChange={(e) => setDepartmentName(e.target.value)}
               placeholder={loadingDepts ? "Carregando…" : "Selecione…"}
               options={departments.map((d) => ({ value: d, label: d }))}
+            />
+          </div>
+        ) : null}
+
+        {scope === "entradas_categoria" || scope === "saidas_categoria" ? (
+          <div className="space-y-2 sm:col-span-2">
+            <DashboardFieldLabel accent="emerald">Categoria de produto</DashboardFieldLabel>
+            <NativeSelectField
+              value={inventoryKind}
+              onChange={(e) => setInventoryKind(e.target.value)}
+              placeholder="Selecione…"
+              options={categoryOptions.map((k) => ({ value: k.slug, label: k.name }))}
             />
           </div>
         ) : null}

@@ -142,6 +142,7 @@ model Tenant {
   suppliers               Supplier[]
   products                Product[]
   inventoryCategories     InventoryCategory[]
+  inventoryDepartments    InventoryDepartment[]
   purchaseRequisitions    PurchaseRequisition[]
   purchaseOrders          PurchaseOrder[]
   purchaseSettings        PurchaseSetting[]
@@ -2497,6 +2498,22 @@ model PurchaseOrder {
   @@index([quoteId])
 }
 
+/// Departamento destino/origem em movimentações manuais de estoque (relatórios ADM).
+model InventoryDepartment {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  movements StockMovement[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
+}
+
 // Movimentação de estoque — entrada (compra), saída (requisição), ajuste
 model StockMovement {
   id            String   @id @default(cuid())
@@ -2507,9 +2524,12 @@ model StockMovement {
   unitPrice     Decimal? @db.Decimal(12, 2)
   referenceType String?  // order | requisition
   referenceId   String?
+  departmentId  String?
+  department    InventoryDepartment? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   notes         String?  @db.Text
   createdAt     DateTime @default(now())
   @@index([productId])
+  @@index([departmentId])
   @@index([createdAt])
 }
 

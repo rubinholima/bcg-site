@@ -163,6 +163,24 @@ function staffRhCargo(s: StaffDirectoryRow): string {
   return getStaffRoleLabel(raw);
 }
 
+function attachDirectorPhotos(
+  list: PressKitNamedRole[],
+  people: StaffDirectoryRow[],
+): PressKitNamedRole[] {
+  return list.map((d) => {
+    if (d.photoUrl?.trim()) return d;
+    if (!d.name.trim()) return d;
+    const norm = d.name.trim().toLocaleUpperCase("pt-BR");
+    const person =
+      people.find(
+        (s) =>
+          s.name.trim().toLocaleUpperCase("pt-BR") === norm &&
+          (!d.role.trim() || staffRhCargo(s) === d.role.trim()),
+      ) ?? people.find((s) => s.name.trim().toLocaleUpperCase("pt-BR") === norm);
+    return person?.photoUrl?.trim() ? { ...d, photoUrl: person.photoUrl } : d;
+  });
+}
+
 function resolveStaffRoleSlug(
   staffId: string | null | undefined,
   role: string | null | undefined,
@@ -349,6 +367,7 @@ export function FutebolRelatorioPressKitForm() {
   const [staffRoleOverrides, setStaffRoleOverrides] = useState<Record<string, string>>({});
   const [dragPlayerId, setDragPlayerId] = useState<string | null>(null);
   const [staffDirectory, setStaffDirectory] = useState<StaffDirectoryRow[]>([]);
+  const [rhEmployees, setRhEmployees] = useState<StaffDirectoryRow[]>([]);
   const [refereeDirectory, setRefereeDirectory] = useState<MatchReferee[]>([]);
   const [refereeSearch, setRefereeSearch] = useState("");
   const [savedSnapshot, setSavedSnapshot] = useState("");
@@ -413,6 +432,45 @@ export function FutebolRelatorioPressKitForm() {
       })
       .catch(() => {
         if (!cancelled) setStaffDirectory([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId]);
+
+  useEffect(() => {
+    if (!tenantId) {
+      setRhEmployees([]);
+      return;
+    }
+    let cancelled = false;
+    void api
+      .get<
+        Array<{
+          id: string;
+          name: string;
+          photoUrl?: string | null;
+          type?: string;
+          jobRole?: { name: string } | null;
+        }>
+      >(`/rh/employees?tenantId=${encodeURIComponent(tenantId)}`)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const rows = Array.isArray(data) ? data : [];
+        setRhEmployees(
+          rows
+            .filter((e) => e.id && e.name?.trim())
+            .map((e) => ({
+              id: `emp-${e.id}`,
+              name: e.name,
+              photoUrl: e.photoUrl ?? null,
+              role: e.type ?? null,
+              jobRole: e.jobRole?.name ? { id: e.id, name: e.jobRole.name } : null,
+            })),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setRhEmployees([]);
       });
     return () => {
       cancelled = true;
@@ -547,7 +605,7 @@ export function FutebolRelatorioPressKitForm() {
     phase: phase.trim() || null,
     matchTime: matchTime.trim() || null,
     referees,
-    directors,
+    directors: attachDirectorPhotos(directors, directorPeople),
     starterPlayerIds: padStarterSlots(starterPlayerIds),
     captainPlayerId: captainPlayerId.trim() || null,
     staffRoleOverrides,
@@ -992,6 +1050,10 @@ export function FutebolRelatorioPressKitForm() {
       if (!s.id || !s.name?.trim()) continue;
       byId.set(s.id, s);
     }
+    for (const s of rhEmployees) {
+      if (!s.id || !s.name?.trim() || byId.has(s.id)) continue;
+      byId.set(s.id, s);
+    }
     for (const s of reportData?.staff ?? []) {
       if (!s.staffId || !s.name?.trim() || byId.has(s.staffId)) continue;
       byId.set(s.staffId, {
@@ -1003,7 +1065,15 @@ export function FutebolRelatorioPressKitForm() {
       });
     }
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-  }, [staffDirectory, reportData?.staff]);
+  }, [staffDirectory, rhEmployees, reportData?.staff]);
+
+  useEffect(() => {
+    if (directorPeople.length === 0) return;
+    setDirectors((prev) => {
+      const next = attachDirectorPhotos(prev, directorPeople);
+      return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+    });
+  }, [directorPeople]);
 
   return (
     <>
@@ -1214,11 +1284,12 @@ export function FutebolRelatorioPressKitForm() {
                               const person = directorPeople.find((s) => s.id === e.target.value);
                               const next = [...directors];
                               if (!person) {
-                                next[i] = { role: "", name: "" };
+                                next[i] = { role: "", name: "", photoUrl: null };
                               } else {
                                 next[i] = {
                                   name: person.name.trim(),
                                   role: staffRhCargo(person),
+                                  photoUrl: person.photoUrl ?? null,
                                 };
                               }
                               setDirectors(next);

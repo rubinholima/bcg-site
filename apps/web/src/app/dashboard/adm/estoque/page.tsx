@@ -53,10 +53,17 @@ import {
 } from "@/lib/inventory-kinds";
 import { useInventoryCategories } from "@/hooks/useInventoryCategories";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Tenant } from "@/types/tenant";
 import { ProductFormDialog, type ProductRow } from "../compras/components/ProductFormDialog";
 
 const STORAGE_TENANT_KEY = "adm_estoque_tenant_id";
+
+type InventoryDepartmentRow = {
+  id: string;
+  name: string;
+  active: boolean;
+};
 
 function parseSquadTags(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -96,8 +103,13 @@ export default function AdmEstoquePage() {
   const [moveQty, setMoveQty] = useState("");
   const [moveDir, setMoveDir] = useState<"in" | "out">("in");
   const [moveNote, setMoveNote] = useState("");
+  const [moveDepartmentId, setMoveDepartmentId] = useState("");
   const [moveUnitPrice, setMoveUnitPrice] = useState("");
   const [moveSaving, setMoveSaving] = useState(false);
+  const [inventoryDepartments, setInventoryDepartments] = useState<InventoryDepartmentRow[]>([]);
+  const [deptDialogOpen, setDeptDialogOpen] = useState(false);
+  const [newDeptName, setNewDeptName] = useState("");
+  const [deptSaving, setDeptSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
     open: false,
     title: "",
@@ -180,6 +192,25 @@ export default function AdmEstoquePage() {
     void loadData();
   }, [loadData]);
 
+  const loadDepartments = useCallback(async () => {
+    if (!tenantId) {
+      setInventoryDepartments([]);
+      return;
+    }
+    try {
+      const { data } = await api.get<InventoryDepartmentRow[]>(
+        `/compras/inventory-departments?tenantId=${encodeURIComponent(tenantId)}`,
+      );
+      setInventoryDepartments(Array.isArray(data) ? data : []);
+    } catch {
+      setInventoryDepartments([]);
+    }
+  }, [tenantId]);
+
+  useEffect(() => {
+    void loadDepartments();
+  }, [loadDepartments]);
+
   const grouped = useMemo(() => {
     const slugsInProducts = [...new Set(products.map((p) => p.inventoryKind || "uso_consumo"))];
     const ordered = sortCategorySlugs(
@@ -220,8 +251,49 @@ export default function AdmEstoquePage() {
     setMoveQty("1");
     setMoveDir("in");
     setMoveNote("");
+    setMoveDepartmentId("");
     setMoveUnitPrice("");
     setMoveOpen(true);
+  };
+
+  const addDepartment = async () => {
+    if (!tenantId || !newDeptName.trim()) return;
+    setDeptSaving(true);
+    try {
+      await api.post("/compras/inventory-departments", {
+        tenantId,
+        name: newDeptName.trim(),
+      });
+      setNewDeptName("");
+      await loadDepartments();
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível cadastrar o departamento.",
+      });
+    } finally {
+      setDeptSaving(false);
+    }
+  };
+
+  const removeDepartment = async (id: string) => {
+    if (!tenantId) return;
+    setDeptSaving(true);
+    try {
+      await api.delete(
+        `/compras/inventory-departments/${encodeURIComponent(id)}?tenantId=${encodeURIComponent(tenantId)}`,
+      );
+      await loadDepartments();
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível remover o departamento.",
+      });
+    } finally {
+      setDeptSaving(false);
+    }
   };
 
   const submitMove = async () => {
@@ -241,6 +313,15 @@ export default function AdmEstoquePage() {
       return;
     }
 
+    if (moveDir === "out" && !moveDepartmentId) {
+      setFeedback({
+        open: true,
+        title: "Departamento obrigatório",
+        message: "Selecione o departamento para registrar a saída.",
+      });
+      return;
+    }
+
     const signed = moveDir === "in" ? n : -n;
     setMoveSaving(true);
     try {
@@ -249,6 +330,7 @@ export default function AdmEstoquePage() {
         quantity: signed,
         type: "adjustment",
         notes: moveNote.trim() || undefined,
+        ...(moveDir === "out" ? { departmentId: moveDepartmentId } : {}),
         ...(moveDir === "in" && unitPrice != null ? { unitPrice } : {}),
       });
       setMoveOpen(false);
@@ -311,6 +393,15 @@ export default function AdmEstoquePage() {
                 Módulo compras
               </Button>
             </Link>
+            <Button
+              type="button"
+              variant="outline"
+              className="backdrop-blur-sm bg-background/50"
+              disabled={!tenantId}
+              onClick={() => setDeptDialogOpen(true)}
+            >
+              Departamentos
+            </Button>
           </div>
         </div>
 
@@ -671,6 +762,23 @@ export default function AdmEstoquePage() {
                 />
               </div>
             ) : null}
+            {moveDir === "out" ? (
+              <div className="space-y-2">
+                <Label>Departamento *</Label>
+                <NativeSelect
+                  className="w-full min-h-[44px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  value={moveDepartmentId}
+                  onChange={(e) => setMoveDepartmentId(e.target.value)}
+                >
+                  <option value="">Selecione…</option>
+                  {inventoryDepartments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label>Observação (opcional)</Label>
               <Input value={moveNote} onChange={(e) => setMoveNote(e.target.value)} placeholder="Ex.: entrega fornecedor X" />
@@ -682,6 +790,54 @@ export default function AdmEstoquePage() {
             </Button>
             <Button type="button" disabled={moveSaving} onClick={() => void submitMove()}>
               {moveSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deptDialogOpen} onOpenChange={setDeptDialogOpen}>
+        <DialogContent className="text-foreground max-w-md">
+          <DialogHeader>
+            <DialogTitle>Departamentos de saída</DialogTitle>
+            <DialogDescription className="sr-only">Cadastro de departamentos</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex gap-2">
+              <Input
+                value={newDeptName}
+                onChange={(e) => setNewDeptName(e.target.value)}
+                placeholder="Nome do departamento"
+                className="text-foreground"
+              />
+              <Button type="button" disabled={deptSaving || !newDeptName.trim()} onClick={() => void addDepartment()}>
+                {deptSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Incluir"}
+              </Button>
+            </div>
+            {inventoryDepartments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum departamento cadastrado.</p>
+            ) : (
+              <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
+                {inventoryDepartments.map((d) => (
+                  <li key={d.id} className="flex items-center justify-between gap-2 rounded border border-border/60 px-2 py-1.5">
+                    <span>{d.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      disabled={deptSaving}
+                      onClick={() => void removeDepartment(d.id)}
+                    >
+                      Remover
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setDeptDialogOpen(false)}>
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>

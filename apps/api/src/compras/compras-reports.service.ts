@@ -9,6 +9,8 @@ export const COMPRAS_REPORT_SCOPES = [
   'geral',
   'entradas',
   'saidas',
+  'entradas_categoria',
+  'saidas_categoria',
   'saidas_departamento',
   'cozinha',
   'requisicoes',
@@ -91,6 +93,13 @@ export class ComprasReportsService {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
     if (!tenant) throw new NotFoundException('Clube não encontrado');
 
+    const cadastro = await this.prisma.inventoryDepartment.findMany({
+      where: { tenantId, active: true },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      select: { name: true },
+    });
+    const fromCadastro = cadastro.map((r) => r.name.trim()).filter(Boolean);
+
     const rows = await this.prisma.purchaseRequisition.findMany({
       where: { tenantId, departmentName: { not: null } },
       select: { departmentName: true },
@@ -102,8 +111,9 @@ export class ComprasReportsService {
       .map((r) => r.departmentName?.trim())
       .filter((n): n is string => !!n);
 
-    const extras = ['COZINHA', 'NUTRIÇÃO', 'MANUTENÇÃO', 'LIMPEZA'];
-    const merged = [...new Set([...fromReq, ...extras])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    const merged = [...new Set([...fromCadastro, ...fromReq])].sort((a, b) =>
+      a.localeCompare(b, 'pt-BR'),
+    );
     return merged;
   }
 
@@ -130,7 +140,7 @@ export class ComprasReportsService {
     const to = input.to?.trim() || input.toDate?.trim();
     const createdAt = dateRange(from, to);
     const departmentFilter = input.departmentName?.trim().toUpperCase();
-    const inventoryKind = input.inventoryKind?.trim();
+    const inventoryKindFilter = input.inventoryKind?.trim();
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
@@ -139,12 +149,14 @@ export class ComprasReportsService {
     if (!tenant) throw new NotFoundException('Clube não encontrado');
 
     const productWhere: Prisma.ProductWhereInput = { tenantId };
-    if (inventoryKind) productWhere.inventoryKind = inventoryKind;
+    if (inventoryKindFilter) productWhere.inventoryKind = inventoryKindFilter;
 
     const includeMovements =
       scope === 'geral' ||
       scope === 'entradas' ||
       scope === 'saidas' ||
+      scope === 'entradas_categoria' ||
+      scope === 'saidas_categoria' ||
       scope === 'saidas_departamento' ||
       scope === 'cozinha';
 
@@ -179,6 +191,7 @@ export class ComprasReportsService {
         orderBy: [{ createdAt: 'desc' }],
         take: 5000,
         include: {
+          department: { select: { name: true } },
           product: {
             select: {
               id: true,
@@ -218,6 +231,7 @@ export class ComprasReportsService {
         .map((row) => {
           const linked = row.referenceId ? requisitionsById.get(row.referenceId) : undefined;
           const departmentName =
+            row.department?.name ??
             linked?.departmentName ??
             (row.notes?.toUpperCase().includes('COZINHA') ? 'COZINHA' : null);
 
@@ -253,12 +267,21 @@ export class ComprasReportsService {
         .filter((row) => {
           if (scope === 'entradas') return row.quantity > 0;
           if (scope === 'saidas') return row.quantity < 0;
+          if (scope === 'entradas_categoria') {
+            if (row.quantity <= 0) return false;
+            if (!inventoryKindFilter) return true;
+            return row.inventoryKind === inventoryKindFilter;
+          }
+          if (scope === 'saidas_categoria') {
+            if (row.quantity >= 0) return false;
+            if (!inventoryKindFilter) return true;
+            return row.inventoryKind === inventoryKindFilter;
+          }
           if (scope === 'saidas_departamento') {
             if (row.quantity >= 0) return false;
             if (!departmentFilter) return true;
             const dept = row.departmentName?.toUpperCase() ?? '';
-            const note = row.notes?.toUpperCase() ?? '';
-            return dept.includes(departmentFilter) || note.includes(departmentFilter);
+            return dept.includes(departmentFilter);
           }
           if (scope === 'cozinha') {
             const kitchenKind = row.inventoryKind
@@ -397,7 +420,7 @@ export class ComprasReportsService {
       period: { from: from ?? null, to: to ?? null },
       filters: {
         departmentName: departmentFilter ?? null,
-        inventoryKind: inventoryKind ?? null,
+        inventoryKind: inventoryKindFilter ?? null,
       },
       summary,
       movements,

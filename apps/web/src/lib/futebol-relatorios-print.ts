@@ -1586,10 +1586,10 @@ export function buildPressKitPrintHtml(
 
   const directorsHtml = config.directors
     .filter((d) => d.name.trim())
-    .map(
-      (d) =>
-        `<div class="dir-card"><strong>${escapeHtml(d.name)}</strong><span>${escapeHtml(d.role)}</span></div>`,
-    )
+    .map((d) => {
+      const photo = playerPhotoHtml(d.photoUrl, d.name);
+      return `<div class="dir-card dir-card-photo">${photo}<div><strong>${escapeHtml(d.name)}</strong><span>${escapeHtml(d.role)}</span></div></div>`;
+    })
     .join("");
 
   const staffRank = (m: RelatorioPessoaRow) => {
@@ -1986,6 +1986,10 @@ export function buildPressKitPrintHtml(
       background: linear-gradient(180deg, ${BCG.blueLight}, #fff);
       display: flex; flex-direction: column; font-size: 9px; line-height: 1.2;
     }
+    .dir-card-photo {
+      flex-direction: row; align-items: center; gap: 6px;
+    }
+    .dir-card-photo .pk-photo { width: 28px; height: 28px; flex-shrink: 0; }
     .dir-card strong { color: ${BCG.blue}; }
     .dir-card span { color: #64748b; font-size: 7px; text-transform: uppercase; letter-spacing: 0.05em; }
 
