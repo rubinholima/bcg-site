@@ -468,10 +468,13 @@ export class FisioterapiaController {
   async listTryoutProspectsForClearance(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId: string,
+    @Query('all') all?: string,
   ) {
     const allowed = await this.allowedTenants(req);
     if (!tenantId?.trim()) return [];
-    return this.tryoutClearance.listTryoutProspects(tenantId.trim(), allowed);
+    return this.tryoutClearance.listTryoutProspects(tenantId.trim(), allowed, {
+      pendingPhysioOnly: all !== '1' && all !== 'true',
+    });
   }
 
   @Get('tryout-clearances/operational-status')

@@ -29,6 +29,9 @@ export class MailService {
         port: Number.isNaN(port) ? 587 : port,
         secure: process.env.SMTP_SECURE === 'true',
         auth: { user, pass },
+        connectionTimeout: 12_000,
+        greetingTimeout: 12_000,
+        socketTimeout: 20_000,
       });
     }
   }

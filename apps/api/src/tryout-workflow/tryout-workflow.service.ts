@@ -643,13 +643,22 @@ export class TryoutWorkflowService {
       throw new BadRequestException('Registro não está na fila de revisão anterior.');
     }
     const arrivalAt = this.parseDateInput(dto.arrivalAt, 'Data de chegada inválida.');
+    const arrivalReferralSource =
+      this.mapLegacySource(dto.arrivalReferralSource) ?? 'captacao';
+    if (
+      !TRYOUT_REFERRAL_SOURCES.includes(
+        arrivalReferralSource as (typeof TRYOUT_REFERRAL_SOURCES)[number],
+      )
+    ) {
+      throw new BadRequestException('Origem de chegada inválida.');
+    }
     const updated = await this.prisma.scoutingProspect.update({
       where: { id: prospectId },
       data: {
         arrivalAt,
         tryoutWorkflowActivatedAt: arrivalAt,
         tryoutWorkflowStage: 'aguardando_supervisao',
-        arrivalReferralSource: dto.arrivalReferralSource,
+        arrivalReferralSource,
         sourceDetails: dto.sourceDetails?.trim() || prospect.sourceDetails,
       },
     });

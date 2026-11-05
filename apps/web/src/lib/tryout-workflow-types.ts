@@ -172,6 +172,14 @@ export function labelTryoutCoachOutcome(outcome: string): string {
   return outcome;
 }
 
+/** Normaliza origens legadas (ex.: indicacao) para valores aceitos pela API. */
+export function normalizeTryoutReferralSource(source?: string | null): string {
+  if (!source?.trim()) return "captacao";
+  if (source === "indicacao") return "indicacao_parceira";
+  if (TRYOUT_REFERRAL_SOURCES.some((s) => s.value === source)) return source;
+  return "captacao";
+}
+
 export function tryoutStageBadgeClass(stage?: string | null): string {
   switch (stage) {
     case 'reprovado':

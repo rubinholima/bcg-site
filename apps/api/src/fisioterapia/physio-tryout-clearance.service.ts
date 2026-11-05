@@ -243,13 +243,31 @@ export class PhysioTryoutClearanceService {
     });
   }
 
-  async listTryoutProspects(tenantId: string, allowed: string[] | null) {
+  async listTryoutProspects(
+    tenantId: string,
+    allowed: string[] | null,
+    options?: { pendingPhysioOnly?: boolean },
+  ) {
     this.assertTenant(allowed, tenantId);
+    const pendingPhysioOnly = options?.pendingPhysioOnly !== false;
     return this.prisma.scoutingProspect.findMany({
       where: {
         tenantId,
         stage: { notIn: ['recusado', 'arquivado', 'cadastrado'] },
-        OR: [{ stage: 'tryout' }, { ctScheduleStatus: { not: null } }],
+        ...(pendingPhysioOnly
+          ? {
+              supervisionDocsValidatedAt: { not: null },
+              OR: [
+                { tryoutWorkflowStage: 'aguardando_fisio' },
+                {
+                  tryoutWorkflowStage: null,
+                  stage: 'tryout',
+                },
+              ],
+            }
+          : {
+              OR: [{ stage: 'tryout' }, { ctScheduleStatus: { not: null } }],
+            }),
       },
       orderBy: [{ updatedAt: 'desc' }],
       select: {

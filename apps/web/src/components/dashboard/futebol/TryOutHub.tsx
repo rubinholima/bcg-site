@@ -39,6 +39,7 @@ import {
   type TryoutReporting,
   labelTryoutSource,
   labelTryoutStage,
+  normalizeTryoutReferralSource,
   tryoutStageBadgeClass,
 } from "@/lib/tryout-workflow-types";
 import { CaptacaoManagerDecisionPanel } from "./CaptacaoManagerDecisionPanel";
@@ -108,6 +109,7 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
     "supervision" | "arrival" | "registration" | "manager" | "legacy" | "workflow" | null
   >(null);
   const [legacyConfirmOpen, setLegacyConfirmOpen] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -157,22 +159,54 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
   }
 
   async function post(path: string, body?: Record<string, unknown>) {
-    await api.post(path, body ?? {});
-    await load();
-    setDialog(null);
-    setActive(null);
+    setActionBusy(true);
+    try {
+      await api.post(path, body ?? {});
+      setDialog(null);
+      setActive(null);
+      await load();
+    } catch (err) {
+      setFeedback({
+        open: true,
+        title: "Não foi possível concluir",
+        message: err instanceof Error ? err.message : "Tente novamente ou atualize a página.",
+        variant: "error",
+      });
+    } finally {
+      setActionBusy(false);
+    }
   }
 
   async function confirmLegacyActivation() {
-    if (!active || !arrivalDate) return;
-    await api.post(`/tryout-workflow/prospects/${active.id}/activate-legacy`, {
-      arrivalReferralSource: arrivalSource,
-      arrivalAt: arrivalDate,
-    });
-    setLegacyConfirmOpen(false);
-    setDialog(null);
-    setActive(null);
-    await load();
+    if (!active || !arrivalDate || actionBusy) return;
+    setActionBusy(true);
+    try {
+      await api.post(`/tryout-workflow/prospects/${active.id}/activate-legacy`, {
+        arrivalReferralSource: normalizeTryoutReferralSource(arrivalSource),
+        arrivalAt: arrivalDate,
+      });
+      setLegacyConfirmOpen(false);
+      setDialog(null);
+      setActive(null);
+      await load();
+      setFeedback({
+        open: true,
+        title: "Workflow ativado",
+        message: `${active.name} entrou no fluxo Try Out (aguardando supervisão).`,
+        variant: "success",
+      });
+    } catch (err) {
+      setLegacyConfirmOpen(false);
+      setDialog("legacy");
+      setFeedback({
+        open: true,
+        title: "Não foi possível ativar",
+        message: err instanceof Error ? err.message : "Verifique origem, data e permissões.",
+        variant: "error",
+      });
+    } finally {
+      setActionBusy(false);
+    }
   }
 
   return (
@@ -326,7 +360,7 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                               className="h-8"
                               onClick={() => {
                                 setActive(p);
-                                setArrivalSource(p.arrivalReferralSource ?? "captacao");
+                                setArrivalSource(normalizeTryoutReferralSource(p.arrivalReferralSource));
                                 setArrivalDate(toDateInputValue(p.arrivalAt));
                                 setDialog("arrival");
                               }}
@@ -347,7 +381,11 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                         ) : null}
                         {p.tryoutEffectiveStage === "aguardando_fisio" ? (
                           <Button size="sm" variant="outline" className="h-8" asChild>
-                            <Link href="/dashboard/saude/fisioterapia/liberacao-tryout">Fisioterapia</Link>
+                            <Link
+                              href={`/dashboard/saude/fisioterapia/liberacao-tryout?tenantId=${encodeURIComponent(tenantId)}&prospectId=${encodeURIComponent(p.id)}`}
+                            >
+                              Fisioterapia
+                            </Link>
                           </Button>
                         ) : null}
                         {p.tryoutEffectiveStage === "liberado_campo" && p.canStartCtFieldEvaluation ? (
@@ -425,7 +463,7 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                   className="h-8 border-amber-500/40"
                   onClick={() => {
                     setActive(p);
-                    setArrivalSource(p.arrivalReferralSource ?? "captacao");
+                    setArrivalSource(normalizeTryoutReferralSource(p.arrivalReferralSource));
                     setArrivalDate("");
                     setDialog("legacy");
                   }}
@@ -615,13 +653,15 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                 value={arrivalDate}
                 onChange={(e) => setArrivalDate(e.target.value)}
               />
-              <Button type="submit">Salvar</Button>
+              <Button type="submit" disabled={actionBusy}>
+                {actionBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+              </Button>
             </form>
           ) : null}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={dialog === "legacy"} onOpenChange={(o) => !o && setDialog(null)}>
+      <Dialog open={dialog === "legacy"} onOpenChange={(o) => !o && !actionBusy && setDialog(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Ativar registro anterior</DialogTitle>
@@ -640,6 +680,7 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                   });
                   return;
                 }
+                setDialog(null);
                 setLegacyConfirmOpen(true);
               }}
             >
@@ -657,7 +698,9 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                 value={arrivalDate}
                 onChange={(e) => setArrivalDate(e.target.value)}
               />
-              <Button type="submit">Continuar</Button>
+              <Button type="submit" disabled={actionBusy}>
+                Continuar
+              </Button>
             </form>
           ) : null}
         </DialogContent>
@@ -674,9 +717,29 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void confirmLegacyActivation()}>
-              Confirmar ativação
+            <AlertDialogCancel
+              disabled={actionBusy}
+              onClick={() => {
+                if (!actionBusy) setDialog("legacy");
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actionBusy}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmLegacyActivation();
+              }}
+            >
+              {actionBusy ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Ativando…
+                </>
+              ) : (
+                "Confirmar ativação"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -703,7 +766,9 @@ export function TryOutHub({ tenants, initialTenantId }: Props) {
                 onChange={(e) => setSupervisionNotes(e.target.value)}
                 placeholder="Observações da supervisão (opcional)"
               />
-              <Button type="submit">Confirmar documentação</Button>
+              <Button type="submit" disabled={actionBusy}>
+                {actionBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar documentação"}
+              </Button>
             </form>
           ) : null}
         </DialogContent>

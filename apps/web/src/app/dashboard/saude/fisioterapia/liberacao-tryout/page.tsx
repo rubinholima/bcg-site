@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ClipboardCheck, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -46,7 +47,12 @@ export default function PhysioTryoutClearancePage() {
   const [bilateralTests, setBilateralTests] = useState<TryoutBilateralTests>(emptyTryoutBilateralTests());
   const [manualStrengthTest, setManualStrengthTest] = useState("");
   const [observations, setObservations] = useState("");
-  const [outcome, setOutcome] = useState<"aprovado" | "reprovado" | "">("");
+  const [outcome, setOutcome] = useState<
+    "aprovado" | "reprovado" | "nao_liberado_temporario" | "nao_liberado_definitivo" | ""
+  >("");
+  const searchParams = useSearchParams();
+  const initialTenantId = searchParams.get("tenantId")?.trim() ?? "";
+  const initialProspectId = searchParams.get("prospectId")?.trim() ?? "";
   const [evaluatedAt, setEvaluatedAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [loadingProspects, setLoadingProspects] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -82,9 +88,21 @@ export default function PhysioTryoutClearancePage() {
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
-      setTenants((Array.isArray(data) ? data : []).filter((t) => isFootballKind(t.kind?.name ?? "")));
+      const list = (Array.isArray(data) ? data : []).filter((t) =>
+        isFootballKind(t.kind?.name ?? ""),
+      );
+      setTenants(list);
+      if (initialTenantId && list.some((t) => t.id === initialTenantId)) {
+        setTenantId(initialTenantId);
+      }
     });
-  }, []);
+  }, [initialTenantId]);
+
+  useEffect(() => {
+    if (initialProspectId && prospects.some((p) => p.id === initialProspectId)) {
+      setProspectId(initialProspectId);
+    }
+  }, [initialProspectId, prospects]);
 
   useEffect(() => {
     if (!tenantId) {
@@ -414,15 +432,15 @@ export default function PhysioTryoutClearancePage() {
           <div id="tryout-field-outcome" className="grid gap-2 scroll-mt-24 sm:max-w-xs">
             <Label>Resultado final *</Label>
             <NativeSelect
-              className={fieldHighlight(
-                showValidationErrors && outcome !== "aprovado" && outcome !== "reprovado",
-              )}
+              className={fieldHighlight(showValidationErrors && !outcome)}
               value={outcome}
               onChange={(e) => { setOutcome(e.target.value as typeof outcome); setValidationBanner(null); }}
             >
               <option value="">Selecione</option>
-              <option value="aprovado">Aprovado</option>
+              <option value="aprovado">Aprovado — liberado para campo</option>
+              <option value="nao_liberado_temporario">Não liberado (temporário — reavaliar)</option>
               <option value="reprovado">Reprovado</option>
+              <option value="nao_liberado_definitivo">Não liberado (definitivo)</option>
             </NativeSelect>
           </div>
 

@@ -99,10 +99,16 @@ export function validatePhysioTryoutClearanceForm(input: {
       message: "Informe o teste de força muscular manual.",
     });
   }
-  if (input.outcome !== "aprovado" && input.outcome !== "reprovado") {
+  const validOutcomes = [
+    "aprovado",
+    "reprovado",
+    "nao_liberado_temporario",
+    "nao_liberado_definitivo",
+  ] as const;
+  if (!validOutcomes.includes(input.outcome as (typeof validOutcomes)[number])) {
     issues.push({
       focusId: "tryout-field-outcome",
-      message: "Selecione o resultado final (aprovado ou reprovado).",
+      message: "Selecione o resultado final da liberação.",
     });
   }
 
