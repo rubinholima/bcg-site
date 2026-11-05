@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import { PurchaseRequisitionWorkflowPanel } from "@/app/dashboard/adm/compras/components/PurchaseRequisitionWorkflowPanel";
+import { canAccessPurchaseRequisitions } from "@/lib/purchase-requisition-access";
 
 export default function RequisicoesPage() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function RequisicoesPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
 
   useEffect(() => {
-    if (!canAccessModule("requisicoes") && !authLoading) return;
+    if (!canAccessPurchaseRequisitions(canAccessModule) && !authLoading) return;
     api.get<Tenant[]>("/tenants").then(({ data }) => setTenants(Array.isArray(data) ? data : []));
   }, [canAccessModule, authLoading]);
 
@@ -28,7 +29,7 @@ export default function RequisicoesPage() {
     );
   }
 
-  if (!canAccessModule("requisicoes")) {
+  if (!canAccessPurchaseRequisitions(canAccessModule)) {
     router.replace("/403");
     return null;
   }

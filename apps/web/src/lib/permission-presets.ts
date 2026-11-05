@@ -97,6 +97,7 @@ export const PERMISSION_PRESETS: readonly PermissionPreset[] = [
     grants: [
       { role: "comissao", slug: "futebol_comissao" },
       { role: "comissao", slug: "futebol_logistica" },
+      { role: "comissao", slug: "requisicoes" },
       { role: "comissao", slug: "futebol_analise" },
       { role: "comissao", slug: "futebol_analise_desempenho" },
       { role: "comissao", slug: "futebol_performance" },

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MailService } from '../common/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { resolveCaptacaoManagerEmail } from '../captacao/captacao-notify.util';
 
 type NotifySettings = {
   comprasNotifyEmail?: string | null;
@@ -109,6 +110,31 @@ export class WorkflowNotifyService {
     }
 
     return { compras, ti };
+  }
+
+  async notifyPendingGerente(input: {
+    tenantName: string;
+    requestedByName: string;
+    totalAmount?: number | null;
+  }) {
+    const total =
+      input.totalAmount != null
+        ? input.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        : '—';
+    const managerEmail = resolveCaptacaoManagerEmail();
+    return this.notify(
+      managerEmail,
+      `[Gerente] Aprovação de compra — ${input.tenantName}`,
+      [
+        'Requisição de compra aguardando sua aprovação (antes do financeiro).',
+        '',
+        `Empresa: ${input.tenantName}`,
+        `Solicitante: ${input.requestedByName}`,
+        `Valor (cotação vencedora): ${total}`,
+        '',
+        `Aprovar em: ${this.dashboardUrl('/dashboard/futebol/aprovacoes-compras')}`,
+      ],
+    );
   }
 
   async notifyPendingFinanceiro(input: {
@@ -260,10 +286,13 @@ export class WorkflowNotifyService {
 
   async getInboxCounts(tenantId?: string) {
     const tenantFilter = tenantId?.trim() ? { tenantId: tenantId.trim() } : {};
-    const [comprasEnviadas, financeiroPendentes, diretoriaPendentes, tiAbertos] =
+    const [comprasEnviadas, gerentePendentes, financeiroPendentes, diretoriaPendentes, tiAbertos] =
       await Promise.all([
         this.prisma.purchaseRequisition.count({
           where: { ...tenantFilter, status: 'enviada' },
+        }),
+        this.prisma.purchaseRequisition.count({
+          where: { ...tenantFilter, status: 'aguardando_gerente' },
         }),
         this.prisma.purchaseRequisition.count({
           where: { ...tenantFilter, status: 'aguardando_financeiro' },
@@ -275,6 +304,6 @@ export class WorkflowNotifyService {
           where: { ...tenantFilter, status: 'aberto' },
         }),
       ]);
-    return { comprasEnviadas, financeiroPendentes, diretoriaPendentes, tiAbertos };
+    return { comprasEnviadas, gerentePendentes, financeiroPendentes, diretoriaPendentes, tiAbertos };
   }
 }

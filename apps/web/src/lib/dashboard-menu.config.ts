@@ -90,6 +90,10 @@ import {
   BookOpen,
 } from "lucide-react";
 import { canAccessMelhoresTemporada } from "@/components/dashboard/futebol/treinadores/treinadores-access";
+import {
+  canAccessPurchaseRequisitions,
+  canApprovePurchaseAsGerente,
+} from "@/lib/purchase-requisition-access";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
 import {
@@ -225,6 +229,18 @@ export function canAccessMenuLeaf(
   }
   // Relatórios Saúde: perfis clínicos (fisioterapia, enfermagem…) têm `saude`, não só `relatorios_saude`.
   if (item.moduleSlug === "relatorios_saude" && canAccessModule("saude")) return true;
+  if (
+    (item.href === "/dashboard/requisicoes" || perm === "requisicoes") &&
+    canAccessPurchaseRequisitions(canAccessModule)
+  ) {
+    return true;
+  }
+  if (
+    item.href === "/dashboard/futebol/aprovacoes-compras" &&
+    canApprovePurchaseAsGerente(role, canAccessModule, isSuperAdmin)
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -669,6 +685,20 @@ const DASHBOARD_MENU_LEGACY: MenuItemConfig[] = [
             label: "Jogos e viagens",
             href: "/dashboard/futebol/logistica",
             icon: MapIcon,
+            moduleSlug: "futebol_logistica",
+          },
+          {
+            slug: "futebol_logistica_requisicoes_compra",
+            label: "Requisições de compra",
+            href: "/dashboard/requisicoes",
+            icon: ShoppingCart,
+            moduleSlug: "futebol_logistica",
+          },
+          {
+            slug: "futebol_aprovacoes_compras",
+            label: "Aprovar compras (gerente)",
+            href: "/dashboard/futebol/aprovacoes-compras",
+            icon: CheckCircle,
             moduleSlug: "futebol_logistica",
           },
           {

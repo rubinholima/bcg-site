@@ -2,6 +2,7 @@ export const REQUISITION_STATUS = {
   RASCUNHO: 'rascunho',
   ENVIADA: 'enviada',
   EM_COTACAO: 'em_cotacao',
+  AGUARDANDO_GERENTE: 'aguardando_gerente',
   AGUARDANDO_FINANCEIRO: 'aguardando_financeiro',
   AGUARDANDO_DIRETORIA: 'aguardando_diretoria',
   APROVADA: 'aprovada',
@@ -18,6 +19,7 @@ export const REQUISITION_STATUS_LABELS: Record<string, string> = {
   rascunho: 'Rascunho',
   enviada: 'Enviada',
   em_cotacao: 'Em cotação',
+  aguardando_gerente: 'Aguardando gerente',
   aguardando_financeiro: 'Aguardando financeiro',
   aguardando_diretoria: 'Aguardando diretoria',
   aprovada: 'Aprovada',
@@ -29,6 +31,7 @@ export const REQUISITION_STATUS_LABELS: Record<string, string> = {
 };
 
 export const APPROVAL_ROLE = {
+  GERENTE: 'gerente',
   FINANCEIRO: 'financeiro',
   DIRETORIA: 'diretoria',
 } as const;

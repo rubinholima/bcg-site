@@ -60,7 +60,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { type SupplierRow } from "@/app/dashboard/adm/compras/components/SupplierFormDialog";
 
-export type WorkflowMode = "compras" | "requester" | "financeiro" | "diretoria";
+export type WorkflowMode = "compras" | "requester" | "gerente" | "financeiro" | "diretoria";
 
 interface PurchaseRequisitionWorkflowPanelProps {
   mode: WorkflowMode;
@@ -159,6 +159,7 @@ export function PurchaseRequisitionWorkflowPanel({
       if (tenantFilter) params.set("tenantId", tenantFilter);
       let url = "/compras/workflow/requisitions";
       if (mode === "requester") url = "/requisicoes/mine";
+      if (mode === "gerente") url = "/compras/workflow/approvals/pending?role=gerente";
       if (mode === "financeiro") url = "/compras/workflow/approvals/pending?role=financeiro";
       if (mode === "diretoria") url = "/compras/workflow/approvals/pending?role=diretoria";
       if (tenantFilter && mode !== "requester") params.set("tenantId", tenantFilter);
@@ -224,7 +225,7 @@ export function PurchaseRequisitionWorkflowPanel({
         })),
       });
       if (submitAfterSave && data?.id) {
-        await api.post(`/compras/workflow/requisitions/${data.id}/submit`);
+        await api.post(`/requisicoes/${data.id}/submit`);
       }
       setFormOpen(false);
       await load();
@@ -263,7 +264,12 @@ export function PurchaseRequisitionWorkflowPanel({
     if (!selected) return;
     setActionLoading(true);
     try {
-      await api.post(`/compras/workflow/requisitions/${selected.id}/${path}`, body ?? {});
+      const base =
+        mode === "requester" && path === "submit"
+          ? `/requisicoes/${selected.id}`
+          : `/compras/workflow/requisitions/${selected.id}`;
+      const suffix = mode === "requester" && path === "submit" ? "/submit" : `/${path}`;
+      await api.post(`${base}${suffix}`, body ?? {});
       await refreshSelected();
       if (path === "submit" && mode === "requester") {
         alert(
@@ -271,7 +277,7 @@ export function PurchaseRequisitionWorkflowPanel({
         );
       } else if (path === "submit-for-approval" && mode === "compras") {
         alert(
-          "Enviada para aprovação. O Financeiro foi notificado por e-mail (se configurado em Configurações → Requisições).",
+          "Enviada para o gerente de futebol. Após aprovação dele, segue para o Financeiro.",
         );
       }
     } catch (err) {
@@ -477,6 +483,7 @@ export function PurchaseRequisitionWorkflowPanel({
   const titleByMode: Record<WorkflowMode, string> = {
     compras: "Fila de requisições",
     requester: listTitle ?? (requestType === "ti" ? "Requisições de equipamento TI" : "Requisições de compra"),
+    gerente: "Aprovações pendentes — Gerente",
     financeiro: "Aprovações pendentes — Financeiro",
     diretoria: "Aprovações pendentes — Diretoria",
   };
@@ -865,15 +872,20 @@ export function PurchaseRequisitionWorkflowPanel({
                     </Button>
                   </>
                 )}
-                {(mode === "financeiro" || mode === "diretoria") && (
+                {(mode === "gerente" || mode === "financeiro" || mode === "diretoria") && (
                   <>
-                    <Button type="button" disabled={actionLoading} onClick={() => runAction("approve", { role: mode === "diretoria" ? "diretoria" : "financeiro" })}>
+                    <Button type="button" disabled={actionLoading} onClick={() => runAction("approve", {
+                      role: mode === "diretoria" ? "diretoria" : mode === "gerente" ? "gerente" : "financeiro",
+                    })}>
                       <Check className="h-4 w-4 mr-1" />
                       Aprovar
                     </Button>
                     <Button type="button" variant="destructive" disabled={actionLoading} onClick={() => {
                       const reason = prompt("Motivo da reprovação:");
-                      if (reason) runAction("reject", { role: mode === "diretoria" ? "diretoria" : "financeiro", reason });
+                      if (reason) runAction("reject", {
+                        role: mode === "diretoria" ? "diretoria" : mode === "gerente" ? "gerente" : "financeiro",
+                        reason,
+                      });
                     }}>
                       <X className="h-4 w-4 mr-1" />
                       Reprovar

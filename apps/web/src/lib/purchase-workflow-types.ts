@@ -2,6 +2,7 @@ export const REQUISITION_STATUS_LABELS: Record<string, string> = {
   rascunho: "Rascunho",
   enviada: "Enviada",
   em_cotacao: "Em cotação",
+  aguardando_gerente: "Aguardando gerente",
   aguardando_financeiro: "Aguardando financeiro",
   aguardando_diretoria: "Aguardando diretoria",
   aprovada: "Aprovada",
@@ -173,7 +174,11 @@ export interface PurchaseSettingsSummaryRow extends PurchaseSettingsRow {
 
 export function statusBadgeClass(status: string): string {
   if (status === "concluida" || status === "aprovada") return "text-green-600 dark:text-green-400";
-  if (status.startsWith("aguardando") || status === "em_cotacao" || status === "em_compra")
+  if (
+    status.startsWith("aguardando") ||
+    status === "em_cotacao" ||
+    status === "em_compra"
+  )
     return "text-amber-600 dark:text-amber-400";
   if (status === "reprovada") return "text-destructive";
   return "text-muted-foreground";

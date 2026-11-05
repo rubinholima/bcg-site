@@ -168,11 +168,16 @@ export class PurchaseWorkflowService {
     });
   }
 
-  async findPendingApprovals(role: 'financeiro' | 'diretoria', tenantId?: string) {
+  async findPendingApprovals(
+    role: 'gerente' | 'financeiro' | 'diretoria',
+    tenantId?: string,
+  ) {
     const status =
-      role === APPROVAL_ROLE.FINANCEIRO
-        ? REQUISITION_STATUS.AGUARDANDO_FINANCEIRO
-        : REQUISITION_STATUS.AGUARDANDO_DIRETORIA;
+      role === APPROVAL_ROLE.GERENTE
+        ? REQUISITION_STATUS.AGUARDANDO_GERENTE
+        : role === APPROVAL_ROLE.FINANCEIRO
+          ? REQUISITION_STATUS.AGUARDANDO_FINANCEIRO
+          : REQUISITION_STATUS.AGUARDANDO_DIRETORIA;
     return this.findAll({ tenantId, status });
   }
 
@@ -453,23 +458,17 @@ export class PurchaseWorkflowService {
     }
     const total = req.approvedTotal ?? req.selectedQuote?.totalAmount ?? 0;
     const threshold = settings.approvalThresholdBrl ?? DEFAULT_PURCHASE_SETTINGS.approvalThresholdBrl;
-    const nextStatus =
-      total > threshold
-        ? REQUISITION_STATUS.AGUARDANDO_FINANCEIRO
-        : REQUISITION_STATUS.AGUARDANDO_FINANCEIRO;
     const updated = await this.prisma.purchaseRequisition.update({
       where: { id: requisitionId },
       data: {
-        status: nextStatus,
+        status: REQUISITION_STATUS.AGUARDANDO_GERENTE,
         approvedTotal: total,
       },
       include: requisitionInclude,
     });
     void this.notify
-      .notifyPendingFinanceiro({
-        tenantId: updated.tenantId,
+      .notifyPendingGerente({
         tenantName: updated.tenant.name,
-        requisitionId: updated.id,
         requestedByName: updated.requestedByName ?? 'Solicitante',
         totalAmount: Number(total),
       })
@@ -477,11 +476,47 @@ export class PurchaseWorkflowService {
     return updated;
   }
 
-  async approve(requisitionId: string, role: 'financeiro' | 'diretoria', approver: { userId?: string; name: string }, notes?: string) {
+  async approve(
+    requisitionId: string,
+    role: 'gerente' | 'financeiro' | 'diretoria',
+    approver: { userId?: string; name: string },
+    notes?: string,
+  ) {
     const req = await this.findRequisition(requisitionId);
     const settings = await this.getSettings(req.tenantId);
     const threshold = settings.approvalThresholdBrl ?? DEFAULT_PURCHASE_SETTINGS.approvalThresholdBrl;
     const total = req.approvedTotal ?? 0;
+
+    if (role === APPROVAL_ROLE.GERENTE) {
+      if (req.status !== REQUISITION_STATUS.AGUARDANDO_GERENTE) {
+        throw new BadRequestException('Requisição não aguarda aprovação do gerente.');
+      }
+      await this.prisma.purchaseApproval.create({
+        data: {
+          requisitionId,
+          role: APPROVAL_ROLE.GERENTE,
+          approverUserId: approver.userId ?? null,
+          approverName: cadastroUpperRequired(approver.name),
+          decision: 'approved',
+          notes: notes ?? null,
+        },
+      });
+      const updated = await this.prisma.purchaseRequisition.update({
+        where: { id: requisitionId },
+        data: { status: REQUISITION_STATUS.AGUARDANDO_FINANCEIRO },
+        include: requisitionInclude,
+      });
+      void this.notify
+        .notifyPendingFinanceiro({
+          tenantId: updated.tenantId,
+          tenantName: updated.tenant.name,
+          requisitionId: updated.id,
+          requestedByName: updated.requestedByName ?? 'Solicitante',
+          totalAmount: Number(total),
+        })
+        .catch(() => undefined);
+      return updated;
+    }
 
     if (role === APPROVAL_ROLE.FINANCEIRO) {
       if (req.status !== REQUISITION_STATUS.AGUARDANDO_FINANCEIRO) {
@@ -539,9 +574,15 @@ export class PurchaseWorkflowService {
     });
   }
 
-  async reject(requisitionId: string, role: 'financeiro' | 'diretoria', approver: { userId?: string; name: string }, reason: string) {
+  async reject(
+    requisitionId: string,
+    role: 'gerente' | 'financeiro' | 'diretoria',
+    approver: { userId?: string; name: string },
+    reason: string,
+  ) {
     const req = await this.findRequisition(requisitionId);
     const validStatuses: string[] = [
+      REQUISITION_STATUS.AGUARDANDO_GERENTE,
       REQUISITION_STATUS.AGUARDANDO_FINANCEIRO,
       REQUISITION_STATUS.AGUARDANDO_DIRETORIA,
     ];

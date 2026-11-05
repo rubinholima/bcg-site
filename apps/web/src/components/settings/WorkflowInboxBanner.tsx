@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 
 export interface WorkflowInboxCounts {
   comprasEnviadas: number;
+  gerentePendentes?: number;
   financeiroPendentes: number;
   diretoriaPendentes: number;
   tiAbertos: number;
@@ -15,7 +16,7 @@ export interface WorkflowInboxCounts {
 interface WorkflowInboxBannerProps {
   tenantId?: string;
   /** compras | financeiro | diretoria | ti */
-  variant: "compras" | "financeiro" | "diretoria" | "ti";
+  variant: "compras" | "gerente" | "financeiro" | "diretoria" | "ti";
 }
 
 const VARIANT_CONFIG = {
@@ -23,6 +24,11 @@ const VARIANT_CONFIG = {
     countKey: "comprasEnviadas" as const,
     label: "nova(s) requisição(ões) aguardando triagem",
     href: "/dashboard/adm/compras",
+  },
+  gerente: {
+    countKey: "gerentePendentes" as const,
+    label: "requisição(ões) aguardando aprovação do gerente",
+    href: "/dashboard/futebol/aprovacoes-compras",
   },
   financeiro: {
     countKey: "financeiroPendentes" as const,

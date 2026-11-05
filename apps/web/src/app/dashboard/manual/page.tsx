@@ -313,13 +313,14 @@ export default function ManualPage() {
 
           <Section id="requisicoes" title="Requisições — fluxo, aprovações e alertas">
             <p>
-              <strong>Fluxo:</strong> requisição → cotações (2 a 4) → financeiro → diretoria (se acima do
-              limite configurado) → ordem de compra → recebimento → assinatura.
+              <strong>Fluxo:</strong> requisição → Compras (cotações) → aprovação do gerente de futebol →
+              financeiro → diretoria (se acima do limite) → ordem de compra → recebimento → assinatura.
             </p>
             <p>
-              O solicitante envia a requisição; Compras registra de 2 a 4 cotações; Financeiro aprova; acima
-              do limite em reais, a Diretoria também aprova; Compras gera a OP, confirma recebimento
-              (patrimônio ou estoque) e dispara o termo de assinatura ao solicitante.
+              Logística e demais solicitantes abrem em Futebol → Logística → Requisições de compra (ou
+              Início → Requisições). Compras registra cotações; o gerente aprova em Futebol → Aprovar
+              compras; depois Financeiro e, se necessário, Diretoria; Compras conclui OP, recebimento e
+              assinatura.
             </p>
             <p>
               <strong>Módulos envolvidos:</strong> Requisições, Compras, Financeiro, Diretoria e TI

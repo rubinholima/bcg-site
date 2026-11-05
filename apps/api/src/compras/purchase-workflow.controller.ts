@@ -19,6 +19,7 @@ import { RequireModule } from '../auth/require-module.decorator';
 import { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { requestActor } from '../common/request-actor';
 import { PurchaseWorkflowService } from './purchase-workflow.service';
+import { PURCHASE_REQUISITION_REQUESTER_MODULES } from './purchase-requisition-access.util';
 import { PurchaseQuoteInviteService } from './purchase-quote-invite.service';
 import { WorkflowNotifyService } from './workflow-notify.service';
 
@@ -98,9 +99,14 @@ export class PurchaseWorkflowController {
   }
 
   @Get('approvals/pending')
-  @RequireModule(['adm_financeiro', 'diretoria'])
+  @RequireModule(['adm_financeiro', 'diretoria', 'futebol_logistica', 'requisicoes'])
   pendingApprovals(@Query('tenantId') tenantId?: string, @Query('role') role?: string) {
-    const r = role === 'diretoria' ? 'diretoria' : 'financeiro';
+    const r =
+      role === 'diretoria'
+        ? 'diretoria'
+        : role === 'gerente'
+          ? 'gerente'
+          : 'financeiro';
     return this.workflow.findPendingApprovals(r, tenantId?.trim() || undefined);
   }
 
@@ -206,10 +212,10 @@ export class PurchaseWorkflowController {
   }
 
   @Post('requisitions/:id/approve')
-  @RequireModule(['adm_financeiro', 'diretoria'])
+  @RequireModule(['adm_financeiro', 'diretoria', 'futebol_logistica', 'requisicoes'])
   approve(
     @Param('id') id: string,
-    @Body('role') role: 'financeiro' | 'diretoria',
+    @Body('role') role: 'gerente' | 'financeiro' | 'diretoria',
     @Body('notes') notes: string | undefined,
     @Req() req: AuthedRequest,
   ) {
@@ -217,10 +223,10 @@ export class PurchaseWorkflowController {
   }
 
   @Post('requisitions/:id/reject')
-  @RequireModule(['adm_financeiro', 'diretoria'])
+  @RequireModule(['adm_financeiro', 'diretoria', 'futebol_logistica', 'requisicoes'])
   reject(
     @Param('id') id: string,
-    @Body('role') role: 'financeiro' | 'diretoria',
+    @Body('role') role: 'gerente' | 'financeiro' | 'diretoria',
     @Body('reason') reason: string,
     @Req() req: AuthedRequest,
   ) {
@@ -254,7 +260,7 @@ export class PurchaseWorkflowController {
   }
 
   @Post('requisitions/:id/sync-receipt')
-  @RequireModule(['adm_compras', 'requisicoes'])
+  @RequireModule(['adm_compras', ...PURCHASE_REQUISITION_REQUESTER_MODULES])
   syncReceipt(@Param('id') id: string) {
     return this.workflow.syncReceiptSignature(id);
   }
@@ -262,7 +268,7 @@ export class PurchaseWorkflowController {
 
 @Controller('requisicoes')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
-@RequireModule('requisicoes')
+@RequireModule([...PURCHASE_REQUISITION_REQUESTER_MODULES])
 export class MyRequisitionsController {
   constructor(private readonly workflow: PurchaseWorkflowService) {}
 
