@@ -5,6 +5,7 @@ import { formatDateDayMonYear } from "@/lib/format-date";
 import { useCallback, useEffect, useState } from "react";
 import {
   Check,
+  Copy,
   Loader2,
   Plus,
   RefreshCw,
@@ -42,7 +43,9 @@ import {
   REQUISITION_STATUS_LABELS,
   statusBadgeClass,
   type PurchaseSettingsRow,
+  type QuoteComparisonResult,
 } from "@/lib/purchase-workflow-types";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { type SupplierRow } from "@/app/dashboard/adm/compras/components/SupplierFormDialog";
 
 export type WorkflowMode = "compras" | "requester" | "financeiro" | "diretoria";
@@ -114,6 +117,15 @@ export function PurchaseRequisitionWorkflowPanel({
   const [quoteSupplierName, setQuoteSupplierName] = useState("");
   const [quoteTotal, setQuoteTotal] = useState("");
   const [quoteDelivery, setQuoteDelivery] = useState("");
+
+  // Cotação online
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteSupplierIds, setInviteSupplierIds] = useState<string[]>([]);
+  const [inviteExpiresDays, setInviteExpiresDays] = useState("7");
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [comparison, setComparison] = useState<QuoteComparisonResult | null>(null);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [feedback, setFeedback] = useState({ open: false, title: "", message: "" });
 
   // Recebimento
   const [receiveOpen, setReceiveOpen] = useState(false);
@@ -252,6 +264,70 @@ export function PurchaseRequisitionWorkflowPanel({
       alert(err instanceof Error ? err.message : "Erro na operação");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const copyText = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setFeedback({ open: true, title: "Copiado", message: "Link copiado para a área de transferência." });
+    } catch {
+      setFeedback({ open: true, title: "Erro", message: "Não foi possível copiar o link." });
+    }
+  };
+
+  const openInviteDialog = () => {
+    setInviteSupplierIds([]);
+    setInviteExpiresDays("7");
+    setInviteOpen(true);
+  };
+
+  const toggleInviteSupplier = (id: string) => {
+    setInviteSupplierIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const handleCreateInvites = async () => {
+    if (!selected || !inviteSupplierIds.length) return;
+    setActionLoading(true);
+    try {
+      await api.post(`/compras/workflow/requisitions/${selected.id}/quote-invites`, {
+        supplierIds: inviteSupplierIds,
+        expiresInDays: inviteExpiresDays ? parseInt(inviteExpiresDays, 10) : undefined,
+      });
+      setInviteOpen(false);
+      await refreshSelected();
+      setFeedback({
+        open: true,
+        title: "Links gerados",
+        message: "Envie cada link ao fornecedor correspondente.",
+      });
+    } catch (err) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: err instanceof Error ? err.message : "Falha ao gerar links.",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const loadComparison = async () => {
+    if (!selected) return;
+    setComparisonLoading(true);
+    setComparisonOpen(true);
+    try {
+      const { data } = await api.get<QuoteComparisonResult>(
+        `/compras/workflow/requisitions/${selected.id}/quote-comparison`,
+      );
+      setComparison(data);
+    } catch {
+      setComparison(null);
+      setFeedback({ open: true, title: "Erro", message: "Não foi possível carregar o comparativo." });
+    } finally {
+      setComparisonLoading(false);
     }
   };
 
@@ -445,6 +521,53 @@ export function PurchaseRequisitionWorkflowPanel({
                   ))}
                 </div>
 
+                {mode === "compras" && selected.status === "em_cotacao" && (
+                  <div className="rounded border p-3 space-y-2">
+                    <p className="font-medium">Cotação online</p>
+                    {selected.quoteInvites && selected.quoteInvites.length > 0 ? (
+                      <ul className="space-y-2">
+                        {selected.quoteInvites.map((inv) => {
+                          const url =
+                            inv.publicUrl ??
+                            (typeof window !== "undefined"
+                              ? `${window.location.origin}/cotacao/${inv.token}`
+                              : `/cotacao/${inv.token}`);
+                          return (
+                            <li
+                              key={inv.id}
+                              className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm border-b pb-2 last:border-0"
+                            >
+                              <span>
+                                {inv.supplierName} —{" "}
+                                {inv.status === "submitted"
+                                  ? "Respondido"
+                                  : inv.status === "cancelled"
+                                    ? "Cancelado"
+                                    : "Aguardando"}
+                              </span>
+                              {inv.status === "pending" ? (
+                                <div className="flex gap-1">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => void copyText(url)}
+                                  >
+                                    <Copy className="h-3.5 w-3.5 mr-1" />
+                                    Copiar link
+                                  </Button>
+                                </div>
+                              ) : null}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Nenhum link gerado ainda.</p>
+                    )}
+                  </div>
+                )}
+
                 {selected.quotes && selected.quotes.length > 0 && (
                   <div className="rounded border p-3 space-y-2">
                     <p className="font-medium">Cotações ({selected.quotes.length})</p>
@@ -600,6 +723,12 @@ export function PurchaseRequisitionWorkflowPanel({
                 )}
                 {mode === "compras" && selected.status === "em_cotacao" && (
                   <>
+                    <Button type="button" variant="outline" onClick={openInviteDialog}>
+                      Links para fornecedores
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => void loadComparison()}>
+                      Menor preço por item
+                    </Button>
                     <Button type="button" variant="outline" onClick={() => setQuoteOpen(true)}>Adicionar cotação</Button>
                     <Button type="button" disabled={actionLoading} onClick={() => runAction("submit-for-approval")}>
                       Enviar para aprovação
@@ -721,6 +850,105 @@ export function PurchaseRequisitionWorkflowPanel({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Links de cotação online</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid gap-2">
+              <Label>Validade (dias)</Label>
+              <Input
+                type="number"
+                min={1}
+                className="text-foreground w-28"
+                value={inviteExpiresDays}
+                onChange={(e) => setInviteExpiresDays(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto rounded border p-2">
+              {suppliers
+                .filter((s) => !selected || s.tenant.id === selected.tenantId)
+                .map((s) => (
+                  <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={inviteSupplierIds.includes(s.id)}
+                      onChange={() => toggleInviteSupplier(s.id)}
+                    />
+                    <span className="min-w-0 truncate">{s.name}</span>
+                    {s.email ? (
+                      <span className="text-xs text-muted-foreground lowercase truncate">{s.email}</span>
+                    ) : null}
+                  </label>
+                ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
+            <Button
+              type="button"
+              disabled={actionLoading || !inviteSupplierIds.length}
+              onClick={() => void handleCreateInvites()}
+            >
+              Gerar links
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={comparisonOpen} onOpenChange={setComparisonOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[min(42rem,calc(100vw-1.5rem))]">
+          <DialogHeader>
+            <DialogTitle>Menor preço por item</DialogTitle>
+          </DialogHeader>
+          {comparisonLoading ? (
+            <Loader2 className="h-8 w-8 animate-spin mx-auto my-6" />
+          ) : comparison?.lines?.length ? (
+            <div className="space-y-4 py-2 text-sm">
+              {comparison.lines.map((line) => (
+                <div key={line.lineId} className="rounded border p-3 space-y-2">
+                  <p className="font-medium">
+                    {line.description} — {line.quantity} {line.unit ?? "un"}
+                  </p>
+                  {line.lowest ? (
+                    <p className="text-green-600 dark:text-green-400">
+                      Menor: {line.lowest.supplierName} —{" "}
+                      {line.lowest.unitPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}{" "}
+                      / un
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground">Sem preços informados.</p>
+                  )}
+                  {line.offers.length > 1 ? (
+                    <ul className="text-xs text-muted-foreground space-y-0.5">
+                      {line.offers.map((o) => (
+                        <li key={`${line.lineId}-${o.quoteId}`}>
+                          {o.supplierName}:{" "}
+                          {o.unitPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-4">Nenhuma cotação com preços por item ainda.</p>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setComparisonOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <FeedbackModal
+        open={feedback.open}
+        onOpenChange={(open) => setFeedback((f) => ({ ...f, open }))}
+        title={feedback.title}
+        message={feedback.message}
+      />
 
       <Dialog open={quoteOpen} onOpenChange={setQuoteOpen}>
         <DialogContent className="max-h-[90vh]">

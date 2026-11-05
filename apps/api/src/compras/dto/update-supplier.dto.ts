@@ -28,5 +28,9 @@ export class UpdateSupplierDto {
 
   @IsString()
   @IsOptional()
+  address?: string;
+
+  @IsString()
+  @IsOptional()
   notes?: string;
 }

@@ -45,6 +45,7 @@ import { TenantPressService } from '../tenant-press/tenant-press.service';
 import { SubmitEmployeeRegistrationDto } from '../registration-invite/dto/submit-employee-registration.dto';
 import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-player-registration.dto';
 import { PrepPseService } from '../prep-fisica/prep-pse.service';
+import { PurchaseQuoteInviteService } from '../compras/purchase-quote-invite.service';
 
 @Controller('public')
 export class PublicController {
@@ -66,6 +67,7 @@ export class PublicController {
     private readonly bostonCityHallMyTickets: BostonCityHallMyTicketsService,
     private readonly tenantPressService: TenantPressService,
     private readonly prepPse: PrepPseService,
+    private readonly purchaseQuoteInvites: PurchaseQuoteInviteService,
   ) {}
 
   /** PSE (RPE) do atleta — link público por token */
@@ -78,6 +80,29 @@ export class PublicController {
   submitAthletePse(@Param('token') token: string, @Body() body: { rpe?: number }) {
     const rpe = typeof body?.rpe === 'number' ? body.rpe : Number(body?.rpe);
     return this.prepPse.submitPublicPse(token, rpe);
+  }
+
+  /** Cotação online — fornecedor preenche preços por item */
+  @Get('purchase-quote-invite/:token')
+  getPurchaseQuoteInvite(@Param('token') token: string) {
+    return this.purchaseQuoteInvites.getPublicForm(token);
+  }
+
+  @Post('purchase-quote-invite/:token/submit')
+  submitPurchaseQuoteInvite(
+    @Param('token') token: string,
+    @Body()
+    body: {
+      lines?: Array<{ lineId: string; unitPrice: number }>;
+      deliveryDays?: number;
+      notes?: string;
+    },
+  ) {
+    return this.purchaseQuoteInvites.submitPublicQuote(token, {
+      lines: body.lines ?? [],
+      deliveryDays: body.deliveryDays,
+      notes: body.notes,
+    });
   }
 
   @Get('portfolio')

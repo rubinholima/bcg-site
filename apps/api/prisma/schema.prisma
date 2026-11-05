@@ -144,6 +144,7 @@ model Tenant {
   inventoryCategories     InventoryCategory[]
   inventoryDepartments    InventoryDepartment[]
   purchaseRequisitions    PurchaseRequisition[]
+  purchaseQuoteInvites    PurchaseQuoteInvite[]
   purchaseOrders          PurchaseOrder[]
   purchaseSettings        PurchaseSetting[]
   tiSupportTickets        TiSupportTicket[]
@@ -2295,11 +2296,13 @@ model Supplier {
   contactName String?
   email       String?
   phone       String?
+  address     String?  @db.Text
   notes       String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   purchaseOrders PurchaseOrder[]
   quotes         PurchaseQuote[]
+  quoteInvites   PurchaseQuoteInvite[]
   financeiroLancamentos FinanceiroLancamento[]
   bchEventStaffAssignments     BchEventStaffAssignment[]
   bchEventServiceCommitments BchEventServiceCommitment[]
@@ -2376,6 +2379,7 @@ model PurchaseRequisition {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   quotes            PurchaseQuote[] @relation("RequisitionQuotes")
+  quoteInvites      PurchaseQuoteInvite[]
   approvals         PurchaseApproval[]
   receipt           PurchaseReceipt?
   purchaseOrders    PurchaseOrder[]
@@ -2403,8 +2407,34 @@ model PurchaseQuote {
   updatedAt      DateTime @updatedAt
   selectedFor    PurchaseRequisition? @relation("SelectedQuote")
   purchaseOrders PurchaseOrder[]
+  quoteInvite    PurchaseQuoteInvite?
   @@index([requisitionId])
   @@index([supplierId])
+}
+
+/// Link público para fornecedor preencher preços item a item (cotação online).
+model PurchaseQuoteInvite {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requisitionId   String
+  requisition     PurchaseRequisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  supplierId      String?
+  supplier        Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierName    String
+  supplierEmail   String?
+  token           String   @unique
+  status          String   @default("pending") // pending | submitted | cancelled
+  itemsSnapshot   Json
+  expiresAt       DateTime?
+  purchaseQuoteId String?  @unique
+  purchaseQuote   PurchaseQuote? @relation(fields: [purchaseQuoteId], references: [id], onDelete: SetNull)
+  submittedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([requisitionId])
+  @@index([tenantId])
+  @@index([status])
 }
 
 model PurchaseApproval {

@@ -45,6 +45,10 @@ export const requisitionInclude = {
     orderBy: { totalAmount: 'asc' as const },
     include: { supplier: { select: { id: true, name: true, email: true } } },
   },
+  quoteInvites: {
+    orderBy: { createdAt: 'desc' as const },
+    include: { supplier: { select: { id: true, name: true, email: true, phone: true } } },
+  },
   selectedQuote: {
     include: { supplier: { select: { id: true, name: true, email: true } } },
   },

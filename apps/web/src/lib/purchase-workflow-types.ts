@@ -26,6 +26,43 @@ export const TI_PRIORITY_LABELS: Record<string, string> = {
   urgente: "Urgente",
 };
 
+export interface PurchaseQuoteInviteRow {
+  id: string;
+  token: string;
+  status: string;
+  supplierName: string;
+  supplierEmail: string | null;
+  publicUrl?: string;
+  submittedAt: string | null;
+  expiresAt: string | null;
+  supplier?: { id: string; name: string; email?: string | null; phone?: string | null };
+}
+
+export interface QuoteComparisonLine {
+  lineId: string;
+  description: string;
+  quantity: number;
+  unit?: string;
+  offers: Array<{
+    quoteId: string;
+    supplierName: string;
+    unitPrice: number;
+    lineTotal: number;
+  }>;
+  lowest: {
+    quoteId: string;
+    supplierName: string;
+    unitPrice: number;
+    lineTotal: number;
+  } | null;
+}
+
+export interface QuoteComparisonResult {
+  requisitionId: string;
+  status: string;
+  lines: QuoteComparisonLine[];
+}
+
 export interface PurchaseQuoteRow {
   id: string;
   requisitionId: string;
@@ -67,6 +104,7 @@ export interface PurchaseRequisitionWorkflowRow {
   requesterEmail: string | null;
   tenant: { id: string; name: string; slug: string };
   quotes?: PurchaseQuoteRow[];
+  quoteInvites?: PurchaseQuoteInviteRow[];
   selectedQuote?: PurchaseQuoteRow | null;
   approvals?: PurchaseApprovalRow[];
   receipt?: {

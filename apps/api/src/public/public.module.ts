@@ -18,6 +18,7 @@ import { TenantPressModule } from '../tenant-press/tenant-press.module';
 import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
 import { CadastrosModule } from '../cadastros/cadastros.module';
 import { PrepFisicaModule } from '../prep-fisica/prep-fisica.module';
+import { ComprasModule } from '../compras/compras.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PrepFisicaModule } from '../prep-fisica/prep-fisica.module';
     FmfScraperModule,
     CadastrosModule,
     PrepFisicaModule,
+    ComprasModule,
   ],
   controllers: [PublicController],
   providers: [PublicService, SofaScoreService, BostonTvInstallGuard],

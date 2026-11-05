@@ -19,6 +19,7 @@ import { RequireModule } from '../auth/require-module.decorator';
 import { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { requestActor } from '../common/request-actor';
 import { PurchaseWorkflowService } from './purchase-workflow.service';
+import { PurchaseQuoteInviteService } from './purchase-quote-invite.service';
 import { WorkflowNotifyService } from './workflow-notify.service';
 
 type AuthedRequest = Request & { user: CognitoJwtPayload };
@@ -28,6 +29,7 @@ type AuthedRequest = Request & { user: CognitoJwtPayload };
 export class PurchaseWorkflowController {
   constructor(
     private readonly workflow: PurchaseWorkflowService,
+    private readonly quoteInvites: PurchaseQuoteInviteService,
     private readonly notify: WorkflowNotifyService,
   ) {}
 
@@ -122,6 +124,33 @@ export class PurchaseWorkflowController {
   @RequireModule('adm_compras')
   startQuotation(@Param('id') id: string) {
     return this.workflow.startQuotation(id);
+  }
+
+  @Post('requisitions/:id/quote-invites')
+  @RequireModule('adm_compras')
+  createQuoteInvites(
+    @Param('id') id: string,
+    @Body() body: { supplierIds: string[]; expiresInDays?: number },
+  ) {
+    return this.quoteInvites.createInvites(id, body);
+  }
+
+  @Get('requisitions/:id/quote-invites')
+  @RequireModule('adm_compras')
+  listQuoteInvites(@Param('id') id: string) {
+    return this.quoteInvites.listInvites(id);
+  }
+
+  @Delete('requisitions/:id/quote-invites/:inviteId')
+  @RequireModule('adm_compras')
+  cancelQuoteInvite(@Param('id') id: string, @Param('inviteId') inviteId: string) {
+    return this.quoteInvites.cancelInvite(id, inviteId);
+  }
+
+  @Get('requisitions/:id/quote-comparison')
+  @RequireModule('adm_compras')
+  quoteComparison(@Param('id') id: string) {
+    return this.quoteInvites.getComparison(id);
   }
 
   @Post('requisitions/:id/quotes')

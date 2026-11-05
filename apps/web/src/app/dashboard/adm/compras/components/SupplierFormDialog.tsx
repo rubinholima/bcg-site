@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 
 export interface SupplierRow {
   id: string;
@@ -22,6 +23,7 @@ export interface SupplierRow {
   contactName: string | null;
   email: string | null;
   phone: string | null;
+  address?: string | null;
   notes: string | null;
   tenant: { id: string; name: string; slug: string };
 }
@@ -48,7 +50,9 @@ export function SupplierFormDialog({
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const [feedback, setFeedback] = useState({ open: false, title: "", message: "" });
 
   useEffect(() => {
     if (!open) return;
@@ -59,6 +63,7 @@ export function SupplierFormDialog({
       setContactName(edit.contactName ?? "");
       setEmail(edit.email ?? "");
       setPhone(edit.phone ?? "");
+      setAddress(edit.address ?? "");
       setNotes(edit.notes ?? "");
     } else {
       setTenantId(tenants[0]?.id ?? "");
@@ -67,6 +72,7 @@ export function SupplierFormDialog({
       setContactName("");
       setEmail("");
       setPhone("");
+      setAddress("");
       setNotes("");
     }
   }, [open, edit, tenants]);
@@ -83,6 +89,7 @@ export function SupplierFormDialog({
           contactName: contactName.trim() || undefined,
           email: email.trim() || undefined,
           phone: phone.trim() || undefined,
+          address: address.trim() || undefined,
           notes: notes.trim() || undefined,
         });
       } else {
@@ -93,6 +100,7 @@ export function SupplierFormDialog({
           contactName: contactName.trim() || undefined,
           email: email.trim() || undefined,
           phone: phone.trim() || undefined,
+          address: address.trim() || undefined,
           notes: notes.trim() || undefined,
         });
       }
@@ -100,7 +108,11 @@ export function SupplierFormDialog({
       onOpenChange(false);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "Erro ao salvar");
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: err instanceof Error ? err.message : "Erro ao salvar",
+      });
     } finally {
       setSaving(false);
     }
@@ -175,6 +187,16 @@ export function SupplierFormDialog({
               />
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="supplier-address">Endereço</Label>
+              <textarea
+                id="supplier-address"
+                className="min-h-[64px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Rua, número, cidade"
+              />
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="supplier-notes">Observações</Label>
               <textarea
                 id="supplier-notes"
@@ -196,6 +218,12 @@ export function SupplierFormDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+      <FeedbackModal
+        open={feedback.open}
+        onOpenChange={(open) => setFeedback((f) => ({ ...f, open }))}
+        title={feedback.title}
+        message={feedback.message}
+      />
     </Dialog>
   );
 }

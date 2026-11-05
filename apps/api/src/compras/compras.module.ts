@@ -25,6 +25,7 @@ import { InventoryDepartmentsService } from './inventory-departments.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { MailService } from '../common/mail.service';
 import { WorkflowNotifyService } from './workflow-notify.service';
+import { PurchaseQuoteInviteService } from './purchase-quote-invite.service';
 
 @Module({
   imports: [AuthModule, ModulesModule, HelloSignModule],
@@ -56,6 +57,7 @@ import { WorkflowNotifyService } from './workflow-notify.service';
     ModuleAccessGuard,
     MailService,
     WorkflowNotifyService,
+    PurchaseQuoteInviteService,
   ],
   exports: [
     SuppliersService,
@@ -64,6 +66,7 @@ import { WorkflowNotifyService } from './workflow-notify.service';
     PurchaseOrdersService,
     StockMovementsService,
     PurchaseWorkflowService,
+    PurchaseQuoteInviteService,
     TiSupportService,
   ],
 })
