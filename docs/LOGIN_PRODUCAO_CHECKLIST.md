@@ -105,3 +105,27 @@ Este doc reúne **tudo** que foi feito para o login funcionar em produção (www
 | Cookie na origem | CloudFront → Default (*) → Origin request policy = AllViewer (ou similar) |
 
 Quando tudo estiver certo: POST login → auth.bostoncitygroup.biz (Set-Cookie com Domain=.bostoncitygroup.biz) → redirect www/dashboard → /api/me com Cookie → 200 → dashboard carrega.
+
+---
+
+## CUP360 — domínios públicos (provisionamento AWS, sem secrets no repositório)
+
+Variáveis na **API** (Nest):
+
+| Variável | Descrição |
+|----------|-----------|
+| `CUP360_PUBLIC_DOMAIN_AWS_ENABLED` | `1` para habilitar chamadas reais ACM/CloudFront/Route53 (IAM mínimo). |
+| `CUP360_PUBLIC_DOMAIN_ORIGIN_DOMAIN` | Hostname HTTPS do origin compartilhado (ex.: `origin.bostoncitygroup.biz`). |
+| `CUP360_PUBLIC_DOMAIN_CLOUDFRONT_ID` | ID da distribuição CloudFront compartilhada (aliases + cert viewer). |
+| `CUP360_PUBLIC_DOMAIN_ACM_REGION` | Região do certificado para CloudFront — usar `us-east-1`. |
+| `CUP360_PUBLIC_DOMAIN_AWS_REGION` | Região AWS para clientes (Route53 global usa endpoint us-east-1 no código). |
+| `CUP360_PUBLIC_DOMAIN_ROUTE53_MANAGE` | `1` para UPSERT automático de CNAME de validação ACM e ALIAS A → CloudFront **apenas** em `CUP360_PUBLIC_DOMAIN_ROUTE53_ALLOWED_ZONES`. |
+| `CUP360_PUBLIC_DOMAIN_ROUTE53_ALLOWED_ZONES` | Lista separada por vírgula de **hosted zone IDs** onde mutação é permitida. |
+
+Variáveis no **Web** (Next, middleware Edge):
+
+| Variável | Descrição |
+|----------|-----------|
+| `CUP360_EDGE_HOST_SECRET` | Segredo compartilhado; o middleware assina `host` em `GET /public/hostname-context` (headers `x-cup360-edge-host-ts` / `x-cup360-edge-host-sig`). A API valida com `CUP360_EDGE_HOST_SECRET` e ignora `host` da query se a assinatura for inválida. |
+
+**IAM (resumo):** `acm:RequestCertificate`, `acm:DescribeCertificate` (us-east-1); `cloudfront:Get*`, `cloudfront:UpdateDistribution`, `cloudfront:CreateInvalidation` na distribuição configurada; `route53:ChangeResourceRecordSets` e `route53:List*` apenas nas zonas permitidas. Nunca usar credencial root.

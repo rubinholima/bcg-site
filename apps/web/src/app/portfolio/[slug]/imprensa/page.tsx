@@ -54,6 +54,7 @@ export async function generateMetadata({
   return {
     title: `${sectionTitle} — ${name}`,
     description: page ? `${sectionTitle} — ${name}` : undefined,
+    robots: pub.customDomain ? { index: true, follow: true } : undefined,
     ...(canonicalUrl
       ? {
           alternates: { canonical: canonicalUrl },

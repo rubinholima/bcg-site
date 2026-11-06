@@ -1474,6 +1474,10 @@ model PublicDomain {
   disabledAt               DateTime?
   lastErrorCode            String?
   lastErrorMessage         String? @db.Text
+  /// Sub-etapa interna do provisionamento (ex.: awaiting_dns_validation) — diagnóstico seguro.
+  provisioningStep         String?
+  /// Instruções DNS / metadados seguros (não contêm segredos).
+  provisioningMetadata     Json?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
   @@index([tenantId])

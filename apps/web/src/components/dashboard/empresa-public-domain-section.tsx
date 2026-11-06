@@ -26,6 +26,7 @@ export type PublicDomainRow = {
   verificationStatus: string;
   sslStatus: string;
   provisioningStatus: string;
+  provisioningStep: string | null;
   provider: string;
   verifiedAt: string | null;
   activatedAt: string | null;
@@ -33,6 +34,7 @@ export type PublicDomainRow = {
   lastCheckedAt: string | null;
   lastErrorCode: string | null;
   lastErrorMessage: string | null;
+  externalDnsInstructions: Array<{ name: string; type: string; value: string }> | null;
   verificationTxtName?: string;
   verificationTxtValue?: string;
 };
@@ -332,6 +334,12 @@ export function EmpresaPublicDomainSection({
                       <dt className="inline text-foreground/80">Provisionamento: </dt>
                       <dd className="inline">{PROV_LABEL[d.provisioningStatus] ?? d.provisioningStatus}</dd>
                     </div>
+                    {d.provisioningStep ? (
+                      <div className="sm:col-span-2">
+                        <dt className="inline text-foreground/80">Etapa: </dt>
+                        <dd className="inline font-mono text-xs">{d.provisioningStep}</dd>
+                      </div>
+                    ) : null}
                     <div className="sm:col-span-2">
                       <dt className="inline text-foreground/80">Última verificação: </dt>
                       <dd className="inline">{d.lastCheckedAt ? new Date(d.lastCheckedAt).toLocaleString("pt-BR") : "—"}</dd>
@@ -343,6 +351,19 @@ export function EmpresaPublicDomainSection({
                       </div>
                     ) : null}
                   </dl>
+
+                  {d.externalDnsInstructions && d.externalDnsInstructions.length > 0 ? (
+                    <div className="mt-3 rounded-md border border-border/60 bg-muted/20 p-2 text-xs">
+                      <p className="font-medium text-foreground/90">Registros DNS (provedor externo)</p>
+                      <ul className="mt-1 space-y-1 break-all font-mono text-muted-foreground">
+                        {d.externalDnsInstructions.map((rec, i) => (
+                          <li key={`${rec.name}-${i}`}>
+                            <span className="text-foreground/80">{rec.type}</span> {rec.name} → {rec.value}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
 
                   {d.verificationStatus !== "VERIFIED" ? (
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">

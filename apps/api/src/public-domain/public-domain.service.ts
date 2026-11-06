@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import type {
   PublicDomain,
   PublicDomainProvisioningStatus,
@@ -23,6 +24,7 @@ import {
   verificationTxtRecordName,
 } from './public-domain.hostname.util';
 import { AwsPublicDomainProvider } from './aws-public-domain.provider';
+import type { DnsInstruction } from './public-domain-provisioner.interface';
 
 const MODULE_SLUG = 'cup360_public_domains';
 
@@ -48,6 +50,8 @@ export type PublicDomainDto = {
   lastCheckedAt: string | null;
   lastErrorCode: string | null;
   lastErrorMessage: string | null;
+  provisioningStep: string | null;
+  externalDnsInstructions: DnsInstruction[] | null;
   createdAt: string;
   updatedAt: string;
   /** Instrução DNS — valor esperado do TXT (não armazenado após verificação). */
@@ -56,6 +60,10 @@ export type PublicDomainDto = {
 };
 
 function toDto(row: PublicDomain, extras?: Partial<PublicDomainDto>): PublicDomainDto {
+  const meta = row.provisioningMetadata as { externalDns?: DnsInstruction[] } | null;
+  const externalFromMeta =
+    meta && Array.isArray(meta.externalDns) ? meta.externalDns : null;
+
   return {
     id: row.id,
     tenantId: row.tenantId,
@@ -76,6 +84,8 @@ function toDto(row: PublicDomain, extras?: Partial<PublicDomainDto>): PublicDoma
     lastCheckedAt: row.lastCheckedAt?.toISOString() ?? null,
     lastErrorCode: row.lastErrorCode,
     lastErrorMessage: row.lastErrorMessage,
+    provisioningStep: row.provisioningStep ?? null,
+    externalDnsInstructions: externalFromMeta,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     ...extras,
@@ -232,12 +242,23 @@ export class PublicDomainService {
     if (row.verificationStatus !== 'VERIFIED') {
       throw new BadRequestException('Verifique a propriedade do domínio antes de publicar.');
     }
+    const tenantHosts = await this.prisma.publicDomain.findMany({
+      where: { tenantId },
+      select: { hostnameNormalized: true },
+    });
+    const allTenantHostnames = tenantHosts.map((h) => h.hostnameNormalized);
     const result = await this.awsProvider.provision({
       domainId: row.id,
       tenantId,
       hostnameNormalized: row.hostnameNormalized,
       isCanonical: row.isCanonical,
+      allTenantHostnames,
+      persistedCertificateArn: row.certificateArn,
+      persistedHostedZoneId: row.hostedZoneId,
     });
+
+    const metaPayload = { externalDns: result.externalDnsInstructions ?? [] };
+
     const updated = await this.prisma.publicDomain.update({
       where: { id: row.id },
       data: {
@@ -249,6 +270,8 @@ export class PublicDomainService {
         hostedZoneId: result.hostedZoneId ?? undefined,
         certificateArn: result.certificateArn ?? undefined,
         distributionId: result.distributionId ?? undefined,
+        provisioningStep: result.provisioningStep ?? null,
+        provisioningMetadata: metaPayload,
         lastCheckedAt: new Date(),
         status: result.provisioningStatus === 'ACTIVE' ? 'ACTIVE' : 'PENDING',
         activatedAt: result.provisioningStatus === 'ACTIVE' ? new Date() : null,
@@ -271,17 +294,26 @@ export class PublicDomainService {
   async disable(tenantId: string, domainId: string, user: CognitoJwtPayload): Promise<PublicDomainDto> {
     await this.assertManageAccess(tenantId, user);
     const row = await this.requireDomain(tenantId, domainId);
+    const tenantHosts = await this.prisma.publicDomain.findMany({
+      where: { tenantId },
+      select: { hostnameNormalized: true },
+    });
     const result = await this.awsProvider.disable({
       domainId: row.id,
       tenantId,
       hostnameNormalized: row.hostnameNormalized,
       isCanonical: row.isCanonical,
+      allTenantHostnames: tenantHosts.map((h) => h.hostnameNormalized),
+      persistedCertificateArn: row.certificateArn,
+      persistedHostedZoneId: row.hostedZoneId,
     });
     const updated = await this.prisma.publicDomain.update({
       where: { id: row.id },
       data: {
         status: 'DISABLED',
         provisioningStatus: result.provisioningStatus ?? 'DISABLED',
+        provisioningStep: null,
+        provisioningMetadata: Prisma.DbNull,
         disabledAt: new Date(),
         activatedAt: null,
         lastCheckedAt: new Date(),

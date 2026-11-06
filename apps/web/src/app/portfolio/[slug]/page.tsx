@@ -69,6 +69,7 @@ export async function generateMetadata({
     title: name,
     description: page ? `Página oficial — ${name}` : bchDescription,
     icons: { icon: iconUrl },
+    robots: pub.customDomain ? { index: true, follow: true } : undefined,
     ...(canonicalUrl
       ? {
           alternates: { canonical: canonicalUrl },

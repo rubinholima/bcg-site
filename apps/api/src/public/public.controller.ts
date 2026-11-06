@@ -13,6 +13,7 @@ import {
   BadGatewayException,
   Req,
   UseGuards,
+  Headers,
 } from '@nestjs/common';
 import { BostonTvInstallGuard } from '../auth/boston-tv-install.guard';
 import type { Request, Response } from 'express';
@@ -47,6 +48,7 @@ import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-p
 import { PrepPseService } from '../prep-fisica/prep-pse.service';
 import { PurchaseQuoteInviteService } from '../compras/purchase-quote-invite.service';
 import { PublicDomainResolveService } from '../public-domain/public-domain-resolve.service';
+import { verifyEdgePublicHostSignature } from '../public-domain/edge-host-signature.util';
 
 @Controller('public')
 export class PublicController {
@@ -81,8 +83,17 @@ export class PublicController {
     @Query('host') host?: string,
     @Query('pathname') pathname?: string,
     @Query('search') search?: string,
+    @Headers() headers?: Record<string, string | string[] | undefined>,
   ) {
-    return this.publicDomainResolve.resolveMiddlewareContext(host ?? '', pathname ?? '/', search ?? '');
+    const secret = process.env.CUP360_EDGE_HOST_SECRET?.trim();
+    let hostHeader = host ?? '';
+    if (secret) {
+      const sig = pickHeader(headers, 'x-cup360-edge-host-sig');
+      const ts = pickHeader(headers, 'x-cup360-edge-host-ts');
+      const verified = verifyEdgePublicHostSignature(secret, ts, sig, hostHeader);
+      hostHeader = verified ?? '';
+    }
+    return this.publicDomainResolve.resolveMiddlewareContext(hostHeader, pathname ?? '/', search ?? '');
   }
 
   /** PSE (RPE) do atleta — link público por token */
@@ -692,4 +703,18 @@ export class PublicController {
       documentType ?? '',
     );
   }
+}
+
+function pickHeader(
+  headers: Record<string, string | string[] | undefined> | undefined,
+  name: string,
+): string | undefined {
+  if (!headers) return undefined;
+  const lower = name.toLowerCase();
+  for (const [k, v] of Object.entries(headers)) {
+    if (k.toLowerCase() !== lower) continue;
+    if (Array.isArray(v)) return v[0]?.trim();
+    return v?.trim();
+  }
+  return undefined;
 }

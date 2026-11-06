@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { signCup360EdgeHost } from "@/lib/public-hostname-normalize";
 
 const CANONICAL_HOST = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "").split("/")[0] ?? "www.bostoncitygroup.biz";
 
@@ -6,6 +7,7 @@ const TRUSTED_PLATFORM_HOSTS = new Set([
   CANONICAL_HOST.toLowerCase(),
   "www.bostoncitygroup.biz",
   "bostoncitygroup.biz",
+  "origin.bostoncitygroup.biz",
   "localhost",
   "127.0.0.1",
 ]);
@@ -43,9 +45,20 @@ async function fetchHostnameContext(
     u.searchParams.set("host", hostOnly);
     u.searchParams.set("pathname", pathname || "/");
     u.searchParams.set("search", search || "");
+    const edgeSecret = process.env.CUP360_EDGE_HOST_SECRET?.trim();
+    const hdrs: Record<string, string> = { Accept: "application/json" };
+    if (edgeSecret) {
+      try {
+        const signed = await signCup360EdgeHost(edgeSecret, hostOnly);
+        hdrs["x-cup360-edge-host-ts"] = signed.ts;
+        hdrs["x-cup360-edge-host-sig"] = signed.sig;
+      } catch {
+        return { mode: "none" };
+      }
+    }
     const res = await fetch(u.toString(), {
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: hdrs,
     });
     if (!res.ok) return { mode: "none" };
     const data = (await res.json()) as HostnameContext;
