@@ -34,6 +34,8 @@ export type PublicDomainRow = {
   lastCheckedAt: string | null;
   lastErrorCode: string | null;
   lastErrorMessage: string | null;
+  distributionDomain?: string | null;
+  cloudFrontFunctionArn?: string | null;
   externalDnsInstructions: Array<{ name: string; type: string; value: string }> | null;
   verificationTxtName?: string;
   verificationTxtValue?: string;
@@ -348,6 +350,12 @@ export function EmpresaPublicDomainSection({
                       <div className="sm:col-span-2 text-destructive">
                         {d.lastErrorCode ? `${d.lastErrorCode}: ` : ""}
                         {d.lastErrorMessage ?? ""}
+                      </div>
+                    ) : null}
+                    {d.distributionDomain ? (
+                      <div className="sm:col-span-2 break-all font-mono text-[11px]">
+                        <dt className="inline text-foreground/80">CloudFront: </dt>
+                        <dd className="inline">{d.distributionDomain}</dd>
                       </div>
                     ) : null}
                   </dl>

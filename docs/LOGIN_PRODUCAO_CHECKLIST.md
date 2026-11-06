@@ -115,8 +115,7 @@ Variáveis na **API** (Nest):
 | Variável | Descrição |
 |----------|-----------|
 | `CUP360_PUBLIC_DOMAIN_AWS_ENABLED` | `1` para habilitar chamadas reais ACM/CloudFront/Route53 (IAM mínimo). |
-| `CUP360_PUBLIC_DOMAIN_ORIGIN_DOMAIN` | Hostname HTTPS do origin compartilhado (ex.: `origin.bostoncitygroup.biz`). |
-| `CUP360_PUBLIC_DOMAIN_CLOUDFRONT_ID` | ID da distribuição CloudFront compartilhada (aliases + cert viewer). |
+| `CUP360_PUBLIC_DOMAIN_ORIGIN_DOMAIN` | Hostname HTTPS do origin compartilhado Lightsail/Nginx (ex.: `origin.bostoncitygroup.biz`) — **contrato final é HTTPS**; o certificado TLS do origin deve estar apto para CloudFront usar `https-only` sem erro. |
 | `CUP360_PUBLIC_DOMAIN_ACM_REGION` | Região do certificado para CloudFront — usar `us-east-1`. |
 | `CUP360_PUBLIC_DOMAIN_AWS_REGION` | Região AWS para clientes (Route53 global usa endpoint us-east-1 no código). |
 | `CUP360_PUBLIC_DOMAIN_ROUTE53_MANAGE` | `1` para UPSERT automático de CNAME de validação ACM e ALIAS A → CloudFront **apenas** em `CUP360_PUBLIC_DOMAIN_ROUTE53_ALLOWED_ZONES`. |
@@ -126,6 +125,10 @@ Variáveis no **Web** (Next, middleware Edge):
 
 | Variável | Descrição |
 |----------|-----------|
-| `CUP360_EDGE_HOST_SECRET` | Segredo compartilhado; o middleware assina `host` em `GET /public/hostname-context` (headers `x-cup360-edge-host-ts` / `x-cup360-edge-host-sig`). A API valida com `CUP360_EDGE_HOST_SECRET` e ignora `host` da query se a assinatura for inválida. |
+| `CUP360_EDGE_HOST_SECRET` | Segredo HMAC (armazenamento seguro no servidor — **não** no frontend). A **CloudFront Function** (viewer-request) assina o contrato e envia `x-cup360-edge-v`, `x-cup360-edge-ts`, `x-cup360-edge-host`, `x-cup360-edge-sig`. O middleware encaminha esses headers para `GET /public/hostname-context`; a API valida **antes** da resolução de tenant. Em dev, sem esses headers e com segredo definido, domínio customizado falha fechado (403). |
 
-**IAM (resumo):** `acm:RequestCertificate`, `acm:DescribeCertificate` (us-east-1); `cloudfront:Get*`, `cloudfront:UpdateDistribution`, `cloudfront:CreateInvalidation` na distribuição configurada; `route53:ChangeResourceRecordSets` e `route53:List*` apenas nas zonas permitidas. Nunca usar credencial root.
+**Modelo:** uma **distribuição CloudFront + certificado ACM + CloudFront Function** por site publicado (aliases apex+www); **não** usar a distribuição BCG do portal como “compartilhada” para tenants.
+
+**CloudFront Function:** artefato em `apps/api/src/public-domain/cloudfront-viewer-request.template.js` — o provisionador substitui `__SECRET__` e injeta aliases; publicar com runtime `cloudfront-js-1.0`.
+
+**IAM (resumo):** `acm:RequestCertificate`, `acm:DescribeCertificate` (us-east-1); `cloudfront:CreateDistribution`, `cloudfront:GetDistribution*`, `cloudfront:UpdateDistribution`; `cloudfront:CreateFunction`, `cloudfront:UpdateFunction`, `cloudfront:DescribeFunction`, `cloudfront:PublishFunction`; `route53:ChangeResourceRecordSets` e `route53:ListResourceRecordSets` apenas nas zonas permitidas. Nunca usar credencial root.

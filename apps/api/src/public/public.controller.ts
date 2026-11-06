@@ -48,7 +48,10 @@ import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-p
 import { PrepPseService } from '../prep-fisica/prep-pse.service';
 import { PurchaseQuoteInviteService } from '../compras/purchase-quote-invite.service';
 import { PublicDomainResolveService } from '../public-domain/public-domain-resolve.service';
-import { verifyEdgePublicHostSignature } from '../public-domain/edge-host-signature.util';
+import {
+  verifyCup360EdgeContract,
+  verifyLegacyEdgeHostSignature,
+} from '../public-domain/cup360-edge-contract.util';
 
 @Controller('public')
 export class PublicController {
@@ -86,14 +89,23 @@ export class PublicController {
     @Headers() headers?: Record<string, string | string[] | undefined>,
   ) {
     const secret = process.env.CUP360_EDGE_HOST_SECRET?.trim();
-    let hostHeader = host ?? '';
-    if (secret) {
-      const sig = pickHeader(headers, 'x-cup360-edge-host-sig');
-      const ts = pickHeader(headers, 'x-cup360-edge-host-ts');
-      const verified = verifyEdgePublicHostSignature(secret, ts, sig, hostHeader);
-      hostHeader = verified ?? '';
+    const path = pathname ?? '/';
+    const q = search ?? '';
+
+    const contract = verifyCup360EdgeContract(secret, headers);
+    if (contract) {
+      return this.publicDomainResolve.resolveMiddlewareContext(contract.hostnameNormalized, path, q);
     }
-    return this.publicDomainResolve.resolveMiddlewareContext(hostHeader, pathname ?? '/', search ?? '');
+
+    if (secret) {
+      const legacy = verifyLegacyEdgeHostSignature(secret, headers, (host ?? '').trim());
+      if (legacy) {
+        return this.publicDomainResolve.resolveMiddlewareContext(legacy, path, q);
+      }
+      return { mode: 'none' as const };
+    }
+
+    return this.publicDomainResolve.resolveMiddlewareContext((host ?? '').trim(), path, q);
   }
 
   /** PSE (RPE) do atleta — link público por token */

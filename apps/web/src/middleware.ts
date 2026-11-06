@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signCup360EdgeHost } from "@/lib/public-hostname-normalize";
 
 const CANONICAL_HOST = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "").split("/")[0] ?? "www.bostoncitygroup.biz";
 
@@ -30,11 +29,19 @@ type HostnameContext =
   | { mode: "apex_redirect"; redirectTo: string }
   | { mode: "custom_domain"; tenantSlug: string; canonicalOrigin: string; pathPrefix: string };
 
+const EDGE_CONTRACT_HEADERS = [
+  "x-cup360-edge-v",
+  "x-cup360-edge-ts",
+  "x-cup360-edge-host",
+  "x-cup360-edge-sig",
+] as const;
+
 async function fetchHostnameContext(
+  incoming: Headers,
   hostOnly: string,
   pathname: string,
   search: string,
-): Promise<HostnameContext> {
+): Promise<HostnameContext | "forbidden"> {
   const base =
     process.env.API_INTERNAL_URL ||
     process.env.API_BASE_URL ||
@@ -48,12 +55,14 @@ async function fetchHostnameContext(
     const edgeSecret = process.env.CUP360_EDGE_HOST_SECRET?.trim();
     const hdrs: Record<string, string> = { Accept: "application/json" };
     if (edgeSecret) {
-      try {
-        const signed = await signCup360EdgeHost(edgeSecret, hostOnly);
-        hdrs["x-cup360-edge-host-ts"] = signed.ts;
-        hdrs["x-cup360-edge-host-sig"] = signed.sig;
-      } catch {
-        return { mode: "none" };
+      let hasContract = true;
+      for (const k of EDGE_CONTRACT_HEADERS) {
+        const v = incoming.get(k);
+        if (!v?.trim()) hasContract = false;
+        else hdrs[k] = v.trim();
+      }
+      if (!hasContract) {
+        return "forbidden";
       }
     }
     const res = await fetch(u.toString(), {
@@ -109,7 +118,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!isPlatformRequest(hostOnly) && !isBlockedPublicPath(pathname)) {
-    const ctx = await fetchHostnameContext(hostOnly, pathname, request.nextUrl.search);
+    const ctx = await fetchHostnameContext(request.headers, hostOnly, pathname, request.nextUrl.search);
+    if (ctx === "forbidden") {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
     if (ctx.mode === "apex_redirect") {
       return NextResponse.redirect(ctx.redirectTo, 308);
     }

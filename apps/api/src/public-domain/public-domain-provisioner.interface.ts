@@ -19,6 +19,9 @@ export type ProvisionRequest = {
   allTenantHostnames: string[];
   persistedCertificateArn?: string | null;
   persistedHostedZoneId?: string | null;
+  persistedDistributionId?: string | null;
+  persistedDistributionDomain?: string | null;
+  persistedCloudFrontFunctionArn?: string | null;
 };
 
 export type ProvisionResult = {
@@ -31,6 +34,8 @@ export type ProvisionResult = {
   hostedZoneId?: string | null;
   certificateArn?: string | null;
   distributionId?: string | null;
+  distributionDomain?: string | null;
+  cloudFrontFunctionArn?: string | null;
   /** Registros que o cliente deve criar (DNS externo ou alias). */
   externalDnsInstructions?: DnsInstruction[];
 };

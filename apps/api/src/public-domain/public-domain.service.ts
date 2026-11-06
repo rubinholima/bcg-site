@@ -43,6 +43,8 @@ export type PublicDomainDto = {
   hostedZoneId: string | null;
   certificateArn: string | null;
   distributionId: string | null;
+  distributionDomain: string | null;
+  cloudFrontFunctionArn: string | null;
   verificationExpiresAt: string | null;
   verifiedAt: string | null;
   activatedAt: string | null;
@@ -77,6 +79,8 @@ function toDto(row: PublicDomain, extras?: Partial<PublicDomainDto>): PublicDoma
     hostedZoneId: row.hostedZoneId,
     certificateArn: row.certificateArn,
     distributionId: row.distributionId,
+    distributionDomain: row.distributionDomain,
+    cloudFrontFunctionArn: row.cloudFrontFunctionArn,
     verificationExpiresAt: row.verificationExpiresAt?.toISOString() ?? null,
     verifiedAt: row.verifiedAt?.toISOString() ?? null,
     activatedAt: row.activatedAt?.toISOString() ?? null,
@@ -255,6 +259,9 @@ export class PublicDomainService {
       allTenantHostnames,
       persistedCertificateArn: row.certificateArn,
       persistedHostedZoneId: row.hostedZoneId,
+      persistedDistributionId: row.distributionId,
+      persistedDistributionDomain: row.distributionDomain,
+      persistedCloudFrontFunctionArn: row.cloudFrontFunctionArn,
     });
 
     const metaPayload = { externalDns: result.externalDnsInstructions ?? [] };
@@ -270,6 +277,8 @@ export class PublicDomainService {
         hostedZoneId: result.hostedZoneId ?? undefined,
         certificateArn: result.certificateArn ?? undefined,
         distributionId: result.distributionId ?? undefined,
+        distributionDomain: result.distributionDomain ?? undefined,
+        cloudFrontFunctionArn: result.cloudFrontFunctionArn ?? undefined,
         provisioningStep: result.provisioningStep ?? null,
         provisioningMetadata: metaPayload,
         lastCheckedAt: new Date(),
@@ -306,6 +315,9 @@ export class PublicDomainService {
       allTenantHostnames: tenantHosts.map((h) => h.hostnameNormalized),
       persistedCertificateArn: row.certificateArn,
       persistedHostedZoneId: row.hostedZoneId,
+      persistedDistributionId: row.distributionId,
+      persistedDistributionDomain: row.distributionDomain,
+      persistedCloudFrontFunctionArn: row.cloudFrontFunctionArn,
     });
     const updated = await this.prisma.publicDomain.update({
       where: { id: row.id },

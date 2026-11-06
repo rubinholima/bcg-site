@@ -10,6 +10,11 @@
       {
         "include": "desenvolvimento/content/manifests/**/*.json",
         "outDir": "dist"
+      },
+      {
+        "include": "public-domain/cloudfront-viewer-request.template.js",
+        "outDir": "dist",
+        "watchAssets": true
       }
     ]
   }

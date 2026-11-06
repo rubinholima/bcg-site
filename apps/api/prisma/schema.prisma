@@ -1469,6 +1469,10 @@ model PublicDomain {
   hostedZoneId            String?
   certificateArn            String?
   distributionId         String?
+  /// Domínio *.cloudfront.net da distribuição dedicada (alias de origem DNS).
+  distributionDomain        String?
+  /// ARN da CloudFront Function (viewer-request) associada à distribuição.
+  cloudFrontFunctionArn     String?
   lastCheckedAt            DateTime?
   activatedAt              DateTime?
   disabledAt               DateTime?

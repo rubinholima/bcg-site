@@ -11,8 +11,6 @@ export type PublicDomainAwsConfig = {
   acmCertificateRegion: string;
   /** Domínio do origin HTTPS compartilhado (ex.: origin.bostoncitygroup.biz). */
   originDomain: string;
-  /** ID da distribuição CloudFront compartilhada (reuso idempotente). */
-  sharedDistributionId: string | null;
   /**
    * Secret compartilhado entre edge (Lambda@Edge/CloudFront Function) e origem.
    * O request legitimo do CloudFront envia o host público neste header assinado.
@@ -49,7 +47,6 @@ export function loadPublicDomainAwsConfig(): PublicDomainAwsConfig {
       process.env.AWS_ACM_REGION?.trim() ||
       'us-east-1',
     originDomain: (process.env.CUP360_PUBLIC_DOMAIN_ORIGIN_DOMAIN ?? '').trim().toLowerCase(),
-    sharedDistributionId: (process.env.CUP360_PUBLIC_DOMAIN_CLOUDFRONT_ID ?? '').trim() || null,
     edgeSignatureSecret: (process.env.CUP360_EDGE_HOST_SECRET ?? '').trim() || null,
     route53ManageDns: parseBool(process.env.CUP360_PUBLIC_DOMAIN_ROUTE53_MANAGE),
     route53AllowedHostedZoneIds: parseList(process.env.CUP360_PUBLIC_DOMAIN_ROUTE53_ALLOWED_ZONES),
