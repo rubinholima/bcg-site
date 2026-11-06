@@ -15,6 +15,7 @@ import {
   formatBchEventDateTime,
   type BchPublicEventListItem,
 } from "@/lib/bch-public-events";
+import { rewriteTenantPortfolioHref } from "@/lib/portfolio-public-links";
 
 function blockTitle(block: HomeContentBlock, fallback: string, lang: "pt" | "en"): string {
   const v = lang === "pt" ? block.config?.titlePt : block.config?.titleEn;
@@ -61,6 +62,7 @@ export function BchUpcomingEventsSection({
   block,
   lang,
   page,
+  pathBase = `/portfolio/${page.tenant?.slug ?? "boston-city-hall"}`,
   fullWidth,
   titleAlign,
   inSection,
@@ -69,6 +71,7 @@ export function BchUpcomingEventsSection({
   block: HomeContentBlock;
   lang: "pt" | "en";
   page: Page;
+  pathBase?: string;
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
   inSection?: boolean;
@@ -86,7 +89,7 @@ export function BchUpcomingEventsSection({
 
   useEffect(() => {
     let cancelled = false;
-    fetchBchPublicEvents()
+    fetchBchPublicEvents({ pathBase })
       .then((data) => {
         if (!cancelled) setEvents(Array.isArray(data) ? data : []);
       })
@@ -99,7 +102,7 @@ export function BchUpcomingEventsSection({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathBase]);
 
   const v = block.config?.visible as boolean | string | undefined;
   const visible = v !== false && v !== "false";
@@ -113,6 +116,7 @@ export function BchUpcomingEventsSection({
   const allLabel = ALL_LABEL[lang];
   const containerClass = moduleSectionContainerClass({ fullWidth });
   const tenantSlug = page.tenant?.slug ?? "boston-city-hall";
+  const eventsBase = pathBase === "" ? "/events" : `${pathBase.replace(/\/$/, "")}/events`;
 
   return (
     <section
@@ -147,7 +151,7 @@ export function BchUpcomingEventsSection({
               align={titleAlign ?? "left"}
             />
             <Link
-              href={`/portfolio/${tenantSlug}/events`}
+              href={eventsBase}
               className="inline-flex min-h-[44px] items-center text-sm font-medium text-amber-400/90 hover:text-amber-300"
             >
               {allLabel}
@@ -210,7 +214,7 @@ export function BchUpcomingEventsSection({
                   )}
                   <div className="mt-4 flex flex-wrap gap-2 pt-2">
                     <Link
-                      href={item.detailPath}
+                      href={rewriteTenantPortfolioHref(item.detailPath, tenantSlug, pathBase)}
                       className="inline-flex min-h-[44px] items-center rounded-lg bg-white/5 px-4 py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:bg-white/10 hover:text-white"
                     >
                       {viewLabel}
@@ -219,7 +223,7 @@ export function BchUpcomingEventsSection({
                     (item.ticketAvailability === "AVAILABLE" ||
                       item.ticketAvailability === "LOW_AVAILABILITY") ? (
                       <Link
-                        href={`/portfolio/${tenantSlug}/events/${encodeURIComponent(item.slug)}/checkout?lang=${lang}`}
+                        href={`${eventsBase}/${encodeURIComponent(item.slug)}/checkout?lang=${lang}`}
                         className="inline-flex min-h-[44px] items-center rounded-lg bg-amber-500/90 px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-amber-400"
                       >
                         {BUY_LABEL[lang]}

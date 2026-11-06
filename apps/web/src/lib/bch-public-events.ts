@@ -1,4 +1,5 @@
 import { getServerBackendBaseUrl } from "@/lib/apiProxy";
+import { rewriteTenantPortfolioHref } from "@/lib/portfolio-public-links";
 
 export type BchPublicTicketAvailability =
   | "AVAILABLE"
@@ -71,8 +72,22 @@ function publicBase(isClient: boolean): string {
   return isClient ? "/api" : getServerBackendBaseUrl().replace(/\/$/, "");
 }
 
+function mapBchPaths(
+  items: BchPublicEventListItem[],
+  pathBase: string | undefined,
+): BchPublicEventListItem[] {
+  if (!pathBase && pathBase !== "") return items;
+  const tenantSlug = "boston-city-hall";
+  return items.map((item) => ({
+    ...item,
+    detailPath: rewriteTenantPortfolioHref(item.detailPath, tenantSlug, pathBase),
+  }));
+}
+
 export async function fetchBchPublicEvents(options?: {
   past?: boolean;
+  /** Base pública do portfólio (ex.: `/portfolio/boston-city-hall` ou `""` no domínio customizado). */
+  pathBase?: string;
 }): Promise<BchPublicEventListItem[]> {
   const isClient = typeof window !== "undefined";
   const qs = options?.past ? "?past=1" : "";
@@ -83,11 +98,13 @@ export async function fetchBchPublicEvents(options?: {
   });
   if (!res.ok) return [];
   const data = (await res.json()) as BchPublicEventListItem[];
-  return Array.isArray(data) ? data : [];
+  const list = Array.isArray(data) ? data : [];
+  return mapBchPaths(list, options?.pathBase);
 }
 
 export async function fetchBchPublicEventBySlug(
   slug: string,
+  options?: { pathBase?: string },
 ): Promise<BchPublicEventDetail | null> {
   const isClient = typeof window !== "undefined";
   const encoded = encodeURIComponent(slug);
@@ -99,6 +116,14 @@ export async function fetchBchPublicEventBySlug(
   if (!res.ok) return null;
   const data = (await res.json()) as BchPublicEventDetail | null;
   if (!data || typeof data !== "object" || !("slug" in data)) return null;
+  const tenantSlug = "boston-city-hall";
+  const pathBase = options?.pathBase;
+  if (pathBase !== undefined) {
+    return {
+      ...data,
+      detailPath: rewriteTenantPortfolioHref(data.detailPath, tenantSlug, pathBase),
+    };
+  }
   return data;
 }
 

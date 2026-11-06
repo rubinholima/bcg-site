@@ -15,6 +15,7 @@ import {
   getImprensaMenuLabel,
   getImprensaMenuLinks,
 } from "@/lib/imprensa-display";
+import { getPortfolioPublicContextServer } from "@/components/portfolio/portfolio-public-path";
 
 async function getPageBySlug(slug: string): Promise<Page | null> {
   try {
@@ -38,15 +39,27 @@ export async function generateMetadata({
   const { slug } = await params;
   const { lang: langParam } = await searchParams;
   const page = await getPageBySlug(slug);
+  const pub = await getPortfolioPublicContextServer(slug);
   const name = page?.tenant?.name ?? slug;
   const blocks = (page?.content?.blocks ?? []) as HomeContentBlock[];
   const imprensaBlock = findImprensaPageBlock(blocks);
   const defaultLang = (page?.content?.theme as { defaultLang?: "pt" | "en" } | undefined)?.defaultLang ?? "pt";
   const lang = langParam === "en" ? "en" : langParam === "pt" ? "pt" : defaultLang;
   const sectionTitle = imprensaBlock ? getImprensaMenuLabel(imprensaBlock, lang) : lang === "en" ? "Press" : "Imprensa";
+  const pathForCanonical = pub.customDomain ? `${pub.pathname || "/imprensa"}` : `/portfolio/${encodeURIComponent(slug)}/imprensa`;
+  const canonicalUrl =
+    pub.customDomain && pub.forwardedHost
+      ? `https://${pub.forwardedHost}${pathForCanonical}`
+      : undefined;
   return {
     title: `${sectionTitle} — ${name}`,
     description: page ? `${sectionTitle} — ${name}` : undefined,
+    ...(canonicalUrl
+      ? {
+          alternates: { canonical: canonicalUrl },
+          openGraph: { url: canonicalUrl },
+        }
+      : {}),
   };
 }
 
@@ -60,25 +73,30 @@ export default async function PortfolioImprensaPage({
   const { slug } = await params;
   const { lang: langParam } = await searchParams;
   const page = await getPageBySlug(slug);
+  const pathBase = (await getPortfolioPublicContextServer(slug)).pathBase;
+  const homeHref = pathBase === "" ? "/" : pathBase;
 
   if (!page?.content?.blocks?.length) {
-    redirect(`/portfolio/${slug}`);
+    redirect(homeHref);
   }
 
   const blocks = page.content.blocks as HomeContentBlock[];
   const imprensaBlock = findImprensaPageBlock(blocks);
   if (!imprensaBlock) {
-    redirect(`/portfolio/${slug}`);
+    redirect(homeHref);
   }
 
   const defaultLang = (page.content.theme as { defaultLang?: "pt" | "en" } | undefined)?.defaultLang ?? "pt";
   const lang = langParam === "en" ? "en" : langParam === "pt" ? "pt" : defaultLang;
 
+  const homeBackHref =
+    homeHref === "/" ? (lang === "en" ? "/?lang=en" : "/") : `${homeHref}${lang === "en" ? "?lang=en" : ""}`;
+
   const tenant = page.tenant;
   const theme = page.content.theme ?? {};
   const headerBlock = blocks.find((b) => b.type === "header");
   const footerBlock = blocks.find((b) => b.type === "footer");
-  const extraNavLinks = getImprensaMenuLinks(blocks, slug, lang);
+  const extraNavLinks = getImprensaMenuLinks(blocks, slug, lang, pathBase);
 
   const bgColor = (theme.backgroundColor as string)?.trim() || "#0f0f12";
   const bgImage = (theme.backgroundImage as string)?.trim();
@@ -123,6 +141,7 @@ export default async function PortfolioImprensaPage({
         logoUrl={tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
+        basePath={pathBase || "/portfolio"}
         extraNavLinks={extraNavLinks}
       />
 
@@ -130,7 +149,7 @@ export default async function PortfolioImprensaPage({
         <div className="border-b border-white/5 bg-zinc-950/60 px-4 py-2.5 sm:px-6">
           <div className="container mx-auto">
             <Link
-              href={`/portfolio/${slug}${lang === "en" ? "?lang=en" : ""}`}
+              href={homeBackHref}
               className="inline-flex min-h-10 items-center text-sm font-medium text-zinc-400 transition hover:text-zinc-100"
             >
               ← {lang === "pt" ? "Voltar ao site" : "Back to site"}

@@ -121,6 +121,9 @@ model Tenant {
   city                    String?  // Cidade (ex.: Boston)
   country                 String?  // País (ex.: EUA)
   websiteUrl              String?  // Site da empresa/clube (ex.: https://...)
+  /// Página pública principal (CUP360) quando o tenant tem várias Pages — ex.: slug "main" vs "sobre".
+  mainPublicPageId        String?  @unique
+  mainPublicPage          Page?    @relation("TenantMainPublicPage", fields: [mainPublicPageId], references: [id], onDelete: SetNull)
   sofascoreTeamId         String?  // ID do time no SofaScore (para módulo Próximos Jogos AUTO)
   footballDataTeamId      String?  // ID do time no football-data.org (API gratuita, mais estável)
   apiFutebolTeamId        String?  // ID do time na API Futebol (estaduais, amador, categorias de base)
@@ -134,6 +137,7 @@ model Tenant {
   updatedAt               DateTime @updatedAt
   workmailAccounts        WorkMailAccount[]
   pages                   Page[]
+  publicDomains           PublicDomain[]
   players                 Player[]
   psychologists           Psychologist[]
   technicalStaff          TechnicalStaff[]
@@ -1440,7 +1444,69 @@ model Page {
   content    Json     // { blocks: [{ id, type, sortOrder, config }] }
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  tenantMainPublicFor Tenant[] @relation("TenantMainPublicPage")
   @@unique([tenantId, slug])
+}
+
+/// Domínio público customizado (CUP360) — hostname canônico por tenant; provisionamento AWS opcional.
+model PublicDomain {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// Hostname normalizado ASCII (punycode); globalmente único.
+  hostnameNormalized String @unique
+  /// true = hostname canônico HTTPS (ex.: www); par apex pode existir com isCanonical=false.
+  isCanonical       Boolean @default(true)
+  /// Ativação lógica (usuário / política).
+  status              PublicDomainStatus @default(DISABLED)
+  verificationStatus  PublicDomainVerificationStatus @default(PENDING_VERIFICATION)
+  sslStatus           PublicDomainSslStatus @default(PENDING)
+  provisioningStatus  PublicDomainProvisioningStatus @default(NOT_CONFIGURED)
+  verificationTokenHash   String?
+  verificationExpiresAt    DateTime?
+  verifiedAt               DateTime?
+  provider                String @default("aws")
+  hostedZoneId            String?
+  certificateArn            String?
+  distributionId         String?
+  lastCheckedAt            DateTime?
+  activatedAt              DateTime?
+  disabledAt               DateTime?
+  lastErrorCode            String?
+  lastErrorMessage         String? @db.Text
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  @@index([tenantId])
+}
+
+enum PublicDomainStatus {
+  DISABLED
+  PENDING
+  ACTIVE
+}
+
+enum PublicDomainVerificationStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  FAILED
+  EXPIRED
+}
+
+enum PublicDomainSslStatus {
+  PENDING
+  ISSUED
+  FAILED
+}
+
+enum PublicDomainProvisioningStatus {
+  NOT_CONFIGURED
+  PENDING_VERIFICATION
+  DNS_PENDING
+  CERTIFICATE_PENDING
+  PROVISIONING
+  ACTIVE
+  ERROR
+  DISABLED
 }
 
 // Contas de email gerenciadas via WorkMail (por empresa)

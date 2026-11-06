@@ -32,6 +32,7 @@ import {
 } from "@/lib/bch-public-venue-content";
 import { BchPublicVenueGallery } from "@/components/portfolio/bch/BchPublicVenueGallery";
 import { BchPublicVenueLeadForm } from "@/components/portfolio/bch/BchPublicVenueLeadForm";
+import { rewriteTenantPortfolioHref } from "@/lib/portfolio-public-links";
 
 function availabilityClass(state: BchPublicEventListItem["ticketAvailability"]): string {
   switch (state) {
@@ -60,17 +61,25 @@ export async function BchPublicVenueHome({
   lang,
   tenantName,
   logoUrl,
+  pathBase: pathBaseProp,
 }: {
   slug: string;
   lang: "pt" | "en";
   tenantName: string;
   logoUrl?: string | null;
+  pathBase?: string;
 }) {
-  const events = await fetchBchPublicEvents();
+  const basePath = pathBaseProp ?? `/portfolio/${slug}`;
+  const events = await fetchBchPublicEvents({ pathBase: basePath });
   const featured = events.slice(0, 6);
-  const basePath = `/portfolio/${slug}`;
   const langQ = lang === "en" ? "?lang=en" : "";
-  const nav = bchPublicNavLinks(lang, basePath);
+  const rootWithLang =
+    basePath === ""
+      ? langQ
+        ? `/?${langQ.replace(/^\?/, "")}`
+        : "/"
+      : `${basePath}${langQ}`;
+  const nav = bchPublicNavLinks(lang, basePath === "" ? "" : basePath);
   const logoSrc = bchLogoSrc(logoUrl);
   const copy = bchVenueCopy(lang);
   const aboutParagraphs = copy.aboutBody.split("\n\n");
@@ -116,20 +125,20 @@ export async function BchPublicVenueHome({
           <p className="mt-4 max-w-2xl text-base text-zinc-300 sm:text-lg">{copy.heroLead}</p>
           <div className="mt-10 flex w-full max-w-lg flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center">
             <Link
-              href={`${basePath}/events${langQ}`}
+              href={basePath === "" ? `/events${langQ}` : `${basePath}/events${langQ}`}
               className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-400"
             >
               {copy.ctaEvents}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
             <Link
-              href={`${basePath}${langQ}#alugar`}
+              href={`${rootWithLang}#alugar`}
               className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/15"
             >
               {copy.ctaRent}
             </Link>
             <Link
-              href={`${basePath}/my-tickets${langQ}`}
+              href={basePath === "" ? `/my-tickets${langQ}` : `${basePath}/my-tickets${langQ}`}
               className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-white/15 bg-zinc-950/40 px-6 py-3 text-sm font-semibold text-zinc-200 transition hover:bg-zinc-900/60"
             >
               {copy.ctaTickets}
@@ -225,7 +234,7 @@ export async function BchPublicVenueHome({
                 <p className="mt-2 text-sm text-zinc-500">{copy.sectionEvents}</p>
               </div>
               <Link
-                href={`${basePath}/events${langQ}`}
+                href={basePath === "" ? `/events${langQ}` : `${basePath}/events${langQ}`}
                 className="inline-flex min-h-[44px] items-center text-sm font-medium text-amber-400 hover:text-amber-300"
               >
                 {copy.allEvents} →
@@ -239,7 +248,10 @@ export async function BchPublicVenueHome({
                 {featured.map((item) => (
                   <li key={item.slug}>
                     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/70 shadow-lg transition hover:border-amber-500/25">
-                      <Link href={item.detailPath} className="block">
+                      <Link
+                        href={rewriteTenantPortfolioHref(item.detailPath, "boston-city-hall", basePath)}
+                        className="block"
+                      >
                         {item.logoUrl ? (
                           <div className="aspect-[16/10] bg-zinc-800">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -256,7 +268,10 @@ export async function BchPublicVenueHome({
                         )}
                       </Link>
                       <div className="flex flex-1 flex-col p-5">
-                        <Link href={item.detailPath} className="hover:text-amber-100">
+                        <Link
+                          href={rewriteTenantPortfolioHref(item.detailPath, "boston-city-hall", basePath)}
+                          className="hover:text-amber-100"
+                        >
                           <h3 className="text-lg font-semibold leading-snug">{item.name}</h3>
                         </Link>
                         {item.startDate ? (
@@ -281,14 +296,18 @@ export async function BchPublicVenueHome({
                         ) : null}
                         <div className="mt-4 flex flex-wrap gap-2 pt-2">
                           <Link
-                            href={item.detailPath}
+                            href={rewriteTenantPortfolioHref(item.detailPath, "boston-city-hall", basePath)}
                             className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-white/5 px-3 text-sm font-medium text-zinc-200 hover:bg-white/10 sm:flex-none sm:px-4"
                           >
                             {copy.details}
                           </Link>
                           {canBuy(item) ? (
                             <Link
-                              href={`${basePath}/events/${encodeURIComponent(item.slug)}/checkout${langQ}`}
+                              href={
+                                basePath === ""
+                                  ? `/events/${encodeURIComponent(item.slug)}/checkout${langQ}`
+                                  : `${basePath}/events/${encodeURIComponent(item.slug)}/checkout${langQ}`
+                              }
                               className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-amber-500/90 px-3 text-sm font-semibold text-zinc-950 hover:bg-amber-400 sm:flex-none sm:px-4"
                             >
                               {copy.buy}

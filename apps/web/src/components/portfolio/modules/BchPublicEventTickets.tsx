@@ -41,10 +41,12 @@ export function BchPublicEventTickets({
   event,
   lang,
   portfolioSlug = "boston-city-hall",
+  pathBase,
 }: {
   event: BchPublicEventDetail;
   lang: "pt" | "en";
   portfolioSlug?: string;
+  pathBase?: string;
 }) {
   if (!event.ticketing?.enabled || event.ticketing.types.length === 0) {
     return null;
@@ -53,7 +55,11 @@ export function BchPublicEventTickets({
   const heading = lang === "pt" ? "Ingressos" : "Tickets";
   const windowLabel = lang === "pt" ? "Período de venda" : "Sale window";
   const buyLabel = lang === "pt" ? "Comprar ingressos" : "Buy tickets";
-  const checkoutHref = `/portfolio/${portfolioSlug}/events/${encodeURIComponent(event.slug)}/checkout?lang=${lang}`;
+  const base = pathBase ?? `/portfolio/${portfolioSlug}`;
+  const checkoutHref =
+    base === ""
+      ? `/events/${encodeURIComponent(event.slug)}/checkout?lang=${lang}`
+      : `${base.replace(/\/$/, "")}/events/${encodeURIComponent(event.slug)}/checkout?lang=${lang}`;
   const showBuyCta = event.ticketing.types.some((t) => canPurchaseTickets(t.availability));
 
   return (

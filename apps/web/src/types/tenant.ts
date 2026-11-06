@@ -18,6 +18,8 @@ export interface Tenant {
   city: string | null;
   country: string | null;
   websiteUrl: string | null;
+  mainPublicPageId?: string | null;
+  mainPublicPage?: { id: string; slug: string } | null;
   sofascoreTeamId: string | null;
   footballDataTeamId: string | null;
   apiFutebolTeamId: string | null;

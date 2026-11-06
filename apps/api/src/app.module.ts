@@ -68,6 +68,7 @@ import { PlayerNegotiationsModule } from './player-negotiations/player-negotiati
 import { PrepFisicaModule } from './prep-fisica/prep-fisica.module';
 import { TreinadorGoleirosModule } from './treinador-goleiros/treinador-goleiros.module';
 import { PerformanceAnalysisModule } from './performance-analysis/performance-analysis.module';
+import { PublicDomainModule } from './public-domain/public-domain.module';
 
 @Module({
   imports: [
@@ -138,6 +139,7 @@ import { PerformanceAnalysisModule } from './performance-analysis/performance-an
     PrepFisicaModule,
     TreinadorGoleirosModule,
     PerformanceAnalysisModule,
+    PublicDomainModule,
   ],
   controllers: [AppController],
   providers: [AppService],

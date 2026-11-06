@@ -7,6 +7,7 @@ import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHea
 import { BchCheckoutFlow } from "@/components/portfolio/modules/BchCheckoutFlow";
 import { fetchBchPublicEventBySlug, type BchPublicEventDetail } from "@/lib/bch-public-events";
 import type { Page } from "@/types/page";
+import { getPortfolioPublicContextServer } from "@/components/portfolio/portfolio-public-path";
 
 const BCH_SLUG = "boston-city-hall";
 
@@ -22,7 +23,10 @@ async function getPageBySlug(slug: string): Promise<Page | null> {
   }
 }
 
-async function fetchEventDetail(eventSlug: string): Promise<BchPublicEventDetail | null> {
+async function fetchEventDetail(
+  eventSlug: string,
+  pathBase?: string,
+): Promise<BchPublicEventDetail | null> {
   const encoded = encodeURIComponent(eventSlug);
   const urls = [
     `${getBackendOriginForServerFetch()}/public/boston-city-hall/events/${encoded}`,
@@ -38,7 +42,7 @@ async function fetchEventDetail(eventSlug: string): Promise<BchPublicEventDetail
       /* próxima origem */
     }
   }
-  return fetchBchPublicEventBySlug(eventSlug);
+  return fetchBchPublicEventBySlug(eventSlug, { pathBase });
 }
 
 export async function generateMetadata({
@@ -65,7 +69,9 @@ export default async function BchCheckoutPage({
 
   if (slug !== BCH_SLUG) notFound();
 
-  const event = await fetchEventDetail(eventSlug);
+  const pathBase = (await getPortfolioPublicContextServer(slug)).pathBase;
+  const eventsListHref = pathBase === "" ? "/events" : `${pathBase}/events`;
+  const event = await fetchEventDetail(eventSlug, pathBase);
   const portfolioPage = await getPageBySlug(slug);
   const lang = langParam === "en" ? "en" : "pt";
 
@@ -73,7 +79,7 @@ export default async function BchCheckoutPage({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-950 px-4 text-white">
         <p>{lang === "pt" ? "Evento não encontrado." : "Event not found."}</p>
-        <Link href={`/portfolio/${slug}/events`} className="text-amber-400 hover:underline">
+        <Link href={eventsListHref} className="text-amber-400 hover:underline">
           ← Eventos
         </Link>
       </div>
@@ -91,14 +97,14 @@ export default async function BchCheckoutPage({
         logoUrl={portfolioPage?.tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={`/portfolio/${slug}`}
+        basePath={pathBase || "/portfolio"}
       />
       <main className="px-4 py-10 sm:px-6 sm:py-14">
         <h1 className="mb-8 text-center text-2xl font-bold sm:text-3xl">
           {lang === "pt" ? "Comprar ingressos" : "Buy tickets"}
         </h1>
         <p className="mb-8 text-center text-zinc-400">{event.name}</p>
-        <BchCheckoutFlow event={event} portfolioSlug={slug} lang={lang} />
+        <BchCheckoutFlow event={event} portfolioSlug={slug} pathBase={pathBase} lang={lang} />
       </main>
     </div>
   );

@@ -34,6 +34,7 @@ export function SectionBlockRenderer({
   slug,
   lang,
   page,
+  pathBase = `/portfolio/${slug}`,
   fixturesContext = "tenant",
   initialUploadToken,
   eventPageMeta,
@@ -42,6 +43,8 @@ export function SectionBlockRenderer({
   slug: string;
   lang: "pt" | "en";
   page: Page;
+  /** Base público: "" no domínio customizado, "/portfolio/[slug]" no site grupo. */
+  pathBase?: string;
   fixturesContext?: FixturesFetchContext;
   initialUploadToken?: string | null;
   eventPageMeta?: EventPageMetaForFixtures | null;
@@ -206,6 +209,7 @@ export function SectionBlockRenderer({
         <BlockRenderer
           block={m}
           slug={slug}
+          pathBase={pathBase}
           lang={lang}
           page={page}
           inSection

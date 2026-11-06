@@ -16,8 +16,9 @@ export function isImprensaBlockVisible(block: HomeContentBlock): boolean {
   return v !== false && v !== "false";
 }
 
-export function getImprensaPageHref(slug: string): string {
-  return `/portfolio/${encodeURIComponent(slug)}/imprensa`;
+export function getImprensaPageHref(slug: string, pathBase = `/portfolio/${encodeURIComponent(slug)}`): string {
+  const base = pathBase === "" ? "" : pathBase.replace(/\/$/, "");
+  return base === "" ? "/imprensa" : `${base}/imprensa`;
 }
 
 export function findImprensaPageBlock(blocks: HomeContentBlock[]): HomeContentBlock | undefined {
@@ -43,8 +44,10 @@ export function getImprensaMenuLinks(
   blocks: HomeContentBlock[],
   slug: string,
   lang: "pt" | "en",
+  pathBase?: string,
 ): Array<{ label: string; href: string }> {
   const block = findImprensaPageBlock(blocks);
   if (!block || block.config?.imprensaShowInMenu === false) return [];
-  return [{ label: getImprensaMenuLabel(block, lang), href: getImprensaPageHref(slug) }];
+  const base = pathBase ?? `/portfolio/${encodeURIComponent(slug)}`;
+  return [{ label: getImprensaMenuLabel(block, lang), href: getImprensaPageHref(slug, base) }];
 }

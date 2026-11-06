@@ -16,6 +16,7 @@ import { UpdateTenantDto } from './dto/update-tenant.dto';
 
 const tenantListInclude = {
   kind: { select: { id: true, name: true } },
+  mainPublicPage: { select: { id: true, slug: true } },
 } satisfies Prisma.TenantInclude;
 
 type TenantWithKind = Prisma.TenantGetPayload<{ include: typeof tenantListInclude }>;
@@ -55,6 +56,10 @@ function mapTenant(row: TenantWithKind): TenantResponseDto {
     city: row.city ?? null,
     country: row.country ?? null,
     websiteUrl: row.websiteUrl ?? null,
+    mainPublicPageId: row.mainPublicPageId ?? null,
+    mainPublicPage: row.mainPublicPage
+      ? { id: row.mainPublicPage.id, slug: row.mainPublicPage.slug }
+      : null,
     sofascoreTeamId: row.sofascoreTeamId ?? null,
     footballDataTeamId: row.footballDataTeamId ?? null,
     apiFutebolTeamId: row.apiFutebolTeamId ?? null,
@@ -220,6 +225,28 @@ export class TenantsService {
       if (dto.websiteUrl !== undefined) {
         updates.push(`"websiteUrl" = $${++idx}`);
         values.push(dto.websiteUrl);
+      }
+      if (dto.mainPublicPageId !== undefined) {
+        if (dto.mainPublicPageId === null || dto.mainPublicPageId === '') {
+          updates.push(`"mainPublicPageId" = $${++idx}`);
+          values.push(null);
+        } else {
+          const page = await this.prisma.page.findFirst({
+            where: { id: dto.mainPublicPageId.trim(), tenantId: id },
+          });
+          if (!page) {
+            throw new NotFoundException('Página principal não encontrada para esta empresa.');
+          }
+          const other = await this.prisma.tenant.findFirst({
+            where: { mainPublicPageId: page.id, NOT: { id } },
+            select: { id: true },
+          });
+          if (other) {
+            throw new ConflictException('Esta página já está vinculada a outra empresa.');
+          }
+          updates.push(`"mainPublicPageId" = $${++idx}`);
+          values.push(page.id);
+        }
       }
       if (dto.sofascoreTeamId !== undefined) {
         updates.push(`"sofascoreTeamId" = $${++idx}`);

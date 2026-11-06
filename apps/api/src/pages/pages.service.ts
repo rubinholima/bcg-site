@@ -2,9 +2,12 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildBostonCityHallPageContent } from './boston-city-hall-page-default';
+import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
+import { TenantAccessService } from '../auth/tenant-access.service';
 
 export type PageContentDto = {
   theme?: Record<string, unknown>;
@@ -55,7 +58,10 @@ export type UpdatePageDto = {
 
 @Injectable()
 export class PagesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tenantAccess: TenantAccessService,
+  ) {}
 
   async findAll(): Promise<PageResponseDto[]> {
     const rows = await this.prisma.page.findMany({
@@ -75,37 +81,126 @@ export class PagesService {
   }
 
   async findByTenantId(tenantId: string): Promise<PageResponseDto | null> {
-    const row = await this.prisma.page.findFirst({
-      where: { tenantId },
-      include: {
-        tenant: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            logoUrl: true,
-            kind: { select: { id: true, name: true } },
+    const tenantRow = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { mainPublicPageId: true },
+    });
+    const preferredId = tenantRow?.mainPublicPageId ?? null;
+
+    const row = preferredId
+      ? await this.prisma.page.findFirst({
+          where: { id: preferredId, tenantId },
+          include: {
+            tenant: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                logoUrl: true,
+                kind: { select: { id: true, name: true } },
+              },
+            },
+          },
+        })
+      : null;
+
+    const resolved =
+      row ??
+      (await this.prisma.page.findFirst({
+        where: { tenantId, slug: 'main' },
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              logoUrl: true,
+              kind: { select: { id: true, name: true } },
+            },
           },
         },
-      },
-    });
-    if (!row) return null;
-    const tenant = row.tenant
+        orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
+      })) ??
+      (await this.prisma.page.findFirst({
+        where: { tenantId },
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              logoUrl: true,
+              kind: { select: { id: true, name: true } },
+            },
+          },
+        },
+        orderBy: [{ slug: 'asc' }, { updatedAt: 'desc' }, { id: 'asc' }],
+      }));
+    if (!resolved) return null;
+    const tenant = resolved.tenant
       ? {
-          ...row.tenant,
-          kind: row.tenant.kind ?? undefined,
+          ...resolved.tenant,
+          kind: resolved.tenant.kind ?? undefined,
         }
       : undefined;
     return {
-      id: row.id,
-      tenantId: row.tenantId,
-      slug: row.slug,
-      title: row.title,
-      content: (row.content as PageContentDto) ?? { blocks: [] },
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
+      id: resolved.id,
+      tenantId: resolved.tenantId,
+      slug: resolved.slug,
+      title: resolved.title,
+      content: (resolved.content as PageContentDto) ?? { blocks: [] },
+      createdAt: resolved.createdAt.toISOString(),
+      updatedAt: resolved.updatedAt.toISOString(),
       tenant,
     };
+  }
+
+  /**
+   * Define página principal pública (explícita). Requer escopo no tenant + dashboard.
+   * super_admin ou company_admin.
+   */
+  async setMainPublicPageForTenant(
+    tenantId: string,
+    pageId: string,
+    user: CognitoJwtPayload,
+  ): Promise<{ ok: true; mainPublicPageId: string | null }> {
+    const role = user.role ?? user['cognito:groups']?.[0] ?? 'user';
+    if (role !== 'super_admin' && role !== 'company_admin') {
+      throw new ForbiddenException('Somente administrador pode definir a página principal pública.');
+    }
+    const allowed = await this.tenantAccess.getAllowedTenantIds(user.sub, role);
+    this.tenantAccess.assertCanAccessTenant(allowed, tenantId);
+
+    const trimmed = pageId.trim();
+    if (!trimmed) {
+      await this.prisma.tenant.update({
+        where: { id: tenantId },
+        data: { mainPublicPageId: null },
+      });
+      return { ok: true, mainPublicPageId: null };
+    }
+
+    const page = await this.prisma.page.findFirst({
+      where: { id: trimmed, tenantId },
+    });
+    if (!page) {
+      throw new NotFoundException('Página não encontrada para esta empresa.');
+    }
+
+    const other = await this.prisma.tenant.findFirst({
+      where: { mainPublicPageId: page.id, NOT: { id: tenantId } },
+      select: { id: true },
+    });
+    if (other) {
+      throw new ConflictException('Esta página já está definida como principal em outra empresa.');
+    }
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { mainPublicPageId: page.id },
+    });
+
+    return { ok: true, mainPublicPageId: page.id };
   }
 
   /** Público: retorna a página do tenant pelo slug (para exibir em /portfolio/[slug]) */

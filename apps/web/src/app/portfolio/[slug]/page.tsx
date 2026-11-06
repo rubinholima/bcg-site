@@ -12,6 +12,7 @@ import { buildBackendUrl } from "@/lib/apiProxy";
 import { getImprensaMenuLinks, isImprensaPageOnlyBlock } from "@/lib/imprensa-display";
 import { BCH_SLUG } from "@/lib/boston-city-hall";
 import { BchPublicVenueHome } from "@/components/portfolio/bch/BchPublicVenueHome";
+import { getPortfolioPublicContextServer } from "@/components/portfolio/portfolio-public-path";
 
 async function getTenantBySlug(slug: string): Promise<{ id: string; name: string; slug: string; logoUrl: string | null } | null> {
   try {
@@ -47,6 +48,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const page = await getPageBySlug(slug);
+  const pub = await getPortfolioPublicContextServer(slug);
   const tenantFallback = slug === BCH_SLUG && !page?.tenant ? await getTenantBySlug(slug) : null;
   const name = page?.tenant?.name ?? tenantFallback?.name ?? (slug === BCH_SLUG ? "Boston City Hall" : slug);
   const logoUrl = page?.tenant?.logoUrl;
@@ -56,10 +58,23 @@ export async function generateMetadata({
     slug === BCH_SLUG
       ? "Arena multiuso em Manhuaçu (MG): shows, eventos corporativos, esportes, galeria do espaço e solicitação de aluguel — Boston City Group."
       : undefined;
+  const pathForCanonical = pub.customDomain
+    ? pub.pathname || "/"
+    : `/portfolio/${encodeURIComponent(slug)}`;
+  const canonicalUrl =
+    pub.customDomain && pub.forwardedHost
+      ? `https://${pub.forwardedHost}${pathForCanonical}`
+      : undefined;
   return {
     title: name,
     description: page ? `Página oficial — ${name}` : bchDescription,
     icons: { icon: iconUrl },
+    ...(canonicalUrl
+      ? {
+          alternates: { canonical: canonicalUrl },
+          openGraph: { url: canonicalUrl },
+        }
+      : {}),
   };
 }
 
@@ -119,6 +134,8 @@ export default async function PortfolioSlugPage({
   const { slug } = await params;
   const { lang: langParam } = await searchParams;
   const page = await getPageBySlug(slug);
+  const pubCtx = await getPortfolioPublicContextServer(slug);
+  const pathBase = pubCtx.pathBase;
   const defaultLang = (page?.content?.theme as { defaultLang?: "pt" | "en" } | undefined)?.defaultLang ?? "pt";
   const lang = langParam === "en" ? "en" : langParam === "pt" ? "pt" : defaultLang;
 
@@ -133,6 +150,7 @@ export default async function PortfolioSlugPage({
         lang={lang}
         tenantName={tenant.name}
         logoUrl={tenant.logoUrl}
+        pathBase={pathBase}
       />
     );
   }
@@ -173,7 +191,7 @@ export default async function PortfolioSlugPage({
   });
   const headerBlock = blocks.find((b) => b.type === "header");
   const footerBlock = blocks.find((b) => b.type === "footer");
-  const extraNavLinks = getImprensaMenuLinks(blocks, slug, lang);
+  const extraNavLinks = getImprensaMenuLinks(blocks, slug, lang, pathBase);
 
   const bgColor = (theme.backgroundColor as string)?.trim() || "#0f0f12";
   const bgImage = (theme.backgroundImage as string)?.trim();
@@ -219,13 +237,14 @@ export default async function PortfolioSlugPage({
         logoUrl={tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
+        basePath={pathBase || "/portfolio"}
         extraNavLinks={extraNavLinks}
       />
 
       {/* Módulos no meio */}
       <main>
         {contentBlocks.map((block) => (
-          <BlockRenderer key={block.id} block={block} slug={slug} lang={lang} page={page} />
+          <BlockRenderer key={block.id} block={block} slug={slug} pathBase={pathBase} lang={lang} page={page} />
         ))}
 
         <PublicFooter

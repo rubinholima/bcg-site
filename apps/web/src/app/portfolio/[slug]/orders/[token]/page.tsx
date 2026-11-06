@@ -7,6 +7,8 @@ import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHea
 import { formatCheckoutMoney, type BchPublicOrder } from "@/lib/bch-public-checkout";
 import { BchPublicOrderPoll } from "@/components/portfolio/bch/BchPublicOrderPoll";
 import type { Page } from "@/types/page";
+import { getPortfolioPublicContextServer } from "@/components/portfolio/portfolio-public-path";
+import { rewriteTenantPortfolioHref } from "@/lib/portfolio-public-links";
 
 const BCH_SLUG = "boston-city-hall";
 
@@ -102,6 +104,10 @@ export default async function BchPublicOrderPage({
   const order = await fetchOrder(token);
   if (!order) notFound();
 
+  const pathBase = (await getPortfolioPublicContextServer(slug)).pathBase;
+  const myTicketsHref =
+    pathBase === "" ? `/my-tickets${lang === "en" ? "?lang=en" : ""}` : `${pathBase}/my-tickets${lang === "en" ? "?lang=en" : ""}`;
+
   const portfolioPage = await getPageBySlug(slug);
   const headerBlock = portfolioPage?.content?.blocks?.find((b) => b.type === "header");
   const copy = statusCopy(order, lang);
@@ -123,7 +129,7 @@ export default async function BchPublicOrderPage({
         logoUrl={portfolioPage?.tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={`/portfolio/${slug}`}
+        basePath={pathBase || "/portfolio"}
       />
       <main className="mx-auto max-w-lg px-4 py-10 sm:py-14">
         <h1 className="text-2xl font-bold text-amber-400/95">{copy.title}</h1>
@@ -137,7 +143,10 @@ export default async function BchPublicOrderPage({
           <div>
             <dt className="text-zinc-500">{lang === "pt" ? "Evento" : "Event"}</dt>
             <dd>
-              <Link href={order.event.detailPath} className="text-amber-400 hover:underline">
+              <Link
+                href={rewriteTenantPortfolioHref(order.event.detailPath, slug, pathBase)}
+                className="text-amber-400 hover:underline"
+              >
                 {order.event.name}
               </Link>
             </dd>
@@ -193,7 +202,7 @@ export default async function BchPublicOrderPage({
 
         <p className="mt-8 text-center text-sm">
           <Link
-            href={`/portfolio/${slug}/my-tickets${lang === "en" ? "?lang=en" : ""}`}
+            href={myTicketsHref}
             className="text-amber-400 hover:underline"
           >
             {lang === "pt" ? "Ver todos os meus ingressos" : "View all my tickets"}

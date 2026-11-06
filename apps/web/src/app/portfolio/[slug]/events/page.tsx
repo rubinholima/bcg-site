@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Calendar, MapPin, Ticket } from "lucide-react";
 import type { Page } from "@/types/page";
-import { buildBackendUrl, getAppBaseUrl, getBackendOriginForServerFetch } from "@/lib/apiProxy";
+import { buildBackendUrl } from "@/lib/apiProxy";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { PortfolioFavicon } from "@/components/portfolio/PortfolioFavicon";
 import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHeader";
@@ -12,9 +12,10 @@ import {
   BCH_TICKET_AVAILABILITY_LABEL,
   fetchBchPublicEvents,
   formatBchEventDateTime,
-  type BchPublicEventListItem,
 } from "@/lib/bch-public-events";
 import { bchPublicNavLinks } from "@/lib/bch-public-nav";
+import { getPortfolioPublicContextServer } from "@/components/portfolio/portfolio-public-path";
+import { rewriteTenantPortfolioHref } from "@/lib/portfolio-public-links";
 
 const BCH_SLUG = "boston-city-hall";
 
@@ -28,25 +29,6 @@ async function getPageBySlug(slug: string): Promise<Page | null> {
   } catch {
     return null;
   }
-}
-
-async function fetchEvents(past: boolean): Promise<BchPublicEventListItem[]> {
-  const qs = past ? "?past=1" : "";
-  const urls = [
-    `${getBackendOriginForServerFetch()}/public/boston-city-hall/events${qs}`,
-    `${getAppBaseUrl().replace(/\/$/, "")}/api/public/boston-city-hall/events${qs}`,
-  ];
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) continue;
-      const data = (await res.json()) as BchPublicEventListItem[];
-      return Array.isArray(data) ? data : [];
-    } catch {
-      /* próxima origem */
-    }
-  }
-  return fetchBchPublicEvents({ past });
 }
 
 export async function generateMetadata({
@@ -79,7 +61,8 @@ export default async function PortfolioEventsListPage({
   const showPast = pastParam === "1" || pastParam === "true";
   const lang = langParam === "en" ? "en" : "pt";
   const page = await getPageBySlug(slug);
-  const events = await fetchEvents(showPast);
+  const pathBase = (await getPortfolioPublicContextServer(slug)).pathBase;
+  const events = await fetchBchPublicEvents({ past: showPast, pathBase });
 
   const title = lang === "pt" ? (showPast ? "Eventos passados" : "Próximos eventos") : showPast ? "Past events" : "Upcoming events";
   const empty =
@@ -94,6 +77,10 @@ export default async function PortfolioEventsListPage({
   const tenantName = page?.tenant?.name ?? "Boston City Hall";
   const logoUrl = page?.tenant?.logoUrl;
 
+  const navBase = pathBase === "" ? "" : `/portfolio/${slug}`;
+  const eventsListBase = pathBase === "" ? "/events" : `/portfolio/${slug}/events`;
+  const homeHref = pathBase === "" ? "/" : `/portfolio/${slug}`;
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <PortfolioFavicon slug={slug} logoUrl={logoUrl} />
@@ -103,15 +90,15 @@ export default async function PortfolioEventsListPage({
         logoUrl={logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={`/portfolio/${slug}`}
-        extraNavLinks={headerBlock ? undefined : bchPublicNavLinks(lang, `/portfolio/${slug}`)}
+        basePath={pathBase || "/portfolio"}
+        extraNavLinks={headerBlock ? undefined : bchPublicNavLinks(lang, navBase)}
       />
       <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold sm:text-3xl">{title}</h1>
           <div className="flex gap-2">
             <Link
-              href={`/portfolio/${slug}/events?lang=${lang}`}
+              href={`${eventsListBase}?lang=${lang}`}
               className={`min-h-[44px] rounded-lg px-4 py-2.5 text-sm font-medium ${
                 !showPast ? "bg-amber-500/20 text-amber-300" : "bg-white/5 text-zinc-400 hover:text-white"
               }`}
@@ -119,7 +106,7 @@ export default async function PortfolioEventsListPage({
               {toggleUpcoming}
             </Link>
             <Link
-              href={`/portfolio/${slug}/events?past=1&lang=${lang}`}
+              href={`${eventsListBase}?past=1&lang=${lang}`}
               className={`min-h-[44px] rounded-lg px-4 py-2.5 text-sm font-medium ${
                 showPast ? "bg-amber-500/20 text-amber-300" : "bg-white/5 text-zinc-400 hover:text-white"
               }`}
@@ -136,7 +123,7 @@ export default async function PortfolioEventsListPage({
             {events.map((item) => (
               <li key={item.slug}>
                 <Link
-                  href={item.detailPath}
+                  href={rewriteTenantPortfolioHref(item.detailPath, slug, pathBase)}
                   className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80 transition hover:border-amber-500/30"
                 >
                   {item.logoUrl ? (
@@ -180,7 +167,7 @@ export default async function PortfolioEventsListPage({
         )}
 
         <p className="mt-12 text-center">
-          <Link href={`/portfolio/${slug}`} className="text-sm text-amber-400 hover:underline">
+          <Link href={homeHref} className="text-sm text-amber-400 hover:underline">
             ← {lang === "pt" ? "Voltar ao site" : "Back to site"}
           </Link>
         </p>

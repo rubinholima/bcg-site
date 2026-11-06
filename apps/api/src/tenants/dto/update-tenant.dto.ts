@@ -66,6 +66,11 @@ export class UpdateTenantDto {
   @MaxLength(2048)
   websiteUrl?: string;
 
+  /** Página pública principal quando há várias Pages no tenant. */
+  @IsString()
+  @IsOptional()
+  mainPublicPageId?: string | null;
+
   @IsString()
   @IsOptional()
   @MaxLength(64)

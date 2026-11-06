@@ -148,6 +148,7 @@ export function BlockRenderer({
   slug,
   lang,
   page,
+  pathBase,
   inSection,
   sectionColumns,
   showModuleTitle,
@@ -159,6 +160,8 @@ export function BlockRenderer({
   slug: string;
   lang: "pt" | "en";
   page: Page;
+  /** Base de URL pública; omitir = `/portfolio/[slug]`. */
+  pathBase?: string;
   inSection?: boolean;
   sectionColumns?: 1 | 2 | 3;
   showModuleTitle?: boolean;
@@ -168,6 +171,7 @@ export function BlockRenderer({
   /** Metadados do evento publicado (nome + categoria fixa de jogos). */
   eventPageMeta?: EventPageMetaForFixtures | null;
 }) {
+  const resolvedPathBase = pathBase ?? `/portfolio/${slug}`;
   /** Servidor pode devolver visible como boolean ou string; ocultar só quando false ou "false". */
   const v = block.config?.visible as boolean | string | undefined;
   const visible = v !== false && v !== "false";
@@ -186,6 +190,7 @@ export function BlockRenderer({
       <SectionBlockRenderer
         block={block}
         slug={slug}
+        pathBase={resolvedPathBase}
         lang={lang}
         page={page}
         fixturesContext={fixturesContext}
@@ -362,7 +367,7 @@ export function BlockRenderer({
   }
 
   if (block.type === "logo_carousel") {
-    return <LogoCarouselSection key={block.id} block={block} lang={lang} />;
+    return <LogoCarouselSection key={block.id} block={block} lang={lang} pathBase={resolvedPathBase} currentTenantSlug={slug} />;
   }
 
   if (block.type === "eventos") {
@@ -387,6 +392,7 @@ export function BlockRenderer({
         block={block}
         lang={lang}
         page={page}
+        pathBase={resolvedPathBase}
         fullWidth={fullWidth}
         titleAlign={titleAlign}
         inSection={inSection}

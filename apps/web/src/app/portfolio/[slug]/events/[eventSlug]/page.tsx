@@ -17,6 +17,7 @@ import {
   type BchPublicEventDetail,
 } from "@/lib/bch-public-events";
 import { Calendar, MapPin } from "lucide-react";
+import { getPortfolioPublicContextServer } from "@/components/portfolio/portfolio-public-path";
 
 const BCH_SLUG = "boston-city-hall";
 
@@ -57,7 +58,10 @@ async function getPageBySlug(slug: string): Promise<Page | null> {
   }
 }
 
-async function fetchEventDetail(eventSlug: string): Promise<BchPublicEventDetail | null> {
+async function fetchEventDetail(
+  eventSlug: string,
+  pathBase?: string,
+): Promise<BchPublicEventDetail | null> {
   const encoded = encodeURIComponent(eventSlug);
   const urls = [
     `${getBackendOriginForServerFetch()}/public/boston-city-hall/events/${encoded}`,
@@ -73,7 +77,7 @@ async function fetchEventDetail(eventSlug: string): Promise<BchPublicEventDetail
       /* próxima origem */
     }
   }
-  return fetchBchPublicEventBySlug(eventSlug);
+  return fetchBchPublicEventBySlug(eventSlug, { pathBase });
 }
 
 function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
@@ -87,7 +91,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug, eventSlug } = await params;
   if (slug !== BCH_SLUG) return { title: "Evento" };
-  const event = await fetchEventDetail(eventSlug);
+  const pathBase = (await getPortfolioPublicContextServer(slug)).pathBase;
+  const event = await fetchEventDetail(eventSlug, pathBase);
   const iconUrl = event?.logoUrl ? getPublicImageUrl(event.logoUrl) : "/favicon.ico";
   return {
     title: event?.name ?? eventSlug,
@@ -113,12 +118,14 @@ export default async function BchPublicEventDetailPage({
     notFound();
   }
 
-  const event = await fetchEventDetail(eventSlug);
+  const pathBase = (await getPortfolioPublicContextServer(slug)).pathBase;
+  const eventsListHref = pathBase === "" ? "/events" : `${pathBase}/events`;
+  const event = await fetchEventDetail(eventSlug, pathBase);
   if (!event) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-950 px-4 text-white">
         <p className="text-lg text-zinc-300">Evento não encontrado.</p>
-        <Link href={`/portfolio/${slug}/events`} className="text-sm text-amber-400 hover:underline">
+        <Link href={eventsListHref} className="text-sm text-amber-400 hover:underline">
           ← Eventos
         </Link>
       </div>
@@ -196,7 +203,7 @@ export default async function BchPublicEventDetailPage({
         logoUrl={event.logoUrl ?? portfolioPage?.tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={`/portfolio/${slug}`}
+        basePath={pathBase || "/portfolio"}
       />
 
       <article className="relative mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
@@ -234,7 +241,7 @@ export default async function BchPublicEventDetailPage({
           </p>
         )}
 
-        <BchPublicEventTickets event={event} lang={lang} />
+        <BchPublicEventTickets event={event} lang={lang} pathBase={pathBase} />
 
         {contentBlocks.length > 0 && (
           <div className="mt-12 space-y-0">
@@ -244,14 +251,15 @@ export default async function BchPublicEventDetailPage({
                 block={block}
                 lang={lang}
                 page={page}
-                slug={event.slug}
+                slug={slug}
+                pathBase={pathBase}
               />
             ))}
           </div>
         )}
 
         <p className="mt-12 flex flex-wrap gap-4 text-sm">
-          <Link href={`/portfolio/${slug}/events`} className="text-amber-400 hover:underline">
+          <Link href={eventsListHref} className="text-amber-400 hover:underline">
             ← {lang === "pt" ? "Todos os eventos" : "All events"}
           </Link>
           <Link href={`/eventos/${encodeURIComponent(event.slug)}`} className="text-zinc-400 hover:text-white">

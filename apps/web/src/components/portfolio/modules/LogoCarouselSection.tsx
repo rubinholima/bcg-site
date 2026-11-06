@@ -6,15 +6,25 @@ import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { fetchPublicTenants, type PublicTenantCarouselItem } from "@/lib/public-tenants";
+import { externalPortfolioUrlForTenantSlug } from "@/lib/portfolio-public-links";
 
-/** Sempre /portfolio/[slug] no site principal (nunca subdomínio americanofc.bostoncitygroup.biz). */
-function buildTenantUrl(item: PublicTenantCarouselItem): string {
-  return `/portfolio/${item.slug}`;
+function buildTenantUrl(
+  item: PublicTenantCarouselItem,
+  pathBase: string,
+  currentTenantSlug: string,
+): string {
+  const portfolioPath = `/portfolio/${item.slug}`;
+  if (pathBase === "") {
+    return item.slug === currentTenantSlug ? "/" : externalPortfolioUrlForTenantSlug(item.slug);
+  }
+  return portfolioPath;
 }
 
 function LogoStrip({
   items,
   fallbackLogo,
+  pathBase,
+  currentTenantSlug,
   cardHeight,
   cardWidthRatio,
   cardRadius,
@@ -29,6 +39,8 @@ function LogoStrip({
 }: {
   items: PublicTenantCarouselItem[];
   fallbackLogo?: string;
+  pathBase: string;
+  currentTenantSlug: string;
   cardHeight: number;
   cardWidthRatio: number;
   cardRadius: number;
@@ -93,7 +105,7 @@ function LogoStrip({
         {duplicated.map((item, i) => (
           <a
             key={`${item.id}-${i}`}
-            href={buildTenantUrl(item)}
+            href={buildTenantUrl(item, pathBase, currentTenantSlug)}
             target={openInNewTab ? "_blank" : undefined}
             rel={openInNewTab ? "noopener noreferrer" : undefined}
             className="flex shrink-0 items-center justify-center rounded-xl transition-transform duration-200 hover:scale-105 hover:shadow-lg overflow-hidden px-3"
@@ -158,9 +170,13 @@ function LogoStrip({
 export function LogoCarouselSection({
   block,
   lang,
+  pathBase = "",
+  currentTenantSlug = "",
 }: {
   block: HomeContentBlock;
   lang: "pt" | "en";
+  pathBase?: string;
+  currentTenantSlug?: string;
 }) {
   const config = block.config ?? {};
   const [allItems, setAllItems] = useState<PublicTenantCarouselItem[]>([]);
@@ -276,6 +292,8 @@ export function LogoCarouselSection({
         <LogoStrip
           items={allItems}
           fallbackLogo={fallbackLogo}
+          pathBase={pathBase}
+          currentTenantSlug={currentTenantSlug}
           cardHeight={cardHeight}
           cardWidthRatio={cardWidthRatio}
           cardRadius={cardRadius}

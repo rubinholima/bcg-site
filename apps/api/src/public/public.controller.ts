@@ -46,6 +46,7 @@ import { SubmitEmployeeRegistrationDto } from '../registration-invite/dto/submit
 import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-player-registration.dto';
 import { PrepPseService } from '../prep-fisica/prep-pse.service';
 import { PurchaseQuoteInviteService } from '../compras/purchase-quote-invite.service';
+import { PublicDomainResolveService } from '../public-domain/public-domain-resolve.service';
 
 @Controller('public')
 export class PublicController {
@@ -68,7 +69,21 @@ export class PublicController {
     private readonly tenantPressService: TenantPressService,
     private readonly prepPse: PrepPseService,
     private readonly purchaseQuoteInvites: PurchaseQuoteInviteService,
+    private readonly publicDomainResolve: PublicDomainResolveService,
   ) {}
+
+  /**
+   * Contexto do host para middleware (domínio customizado CUP360).
+   * GET /public/hostname-context?host=www.example.com
+   */
+  @Get('hostname-context')
+  hostnameContext(
+    @Query('host') host?: string,
+    @Query('pathname') pathname?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.publicDomainResolve.resolveMiddlewareContext(host ?? '', pathname ?? '/', search ?? '');
+  }
 
   /** PSE (RPE) do atleta — link público por token */
   @Get('pse/:token')

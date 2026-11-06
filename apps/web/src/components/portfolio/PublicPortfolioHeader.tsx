@@ -102,11 +102,16 @@ function PortfolioLangSelector({
   lang: "pt" | "en";
   basePath?: string;
 }) {
-  const base = `${basePath}/${slug}`;
+  const home =
+    basePath === ""
+      ? "/"
+      : basePath.startsWith("/portfolio/")
+        ? basePath
+        : `${basePath.replace(/\/$/, "")}/${slug}`;
   return (
     <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
       <Link
-        href={`${base}?lang=pt`}
+        href={`${home}?lang=pt`}
         className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
           lang === "pt"
             ? "bg-white/20 text-white"
@@ -116,7 +121,7 @@ function PortfolioLangSelector({
         PT
       </Link>
       <Link
-        href={`${base}?lang=en`}
+        href={`${home}?lang=en`}
         className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
           lang === "en"
             ? "bg-white/20 text-white"
@@ -360,7 +365,12 @@ export function PublicPortfolioHeader({
   const resolvedLogoRaw = fromProp || fromHeader || null;
   const logoSrc = resolvedLogoRaw ? getPublicImageUrl(resolvedLogoRaw) : null;
 
-  const pageUrl = `${basePath}/${slug}`;
+  const pageUrl =
+    basePath === ""
+      ? "/"
+      : basePath.startsWith("/portfolio/")
+        ? basePath
+        : `${basePath.replace(/\/$/, "")}/${slug}`;
   const navLinkClass =
     "rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white";
 

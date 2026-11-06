@@ -24,10 +24,12 @@ function maxQtyForType(purchaseLimit: number | null): number {
 export function BchCheckoutFlow({
   event,
   portfolioSlug,
+  pathBase,
   lang,
 }: {
   event: BchPublicEventDetail;
   portfolioSlug: string;
+  pathBase?: string;
   lang: "pt" | "en";
 }) {
   const [step, setStep] = useState<Step>("tickets");
@@ -315,7 +317,11 @@ export function BchCheckoutFlow({
 
       <p className="mt-8 text-center text-sm">
         <Link
-          href={`/portfolio/${portfolioSlug}/events/${encodeURIComponent(event.slug)}`}
+          href={
+            pathBase === ""
+              ? `/events/${encodeURIComponent(event.slug)}`
+              : `${(pathBase ?? `/portfolio/${portfolioSlug}`).replace(/\/$/, "")}/events/${encodeURIComponent(event.slug)}`
+          }
           className="text-amber-400 hover:underline"
         >
           ← {lang === "pt" ? "Voltar ao evento" : "Back to event"}

@@ -19,7 +19,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { api } from "@/lib/api";
 import { LogoUploadWithName } from "@/components/dashboard/LogoUploadWithName";
 import { Tenant } from "@/types/tenant";
+import type { Page } from "@/types/page";
 import { TenantKind } from "@/types/tenant-kind";
+import { EmpresaPublicDomainSection } from "@/components/dashboard/empresa-public-domain-section";
 import { isFootballKind } from "@/lib/home-data";
 import { useAuth } from "@/context/AuthContext";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
@@ -46,7 +48,7 @@ interface FormData {
 
 export default function EditEmpresaPage() {
   const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
-  const { isSuperAdmin, loading: authLoading } = useAuth();
+  const { isSuperAdmin, isCompanyAdmin, loading: authLoading, canAccessModule } = useAuth();
   const { categories: fixtureCategories } = useFixtureCategories();
   const params = useParams();
   const id = params.id as string;
@@ -56,6 +58,7 @@ export default function EditEmpresaPage() {
   const [error, setError] = useState<string | null>(null);
   const [tipos, setTipos] = useState<TenantKind[]>([]);
   const [empresa, setEmpresa] = useState<Tenant | null>(null);
+  const [tenantPages, setTenantPages] = useState<Page[]>([]);
   const [formData, setFormData] = useState<FormData>({
     name: "",
     tradeName: "",
@@ -97,6 +100,13 @@ export default function EditEmpresaPage() {
           });
         }
         setTipos(tiposList ?? []);
+        try {
+          const { data: allPages } = await api.get<Page[]>("/pages");
+          const list = Array.isArray(allPages) ? allPages.filter((p) => p.tenantId === id) : [];
+          setTenantPages(list);
+        } catch {
+          setTenantPages([]);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar empresa");
       } finally {
@@ -106,6 +116,19 @@ export default function EditEmpresaPage() {
     }
     load();
   }, [id]);
+
+  const refreshEmpresa = async () => {
+    try {
+      const { data: next } = await api.get<Tenant>(`/tenants/${id}`);
+      if (next) setEmpresa(next);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const canSetMainPage =
+    (isSuperAdmin || isCompanyAdmin) && canAccessModule("paginas");
+  const canManageDomains = canAccessModule("cup360_public_domains");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -571,6 +594,16 @@ export default function EditEmpresaPage() {
           </form>
         </CardContent>
       </Card>
+
+      <EmpresaPublicDomainSection
+        tenantId={id}
+        canManageDomains={canManageDomains}
+        canSetMainPage={canSetMainPage}
+        mainPublicPageId={empresa?.mainPublicPageId ?? null}
+        pages={tenantPages.map((p) => ({ id: p.id, slug: p.slug, title: p.title }))}
+        onMainPageSaved={() => void refreshEmpresa()}
+      />
+
       <SaveSuccessModal />
     </div>
   );

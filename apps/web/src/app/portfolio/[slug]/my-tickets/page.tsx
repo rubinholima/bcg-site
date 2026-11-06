@@ -5,6 +5,7 @@ import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHea
 import { BchMyTicketsClient } from "@/components/portfolio/bch/BchMyTicketsClient";
 import { buildBackendUrl } from "@/lib/apiProxy";
 import type { Page } from "@/types/page";
+import { getPortfolioPublicContextServer } from "@/components/portfolio/portfolio-public-path";
 
 const BCH_SLUG = "boston-city-hall";
 
@@ -40,6 +41,7 @@ export default async function BchMyTicketsPage({
   if (slug !== BCH_SLUG) notFound();
 
   const lang = langParam === "en" ? "en" : "pt";
+  const pathBase = (await getPortfolioPublicContextServer(slug)).pathBase;
   const portfolioPage = await getPageBySlug(slug);
   const headerBlock = portfolioPage?.content?.blocks?.find((b) => b.type === "header");
 
@@ -52,7 +54,7 @@ export default async function BchMyTicketsPage({
         logoUrl={portfolioPage?.tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={`/portfolio/${slug}`}
+        basePath={pathBase || "/portfolio"}
       />
       <main className="mx-auto max-w-lg px-4 py-10 sm:py-14">
         <h1 className="text-2xl font-bold text-amber-400/95">
