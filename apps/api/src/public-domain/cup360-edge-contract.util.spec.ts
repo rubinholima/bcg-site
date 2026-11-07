@@ -2,6 +2,7 @@ import { createHmac } from 'crypto';
 import {
   buildCup360EdgeContractPayload,
   CUP360_EDGE_CONTRACT_VERSION,
+  cup360EdgeContractHeadersComplete,
   signCup360EdgeContract,
   verifyCup360EdgeContract,
   verifyLegacyEdgeHostSignature,
@@ -52,6 +53,13 @@ describe('cup360-edge-contract', () => {
       'x-cup360-edge-sig': sig,
     });
     expect(out).toBeNull();
+  });
+
+  it('detecta conjunto completo de headers do contrato', () => {
+    const ts = Math.floor(Date.now() / 1000);
+    const h = headersForContract('www.example.com', ts);
+    expect(cup360EdgeContractHeadersComplete(h)).toBe(true);
+    expect(cup360EdgeContractHeadersComplete({ 'x-cup360-edge-host': 'x' })).toBe(false);
   });
 
   it('compat: assinatura legada (middleware) com x-cup360-edge-host-ts', () => {

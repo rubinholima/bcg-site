@@ -1,40 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const CANONICAL_HOST = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "").split("/")[0] ?? "www.bostoncitygroup.biz";
-
-const TRUSTED_PLATFORM_HOSTS = new Set([
-  CANONICAL_HOST.toLowerCase(),
-  "www.bostoncitygroup.biz",
-  "bostoncitygroup.biz",
-  "origin.bostoncitygroup.biz",
-  "localhost",
-  "127.0.0.1",
-]);
-
-function parseTrustedHostList(): Set<string> {
-  const raw = process.env.CUP360_TRUSTED_PUBLIC_HOSTS?.trim();
-  const s = new Set(TRUSTED_PLATFORM_HOSTS);
-  if (!raw) return s;
-  for (const p of raw.split(/[\s,]+/)) {
-    const h = p.trim().toLowerCase().replace(/\.$/, "");
-    if (h) s.add(h);
-  }
-  return s;
-}
-
-const TRUSTED_HOSTS = parseTrustedHostList();
+import {
+  CUP360_EDGE_CONTRACT_HEADERS,
+  cup360EdgeContractHeadersComplete,
+  getOriginInboundHost,
+  isCup360PlatformHost,
+  shouldResolvePublicDomainRouting,
+} from "@/lib/middleware-edge-routing";
 
 type HostnameContext =
   | { mode: "none" }
   | { mode: "apex_redirect"; redirectTo: string }
   | { mode: "custom_domain"; tenantSlug: string; canonicalOrigin: string; pathPrefix: string };
-
-const EDGE_CONTRACT_HEADERS = [
-  "x-cup360-edge-v",
-  "x-cup360-edge-ts",
-  "x-cup360-edge-host",
-  "x-cup360-edge-sig",
-] as const;
 
 async function fetchHostnameContext(
   incoming: Headers,
@@ -54,21 +30,17 @@ async function fetchHostnameContext(
     u.searchParams.set("search", search || "");
     const edgeSecret = process.env.CUP360_EDGE_HOST_SECRET?.trim();
     const hdrs: Record<string, string> = { Accept: "application/json" };
-    if (edgeSecret) {
-      let hasContract = true;
-      for (const k of EDGE_CONTRACT_HEADERS) {
+    if (edgeSecret && cup360EdgeContractHeadersComplete(incoming)) {
+      for (const k of CUP360_EDGE_CONTRACT_HEADERS) {
         const v = incoming.get(k);
-        if (!v?.trim()) hasContract = false;
-        else hdrs[k] = v.trim();
-      }
-      if (!hasContract) {
-        return "forbidden";
+        if (v?.trim()) hdrs[k] = v.trim();
       }
     }
     const res = await fetch(u.toString(), {
       cache: "no-store",
       headers: hdrs,
     });
+    if (res.status === 403) return "forbidden";
     if (!res.ok) return { mode: "none" };
     const data = (await res.json()) as HostnameContext;
     if (data?.mode === "apex_redirect" && data.redirectTo) return data;
@@ -80,25 +52,9 @@ async function fetchHostnameContext(
   }
 }
 
-function isPlatformRequest(hostOnly: string): boolean {
-  if (!hostOnly) return false;
-  const h = hostOnly.split(":")[0]?.toLowerCase() ?? "";
-  return TRUSTED_HOSTS.has(h);
-}
-
-function isBlockedPublicPath(pathname: string): boolean {
-  return (
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/api/") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/portfolio")
-  );
-}
-
 /**
  * Middleware: slash em dashboard/login, domínio público customizado → rewrite para /portfolio/[slug].
- * origin.bostoncitygroup.biz permanece host de origem (CloudFront) — sem redirect canônico.
+ * Na origem compartilhada (Host=origin.bostoncitygroup.biz), o tenant vem do contrato de borda assinado.
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -110,11 +66,24 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
-  const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || "";
-  const hostOnly = host.replace(/^https?:\/\//, "").split("/")[0] ?? "";
+  const hostOnly = getOriginInboundHost(request.headers.get("host"));
+  const edgeSecret = process.env.CUP360_EDGE_HOST_SECRET?.trim();
 
-  if (!isPlatformRequest(hostOnly) && !isBlockedPublicPath(pathname)) {
-    const ctx = await fetchHostnameContext(request.headers, hostOnly, pathname, request.nextUrl.search);
+  if (
+    edgeSecret &&
+    !isCup360PlatformHost(hostOnly) &&
+    !cup360EdgeContractHeadersComplete(request.headers)
+  ) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
+  if (shouldResolvePublicDomainRouting(hostOnly, pathname, request.headers, edgeSecret)) {
+    const ctx = await fetchHostnameContext(
+      request.headers,
+      hostOnly,
+      pathname,
+      request.nextUrl.search,
+    );
     if (ctx === "forbidden") {
       return new NextResponse("Forbidden", { status: 403 });
     }

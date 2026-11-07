@@ -6,6 +6,24 @@ export const CUP360_EDGE_CONTRACT_VERSION = '1';
 
 const MAX_SKEW_SEC = 120;
 
+const EDGE_CONTRACT_HEADER_NAMES = [
+  'x-cup360-edge-v',
+  'x-cup360-edge-ts',
+  'x-cup360-edge-host',
+  'x-cup360-edge-sig',
+] as const;
+
+/** Indica que o viewer enviou o contrato completo (antes da verificação HMAC). */
+export function cup360EdgeContractHeadersComplete(
+  headers: Record<string, string | string[] | undefined> | undefined,
+): boolean {
+  if (!headers) return false;
+  for (const name of EDGE_CONTRACT_HEADER_NAMES) {
+    if (!pickHeader(headers, name)) return false;
+  }
+  return true;
+}
+
 export function buildCup360EdgeContractPayload(
   version: string,
   timestampSec: number,

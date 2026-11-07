@@ -14,6 +14,7 @@ import {
   Req,
   UseGuards,
   Headers,
+  ForbiddenException,
 } from '@nestjs/common';
 import { BostonTvInstallGuard } from '../auth/boston-tv-install.guard';
 import type { Request, Response } from 'express';
@@ -49,9 +50,11 @@ import { PrepPseService } from '../prep-fisica/prep-pse.service';
 import { PurchaseQuoteInviteService } from '../compras/purchase-quote-invite.service';
 import { PublicDomainResolveService } from '../public-domain/public-domain-resolve.service';
 import {
+  cup360EdgeContractHeadersComplete,
   verifyCup360EdgeContract,
   verifyLegacyEdgeHostSignature,
 } from '../public-domain/cup360-edge-contract.util';
+import { isCup360PlatformHostname } from '../public-domain/cup360-platform-hosts.util';
 
 @Controller('public')
 export class PublicController {
@@ -92,15 +95,23 @@ export class PublicController {
     const path = pathname ?? '/';
     const q = search ?? '';
 
+    const contractComplete = cup360EdgeContractHeadersComplete(headers);
     const contract = verifyCup360EdgeContract(secret, headers);
     if (contract) {
       return this.publicDomainResolve.resolveMiddlewareContext(contract.hostnameNormalized, path, q);
     }
 
     if (secret) {
+      if (contractComplete) {
+        throw new ForbiddenException('Contrato de borda inválido ou expirado.');
+      }
       const legacy = verifyLegacyEdgeHostSignature(secret, headers, (host ?? '').trim());
       if (legacy) {
         return this.publicDomainResolve.resolveMiddlewareContext(legacy, path, q);
+      }
+      const claimed = (host ?? '').trim();
+      if (claimed && !isCup360PlatformHostname(claimed)) {
+        throw new ForbiddenException('Contrato de borda obrigatório para domínio público.');
       }
       return { mode: 'none' as const };
     }
