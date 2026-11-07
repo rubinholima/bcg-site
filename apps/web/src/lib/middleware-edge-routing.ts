@@ -14,6 +14,10 @@ const DEFAULT_PLATFORM_HOSTS = new Set([
   "www.bostoncitygroup.biz",
   "bostoncitygroup.biz",
   "origin.bostoncitygroup.biz",
+  /** Login direto (bypass CloudFront) — nginx → Next :3000 */
+  "auth.bostoncitygroup.biz",
+  /** API pública documentada em produção (README-env) */
+  "api.bostoncitygroup.biz",
   "localhost",
   "127.0.0.1",
 ]);
@@ -77,4 +81,18 @@ export function shouldResolvePublicDomainRouting(
     return !isCup360PlatformHost(hostOnly);
   }
   return !isCup360PlatformHost(hostOnly);
+}
+
+/** Fail-closed do middleware quando há segredo de borda e o host não é plataforma. */
+export function middlewareFailsClosedWithoutEdgeContract(
+  hostHeader: string | null,
+  headers: Headers,
+  edgeSecret?: string,
+): boolean {
+  const secret = edgeSecret?.trim();
+  if (!secret) return false;
+  const hostOnly = getOriginInboundHost(hostHeader);
+  if (isCup360PlatformHost(hostOnly)) return false;
+  if (cup360EdgeContractHeadersComplete(headers)) return false;
+  return true;
 }

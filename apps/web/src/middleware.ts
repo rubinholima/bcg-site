@@ -3,7 +3,7 @@ import {
   CUP360_EDGE_CONTRACT_HEADERS,
   cup360EdgeContractHeadersComplete,
   getOriginInboundHost,
-  isCup360PlatformHost,
+  middlewareFailsClosedWithoutEdgeContract,
   shouldResolvePublicDomainRouting,
 } from "@/lib/middleware-edge-routing";
 
@@ -70,9 +70,11 @@ export async function middleware(request: NextRequest) {
   const edgeSecret = process.env.CUP360_EDGE_HOST_SECRET?.trim();
 
   if (
-    edgeSecret &&
-    !isCup360PlatformHost(hostOnly) &&
-    !cup360EdgeContractHeadersComplete(request.headers)
+    middlewareFailsClosedWithoutEdgeContract(
+      request.headers.get("host"),
+      request.headers,
+      edgeSecret,
+    )
   ) {
     return new NextResponse("Forbidden", { status: 403 });
   }

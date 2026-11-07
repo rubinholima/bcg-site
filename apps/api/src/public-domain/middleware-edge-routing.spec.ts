@@ -1,6 +1,8 @@
 import {
   cup360EdgeContractHeadersComplete,
   getOriginInboundHost,
+  isCup360PlatformHost,
+  middlewareFailsClosedWithoutEdgeContract,
   shouldResolvePublicDomainRouting,
 } from '../../../web/src/lib/middleware-edge-routing';
 
@@ -59,5 +61,43 @@ describe('middleware-edge-routing (Web)', () => {
       'x-cup360-edge-host': 'www.customer.com',
     });
     expect(cup360EdgeContractHeadersComplete(hdrs)).toBe(false);
+  });
+
+  describe('hosts de infraestrutura da plataforma', () => {
+    const infra = [
+      'auth.bostoncitygroup.biz',
+      'api.bostoncitygroup.biz',
+      'origin.bostoncitygroup.biz',
+      'www.bostoncitygroup.biz',
+    ];
+
+    it.each(infra)('%s é plataforma', (host) => {
+      expect(isCup360PlatformHost(host)).toBe(true);
+    });
+
+    it('auth + /api/auth/login sem contrato não dispara fail-closed', () => {
+      expect(
+        middlewareFailsClosedWithoutEdgeContract(
+          'auth.bostoncitygroup.biz',
+          new Headers(),
+          secret,
+        ),
+      ).toBe(false);
+    });
+
+    it('www.customer.com sem contrato → fail-closed', () => {
+      expect(
+        middlewareFailsClosedWithoutEdgeContract('www.customer.com', new Headers(), secret),
+      ).toBe(true);
+    });
+
+    it('contrato inválido/incompleto em cliente continua fail-closed', () => {
+      const hdrs = headersFromRecord({
+        'x-cup360-edge-host': 'www.customer.com',
+      });
+      expect(
+        middlewareFailsClosedWithoutEdgeContract('www.customer.com', hdrs, secret),
+      ).toBe(true);
+    });
   });
 });

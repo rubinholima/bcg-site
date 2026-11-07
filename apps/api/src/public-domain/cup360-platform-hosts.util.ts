@@ -2,6 +2,10 @@ const DEFAULT_PLATFORM_HOSTS = new Set([
   'www.bostoncitygroup.biz',
   'bostoncitygroup.biz',
   'origin.bostoncitygroup.biz',
+  /** Login direto (bypass CloudFront) — nginx → Next :3000 */
+  'auth.bostoncitygroup.biz',
+  /** API pública documentada em produção (README-env) */
+  'api.bostoncitygroup.biz',
   'localhost',
   '127.0.0.1',
 ]);

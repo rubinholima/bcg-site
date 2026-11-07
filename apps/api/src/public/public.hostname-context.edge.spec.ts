@@ -102,4 +102,16 @@ describe('GET /public/hostname-context — contrato de borda', () => {
     expect(out).toEqual({ mode: 'none' });
     expect(resolve.resolveMiddlewareContext).not.toHaveBeenCalled();
   });
+
+  it('auth plataforma sem contrato → mode none (login direto)', async () => {
+    const out = await controller.hostnameContext('auth.bostoncitygroup.biz', '/api/auth/login', '', {});
+    expect(out).toEqual({ mode: 'none' });
+    expect(resolve.resolveMiddlewareContext).not.toHaveBeenCalled();
+  });
+
+  it('api plataforma sem contrato → mode none', async () => {
+    const out = await controller.hostnameContext('api.bostoncitygroup.biz', '/', '', {});
+    expect(out).toEqual({ mode: 'none' });
+    expect(resolve.resolveMiddlewareContext).not.toHaveBeenCalled();
+  });
 });
