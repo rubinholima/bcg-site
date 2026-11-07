@@ -2,20 +2,19 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  ACMClient,
   CertificateStatus,
   DescribeCertificateCommand,
   RequestCertificateCommand,
 } from '@aws-sdk/client-acm';
 import {
-  CloudFrontClient,
-  CreateDistributionCommand,
+  CreateDistributionWithTagsCommand,
   CreateFunctionCommand,
   DescribeFunctionCommand,
   type DistributionConfig,
   GetDistributionCommand,
   GetDistributionConfigCommand,
   PublishFunctionCommand,
+  TagResourceCommand,
   UpdateDistributionCommand,
   UpdateFunctionCommand,
 } from '@aws-sdk/client-cloudfront';
@@ -23,7 +22,6 @@ import {
   ChangeResourceRecordSetsCommand,
   ListHostedZonesByNameCommand,
   ListResourceRecordSetsCommand,
-  Route53Client,
   type ResourceRecordSet,
 } from '@aws-sdk/client-route-53';
 import type { PublicDomainSslStatus, PublicDomainVerificationStatus } from '@prisma/client';
@@ -32,7 +30,19 @@ import {
   CUP360_EDGE_CONTRACT_VERSION,
   edgeSecretFingerprint,
 } from './cup360-edge-contract.util';
+import { createPublicDomainAwsClients } from './public-domain-aws.clients';
 import { loadPublicDomainAwsConfig } from './public-domain-aws.config';
+import {
+  cup360CloudFrontFunctionName,
+  cup360PublicDomainTags,
+} from './public-domain-aws-ownership.util';
+import {
+  verifyAcmCertificateOwned,
+  verifyCloudFrontDistributionOwned,
+  verifyCloudFrontFunctionOwned,
+} from './public-domain-aws-ownership.verify';
+import { sanitizePublicDomainAwsErrorMessage } from './public-domain-aws.errors';
+import { validatePublicDomainAwsRuntimeConfig } from './public-domain-aws.runtime';
 import { hostnamesForCertificate } from './public-domain-dns.util';
 import { planWebAliasTransition } from './route53-web-alias-plan.util';
 import {
@@ -41,9 +51,6 @@ import {
   type ProvisionRequest,
   type ProvisionResult,
 } from './public-domain-provisioner.interface';
-
-const TAG_KEY = 'cup360-managed';
-const TAG_VALUE_SITE = 'public-domain-site';
 
 const CLOUDFRONT_ALIAS_HOSTED_ZONE = 'Z2FDTNDATAQYW2';
 /** Managed: CachingDisabled */
@@ -56,8 +63,6 @@ const ORIGIN_REQ_POLICY_VIEWER_EXCEPT_HOST = 'b689b0a8-53d0-40ab-baf2-68738e2966
 @Injectable()
 export class AwsPublicDomainProvider extends PublicDomainProvisioner {
   private readonly log = new Logger(AwsPublicDomainProvider.name);
-  private readonly r53 = new Route53Client({ region: 'us-east-1' });
-  private readonly cf = new CloudFrontClient({ region: 'us-east-1' });
 
   async provision(request: ProvisionRequest): Promise<ProvisionResult> {
     const cfg = loadPublicDomainAwsConfig();
@@ -66,9 +71,18 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         provisioningStatus: 'NOT_CONFIGURED',
         lastErrorCode: 'AWS_PROVIDER_DISABLED',
         lastErrorMessage:
-          'Provisionamento AWS desativado. Defina CUP360_PUBLIC_DOMAIN_AWS_ENABLED=1 e credenciais IAM.',
+          'Provisionamento AWS desativado. Defina CUP360_PUBLIC_DOMAIN_AWS_ENABLED=1 e credenciais IAM dedicadas.',
       };
     }
+    const runtime = validatePublicDomainAwsRuntimeConfig(cfg);
+    if (!runtime.ok) {
+      return {
+        provisioningStatus: 'ERROR',
+        lastErrorCode: runtime.lastErrorCode,
+        lastErrorMessage: runtime.lastErrorMessage,
+      };
+    }
+    const { acm, cf, r53 } = createPublicDomainAwsClients(cfg);
     if (!cfg.originDomain) {
       return {
         provisioningStatus: 'ERROR',
@@ -86,7 +100,6 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
       };
     }
 
-    const acm = new ACMClient({ region: cfg.acmCertificateRegion });
     const sanList = hostnamesForCertificate(request.hostnameNormalized, request.allTenantHostnames);
     const primaryDomainName = pickAcmPrimaryDomainName(sanList);
     const sanForAcm =
@@ -95,7 +108,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
     const zoneQuery = zoneParentName(request.hostnameNormalized);
 
     try {
-      const listed = await this.r53.send(
+      const listed = await r53.send(
         new ListHostedZonesByNameCommand({ DNSName: zoneQuery, MaxItems: 50 }),
       );
       const matchZone = (listed.HostedZones ?? []).find(
@@ -106,16 +119,23 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
       const zoneNameForSafety = matchZone?.Name ? String(matchZone.Name) : zoneQuery;
 
       let certArn = request.persistedCertificateArn ?? null;
+      if (certArn) {
+        const ownedCert = await verifyAcmCertificateOwned(acm, certArn);
+        if (!ownedCert.ok) {
+          return {
+            provisioningStatus: 'ERROR',
+            lastErrorCode: ownedCert.lastErrorCode,
+            lastErrorMessage: ownedCert.lastErrorMessage,
+          };
+        }
+      }
       if (!certArn) {
         const created = await acm.send(
           new RequestCertificateCommand({
             DomainName: primaryDomainName,
             SubjectAlternativeNames: sanForAcm,
             ValidationMethod: 'DNS',
-            Tags: [
-              { Key: TAG_KEY, Value: TAG_VALUE_SITE },
-              { Key: 'cup360-tenant', Value: request.tenantId.slice(0, 128) },
-            ],
+            Tags: cup360PublicDomainTags(request.tenantId, request.domainId),
           }),
         );
         certArn = created.CertificateArn ?? null;
@@ -158,7 +178,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
                 lastErrorMessage: 'ACM validation CNAME bloqueado pela política de segurança DNS.',
               };
             }
-            await this.r53.send(
+            await r53.send(
               new ChangeResourceRecordSetsCommand({
                 HostedZoneId: hostedZoneId,
                 ChangeBatch: {
@@ -214,15 +234,23 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         };
       }
 
-      const fnName = `cup360-site-${request.tenantId.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40)}`;
+      const fnName = cup360CloudFrontFunctionName(request.tenantId);
       const fnCode = Buffer.from(buildViewerFunctionCode(edgeSecret, sanList, CUP360_EDGE_CONTRACT_VERSION));
 
       let fnArn: string | null = request.persistedCloudFrontFunctionArn ?? null;
       try {
-        const existingFn = await this.cf.send(new DescribeFunctionCommand({ Name: fnName }));
+        const ownedFn = await verifyCloudFrontFunctionOwned(cf, fnName, request.persistedCloudFrontFunctionArn);
+        if (!ownedFn.ok) {
+          return {
+            provisioningStatus: 'ERROR',
+            lastErrorCode: ownedFn.lastErrorCode,
+            lastErrorMessage: ownedFn.lastErrorMessage,
+          };
+        }
+        const existingFn = await cf.send(new DescribeFunctionCommand({ Name: fnName }));
         const etagFn = existingFn.ETag;
         if (etagFn) {
-          await this.cf.send(
+          await cf.send(
             new UpdateFunctionCommand({
               Name: fnName,
               IfMatch: etagFn,
@@ -235,7 +263,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
           );
         }
       } catch {
-        await this.cf.send(
+        await cf.send(
           new CreateFunctionCommand({
             Name: fnName,
             FunctionCode: fnCode,
@@ -247,13 +275,30 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         );
       }
 
-      const fnAfter = await this.cf.send(new DescribeFunctionCommand({ Name: fnName }));
+      const fnAfter = await cf.send(new DescribeFunctionCommand({ Name: fnName }));
       const etagPublish = fnAfter.ETag;
       if (etagPublish) {
-        const pub = await this.cf.send(
+        const pub = await cf.send(
           new PublishFunctionCommand({ Name: fnName, IfMatch: etagPublish }),
         );
         fnArn = pub.FunctionSummary?.FunctionMetadata?.FunctionARN ?? fnArn;
+      }
+
+      if (fnArn) {
+        try {
+          await cf.send(
+            new TagResourceCommand({
+              Resource: fnArn,
+              Tags: {
+                Items: cup360PublicDomainTags(request.tenantId, request.domainId),
+              },
+            }),
+          );
+        } catch (tagErr) {
+          this.log.debug(
+            `TagResource function: ${tagErr instanceof Error ? tagErr.message : String(tagErr)}`,
+          );
+        }
       }
 
       if (!fnArn) {
@@ -269,22 +314,35 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
       let distDomain: string | null = request.persistedDistributionDomain ?? null;
 
       if (!distId) {
-        const createOut = await this.cf.send(
-          new CreateDistributionCommand({
-            DistributionConfig: buildNewDistributionConfig({
-              callerReference: `cup360-${request.tenantId}-${request.domainId}`,
-              comment: `CUP360 PublicDomain site tenant=${request.tenantId}`,
-              aliases: sanList,
-              certificateArn: certArn,
-              originDomain: cfg.originDomain,
-              functionArn: fnArn,
-            }),
+        const createOut = await cf.send(
+          new CreateDistributionWithTagsCommand({
+            DistributionConfigWithTags: {
+              DistributionConfig: buildNewDistributionConfig({
+                callerReference: `cup360-${request.tenantId}-${request.domainId}`,
+                comment: `CUP360 PublicDomain site tenant=${request.tenantId}`,
+                aliases: sanList,
+                certificateArn: certArn,
+                originDomain: cfg.originDomain,
+                functionArn: fnArn,
+              }),
+              Tags: {
+                Items: cup360PublicDomainTags(request.tenantId, request.domainId),
+              },
+            },
           }),
         );
         distId = createOut.Distribution?.Id ?? null;
         distDomain = createOut.Distribution?.DomainName ?? null;
       } else {
-        const g = await this.cf.send(new GetDistributionConfigCommand({ Id: distId }));
+        const ownedDist = await verifyCloudFrontDistributionOwned(cf, distId);
+        if (!ownedDist.ok) {
+          return {
+            provisioningStatus: 'ERROR',
+            lastErrorCode: ownedDist.lastErrorCode,
+            lastErrorMessage: ownedDist.lastErrorMessage,
+          };
+        }
+        const g = await cf.send(new GetDistributionConfigCommand({ Id: distId }));
         const dcfg = g.DistributionConfig;
         const etag = g.ETag;
         if (!dcfg || !etag) {
@@ -296,11 +354,11 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
           };
         }
         if (!distDomain) {
-          const gd = await this.cf.send(new GetDistributionCommand({ Id: distId }));
+          const gd = await cf.send(new GetDistributionCommand({ Id: distId }));
           distDomain = gd.Distribution?.DomainName ?? null;
         }
 
-        const prevStatus = (await this.cf.send(new GetDistributionCommand({ Id: distId }))).Distribution?.Status;
+        const prevStatus = (await cf.send(new GetDistributionCommand({ Id: distId }))).Distribution?.Status;
         if (prevStatus && prevStatus !== 'Deployed') {
           return {
             provisioningStatus: 'PROVISIONING',
@@ -325,14 +383,14 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         };
         attachViewerFunction(dcfg, fnArn);
 
-        await this.cf.send(
+        await cf.send(
           new UpdateDistributionCommand({
             Id: distId,
             DistributionConfig: dcfg,
             IfMatch: etag,
           }),
         );
-        const gd2 = await this.cf.send(new GetDistributionCommand({ Id: distId }));
+        const gd2 = await cf.send(new GetDistributionCommand({ Id: distId }));
         distDomain = gd2.Distribution?.DomainName ?? distDomain;
       }
 
@@ -345,7 +403,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         };
       }
 
-      const distStatus = (await this.cf.send(new GetDistributionCommand({ Id: distId }))).Distribution?.Status;
+      const distStatus = (await cf.send(new GetDistributionCommand({ Id: distId }))).Distribution?.Status;
       if (distStatus !== 'Deployed') {
         return {
           provisioningStatus: 'PROVISIONING',
@@ -372,7 +430,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
           const collected: ResourceRecordSet[] = [];
           let marker: string | undefined = fqdn(hostname);
           for (let page = 0; page < 40; page++) {
-            const out = await this.r53.send(
+            const out = await r53.send(
               new ListResourceRecordSetsCommand({
                 HostedZoneId: hostedZoneId,
                 StartRecordName: marker,
@@ -411,7 +469,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
 
         for (const batch of phases) {
           if (!batch.length) continue;
-          await this.r53.send(
+          await r53.send(
             new ChangeResourceRecordSetsCommand({
               HostedZoneId: hostedZoneId,
               ChangeBatch: { Comment: 'CUP360 web alias transition', Changes: batch },
@@ -447,7 +505,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         provisioningStep: null,
       };
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = sanitizePublicDomainAwsErrorMessage(e);
       this.log.warn(`provision: ${msg}`);
       return {
         provisioningStatus: 'ERROR',
@@ -461,16 +519,33 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
   async disable(request: ProvisionRequest): Promise<ProvisionResult> {
     const cfg = loadPublicDomainAwsConfig();
     if (!cfg.enabled) return { provisioningStatus: 'DISABLED' };
+    const runtime = validatePublicDomainAwsRuntimeConfig(cfg);
+    if (!runtime.ok) {
+      return {
+        provisioningStatus: 'ERROR',
+        lastErrorCode: runtime.lastErrorCode,
+        lastErrorMessage: runtime.lastErrorMessage,
+      };
+    }
+    const { cf } = createPublicDomainAwsClients(cfg);
     try {
       const distId = request.persistedDistributionId;
       if (distId) {
-        const g = await this.cf.send(new GetDistributionConfigCommand({ Id: distId }));
+        const owned = await verifyCloudFrontDistributionOwned(cf, distId);
+        if (!owned.ok) {
+          return {
+            provisioningStatus: 'ERROR',
+            lastErrorCode: owned.lastErrorCode,
+            lastErrorMessage: owned.lastErrorMessage,
+          };
+        }
+        const g = await cf.send(new GetDistributionConfigCommand({ Id: distId }));
         const dc = g.DistributionConfig;
         const etag = g.ETag;
         if (dc && etag) {
           dc.Enabled = false;
           dc.Aliases = { Quantity: 0, Items: [] };
-          await this.cf.send(
+          await cf.send(
             new UpdateDistributionCommand({
               Id: distId,
               DistributionConfig: dc,
@@ -481,7 +556,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
       }
       return { provisioningStatus: 'DISABLED' };
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = sanitizePublicDomainAwsErrorMessage(e);
       return {
         provisioningStatus: 'DISABLED',
         lastErrorCode: 'AWS_DISABLE_PARTIAL',

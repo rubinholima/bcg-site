@@ -115,6 +115,9 @@ Variáveis na **API** (Nest):
 | Variável | Descrição |
 |----------|-----------|
 | `CUP360_PUBLIC_DOMAIN_AWS_ENABLED` | `1` para habilitar chamadas reais ACM/CloudFront/Route53 (IAM mínimo). |
+| `CUP360_PUBLIC_DOMAIN_AWS_ACCESS_KEY_ID` | **Credencial dedicada** do usuário IAM `cup360-public-domains-prod` (obrigatória em produção com AWS habilitado). **Não** reutilizar `AWS_ACCESS_KEY_ID` da API (S3/mídia). |
+| `CUP360_PUBLIC_DOMAIN_AWS_SECRET_ACCESS_KEY` | Secret da credencial dedicada (par obrigatório). |
+| `CUP360_PUBLIC_DOMAIN_AWS_SESSION_TOKEN` | Opcional — apenas se a credencial dedicada for temporária (STS). |
 | `CUP360_PUBLIC_DOMAIN_ORIGIN_DOMAIN` | Hostname HTTPS do origin compartilhado Lightsail/Nginx (ex.: `origin.bostoncitygroup.biz`) — **contrato final é HTTPS**; o certificado TLS do origin deve estar apto para CloudFront usar `https-only` sem erro. |
 | `CUP360_PUBLIC_DOMAIN_ACM_REGION` | Região do certificado para CloudFront — usar `us-east-1`. |
 | `CUP360_PUBLIC_DOMAIN_AWS_REGION` | Região AWS para clientes (Route53 global usa endpoint us-east-1 no código). |
@@ -131,4 +134,8 @@ Variáveis no **Web** (Next, middleware Edge):
 
 **CloudFront Function:** artefato em `apps/api/src/public-domain/cloudfront-viewer-request.template.js` — o provisionador substitui `__SECRET__` e injeta aliases; publicar com runtime `cloudfront-js-1.0`.
 
-**IAM (resumo):** `acm:RequestCertificate`, `acm:DescribeCertificate` (us-east-1); `cloudfront:CreateDistribution`, `cloudfront:GetDistribution*`, `cloudfront:UpdateDistribution`; `cloudfront:CreateFunction`, `cloudfront:UpdateFunction`, `cloudfront:DescribeFunction`, `cloudfront:PublishFunction`; `route53:ChangeResourceRecordSets` e `route53:ListResourceRecordSets` apenas nas zonas permitidas. Nunca usar credencial root.
+**IAM (resumo):** identidade dedicada `cup360-public-domains-prod` com escopo mínimo. A API usa **somente** as variáveis `CUP360_PUBLIC_DOMAIN_AWS_*` para ACM/CloudFront/Route53 deste módulo — credenciais globais da API permanecem para S3 e demais integrações.
+
+Recursos criados pelo provisionador devem ter tag **`cup360-managed=public-domain-site`** (distribuições via `CreateDistributionWithTags`; ACM no `RequestCertificate`; functions via `TagResource`). Updates/despublicação recusam recursos sem essa tag (protege distribuições legadas como a BCG `EQ7G08XI2IC8C`).
+
+**IAM (ações):** `acm:RequestCertificate`, `acm:DescribeCertificate`, `acm:ListTagsForCertificate` (us-east-1); `cloudfront:CreateDistributionWithTags`, `cloudfront:GetDistribution*`, `cloudfront:UpdateDistribution`, `cloudfront:ListTagsForResource`, `cloudfront:TagResource`; `cloudfront:CreateFunction`, `cloudfront:UpdateFunction`, `cloudfront:DescribeFunction`, `cloudfront:PublishFunction`; `route53:ChangeResourceRecordSets` e `route53:ListResourceRecordSets` apenas nas zonas permitidas. Nunca usar credencial root.

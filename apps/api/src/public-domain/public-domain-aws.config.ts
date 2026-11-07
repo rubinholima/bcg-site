@@ -2,9 +2,17 @@
  * Configuração de provisionamento AWS (domínio público CUP360).
  * Valores vêm de variáveis de ambiente — nunca commitar secrets.
  */
+export type PublicDomainDedicatedAwsCredentials = {
+  accessKeyId: string | null;
+  secretAccessKey: string | null;
+  sessionToken: string | null;
+};
+
 export type PublicDomainAwsConfig = {
   /** Quando true, executa chamadas reais à AWS (ACN/CloudFront/Route53). */
   enabled: boolean;
+  /** Credenciais IAM dedicadas ao provisionador (nunca reutilizar credenciais globais da API em produção). */
+  dedicatedCredentials: PublicDomainDedicatedAwsCredentials | null;
   /** Região padrão (Route53, ACM regional). */
   region: string;
   /** Região do certificado para CloudFront (obrigatório us-east-1). */
@@ -38,9 +46,18 @@ function parseList(v: string | undefined): string[] {
     .filter(Boolean);
 }
 
+function loadDedicatedCredentials(): PublicDomainDedicatedAwsCredentials | null {
+  const accessKeyId = (process.env.CUP360_PUBLIC_DOMAIN_AWS_ACCESS_KEY_ID ?? '').trim() || null;
+  const secretAccessKey = (process.env.CUP360_PUBLIC_DOMAIN_AWS_SECRET_ACCESS_KEY ?? '').trim() || null;
+  const sessionToken = (process.env.CUP360_PUBLIC_DOMAIN_AWS_SESSION_TOKEN ?? '').trim() || null;
+  if (!accessKeyId && !secretAccessKey && !sessionToken) return null;
+  return { accessKeyId, secretAccessKey, sessionToken };
+}
+
 export function loadPublicDomainAwsConfig(): PublicDomainAwsConfig {
   return {
     enabled: parseBool(process.env.CUP360_PUBLIC_DOMAIN_AWS_ENABLED),
+    dedicatedCredentials: loadDedicatedCredentials(),
     region: process.env.CUP360_PUBLIC_DOMAIN_AWS_REGION ?? process.env.AWS_REGION ?? 'us-east-1',
     acmCertificateRegion:
       process.env.CUP360_PUBLIC_DOMAIN_ACM_REGION?.trim() ||
