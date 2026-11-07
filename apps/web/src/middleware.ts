@@ -97,7 +97,8 @@ function isBlockedPublicPath(pathname: string): boolean {
 }
 
 /**
- * Middleware: slash em dashboard/login, origin → www, domínio público customizado → rewrite para /portfolio/[slug].
+ * Middleware: slash em dashboard/login, domínio público customizado → rewrite para /portfolio/[slug].
+ * origin.bostoncitygroup.biz permanece host de origem (CloudFront) — sem redirect canônico.
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -111,11 +112,6 @@ export async function middleware(request: NextRequest) {
 
   const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || "";
   const hostOnly = host.replace(/^https?:\/\//, "").split("/")[0] ?? "";
-  if (hostOnly === "origin.bostoncitygroup.biz") {
-    const path = request.nextUrl.pathname + request.nextUrl.search;
-    const canonicalUrl = new URL(path, `https://${CANONICAL_HOST}`);
-    return NextResponse.redirect(canonicalUrl, 302);
-  }
 
   if (!isPlatformRequest(hostOnly) && !isBlockedPublicPath(pathname)) {
     const ctx = await fetchHostnameContext(request.headers, hostOnly, pathname, request.nextUrl.search);
