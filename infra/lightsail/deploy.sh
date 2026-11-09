@@ -134,23 +134,22 @@ if [ ! -f dist/main.js ] && [ ! -f dist/src/main.js ]; then
 fi
 cd "$WORK_TREE"
 
-log "Web: build..."
+log "Web: build (env compartilhado para middleware/Next)..."
 if command -v pm2 >/dev/null 2>&1; then
   pm2 stop bcg-web 2>/dev/null || true
 fi
 cd "$WORK_TREE/apps/web"
+# shellcheck disable=SC1091
+source "$WORK_TREE/infra/lightsail/load-shared-env.sh" web
 pnpm run build
 cd "$WORK_TREE"
 
-log "PM2 restart bcg-api, bcg-web..."
+log "PM2 restart bcg-api, bcg-web (ecosystem + bcg-site-shared)..."
 if command -v pm2 >/dev/null 2>&1; then
-  pm2 delete bcg-api 2>/dev/null || true
-  if [ -f apps/api/dist/main.js ]; then
-    (cd apps/api && pm2 start dist/main.js --name bcg-api)
-  else
-    (cd apps/api && pm2 start dist/src/main.js --name bcg-api)
-  fi
-  pm2 restart bcg-web 2>/dev/null || (cd apps/web && pm2 start pnpm --name bcg-web -- start)
+  export BCG_SHARED="$SHARED"
+  export BCG_WORK_TREE="$WORK_TREE"
+  pm2 delete bcg-api bcg-web 2>/dev/null || true
+  pm2 start "$WORK_TREE/infra/lightsail/ecosystem.config.cjs" --update-env
   pm2 save 2>/dev/null || true
 else
   log "pm2 não encontrado; suba API e Web manualmente."

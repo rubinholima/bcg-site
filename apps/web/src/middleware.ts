@@ -3,7 +3,9 @@ import {
   CUP360_EDGE_CONTRACT_HEADERS,
   cup360EdgeContractHeadersComplete,
   getOriginInboundHost,
+  isCup360PlatformHost,
   middlewareFailsClosedWithoutEdgeContract,
+  shouldBlockCustomerDomainAdminPath,
   shouldResolvePublicDomainRouting,
 } from "@/lib/middleware-edge-routing";
 
@@ -58,14 +60,6 @@ async function fetchHostnameContext(
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  if (pathname === "/dashboard" || pathname === "/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = pathname + "/";
-    const res = NextResponse.rewrite(url);
-    res.headers.set("X-Middleware-Auth", "rewrite-add-slash");
-    return res;
-  }
-
   const hostOnly = getOriginInboundHost(request.headers.get("host"));
   const edgeSecret = process.env.CUP360_EDGE_HOST_SECRET?.trim();
 
@@ -77,6 +71,21 @@ export async function middleware(request: NextRequest) {
     )
   ) {
     return new NextResponse("Forbidden", { status: 403 });
+  }
+
+  if (shouldBlockCustomerDomainAdminPath(hostOnly, pathname, edgeSecret)) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
+  if (
+    (pathname === "/dashboard" || pathname === "/login") &&
+    isCup360PlatformHost(hostOnly)
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname + "/";
+    const res = NextResponse.rewrite(url);
+    res.headers.set("X-Middleware-Auth", "rewrite-add-slash");
+    return res;
   }
 
   if (shouldResolvePublicDomainRouting(hostOnly, pathname, request.headers, edgeSecret)) {

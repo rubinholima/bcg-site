@@ -83,6 +83,18 @@ export function shouldResolvePublicDomainRouting(
   return !isCup360PlatformHost(hostOnly);
 }
 
+/** Bloqueia rotas administrativas/API em host de cliente (não plataforma). */
+export function shouldBlockCustomerDomainAdminPath(
+  hostOnly: string,
+  pathname: string,
+  edgeSecret?: string,
+): boolean {
+  const secret = edgeSecret?.trim();
+  if (!secret) return false;
+  if (isCup360PlatformHost(hostOnly)) return false;
+  return isBlockedPublicPath(pathname);
+}
+
 /** Fail-closed do middleware quando há segredo de borda e o host não é plataforma. */
 export function middlewareFailsClosedWithoutEdgeContract(
   hostHeader: string | null,

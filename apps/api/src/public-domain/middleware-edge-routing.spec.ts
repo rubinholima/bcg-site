@@ -3,6 +3,7 @@ import {
   getOriginInboundHost,
   isCup360PlatformHost,
   middlewareFailsClosedWithoutEdgeContract,
+  shouldBlockCustomerDomainAdminPath,
   shouldResolvePublicDomainRouting,
 } from '../../../web/src/lib/middleware-edge-routing';
 
@@ -38,6 +39,16 @@ describe('middleware-edge-routing (Web)', () => {
     expect(
       shouldResolvePublicDomainRouting('www.customer.com', '/', new Headers(), secret),
     ).toBe(true);
+  });
+
+  it('dashboard/login em domínio cliente → bloqueio admin', () => {
+    expect(shouldBlockCustomerDomainAdminPath('www.customer.com', '/dashboard', secret)).toBe(
+      true,
+    );
+    expect(shouldBlockCustomerDomainAdminPath('www.customer.com', '/login', secret)).toBe(true);
+    expect(
+      shouldBlockCustomerDomainAdminPath('www.bostoncitygroup.biz', '/dashboard', secret),
+    ).toBe(false);
   });
 
   it('caminhos bloqueados não disparam resolução', () => {
