@@ -51,6 +51,33 @@ describe('middleware-edge-routing (Web)', () => {
     ).toBe(false);
   });
 
+  it('origin Host + contrato → bloqueia dashboard pelo host assinado', () => {
+    const hdrs = headersFromRecord({
+      'x-cup360-edge-v': '1',
+      'x-cup360-edge-ts': '1',
+      'x-cup360-edge-host': 'www.customer.com',
+      'x-cup360-edge-sig': 'ab',
+    });
+    expect(
+      shouldBlockCustomerDomainAdminPath(
+        'origin.bostoncitygroup.biz',
+        '/dashboard',
+        secret,
+        hdrs,
+      ),
+    ).toBe(true);
+  });
+
+  it('origin Host sem contrato → fail-closed', () => {
+    expect(
+      middlewareFailsClosedWithoutEdgeContract(
+        'origin.bostoncitygroup.biz',
+        new Headers(),
+        secret,
+      ),
+    ).toBe(true);
+  });
+
   it('caminhos bloqueados não disparam resolução', () => {
     const hdrs = headersFromRecord({
       'x-cup360-edge-v': '1',

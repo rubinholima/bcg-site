@@ -35,6 +35,24 @@ function parseTrustedHostList(): Set<string> {
 
 const TRUSTED_PLATFORM_HOSTS = parseTrustedHostList();
 
+/** Origem compartilhada CloudFront → Next; exige contrato assinado na borda. */
+const CUP360_SHARED_ORIGIN_HOSTS = new Set(["origin.bostoncitygroup.biz"]);
+
+export function isCup360SharedOriginHost(hostOnly: string): boolean {
+  const h = hostOnly.split(":")[0]?.toLowerCase() ?? "";
+  return CUP360_SHARED_ORIGIN_HOSTS.has(h);
+}
+
+/** Host público efetivo: contrato de borda (x-cup360-edge-host) ou Host de entrada. */
+export function getCup360EdgeClaimedHost(headers: Headers, hostOnly: string): string {
+  const inbound = hostOnly.split(":")[0]?.toLowerCase() ?? hostOnly;
+  const claimed = headers.get("x-cup360-edge-host")?.trim().toLowerCase();
+  if (cup360EdgeContractHeadersComplete(headers) && claimed) {
+    return claimed.split(":")[0] ?? claimed;
+  }
+  return inbound;
+}
+
 /** Host efetivo do pedido na origem — apenas header `Host` (não confiar em X-Forwarded-Host). */
 export function getOriginInboundHost(hostHeader: string | null): string {
   const host = hostHeader ?? "";
@@ -77,10 +95,11 @@ export function shouldResolvePublicDomainRouting(
   if (isBlockedPublicPath(pathname)) return false;
   if (cup360EdgeContractHeadersComplete(headers)) return true;
   const secret = edgeSecret?.trim();
+  const effectiveHost = getCup360EdgeClaimedHost(headers, hostOnly);
   if (secret) {
-    return !isCup360PlatformHost(hostOnly);
+    return !isCup360PlatformHost(effectiveHost);
   }
-  return !isCup360PlatformHost(hostOnly);
+  return !isCup360PlatformHost(effectiveHost);
 }
 
 /** Bloqueia rotas administrativas/API em host de cliente (não plataforma). */
@@ -88,10 +107,12 @@ export function shouldBlockCustomerDomainAdminPath(
   hostOnly: string,
   pathname: string,
   edgeSecret?: string,
+  headers?: Headers,
 ): boolean {
   const secret = edgeSecret?.trim();
   if (!secret) return false;
-  if (isCup360PlatformHost(hostOnly)) return false;
+  const effective = headers ? getCup360EdgeClaimedHost(headers, hostOnly) : hostOnly;
+  if (isCup360PlatformHost(effective)) return false;
   return isBlockedPublicPath(pathname);
 }
 
@@ -104,6 +125,9 @@ export function middlewareFailsClosedWithoutEdgeContract(
   const secret = edgeSecret?.trim();
   if (!secret) return false;
   const hostOnly = getOriginInboundHost(hostHeader);
+  if (isCup360SharedOriginHost(hostOnly)) {
+    return !cup360EdgeContractHeadersComplete(headers);
+  }
   if (isCup360PlatformHost(hostOnly)) return false;
   if (cup360EdgeContractHeadersComplete(headers)) return false;
   return true;

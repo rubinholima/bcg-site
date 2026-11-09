@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   CUP360_EDGE_CONTRACT_HEADERS,
   cup360EdgeContractHeadersComplete,
+  getCup360EdgeClaimedHost,
   getOriginInboundHost,
   isCup360PlatformHost,
   middlewareFailsClosedWithoutEdgeContract,
@@ -73,13 +74,14 @@ export async function middleware(request: NextRequest) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  if (shouldBlockCustomerDomainAdminPath(hostOnly, pathname, edgeSecret)) {
+  if (shouldBlockCustomerDomainAdminPath(hostOnly, pathname, edgeSecret, request.headers)) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
+  const claimedHost = getCup360EdgeClaimedHost(request.headers, hostOnly);
   if (
     (pathname === "/dashboard" || pathname === "/login") &&
-    isCup360PlatformHost(hostOnly)
+    isCup360PlatformHost(claimedHost)
   ) {
     const url = request.nextUrl.clone();
     url.pathname = pathname + "/";
@@ -91,7 +93,7 @@ export async function middleware(request: NextRequest) {
   if (shouldResolvePublicDomainRouting(hostOnly, pathname, request.headers, edgeSecret)) {
     const ctx = await fetchHostnameContext(
       request.headers,
-      hostOnly,
+      claimedHost,
       pathname,
       request.nextUrl.search,
     );
