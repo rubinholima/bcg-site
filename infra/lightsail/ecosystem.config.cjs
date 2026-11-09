@@ -63,6 +63,7 @@ module.exports = {
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
+        API_INTERNAL_URL: webEnv.API_INTERNAL_URL || 'http://127.0.0.1:3001',
         ...webEnv,
       },
     },
