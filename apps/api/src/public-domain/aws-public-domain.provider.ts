@@ -257,7 +257,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
               FunctionCode: fnCode,
               FunctionConfig: {
                 Comment: `CUP360 viewer ${edgeSecretFingerprint(edgeSecret)}`,
-                Runtime: 'cloudfront-js-1.0',
+                Runtime: 'cloudfront-js-2.0',
               },
             }),
           );
@@ -269,7 +269,7 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
             FunctionCode: fnCode,
             FunctionConfig: {
               Comment: `CUP360 viewer ${edgeSecretFingerprint(edgeSecret)}`,
-              Runtime: 'cloudfront-js-1.0',
+              Runtime: 'cloudfront-js-2.0',
             },
           }),
         );
@@ -359,39 +359,48 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         }
 
         const prevStatus = (await cf.send(new GetDistributionCommand({ Id: distId }))).Distribution?.Status;
-        if (prevStatus && prevStatus !== 'Deployed') {
-          return {
-            provisioningStatus: 'PROVISIONING',
-            sslStatus: 'ISSUED' as PublicDomainSslStatus,
-            certificateArn: certArn,
-            distributionId: distId,
-            distributionDomain: distDomain,
-            cloudFrontFunctionArn: fnArn,
-            hostedZoneId,
-            provisioningStep: 'cloudfront_previous_update_deploying',
-          };
-        }
-
-        dcfg.Comment = `CUP360 site ${request.tenantId}`;
-        dcfg.Aliases = { Quantity: sanList.length, Items: [...sanList] };
-        dcfg.ViewerCertificate = {
-          ACMCertificateArn: certArn,
-          SSLSupportMethod: 'sni-only',
-          MinimumProtocolVersion: 'TLSv1.2_2021',
-          Certificate: certArn,
-          CertificateSource: 'acm',
-        };
-        attachViewerFunction(dcfg, fnArn);
-
-        await cf.send(
-          new UpdateDistributionCommand({
-            Id: distId,
-            DistributionConfig: dcfg,
-            IfMatch: etag,
-          }),
+        const distConfigCurrent = cloudFrontDistributionMatchesDesired(
+          dcfg,
+          sanList,
+          certArn,
+          fnArn,
+          cfg.originDomain,
         );
-        const gd2 = await cf.send(new GetDistributionCommand({ Id: distId }));
-        distDomain = gd2.Distribution?.DomainName ?? distDomain;
+        if (!distConfigCurrent) {
+          if (prevStatus && prevStatus !== 'Deployed') {
+            return {
+              provisioningStatus: 'PROVISIONING',
+              sslStatus: 'ISSUED' as PublicDomainSslStatus,
+              certificateArn: certArn,
+              distributionId: distId,
+              distributionDomain: distDomain,
+              cloudFrontFunctionArn: fnArn,
+              hostedZoneId,
+              provisioningStep: 'cloudfront_previous_update_deploying',
+            };
+          }
+
+          dcfg.Comment = `CUP360 site ${request.tenantId}`;
+          dcfg.Aliases = { Quantity: sanList.length, Items: [...sanList] };
+          dcfg.ViewerCertificate = {
+            ACMCertificateArn: certArn,
+            SSLSupportMethod: 'sni-only',
+            MinimumProtocolVersion: 'TLSv1.2_2021',
+            Certificate: certArn,
+            CertificateSource: 'acm',
+          };
+          attachViewerFunction(dcfg, fnArn);
+
+          await cf.send(
+            new UpdateDistributionCommand({
+              Id: distId,
+              DistributionConfig: dcfg,
+              IfMatch: etag,
+            }),
+          );
+          const gd2 = await cf.send(new GetDistributionCommand({ Id: distId }));
+          distDomain = gd2.Distribution?.DomainName ?? distDomain;
+        }
       }
 
       if (!distId || !distDomain) {
@@ -596,8 +605,43 @@ function buildViewerFunctionCode(secret: string, aliases: string[], version: str
   const secretJs = JSON.stringify(secret);
   return tpl
     .replace(/__SECRET__/g, secretJs)
-    .replace('__ALIASES_JSON__', JSON.stringify(aliases))
+    .replace(/__ALIASES_JSON__/g, JSON.stringify(aliases))
     .replace(/__VERSION__/g, version);
+}
+
+function sortedLowerHostnames(items: string[] | undefined): string[] {
+  return [...(items ?? [])].map((h) => h.toLowerCase()).sort();
+}
+
+function cloudFrontDistributionMatchesDesired(
+  dcfg: DistributionConfig,
+  sanList: string[],
+  certificateArn: string,
+  fnArn: string,
+  originDomain: string,
+): boolean {
+  const aliases = sortedLowerHostnames(dcfg.Aliases?.Items);
+  const desired = sortedLowerHostnames(sanList);
+  if (aliases.length !== desired.length || aliases.some((a, i) => a !== desired[i])) {
+    return false;
+  }
+  const vc = dcfg.ViewerCertificate;
+  if (vc?.ACMCertificateArn !== certificateArn) return false;
+  const origin = dcfg.Origins?.Items?.[0];
+  if (origin?.DomainName !== originDomain) return false;
+  if (origin?.CustomOriginConfig?.OriginProtocolPolicy !== 'https-only') return false;
+  const fnAssocs = [
+    ...(dcfg.DefaultCacheBehavior?.FunctionAssociations?.Items ?? []),
+    ...(dcfg.CacheBehaviors?.Items?.[0]?.FunctionAssociations?.Items ?? []),
+  ];
+  if (!fnAssocs.some((f) => f.FunctionARN === fnArn && f.EventType === 'viewer-request')) {
+    return false;
+  }
+  const defReq = dcfg.DefaultCacheBehavior?.OriginRequestPolicyId;
+  const staticReq = dcfg.CacheBehaviors?.Items?.[0]?.OriginRequestPolicyId;
+  if (defReq !== ORIGIN_REQ_POLICY_VIEWER_EXCEPT_HOST) return false;
+  if (staticReq !== ORIGIN_REQ_POLICY_VIEWER_EXCEPT_HOST) return false;
+  return true;
 }
 
 function attachViewerFunction(dcfg: DistributionConfig, fnArn: string): void {
