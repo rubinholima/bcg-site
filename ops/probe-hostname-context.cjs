@@ -1,6 +1,6 @@
 const fs = require('fs');
 const crypto = require('crypto');
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 
 const SHARED = process.env.BCG_SHARED || '/home/ubuntu/bcg-site-shared';
 
@@ -25,11 +25,10 @@ const payload = `${v}|${ts}|${host}`;
 const sig = crypto.createHmac('sha256', secret).update(payload, 'utf8').digest('hex');
 
 const url = `http://127.0.0.1:3001/public/hostname-context?host=${encodeURIComponent(host)}&pathname=/`;
-const cmd = [
-  'curl',
+const args = [
   '-s',
   '-w',
-  '\\nHTTP:%{http_code}',
+  '\nHTTP:%{http_code}',
   url,
   '-H',
   `x-cup360-edge-v: ${v}`,
@@ -39,6 +38,6 @@ const cmd = [
   `x-cup360-edge-host: ${host}`,
   '-H',
   `x-cup360-edge-sig: ${sig}`,
-].join(' ');
-const out = execSync(cmd, { encoding: 'utf8', timeout: 15000 });
-console.log(out.slice(0, 500));
+];
+const out = spawnSync('curl', args, { encoding: 'utf8', timeout: 15000 });
+console.log((out.stdout || out.stderr || '').slice(0, 500));
