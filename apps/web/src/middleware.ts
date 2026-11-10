@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   CUP360_EDGE_CONTRACT_HEADERS,
+  CUP360_LEGACY_INBOUND_HEADERS,
   cup360EdgeContractHeadersComplete,
   getCup360EdgeClaimedHost,
   getOriginInboundHost,
@@ -38,6 +39,10 @@ async function fetchHostnameContext(
         const v = incoming.get(k);
         if (v?.trim()) hdrs[k] = v.trim();
       }
+    }
+    for (const k of CUP360_LEGACY_INBOUND_HEADERS) {
+      const v = incoming.get(k);
+      if (v?.trim()) hdrs[k] = v.trim();
     }
     const res = await fetch(u.toString(), {
       cache: "no-store",

@@ -8,6 +8,11 @@ import {
 } from '../public-domain/cup360-edge-contract.util';
 import { PublicController } from './public.controller';
 import { PublicDomainResolveService } from '../public-domain/public-domain-resolve.service';
+import { LegacyPublicDomainResolveService } from '../public-domain/legacy-public-domain-resolve.service';
+import {
+  CUP360_LEGACY_PROVENANCE_HEADER,
+  CUP360_LEGACY_PROVENANCE_NGINX_V1,
+} from '../public-domain/cup360-legacy-provenance.util';
 
 describe('GET /public/hostname-context — contrato de borda', () => {
   const secret = 'test-secret-min-16bytes';
@@ -17,6 +22,14 @@ describe('GET /public/hostname-context — contrato de borda', () => {
       tenantSlug: 'clube',
       canonicalOrigin: 'https://www.clube.com',
       pathPrefix: '/portfolio/clube',
+    }),
+  };
+  const legacyResolve = {
+    resolveMiddlewareContext: jest.fn().mockResolvedValue({
+      mode: 'custom_domain',
+      tenantSlug: 'legacy-clube',
+      canonicalOrigin: 'https://legacy-clube.example',
+      pathPrefix: '/portfolio/legacy-clube',
     }),
   };
 
@@ -58,6 +71,7 @@ describe('GET /public/hostname-context — contrato de borda', () => {
       {} as never,
       {} as never,
       resolve as unknown as PublicDomainResolveService,
+      legacyResolve as unknown as LegacyPublicDomainResolveService,
     );
   });
 
@@ -72,29 +86,42 @@ describe('GET /public/hostname-context — contrato de borda', () => {
     expect(resolve.resolveMiddlewareContext).toHaveBeenCalledWith('www.customer.com', '/', '');
   });
 
-  it('assinatura inválida → Forbidden', () => {
+  it('assinatura inválida → Forbidden', async () => {
     const ts = Math.floor(Date.now() / 1000);
     const h = headersForContract('www.customer.com', ts);
     h['x-cup360-edge-sig'] = '00'.repeat(32);
     expect(cup360EdgeContractHeadersComplete(h)).toBe(true);
-    expect(() => controller.hostnameContext('origin.bostoncitygroup.biz', '/', '', h)).toThrow(
+    await expect(controller.hostnameContext('origin.bostoncitygroup.biz', '/', '', h)).rejects.toThrow(
       ForbiddenException,
     );
   });
 
-  it('timestamp expirado → Forbidden', () => {
+  it('timestamp expirado → Forbidden', async () => {
     const ts = Math.floor(Date.now() / 1000) - 400;
     const h = headersForContract('www.customer.com', ts);
     expect(verifyCup360EdgeContract(secret, h)).toBeNull();
-    expect(() => controller.hostnameContext('origin.bostoncitygroup.biz', '/', '', h)).toThrow(
+    await expect(controller.hostnameContext('origin.bostoncitygroup.biz', '/', '', h)).rejects.toThrow(
       ForbiddenException,
     );
   });
 
-  it('domínio cliente direto sem contrato → Forbidden', () => {
-    expect(() => controller.hostnameContext('www.customer.com', '/', '', {})).toThrow(
+  it('domínio cliente direto sem contrato → Forbidden', async () => {
+    await expect(controller.hostnameContext('www.customer.com', '/', '', {})).rejects.toThrow(
       ForbiddenException,
     );
+  });
+
+  it('domínio legado com provenance nginx → LegacyPublicDomainResolve', async () => {
+    const out = await controller.hostnameContext('legacy-clube.example', '/', '', {
+      [CUP360_LEGACY_PROVENANCE_HEADER]: CUP360_LEGACY_PROVENANCE_NGINX_V1,
+    });
+    expect(legacyResolve.resolveMiddlewareContext).toHaveBeenCalledWith(
+      'legacy-clube.example',
+      '/',
+      '',
+    );
+    expect(out).toMatchObject({ mode: 'custom_domain', tenantSlug: 'legacy-clube' });
+    expect(resolve.resolveMiddlewareContext).not.toHaveBeenCalled();
   });
 
   it('origin plataforma sem contrato → mode none', async () => {

@@ -49,12 +49,15 @@ import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-p
 import { PrepPseService } from '../prep-fisica/prep-pse.service';
 import { PurchaseQuoteInviteService } from '../compras/purchase-quote-invite.service';
 import { PublicDomainResolveService } from '../public-domain/public-domain-resolve.service';
+import { LegacyPublicDomainResolveService } from '../public-domain/legacy-public-domain-resolve.service';
 import {
   cup360EdgeContractHeadersComplete,
   verifyCup360EdgeContract,
   verifyLegacyEdgeHostSignature,
 } from '../public-domain/cup360-edge-contract.util';
 import { isCup360PlatformHostname } from '../public-domain/cup360-platform-hosts.util';
+import { isCup360LegacyProvenanceTrusted } from '../public-domain/cup360-legacy-provenance.util';
+import { normalizePublicHostname, PublicDomainHostnameError } from '../public-domain/public-domain.hostname.util';
 
 @Controller('public')
 export class PublicController {
@@ -78,6 +81,7 @@ export class PublicController {
     private readonly prepPse: PrepPseService,
     private readonly purchaseQuoteInvites: PurchaseQuoteInviteService,
     private readonly publicDomainResolve: PublicDomainResolveService,
+    private readonly legacyPublicDomainResolve: LegacyPublicDomainResolveService,
   ) {}
 
   /**
@@ -85,7 +89,7 @@ export class PublicController {
    * GET /public/hostname-context?host=www.example.com
    */
   @Get('hostname-context')
-  hostnameContext(
+  async hostnameContext(
     @Query('host') host?: string,
     @Query('pathname') pathname?: string,
     @Query('search') search?: string,
@@ -94,6 +98,7 @@ export class PublicController {
     const secret = process.env.CUP360_EDGE_HOST_SECRET?.trim();
     const path = pathname ?? '/';
     const q = search ?? '';
+    const claimedRaw = (host ?? '').trim();
 
     const contractComplete = cup360EdgeContractHeadersComplete(headers);
     const contract = verifyCup360EdgeContract(secret, headers);
@@ -101,22 +106,51 @@ export class PublicController {
       return this.publicDomainResolve.resolveMiddlewareContext(contract.hostnameNormalized, path, q);
     }
 
+    const legacyProvenance = isCup360LegacyProvenanceTrusted(headers);
+    const legacySignedHost = verifyLegacyEdgeHostSignature(secret, headers, claimedRaw);
+
+    const resolveRegisteredLegacy = async (hostAscii: string) => {
+      let hostNorm: string;
+      try {
+        hostNorm = normalizePublicHostname(hostAscii);
+      } catch (e) {
+        if (e instanceof PublicDomainHostnameError) {
+          throw new ForbiddenException('Hostname legado inválido.');
+        }
+        throw e;
+      }
+      if (legacySignedHost && legacySignedHost !== hostNorm) {
+        throw new ForbiddenException('Assinatura legada não corresponde ao host.');
+      }
+      const ctx = await this.legacyPublicDomainResolve.resolveMiddlewareContext(hostNorm, path, q);
+      if (ctx.mode === 'none') {
+        throw new ForbiddenException('Domínio legado não registrado.');
+      }
+      return ctx;
+    };
+
     if (secret) {
       if (contractComplete) {
         throw new ForbiddenException('Contrato de borda inválido ou expirado.');
       }
-      const legacy = verifyLegacyEdgeHostSignature(secret, headers, (host ?? '').trim());
-      if (legacy) {
-        return this.publicDomainResolve.resolveMiddlewareContext(legacy, path, q);
+      if (legacyProvenance || legacySignedHost) {
+        if (!claimedRaw) {
+          throw new ForbiddenException('Host obrigatório para domínio legado.');
+        }
+        return resolveRegisteredLegacy(claimedRaw);
       }
-      const claimed = (host ?? '').trim();
-      if (claimed && !isCup360PlatformHostname(claimed)) {
+      if (claimedRaw && !isCup360PlatformHostname(claimedRaw)) {
         throw new ForbiddenException('Contrato de borda obrigatório para domínio público.');
       }
       return { mode: 'none' as const };
     }
 
-    return this.publicDomainResolve.resolveMiddlewareContext((host ?? '').trim(), path, q);
+    if (legacyProvenance || legacySignedHost) {
+      if (!claimedRaw) return { mode: 'none' as const };
+      return resolveRegisteredLegacy(claimedRaw);
+    }
+
+    return this.publicDomainResolve.resolveMiddlewareContext(claimedRaw, path, q);
   }
 
   /** PSE (RPE) do atleta — link público por token */

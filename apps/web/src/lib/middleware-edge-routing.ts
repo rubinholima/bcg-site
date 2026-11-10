@@ -1,9 +1,46 @@
+import {
+  CUP360_LEGACY_EDGE_HOST_SIG_HEADER,
+  CUP360_LEGACY_EDGE_HOST_TS_HEADER,
+  CUP360_LEGACY_PROVENANCE_HEADER,
+  hasTrustedLegacyInboundProvenance,
+} from "./cup360-legacy-provenance";
+
 export const CUP360_EDGE_CONTRACT_HEADERS = [
   "x-cup360-edge-v",
   "x-cup360-edge-ts",
   "x-cup360-edge-host",
   "x-cup360-edge-sig",
 ] as const;
+
+export const CUP360_LEGACY_INBOUND_HEADERS = [
+  CUP360_LEGACY_PROVENANCE_HEADER,
+  CUP360_LEGACY_EDGE_HOST_TS_HEADER,
+  CUP360_LEGACY_EDGE_HOST_SIG_HEADER,
+] as const;
+
+export type Cup360InboundDomainClass =
+  | "PLATFORM"
+  | "LEGACY_CUSTOM"
+  | "NATIVE_PUBLIC_DOMAIN"
+  | "UNKNOWN";
+
+/** Classificação local (middleware) — resolução de tenant continua na API. */
+export function classifyCup360InboundDomain(
+  hostOnly: string,
+  headers: Headers,
+  edgeSecret?: string,
+): Cup360InboundDomainClass {
+  const effective =
+    getCup360EdgeClaimedHost(headers, hostOnly).split(":")[0]?.toLowerCase() ?? "";
+
+  if (isCup360PlatformHost(effective)) return "PLATFORM";
+  if (cup360EdgeContractHeadersComplete(headers)) return "NATIVE_PUBLIC_DOMAIN";
+  if (hasTrustedLegacyInboundProvenance(headers)) {
+    return "LEGACY_CUSTOM";
+  }
+  if (edgeSecret?.trim()) return "UNKNOWN";
+  return "PLATFORM";
+}
 
 const CANONICAL_HOST =
   process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "").split("/")[0]?.toLowerCase() ??
@@ -95,8 +132,9 @@ export function shouldResolvePublicDomainRouting(
 ): boolean {
   if (isBlockedPublicPath(pathname)) return false;
   if (cup360EdgeContractHeadersComplete(headers)) return true;
-  const secret = edgeSecret?.trim();
   const effectiveHost = getCup360EdgeClaimedHost(headers, hostOnly);
+  if (hasTrustedLegacyInboundProvenance(headers)) return true;
+  const secret = edgeSecret?.trim();
   if (secret) {
     return !isCup360PlatformHost(effectiveHost);
   }
@@ -131,5 +169,6 @@ export function middlewareFailsClosedWithoutEdgeContract(
   const hostOnly = getOriginInboundHost(hostHeader);
   if (isCup360PlatformHost(hostOnly)) return false;
   if (cup360EdgeContractHeadersComplete(headers)) return false;
+  if (hasTrustedLegacyInboundProvenance(headers)) return false;
   return true;
 }

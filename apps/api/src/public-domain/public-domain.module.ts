@@ -6,11 +6,22 @@ import { PublicDomainController } from './public-domain.controller';
 import { PublicDomainService } from './public-domain.service';
 import { AwsPublicDomainProvider } from './aws-public-domain.provider';
 import { PublicDomainResolveService } from './public-domain-resolve.service';
+import { LegacyPublicDomainResolveService } from './legacy-public-domain-resolve.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule],
   controllers: [PublicDomainController],
-  providers: [PublicDomainService, PublicDomainResolveService, AwsPublicDomainProvider],
-  exports: [PublicDomainService, PublicDomainResolveService, AwsPublicDomainProvider],
+  providers: [
+    PublicDomainService,
+    PublicDomainResolveService,
+    LegacyPublicDomainResolveService,
+    AwsPublicDomainProvider,
+  ],
+  exports: [
+    PublicDomainService,
+    PublicDomainResolveService,
+    LegacyPublicDomainResolveService,
+    AwsPublicDomainProvider,
+  ],
 })
 export class PublicDomainModule {}
