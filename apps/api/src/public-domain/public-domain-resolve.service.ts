@@ -70,27 +70,60 @@ export class PublicDomainResolveService {
     }
 
     const hit = await this.resolveActiveByHostname(host);
-    if (!hit) return { mode: 'none' };
+    if (hit) {
+      const all = await this.prisma.publicDomain.findMany({
+        where: { tenantId: hit.tenantId, status: 'ACTIVE', verificationStatus: 'VERIFIED' },
+        select: { hostnameNormalized: true, isCanonical: true },
+      });
+      const canonicalRow = all.find((d) => d.isCanonical) ?? all[0];
+      if (!canonicalRow) return { mode: 'none' };
 
-    const all = await this.prisma.publicDomain.findMany({
-      where: { tenantId: hit.tenantId, status: 'ACTIVE', verificationStatus: 'VERIFIED' },
-      select: { hostnameNormalized: true, isCanonical: true },
-    });
-    const canonicalRow = all.find((d) => d.isCanonical) ?? all[0];
-    if (!canonicalRow) return { mode: 'none' };
+      const canonicalHost = canonicalRow.hostnameNormalized;
+      if (host !== canonicalHost) {
+        const path = (pathname || '/') + (search ?? '');
+        return { mode: 'apex_redirect', redirectTo: `https://${canonicalHost}${path}` };
+      }
+      const pathPrefix = `/portfolio/${hit.tenantSlug}`;
 
-    const canonicalHost = canonicalRow.hostnameNormalized;
-    if (host !== canonicalHost) {
-      const path = (pathname || '/') + (search ?? '');
-      return { mode: 'apex_redirect', redirectTo: `https://${canonicalHost}${path}` };
+      return {
+        mode: 'custom_domain',
+        tenantSlug: hit.tenantSlug,
+        canonicalOrigin: `https://${canonicalHost}`,
+        pathPrefix,
+      };
     }
-    const pathPrefix = `/portfolio/${hit.tenantSlug}`;
 
+    /** Alias de redirect (ex.: apex): VERIFIED + isCanonical=false — não precisa ACTIVE. */
+    const redirectAlias = await this.prisma.publicDomain.findFirst({
+      where: {
+        hostnameNormalized: host,
+        verificationStatus: 'VERIFIED',
+        isCanonical: false,
+      },
+      select: { tenantId: true, hostnameNormalized: true },
+    });
+    if (!redirectAlias) return { mode: 'none' };
+
+    const canonical = await this.findActiveCanonicalHostname(redirectAlias.tenantId);
+    if (!canonical) return { mode: 'none' };
+
+    const path = (pathname || '/') + (search ?? '');
     return {
-      mode: 'custom_domain',
-      tenantSlug: hit.tenantSlug,
-      canonicalOrigin: `https://${canonicalHost}`,
-      pathPrefix,
+      mode: 'apex_redirect',
+      redirectTo: `https://${canonical.hostnameNormalized}${path}`,
     };
+  }
+
+  /** Host canônico publicado (ACTIVE+VERIFIED) do tenant — destino de redirect confiável. */
+  private async findActiveCanonicalHostname(tenantId: string): Promise<{ hostnameNormalized: string } | null> {
+    return this.prisma.publicDomain.findFirst({
+      where: {
+        tenantId,
+        verificationStatus: 'VERIFIED',
+        isCanonical: true,
+        status: 'ACTIVE',
+      },
+      select: { hostnameNormalized: true },
+    });
   }
 }

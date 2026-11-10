@@ -286,6 +286,32 @@ export class PublicDomainService {
         activatedAt: result.provisioningStatus === 'ACTIVE' ? new Date() : null,
       },
     });
+
+    if (result.provisioningStatus === 'ACTIVE') {
+      await this.prisma.publicDomain.updateMany({
+        where: {
+          tenantId,
+          verificationStatus: 'VERIFIED',
+          id: { not: domainId },
+        },
+        data: {
+          status: 'ACTIVE',
+          provisioningStatus: 'ACTIVE',
+          sslStatus: result.sslStatus ?? 'ISSUED',
+          certificateArn: result.certificateArn ?? undefined,
+          distributionId: result.distributionId ?? undefined,
+          distributionDomain: result.distributionDomain ?? undefined,
+          cloudFrontFunctionArn: result.cloudFrontFunctionArn ?? undefined,
+          hostedZoneId: result.hostedZoneId ?? undefined,
+          provisioningStep: null,
+          lastErrorCode: null,
+          lastErrorMessage: null,
+          lastCheckedAt: new Date(),
+          activatedAt: new Date(),
+        },
+      });
+    }
+
     await this.audit(user, 'public_domain_publish', domainId, tenantId, {
       provisioningStatus: result.provisioningStatus,
     });

@@ -41,7 +41,7 @@ describe('PublicDomainResolveService', () => {
     });
   });
 
-  it('apex_redirect quando visita alias (não canônico)', async () => {
+  it('apex_redirect quando visita alias ACTIVE (não canônico)', async () => {
     const hit = {
       tenantId: 't1',
       hostnameNormalized: 'clube.com',
@@ -61,6 +61,22 @@ describe('PublicDomainResolveService', () => {
     ).resolves.toEqual({
       mode: 'apex_redirect',
       redirectTo: 'https://www.clube.com/x?y=2',
+    });
+  });
+
+  it('apex_redirect quando alias VERIFIED mas DISABLED (só redirect)', async () => {
+    const findFirst = jest
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ tenantId: 't1', hostnameNormalized: 'clube.com' })
+      .mockResolvedValueOnce({ hostnameNormalized: 'www.clube.com' });
+    const prisma = {
+      publicDomain: { findFirst, findMany: jest.fn() },
+    };
+    const svc = new PublicDomainResolveService(prisma as unknown as PrismaService);
+    await expect(svc.resolveMiddlewareContext('clube.com', '/', '')).resolves.toEqual({
+      mode: 'apex_redirect',
+      redirectTo: 'https://www.clube.com/',
     });
   });
 
