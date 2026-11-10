@@ -68,14 +68,14 @@ describe('middleware-edge-routing (Web)', () => {
     ).toBe(true);
   });
 
-  it('origin Host sem contrato → fail-closed', () => {
+  it('origin Host sem contrato → plataforma, nunca fail-closed', () => {
     expect(
       middlewareFailsClosedWithoutEdgeContract(
         'origin.bostoncitygroup.biz',
         new Headers(),
         secret,
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('caminhos bloqueados não disparam resolução', () => {

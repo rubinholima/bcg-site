@@ -35,13 +35,14 @@ function parseTrustedHostList(): Set<string> {
 
 const TRUSTED_PLATFORM_HOSTS = parseTrustedHostList();
 
-/** Origem compartilhada CloudFront → Next; exige contrato assinado na borda. */
-const CUP360_SHARED_ORIGIN_HOSTS = new Set(["origin.bostoncitygroup.biz"]);
-
-export function isCup360SharedOriginHost(hostOnly: string): boolean {
-  const h = hostOnly.split(":")[0]?.toLowerCase() ?? "";
-  return CUP360_SHARED_ORIGIN_HOSTS.has(h);
-}
+/** Hosts de plataforma CUP360 (nunca exigem contrato de domínio cliente). */
+export const CUP360_PLATFORM_HOSTNAMES = [
+  "www.bostoncitygroup.biz",
+  "bostoncitygroup.biz",
+  "origin.bostoncitygroup.biz",
+  "auth.bostoncitygroup.biz",
+  "api.bostoncitygroup.biz",
+] as const;
 
 /** Host público efetivo: contrato de borda (x-cup360-edge-host) ou Host de entrada. */
 export function getCup360EdgeClaimedHost(headers: Headers, hostOnly: string): string {
@@ -116,7 +117,10 @@ export function shouldBlockCustomerDomainAdminPath(
   return isBlockedPublicPath(pathname);
 }
 
-/** Fail-closed do middleware quando há segredo de borda e o host não é plataforma. */
+/**
+ * Fail-closed apenas para hosts que não são da plataforma.
+ * Hosts de plataforma (incl. origin compartilhada) nunca exigem contrato — com ou sem segredo.
+ */
 export function middlewareFailsClosedWithoutEdgeContract(
   hostHeader: string | null,
   headers: Headers,
@@ -125,9 +129,6 @@ export function middlewareFailsClosedWithoutEdgeContract(
   const secret = edgeSecret?.trim();
   if (!secret) return false;
   const hostOnly = getOriginInboundHost(hostHeader);
-  if (isCup360SharedOriginHost(hostOnly)) {
-    return !cup360EdgeContractHeadersComplete(headers);
-  }
   if (isCup360PlatformHost(hostOnly)) return false;
   if (cup360EdgeContractHeadersComplete(headers)) return false;
   return true;
