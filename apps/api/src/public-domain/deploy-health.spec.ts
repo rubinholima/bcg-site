@@ -1,23 +1,27 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-describe('infra/lightsail/deploy.sh — health checks obrigatórios', () => {
-  const deploySh = readFileSync(
-    join(__dirname, '..', '..', '..', '..', 'infra', 'lightsail', 'deploy.sh'),
-    'utf8',
-  );
+const root = join(__dirname, '..', '..', '..', '..');
 
-  it('falha API health com exit 1', () => {
-    expect(deploySh).toMatch(/GET \/group/);
-    expect(deploySh).toMatch(/HEALTH_OK=0/);
-    expect(deploySh).toMatch(/ERRO: API :3001/);
+describe('infra/lightsail deploy readiness', () => {
+  const deploySh = readFileSync(join(root, 'infra', 'lightsail', 'deploy.sh'), 'utf8');
+  const readinessSh = readFileSync(join(root, 'infra', 'lightsail', 'deploy-readiness.sh'), 'utf8');
+
+  it('deploy.sh usa readiness com timeout e exit 1 em falha', () => {
+    expect(deploySh).toMatch(/deploy-readiness\.sh/);
+    expect(deploySh).toMatch(/deploy_readiness_run_post_pm2/);
     expect(deploySh).toMatch(/exit 1/);
+    expect(deploySh).not.toMatch(/até 6 tentativas/);
   });
 
-  it('falha Web health com exit 1', () => {
-    expect(deploySh).toMatch(/WEB_HEALTH_OK/);
-    expect(deploySh).toMatch(/127\.0\.0\.1:3000/);
-    expect(deploySh).toMatch(/ERRO: Web :3000/);
+  it('readiness: poll 3s, max 120s, GET /group + HEAD web + PM2', () => {
+    expect(readinessSh).toMatch(/DEPLOY_HEALTH_MAX_WAIT_SEC.*120/);
+    expect(readinessSh).toMatch(/DEPLOY_HEALTH_POLL_SEC.*3/);
+    expect(readinessSh).toMatch(/3001\/group/);
+    expect(readinessSh).toMatch(/3000\//);
+    expect(readinessSh).toMatch(/deploy_readiness_pm2_online bcg-api/);
+    expect(readinessSh).toMatch(/deploy_readiness_pm2_online bcg-web/);
+    expect(readinessSh).toMatch(/deploy_readiness_diagnose_failure/);
   });
 
   it('não trata falha de API apenas como AVISO', () => {

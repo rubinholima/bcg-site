@@ -157,44 +157,13 @@ fi
 
 echo "$NEW_REV" > "$REV_FILE"
 
-log "health check (GET /group, até 6 tentativas)..."
-HEALTH_OK=0
-for i in 1 2 3 4 5 6; do
-  if curl -sf --connect-timeout 3 --max-time 10 http://127.0.0.1:3001/group >/dev/null; then
-    log "health: GET /group OK (tentativa $i)"
-    HEALTH_OK=1
-    break
-  fi
-  if [ "$i" -lt 6 ]; then
-    sleep 3
-  fi
-done
-if [ "$HEALTH_OK" -eq 0 ]; then
-  log "ERRO: API :3001 não respondeu GET /group após 6 tentativas — deploy falhou"
-  pm2 logs bcg-api --lines 30 --nostream 2>/dev/null || true
+# shellcheck source=deploy-readiness.sh
+source "$WORK_TREE/infra/lightsail/deploy-readiness.sh"
+export DEPLOY_READINESS_LOG_FN=log
+if ! deploy_readiness_run_post_pm2; then
+  log "deploy falhou — aplicação não passou no health check de readiness"
   exit 1
 fi
-
-log "health check Web (HEAD :3000/, até 6 tentativas)..."
-WEB_HEALTH_OK=0
-for i in 1 2 3 4 5 6; do
-  if curl -sfI --connect-timeout 3 --max-time 10 http://127.0.0.1:3000/ >/dev/null; then
-    log "health: Web :3000 OK (tentativa $i)"
-    WEB_HEALTH_OK=1
-    break
-  fi
-  if [ "$i" -lt 6 ]; then
-    sleep 3
-  fi
-done
-if [ "$WEB_HEALTH_OK" -eq 0 ]; then
-  log "ERRO: Web :3000 não respondeu após 6 tentativas — deploy falhou"
-  pm2 logs bcg-web --lines 30 --nostream 2>/dev/null || true
-  exit 1
-fi
-
-log "PM2 status:"
-pm2 list 2>/dev/null | grep -E "bcg-api|bcg-web|Name" || pm2 list 2>/dev/null || true
 
 echo "=========================================="
 log "Concluído — https://bostoncitygroup.biz"
