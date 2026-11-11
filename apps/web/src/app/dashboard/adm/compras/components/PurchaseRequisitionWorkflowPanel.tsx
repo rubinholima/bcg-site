@@ -72,6 +72,8 @@ interface PurchaseRequisitionWorkflowPanelProps {
   listTitle?: string;
   newButtonLabel?: string;
   formTitle?: string;
+  initialRequisitionId?: string | null;
+  onInitialRequisitionConsumed?: () => void;
 }
 
 const selectClass =
@@ -101,6 +103,8 @@ export function PurchaseRequisitionWorkflowPanel({
   listTitle,
   newButtonLabel = "Nova requisição",
   formTitle = "Nova requisição de compra",
+  initialRequisitionId,
+  onInitialRequisitionConsumed,
 }: PurchaseRequisitionWorkflowPanelProps) {
   const { user } = useAuth();
   const requesterPreview = formatRequesterDisplay(
@@ -114,6 +118,8 @@ export function PurchaseRequisitionWorkflowPanel({
   const [detailLoading, setDetailLoading] = useState(false);
   const [settings, setSettings] = useState<PurchaseSettingsRow | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [winnerJustification, setWinnerJustification] = useState("");
+  const [pendingWinnerQuoteId, setPendingWinnerQuoteId] = useState<string | null>(null);
 
   // Nova requisição (requester)
   const [formOpen, setFormOpen] = useState(false);
@@ -177,6 +183,11 @@ export function PurchaseRequisitionWorkflowPanel({
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!initialRequisitionId) return;
+    void openDetail(initialRequisitionId).finally(() => onInitialRequisitionConsumed?.());
+  }, [initialRequisitionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!tenantFilter || mode === "requester") return;
@@ -714,7 +725,22 @@ export function PurchaseRequisitionWorkflowPanel({
                         <div className="flex gap-1">
                           {q.isWinner && <span className="text-xs text-green-600 font-medium">Vencedora</span>}
                           {mode === "compras" && selected.status === "em_cotacao" && !q.isWinner && (
-                            <Button type="button" size="sm" variant="outline" disabled={actionLoading} onClick={() => runAction(`quotes/${q.id}/select`)}>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={actionLoading}
+                              onClick={() => {
+                                const sorted = [...(selected.quotes ?? [])].sort((a, b) => a.totalAmount - b.totalAmount);
+                                const lowest = sorted[0];
+                                if (lowest && lowest.id !== q.id) {
+                                  setPendingWinnerQuoteId(q.id);
+                                  setWinnerJustification("");
+                                } else {
+                                  void runAction(`quotes/${q.id}/select`, {});
+                                }
+                              }}
+                            >
                               Escolher
                             </Button>
                           )}
@@ -1193,6 +1219,39 @@ export function PurchaseRequisitionWorkflowPanel({
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setQuoteOpen(false)}>Cancelar</Button>
             <Button type="button" disabled={actionLoading} onClick={handleAddQuote}>Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pendingWinnerQuoteId != null} onOpenChange={(o) => !o && setPendingWinnerQuoteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Justificativa da escolha</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            A proposta selecionada não é a de menor valor total. Informe o motivo (prazo, qualidade, garantia, etc.).
+          </p>
+          <textarea
+            className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            value={winnerJustification}
+            onChange={(e) => setWinnerJustification(e.target.value)}
+          />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPendingWinnerQuoteId(null)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              disabled={!winnerJustification.trim() || actionLoading || !pendingWinnerQuoteId}
+              onClick={() => {
+                const qid = pendingWinnerQuoteId;
+                if (!qid) return;
+                setPendingWinnerQuoteId(null);
+                void runAction(`quotes/${qid}/select`, { justification: winnerJustification.trim() });
+              }}
+            >
+              Confirmar vencedor
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

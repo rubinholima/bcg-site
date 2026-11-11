@@ -26,6 +26,9 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { MailService } from '../common/mail.service';
 import { WorkflowNotifyService } from './workflow-notify.service';
 import { PurchaseQuoteInviteService } from './purchase-quote-invite.service';
+import { ProcurementAuditService } from './procurement-audit.service';
+import { SupplierCategoriesController } from './supplier-categories.controller';
+import { SupplierCategoriesService } from './supplier-categories.service';
 
 @Module({
   imports: [AuthModule, ModulesModule, HelloSignModule],
@@ -42,8 +45,11 @@ import { PurchaseQuoteInviteService } from './purchase-quote-invite.service';
     InventoryCategoriesController,
     ComprasReportsController,
     InventoryDepartmentsController,
+    SupplierCategoriesController,
   ],
   providers: [
+    ProcurementAuditService,
+    SupplierCategoriesService,
     SuppliersService,
     ProductsService,
     InventoryCategoriesService,

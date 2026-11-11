@@ -725,7 +725,9 @@ export default function EditarEventoPage() {
                     {block.type === "patrocinadores" ? (
                       <PatrocinadoresModuleEditor
                         block={block}
-                        update={(key, value) => updateBlockConfigValue(index, key, value)}
+                        updateBlockConfigValue={(key, value) =>
+                          updateBlockConfigValue(index, key, value)
+                        }
                       />
                     ) : null}
                     {block.type !== "header" && block.type !== "footer" ? (

@@ -342,7 +342,14 @@ export class PurchaseQuoteInviteService {
       supplierName: q.supplierName,
       totalAmount: q.totalAmount,
       deliveryDays: q.deliveryDays,
+      paymentTerms: (q as { paymentTerms?: string | null }).paymentTerms ?? null,
+      pricingBreakdown: (q as { pricingBreakdown?: Record<string, number> | null }).pricingBreakdown ?? null,
     }));
+
+    const lowestTotalQuoteId =
+      req.quotes.length > 0
+        ? [...req.quotes].sort((a, b) => a.totalAmount - b.totalAmount)[0]!.id
+        : null;
 
     const matrixRows = lines.map((line, lineIndex) => {
       const prices: Record<string, number | null> = {};
@@ -371,7 +378,7 @@ export class PurchaseQuoteInviteService {
       requisitionId: req.id,
       status: req.status,
       lines: comparisonLines,
-      matrix: { suppliers, rows: matrixRows },
+      matrix: { suppliers, rows: matrixRows, lowestTotalQuoteId },
     };
   }
 

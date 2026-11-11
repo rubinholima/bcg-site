@@ -29,4 +29,17 @@ export class UpdateProductDto {
   @IsString({ each: true })
   @IsOptional()
   squadTags?: string[];
+
+  @IsString()
+  @IsOptional()
+  preferredSupplierId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  lastSupplierId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  supplierReference?: string | null;
 }

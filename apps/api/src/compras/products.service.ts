@@ -138,6 +138,21 @@ export class ProductsService {
           ? (cadastroJsonStringArray(dto.squadTags) as Prisma.InputJsonValue)
           : Prisma.JsonNull;
     }
+    if (dto.preferredSupplierId !== undefined) {
+      data.preferredSupplier =
+        dto.preferredSupplierId == null || dto.preferredSupplierId === ''
+          ? { disconnect: true }
+          : { connect: { id: dto.preferredSupplierId } };
+    }
+    if (dto.lastSupplierId !== undefined) {
+      data.lastSupplier =
+        dto.lastSupplierId == null || dto.lastSupplierId === ''
+          ? { disconnect: true }
+          : { connect: { id: dto.lastSupplierId } };
+    }
+    if (dto.supplierReference !== undefined) {
+      data.supplierReference = dto.supplierReference?.trim() || null;
+    }
     return this.prisma.product.update({
       where: { id },
       data,

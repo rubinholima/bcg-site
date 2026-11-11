@@ -175,6 +175,12 @@ export class PurchaseWorkflowController {
     return this.quoteInvites.getComparison(id);
   }
 
+  @Get('quotations/inbox-counts')
+  @RequireModule('adm_compras')
+  quotationInboxCounts(@Query('tenantId') tenantId?: string) {
+    return this.workflow.quotationInboxCounts(tenantId?.trim() || undefined);
+  }
+
   @Post('requisitions/:id/quotes')
   @RequireModule('adm_compras')
   addQuote(
@@ -183,11 +189,22 @@ export class PurchaseWorkflowController {
     body: {
       supplierId?: string;
       supplierName: string;
-      items: Array<{ description: string; quantity: number; unit?: string; unitPrice: number }>;
+      items: Array<{
+        description: string;
+        quantity: number;
+        unit?: string;
+        unitPrice: number;
+        tax?: number;
+        shipping?: number;
+        discount?: number;
+      }>;
       totalAmount: number;
       deliveryDays?: number;
       notes?: string;
       attachmentUrl?: string;
+      paymentTerms?: string;
+      validUntil?: string;
+      pricingBreakdown?: { tax?: number; shipping?: number; discount?: number; otherCosts?: number };
     },
   ) {
     return this.workflow.addQuote(id, body);
@@ -201,8 +218,16 @@ export class PurchaseWorkflowController {
 
   @Post('requisitions/:id/quotes/:quoteId/select')
   @RequireModule('adm_compras')
-  selectQuote(@Param('id') id: string, @Param('quoteId') quoteId: string) {
-    return this.workflow.selectQuote(id, quoteId);
+  selectQuote(
+    @Param('id') id: string,
+    @Param('quoteId') quoteId: string,
+    @Body() body: { justification?: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.workflow.selectQuote(id, quoteId, body?.justification, {
+      userId: req.user.sub,
+      name: (req.user.name as string) ?? (req.user.email as string) ?? 'Usuário',
+    });
   }
 
   @Post('requisitions/:id/submit-for-approval')

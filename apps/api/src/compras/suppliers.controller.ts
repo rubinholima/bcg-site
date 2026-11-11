@@ -35,6 +35,13 @@ export class SuppliersController {
     return req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
   }
 
+  private actor(req: Request & { user: CognitoJwtPayload }) {
+    return {
+      userId: req.user.sub,
+      name: (req.user.name as string) ?? (req.user.email as string) ?? 'Usuário',
+    };
+  }
+
   private async allowedTenants(req: Request & { user: CognitoJwtPayload }) {
     return this.tenantAccess.getAllowedTenantIds(req.user.sub, this.roleFrom(req));
   }
@@ -65,14 +72,24 @@ export class SuppliersController {
     @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId?: string,
     @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('country') country?: string,
   ) {
     const allowed = await this.allowedTenants(req);
     const tid = tenantId?.trim();
     if (tid) {
       this.tenantAccess.assertCanAccessTenant(allowed, tid);
-      return this.service.findAll(tid, search, allowed);
+      return this.service.findAll(tid, search, allowed, { status, categoryId, country });
     }
-    return this.service.findAll(undefined, search, allowed);
+    return this.service.findAll(undefined, search, allowed, { status, categoryId, country });
+  }
+
+  @Get(':id/history')
+  async history(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const row = await this.service.findOne(id);
+    await this.assertRowTenant(req, row.tenantId);
+    return this.service.getHistory(id);
   }
 
   @Get(':id')
@@ -85,7 +102,43 @@ export class SuppliersController {
   @Post()
   async create(@Req() req: Request & { user: CognitoJwtPayload }, @Body() dto: CreateSupplierDto) {
     await this.requireTenantScope(req, dto.tenantId);
-    return this.service.create(dto);
+    return this.service.create(dto, this.actor(req));
+  }
+
+  @Patch(':id/status')
+  async setStatus(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
+    const row = await this.service.findOne(id);
+    await this.assertRowTenant(req, row.tenantId);
+    return this.service.setStatus(id, status, this.actor(req));
+  }
+
+  @Post(':id/documents')
+  async addDocument(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { label: string; mediaKey?: string; fileUrl?: string },
+  ) {
+    const row = await this.service.findOne(id);
+    await this.assertRowTenant(req, row.tenantId);
+    return this.service.addDocument(id, {
+      ...body,
+      createdByUserId: req.user.sub,
+    });
+  }
+
+  @Delete(':id/documents/:documentId')
+  async removeDocument(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Param('documentId') documentId: string,
+  ) {
+    const row = await this.service.findOne(id);
+    await this.assertRowTenant(req, row.tenantId);
+    return this.service.removeDocument(id, documentId);
   }
 
   @Patch(':id')
@@ -96,13 +149,13 @@ export class SuppliersController {
   ) {
     const row = await this.service.findOne(id);
     await this.assertRowTenant(req, row.tenantId);
-    return this.service.update(id, dto);
+    return this.service.update(id, dto, this.actor(req));
   }
 
   @Delete(':id')
   async remove(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     const row = await this.service.findOne(id);
     await this.assertRowTenant(req, row.tenantId);
-    return this.service.remove(id);
+    return this.service.remove(id, this.actor(req));
   }
 }

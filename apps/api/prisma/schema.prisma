@@ -146,6 +146,7 @@ model Tenant {
   medicalStaff            MedicalStaff[]
   healthInterns           HealthIntern[]
   suppliers               Supplier[]
+  supplierCategories      SupplierCategory[]
   products                Product[]
   inventoryCategories     InventoryCategory[]
   inventoryDepartments    InventoryDepartment[]
@@ -2427,22 +2428,67 @@ model Supplier {
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name        String
-  document    String?  // CPF/CNPJ
+  document    String?  // CPF/CNPJ (legado)
+  personType  String?  // pj | pf
+  tradeName   String?
+  taxId       String?  // EIN / Tax ID (EUA e internacional)
   contactName String?
   email       String?
   phone       String?
+  whatsapp    String?
+  website     String?
   address     String?  @db.Text
+  addressStructured Json?
+  commercial  Json?    // paymentTerms, currency, preferredPaymentMethod, etc.
+  country     String?
+  status      String   @default("active") // active | inactive | blocked
+  supplierCategoryId String?
+  supplierCategory   SupplierCategory? @relation(fields: [supplierCategoryId], references: [id], onDelete: SetNull)
   notes       String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   purchaseOrders PurchaseOrder[]
   quotes         PurchaseQuote[]
   quoteInvites   PurchaseQuoteInvite[]
+  documents      SupplierDocument[]
   financeiroLancamentos FinanceiroLancamento[]
   bchEventStaffAssignments     BchEventStaffAssignment[]
   bchEventServiceCommitments BchEventServiceCommitment[]
   bchEventTeamMembers          BchEventTeamMember[]
+  productsPreferred          Product[] @relation("ProductPreferredSupplier")
+  productsLast               Product[] @relation("ProductLastSupplier")
   @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([supplierCategoryId])
+}
+
+/// Categoria de fornecedor (customizável por clube; slugs únicos por tenant)
+model SupplierCategory {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slug      String
+  name      String
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  suppliers Supplier[]
+  @@unique([tenantId, slug])
+  @@index([tenantId, active])
+}
+
+/// Documentos do fornecedor (chave de mídia / URL)
+model SupplierDocument {
+  id              String   @id @default(cuid())
+  supplierId      String
+  supplier        Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  label           String
+  mediaKey        String?
+  fileUrl         String?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  @@index([supplierId])
 }
 
 // Produto/catálogo (estoque por tenant) — estoque mínimo gera alerta
@@ -2465,6 +2511,11 @@ model Product {
   averagePrice  Decimal? @db.Decimal(12, 2)
   /// Categorias de futebol do clube (ex.: principal, sub20) — null ou [] = vale para todas
   squadTags     Json?
+  preferredSupplierId String?
+  preferredSupplier   Supplier? @relation("ProductPreferredSupplier", fields: [preferredSupplierId], references: [id], onDelete: SetNull)
+  lastSupplierId      String?
+  lastSupplier        Supplier? @relation("ProductLastSupplier", fields: [lastSupplierId], references: [id], onDelete: SetNull)
+  supplierReference   String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   stockMovements StockMovement[]
@@ -2537,6 +2588,10 @@ model PurchaseQuote {
   deliveryDays   Int?
   notes          String?  @db.Text
   attachmentUrl  String?
+  pricingBreakdown Json?  // tax, shipping, discount, otherCosts
+  paymentTerms   String?
+  validUntil     DateTime?
+  winnerJustification String? @db.Text
   isWinner       Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -2661,6 +2716,21 @@ model PurchaseOrder {
   @@index([supplierId])
   @@index([requisitionId])
   @@index([quoteId])
+}
+
+/// Auditoria do fluxo de compras (fornecedores, cotações, aprovações)
+model ProcurementAuditLog {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  entityType   String
+  entityId     String
+  action       String
+  actorUserId  String?
+  actorName    String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  @@index([tenantId, createdAt])
+  @@index([entityType, entityId])
 }
 
 /// Departamento destino/origem em movimentações manuais de estoque (relatórios ADM).

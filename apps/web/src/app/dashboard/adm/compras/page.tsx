@@ -13,6 +13,9 @@ import {
   RefreshCw,
   ShoppingCart,
   Trash2,
+  Truck,
+  FileText,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,13 +50,19 @@ import { PurchaseRequisitionWorkflowPanel } from "./components/PurchaseRequisiti
 import { WorkflowInboxBanner } from "@/components/settings/WorkflowInboxBanner";
 import { type SupplierRow } from "./components/SupplierFormDialog";
 import { useInventoryCategories } from "@/hooks/useInventoryCategories";
+import { SuppliersComprasPanel } from "./components/SuppliersComprasPanel";
+import { QuotationsComprasPanel } from "./components/QuotationsComprasPanel";
+import { PurchaseOrdersComprasPanel } from "./components/PurchaseOrdersComprasPanel";
 
-type TabId = "produtos" | "categorias" | "requisicoes";
+type TabId = "produtos" | "categorias" | "fornecedores" | "requisicoes" | "cotacoes" | "pedidos";
 
 const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: "produtos", label: "Produtos", icon: Package },
   { id: "categorias", label: "Categorias", icon: FolderTree },
+  { id: "fornecedores", label: "Fornecedores", icon: Truck },
   { id: "requisicoes", label: "Requisições", icon: ShoppingCart },
+  { id: "cotacoes", label: "Cotações", icon: FileText },
+  { id: "pedidos", label: "Pedidos", icon: ClipboardList },
 ];
 
 function groupCustomCategories(rows: InventoryCategoryRow[]) {
@@ -89,6 +98,8 @@ export default function AdmComprasPage() {
 
   const [inventoryCategories, setInventoryCategories] = useState<InventoryCategoryRow[]>([]);
   const [productsCount, setProductsCount] = useState(0);
+  const [quotationCounts, setQuotationCounts] = useState({ emCotacao: 0, aguardandoFornecedor: 0 });
+  const [focusRequisitionId, setFocusRequisitionId] = useState<string | null>(null);
 
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [categoryEdit, setCategoryEdit] = useState<InventoryCategoryRow | null>(null);
@@ -150,6 +161,17 @@ export default function AdmComprasPage() {
     if (!canAccessModule("adm_compras") || !tenantId) return;
     void loadCategories();
   }, [canAccessModule, tenantId, loadCategories]);
+
+  useEffect(() => {
+    if (!canAccessModule("adm_compras")) return;
+    const qs = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : "";
+    api
+      .get<{ emCotacao: number; aguardandoFornecedor: number }>(`/compras/workflow/quotations/inbox-counts${qs}`)
+      .then(({ data }) => {
+        if (data) setQuotationCounts({ emCotacao: data.emCotacao, aguardandoFornecedor: data.aguardandoFornecedor });
+      })
+      .catch(() => undefined);
+  }, [canAccessModule, tenantId, activeTab]);
 
   useEffect(() => {
     if (!canAccessModule("adm_compras") || activeTab !== "categorias") return;
@@ -280,7 +302,8 @@ export default function AdmComprasPage() {
         items={[
           { label: "Produtos", value: stats.produtos, tone: "emerald" },
           { label: "Categorias", value: stats.categorias, tone: "amber" },
-          { label: "Padrão sistema", value: stats.sistema, tone: "sky" },
+          { label: "Cotações abertas", value: quotationCounts.emCotacao, tone: "violet" },
+          { label: "Aguardando fornecedor", value: quotationCounts.aguardandoFornecedor, tone: "sky" },
         ]}
       />
 
@@ -294,7 +317,7 @@ export default function AdmComprasPage() {
           }}
         />
 
-        {activeTab !== "requisicoes" ? (
+        {activeTab === "produtos" || activeTab === "categorias" ? (
           <>
             <DashboardFilterBox accent="emerald" className={activeTab === "produtos" ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"}>
               <div className="grid gap-1.5 sm:col-span-2 lg:col-span-1">
@@ -502,6 +525,45 @@ export default function AdmComprasPage() {
           )
         ) : null}
 
+        {(activeTab === "cotacoes" || activeTab === "pedidos") ? (
+          <DashboardFilterBox accent="emerald" className="sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <DashboardFieldLabel accent="emerald">Clube / Empresa</DashboardFieldLabel>
+              <NativeSelect value={tenantId || ""} onChange={(e) => setTenantId(e.target.value)}>
+                <option value="">Selecione</option>
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+          </DashboardFilterBox>
+        ) : null}
+
+        {activeTab === "fornecedores" ? (
+          <SuppliersComprasPanel
+            tenants={tenants}
+            tenantId={tenantId}
+            onTenantChange={setTenantId}
+          />
+        ) : null}
+
+        {activeTab === "cotacoes" ? (
+          <QuotationsComprasPanel
+            tenants={tenants}
+            tenantId={tenantId}
+            onOpenRequisition={(id) => {
+              setFocusRequisitionId(id);
+              setActiveTab("requisicoes");
+            }}
+          />
+        ) : null}
+
+        {activeTab === "pedidos" ? (
+          <PurchaseOrdersComprasPanel tenants={tenants} tenantId={tenantId} suppliers={suppliers} />
+        ) : null}
+
         {activeTab === "requisicoes" ? (
           <PurchaseRequisitionWorkflowPanel
             mode="compras"
@@ -509,6 +571,8 @@ export default function AdmComprasPage() {
             suppliers={suppliers}
             assetCategories={assetCategories}
             defaultTenantId={tenantId || tenants[0]?.id}
+            initialRequisitionId={focusRequisitionId}
+            onInitialRequisitionConsumed={() => setFocusRequisitionId(null)}
           />
         ) : null}
       </DashboardDeptSection>
