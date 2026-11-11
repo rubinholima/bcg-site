@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Delete,
   Post,
   Query,
   Req,
@@ -188,6 +189,25 @@ export class AthleteContractsController {
     @Body() body: Record<string, unknown>,
   ) {
     return this.service.createFinanceLink(playerId, req.user, null, body);
+  }
+
+  @Patch('players/:playerId/athlete-contract-finance-links/:linkId')
+  updateFinanceLink(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('playerId') playerId: string,
+    @Param('linkId') linkId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.updateFinanceLink(playerId, linkId, req.user, null, body);
+  }
+
+  @Delete('players/:playerId/athlete-contract-finance-links/:linkId')
+  deleteFinanceLink(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('playerId') playerId: string,
+    @Param('linkId') linkId: string,
+  ) {
+    return this.service.deleteFinanceLink(playerId, linkId, req.user, null);
   }
 
   @Post('tenants/:tenantId/athlete-contracts/report')

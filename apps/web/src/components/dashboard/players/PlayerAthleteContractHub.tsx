@@ -24,7 +24,9 @@ import {
 } from "@/lib/athlete-contract-hub";
 import type { PlayerRegistrationProfile } from "@/lib/player-registration-profile";
 import { PlayerContractsSection } from "./PlayerContractsSection";
+import { PlayerAthleteContractFinanceSection } from "./PlayerAthleteContractFinanceSection";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
+import type { AthleteFinanceLinkRow, AthleteFinancialSummary } from "@/lib/athlete-contract-finance";
 
 type Props = {
   playerId: string;
@@ -344,6 +346,32 @@ export function PlayerAthleteContractHub({
           </Button>
         ) : null}
       </div>
+
+      <PlayerAthleteContractFinanceSection
+        playerId={playerId}
+        tenantId={tenantId}
+        canViewFinancial={Boolean(hub?.access?.canViewFinancial)}
+        canManage={canManage}
+        financeLinks={(hub?.financeLinks ?? []) as AthleteFinanceLinkRow[]}
+        financialSummary={
+          hub?.financialSummary && !("restricted" in hub.financialSummary)
+            ? (hub.financialSummary as AthleteFinancialSummary)
+            : null
+        }
+        contracts={(hub?.contracts ?? []).map((c) => {
+          const row = c as { id: string; contractType?: { name?: string } };
+          return {
+            id: row.id,
+            label: row.contractType?.name ?? `Contrato ${row.id.slice(0, 8)}`,
+          };
+        })}
+        federativeId={
+          hub?.federative && typeof (hub.federative as { id?: string }).id === "string"
+            ? String((hub.federative as { id: string }).id)
+            : null
+        }
+        onReload={load}
+      />
 
       <Card>
         <CardHeader className="pb-2">

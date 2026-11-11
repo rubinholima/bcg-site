@@ -14,6 +14,16 @@ import {
   categoryLooksProfessional,
 } from './athlete-contract-report.util';
 
+function buildReportBodyForTest(
+  presetId: string,
+  extra: Record<string, unknown>,
+): Record<string, unknown> {
+  const presetDef =
+    ATHLETE_CONTRACT_REPORT_PRESETS.find((p) => p.id === presetId) ??
+    ATHLETE_CONTRACT_REPORT_PRESETS[0];
+  return { ...presetDef, ...extra };
+}
+
 describe('Athlete contracts (PROMPT 038)', () => {
   it('valida percentual econômico 100%', () => {
     expect(
@@ -105,6 +115,24 @@ describe('Athlete contracts (PROMPT 038)', () => {
     expect(categoryLooksProfessional('Sub-20')).toBe(false);
     expect(categoryLooksFormation('Sub-20')).toBe(true);
     expect(categoryLooksProfessional('Profissional')).toBe(true);
+  });
+
+  it('combinação preset + filtros no payload do relatório', () => {
+    const body = buildReportBodyForTest('expiring_60', {
+      category: 'Sub-17',
+      clubName: 'Villa',
+      financialPending: true,
+    });
+    expect(body.expirationWindowDays).toBe(60);
+    expect(body.category).toBe('Sub-17');
+    expect(body.clubName).toBe('Villa');
+    expect(body.financialPending).toBe(true);
+  });
+
+  it('permissão financeira — editor sem módulo financeiro', () => {
+    const editor = resolveAthleteContractAccess('editor', ['juridico', 'cadastros']);
+    expect(editor.canViewFinancial).toBe(false);
+    expect(editor.canManage).toBe(true);
   });
 
   it('preset expirado e assinatura', () => {

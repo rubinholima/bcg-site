@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,8 @@ const STORAGE_TENANT_KEY = "adm_financeiro_tenant_id";
 
 export default function AdmFinanceiroPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryTenantId = searchParams.get("tenantId") ?? "";
   const { canAccessModule, loading: authLoading } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
@@ -39,15 +41,20 @@ export default function AdmFinanceiroPage() {
       }
       const stored =
         typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_TENANT_KEY) : null;
+      const fromQuery =
+        queryTenantId && listTen.some((t) => t.id === queryTenantId) ? queryTenantId : null;
       const fallback = stored && listTen.some((t) => t.id === stored) ? stored : listTen[0].id;
-      setTenantId((prev) => (prev && listTen.some((t) => t.id === prev) ? prev : fallback));
+      setTenantId((prev) => {
+        if (fromQuery) return fromQuery;
+        return prev && listTen.some((t) => t.id === prev) ? prev : fallback;
+      });
     } catch {
       setTenants([]);
       setTenantId("");
     } finally {
       setTenantsLoading(false);
     }
-  }, []);
+  }, [queryTenantId]);
 
   useEffect(() => {
     if (!canAccessModule("adm_financeiro") && !authLoading) return;

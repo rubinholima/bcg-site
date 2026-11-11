@@ -23,7 +23,21 @@ export type AthleteContractHubDto = {
   professionalizations: Array<Record<string, unknown>>;
   attachments: Array<Record<string, unknown>>;
   financeLinks?: Array<Record<string, unknown>>;
-  access?: { canViewFinancial?: boolean; canManage?: boolean; canManageTypes?: boolean };
+  financialSummary?: {
+    totalLinks: number;
+    pendingCount: number;
+    paidCount: number;
+    federationFees: number;
+    transferFees: number;
+    allowances: number;
+    salaryReferences: number;
+    contractualPayments: number;
+  } | null;
+  access?: {
+    canViewFinancial?: boolean;
+    canManage?: boolean;
+    canManageTypes?: boolean;
+  };
 };
 
 export const DOCUMENT_CATEGORIES = [

@@ -220,7 +220,26 @@ export class AthleteContractsService {
     );
     if (proPending) pendingItems.push('professionalization');
     const finPending = financeLinks.filter((f) => f.status === 'pendente' || f.status === 'pending');
+    const finPaid = financeLinks.filter((f) => f.status === 'pago' || f.status === 'paid');
     if (finPending.length && access.canViewFinancial) pendingItems.push('financial');
+
+    const mapFinanceLink = (f: (typeof financeLinks)[number]) => ({
+      ...f,
+      amount: f.amount != null ? Number(f.amount) : null,
+    });
+
+    const financialSummary = access.canViewFinancial
+      ? {
+          totalLinks: financeLinks.length,
+          pendingCount: finPending.length,
+          paidCount: finPaid.length,
+          federationFees: financeLinks.filter((f) => f.linkType === 'federation_fee').length,
+          transferFees: financeLinks.filter((f) => f.linkType === 'transfer_fee').length,
+          allowances: financeLinks.filter((f) => f.linkType === 'allowance').length,
+          salaryReferences: financeLinks.filter((f) => f.linkType === 'salary_reference').length,
+          contractualPayments: financeLinks.filter((f) => f.linkType === 'contractual_payment').length,
+        }
+      : { restricted: true as const, pendingCount: finPending.length };
 
     const summary = {
       athleteSituation: evaluation?.status ?? '—',
@@ -265,7 +284,8 @@ export class AthleteContractsService {
         contractLabel: a.contractId ? contracts.find((c) => c.id === a.contractId)?.contractType?.name ?? a.contractId : null,
         federativeProcessId: a.federativeProcessId,
       })),
-      financeLinks: access.canViewFinancial ? financeLinks : [],
+      financeLinks: access.canViewFinancial ? financeLinks.map(mapFinanceLink) : [],
+      financialSummary,
       access: {
         canView: access.canView,
         canManage: access.canManage,
@@ -600,6 +620,82 @@ export class AthleteContractsService {
     return link;
   }
 
+  async updateFinanceLink(
+    playerId: string,
+    linkId: string,
+    user: CognitoJwtPayload,
+    allowedTenantIds: string[] | null,
+    body: Record<string, unknown>,
+  ) {
+    const access = await this.accessFor(user);
+    assertAthleteContractAccess(access, 'canManage');
+    if (!access.canViewFinancial) {
+      throw new BadRequestException('Sem permissão financeira para editar vínculos.');
+    }
+    await this.requirePlayer(playerId, allowedTenantIds);
+    const existing = await this.prisma.athleteContractFinanceLink.findFirst({
+      where: { id: linkId, playerId },
+    });
+    if (!existing) throw new NotFoundException('Vínculo financeiro não encontrado.');
+    const linkType =
+      typeof body.linkType === 'string' ? body.linkType : existing.linkType;
+    if (!this.financeLinkTypes.has(linkType)) {
+      throw new BadRequestException('Tipo de vínculo financeiro inválido.');
+    }
+    return this.prisma.athleteContractFinanceLink.update({
+      where: { id: linkId },
+      data: {
+        linkType,
+        contractId:
+          typeof body.contractId === 'string'
+            ? body.contractId
+            : body.contractId === null
+              ? null
+              : existing.contractId,
+        federativeProcessId:
+          typeof body.federativeProcessId === 'string'
+            ? body.federativeProcessId
+            : body.federativeProcessId === null
+              ? null
+              : existing.federativeProcessId,
+        referenceId:
+          typeof body.referenceId === 'string' ? body.referenceId : existing.referenceId,
+        financeiroLancamentoId:
+          typeof body.financeiroLancamentoId === 'string'
+            ? body.financeiroLancamentoId
+            : existing.financeiroLancamentoId,
+        omieReference:
+          typeof body.omieReference === 'string' ? body.omieReference : existing.omieReference,
+        description:
+          typeof body.description === 'string' ? body.description : existing.description,
+        amount:
+          body.amount != null ? new Prisma.Decimal(String(body.amount)) : existing.amount,
+        currency: typeof body.currency === 'string' ? body.currency : existing.currency,
+        status: typeof body.status === 'string' ? body.status : existing.status,
+      },
+    });
+  }
+
+  async deleteFinanceLink(
+    playerId: string,
+    linkId: string,
+    user: CognitoJwtPayload,
+    allowedTenantIds: string[] | null,
+  ) {
+    const access = await this.accessFor(user);
+    assertAthleteContractAccess(access, 'canManage');
+    if (!access.canViewFinancial) {
+      throw new BadRequestException('Sem permissão financeira para remover vínculos.');
+    }
+    await this.requirePlayer(playerId, allowedTenantIds);
+    const existing = await this.prisma.athleteContractFinanceLink.findFirst({
+      where: { id: linkId, playerId },
+    });
+    if (!existing) throw new NotFoundException('Vínculo financeiro não encontrado.');
+    await this.prisma.athleteContractFinanceLink.delete({ where: { id: linkId } });
+    return { ok: true };
+  }
+
   async upsertEvaluation(
     playerId: string,
     user: CognitoJwtPayload,
@@ -889,6 +985,44 @@ export class AthleteContractsService {
       filtered = filtered.filter((r) => categoryLooksProfessional(r.player.category));
     }
     if (filters.formation === true) {
+      filtered = filtered.filter((r) => categoryLooksFormation(r.player.category));
+    }
+    if (typeof filters.clubName === 'string' && filters.clubName.trim()) {
+      const q = filters.clubName.trim().toLowerCase();
+      filtered = filtered.filter(
+        (r) =>
+          (r.clubName?.toLowerCase().includes(q) ?? false) ||
+          (r.destinationClubName?.toLowerCase().includes(q) ?? false) ||
+          (r.originClubName?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (typeof filters.agentName === 'string' && filters.agentName.trim()) {
+      const q = filters.agentName.trim().toLowerCase();
+      filtered = filtered.filter((r) =>
+        r.parties.some(
+          (p) =>
+            ['agent', 'intermediary', 'agente', 'intermediario'].includes(
+              p.partyType.toLowerCase(),
+            ) && p.partyName.toLowerCase().includes(q),
+        ),
+      );
+    }
+    if (typeof filters.partnerClubName === 'string' && filters.partnerClubName.trim()) {
+      const q = filters.partnerClubName.trim().toLowerCase();
+      filtered = filtered.filter(
+        (r) =>
+          (r.destinationClubName?.toLowerCase().includes(q) ?? false) ||
+          r.parties.some(
+            (p) =>
+              p.partyType.toLowerCase().includes('partner') &&
+              p.partyName.toLowerCase().includes(q),
+          ),
+      );
+    }
+    if (filters.athleteSegment === 'professional') {
+      filtered = filtered.filter((r) => categoryLooksProfessional(r.player.category));
+    }
+    if (filters.athleteSegment === 'formation') {
       filtered = filtered.filter((r) => categoryLooksFormation(r.player.category));
     }
 
