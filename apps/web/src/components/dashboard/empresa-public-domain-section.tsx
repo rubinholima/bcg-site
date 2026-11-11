@@ -198,8 +198,14 @@ export function EmpresaPublicDomainSection({
     }
   }
 
-  async function retry(id: string) {
-    await publish(id);
+  async function reconcile(id: string) {
+    setError(null);
+    try {
+      await api.post(`/tenants/${tenantId}/public-domains/${id}/reconcile`, {});
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao continuar provisionamento");
+    }
   }
 
   async function disable(id: string) {
@@ -370,6 +376,9 @@ export function EmpresaPublicDomainSection({
                             {rec.purpose ? (
                               <span className="text-foreground/70">{rec.purpose}: </span>
                             ) : null}
+                            {rec.status ? (
+                              <span className="text-foreground/60">[{rec.status}] </span>
+                            ) : null}
                             <span className="text-foreground/80">{rec.type}</span> {rec.name} → {rec.value}
                           </li>
                         ))}
@@ -395,8 +404,8 @@ export function EmpresaPublicDomainSection({
                     <Button type="button" size="sm" onClick={() => void publish(d.id)} disabled={d.verificationStatus !== "VERIFIED"}>
                       Publicar
                     </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => void retry(d.id)}>
-                      Tentar novamente
+                    <Button type="button" size="sm" variant="outline" onClick={() => void reconcile(d.id)}>
+                      Verificar / Continuar
                     </Button>
                     <Button type="button" size="sm" variant="outline" onClick={() => void disable(d.id)}>
                       Despublicar

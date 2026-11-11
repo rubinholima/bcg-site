@@ -43,7 +43,20 @@ import {
 } from './public-domain-aws-ownership.verify';
 import { sanitizePublicDomainAwsErrorMessage } from './public-domain-aws.errors';
 import { validatePublicDomainAwsRuntimeConfig } from './public-domain-aws.runtime';
-import { hostnamesForCertificate } from './public-domain-dns.util';
+import { verifiedHostnamesForCertificate } from './public-domain-san.util';
+import {
+  findMostSpecificPublicHostedZone,
+  hostedZoneLookupDnsName,
+} from './public-domain-route53-discovery.util';
+import {
+  assertRoute53WriteAllowed,
+  type Route53WriteGuardContext,
+} from './public-domain-route53-write-guard';
+import {
+  managedWebAliasesReady,
+  publicDnsResolvesToCloudFront,
+} from './public-domain-web-alias-verify.util';
+import { canMarkProvisioningActive } from './public-domain-active-readiness.util';
 import { planWebAliasTransition } from './route53-web-alias-plan.util';
 import {
   PublicDomainProvisioner,
@@ -100,27 +113,38 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
       };
     }
 
-    const sanList = hostnamesForCertificate(request.hostnameNormalized, request.allTenantHostnames);
+    const sanList = verifiedHostnamesForCertificate(
+      request.hostnameNormalized,
+      request.verifiedTenantHostnames,
+    );
+    if (!sanList.some((h) => h.toLowerCase() === request.hostnameNormalized.toLowerCase())) {
+      return {
+        provisioningStatus: 'ERROR',
+        lastErrorCode: 'UNVERIFIED_SAN',
+        lastErrorMessage: 'Hostname principal não está verificado para certificado.',
+      };
+    }
     const primaryDomainName = pickAcmPrimaryDomainName(sanList);
     const sanForAcm =
       sanList.length > 1 ? sanList.filter((h) => h !== primaryDomainName) : undefined;
 
-    const zoneQuery = zoneParentName(request.hostnameNormalized);
-
     try {
       const listed = await r53.send(
-        new ListHostedZonesByNameCommand({ DNSName: zoneQuery, MaxItems: 50 }),
+        new ListHostedZonesByNameCommand({
+          DNSName: hostedZoneLookupDnsName(request.hostnameNormalized),
+          MaxItems: 100,
+        }),
       );
-      const matchZone = (listed.HostedZones ?? []).find(
-        (z) => z.Name && fqdn(String(z.Name)).toLowerCase() === zoneQuery.toLowerCase(),
+      const matchZone = findMostSpecificPublicHostedZone(
+        listed.HostedZones ?? [],
+        request.hostnameNormalized,
       );
-      const hostedZoneId =
-        request.persistedHostedZoneId ?? (matchZone?.Id ? stripHostedZoneId(matchZone.Id) : null);
-      const zoneNameForSafety = matchZone?.Name ? String(matchZone.Name) : zoneQuery;
+      const hostedZoneId = request.persistedHostedZoneId ?? matchZone?.hostedZoneId ?? null;
+      const zoneNameForSafety = matchZone?.zoneName ?? fqdn(request.hostnameNormalized);
 
       let certArn = request.persistedCertificateArn ?? null;
       if (certArn) {
-        const ownedCert = await verifyAcmCertificateOwned(acm, certArn);
+        const ownedCert = await verifyAcmCertificateOwned(acm, certArn, request.tenantId, request.domainId);
         if (!ownedCert.ok) {
           return {
             provisioningStatus: 'ERROR',
@@ -180,22 +204,28 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
                 lastErrorMessage: 'ACM validation CNAME bloqueado pela política de segurança DNS.',
               };
             }
+            const acmChange = {
+              Action: 'UPSERT' as const,
+              ResourceRecordSet: {
+                Name: recordName,
+                Type: 'CNAME' as const,
+                TTL: 300,
+                ResourceRecords: [{ Value: fqdn(v.value) }],
+              },
+            };
+            const guardCtx: Route53WriteGuardContext = {
+              hostnameNormalized: request.hostnameNormalized,
+              hostedZoneId,
+              zoneName: zoneNameForSafety,
+              purpose: 'ACM_VALIDATION',
+            };
+            assertRoute53WriteAllowed(guardCtx, acmChange);
             await r53.send(
               new ChangeResourceRecordSetsCommand({
                 HostedZoneId: hostedZoneId,
                 ChangeBatch: {
                   Comment: 'CUP360 ACM validation',
-                  Changes: [
-                    {
-                      Action: 'UPSERT',
-                      ResourceRecordSet: {
-                        Name: recordName,
-                        Type: 'CNAME',
-                        TTL: 300,
-                        ResourceRecords: [{ Value: fqdn(v.value) }],
-                      },
-                    },
-                  ],
+                  Changes: [acmChange],
                 },
               }),
             );
@@ -236,19 +266,24 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         };
       }
 
-      const fnName = cup360CloudFrontFunctionName(request.tenantId);
+      const ownedFn = await verifyCloudFrontFunctionOwned(
+        cf,
+        request.tenantId,
+        request.domainId,
+        request.persistedCloudFrontFunctionArn,
+      );
+      if (!ownedFn.ok) {
+        return {
+          provisioningStatus: 'ERROR',
+          lastErrorCode: ownedFn.lastErrorCode,
+          lastErrorMessage: ownedFn.lastErrorMessage,
+        };
+      }
+      const fnName = ownedFn.name;
       const fnCode = Buffer.from(buildViewerFunctionCode(edgeSecret, sanList, CUP360_EDGE_CONTRACT_VERSION));
 
       let fnArn: string | null = request.persistedCloudFrontFunctionArn ?? null;
       try {
-        const ownedFn = await verifyCloudFrontFunctionOwned(cf, fnName, request.persistedCloudFrontFunctionArn);
-        if (!ownedFn.ok) {
-          return {
-            provisioningStatus: 'ERROR',
-            lastErrorCode: ownedFn.lastErrorCode,
-            lastErrorMessage: ownedFn.lastErrorMessage,
-          };
-        }
         const existingFn = await cf.send(new DescribeFunctionCommand({ Name: fnName }));
         const etagFn = existingFn.ETag;
         if (etagFn) {
@@ -336,7 +371,12 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         distId = createOut.Distribution?.Id ?? null;
         distDomain = createOut.Distribution?.DomainName ?? null;
       } else {
-        const ownedDist = await verifyCloudFrontDistributionOwned(cf, distId);
+        const ownedDist = await verifyCloudFrontDistributionOwned(
+          cf,
+          distId,
+          request.tenantId,
+          request.domainId,
+        );
         if (!ownedDist.ok) {
           return {
             provisioningStatus: 'ERROR',
@@ -480,14 +520,51 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         });
         this.log.debug(`Route53 plan: ${diagnostics.join('; ')}`);
 
+        const aliasGuardCtx: Route53WriteGuardContext = {
+          hostnameNormalized: request.hostnameNormalized,
+          hostedZoneId,
+          zoneName: zoneNameForSafety,
+          purpose: 'WEB_ALIAS',
+        };
         for (const batch of phases) {
           if (!batch.length) continue;
+          for (const change of batch) {
+            assertRoute53WriteAllowed(aliasGuardCtx, change);
+          }
           await r53.send(
             new ChangeResourceRecordSetsCommand({
               HostedZoneId: hostedZoneId,
               ChangeBatch: { Comment: 'CUP360 web alias transition', Changes: batch },
             }),
           );
+        }
+
+        const aliasesReady = managedWebAliasesReady(sanList, distDomain, (name) =>
+          existingByName.get(fqdn(name).toLowerCase()) ?? [],
+        );
+        if (!aliasesReady) {
+          for (const h of sanList) {
+            existingByName.set(fqdn(h).toLowerCase(), await listRecordsAtName(h));
+          }
+        }
+        const readyAfter = managedWebAliasesReady(sanList, distDomain, (name) =>
+          existingByName.get(fqdn(name).toLowerCase()) ?? [],
+        );
+        if (!readyAfter) {
+          return {
+            provisioningStatus: 'DNS_PENDING',
+            sslStatus: 'ISSUED' as PublicDomainSslStatus,
+            verificationStatus: 'VERIFIED' as PublicDomainVerificationStatus,
+            certificateArn: certArn,
+            distributionId: distId,
+            distributionDomain: distDomain,
+            cloudFrontFunctionArn: fnArn,
+            hostedZoneId,
+            provisioningStep: 'web_alias_propagation',
+            externalDnsInstructions: aliasInstructions,
+            lastErrorCode: 'WEB_ALIAS_PENDING',
+            lastErrorMessage: 'Alias DNS ainda não aponta para a distribuição CloudFront esperada.',
+          };
         }
       } else {
         return {
@@ -506,7 +583,31 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         };
       }
 
-      return {
+      if (!(cfg.route53ManageDns && hostedZoneId)) {
+        const extReady = await publicDnsResolvesToCloudFront(
+          request.hostnameNormalized,
+          distDomain,
+        );
+        if (!extReady) {
+          return {
+            provisioningStatus: 'DNS_PENDING',
+            sslStatus: 'ISSUED' as PublicDomainSslStatus,
+            verificationStatus: 'VERIFIED' as PublicDomainVerificationStatus,
+            certificateArn: certArn,
+            distributionId: distId,
+            distributionDomain: distDomain,
+            cloudFrontFunctionArn: fnArn,
+            hostedZoneId,
+            provisioningStep: 'customer_web_alias',
+            externalDnsInstructions: aliasInstructions,
+            lastErrorCode: 'EXTERNAL_WEB_ALIAS',
+            lastErrorMessage:
+              'Aponte o hostname para o domínio CloudFront indicado e use Verificar / Continuar.',
+          };
+        }
+      }
+
+      const activeCandidate: ProvisionResult = {
         provisioningStatus: 'ACTIVE',
         sslStatus: 'ISSUED' as PublicDomainSslStatus,
         verificationStatus: 'VERIFIED' as PublicDomainVerificationStatus,
@@ -517,6 +618,16 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         hostedZoneId,
         provisioningStep: null,
       };
+      if (!canMarkProvisioningActive(activeCandidate)) {
+        return {
+          ...activeCandidate,
+          provisioningStatus: 'PROVISIONING',
+          provisioningStep: 'active_prerequisites',
+          lastErrorCode: 'ACTIVE_BLOCKED',
+          lastErrorMessage: 'Pré-requisitos de ACTIVE incompletos.',
+        };
+      }
+      return activeCandidate;
     } catch (e) {
       const msg = sanitizePublicDomainAwsErrorMessage(e);
       this.log.warn(`provision: ${msg}`);
@@ -543,8 +654,13 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
     const { cf } = createPublicDomainAwsClients(cfg);
     try {
       const distId = request.persistedDistributionId;
-      if (distId) {
-        const owned = await verifyCloudFrontDistributionOwned(cf, distId);
+      if (distId && !request.skipCloudFrontDistributionDisable) {
+        const owned = await verifyCloudFrontDistributionOwned(
+          cf,
+          distId,
+          request.tenantId,
+          request.domainId,
+        );
         if (!owned.ok) {
           return {
             provisioningStatus: 'ERROR',

@@ -73,6 +73,15 @@ export class PublicDomainController {
     return this.publicDomain.publish(tenantId, domainId, req.user);
   }
 
+  @Post(':domainId/reconcile')
+  reconcile(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('tenantId') tenantId: string,
+    @Param('domainId') domainId: string,
+  ) {
+    return this.publicDomain.reconcile(tenantId, domainId, req.user);
+  }
+
   @Post(':domainId/retry')
   retry(
     @Req() req: Request & { user: CognitoJwtPayload },

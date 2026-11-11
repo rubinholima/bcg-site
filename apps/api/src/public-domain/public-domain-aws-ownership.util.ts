@@ -21,9 +21,11 @@ export function hasCup360PublicDomainSiteTag(tags: AwsTag[] | undefined): boolea
   );
 }
 
-/** Nome canônico das CloudFront Functions criadas por este módulo. */
-export function cup360CloudFrontFunctionName(tenantId: string): string {
-  return `cup360-site-${tenantId.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40)}`;
+/** Nome canônico das CloudFront Functions — inclui domainId para evitar colisão entre sites. */
+export function cup360CloudFrontFunctionName(tenantId: string, domainId: string): string {
+  const t = tenantId.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 24);
+  const d = domainId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
+  return `cup360-site-${t}-${d}`;
 }
 
 export function isCup360CloudFrontFunctionName(name: string | undefined): boolean {

@@ -19,8 +19,12 @@ export type ProvisionRequest = {
   tenantId: string;
   hostnameNormalized: string;
   isCanonical: boolean;
-  /** Hostnames do tenant (www + apex) para SAN e aliases. */
+  /** Todos os hostnames cadastrados no tenant (referência). */
   allTenantHostnames: string[];
+  /** Somente hostnames com ownership VERIFIED — usados em SAN/ACM/aliases. */
+  verifiedTenantHostnames: string[];
+  /** Desabilita mutação CloudFront quando outro hostname ativo compartilha a distribuição. */
+  skipCloudFrontDistributionDisable?: boolean;
   persistedCertificateArn?: string | null;
   persistedHostedZoneId?: string | null;
   persistedDistributionId?: string | null;

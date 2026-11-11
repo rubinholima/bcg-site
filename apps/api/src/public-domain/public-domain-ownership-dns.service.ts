@@ -13,6 +13,10 @@ import {
   type PublicDnsTxtResolver,
 } from './public-domain-public-dns-resolver';
 import { PublicDomainDnsCapabilityService } from './public-domain-dns-capability.service';
+import {
+  assertRoute53WriteAllowed,
+  type Route53WriteGuardContext,
+} from './public-domain-route53-write-guard';
 import type { PublicDomainDnsCapability } from './public-domain-dns-instruction.model';
 import type { PublicDomainDnsInstruction } from './public-domain-dns-instruction.model';
 
@@ -66,6 +70,13 @@ export class PublicDomainOwnershipDnsService {
     }
     try {
       const { r53 } = createPublicDomainAwsClients(cfg);
+      const guardCtx: Route53WriteGuardContext = {
+        hostnameNormalized: params.hostnameNormalized,
+        hostedZoneId: params.hostedZoneId,
+        zoneName: params.zoneName,
+        purpose: 'OWNERSHIP',
+      };
+      assertRoute53WriteAllowed(guardCtx, change);
       await r53.send(
         new ChangeResourceRecordSetsCommand({
           HostedZoneId: params.hostedZoneId,
@@ -91,7 +102,16 @@ export class PublicDomainOwnershipDnsService {
     let txtValues: string[];
     try {
       txtValues = await resolveOwnershipTxtForHostname(params.hostnameNormalized, params.resolver);
-    } catch {
+    } catch (e: unknown) {
+      const err = e as NodeJS.ErrnoException;
+      if (err?.code === 'ETIMEOUT' || err?.message === 'DNS_TIMEOUT') {
+        return {
+          ok: false,
+          code: 'DNS_TIMEOUT',
+          message: 'Consulta DNS excedeu o tempo limite. Tente novamente.',
+          txtValues: [],
+        };
+      }
       return {
         ok: false,
         code: 'DNS_LOOKUP_FAILED',

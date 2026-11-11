@@ -18,7 +18,7 @@ describe('verifyCloudFrontDistributionOwned', () => {
         }),
     } as unknown as CloudFrontClient;
 
-    const out = await verifyCloudFrontDistributionOwned(cf, 'EQ7G08XI2IC8C');
+    const out = await verifyCloudFrontDistributionOwned(cf, 'EQ7G08XI2IC8C', 'tenant-a', 'dom-a');
     expect(out.ok).toBe(false);
     if (!out.ok) {
       expect(out.lastErrorCode).toBe('AWS_RESOURCE_NOT_OWNED');
@@ -35,12 +35,16 @@ describe('verifyCloudFrontDistributionOwned', () => {
         })
         .mockResolvedValueOnce({
           Tags: {
-            Items: [{ Key: CUP360_PUBLIC_DOMAIN_TAG_KEY, Value: CUP360_PUBLIC_DOMAIN_TAG_VALUE }],
+            Items: [
+              { Key: CUP360_PUBLIC_DOMAIN_TAG_KEY, Value: CUP360_PUBLIC_DOMAIN_TAG_VALUE },
+              { Key: 'cup360-tenant', Value: 'tenant-a' },
+              { Key: 'cup360-public-domain-id', Value: 'dom-a' },
+            ],
           },
         }),
     } as unknown as CloudFrontClient;
 
-    const out = await verifyCloudFrontDistributionOwned(cf, 'ABC123');
+    const out = await verifyCloudFrontDistributionOwned(cf, 'ABC123', 'tenant-a', 'dom-a');
     expect(out).toEqual({
       ok: true,
       arn: 'arn:aws:cloudfront::123:distribution/ABC123',

@@ -1,0 +1,8 @@
+{
+  "identityModel": {
+    "applicationRuntime": "Cup360 API request-serving role (JWT, Prisma, dashboard) — sem permissões amplas Route53/ACM/CloudFront de escrita.",
+    "provisioningRuntime": "Cup360PublicDomainsProvisioner — identidade AWS dedicada; política v5-deployable-proposed.json; tags obrigatórias cup360-managed, cup360-tenant, cup360-public-domain-id.",
+    "boundary": "Aplicação valida tenant/hostname/SAN; provisionador só muta recursos já etiquetados; Route53 limitado a zonas explicitamente listadas na política."
+  },
+  "extendZones": "Para nova hosted zone autorizada, duplicar entradas Route53ListInAuthorizedZone, Route53ChangeCup360Records e DenyRoute53OutsideAllowlist com o novo hostedzone ID — regenerar JSON completo antes de anexar à role."
+}

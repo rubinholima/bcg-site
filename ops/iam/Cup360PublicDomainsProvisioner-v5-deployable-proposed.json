@@ -1,16 +1,16 @@
 {
   "Version": "2012-10-17",
-  "Description": "PROPOSTA — não aplicada. Substitui listas fixas de hostname/zona BCFC por tags CUP360 + allowlist de hosted zones via variável de ambiente.",
   "Statement": [
     {
-      "Sid": "AcmRequestManagedTag",
+      "Sid": "AcmRequestManagedTagDns",
       "Effect": "Allow",
       "Action": "acm:RequestCertificate",
       "Resource": "*",
       "Condition": {
         "StringEquals": {
           "aws:RequestedRegion": "us-east-1",
-          "aws:RequestTag/cup360-managed": "public-domain-site"
+          "aws:RequestTag/cup360-managed": "public-domain-site",
+          "acm:ValidationMethod": "DNS"
         },
         "ForAllValues:StringEquals": {
           "aws:TagKeys": ["cup360-managed", "cup360-tenant", "cup360-public-domain-id"]
@@ -18,15 +18,31 @@
       }
     },
     {
-      "Sid": "AcmReadWriteTagged",
+      "Sid": "AcmReadTagged",
       "Effect": "Allow",
-      "Action": ["acm:DescribeCertificate", "acm:ListTagsForCertificate", "acm:AddTagsToCertificate"],
-      "Resource": "arn:aws:acm:us-east-1:887366284369:certificate/*"
+      "Action": ["acm:DescribeCertificate", "acm:ListTagsForCertificate"],
+      "Resource": "arn:aws:acm:us-east-1:887366284369:certificate/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/cup360-managed": "public-domain-site"
+        }
+      }
+    },
+    {
+      "Sid": "AcmTagNewCertificates",
+      "Effect": "Allow",
+      "Action": "acm:AddTagsToCertificate",
+      "Resource": "arn:aws:acm:us-east-1:887366284369:certificate/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/cup360-managed": "public-domain-site"
+        }
+      }
     },
     {
       "Sid": "CloudFrontCreateManaged",
       "Effect": "Allow",
-      "Action": ["cloudfront:CreateDistribution", "cloudfront:CreateFunction"],
+      "Action": ["cloudfront:CreateDistribution", "cloudfront:CreateFunction", "cloudfront:TagResource"],
       "Resource": "*",
       "Condition": {
         "StringEquals": {
@@ -41,7 +57,6 @@
         "cloudfront:GetDistribution",
         "cloudfront:GetDistributionConfig",
         "cloudfront:UpdateDistribution",
-        "cloudfront:TagResource",
         "cloudfront:ListTagsForResource",
         "cloudfront:DescribeFunction",
         "cloudfront:UpdateFunction",
@@ -74,24 +89,39 @@
       "Resource": "*"
     },
     {
-      "Sid": "Route53AuthorizedZoneMutations",
+      "Sid": "Route53ListInAuthorizedZone",
       "Effect": "Allow",
-      "Action": ["route53:ChangeResourceRecordSets", "route53:ListResourceRecordSets"],
-      "Resource": [
-        "arn:aws:route53:::hostedzone/REPLACE_ZONE_A",
-        "arn:aws:route53:::hostedzone/REPLACE_ZONE_B",
-        "arn:aws:route53:::hostedzone/REPLACE_ZONE_C"
-      ]
+      "Action": "route53:ListResourceRecordSets",
+      "Resource": "arn:aws:route53:::hostedzone/Z0293263107R5329WZZM8"
     },
     {
-      "Sid": "DenyOtherHostedZones",
+      "Sid": "Route53ChangeCup360Records",
+      "Effect": "Allow",
+      "Action": "route53:ChangeResourceRecordSets",
+      "Resource": "arn:aws:route53:::hostedzone/Z0293263107R5329WZZM8",
+      "Condition": {
+        "ForAllValues:StringEquals": {
+          "route53:ChangeResourceRecordSetsRecordTypes": ["A", "CNAME", "TXT"],
+          "route53:ChangeResourceRecordSetsActions": ["UPSERT", "DELETE"]
+        }
+      }
+    },
+    {
+      "Sid": "DenyRoute53OutsideAllowlist",
       "Effect": "Deny",
       "Action": "route53:ChangeResourceRecordSets",
-      "NotResource": [
-        "arn:aws:route53:::hostedzone/REPLACE_ZONE_A",
-        "arn:aws:route53:::hostedzone/REPLACE_ZONE_B",
-        "arn:aws:route53:::hostedzone/REPLACE_ZONE_C"
-      ]
+      "NotResource": "arn:aws:route53:::hostedzone/Z0293263107R5329WZZM8"
+    },
+    {
+      "Sid": "DenyMailRecordTypes",
+      "Effect": "Deny",
+      "Action": "route53:ChangeResourceRecordSets",
+      "Resource": "arn:aws:route53:::hostedzone/Z0293263107R5329WZZM8",
+      "Condition": {
+        "ForAllValues:StringEquals": {
+          "route53:ChangeResourceRecordSetsRecordTypes": ["MX", "NS", "SOA", "SRV"]
+        }
+      }
     },
     {
       "Sid": "DenyLegacyAcmTagging",

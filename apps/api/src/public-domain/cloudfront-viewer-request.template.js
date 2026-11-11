@@ -3,7 +3,7 @@
  * Placeholders: __SECRET__, __ALIASES_JSON__, __VERSION__
  * Runtime: cloudfront-js-2.0 (crypto HMAC SHA-256).
  */
-import crypto from 'crypto';
+const crypto = require('crypto');
 
 function handler(event) {
   var req = event.request;

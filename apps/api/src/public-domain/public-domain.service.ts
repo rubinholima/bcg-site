@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -19,8 +18,6 @@ import { ModulesService } from '../modules/modules.service';
 import {
   generateVerificationToken,
   hashVerificationToken,
-  normalizePublicHostname,
-  PublicDomainHostnameError,
   verificationTxtRecordName,
 } from './public-domain.hostname.util';
 import { AwsPublicDomainProvider } from './aws-public-domain.provider';
@@ -29,6 +26,9 @@ import { formatOwnershipTxtChallenge } from './public-domain-ownership-challenge
 import { PublicDomainOwnershipDnsService } from './public-domain-ownership-dns.service';
 import type { PublicDomainDnsCapability } from './public-domain-dns-instruction.model';
 import { PublicDomainDnsCapabilityService } from './public-domain-dns-capability.service';
+import { PublicDomainHostnameAuthorizationService } from './public-domain-hostname-authorization.service';
+import type { ProvisionRequest } from './public-domain-provisioner.interface';
+import { canMarkProvisioningActive } from './public-domain-active-readiness.util';
 
 const MODULE_SLUG = 'cup360_public_domains';
 
@@ -111,6 +111,7 @@ export class PublicDomainService {
     private readonly awsProvider: AwsPublicDomainProvider,
     private readonly ownershipDns: PublicDomainOwnershipDnsService,
     private readonly dnsCapability: PublicDomainDnsCapabilityService,
+    private readonly hostnameAuth: PublicDomainHostnameAuthorizationService,
   ) {}
 
   async list(tenantId: string, user: CognitoJwtPayload): Promise<PublicDomainDto[]> {
@@ -128,22 +129,14 @@ export class PublicDomainService {
     user: CognitoJwtPayload,
   ): Promise<PublicDomainDto> {
     await this.assertManageAccess(tenantId, user);
-    let hostnameNormalized: string;
-    try {
-      hostnameNormalized = normalizePublicHostname(body.hostname);
-    } catch (e) {
-      if (e instanceof PublicDomainHostnameError) {
-        throw new BadRequestException(e.message);
-      }
-      throw e;
-    }
+    const hostnameNormalized = await this.hostnameAuth.assertHostnameAllowedForTenantCreate(
+      body.hostname,
+      tenantId,
+    );
 
     const existing = await this.prisma.publicDomain.findUnique({
       where: { hostnameNormalized },
     });
-    if (existing && existing.tenantId !== tenantId) {
-      throw new ConflictException('Este hostname já está reservado para outra empresa.');
-    }
     if (existing) {
       return toDto(existing);
     }
@@ -222,8 +215,14 @@ export class PublicDomainService {
       throw new BadRequestException(check.message);
     }
 
-    const updated = await this.prisma.publicDomain.update({
-      where: { id: row.id },
+    const claimed = await this.prisma.publicDomain.updateMany({
+      where: {
+        id: row.id,
+        tenantId,
+        verificationTokenHash: row.verificationTokenHash,
+        verificationExpiresAt: { gt: new Date() },
+        verificationStatus: { in: ['PENDING_VERIFICATION', 'FAILED'] },
+      },
       data: {
         verificationStatus: 'VERIFIED',
         verifiedAt: new Date(),
@@ -235,6 +234,10 @@ export class PublicDomainService {
         lastCheckedAt: new Date(),
       },
     });
+    if (claimed.count !== 1) {
+      throw new BadRequestException('Desafio alterado ou expirado. Gere um novo TXT.');
+    }
+    const updated = await this.requireDomain(tenantId, domainId);
     await this.audit(user, 'public_domain_verified_dns', updated.id, tenantId, {
       hostname: updated.hostnameNormalized,
     });
@@ -285,30 +288,21 @@ export class PublicDomainService {
     if (row.verificationStatus !== 'VERIFIED') {
       throw new BadRequestException('Verifique a propriedade do domínio antes de publicar.');
     }
-    const tenantHosts = await this.prisma.publicDomain.findMany({
-      where: { tenantId },
-      select: { hostnameNormalized: true },
-    });
-    const allTenantHostnames = tenantHosts.map((h) => h.hostnameNormalized);
-    const result = await this.awsProvider.provision({
-      domainId: row.id,
-      tenantId,
-      hostnameNormalized: row.hostnameNormalized,
-      isCanonical: row.isCanonical,
-      allTenantHostnames,
-      persistedCertificateArn: row.certificateArn,
-      persistedHostedZoneId: row.hostedZoneId,
-      persistedDistributionId: row.distributionId,
-      persistedDistributionDomain: row.distributionDomain,
-      persistedCloudFrontFunctionArn: row.cloudFrontFunctionArn,
-    });
+    const request = await this.buildProvisionRequest(tenantId, row);
+    const result = await this.awsProvider.provision(request);
+
+    const effectiveStatus = canMarkProvisioningActive(result)
+      ? result.provisioningStatus
+      : result.provisioningStatus === 'ACTIVE'
+        ? 'PROVISIONING'
+        : result.provisioningStatus;
 
     const metaPayload = { externalDns: result.externalDnsInstructions ?? [] };
 
     const updated = await this.prisma.publicDomain.update({
       where: { id: row.id },
       data: {
-        provisioningStatus: result.provisioningStatus,
+        provisioningStatus: effectiveStatus,
         sslStatus: result.sslStatus ?? undefined,
         verificationStatus: result.verificationStatus ?? undefined,
         lastErrorCode: result.lastErrorCode ?? null,
@@ -321,12 +315,12 @@ export class PublicDomainService {
         provisioningStep: result.provisioningStep ?? null,
         provisioningMetadata: metaPayload,
         lastCheckedAt: new Date(),
-        status: result.provisioningStatus === 'ACTIVE' ? 'ACTIVE' : 'PENDING',
-        activatedAt: result.provisioningStatus === 'ACTIVE' ? new Date() : null,
+        status: effectiveStatus === 'ACTIVE' ? 'ACTIVE' : 'PENDING',
+        activatedAt: effectiveStatus === 'ACTIVE' ? new Date() : null,
       },
     });
 
-    if (result.provisioningStatus === 'ACTIVE') {
+    if (effectiveStatus === 'ACTIVE') {
       await this.prisma.publicDomain.updateMany({
         where: {
           tenantId,
@@ -365,25 +359,36 @@ export class PublicDomainService {
     return this.publish(tenantId, domainId, user);
   }
 
+  /** Verificar / Continuar — ownership DNS + provisionamento idempotente. */
+  async reconcile(
+    tenantId: string,
+    domainId: string,
+    user: CognitoJwtPayload,
+  ): Promise<PublicDomainDto> {
+    await this.assertManageAccess(tenantId, user);
+    const row = await this.requireDomain(tenantId, domainId);
+    if (row.verificationStatus !== 'VERIFIED') {
+      try {
+        return await this.verifyOwnershipViaDns(tenantId, domainId, {}, user);
+      } catch {
+        return toDto(await this.requireDomain(tenantId, domainId));
+      }
+    }
+    if (
+      row.status === 'ACTIVE' &&
+      row.provisioningStatus === 'ACTIVE' &&
+      !row.provisioningStep
+    ) {
+      return toDto(row);
+    }
+    return this.publish(tenantId, domainId, user);
+  }
+
   async disable(tenantId: string, domainId: string, user: CognitoJwtPayload): Promise<PublicDomainDto> {
     await this.assertManageAccess(tenantId, user);
     const row = await this.requireDomain(tenantId, domainId);
-    const tenantHosts = await this.prisma.publicDomain.findMany({
-      where: { tenantId },
-      select: { hostnameNormalized: true },
-    });
-    const result = await this.awsProvider.disable({
-      domainId: row.id,
-      tenantId,
-      hostnameNormalized: row.hostnameNormalized,
-      isCanonical: row.isCanonical,
-      allTenantHostnames: tenantHosts.map((h) => h.hostnameNormalized),
-      persistedCertificateArn: row.certificateArn,
-      persistedHostedZoneId: row.hostedZoneId,
-      persistedDistributionId: row.distributionId,
-      persistedDistributionDomain: row.distributionDomain,
-      persistedCloudFrontFunctionArn: row.cloudFrontFunctionArn,
-    });
+    const request = await this.buildProvisionRequest(tenantId, row);
+    const result = await this.awsProvider.disable(request);
     const updated = await this.prisma.publicDomain.update({
       where: { id: row.id },
       data: {
@@ -477,6 +482,45 @@ export class PublicDomainService {
     return {
       dnsCapability: ctx.capability,
       ownershipDnsInstructions: [ownershipInstruction],
+    };
+  }
+
+  private async buildProvisionRequest(tenantId: string, row: PublicDomain): Promise<ProvisionRequest> {
+    const tenantHosts = await this.prisma.publicDomain.findMany({
+      where: { tenantId },
+      select: {
+        hostnameNormalized: true,
+        verificationStatus: true,
+        distributionId: true,
+        status: true,
+        id: true,
+      },
+    });
+    const verifiedTenantHostnames = tenantHosts
+      .filter((h) => h.verificationStatus === 'VERIFIED')
+      .map((h) => h.hostnameNormalized);
+    const sharedDistPeers =
+      row.distributionId != null
+        ? tenantHosts.filter(
+            (h) =>
+              h.distributionId === row.distributionId &&
+              h.id !== row.id &&
+              h.status === 'ACTIVE',
+          ).length
+        : 0;
+    return {
+      domainId: row.id,
+      tenantId,
+      hostnameNormalized: row.hostnameNormalized,
+      isCanonical: row.isCanonical,
+      allTenantHostnames: tenantHosts.map((h) => h.hostnameNormalized),
+      verifiedTenantHostnames,
+      skipCloudFrontDistributionDisable: sharedDistPeers > 0,
+      persistedCertificateArn: row.certificateArn,
+      persistedHostedZoneId: row.hostedZoneId,
+      persistedDistributionId: row.distributionId,
+      persistedDistributionDomain: row.distributionDomain,
+      persistedCloudFrontFunctionArn: row.cloudFrontFunctionArn,
     };
   }
 
