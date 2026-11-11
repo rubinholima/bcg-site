@@ -31,6 +31,13 @@ export const DYNAMIC_REPORT_POPULATIONS: DynamicReportPopulationDefinition[] = [
     filterKeys: ['search', 'category', 'situation', 'position', 'season', 'competition', 'referenceDate'],
   },
   {
+    key: 'player.athlete_contracts',
+    label: 'Contratos de atletas (gestão contratual)',
+    source: 'player',
+    description: 'Use o relatório dedicado em Futebol → Contratos de atletas para filtros contratuais completos.',
+    filterKeys: ['search', 'category', 'situation', 'referenceDate'],
+  },
+  {
     key: 'employee.active_staff',
     label: 'Colaboradores ativos',
     source: 'employee',
@@ -69,6 +76,15 @@ export const DYNAMIC_REPORT_PRESETS: DynamicReportPresetDefinition[] = [
     sortDir: 'asc',
     groupBy: 'cafeteria',
     lockedFields: true,
+  },
+  {
+    id: 'contratos_atletas_hub',
+    label: 'Contratos de atletas (hub contratual)',
+    population: 'player.athlete_contracts',
+    defaultFields: ['fullName', 'category', 'sportsSituation'],
+    sortBy: 'fullName',
+    sortDir: 'asc',
+    groupBy: 'none',
   },
   {
     id: 'folha_pagamento',

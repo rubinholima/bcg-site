@@ -6,6 +6,13 @@ import {
   resolveAlertDays,
 } from './athlete-contract-expiration.util';
 import { resolveAthleteContractAccess } from './athlete-contract-access.util';
+import {
+  ATHLETE_CONTRACT_REPORT_PRESETS,
+  applyExpirationPreset,
+  buildAthleteContractDedupKey,
+  categoryLooksFormation,
+  categoryLooksProfessional,
+} from './athlete-contract-report.util';
 
 describe('Athlete contracts (PROMPT 038)', () => {
   it('valida percentual econômico 100%', () => {
@@ -63,5 +70,48 @@ describe('Athlete contracts (PROMPT 038)', () => {
     const admin = resolveAthleteContractAccess('company_admin', ['juridico']);
     expect(admin.canManage).toBe(true);
     expect(admin.canManageTypes).toBe(true);
+  });
+
+  it('presets do relatório contratual — lista completa PROMPT 039', () => {
+    const ids = ATHLETE_CONTRACT_REPORT_PRESETS.map((p) => p.id);
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        'expiring_30',
+        'expiring_60',
+        'expiring_90',
+        'expired',
+        'no_active_contract',
+        'awaiting_signature',
+        'awaiting_federation',
+        'professional',
+        'formation',
+        'agent_intermediary',
+        'partner_club',
+      ]),
+    );
+  });
+
+  it('deduplicação de notificação — chave estável', () => {
+    const key = buildAthleteContractDedupKey({
+      tenantId: 't1',
+      kind: 'contract_expiring',
+      entityId: 'c1',
+      bucket: '2026-11-11',
+    });
+    expect(key).toBe('t1:contract_expiring:c1:2026-11-11');
+  });
+
+  it('categorias profissional vs formação', () => {
+    expect(categoryLooksProfessional('Sub-20')).toBe(false);
+    expect(categoryLooksFormation('Sub-20')).toBe(true);
+    expect(categoryLooksProfessional('Profissional')).toBe(true);
+  });
+
+  it('preset expirado e assinatura', () => {
+    const ref = new Date('2026-01-15T12:00:00Z');
+    const end = new Date('2026-01-01T00:00:00Z');
+    expect(applyExpirationPreset('expired', end, 'ACTIVE', ref)).toBe(true);
+    expect(applyExpirationPreset('awaiting_signature', end, 'PENDING_SIGNATURE', ref)).toBe(true);
+    expect(applyExpirationPreset('awaiting_signature', end, 'ACTIVE', ref)).toBe(false);
   });
 });

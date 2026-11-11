@@ -23,6 +23,11 @@ function ContratosAtletasContent() {
   const sp = useSearchParams();
   const tenantId = sp.get("tenantId") ?? "";
   const [preset, setPreset] = useState<string>("expiring_30");
+  const [category, setCategory] = useState("");
+  const [sortBy, setSortBy] = useState("endDate");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [offset, setOffset] = useState(0);
+  const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -31,17 +36,25 @@ function ContratosAtletasContent() {
     setLoading(true);
     try {
       const p = REPORT_PRESETS.find((x) => x.id === preset) ?? REPORT_PRESETS[0];
-      const { data } = await api.post<{ rows: ReportRow[] }>(
+      const { data } = await api.post<{ rows: ReportRow[]; total?: number }>(
         `/tenants/${tenantId}/athlete-contracts/report`,
-        p,
+        {
+          ...p,
+          category: category.trim() || undefined,
+          sortBy,
+          sortDir,
+          offset,
+          limit: 50,
+        },
       );
       setRows(Array.isArray(data?.rows) ? data.rows : []);
+      setTotal(typeof data?.total === "number" ? data.total : 0);
     } catch {
       setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [tenantId, preset]);
+  }, [tenantId, preset, category, sortBy, sortDir, offset]);
 
   useEffect(() => {
     void run();
@@ -93,7 +106,54 @@ function ContratosAtletasContent() {
         <Button type="button" size="sm" variant="outline" onClick={exportCsv} disabled={!rows.length}>
           Exportar CSV
         </Button>
+        <input
+          className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+          placeholder="Categoria"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        />
+        <select
+          className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <option value="endDate">Ordenar: fim</option>
+          <option value="playerName">Ordenar: atleta</option>
+          <option value="daysUntilExpiry">Ordenar: dias</option>
+        </select>
+        <select
+          className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+          value={sortDir}
+          onChange={(e) => setSortDir(e.target.value as "asc" | "desc")}
+        >
+          <option value="asc">Asc</option>
+          <option value="desc">Desc</option>
+        </select>
+        <Button type="button" size="sm" variant="ghost" asChild>
+          <a href={`/dashboard/relatorios/futebol/contratos-atletas/tipos?tenantId=${tenantId}`}>
+            Tipos de contrato
+          </a>
+        </Button>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Total: {total} · Página {Math.floor(offset / 50) + 1}
+        {total > offset + 50 ? (
+          <>
+            {" "}
+            <button type="button" className="underline" onClick={() => setOffset((o) => o + 50)}>
+              Próxima
+            </button>
+          </>
+        ) : null}
+        {offset > 0 ? (
+          <>
+            {" "}
+            <button type="button" className="underline" onClick={() => setOffset((o) => Math.max(0, o - 50))}>
+              Anterior
+            </button>
+          </>
+        ) : null}
+      </p>
 
       {!tenantId ? (
         <p className="text-sm text-muted-foreground">Informe tenantId na URL (?tenantId=…).</p>

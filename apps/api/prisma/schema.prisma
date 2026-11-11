@@ -166,6 +166,7 @@ model Tenant {
   athleteEvaluations      AthleteEvaluation[]
   athleteFederativeProcesses AthleteFederativeProcess[]
   athleteProfessionalizations AthleteProfessionalizationCase[]
+  athleteContractNotificationDedups AthleteContractNotificationDedup[]
   assetCategories         AssetCategory[]
   assets                  Asset[]
   infrastructureRacks     InfrastructureRack[]
@@ -1860,6 +1861,7 @@ model Player {
   athleteFederativeProcesses AthleteFederativeProcess[]
   athleteContracts           AthleteContract[]
   athleteContractAttachments AthleteContractAttachment[]
+  athleteContractFinanceLinks AthleteContractFinanceLink[]
   athleteProfessionalizations AthleteProfessionalizationCase[]
   analysisEvents             AnalysisEvent[] @relation("AnalysisEventPlayer")
   analysisEventsRelated      AnalysisEvent[] @relation("AnalysisEventRelatedPlayer")
@@ -3056,36 +3058,53 @@ model AthleteContractSignature {
 }
 
 model AthleteContractAttachment {
-  id              String   @id @default(cuid())
-  contractId      String?
-  contract        AthleteContract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
-  playerId        String
-  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  category        String
-  documentType    String?
-  description     String?  @db.Text
-  fileKey         String
-  fileUrl         String?
-  legalDocumentId String?
-  issueDate       DateTime? @db.Date
-  expirationDate  DateTime? @db.Date
-  versionLabel    String?
-  uploadedByUserId String?
-  uploadedAt      DateTime @default(now())
+  id                        String   @id @default(cuid())
+  contractId                String?
+  contract                  AthleteContract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  playerId                  String
+  player                    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  federativeProcessId       String?
+  federativeProcess         AthleteFederativeProcess? @relation(fields: [federativeProcessId], references: [id], onDelete: SetNull)
+  professionalizationCaseId String?
+  professionalizationCase   AthleteProfessionalizationCase? @relation(fields: [professionalizationCaseId], references: [id], onDelete: SetNull)
+  category                  String
+  documentType              String?
+  description               String?  @db.Text
+  fileKey                   String
+  fileUrl                   String?
+  legalDocumentId           String?
+  issueDate                 DateTime? @db.Date
+  expirationDate            DateTime? @db.Date
+  versionLabel              String?
+  uploadedByUserId          String?
+  uploadedByEmail           String?
+  uploadedAt                DateTime @default(now())
   @@index([playerId, category])
   @@index([contractId])
+  @@index([federativeProcessId])
 }
 
 model AthleteContractFinanceLink {
-  id              String   @id @default(cuid())
-  contractId      String
-  contract        AthleteContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  linkType        String
-  referenceId     String?
-  description     String?  @db.Text
-  amount          Decimal? @db.Decimal(14, 2)
-  status          String?
+  id                     String   @id @default(cuid())
+  contractId             String?
+  contract               AthleteContract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  playerId               String?
+  player                 Player? @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  federativeProcessId    String?
+  federativeProcess      AthleteFederativeProcess? @relation(fields: [federativeProcessId], references: [id], onDelete: Cascade)
+  linkType               String
+  referenceId            String?
+  financeiroLancamentoId String?
+  omieReference          String?
+  description            String?  @db.Text
+  amount                 Decimal? @db.Decimal(14, 2)
+  currency               String?  @default("BRL")
+  status                 String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
   @@index([contractId])
+  @@index([playerId])
+  @@index([federativeProcessId])
 }
 
 model AthleteContractAuditLog {
@@ -3140,6 +3159,8 @@ model AthleteFederativeProcess {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   contracts             AthleteContract[]
+  attachments           AthleteContractAttachment[]
+  financeLinks          AthleteContractFinanceLink[]
   @@index([tenantId, playerId])
   @@index([playerId, status])
 }
@@ -3161,8 +3182,24 @@ model AthleteProfessionalizationCase {
   notes                String?   @db.Text
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  attachments          AthleteContractAttachment[]
   @@index([tenantId, playerId])
   @@index([playerId, status])
+}
+
+/// Idempotência de avisos contratuais (integração PlatformAnnouncement).
+model AthleteContractNotificationDedup {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  dedupKey       String   @unique
+  kind           String
+  entityType     String?
+  entityId       String?
+  targetUserId   String?
+  announcementId String?
+  createdAt      DateTime @default(now())
+  @@index([tenantId, kind])
 }
 
 // ========== Patrimônio (empresa + clube; clube tem kit: camisa, calção, meião) ==========

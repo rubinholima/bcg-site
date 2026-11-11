@@ -262,6 +262,7 @@ export class DynamicReportsService {
             },
           },
         },
+        athleteContracts: { select: { id: true }, take: 1 },
       },
     });
 
@@ -292,6 +293,11 @@ export class DynamicReportsService {
       if (population === 'player.payroll') {
         const active = p.rhEmployee ? pickActiveEmployment(p.rhEmployee.employments) : null;
         return active != null;
+      }
+      if (population === 'player.athlete_contracts') {
+        return Array.isArray((p as { athleteContracts?: unknown[] }).athleteContracts)
+          ? ((p as { athleteContracts: unknown[] }).athleteContracts.length > 0)
+          : true;
       }
       return true;
     });
