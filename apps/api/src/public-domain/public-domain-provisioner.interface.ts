@@ -4,10 +4,14 @@ import type {
   PublicDomainVerificationStatus,
 } from '@prisma/client';
 
+import type { DnsInstructionPurpose, DnsInstructionStatus } from './public-domain-dns-instruction.model';
+
 export type DnsInstruction = {
   name: string;
   type: string;
   value: string;
+  purpose?: DnsInstructionPurpose;
+  status?: DnsInstructionStatus;
 };
 
 export type ProvisionRequest = {

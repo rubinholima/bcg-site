@@ -25,6 +25,10 @@ import {
 } from './public-domain.hostname.util';
 import { AwsPublicDomainProvider } from './aws-public-domain.provider';
 import type { DnsInstruction } from './public-domain-provisioner.interface';
+import { formatOwnershipTxtChallenge } from './public-domain-ownership-challenge.util';
+import { PublicDomainOwnershipDnsService } from './public-domain-ownership-dns.service';
+import type { PublicDomainDnsCapability } from './public-domain-dns-instruction.model';
+import { PublicDomainDnsCapabilityService } from './public-domain-dns-capability.service';
 
 const MODULE_SLUG = 'cup360_public_domains';
 
@@ -59,6 +63,8 @@ export type PublicDomainDto = {
   /** Instrução DNS — valor esperado do TXT (não armazenado após verificação). */
   verificationTxtName?: string;
   verificationTxtValue?: string;
+  dnsCapability?: PublicDomainDnsCapability;
+  ownershipDnsInstructions?: DnsInstruction[] | null;
 };
 
 function toDto(row: PublicDomain, extras?: Partial<PublicDomainDto>): PublicDomainDto {
@@ -103,6 +109,8 @@ export class PublicDomainService {
     private readonly tenantAccess: TenantAccessService,
     private readonly modules: ModulesService,
     private readonly awsProvider: AwsPublicDomainProvider,
+    private readonly ownershipDns: PublicDomainOwnershipDnsService,
+    private readonly dnsCapability: PublicDomainDnsCapabilityService,
   ) {}
 
   async list(tenantId: string, user: CognitoJwtPayload): Promise<PublicDomainDto[]> {
@@ -161,13 +169,15 @@ export class PublicDomainService {
       hostname: hostnameNormalized,
     });
 
+    const ownershipExtras = await this.bootstrapOwnershipChallenge(row, token);
     return toDto(row, {
       verificationTxtName: verificationTxtRecordName(hostnameNormalized),
-      verificationTxtValue: `cup360-verify=${token}`,
+      verificationTxtValue: formatOwnershipTxtChallenge(token),
+      ...ownershipExtras,
     });
   }
 
-  async verifyOwnershipWithToken(
+  async verifyOwnershipViaDns(
     tenantId: string,
     domainId: string,
     body: { token?: string },
@@ -178,25 +188,40 @@ export class PublicDomainService {
     if (row.verificationStatus === 'VERIFIED') {
       return toDto(row);
     }
-    const token = (body.token ?? '').trim();
-    if (!token || !row.verificationTokenHash || !row.verificationExpiresAt) {
-      throw new BadRequestException('Token inválido.');
+    if ((body?.token ?? '').trim()) {
+      throw new BadRequestException(
+        'Verificação por token no dashboard não é mais aceita. Publique o TXT no DNS e use Verificar.',
+      );
+    }
+    if (!row.verificationTokenHash || !row.verificationExpiresAt) {
+      throw new BadRequestException('Desafio de verificação ausente. Gere um novo TXT.');
     }
     if (row.verificationExpiresAt.getTime() < Date.now()) {
       await this.prisma.publicDomain.update({
         where: { id: row.id },
         data: { verificationStatus: 'EXPIRED', lastErrorCode: 'VERIFICATION_EXPIRED' },
       });
-      throw new BadRequestException('Verificação expirada.');
+      throw new BadRequestException('Verificação expirada. Gere um novo desafio.');
     }
-    const h = hashVerificationToken(token);
-    if (h !== row.verificationTokenHash) {
+
+    const check = await this.ownershipDns.verifyAuthoritativeTxt({
+      hostnameNormalized: row.hostnameNormalized,
+      tokenHash: row.verificationTokenHash,
+    });
+
+    if (!check.ok) {
       await this.prisma.publicDomain.update({
         where: { id: row.id },
-        data: { verificationStatus: 'FAILED', lastErrorCode: 'VERIFICATION_MISMATCH' },
+        data: {
+          verificationStatus: 'FAILED',
+          lastErrorCode: check.code,
+          lastErrorMessage: check.message,
+          lastCheckedAt: new Date(),
+        },
       });
-      throw new ForbiddenException('Token de verificação incorreto.');
+      throw new BadRequestException(check.message);
     }
+
     const updated = await this.prisma.publicDomain.update({
       where: { id: row.id },
       data: {
@@ -207,12 +232,26 @@ export class PublicDomainService {
         lastErrorMessage: null,
         verificationTokenHash: null,
         verificationExpiresAt: null,
+        lastCheckedAt: new Date(),
       },
     });
-    await this.audit(user, 'public_domain_verified', updated.id, tenantId, {
+    await this.audit(user, 'public_domain_verified_dns', updated.id, tenantId, {
       hostname: updated.hostnameNormalized,
     });
     return toDto(updated);
+  }
+
+  /**
+   * Compatibilidade com scripts operacionais históricos — não aceita mais token colado.
+   * @deprecated use verifyOwnershipViaDns
+   */
+  async verifyOwnershipWithToken(
+    tenantId: string,
+    domainId: string,
+    body: { token?: string },
+    user: CognitoJwtPayload,
+  ): Promise<PublicDomainDto> {
+    return this.verifyOwnershipViaDns(tenantId, domainId, body, user);
   }
 
   async setCanonical(
@@ -399,10 +438,46 @@ export class PublicDomainService {
       },
     });
     await this.audit(user, 'public_domain_refresh_challenge', domainId, tenantId, {});
+    const ownershipExtras = await this.bootstrapOwnershipChallenge(updated, token);
     return toDto(updated, {
       verificationTxtName: verificationTxtRecordName(row.hostnameNormalized),
-      verificationTxtValue: `cup360-verify=${token}`,
+      verificationTxtValue: formatOwnershipTxtChallenge(token),
+      ...ownershipExtras,
     });
+  }
+
+  private async bootstrapOwnershipChallenge(
+    row: PublicDomain,
+    verificationToken: string,
+  ): Promise<Partial<PublicDomainDto>> {
+    const ctx = await this.dnsCapability.resolveForHostname(row.hostnameNormalized);
+    const ownershipInstruction = this.ownershipDns.ownershipInstructions(
+      row.hostnameNormalized,
+      verificationToken,
+    );
+    if (ctx.capability === 'MANAGED_ROUTE53' && ctx.hostedZoneId && ctx.zoneName) {
+      await this.ownershipDns.tryUpsertManagedOwnershipTxt({
+        hostnameNormalized: row.hostnameNormalized,
+        verificationToken,
+        hostedZoneId: ctx.hostedZoneId,
+        zoneName: ctx.zoneName,
+      });
+    }
+    const meta = {
+      dnsCapability: ctx.capability,
+      ownershipDns: [ownershipInstruction],
+    };
+    await this.prisma.publicDomain.update({
+      where: { id: row.id },
+      data: {
+        hostedZoneId: ctx.hostedZoneId ?? undefined,
+        provisioningMetadata: meta,
+      },
+    });
+    return {
+      dnsCapability: ctx.capability,
+      ownershipDnsInstructions: [ownershipInstruction],
+    };
   }
 
   private async requireDomain(tenantId: string, domainId: string): Promise<PublicDomain> {

@@ -43,7 +43,7 @@ export class PublicDomainController {
     @Param('domainId') domainId: string,
     @Body() body: { token?: string },
   ) {
-    return this.publicDomain.verifyOwnershipWithToken(tenantId, domainId, body, req.user);
+    return this.publicDomain.verifyOwnershipViaDns(tenantId, domainId, body, req.user);
   }
 
   @Post(':domainId/verification/refresh')

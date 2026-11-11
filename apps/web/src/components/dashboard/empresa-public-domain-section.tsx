@@ -36,7 +36,15 @@ export type PublicDomainRow = {
   lastErrorMessage: string | null;
   distributionDomain?: string | null;
   cloudFrontFunctionArn?: string | null;
-  externalDnsInstructions: Array<{ name: string; type: string; value: string }> | null;
+  externalDnsInstructions: Array<{
+    name: string;
+    type: string;
+    value: string;
+    purpose?: string;
+    status?: string;
+  }> | null;
+  dnsCapability?: string;
+  ownershipDnsInstructions?: Array<{ name: string; type: string; value: string; purpose?: string }> | null;
   verificationTxtName?: string;
   verificationTxtValue?: string;
 };
@@ -85,7 +93,6 @@ export function EmpresaPublicDomainSection({
   const [error, setError] = useState<string | null>(null);
   const [newHost, setNewHost] = useState("");
   const [mainPageId, setMainPageId] = useState(mainPublicPageId ?? "");
-  const [verifyInputs, setVerifyInputs] = useState<Record<string, string>>({});
   const [pendingInstruction, setPendingInstruction] = useState<{
     txtName: string;
     txtValue: string;
@@ -162,15 +169,9 @@ export function EmpresaPublicDomainSection({
   }
 
   async function verifyDomain(id: string) {
-    const token = (verifyInputs[id] ?? "").trim();
-    if (!token) {
-      setError("Cole o token mostrado ao criar ou renovar o desafio.");
-      return;
-    }
     setError(null);
     try {
-      await api.post(`/tenants/${tenantId}/public-domains/${id}/verify`, { token });
-      setVerifyInputs((prev) => ({ ...prev, [id]: "" }));
+      await api.post(`/tenants/${tenantId}/public-domains/${id}/verify`, {});
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro na verificação");
@@ -366,6 +367,9 @@ export function EmpresaPublicDomainSection({
                       <ul className="mt-1 space-y-1 break-all font-mono text-muted-foreground">
                         {d.externalDnsInstructions.map((rec, i) => (
                           <li key={`${rec.name}-${i}`}>
+                            {rec.purpose ? (
+                              <span className="text-foreground/70">{rec.purpose}: </span>
+                            ) : null}
                             <span className="text-foreground/80">{rec.type}</span> {rec.name} → {rec.value}
                           </li>
                         ))}
@@ -375,14 +379,8 @@ export function EmpresaPublicDomainSection({
 
                   {d.verificationStatus !== "VERIFIED" ? (
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                      <Input
-                        className="sm:max-w-xs"
-                        placeholder="Token cup360-verify=…"
-                        value={verifyInputs[d.id] ?? ""}
-                        onChange={(e) => setVerifyInputs((prev) => ({ ...prev, [d.id]: e.target.value }))}
-                      />
                       <Button type="button" size="sm" variant="secondary" onClick={() => void verifyDomain(d.id)}>
-                        Verificar
+                        Verificar DNS
                       </Button>
                       <Button type="button" size="sm" variant="outline" onClick={() => void refreshChallenge(d.id)}>
                         Novo TXT

@@ -1,0 +1,108 @@
+{
+  "Version": "2012-10-17",
+  "Description": "PROPOSTA — não aplicada. Substitui listas fixas de hostname/zona BCFC por tags CUP360 + allowlist de hosted zones via variável de ambiente.",
+  "Statement": [
+    {
+      "Sid": "AcmRequestManagedTag",
+      "Effect": "Allow",
+      "Action": "acm:RequestCertificate",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "us-east-1",
+          "aws:RequestTag/cup360-managed": "public-domain-site"
+        },
+        "ForAllValues:StringEquals": {
+          "aws:TagKeys": ["cup360-managed", "cup360-tenant", "cup360-public-domain-id"]
+        }
+      }
+    },
+    {
+      "Sid": "AcmReadWriteTagged",
+      "Effect": "Allow",
+      "Action": ["acm:DescribeCertificate", "acm:ListTagsForCertificate", "acm:AddTagsToCertificate"],
+      "Resource": "arn:aws:acm:us-east-1:887366284369:certificate/*"
+    },
+    {
+      "Sid": "CloudFrontCreateManaged",
+      "Effect": "Allow",
+      "Action": ["cloudfront:CreateDistribution", "cloudfront:CreateFunction"],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/cup360-managed": "public-domain-site"
+        }
+      }
+    },
+    {
+      "Sid": "CloudFrontMutateTaggedOnly",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:GetDistribution",
+        "cloudfront:GetDistributionConfig",
+        "cloudfront:UpdateDistribution",
+        "cloudfront:TagResource",
+        "cloudfront:ListTagsForResource",
+        "cloudfront:DescribeFunction",
+        "cloudfront:UpdateFunction",
+        "cloudfront:PublishFunction"
+      ],
+      "Resource": [
+        "arn:aws:cloudfront::887366284369:distribution/*",
+        "arn:aws:cloudfront::887366284369:function/cup360-site-*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/cup360-managed": "public-domain-site"
+        }
+      }
+    },
+    {
+      "Sid": "DenyLegacyDistributions",
+      "Effect": "Deny",
+      "Action": ["cloudfront:UpdateDistribution", "cloudfront:TagResource"],
+      "Resource": [
+        "arn:aws:cloudfront::887366284369:distribution/EQ7G08XI2IC8C",
+        "arn:aws:cloudfront::887366284369:distribution/E1NBA89C9PALRU",
+        "arn:aws:cloudfront::887366284369:distribution/E25Z46F65I1QT"
+      ]
+    },
+    {
+      "Sid": "Route53Discovery",
+      "Effect": "Allow",
+      "Action": ["route53:ListHostedZonesByName", "route53:GetChange"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Route53AuthorizedZoneMutations",
+      "Effect": "Allow",
+      "Action": ["route53:ChangeResourceRecordSets", "route53:ListResourceRecordSets"],
+      "Resource": [
+        "arn:aws:route53:::hostedzone/REPLACE_ZONE_A",
+        "arn:aws:route53:::hostedzone/REPLACE_ZONE_B",
+        "arn:aws:route53:::hostedzone/REPLACE_ZONE_C"
+      ]
+    },
+    {
+      "Sid": "DenyOtherHostedZones",
+      "Effect": "Deny",
+      "Action": "route53:ChangeResourceRecordSets",
+      "NotResource": [
+        "arn:aws:route53:::hostedzone/REPLACE_ZONE_A",
+        "arn:aws:route53:::hostedzone/REPLACE_ZONE_B",
+        "arn:aws:route53:::hostedzone/REPLACE_ZONE_C"
+      ]
+    },
+    {
+      "Sid": "DenyLegacyAcmTagging",
+      "Effect": "Deny",
+      "Action": "acm:AddTagsToCertificate",
+      "Resource": [
+        "arn:aws:acm:us-east-1:887366284369:certificate/a0820055-641b-4196-bd32-8b0d581d184c",
+        "arn:aws:acm:us-east-1:887366284369:certificate/4926d514-3018-474b-a104-ce14500169bd",
+        "arn:aws:acm:us-east-1:887366284369:certificate/222019de-78ff-4088-b69e-2dda1af12c9a",
+        "arn:aws:acm:us-east-1:887366284369:certificate/06a9f9f3-be5c-40a9-a5d8-7d85763005f9"
+      ]
+    }
+  ]
+}

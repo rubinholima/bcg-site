@@ -1,0 +1,23 @@
+{
+  "policyFile": "Cup360PublicDomainsRuntime-v4-generic-proposed.json",
+  "iamApplied": false,
+  "limitations": [
+    {
+      "id": "ACM_DOMAIN_NAMES",
+      "summary": "IAM não oferece condição ForAllValues em acm:DomainNames que valide domínios arbitrários futuros sem listá-los na política.",
+      "mitigation": "Exigir aws:RequestTag/cup360-managed=public-domain-site + auditoria; validação de hostname no código antes de RequestCertificate; opcional SCP/account boundary."
+    },
+    {
+      "id": "ROUTE53_RECORD_NAME_SCOPE",
+      "summary": "route53:ChangeResourceRecordSetsNormalizedRecordNames não cobre todos os padrões ACM (_*.acm-validations.aws) de forma genérica sem WildcardLike amplo.",
+      "mitigation": "Manter allowlist de hosted zone IDs; filtro isCup360ManagedWebRecord no código; deny NotResource em outras zonas."
+    },
+    {
+      "id": "OWNERSHIP_TXT_IAM",
+      "summary": "Separar permissão TXT _cup360-verification.* por zona via IAM é verboso; a segurança primária é allowlist de zona + safety util no app.",
+      "mitigation": "Política v4 autoriza mutations só nas zonas REPLACE_ZONE_* configuradas pelo operador (espelha CUP360_PUBLIC_DOMAIN_ROUTE53_ALLOWED_ZONES)."
+    }
+  ],
+  "multiZoneConfigEnv": "CUP360_PUBLIC_DOMAIN_ROUTE53_ALLOWED_ZONES",
+  "applicationCodeChangePerNewZone": false
+}

@@ -159,6 +159,8 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
           name: String(v.ResourceRecord!.Name),
           type: String(v.ResourceRecord!.Type),
           value: String(v.ResourceRecord!.Value).replace(/\.$/, ''),
+          purpose: 'ACM_VALIDATION' as const,
+          status: 'PENDING' as const,
         }));
 
       if (status === 'PENDING_VALIDATION') {
@@ -431,6 +433,8 @@ export class AwsPublicDomainProvider extends PublicDomainProvisioner {
         name: fqdn(h),
         type: 'ALIAS',
         value: `${cfDns} (CloudFront)`,
+        purpose: 'WEB_ALIAS' as const,
+        status: 'PENDING' as const,
       }));
 
       if (cfg.route53ManageDns && hostedZoneId && cfg.route53AllowedHostedZoneIds.includes(hostedZoneId)) {
