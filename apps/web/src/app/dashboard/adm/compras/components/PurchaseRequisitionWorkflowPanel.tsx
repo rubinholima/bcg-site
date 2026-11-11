@@ -59,6 +59,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { type SupplierRow } from "@/app/dashboard/adm/compras/components/SupplierFormDialog";
+import { QuoteEntryDialog } from "@/app/dashboard/adm/compras/components/QuoteEntryDialog";
+import { canProcurement } from "@/lib/procurement-permissions";
 
 export type WorkflowMode = "compras" | "requester" | "gerente" | "financeiro" | "diretoria";
 
@@ -106,7 +108,9 @@ export function PurchaseRequisitionWorkflowPanel({
   initialRequisitionId,
   onInitialRequisitionConsumed,
 }: PurchaseRequisitionWorkflowPanelProps) {
-  const { user } = useAuth();
+  const { user, modules, role } = useAuth();
+  const canEnterQuote = canProcurement(modules, "enter_quote", role);
+  const canSelectWinner = canProcurement(modules, "select_winner", role);
   const requesterPreview = formatRequesterDisplay(
     user?.name ?? user?.username ?? "",
     user?.email ?? "",
@@ -131,10 +135,6 @@ export function PurchaseRequisitionWorkflowPanel({
 
   // Cotação
   const [quoteOpen, setQuoteOpen] = useState(false);
-  const [quoteSupplierId, setQuoteSupplierId] = useState("");
-  const [quoteSupplierName, setQuoteSupplierName] = useState("");
-  const [quoteTotal, setQuoteTotal] = useState("");
-  const [quoteDelivery, setQuoteDelivery] = useState("");
 
   // Cotação online
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -444,27 +444,23 @@ export function PurchaseRequisitionWorkflowPanel({
     }
   };
 
-  const handleAddQuote = async () => {
-    if (!selected || !quoteSupplierName.trim() || !quoteTotal) return;
+  const handleAddQuote = async (payload: {
+    supplierId?: string;
+    supplierName: string;
+    items: Array<{ description: string; quantity: number; unit?: string; unitPrice: number }>;
+    pricingBreakdown: { tax?: number; shipping?: number; discount?: number; otherCosts?: number };
+    totalAmount: number;
+    deliveryDays?: number;
+    paymentTerms?: string;
+    validUntil?: string;
+    notes?: string;
+    attachmentUrl?: string;
+  }) => {
+    if (!selected) return;
     setActionLoading(true);
     try {
-      const items = (selected.items as Array<{ description: string; quantity: number; unit?: string }>) ?? [];
-      await api.post(`/compras/workflow/requisitions/${selected.id}/quotes`, {
-        supplierId: quoteSupplierId || undefined,
-        supplierName: quoteSupplierName.trim(),
-        totalAmount: parseFloat(quoteTotal),
-        deliveryDays: quoteDelivery ? parseInt(quoteDelivery, 10) : undefined,
-        items: items.map((i) => ({
-          description: i.description,
-          quantity: i.quantity,
-          unit: i.unit ?? "un",
-          unitPrice: parseFloat(quoteTotal) / Math.max(items.length, 1),
-        })),
-      });
+      await api.post(`/compras/workflow/requisitions/${selected.id}/quotes`, payload);
       setQuoteOpen(false);
-      setQuoteSupplierId("");
-      setQuoteSupplierName("");
-      setQuoteTotal("");
       await refreshSelected();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Erro ao adicionar cotação");
@@ -892,7 +888,11 @@ export function PurchaseRequisitionWorkflowPanel({
                     <Button type="button" variant="outline" onClick={() => void loadComparison()}>
                       Menor preço por item
                     </Button>
-                    <Button type="button" variant="outline" onClick={() => setQuoteOpen(true)}>Adicionar cotação</Button>
+                    {canEnterQuote ? (
+                      <Button type="button" variant="outline" onClick={() => setQuoteOpen(true)}>
+                        Adicionar cotação
+                      </Button>
+                    ) : null}
                     <Button type="button" disabled={actionLoading} onClick={() => runAction("submit-for-approval")}>
                       Enviar para aprovação
                     </Button>
@@ -1096,16 +1096,20 @@ export function PurchaseRequisitionWorkflowPanel({
                 <TableHeader>
                   <TableRow>
                     <TableHead className="min-w-[140px]">Item</TableHead>
-                    {comparison.matrix.suppliers.map((s) => (
-                      <TableHead key={s.quoteId} className="text-right min-w-[100px]">
+                    {comparison.matrix.suppliers.map((s) => {
+                      const isLowestTotal =
+                        comparison.matrix?.lowestTotalQuoteId === s.quoteId;
+                      return (
+                      <TableHead key={s.quoteId} className={`text-right min-w-[100px] ${isLowestTotal ? "text-green-600 dark:text-green-400" : ""}`}>
                         <span className="block truncate max-w-[120px]" title={s.supplierName}>
                           {s.supplierName}
+                          {isLowestTotal ? " ★" : ""}
                         </span>
                         <span className="text-[10px] font-normal text-muted-foreground block">
                           {s.totalAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                         </span>
                       </TableHead>
-                    ))}
+                    );})}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1135,6 +1139,48 @@ export function PurchaseRequisitionWorkflowPanel({
                   ))}
                 </TableBody>
               </Table>
+              <div className="mt-3 overflow-x-auto">
+                <Table className="min-w-[520px] text-xs">
+                  <TableBody>
+                    {(["tax", "shipping", "discount", "otherCosts"] as const).map((key) => (
+                      <TableRow key={key}>
+                        <TableCell className="font-medium">
+                          {key === "tax"
+                            ? "Impostos"
+                            : key === "shipping"
+                              ? "Frete"
+                              : key === "discount"
+                                ? "Desconto"
+                                : "Outros"}
+                        </TableCell>
+                        {comparison.matrix!.suppliers.map((s) => (
+                          <TableCell key={`${key}-${s.quoteId}`} className="text-right tabular-nums">
+                            {(s.pricingBreakdown?.[key] ?? 0).toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                    <TableRow>
+                      <TableCell className="font-semibold">Total geral</TableCell>
+                      {comparison.matrix!.suppliers.map((s) => (
+                        <TableCell
+                          key={`total-${s.quoteId}`}
+                          className={`text-right tabular-nums font-semibold ${
+                            comparison.matrix?.lowestTotalQuoteId === s.quoteId
+                              ? "text-green-600 dark:text-green-400"
+                              : ""
+                          }`}
+                        >
+                          {s.totalAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           ) : comparison?.lines?.length ? (
             <div className="space-y-4 py-2 text-sm">
@@ -1186,42 +1232,17 @@ export function PurchaseRequisitionWorkflowPanel({
         message={feedback.message}
       />
 
-      <Dialog open={quoteOpen} onOpenChange={setQuoteOpen}>
-        <DialogContent className="max-h-[90vh]">
-          <DialogHeader><DialogTitle>Nova cotação</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid gap-2">
-              <Label>Fornecedor cadastrado</Label>
-              <select className={selectClass} value={quoteSupplierId} onChange={(e) => {
-                setQuoteSupplierId(e.target.value);
-                const s = suppliers.find((x) => x.id === e.target.value);
-                if (s) setQuoteSupplierName(s.name);
-              }}>
-                <option value="">— ou nome manual —</option>
-                {suppliers.filter((s) => !tenantFilter || s.tenant?.id === tenantFilter).map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Nome do fornecedor *</Label>
-              <Input value={quoteSupplierName} onChange={(e) => setQuoteSupplierName(e.target.value)} className="uppercase" />
-            </div>
-            <div className="grid gap-2">
-              <Label>Valor total (R$) *</Label>
-              <Input type="number" step="0.01" value={quoteTotal} onChange={(e) => setQuoteTotal(e.target.value)} />
-            </div>
-            <div className="grid gap-2">
-              <Label>Prazo entrega (dias)</Label>
-              <Input type="number" value={quoteDelivery} onChange={(e) => setQuoteDelivery(e.target.value)} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setQuoteOpen(false)}>Cancelar</Button>
-            <Button type="button" disabled={actionLoading} onClick={handleAddQuote}>Adicionar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <QuoteEntryDialog
+        open={quoteOpen}
+        onOpenChange={setQuoteOpen}
+        requisitionItems={
+          (selected?.items as Array<{ description: string; quantity: number; unit?: string }>) ?? []
+        }
+        suppliers={suppliers}
+        tenantId={selected?.tenantId ?? tenantFilter}
+        saving={actionLoading}
+        onSubmit={handleAddQuote}
+      />
 
       <Dialog open={pendingWinnerQuoteId != null} onOpenChange={(o) => !o && setPendingWinnerQuoteId(null)}>
         <DialogContent>

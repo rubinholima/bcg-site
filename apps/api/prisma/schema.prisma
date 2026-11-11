@@ -2484,6 +2484,7 @@ model SupplierDocument {
   supplierId      String
   supplier        Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   label           String
+  docType         String?
   mediaKey        String?
   fileUrl         String?
   createdByUserId String?
@@ -2562,6 +2563,13 @@ model PurchaseRequisition {
   isPatrimonial     Boolean  @default(false)
   rejectionReason   String?  @db.Text
   requesterEmail    String?
+  /// Título exibido (cotação manual)
+  title             String?
+  /// requisition | manual_quotation
+  originKind        String   @default("requisition")
+  quoteDeadline     DateTime?
+  currency          String?
+  responsibleUserId String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   quotes            PurchaseQuote[] @relation("RequisitionQuotes")

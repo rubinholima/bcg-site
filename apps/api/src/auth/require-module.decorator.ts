@@ -1,9 +1,11 @@
 import { SetMetadata } from '@nestjs/common';
+import type { ProcurementCapability } from '../compras/procurement-access.util';
 
 export const REQUIRED_MODULE_KEY = 'requiredModule';
 export const TEAM_REPORT_READ_KEY = 'teamReportRead';
 export const SEASON_HIGHLIGHTS_ACCESS_KEY = 'seasonHighlightsAccess';
 export const UNIFORM_KIT_ACCESS_KEY = 'uniformKitAccess';
+export const PROCUREMENT_CAPABILITY_KEY = 'procurementCapability';
 
 export type UniformKitAccessMode = 'logistics_read' | 'manage';
 
@@ -19,3 +21,7 @@ export const TeamReportReadAccess = () => SetMetadata(TEAM_REPORT_READ_KEY, true
 
 /** Melhores da Temporada: admins, gerente/gestor/supervisor e treinadores (com módulo). */
 export const SeasonHighlightsAccess = () => SetMetadata(SEASON_HIGHLIGHTS_ACCESS_KEY, true);
+
+/** Capacidade granular de compras — use com ProcurementCapabilityGuard. */
+export const RequireProcurement = (capability: ProcurementCapability) =>
+  SetMetadata(PROCUREMENT_CAPABILITY_KEY, capability);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { DashboardFieldLabel, DashboardFilterBox, DashboardStatGrid } from "@/components/dashboard/DashboardDeptHeader";
@@ -16,16 +16,21 @@ import {
 import { api } from "@/lib/api";
 import type { Tenant } from "@/types/tenant";
 import { REQUISITION_STATUS_LABELS, type PurchaseRequisitionWorkflowRow } from "@/lib/purchase-workflow-types";
+import { ManualQuotationDialog } from "./ManualQuotationDialog";
+import type { SupplierRow } from "./SupplierFormDialog";
 
 export function QuotationsComprasPanel({
   tenants,
   tenantId,
+  suppliers,
   onOpenRequisition,
 }: {
   tenants: Tenant[];
   tenantId: string;
+  suppliers: SupplierRow[];
   onOpenRequisition: (id: string) => void;
 }) {
+  const [manualOpen, setManualOpen] = useState(false);
   const [rows, setRows] = useState<PurchaseRequisitionWorkflowRow[]>([]);
   const [counts, setCounts] = useState({
     emCotacao: 0,
@@ -84,9 +89,13 @@ export function QuotationsComprasPanel({
             <option value="aprovada">Aprovada</option>
           </NativeSelect>
         </div>
-        <div className="flex items-end">
+        <div className="flex flex-wrap items-end gap-2">
           <Button type="button" variant="outline" size="sm" className="min-h-[44px]" onClick={() => void load()}>
             Atualizar
+          </Button>
+          <Button type="button" size="sm" className="min-h-[44px]" onClick={() => setManualOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" />
+            Nova cotação
           </Button>
         </div>
       </DashboardFilterBox>
@@ -112,7 +121,9 @@ export function QuotationsComprasPanel({
             {rows.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <span className="font-medium">{r.requestedByName}</span>
+                  <span className="font-medium">
+                    {(r as { title?: string | null }).title?.trim() || r.requestedByName}
+                  </span>
                   <div className="text-xs text-muted-foreground">{r.departmentName || "—"}</div>
                 </TableCell>
                 <TableCell>{r.tenant?.name}</TableCell>
@@ -129,6 +140,15 @@ export function QuotationsComprasPanel({
           </TableBody>
         </Table>
       )}
+
+      <ManualQuotationDialog
+        open={manualOpen}
+        onOpenChange={setManualOpen}
+        tenants={tenants}
+        defaultTenantId={tenantId}
+        suppliers={suppliers}
+        onCreated={(id) => onOpenRequisition(id)}
+      />
     </div>
   );
 }

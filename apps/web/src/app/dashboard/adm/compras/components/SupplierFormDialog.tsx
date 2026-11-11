@@ -33,7 +33,17 @@ export interface SupplierRow {
   status?: string;
   supplierCategoryId?: string | null;
   notes: string | null;
+  addressStructured?: Record<string, string> | null;
+  commercial?: Record<string, string> | null;
   tenant: { id: string; name: string; slug: string };
+}
+
+function sectionTitle(label: string) {
+  return (
+    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-1 pt-2">
+      {label}
+    </p>
+  );
 }
 
 interface SupplierFormDialogProps {
@@ -68,6 +78,17 @@ export function SupplierFormDialog({
   const [country, setCountry] = useState("");
   const [supplierCategoryId, setSupplierCategoryId] = useState("");
   const [address, setAddress] = useState("");
+  const [addrStreet, setAddrStreet] = useState("");
+  const [addrNumber, setAddrNumber] = useState("");
+  const [addrCity, setAddrCity] = useState("");
+  const [addrState, setAddrState] = useState("");
+  const [addrPostal, setAddrPostal] = useState("");
+  const [addrComplement, setAddrComplement] = useState("");
+  const [status, setStatus] = useState<"active" | "inactive" | "blocked">("active");
+  const [currency, setCurrency] = useState("BRL");
+  const [paymentTerms, setPaymentTerms] = useState("");
+  const [preferredPayment, setPreferredPayment] = useState("");
+  const [commercialNotes, setCommercialNotes] = useState("");
   const [notes, setNotes] = useState("");
   const [feedback, setFeedback] = useState({ open: false, title: "", message: "" });
 
@@ -88,6 +109,19 @@ export function SupplierFormDialog({
       setCountry(edit.country ?? "");
       setSupplierCategoryId(edit.supplierCategoryId ?? "");
       setAddress(edit.address ?? "");
+      const addr = (edit.addressStructured ?? {}) as Record<string, string>;
+      setAddrStreet(addr.street ?? "");
+      setAddrNumber(addr.number ?? "");
+      setAddrCity(addr.city ?? "");
+      setAddrState(addr.state ?? "");
+      setAddrPostal(addr.postalCode ?? "");
+      setAddrComplement(addr.complement ?? "");
+      const comm = (edit.commercial ?? {}) as Record<string, string>;
+      setCurrency(comm.currency ?? "BRL");
+      setPaymentTerms(comm.paymentTerms ?? "");
+      setPreferredPayment(comm.preferredPaymentMethod ?? "");
+      setCommercialNotes(comm.notes ?? "");
+      setStatus((edit.status as "active" | "inactive" | "blocked") ?? "active");
       setNotes(edit.notes ?? "");
     } else {
       setTenantId(tenants[0]?.id ?? "");
@@ -104,6 +138,17 @@ export function SupplierFormDialog({
       setCountry("");
       setSupplierCategoryId("");
       setAddress("");
+      setAddrStreet("");
+      setAddrNumber("");
+      setAddrCity("");
+      setAddrState("");
+      setAddrPostal("");
+      setAddrComplement("");
+      setStatus("active");
+      setCurrency("BRL");
+      setPaymentTerms("");
+      setPreferredPayment("");
+      setCommercialNotes("");
       setNotes("");
     }
   }, [open, edit, tenants]);
@@ -127,6 +172,22 @@ export function SupplierFormDialog({
         country: country.trim() || undefined,
         supplierCategoryId: supplierCategoryId || undefined,
         address: address.trim() || undefined,
+        addressStructured: {
+          country: country.trim() || undefined,
+          state: addrState.trim() || undefined,
+          city: addrCity.trim() || undefined,
+          postalCode: addrPostal.trim() || undefined,
+          street: addrStreet.trim() || undefined,
+          number: addrNumber.trim() || undefined,
+          complement: addrComplement.trim() || undefined,
+        },
+        commercial: {
+          currency: currency.trim() || undefined,
+          paymentTerms: paymentTerms.trim() || undefined,
+          preferredPaymentMethod: preferredPayment.trim() || undefined,
+          notes: commercialNotes.trim() || undefined,
+        },
+        status,
         notes: notes.trim() || undefined,
       };
       if (edit) {
@@ -150,12 +211,13 @@ export function SupplierFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{edit ? "Editar fornecedor" : "Novo fornecedor"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            {sectionTitle("Dados gerais")}
             <div className="grid gap-2">
               <Label htmlFor="supplier-tenant">Clube/Empresa *</Label>
               <select
@@ -229,6 +291,7 @@ export function SupplierFormDialog({
                 <Input id="supplier-tax" value={taxId} onChange={(e) => setTaxId(e.target.value)} />
               </div>
             </div>
+            {sectionTitle("Contato")}
             <div className="grid gap-2">
               <Label htmlFor="supplier-contact">Nome do contato</Label>
               <Input
@@ -268,18 +331,71 @@ export function SupplierFormDialog({
                 <Input id="supplier-country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="BR, US…" />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="supplier-address">Endereço</Label>
-              <textarea
-                id="supplier-address"
-                className="min-h-[64px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Rua, número, cidade"
-              />
+            {sectionTitle("Endereço")}
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Logradouro</Label>
+                <Input value={addrStreet} onChange={(e) => setAddrStreet(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Número</Label>
+                <Input value={addrNumber} onChange={(e) => setAddrNumber(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Complemento</Label>
+                <Input value={addrComplement} onChange={(e) => setAddrComplement(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Cidade</Label>
+                <Input value={addrCity} onChange={(e) => setAddrCity(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Estado / UF</Label>
+                <Input value={addrState} onChange={(e) => setAddrState(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label>CEP / ZIP</Label>
+                <Input value={addrPostal} onChange={(e) => setAddrPostal(e.target.value)} />
+              </div>
+            </div>
+            {sectionTitle("Comercial")}
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label>Moeda</Label>
+                <Input value={currency} onChange={(e) => setCurrency(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Condições de pagamento</Label>
+                <Input value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Forma de pagamento preferida</Label>
+                <Input value={preferredPayment} onChange={(e) => setPreferredPayment(e.target.value)} />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Observações comerciais</Label>
+                <textarea
+                  className="min-h-[64px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  value={commercialNotes}
+                  onChange={(e) => setCommercialNotes(e.target.value)}
+                />
+              </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="supplier-notes">Observações</Label>
+              <Label>Status</Label>
+              <select
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as "active" | "inactive" | "blocked")}
+              >
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+                <option value="blocked">Bloqueado</option>
+              </select>
+            </div>
+            {sectionTitle("Observações gerais")}
+            <div className="grid gap-2">
+              <Label htmlFor="supplier-notes">Notas</Label>
               <textarea
                 id="supplier-notes"
                 className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"

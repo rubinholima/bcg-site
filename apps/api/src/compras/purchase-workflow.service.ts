@@ -17,6 +17,11 @@ import {
 } from './purchase-workflow.constants';
 import { cadastroEmail, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { ProcurementAuditService } from './procurement-audit.service';
+import {
+  computeItemsSubtotal,
+  computeQuoteGrandTotal,
+  type QuotePricingBreakdown,
+} from './procurement-quote-totals.util';
 
 interface RequisitionItem {
   productId?: string;
@@ -402,13 +407,23 @@ export class PurchaseWorkflowService {
         throw new BadRequestException('Fornecedor inválido.');
       }
     }
+    const normalizedItems = input.items.map((i) => ({
+      ...i,
+      description: cadastroUpperRequired(i.description),
+      unit: i.unit ? cadastroUpperRequired(i.unit) : i.unit,
+    }));
+    const itemsSubtotal = computeItemsSubtotal(normalizedItems);
+    const totalAmount =
+      input.totalAmount != null && !Number.isNaN(input.totalAmount)
+        ? input.totalAmount
+        : computeQuoteGrandTotal(itemsSubtotal, input.pricingBreakdown as QuotePricingBreakdown);
     const quote = await this.prisma.purchaseQuote.create({
       data: {
         requisitionId,
         supplierId: input.supplierId ?? null,
         supplierName: cadastroUpperRequired(input.supplierName),
-        items: input.items as object,
-        totalAmount: input.totalAmount,
+        items: normalizedItems as object,
+        totalAmount,
         deliveryDays: input.deliveryDays ?? null,
         notes: input.notes ?? null,
         attachmentUrl: input.attachmentUrl ?? null,
@@ -499,6 +514,56 @@ export class PurchaseWorkflowService {
       },
     });
     return this.findRequisition(requisitionId);
+  }
+
+  async createManualQuotation(input: {
+    tenantId: string;
+    title: string;
+    description?: string;
+    quoteDeadline?: string;
+    currency?: string;
+    notes?: string;
+    items: RequisitionItem[];
+    supplierIds?: string[];
+    actor: { userId?: string; name: string; email?: string };
+  }) {
+    if (!input.title?.trim()) throw new BadRequestException('Informe o título da cotação.');
+    if (!input.items?.length) throw new BadRequestException('Informe ao menos um item.');
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: input.tenantId } });
+    if (!tenant) throw new NotFoundException('Empresa não encontrada');
+    const req = await this.prisma.purchaseRequisition.create({
+      data: {
+        tenantId: input.tenantId,
+        title: input.title.trim(),
+        originKind: 'manual_quotation',
+        requestedByUserId: input.actor.userId ?? null,
+        responsibleUserId: input.actor.userId ?? null,
+        requestedByName: cadastroUpperRequired(input.actor.name),
+        requesterEmail: cadastroEmail(input.actor.email),
+        requestType: 'compra',
+        departmentName: cadastroUpper('COMPRAS — COTAÇÃO'),
+        justification: input.description?.trim() || input.notes?.trim() || null,
+        items: input.items.map((i) => ({
+          ...i,
+          description: cadastroUpperRequired(i.description),
+          unit: i.unit ? cadastroUpperRequired(i.unit) : i.unit ?? 'un',
+        })) as object,
+        quoteDeadline: input.quoteDeadline ? new Date(input.quoteDeadline) : null,
+        currency: input.currency?.trim() || 'BRL',
+        status: REQUISITION_STATUS.EM_COTACAO,
+      },
+      include: requisitionInclude,
+    });
+    void this.audit.log({
+      tenantId: req.tenantId,
+      entityType: 'purchase_requisition',
+      entityId: req.id,
+      action: 'quotation_created',
+      actorUserId: input.actor.userId,
+      actorName: input.actor.name,
+      metadata: { originKind: 'manual_quotation', title: req.title },
+    });
+    return req;
   }
 
   async quotationInboxCounts(tenantId?: string) {
@@ -662,11 +727,21 @@ export class PurchaseWorkflowService {
         notes: notes ?? null,
       },
     });
-    return this.prisma.purchaseRequisition.update({
+    const final = await this.prisma.purchaseRequisition.update({
       where: { id: requisitionId },
       data: { status: REQUISITION_STATUS.APROVADA },
       include: requisitionInclude,
     });
+    void this.audit.log({
+      tenantId: req.tenantId,
+      entityType: 'purchase_requisition',
+      entityId: requisitionId,
+      action: 'approval',
+      actorUserId: approver.userId,
+      actorName: approver.name,
+      metadata: { role, decision: 'approved' },
+    });
+    return final;
   }
 
   async reject(
@@ -694,7 +769,7 @@ export class PurchaseWorkflowService {
         notes: reason,
       },
     });
-    return this.prisma.purchaseRequisition.update({
+    const rejected = await this.prisma.purchaseRequisition.update({
       where: { id: requisitionId },
       data: {
         status: REQUISITION_STATUS.REPROVADA,
@@ -702,6 +777,16 @@ export class PurchaseWorkflowService {
       },
       include: requisitionInclude,
     });
+    void this.audit.log({
+      tenantId: req.tenantId,
+      entityType: 'purchase_requisition',
+      entityId: requisitionId,
+      action: 'rejection',
+      actorUserId: approver.userId,
+      actorName: approver.name,
+      metadata: { role, reason },
+    });
+    return rejected;
   }
 
   async createOrder(requisitionId: string) {
@@ -733,6 +818,31 @@ export class PurchaseWorkflowService {
       where: { id: requisitionId },
       data: { status: REQUISITION_STATUS.EM_COMPRA },
     });
+    void this.audit.log({
+      tenantId: req.tenantId,
+      entityType: 'purchase_order',
+      entityId: order.id,
+      action: 'purchase_order_generated',
+      metadata: { requisitionId, quoteId: quote.id, supplierId },
+    });
+    const quoteItems = parseRequisitionItems(quote.items) as Array<
+      RequisitionItem & { unitPrice?: number }
+    >;
+    for (const item of quoteItems) {
+      if (!item.productId) continue;
+      const unitPrice =
+        item.unitPrice ??
+        item.estimatedUnitPrice ??
+        quote.totalAmount / Math.max(quoteItems.length, 1);
+      await this.prisma.product.update({
+        where: { id: item.productId },
+        data: {
+          lastSupplierId: supplierId,
+          purchasePrice: unitPrice,
+          currentPrice: unitPrice,
+        },
+      });
+    }
     return { requisition: await this.findRequisition(requisitionId), order };
   }
 

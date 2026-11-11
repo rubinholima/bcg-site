@@ -29,7 +29,10 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import type { Tenant } from "@/types/tenant";
 import { SupplierFormDialog, type SupplierRow } from "./SupplierFormDialog";
+import { SupplierDocumentsPanel } from "./SupplierDocumentsPanel";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
+import { useAuth } from "@/context/AuthContext";
+import { canProcurement } from "@/lib/procurement-permissions";
 
 type SupplierCategoryRow = { id: string; name: string; slug: string };
 
@@ -48,6 +51,8 @@ export function SuppliersComprasPanel({
   tenantId: string;
   onTenantChange: (id: string) => void;
 }) {
+  const { modules, role } = useAuth();
+  const canManageSupplier = canProcurement(modules, "manage_supplier", role);
   const [rows, setRows] = useState<SupplierRow[]>([]);
   const [categories, setCategories] = useState<SupplierCategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -304,15 +309,22 @@ export function SuppliersComprasPanel({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Truck className="h-5 w-5" />
-              Histórico do fornecedor
+              Fornecedor
             </DialogTitle>
           </DialogHeader>
           {detail ? (
-            <div className="space-y-3 text-sm">
+            <div className="space-y-4 text-sm">
               <p>
                 Cotações: <strong>{detail.quotes.length}</strong> · Vitórias: <strong>{detail.wins}</strong> · Pedidos:{" "}
                 <strong>{detail.purchaseOrders.length}</strong>
               </p>
+              {detailId ? (
+                <>
+                  <p className="font-medium text-foreground">Documentos</p>
+                  <SupplierDocumentsPanel supplierId={detailId} canManage={canManageSupplier} />
+                </>
+              ) : null}
+              <p className="font-medium text-foreground">Auditoria recente</p>
               {detail.audit.slice(0, 8).map((a, i) => (
                 <p key={i} className="text-xs text-muted-foreground">
                   {new Date(a.createdAt).toLocaleString("pt-BR")} — {a.action}

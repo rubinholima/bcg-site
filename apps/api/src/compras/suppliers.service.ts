@@ -219,28 +219,62 @@ export class SuppliersService {
 
   async addDocument(
     supplierId: string,
-    input: { label: string; mediaKey?: string; fileUrl?: string; createdByUserId?: string },
+    input: {
+      label: string;
+      docType?: string;
+      mediaKey?: string;
+      fileUrl?: string;
+      createdByUserId?: string;
+    },
+    actor?: { userId?: string; name?: string },
   ) {
-    await this.findOne(supplierId);
+    const supplier = await this.findOne(supplierId);
     if (!input.label?.trim()) throw new BadRequestException('Informe o rótulo do documento.');
-    return this.prisma.supplierDocument.create({
+    if (!input.mediaKey?.trim() && !input.fileUrl?.trim()) {
+      throw new BadRequestException('Informe o arquivo (mídia ou URL).');
+    }
+    const doc = await this.prisma.supplierDocument.create({
       data: {
         supplierId,
         label: input.label.trim(),
+        docType: input.docType?.trim() || null,
         mediaKey: input.mediaKey?.trim() || null,
         fileUrl: input.fileUrl?.trim() || null,
         createdByUserId: input.createdByUserId ?? null,
       },
     });
+    void this.audit.log({
+      tenantId: supplier.tenantId,
+      entityType: 'supplier',
+      entityId: supplierId,
+      action: 'document_uploaded',
+      actorUserId: actor?.userId,
+      actorName: actor?.name,
+      metadata: { documentId: doc.id, label: doc.label, docType: doc.docType },
+    });
+    return doc;
   }
 
-  async removeDocument(supplierId: string, documentId: string) {
-    await this.findOne(supplierId);
+  async removeDocument(
+    supplierId: string,
+    documentId: string,
+    actor?: { userId?: string; name?: string },
+  ) {
+    const supplier = await this.findOne(supplierId);
     const doc = await this.prisma.supplierDocument.findFirst({
       where: { id: documentId, supplierId },
     });
     if (!doc) throw new NotFoundException('Documento não encontrado');
     await this.prisma.supplierDocument.delete({ where: { id: documentId } });
+    void this.audit.log({
+      tenantId: supplier.tenantId,
+      entityType: 'supplier',
+      entityId: supplierId,
+      action: 'document_removed',
+      actorUserId: actor?.userId,
+      actorName: actor?.name,
+      metadata: { documentId, label: doc.label },
+    });
     return { ok: true };
   }
 }

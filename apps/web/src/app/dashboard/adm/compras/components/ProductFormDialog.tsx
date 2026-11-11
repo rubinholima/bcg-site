@@ -30,6 +30,10 @@ export interface ProductRow {
   purchasePrice?: string | number | null;
   currentPrice?: string | number | null;
   averagePrice?: string | number | null;
+  preferredSupplierId?: string | null;
+  supplierReference?: string | null;
+  preferredSupplier?: { id: string; name: string } | null;
+  lastSupplier?: { id: string; name: string } | null;
   tenant: { id: string; name: string; slug: string; categories?: string[] | null };
 }
 
@@ -80,6 +84,9 @@ export function ProductFormDialog({
   const [squadSelected, setSquadSelected] = useState<Set<string>>(new Set());
   const [initialQuantity, setInitialQuantity] = useState(0);
   const [initialUnitPrice, setInitialUnitPrice] = useState("");
+  const [preferredSupplierId, setPreferredSupplierId] = useState("");
+  const [supplierReference, setSupplierReference] = useState("");
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
 
   const tenantCategories =
     tenants.find((t) => t.id === tenantId)?.categories?.filter(Boolean) ?? [];
@@ -96,6 +103,8 @@ export function ProductFormDialog({
       setSquadSelected(new Set(parseSquadTags(edit.squadTags)));
       setInitialQuantity(0);
       setInitialUnitPrice("");
+      setPreferredSupplierId(edit.preferredSupplierId ?? edit.preferredSupplier?.id ?? "");
+      setSupplierReference(edit.supplierReference ?? "");
     } else {
       const tid = defaultTenantId?.trim() || tenants[0]?.id || "";
       setTenantId(tid);
@@ -107,8 +116,24 @@ export function ProductFormDialog({
       setSquadSelected(new Set());
       setInitialQuantity(0);
       setInitialUnitPrice("");
+      setPreferredSupplierId("");
+      setSupplierReference("");
     }
   }, [open, edit, tenants, defaultTenantId]);
+
+  useEffect(() => {
+    if (!open || !tenantId) return;
+    void (async () => {
+      try {
+        const { data } = await api.get<Array<{ id: string; name: string }>>(
+          `/compras/suppliers?tenantId=${encodeURIComponent(tenantId)}`,
+        );
+        setSuppliers(Array.isArray(data) ? data.map((s) => ({ id: s.id, name: s.name })) : []);
+      } catch {
+        setSuppliers([]);
+      }
+    })();
+  }, [open, tenantId]);
 
   const toggleSquad = (slug: string) => {
     setSquadSelected((prev) => {
@@ -149,6 +174,8 @@ export function ProductFormDialog({
         await api.patch(`/compras/products/${edit.id}`, {
           ...common,
           squadTags: Array.from(squadSelected),
+          preferredSupplierId: preferredSupplierId || null,
+          supplierReference: supplierReference.trim() || null,
         });
       } else {
         await api.post("/compras/products", {
@@ -328,6 +355,35 @@ export function ProductFormDialog({
                   </p>
                 </div>
               )}
+
+              {edit ? (
+                <div className="rounded-lg border border-border p-3 space-y-3">
+                  <p className="text-sm font-medium">Fornecedor</p>
+                  <div className="grid gap-2">
+                    <Label>Fornecedor preferido</Label>
+                    <select
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                      value={preferredSupplierId}
+                      onChange={(e) => setPreferredSupplierId(e.target.value)}
+                    >
+                      <option value="">—</option>
+                      {suppliers.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Referência / SKU do fornecedor</Label>
+                    <Input value={supplierReference} onChange={(e) => setSupplierReference(e.target.value)} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Último fornecedor: {edit.lastSupplier?.name ?? "—"} · Última compra:{" "}
+                    {formatProductPrice(edit.purchasePrice)}
+                  </p>
+                </div>
+              ) : null}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

@@ -47,7 +47,11 @@ export class ProductsService {
     const rows = await this.prisma.product.findMany({
       where,
       orderBy: [{ tenant: { name: 'asc' } }, { inventoryKind: 'asc' }, { name: 'asc' }],
-      include: { tenant: { select: { id: true, name: true, slug: true, categories: true } } },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true, categories: true } },
+        preferredSupplier: { select: { id: true, name: true } },
+        lastSupplier: { select: { id: true, name: true } },
+      },
     });
     const st = squadTag?.trim();
     if (!st) return rows;
@@ -57,7 +61,11 @@ export class ProductsService {
   async findOne(id: string) {
     const product = await this.prisma.product.findUnique({
       where: { id },
-      include: { tenant: { select: { id: true, name: true, slug: true, categories: true } } },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true, categories: true } },
+        preferredSupplier: { select: { id: true, name: true } },
+        lastSupplier: { select: { id: true, name: true } },
+      },
     });
     if (!product) throw new NotFoundException('Produto não encontrado');
     return product;
@@ -144,12 +152,7 @@ export class ProductsService {
           ? { disconnect: true }
           : { connect: { id: dto.preferredSupplierId } };
     }
-    if (dto.lastSupplierId !== undefined) {
-      data.lastSupplier =
-        dto.lastSupplierId == null || dto.lastSupplierId === ''
-          ? { disconnect: true }
-          : { connect: { id: dto.lastSupplierId } };
-    }
+    /* lastSupplierId é derivado de ordens de compra — não aceita edição manual. */
     if (dto.supplierReference !== undefined) {
       data.supplierReference = dto.supplierReference?.trim() || null;
     }

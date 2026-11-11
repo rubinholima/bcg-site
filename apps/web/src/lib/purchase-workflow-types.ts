@@ -63,6 +63,15 @@ export interface QuoteComparisonMatrixSupplier {
   supplierName: string;
   totalAmount: number;
   deliveryDays: number | null;
+  paymentTerms?: string | null;
+  validUntil?: string | null;
+  pricingBreakdown?: {
+    tax?: number;
+    shipping?: number;
+    discount?: number;
+    otherCosts?: number;
+  } | null;
+  isWinner?: boolean;
 }
 
 export interface QuoteComparisonMatrixRow {
@@ -81,6 +90,7 @@ export interface QuoteComparisonResult {
   matrix?: {
     suppliers: QuoteComparisonMatrixSupplier[];
     rows: QuoteComparisonMatrixRow[];
+    lowestTotalQuoteId?: string | null;
   };
 }
 

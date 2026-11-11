@@ -15,14 +15,15 @@ import type { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
-import { RequireModule } from '../auth/require-module.decorator';
+import { RequireModule, RequireProcurement } from '../auth/require-module.decorator';
+import { ProcurementCapabilityGuard } from './procurement-capability.guard';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 
 @Controller('compras/suppliers')
-@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
+@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard, ProcurementCapabilityGuard)
 /** Cadastro único: Compras, Financeiro, Logística ou permissão group_fornecedores. */
 @RequireModule(['adm_compras', 'adm_financeiro', 'futebol_logistica', 'group_fornecedores'])
 export class SuppliersController {
@@ -68,6 +69,7 @@ export class SuppliersController {
   }
 
   @Get()
+  @RequireProcurement('view_supplier')
   async findAll(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId?: string,
@@ -86,6 +88,7 @@ export class SuppliersController {
   }
 
   @Get(':id/history')
+  @RequireProcurement('view_supplier')
   async history(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     const row = await this.service.findOne(id);
     await this.assertRowTenant(req, row.tenantId);
@@ -93,6 +96,7 @@ export class SuppliersController {
   }
 
   @Get(':id')
+  @RequireProcurement('view_supplier')
   async findOne(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     const row = await this.service.findOne(id);
     await this.assertRowTenant(req, row.tenantId);
@@ -100,12 +104,14 @@ export class SuppliersController {
   }
 
   @Post()
+  @RequireProcurement('manage_supplier')
   async create(@Req() req: Request & { user: CognitoJwtPayload }, @Body() dto: CreateSupplierDto) {
     await this.requireTenantScope(req, dto.tenantId);
     return this.service.create(dto, this.actor(req));
   }
 
   @Patch(':id/status')
+  @RequireProcurement('manage_supplier')
   async setStatus(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Param('id') id: string,
@@ -117,20 +123,23 @@ export class SuppliersController {
   }
 
   @Post(':id/documents')
+  @RequireProcurement('manage_supplier')
   async addDocument(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Param('id') id: string,
-    @Body() body: { label: string; mediaKey?: string; fileUrl?: string },
+    @Body() body: { label: string; docType?: string; mediaKey?: string; fileUrl?: string },
   ) {
     const row = await this.service.findOne(id);
     await this.assertRowTenant(req, row.tenantId);
-    return this.service.addDocument(id, {
-      ...body,
-      createdByUserId: req.user.sub,
-    });
+    return this.service.addDocument(
+      id,
+      { ...body, createdByUserId: req.user.sub },
+      this.actor(req),
+    );
   }
 
   @Delete(':id/documents/:documentId')
+  @RequireProcurement('manage_supplier')
   async removeDocument(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Param('id') id: string,
@@ -138,10 +147,11 @@ export class SuppliersController {
   ) {
     const row = await this.service.findOne(id);
     await this.assertRowTenant(req, row.tenantId);
-    return this.service.removeDocument(id, documentId);
+    return this.service.removeDocument(id, documentId, this.actor(req));
   }
 
   @Patch(':id')
+  @RequireProcurement('manage_supplier')
   async update(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Param('id') id: string,
@@ -153,6 +163,7 @@ export class SuppliersController {
   }
 
   @Delete(':id')
+  @RequireProcurement('manage_supplier')
   async remove(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     const row = await this.service.findOne(id);
     await this.assertRowTenant(req, row.tenantId);

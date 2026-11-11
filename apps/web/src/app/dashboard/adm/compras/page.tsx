@@ -553,6 +553,7 @@ export default function AdmComprasPage() {
           <QuotationsComprasPanel
             tenants={tenants}
             tenantId={tenantId}
+            suppliers={suppliers}
             onOpenRequisition={(id) => {
               setFocusRequisitionId(id);
               setActiveTab("requisicoes");

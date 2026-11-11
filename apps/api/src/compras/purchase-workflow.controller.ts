@@ -15,7 +15,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { SuperAdminGuard } from '../auth/super-admin.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
-import { RequireModule } from '../auth/require-module.decorator';
+import { RequireModule, RequireProcurement } from '../auth/require-module.decorator';
+import { ProcurementCapabilityGuard } from './procurement-capability.guard';
 import { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { requestActor } from '../common/request-actor';
 import { PurchaseWorkflowService } from './purchase-workflow.service';
@@ -26,13 +27,57 @@ import { WorkflowNotifyService } from './workflow-notify.service';
 type AuthedRequest = Request & { user: CognitoJwtPayload };
 
 @Controller('compras/workflow')
-@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
+@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard, ProcurementCapabilityGuard)
 export class PurchaseWorkflowController {
   constructor(
     private readonly workflow: PurchaseWorkflowService,
     private readonly quoteInvites: PurchaseQuoteInviteService,
     private readonly notify: WorkflowNotifyService,
   ) {}
+
+  @Post('manual-quotations')
+  @RequireModule('adm_compras')
+  @RequireProcurement('manage_quotation')
+  createManualQuotation(
+    @Req() req: AuthedRequest,
+    @Body()
+    body: {
+      tenantId: string;
+      title: string;
+      description?: string;
+      quoteDeadline?: string;
+      currency?: string;
+      notes?: string;
+      supplierIds?: string[];
+      items: Array<{
+        productId?: string;
+        description: string;
+        quantity: number;
+        unit?: string;
+        specification?: string;
+      }>;
+    },
+  ) {
+    const a = requestActor(req.user);
+    return this.workflow.createManualQuotation({
+      tenantId: body.tenantId,
+      title: body.title,
+      description: body.description,
+      quoteDeadline: body.quoteDeadline,
+      currency: body.currency,
+      notes: body.notes,
+      supplierIds: body.supplierIds,
+      items: body.items.map((i) => ({
+        productId: i.productId,
+        description: i.specification?.trim()
+          ? `${i.description} — ${i.specification.trim()}`
+          : i.description,
+        quantity: i.quantity,
+        unit: i.unit,
+      })),
+      actor: { userId: a.userId, name: a.name, email: a.email ?? undefined },
+    });
+  }
 
   @Get('settings')
   @RequireModule(['adm_compras', 'adm_financeiro', 'configuracoes'])
@@ -183,6 +228,7 @@ export class PurchaseWorkflowController {
 
   @Post('requisitions/:id/quotes')
   @RequireModule('adm_compras')
+  @RequireProcurement('enter_quote')
   addQuote(
     @Param('id') id: string,
     @Body()
@@ -218,6 +264,7 @@ export class PurchaseWorkflowController {
 
   @Post('requisitions/:id/quotes/:quoteId/select')
   @RequireModule('adm_compras')
+  @RequireProcurement('select_winner')
   selectQuote(
     @Param('id') id: string,
     @Param('quoteId') quoteId: string,
@@ -238,6 +285,7 @@ export class PurchaseWorkflowController {
 
   @Post('requisitions/:id/approve')
   @RequireModule(['adm_financeiro', 'diretoria', 'futebol_logistica', 'requisicoes'])
+  @RequireProcurement('approve_quotation')
   approve(
     @Param('id') id: string,
     @Body('role') role: 'gerente' | 'financeiro' | 'diretoria',
@@ -249,6 +297,7 @@ export class PurchaseWorkflowController {
 
   @Post('requisitions/:id/reject')
   @RequireModule(['adm_financeiro', 'diretoria', 'futebol_logistica', 'requisicoes'])
+  @RequireProcurement('approve_quotation')
   reject(
     @Param('id') id: string,
     @Body('role') role: 'gerente' | 'financeiro' | 'diretoria',
@@ -260,6 +309,7 @@ export class PurchaseWorkflowController {
 
   @Post('requisitions/:id/create-order')
   @RequireModule('adm_compras')
+  @RequireProcurement('manage_purchase_order')
   createOrder(@Param('id') id: string) {
     return this.workflow.createOrder(id);
   }

@@ -29,6 +29,9 @@ import { PurchaseQuoteInviteService } from './purchase-quote-invite.service';
 import { ProcurementAuditService } from './procurement-audit.service';
 import { SupplierCategoriesController } from './supplier-categories.controller';
 import { SupplierCategoriesService } from './supplier-categories.service';
+import { ProcurementAccessService } from './procurement-access.service';
+import { ProcurementCapabilityGuard } from './procurement-capability.guard';
+import { ProcurementPermissionsController } from './procurement-permissions.controller';
 
 @Module({
   imports: [AuthModule, ModulesModule, HelloSignModule],
@@ -46,8 +49,11 @@ import { SupplierCategoriesService } from './supplier-categories.service';
     ComprasReportsController,
     InventoryDepartmentsController,
     SupplierCategoriesController,
+    ProcurementPermissionsController,
   ],
   providers: [
+    ProcurementAccessService,
+    ProcurementCapabilityGuard,
     ProcurementAuditService,
     SupplierCategoriesService,
     SuppliersService,

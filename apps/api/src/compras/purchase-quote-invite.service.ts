@@ -343,7 +343,9 @@ export class PurchaseQuoteInviteService {
       totalAmount: q.totalAmount,
       deliveryDays: q.deliveryDays,
       paymentTerms: (q as { paymentTerms?: string | null }).paymentTerms ?? null,
+      validUntil: (q as { validUntil?: Date | null }).validUntil?.toISOString() ?? null,
       pricingBreakdown: (q as { pricingBreakdown?: Record<string, number> | null }).pricingBreakdown ?? null,
+      isWinner: q.isWinner,
     }));
 
     const lowestTotalQuoteId =
