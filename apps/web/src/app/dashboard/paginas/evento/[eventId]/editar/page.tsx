@@ -227,7 +227,7 @@ export default function EditarEventoPage() {
     const v = b.config?.visible as boolean | string | undefined;
     return v === false || v === "false";
   };
-  const updateTheme = (key: keyof PageTheme, value: string | number | undefined) => {
+  const updateTheme = (key: keyof PageTheme, value: PageTheme[keyof PageTheme] | undefined) => {
     const normalized = value === undefined || value === null || value === "" ? undefined : value;
     setEvent((prev) =>
       prev

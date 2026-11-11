@@ -25,6 +25,7 @@ import {
   prepareFixturesForStandings,
 } from "@/lib/standings-fixtures-enrich";
 import { TabelaClassificacaoMobile } from "@/components/portfolio/modules/TabelaClassificacaoMobile";
+import { publicClientFetch, toPublicClientApiPath } from "@/lib/public-client-api";
 
 const FILTER_ALL = "__all__";
 
@@ -286,7 +287,7 @@ export function TabelaClassificacaoSection({
   };
 
   useEffect(() => {
-    fetch("/api/public/cadastros/championships")
+    publicClientFetch(toPublicClientApiPath("/api/public/cadastros/championships"))
       .then((r) => r.json())
       .then((data) => {
         const items = data?.items ?? (Array.isArray(data) ? data : []);

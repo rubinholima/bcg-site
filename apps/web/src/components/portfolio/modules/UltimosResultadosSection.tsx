@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { FixtureItem } from "@/lib/fixtures-shared";
 import { fetchFixtures, type FixturesFetchContext } from "@/lib/fixtures-shared";
+import { publicClientFetch, toPublicClientApiPath } from "@/lib/public-client-api";
 import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
 import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
@@ -419,7 +420,7 @@ export function UltimosResultadosSection({
   useEffect(() => {
     if (!slug?.trim() || fixturesContext === "event") return;
     let cancelled = false;
-    fetch(`/api/public/tenants/${encodeURIComponent(slug)}`, { cache: "no-store" })
+    publicClientFetch(toPublicClientApiPath(`/api/public/tenants/${encodeURIComponent(slug)}`), { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { name?: string; logoUrl?: string | null } | null) => {
         if (cancelled || !data) return;

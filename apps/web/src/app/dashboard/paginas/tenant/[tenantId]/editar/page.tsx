@@ -72,7 +72,26 @@ import {
 import { BCH_SLUG, bchLogoSrc } from "@/lib/boston-city-hall";
 import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, HeaderLinksEditor, NoticiasModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, ModuleTitleGradientFields, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import {
+  FontFamilyField,
+  PageBuilderChrome,
+  PageThemePanel,
+  HeroModuleEditor,
+  HinoModuleEditor,
+  HeaderLinksEditor,
+  NoticiasModuleEditor,
+  ImprensaDisplayModeFields,
+  ImprensaModuleEditor,
+  ModuleTitleGradientFields,
+  normalizeBlocks,
+  sanitizeBlocksForSave,
+  type PageEditorialStatus,
+  usePageEditorSession,
+  PageBuilderNavigator,
+  PageBuilderLivePreview,
+  PageSeoPanel,
+  PageBuilderRevisionPanel,
+} from "@/components/dashboard/page-builder";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
@@ -326,6 +345,13 @@ export default function EditarPaginaTenantPage() {
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
 
+  const editorSession = usePageEditorSession({
+    page,
+    setPage,
+    storageKey: `page-builder-${tenantId}`,
+    blocks,
+  });
+
   /** Na página de clube/empresa: Geral, Eventos e o tipo do tenant (se houver). */
   const tenantKind = page?.tenant?.kind;
   const allowedTypeOptions = [
@@ -409,7 +435,7 @@ export default function EditarPaginaTenantPage() {
   };
 
   const theme = page?.content?.theme ?? {};
-  const updateTheme = (key: keyof PageTheme, value: string | number | undefined) => {
+  const updateTheme = (key: keyof PageTheme, value: PageTheme[keyof PageTheme] | undefined) => {
     const normalized = value === undefined || value === null || value === "" ? undefined : value;
     setPage((prev) =>
       prev
@@ -543,37 +569,7 @@ export default function EditarPaginaTenantPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!page) return;
-    setSaving(true);
-    setError(null);
-    setSuccess(false);
-    try {
-      const payloadBlocks = sanitizeBlocksForSave(blocks);
-      const res = await authFetch(`/api/pages/${page.id}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: { theme: page.content.theme, blocks: payloadBlocks },
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const msg =
-          (data as { error?: string; message?: string })?.error ??
-          (data as { message?: string })?.message ??
-          "Erro ao salvar";
-        if (process.env.NODE_ENV === "development") {
-          console.error("[tenant page save]", res.status, data);
-        }
-        throw new Error(msg);
-      }
-      setSuccess(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar");
-    } finally {
-      setSaving(false);
-    }
+    await editorSession.savePublish();
   };
 
   if (loading) {
@@ -597,6 +593,12 @@ export default function EditarPaginaTenantPage() {
     );
   }
 
+  const editorialStatus: PageEditorialStatus = page.hasUnpublishedDraft
+    ? "unpublished_changes"
+    : page.draftContent
+      ? "draft"
+      : "published";
+
   const tenantName = page.tenant?.name ?? "Empresa";
   const subjectLogoSrc = page.tenant
     ? page.tenant.slug === BCH_SLUG
@@ -612,26 +614,57 @@ export default function EditarPaginaTenantPage() {
         title={tenantName}
         subtitle="Módulos, aparência global e textos PT/EN."
         previewHref={page?.tenant?.slug ? `/portfolio/${page.tenant.slug}` : undefined}
-        previewLabel="Ver página"
-        saving={saving}
-        success={success}
-        error={error}
+        previewLabel="Ver site"
+        saving={editorSession.savingMode !== "idle"}
+        success={!!editorSession.editorSuccess}
+        error={editorSession.editorError ?? error}
         formId="editor-tenant-page-form"
         subjectLogo={subjectLogoSrc ? { src: subjectLogoSrc, alt: tenantName } : null}
+        editorialStatus={editorialStatus}
+        publishedAt={page.publishedAt}
+        updatedAt={page.updatedAt}
+        dirty={editorSession.dirty}
+        onSaveDraft={() => void editorSession.saveDraft()}
+        onPublish={() => void editorSession.savePublish()}
+        onTogglePreview={() => editorSession.setPreviewOpen((o) => !o)}
+        previewOpen={editorSession.previewOpen}
+        onUndo={editorSession.undo}
+        onRedo={editorSession.redo}
+        savingMode={editorSession.savingMode}
       />
 
-      {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400">
-          Página salva com sucesso.
-        </div>
-      )}
+      {editorSession.previewOpen && page.tenant?.slug ? (
+        <PageBuilderLivePreview
+          blocks={blocks}
+          theme={theme}
+          slug={page.tenant.slug}
+          viewport={editorSession.previewViewport}
+          selectedBlockId={editorSession.selectedBlockId}
+          onSelectBlock={editorSession.setSelectedBlockId}
+        />
+      ) : null}
 
-      <form id="editor-tenant-page-form" onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid gap-4 lg:grid-cols-[minmax(220px,260px)_minmax(0,1fr)]">
+        <div className="space-y-3">
+          <PageBuilderNavigator
+            blocks={blocks}
+            selectedBlockId={editorSession.selectedBlockId}
+            collapsedBlockIds={collapsedBlockIds}
+            onSelect={editorSession.setSelectedBlockId}
+            onToggleCollapse={toggleBlockCollapsed}
+            onMove={(index, dir) => moveBlockTo(index, index + dir)}
+            onDuplicate={editorSession.duplicateBlockAt}
+            onCopy={editorSession.copyBlockAt}
+            onRemove={removeBlock}
+          />
+          <PageBuilderRevisionPanel
+            pageId={page.id}
+            onRestored={() => {
+              void editorSession.loadDraftIntoEditor();
+            }}
+          />
+        </div>
+        <form id="editor-tenant-page-form" onSubmit={handleSubmit} className="space-y-6 min-w-0">
         <PageThemePanel
           theme={theme}
           open={globalAppearanceOpen}
@@ -639,6 +672,26 @@ export default function EditarPaginaTenantPage() {
           updateTheme={updateTheme}
           overlayOpacityDraft={overlayOpacityDraft}
           setOverlayOpacityDraft={setOverlayOpacityDraft}
+        />
+
+        <PageSeoPanel
+          seo={(theme.seo as import("@/types/page").PageSeoSettings) ?? {}}
+          onChange={(key, value) => {
+            setPage((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    content: {
+                      ...prev.content,
+                      theme: {
+                        ...(prev.content.theme ?? {}),
+                        seo: { ...((prev.content.theme?.seo as object) ?? {}), [key]: value },
+                      },
+                    },
+                  }
+                : prev,
+            );
+          }}
         />
 
         <Card>
@@ -3303,7 +3356,8 @@ export default function EditarPaginaTenantPage() {
             </div>
           </CardContent>
         </Card>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

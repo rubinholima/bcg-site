@@ -1,4 +1,6 @@
 import type { HomeContentDto, HomeContentBlock, HomeBlockType, GlobalPresenceCounter, GlobalPresenceLocation } from "@/types/home-content";
+import { buildModuleOptionsFromRegistry, getRegistryBlockLabel } from "@/lib/page-builder/registry-bridge";
+import { normalizePageBlocks } from "@bcg/page-builder-core";
 import type { Page } from "@/types/page";
 import { getServerBackendBaseUrl } from "@/lib/apiProxy";
 import { copy, type CopySchema } from "@/lib/home-copy";
@@ -225,58 +227,9 @@ export function getModuleCategoryLabel(category: ModuleCategory): string {
   return MODULE_CATEGORIES.find((c) => c.id === category)?.label ?? category;
 }
 
-/** Opções para o dropdown "Adicionar módulo" — agrupadas por categoria */
-export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: ModuleCategory }[] = [
-  // Geral
-  { type: "header", label: "Cabeçalho", category: "geral" },
-  { type: "footer", label: "Rodapé", category: "geral" },
-  { type: "hero", label: "Hero", category: "geral" },
-  { type: "highlights", label: "Destaques", category: "geral" },
-  { type: "text", label: "Bloco de texto", category: "geral" },
-  { type: "custom", label: "Customizado (título + texto + imagem)", category: "geral" },
-  { type: "what", label: "O que fazemos", category: "geral" },
-  { type: "clubs", label: "Clubes", category: "geral" },
-  { type: "companies", label: "Empresas", category: "geral" },
-  { type: "founder", label: "Fundador", category: "geral" },
-  { type: "how", label: "Como funciona", category: "geral" },
-  { type: "cta", label: "CTA final", category: "geral" },
-  { type: "section", label: "Seção (1, 2 ou 3 colunas)", category: "geral" },
-  // Futebol
-  { type: "proximos_jogos", label: "Próximos jogos", category: "futebol" },
-  { type: "ultimos_resultados", label: "Últimos resultados", category: "futebol" },
-  { type: "times_categorias", label: "Times por categorias", category: "futebol" },
-  { type: "noticias", label: "Notícias", category: "futebol" },
-  { type: "calendario", label: "Calendário / Agenda", category: "futebol" },
-  { type: "tabela", label: "Tabela / Classificação", category: "futebol" },
-  { type: "patrocinadores", label: "Patrocinadores", category: "futebol" },
-  { type: "galeria", label: "Galeria de fotos", category: "futebol" },
-  { type: "hino", label: "Hino do clube (letra + player)", category: "futebol" },
-  { type: "imprensa", label: "Imprensa / kit de marca", category: "futebol" },
-  // Empresas
-  { type: "sobre", label: "Sobre nós", category: "empresas" },
-  { type: "servicos", label: "Serviços", category: "empresas" },
-  { type: "produtos", label: "Produtos", category: "empresas" },
-  { type: "equipe", label: "Nossa equipe", category: "empresas" },
-  { type: "clientes", label: "Clientes / Cases", category: "empresas" },
-  { type: "contato", label: "Contato", category: "empresas" },
-  { type: "imprensa", label: "Imprensa / kit de marca", category: "empresas" },
-  { type: "global_presence", label: "Presença Global / Expansão", category: "empresas" },
-  { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)", category: "empresas" },
-  // Eventos (páginas de venue, torneios, Boston City Hall, etc.)
-  { type: "eventos", label: "Nossos Eventos", category: "eventos" },
-  { type: "bch_upcoming_events", label: "BCH — Próximos eventos", category: "eventos" },
-  { type: "galeria_eventos", label: "Galeria de fotos do evento", category: "eventos" },
-  { type: "proximos_eventos", label: "Próximos jogos (evento)", category: "eventos" },
-  { type: "ultimos_eventos", label: "Últimos resultados (evento)", category: "eventos" },
-  { type: "tabela_eventos", label: "Tabela / classificação (evento)", category: "eventos" },
-  // Imobiliária
-  { type: "imoveis_destaque", label: "Imóveis em destaque", category: "imobiliaria" },
-  { type: "formulario_captura", label: "Formulário de captura (leads)", category: "imobiliaria" },
-  { type: "diferenciais", label: "Diferenciais", category: "imobiliaria" },
-  { type: "numeros", label: "Números / Estatísticas", category: "imobiliaria" },
-  { type: "como_funciona", label: "Como funciona (processo)", category: "imobiliaria" },
-  { type: "faq", label: "Perguntas frequentes", category: "imobiliaria" },
-];
+/** Opções para o dropdown "Adicionar módulo" — fonte canônica @bcg/page-builder-core */
+export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: ModuleCategory }[] =
+  buildModuleOptionsFromRegistry();
 
 /**
  * Módulos específicos para páginas de EVENTOS, por tipo de negócio.
@@ -308,9 +261,20 @@ export function getEventPageModulesForCategory(category: ModuleCategory): { type
 }
 
 export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"): string {
+  const fromRegistry = getRegistryBlockLabel(id, type, lang);
+  if (fromRegistry) {
+    if (type === "custom" && id.startsWith("custom-")) return `${fromRegistry} (${id})`;
+    if (type === "text" && id.startsWith("text-")) return `${fromRegistry} (${id})`;
+    return fromRegistry;
+  }
   if (type === "custom" && id.startsWith("custom-")) return BLOCK_LABELS.custom[lang] + ` (${id})`;
   if (type === "text" && id.startsWith("text-")) return BLOCK_LABELS.text[lang] + ` (${id})`;
   return BLOCK_LABELS[id]?.[lang] ?? BLOCK_LABELS[type]?.[lang] ?? id;
+}
+
+/** Normaliza blocos antes de salvar/exibir — preserva JSON legado. */
+export function normalizePageContentBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
+  return normalizePageBlocks(blocks) as HomeContentBlock[];
 }
 
 /** Chaves de config que têm UI dedicada no editor. Usado em Campos adicionais para não duplicar. */
@@ -634,6 +598,49 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
   }
   if (type === "faq") {
     config.faqItems = [];
+  }
+  if (type === "match_day_hero") {
+    config.titlePt = "Próximo jogo";
+    config.titleEn = "Next match";
+    config.matchDayMode = "next";
+    config.bodyAlign = "center";
+    config.titleAlign = "center";
+  }
+  if (type === "countdown_block") {
+    config.countdownTargetISO = "";
+    config.countdownLabelPt = "Falta pouco";
+    config.countdownLabelEn = "Coming soon";
+  }
+  if (type === "match_center") {
+    config.titlePt = "Match Center";
+    config.titleEn = "Match Center";
+  }
+  if (type === "technical_staff_public") {
+    config.titlePt = "Comissão técnica";
+    config.titleEn = "Technical staff";
+    config.staffLayout = "grid";
+  }
+  if (type === "stadium_public") {
+    config.titlePt = "Estádio";
+    config.titleEn = "Stadium";
+  }
+  if (type === "honors_block") {
+    config.honorsItems = [];
+  }
+  if (type === "membership_public") {
+    config.titlePt = "Sócio torcedor";
+    config.titleEn = "Membership";
+  }
+  if (type === "statistics_public") {
+    config.titlePt = "Estatísticas";
+    config.titleEn = "Statistics";
+  }
+  if (type === "video_block") {
+    config.videoUrl = "";
+    config.videoAspectRatio = "16/9";
+  }
+  if (type === "social_links_block") {
+    config.socialLinks = [];
   }
 
   return { id, type, sortOrder, config };

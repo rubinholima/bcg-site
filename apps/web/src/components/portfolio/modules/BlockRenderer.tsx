@@ -58,6 +58,18 @@ import { BchUpcomingEventsSection } from "@/components/portfolio/modules/BchUpco
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import type { FixturesFetchContext } from "@/lib/fixtures-shared";
 import { Button } from "@/components/ui/button";
+import {
+  CountdownSection,
+  HonorsBlockSection,
+  MatchCenterSection,
+  MatchDayHeroSection,
+  MembershipPublicSection,
+  SocialLinksBlockSection,
+  StadiumPublicSection,
+  StatisticsPublicSection,
+  TechnicalStaffPublicSection,
+  VideoBlockSection,
+} from "@/components/portfolio/modules/football/FootballBuilderSections";
 
 export type EventPageMetaForFixtures = {
   name: string;
@@ -705,6 +717,133 @@ export function BlockRenderer({
         eventPageLogoUrl={
           neutralEventFixtures ? (eventPageMeta?.logoUrl ?? null) : null
         }
+      />
+    );
+  }
+
+  if (block.type === "match_day_hero") {
+    return (
+      <MatchDayHeroSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "countdown_block") {
+    return (
+      <section key={block.id} id={block.id} className={`py-8 ${moduleBottomBorderClass(block.config)}`} style={blockSectionStyle(block, page)}>
+        <div className={moduleSectionContainerClass({ fullWidth })}>
+          <CountdownSection block={block} slug={slug} lang={lang} page={page} fullWidth={fullWidth} />
+        </div>
+      </section>
+    );
+  }
+  if (block.type === "match_center") {
+    return (
+      <MatchCenterSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "technical_staff_public") {
+    return (
+      <TechnicalStaffPublicSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "stadium_public") {
+    return (
+      <StadiumPublicSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "honors_block") {
+    return (
+      <HonorsBlockSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "membership_public") {
+    return (
+      <MembershipPublicSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "statistics_public") {
+    return (
+      <StatisticsPublicSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "video_block") {
+    return (
+      <VideoBlockSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "social_links_block") {
+    return (
+      <SocialLinksBlockSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        showTitle={shouldShowTitle}
       />
     );
   }

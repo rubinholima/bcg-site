@@ -40,6 +40,19 @@ export class PagesController {
     return this.pagesService.findByTenantId(tenantId);
   }
 
+  @Get(':id/revisions')
+  listRevisions(@Param('id') id: string) {
+    return this.pagesService.listRevisions(id);
+  }
+
+  @Post(':id/revisions/:revisionId/restore')
+  restoreRevision(
+    @Param('id') id: string,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.pagesService.restoreRevision(id, revisionId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.pagesService.findOne(id);

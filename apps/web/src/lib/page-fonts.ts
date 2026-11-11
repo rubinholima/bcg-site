@@ -214,7 +214,32 @@ export function pageFontPresetsByCategory(): { category: PageFontCategory; label
 /** URL única do Google Fonts com todas as famílias dos presets. */
 export function buildPageFontsGoogleStylesheetUrl(): string {
   const families = [...new Set(PAGE_FONT_PRESETS.map((p) => p.googleFamily).filter(Boolean))] as string[];
-  const query = families
+  return buildGoogleFontsUrlForFamilies(families);
+}
+
+export function collectFontFamiliesFromTheme(theme?: PageTheme | null, blocks?: Array<{ config?: Record<string, unknown> }>): string[] {
+  const families = new Set<string>();
+  const addValue = (value?: string) => {
+    const v = value?.trim();
+    if (!v) return;
+    const preset = PAGE_FONT_PRESETS.find((p) => p.value === v);
+    if (preset?.googleFamily) families.add(preset.googleFamily);
+  };
+  addValue(theme?.fontFamily);
+  addValue(theme?.headingFontFamily);
+  addValue(theme?.bodyFontFamily);
+  if (blocks?.length) {
+    for (const b of blocks) {
+      addValue(b.config?.fontFamily as string | undefined);
+    }
+  }
+  return [...families];
+}
+
+export function buildGoogleFontsUrlForFamilies(families: string[]): string {
+  const unique = [...new Set(families.filter(Boolean))];
+  if (!unique.length) return "";
+  const query = unique
     .map((name) => `family=${encodeURIComponent(name).replace(/%20/g, "+")}:wght@400;500;600;700`)
     .join("&");
   return `https://fonts.googleapis.com/css2?${query}&display=swap`;

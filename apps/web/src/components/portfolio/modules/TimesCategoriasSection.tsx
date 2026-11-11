@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
 import { AutoScrollMarquee } from "@/components/portfolio/AutoScrollMarquee";
+import { publicClientFetch, toPublicClientApiPath } from "@/lib/public-client-api";
 
 // Meses abreviados em português
 const MONTHS_ABBR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -696,7 +697,7 @@ export function TimesCategoriasSection({
   useEffect(() => {
     if (tenantId?.trim()) {
       setLoading(true);
-      fetch(`/api/public/tenants/by-id/${encodeURIComponent(tenantId)}/players`, { cache: "no-store" })
+      publicClientFetch(toPublicClientApiPath(`/api/public/tenants/by-id/${encodeURIComponent(tenantId)}/players`), { cache: "no-store" })
         .then((res) => (res.ok ? res.json() : { categories: [] }))
         .then((data: { categories?: TeamCategory[] }) => {
           const cats = Array.isArray(data?.categories) ? data.categories : [];
@@ -709,7 +710,7 @@ export function TimesCategoriasSection({
         .finally(() => setLoading(false));
     } else if (slug?.trim()) {
       setLoading(true);
-      fetch(`/api/public/tenants/${encodeURIComponent(slug)}/players`, { cache: "no-store" })
+      publicClientFetch(toPublicClientApiPath(`/api/public/tenants/${encodeURIComponent(slug)}/players`), { cache: "no-store" })
         .then((res) => (res.ok ? res.json() : { categories: [] }))
         .then((data: { categories?: TeamCategory[] }) => {
           const cats = Array.isArray(data?.categories) ? data.categories : [];

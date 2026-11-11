@@ -63,6 +63,47 @@ export type UpdatePageDto = {
   createdBy?: string;
 };
 
+function mapPageRow(
+  row: {
+    id: string;
+    tenantId: string;
+    slug: string;
+    title: string | null;
+    content: unknown;
+    draftContent?: unknown;
+    hasUnpublishedDraft?: boolean;
+    publishedAt?: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    tenant?: {
+      id: string;
+      name: string;
+      slug: string;
+      logoUrl?: string | null;
+      kind?: { id: string; name: string };
+    } | null;
+  },
+): PageResponseDto {
+  return {
+    id: row.id,
+    tenantId: row.tenantId,
+    slug: row.slug,
+    title: row.title,
+    content: (row.content as PageContentDto) ?? { blocks: [] },
+    draftContent: (row.draftContent as PageContentDto) ?? null,
+    hasUnpublishedDraft: row.hasUnpublishedDraft ?? false,
+    publishedAt: row.publishedAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    tenant: row.tenant
+      ? {
+          ...row.tenant,
+          kind: row.tenant.kind ?? undefined,
+        }
+      : undefined,
+  };
+}
+
 @Injectable()
 export class PagesService {
   constructor(
@@ -150,16 +191,7 @@ export class PagesService {
           kind: resolved.tenant.kind ?? undefined,
         }
       : undefined;
-    return {
-      id: resolved.id,
-      tenantId: resolved.tenantId,
-      slug: resolved.slug,
-      title: resolved.title,
-      content: (resolved.content as PageContentDto) ?? { blocks: [] },
-      createdAt: resolved.createdAt.toISOString(),
-      updatedAt: resolved.updatedAt.toISOString(),
-      tenant,
-    };
+    return mapPageRow({ ...resolved, tenant });
   }
 
   /**
@@ -229,16 +261,47 @@ export class PagesService {
     if (!row) {
       throw new NotFoundException(`Página com ID "${id}" não encontrada`);
     }
-    return {
-      id: row.id,
-      tenantId: row.tenantId,
-      slug: row.slug,
-      title: row.title,
-      content: (row.content as PageContentDto) ?? { blocks: [] },
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-      tenant: row.tenant ?? undefined,
-    };
+    return mapPageRow(row);
+  }
+
+  async listRevisions(pageId: string): Promise<
+    Array<{ id: string; createdAt: string; createdBy: string | null; label: string | null }>
+  > {
+    const page = await this.prisma.page.findUnique({ where: { id: pageId } });
+    if (!page) throw new NotFoundException(`Página com ID "${pageId}" não encontrada`);
+    const rows = await this.prisma.pageContentRevision.findMany({
+      where: { pageId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      createdAt: r.createdAt.toISOString(),
+      createdBy: r.createdBy,
+      label: r.label,
+    }));
+  }
+
+  async restoreRevision(pageId: string, revisionId: string): Promise<PageResponseDto> {
+    const page = await this.prisma.page.findUnique({
+      where: { id: pageId },
+      include: { tenant: { select: { id: true, name: true, slug: true } } },
+    });
+    if (!page) throw new NotFoundException(`Página com ID "${pageId}" não encontrada`);
+    const rev = await this.prisma.pageContentRevision.findFirst({
+      where: { id: revisionId, pageId },
+    });
+    if (!rev) throw new NotFoundException('Revisão não encontrada');
+    const content = (rev.content as PageContentDto) ?? { blocks: [] };
+    const row = await this.prisma.page.update({
+      where: { id: pageId },
+      data: {
+        draftContent: content as object,
+        hasUnpublishedDraft: true,
+      },
+      include: { tenant: { select: { id: true, name: true, slug: true } } },
+    });
+    return mapPageRow(row);
   }
 
   async create(dto: CreatePageDto): Promise<PageResponseDto> {
@@ -354,18 +417,6 @@ export class PagesService {
       data,
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });
-    return {
-      id: row.id,
-      tenantId: row.tenantId,
-      slug: row.slug,
-      title: row.title,
-      content: (row.content as PageContentDto) ?? { blocks: [] },
-      draftContent: (row.draftContent as PageContentDto) ?? null,
-      hasUnpublishedDraft: row.hasUnpublishedDraft,
-      publishedAt: row.publishedAt?.toISOString() ?? null,
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-      tenant: row.tenant ?? undefined,
-    };
+    return mapPageRow(row);
   }
 }

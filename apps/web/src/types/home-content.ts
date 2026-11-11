@@ -100,7 +100,18 @@ export type HomeBlockType =
   | "como_funciona"
   | "faq"
   // Container: seção com colunas
-  | "section";
+  | "section"
+  // Futebol — blocos públicos 2.0
+  | "match_day_hero"
+  | "countdown_block"
+  | "match_center"
+  | "technical_staff_public"
+  | "stadium_public"
+  | "honors_block"
+  | "membership_public"
+  | "statistics_public"
+  | "video_block"
+  | "social_links_block";
 
 /** Efeitos do carrossel do Hero */
 export type HeroCarouselEffect = "fade" | "slide" | "zoom";

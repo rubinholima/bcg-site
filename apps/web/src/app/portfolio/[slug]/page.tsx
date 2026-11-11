@@ -13,6 +13,7 @@ import { getImprensaMenuLinks, isImprensaPageOnlyBlock } from "@/lib/imprensa-di
 import { BCH_SLUG } from "@/lib/boston-city-hall";
 import { BchPublicVenueHome } from "@/components/portfolio/bch/BchPublicVenueHome";
 import { getPortfolioPublicContextServer } from "@/components/portfolio/portfolio-public-path";
+import { PortfolioPageFonts } from "@/components/portfolio/PortfolioPageFonts";
 
 async function getTenantBySlug(slug: string): Promise<{ id: string; name: string; slug: string; logoUrl: string | null } | null> {
   try {
@@ -119,6 +120,16 @@ const GENERIC_BLOCK_TYPES = [
   "formulario_captura",
   "imoveis_destaque",
   "galeria_eventos",
+  "match_day_hero",
+  "countdown_block",
+  "match_center",
+  "technical_staff_public",
+  "stadium_public",
+  "honors_block",
+  "membership_public",
+  "statistics_public",
+  "video_block",
+  "social_links_block",
 ];
 
 function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
@@ -231,6 +242,7 @@ export default async function PortfolioSlugPage({
           />
         </div>
       )}
+      <PortfolioPageFonts theme={theme} />
       <PortfolioFavicon slug={slug} logoUrl={tenant?.logoUrl} />
       <PublicPortfolioHeader
         slug={slug}

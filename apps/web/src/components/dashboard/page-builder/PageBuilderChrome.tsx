@@ -3,13 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Building2, ExternalLink, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Building2, ExternalLink, Eye, Loader2, Redo2, Save, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface PageBuilderLogo {
   src: string;
   alt: string;
 }
+
+export type PageEditorialStatus = "published" | "draft" | "unpublished_changes";
 
 interface PageBuilderChromeProps {
   title: string;
@@ -23,6 +25,17 @@ interface PageBuilderChromeProps {
   formId: string;
   /** Logo do clube, empresa ou evento sendo editado. */
   subjectLogo?: PageBuilderLogo | null;
+  editorialStatus?: PageEditorialStatus;
+  publishedAt?: string | null;
+  updatedAt?: string | null;
+  dirty?: boolean;
+  onSaveDraft?: () => void;
+  onPublish?: () => void;
+  onTogglePreview?: () => void;
+  previewOpen?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  savingMode?: "idle" | "draft" | "publish";
 }
 
 function ChromeLogo({ logo }: { logo: PageBuilderLogo }) {
@@ -66,8 +79,25 @@ export function PageBuilderChrome({
   error = null,
   formId,
   subjectLogo = null,
+  editorialStatus = "published",
+  publishedAt,
+  updatedAt,
+  dirty = false,
+  onSaveDraft,
+  onPublish,
+  onTogglePreview,
+  previewOpen,
+  onUndo,
+  onRedo,
+  savingMode = "idle",
 }: PageBuilderChromeProps) {
   const showSubjectLogo = !!subjectLogo?.src;
+  const statusLabel =
+    editorialStatus === "draft"
+      ? "Rascunho"
+      : editorialStatus === "unpublished_changes"
+        ? "Alterações não publicadas"
+        : "Publicado";
 
   return (
     <div className="sticky top-0 z-30 -mx-4 border-b border-border bg-background/95 px-4 py-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
@@ -87,10 +117,32 @@ export function PageBuilderChrome({
             {subtitle ? (
               <p className="hidden truncate text-xs text-muted-foreground sm:block">{subtitle}</p>
             ) : null}
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              {statusLabel}
+              {dirty ? " · não salvo" : ""}
+              {publishedAt ? ` · publicado ${new Date(publishedAt).toLocaleString("pt-BR")}` : ""}
+              {updatedAt && !publishedAt ? ` · salvo ${new Date(updatedAt).toLocaleString("pt-BR")}` : ""}
+            </p>
           </div>
         </div>
 
         <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {onUndo ? (
+            <Button type="button" variant="ghost" size="icon" className="h-10 w-10 hidden sm:inline-flex" onClick={onUndo} title="Desfazer">
+              <Undo2 className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {onRedo ? (
+            <Button type="button" variant="ghost" size="icon" className="h-10 w-10 hidden sm:inline-flex" onClick={onRedo} title="Refazer">
+              <Redo2 className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {onTogglePreview ? (
+            <Button type="button" variant="outline" size="sm" className="min-h-[44px] gap-1.5" onClick={onTogglePreview}>
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">{previewOpen ? "Fechar prévia" : "Pré-visualizar"}</span>
+            </Button>
+          ) : null}
           {error ? (
             <span className="hidden max-w-[200px] truncate text-sm text-destructive lg:inline" title={error}>
               {error}
@@ -112,10 +164,37 @@ export function PageBuilderChrome({
               Voltar
             </Button>
           </Link>
-          <Button type="submit" form={formId} disabled={saving} className="min-h-[44px] px-3 sm:px-4">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Save className="h-4 w-4 sm:mr-2" />}
-            <span className="hidden sm:inline">{saving ? "Salvando…" : "Salvar"}</span>
-          </Button>
+          {onSaveDraft ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={saving || savingMode !== "idle"}
+              className="min-h-[44px] px-3"
+              onClick={onSaveDraft}
+            >
+              {savingMode === "draft" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar rascunho"}
+            </Button>
+          ) : null}
+          {onPublish ? (
+            <Button
+              type="button"
+              disabled={saving || savingMode !== "idle"}
+              className="min-h-[44px] px-3 sm:px-4"
+              onClick={onPublish}
+            >
+              {savingMode === "publish" ? (
+                <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
+              ) : (
+                <Save className="h-4 w-4 sm:mr-2" />
+              )}
+              <span className="hidden sm:inline">Publicar</span>
+            </Button>
+          ) : (
+            <Button type="submit" form={formId} disabled={saving} className="min-h-[44px] px-3 sm:px-4">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Save className="h-4 w-4 sm:mr-2" />}
+              <span className="hidden sm:inline">{saving ? "Salvando…" : "Salvar"}</span>
+            </Button>
+          )}
         </div>
       </div>
     </div>

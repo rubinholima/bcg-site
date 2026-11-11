@@ -22,6 +22,7 @@ import {
   fetchFixtures as fetchFixturesShared,
   type FixturesFetchContext,
 } from "@/lib/fixtures-shared";
+import { publicClientFetch, toPublicClientApiPath } from "@/lib/public-client-api";
 import {
   ProximosJogosMobileCarousel,
   ProximosJogosVenuePills,
@@ -363,7 +364,7 @@ export function ProximosJogosSection({
   useEffect(() => {
     if (!slug?.trim() || fixturesContext === "event") return;
     let cancelled = false;
-    fetch(`/api/public/tenants/${encodeURIComponent(slug)}`, { cache: "no-store" })
+    publicClientFetch(toPublicClientApiPath(`/api/public/tenants/${encodeURIComponent(slug)}`), { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { name?: string; logoUrl?: string | null } | null) => {
         if (cancelled || !data) return;

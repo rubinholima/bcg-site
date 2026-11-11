@@ -26,7 +26,7 @@ interface PageThemePanelProps {
   theme: PageTheme;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  updateTheme: (key: keyof PageTheme, value: PageTheme[keyof PageTheme]) => void;
+  updateTheme: (key: keyof PageTheme, value: PageTheme[keyof PageTheme] | undefined) => void;
   overlayOpacityDraft: string | null;
   setOverlayOpacityDraft: (value: string | null) => void;
 }

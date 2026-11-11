@@ -10,6 +10,7 @@ import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { SmartImage } from "@/components/common/SmartImage";
 import { Button } from "@/components/ui/button";
 import { Loader2, Newspaper, Upload } from "lucide-react";
+import { publicClientFetch, toPublicClientApiPath } from "@/lib/public-client-api";
 
 type EventPhoto = { id: string; url: string; caption: string | null; sortOrder: number };
 
@@ -49,7 +50,7 @@ export function GaleriaEventosSection({
   useEffect(() => {
     let cancelled = false;
     // Token público por slug foi removido — só usa link privado (initialUploadToken / dashboard).
-    fetch(`/api/public/events/${encodeURIComponent(slug)}/photos`)
+    publicClientFetch(toPublicClientApiPath(`/api/public/events/${encodeURIComponent(slug)}/photos`))
       .then(safeJson)
       .then((photosData) => {
         if (!cancelled && Array.isArray(photosData)) setPhotos(photosData);

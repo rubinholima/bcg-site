@@ -17,7 +17,6 @@ const geistMono = Geist_Mono({
 });
 
 import { getAppBaseUrl } from "@/lib/apiProxy";
-import { buildPageFontsGoogleStylesheetUrl } from "@/lib/page-fonts";
 
 /** Nome e logo vêm da API do Grupo Master. Usa /api/public/group (fallback quando backend indisponível). */
 async function getGroupMetadata(): Promise<{ name?: string; logoUrl?: string }> {
@@ -61,7 +60,6 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <link rel="stylesheet" href={buildPageFontsGoogleStylesheetUrl()} />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var p=location.pathname;if(p.indexOf('/dashboard')===0){var t=localStorage.getItem('cup360-dashboard-theme');var light=t==='light'||(t==='system'&&!matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',!light);document.documentElement.classList.toggle('dashboard-theme-light',light);}else{document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})();`,
