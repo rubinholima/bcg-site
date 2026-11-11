@@ -97,7 +97,7 @@ export default async function BchCheckoutPage({
         logoUrl={portfolioPage?.tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={pathBase || "/portfolio"}
+        basePath={pathBase}
       />
       <main className="px-4 py-10 sm:px-6 sm:py-14">
         <h1 className="mb-8 text-center text-2xl font-bold sm:text-3xl">

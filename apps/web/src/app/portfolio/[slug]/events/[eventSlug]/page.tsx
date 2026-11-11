@@ -203,7 +203,7 @@ export default async function BchPublicEventDetailPage({
         logoUrl={event.logoUrl ?? portfolioPage?.tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={pathBase || "/portfolio"}
+        basePath={pathBase}
       />
 
       <article className="relative mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">

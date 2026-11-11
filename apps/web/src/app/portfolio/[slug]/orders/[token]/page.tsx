@@ -129,7 +129,7 @@ export default async function BchPublicOrderPage({
         logoUrl={portfolioPage?.tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={pathBase || "/portfolio"}
+        basePath={pathBase}
       />
       <main className="mx-auto max-w-lg px-4 py-10 sm:py-14">
         <h1 className="text-2xl font-bold text-amber-400/95">{copy.title}</h1>

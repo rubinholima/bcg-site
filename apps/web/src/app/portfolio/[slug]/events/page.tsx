@@ -90,7 +90,7 @@ export default async function PortfolioEventsListPage({
         logoUrl={logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={pathBase || "/portfolio"}
+        basePath={pathBase}
         extraNavLinks={headerBlock ? undefined : bchPublicNavLinks(lang, navBase)}
       />
       <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">

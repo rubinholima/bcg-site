@@ -238,7 +238,7 @@ export default async function PortfolioSlugPage({
         logoUrl={tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
-        basePath={pathBase || "/portfolio"}
+        basePath={pathBase}
         extraNavLinks={extraNavLinks}
       />
 

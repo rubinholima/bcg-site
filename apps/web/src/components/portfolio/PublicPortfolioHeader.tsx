@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { LayoutDashboard, Menu, X } from "lucide-react";
 import type { HomeContentBlock } from "@/types/home-content";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ import {
 } from "@/lib/header-nav";
 import { HeaderNavMenu } from "@/components/home/HeaderNavMenu";
 import { cn } from "@/lib/utils";
+import { rewriteTenantPortfolioHref } from "@/lib/portfolio-public-links";
+import { buildPortfolioLangSwitchHref, portfolioPublicHomeHref } from "@/lib/portfolio-public-nav-url";
 
 type HeaderPreset = "classic" | "centered" | "minimal" | "overlay" | "sticky" | "split";
 
@@ -92,26 +95,16 @@ function logoSizeClass(size: "sm" | "md" | "lg") {
   }
 }
 
-/** Seletor PT/EN no mesmo estilo da página principal: caixa arredondada, item selecionado em destaque. */
-function PortfolioLangSelector({
-  slug,
-  lang,
-  basePath = "/portfolio",
-}: {
-  slug: string;
-  lang: "pt" | "en";
-  basePath?: string;
-}) {
-  const home =
-    basePath === ""
-      ? "/"
-      : basePath.startsWith("/portfolio/")
-        ? basePath
-        : `${basePath.replace(/\/$/, "")}/${slug}`;
+/** Seletor PT/EN — usa pathname visível (domínio customizado ou /portfolio/[slug]). */
+function PortfolioLangSelector({ lang }: { lang: "pt" | "en" }) {
+  const pathname = usePathname() ?? "/";
+  const searchParams = useSearchParams();
+  const ptHref = buildPortfolioLangSwitchHref(pathname, searchParams, "pt");
+  const enHref = buildPortfolioLangSwitchHref(pathname, searchParams, "en");
   return (
     <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
       <Link
-        href={`${home}?lang=pt`}
+        href={ptHref}
         className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
           lang === "pt"
             ? "bg-white/20 text-white"
@@ -121,7 +114,7 @@ function PortfolioLangSelector({
         PT
       </Link>
       <Link
-        href={`${home}?lang=en`}
+        href={enHref}
         className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
           lang === "en"
             ? "bg-white/20 text-white"
@@ -132,6 +125,30 @@ function PortfolioLangSelector({
       </Link>
     </div>
   );
+}
+
+function rewriteNavLinksForPublicContext(
+  links: HeaderNavLink[],
+  tenantSlug: string,
+  basePath: string,
+): HeaderNavLink[] {
+  const mapHref = (href: string | undefined) => {
+    const h = (href ?? "").trim();
+    if (!h || !h.startsWith("/")) return h;
+    return rewriteTenantPortfolioHref(h, tenantSlug, basePath);
+  };
+  return links.map((link) => {
+    if (isHeaderNavDropdown(link)) {
+      return {
+        ...link,
+        children: (link.children ?? []).map((c) => ({
+          ...c,
+          href: mapHref(c.href),
+        })),
+      };
+    }
+    return { ...link, href: mapHref(link.href) };
+  });
 }
 
 function MobileNavLink({
@@ -229,7 +246,7 @@ function PortfolioMobileNavPanel({
       })}
       {showLanguage ? (
         <div className="px-3 pt-2">
-          <PortfolioLangSelector slug={slug} lang={lang} basePath={basePath} />
+          <PortfolioLangSelector lang={lang} />
         </div>
       ) : null}
       {showHomeLink ? (
@@ -285,7 +302,7 @@ function PortfolioHeaderNavigation({
     <>
       <nav className={cn("hidden shrink-0 items-center gap-2 sm:gap-3 md:flex", desktopNavClassName)}>
         {showLanguage ? (
-          <PortfolioLangSelector slug={slug} lang={lang} basePath={basePath} />
+          <PortfolioLangSelector lang={lang} />
         ) : null}
         <HeaderNavMenu links={links} linkClassName={navLinkClass} style={style} />
         {showHomeLink ? (
@@ -365,12 +382,11 @@ export function PublicPortfolioHeader({
   const resolvedLogoRaw = fromProp || fromHeader || null;
   const logoSrc = resolvedLogoRaw ? getPublicImageUrl(resolvedLogoRaw) : null;
 
-  const pageUrl =
-    basePath === ""
-      ? "/"
-      : basePath.startsWith("/portfolio/")
-        ? basePath
-        : `${basePath.replace(/\/$/, "")}/${slug}`;
+  const pageUrl = portfolioPublicHomeHref(basePath, slug);
+  const navLinks = useMemo(
+    () => rewriteNavLinksForPublicContext(c.filteredLinks, slug, basePath),
+    [c.filteredLinks, slug, basePath],
+  );
   const navLinkClass =
     "rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white";
 
@@ -399,7 +415,7 @@ export function PublicPortfolioHeader({
   );
 
   const navProps = {
-    links: c.filteredLinks,
+    links: navLinks,
     style,
     showLanguage: c.showLanguage,
     showHomeLink: c.showHomeLink,
@@ -468,11 +484,11 @@ export function PublicPortfolioHeader({
           <div className="flex h-14 items-center gap-3">
             {logoLink}
             <nav className="hidden flex-1 items-center justify-center gap-2 sm:gap-3 md:flex">
-              <HeaderNavMenu links={c.filteredLinks} linkClassName={navLinkClass} style={style} />
+              <HeaderNavMenu links={navLinks} linkClassName={navLinkClass} style={style} />
             </nav>
             <div className="hidden shrink-0 items-center gap-2 md:flex">
               {c.showLanguage ? (
-                <PortfolioLangSelector slug={slug} lang={lang} basePath={basePath} />
+                <PortfolioLangSelector lang={lang} />
               ) : null}
               {c.showHomeLink ? (
                 <Link href="/" className={navLinkClass} style={style}>
