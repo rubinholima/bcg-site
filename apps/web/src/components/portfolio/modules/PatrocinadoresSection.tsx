@@ -89,7 +89,14 @@ export function PatrocinadoresSection({
   const title = ((lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string)?.trim();
   const titleLogo = (block.config?.patrocinadoresTitleLogo as string)?.trim();
   const hasTitle = title && title.length > 0;
-  const rawItems = (block.config?.patrocinadoresManualItems as PatrocinadorItem[] | undefined) ?? [];
+  const layout = (block.config?.patrocinadoresLayout as string) ?? "grid";
+  const tiers = (block.config?.patrocinadoresTiers as Array<{ name?: string; sortOrder?: number; sponsors?: PatrocinadorItem[] }>) ?? [];
+  const rawItems = tiers.length
+    ? tiers
+        .slice()
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+        .flatMap((t) => t.sponsors ?? [])
+    : ((block.config?.patrocinadoresManualItems as PatrocinadorItem[] | undefined) ?? []);
   const items = rawItems.map((i) => {
     const logo = i.logoUrl ?? (i as unknown as Record<string, unknown>).logo_url;
     return { ...i, logoUrl: String(logo ?? "").trim() };
@@ -156,13 +163,39 @@ export function PatrocinadoresSection({
               align={titleAlign ?? "left"}
             />
           ) : null}
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-            {displayItems.map((item, idx) => (
-              <div key={item.id ?? idx} className="h-[100px] w-[140px] sm:h-[120px] sm:w-[160px] md:w-[180px] lg:w-[200px]">
-                <SponsorLogo item={item} lang={lang} />
-              </div>
-            ))}
-          </div>
+          {layout === "tiered" && tiers.length ? (
+            <div className="space-y-10">
+              {tiers
+                .slice()
+                .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+                .map((tier, ti) => {
+                  const tierItems = (tier.sponsors ?? []).filter((i) => i.logoUrl?.trim());
+                  if (!tierItems.length) return null;
+                  return (
+                    <div key={ti}>
+                      {tier.name ? (
+                        <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-white/70">{tier.name}</p>
+                      ) : null}
+                      <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+                        {tierItems.map((item, idx) => (
+                          <div key={item.id ?? idx} className="h-[100px] w-[140px] sm:h-[120px] sm:w-[160px]">
+                            <SponsorLogo item={item} lang={lang} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            <div className={`flex flex-wrap justify-center gap-4 sm:gap-6 ${layout === "carousel" ? "overflow-x-auto pb-2" : ""}`}>
+              {displayItems.map((item, idx) => (
+                <div key={item.id ?? idx} className="h-[100px] w-[140px] shrink-0 sm:h-[120px] sm:w-[160px] md:w-[180px] lg:w-[200px]">
+                  <SponsorLogo item={item} lang={lang} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </AnimateInView>

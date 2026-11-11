@@ -13,9 +13,12 @@ export type PageEditorSessionOptions = {
   setPage: React.Dispatch<React.SetStateAction<Page | null>>;
   storageKey: string;
   blocks: HomeContentBlock[];
+  /** Substitui persistência padrão de Page (group-home, evento). */
+  onSaveDraft?: () => Promise<void>;
+  onSavePublish?: () => Promise<void>;
 };
 
-export function usePageEditorSession({ page, setPage, storageKey, blocks }: PageEditorSessionOptions) {
+export function usePageEditorSession({ page, setPage, storageKey, blocks, onSaveDraft, onSavePublish }: PageEditorSessionOptions) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewViewport, setPreviewViewport] = useState<PreviewViewport>("desktop");
@@ -151,11 +154,27 @@ export function usePageEditorSession({ page, setPage, storageKey, blocks }: Page
 
   const saveContent = useCallback(
     async (action: "save_draft" | "publish") => {
-      if (!page?.id) return;
       setSavingMode(action === "save_draft" ? "draft" : "publish");
       setEditorError(null);
       setEditorSuccess(null);
       try {
+        if (action === "save_draft" && onSaveDraft) {
+          await onSaveDraft();
+          savedFingerprint.current = fingerprint();
+          setDirty(false);
+          if (storageKey) localStorage.removeItem(storageKey);
+          setEditorSuccess("Rascunho salvo.");
+          return;
+        }
+        if (action === "publish" && onSavePublish) {
+          await onSavePublish();
+          savedFingerprint.current = fingerprint();
+          setDirty(false);
+          if (storageKey) localStorage.removeItem(storageKey);
+          setEditorSuccess("Salvo.");
+          return;
+        }
+        if (!page?.id) return;
         const payloadBlocks = sanitizeBlocksForSave(blocks);
         const res = await authFetch(`/api/pages/${page.id}`, {
           method: "PATCH",
@@ -182,7 +201,7 @@ export function usePageEditorSession({ page, setPage, storageKey, blocks }: Page
         setSavingMode("idle");
       }
     },
-    [page, blocks, setPage, storageKey],
+    [page, blocks, setPage, storageKey, fingerprint, onSaveDraft, onSavePublish],
   );
 
   const loadDraftIntoEditor = useCallback(() => {

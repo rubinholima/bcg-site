@@ -209,6 +209,47 @@ export function PageThemePanel({
               />
             </div>
           </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {(
+              [
+                ["primary", "Primária"],
+                ["secondary", "Secundária"],
+                ["surface", "Superfície"],
+                ["muted", "Muted"],
+                ["success", "Sucesso"],
+                ["warning", "Aviso"],
+                ["error", "Erro"],
+              ] as const
+            ).map(([key, label]) => (
+              <div key={key} className="space-y-1">
+                <Label className="text-xs">{label}</Label>
+                <Input
+                  placeholder="#hex"
+                  value={(theme.globalColors?.[key] as string) ?? ""}
+                  onChange={(e) =>
+                    updateTheme("globalColors", {
+                      ...(theme.globalColors ?? {}),
+                      [key]: e.target.value.trim() || undefined,
+                    })
+                  }
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FontFamilyField
+              value={(theme.headingFontFamily as string) ?? ""}
+              onChange={(v) => updateTheme("headingFontFamily", v)}
+              label="Fonte dos títulos"
+            />
+            <FontFamilyField
+              value={(theme.bodyFontFamily as string) ?? ""}
+              onChange={(v) => updateTheme("bodyFontFamily", v)}
+              label="Fonte do corpo"
+            />
+          </div>
         </CardContent>
       ) : null}
     </Card>

@@ -333,10 +333,19 @@ export function NoticiasSection({
     };
   }, [dataSource, rssUrl, fetchMax, lang]);
 
+  const categoryFilter = (block.config?.noticiasCategoryFilter as string)?.trim().toLowerCase();
+  const featuredOnly = block.config?.noticiasFeaturedOnly === true;
+
   const displayItems = useMemo(() => {
-    const pool = dataSource === "manual" ? manualItems : rawItems;
+    let pool = dataSource === "manual" ? manualItems : rawItems;
+    if (categoryFilter) {
+      pool = pool.filter((it) => (it.title ?? "").toLowerCase().includes(categoryFilter));
+    }
+    if (featuredOnly && pool.length) {
+      pool = [pool[0]!];
+    }
     return orderNoticiasForDisplay(pool, maxItems, orderMode);
-  }, [dataSource, manualItems, rawItems, maxItems, orderMode]);
+  }, [dataSource, manualItems, rawItems, maxItems, orderMode, categoryFilter, featuredOnly]);
 
   const hasContent = displayItems.length > 0;
 

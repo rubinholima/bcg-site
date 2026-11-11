@@ -56,7 +56,9 @@ import { GlobalPresenceSection } from "@/components/home/GlobalPresenceSection";
 import { EventosSection } from "@/components/portfolio/modules/EventosSection";
 import { BchUpcomingEventsSection } from "@/components/portfolio/modules/BchUpcomingEventsSection";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
+import { RichTextHtml } from "@/components/portfolio/RichTextHtml";
 import type { FixturesFetchContext } from "@/lib/fixtures-shared";
+import { resolveEffectiveBlockConfig } from "@/lib/page-builder/resolve-block-style";
 import { Button } from "@/components/ui/button";
 import {
   CountdownSection,
@@ -162,7 +164,7 @@ function getEffectiveTitleAlign(
 }
 
 export function BlockRenderer({
-  block,
+  block: inputBlock,
   slug,
   lang,
   page,
@@ -173,6 +175,7 @@ export function BlockRenderer({
   initialUploadToken,
   fixturesContext = "tenant",
   eventPageMeta,
+  previewViewport,
 }: {
   block: HomeContentBlock;
   slug: string;
@@ -188,7 +191,13 @@ export function BlockRenderer({
   fixturesContext?: FixturesFetchContext;
   /** Metadados do evento publicado (nome + categoria fixa de jogos). */
   eventPageMeta?: EventPageMetaForFixtures | null;
+  /** Preview do editor — aplica cascata styleResponsive. */
+  previewViewport?: import("@/components/dashboard/page-builder/usePageEditorSession").PreviewViewport;
 }) {
+  const block =
+    previewViewport != null
+      ? { ...inputBlock, config: resolveEffectiveBlockConfig(inputBlock, previewViewport) }
+      : inputBlock;
   const resolvedPathBase = pathBase ?? `/portfolio/${slug}`;
   /** Servidor pode devolver visible como boolean ou string; ocultar só quando false ou "false". */
   const v = block.config?.visible as boolean | string | undefined;
@@ -991,9 +1000,12 @@ export function BlockRenderer({
               align={titleAlign}
             />
           )}
-          {body?.trim() && (
-            <p className="mt-4 whitespace-pre-wrap text-zinc-300">{body}</p>
-          )}
+          {body?.trim() &&
+            (/<[a-z][\s\S]*>/i.test(body) ? (
+              <RichTextHtml html={body} />
+            ) : (
+              <p className="mt-4 whitespace-pre-wrap text-zinc-300">{body}</p>
+            ))}
           {imgUrl && (
             <div className="relative mx-auto mt-8 aspect-video w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10">
               <SmartImage

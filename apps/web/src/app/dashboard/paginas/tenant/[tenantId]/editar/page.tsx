@@ -91,7 +91,16 @@ import {
   PageBuilderLivePreview,
   PageSeoPanel,
   PageBuilderRevisionPanel,
+  PageBuilderEditorLayout,
+  BlockStylePanel,
+  RichTextEditor,
+  FootballBlockModuleEditor,
+  PatrocinadoresModuleEditor,
+  PageTemplatesBar,
+  ReusableSectionsPanel,
 } from "@/components/dashboard/page-builder";
+import { EXTENDED_BLOCK_TYPES } from "@/lib/page-builder/registry-bridge";
+import type { PreviewViewport } from "@/components/dashboard/page-builder/usePageEditorSession";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
@@ -339,6 +348,7 @@ export default function EditarPaginaTenantPage() {
   const [pastFixturesByBlock, setPastFixturesByBlock] = useState<Record<string, FixtureItem[]>>({});
   const [loadingPastFixtures, setLoadingPastFixtures] = useState<string | null>(null);
   const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
+  const [blockStyleViewport, setBlockStyleViewport] = useState<PreviewViewport>("desktop");
   const dateInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const proximosJogosUrlRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const proximosJogosGidRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -609,62 +619,44 @@ export default function EditarPaginaTenantPage() {
     : "";
 
   return (
-    <div className="flex flex-col gap-4 min-h-0">
-      <PageBuilderChrome
-        title={tenantName}
-        subtitle="Módulos, aparência global e textos PT/EN."
-        previewHref={page?.tenant?.slug ? `/portfolio/${page.tenant.slug}` : undefined}
-        previewLabel="Ver site"
-        saving={editorSession.savingMode !== "idle"}
-        success={!!editorSession.editorSuccess}
-        error={editorSession.editorError ?? error}
-        formId="editor-tenant-page-form"
-        subjectLogo={subjectLogoSrc ? { src: subjectLogoSrc, alt: tenantName } : null}
-        editorialStatus={editorialStatus}
-        publishedAt={page.publishedAt}
-        updatedAt={page.updatedAt}
-        dirty={editorSession.dirty}
-        onSaveDraft={() => void editorSession.saveDraft()}
-        onPublish={() => void editorSession.savePublish()}
-        onTogglePreview={() => editorSession.setPreviewOpen((o) => !o)}
-        previewOpen={editorSession.previewOpen}
-        onUndo={editorSession.undo}
-        onRedo={editorSession.redo}
-        savingMode={editorSession.savingMode}
-      />
-
-      {editorSession.previewOpen && page.tenant?.slug ? (
-        <PageBuilderLivePreview
-          blocks={blocks}
-          theme={theme}
-          slug={page.tenant.slug}
-          viewport={editorSession.previewViewport}
-          selectedBlockId={editorSession.selectedBlockId}
-          onSelectBlock={editorSession.setSelectedBlockId}
-        />
-      ) : null}
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(220px,260px)_minmax(0,1fr)]">
-        <div className="space-y-3">
-          <PageBuilderNavigator
-            blocks={blocks}
-            selectedBlockId={editorSession.selectedBlockId}
-            collapsedBlockIds={collapsedBlockIds}
-            onSelect={editorSession.setSelectedBlockId}
-            onToggleCollapse={toggleBlockCollapsed}
-            onMove={(index, dir) => moveBlockTo(index, index + dir)}
-            onDuplicate={editorSession.duplicateBlockAt}
-            onCopy={editorSession.copyBlockAt}
-            onRemove={removeBlock}
-          />
-          <PageBuilderRevisionPanel
-            pageId={page.id}
-            onRestored={() => {
-              void editorSession.loadDraftIntoEditor();
-            }}
-          />
-        </div>
+    <PageBuilderEditorLayout
+      chrome={{
+        title: tenantName,
+        subtitle: "Módulos, aparência global e textos PT/EN.",
+        previewHref: page?.tenant?.slug ? `/portfolio/${page.tenant.slug}` : undefined,
+        previewLabel: "Ver site",
+        subjectLogo: subjectLogoSrc ? { src: subjectLogoSrc, alt: tenantName } : null,
+        editorialStatus,
+        publishedAt: page.publishedAt,
+        updatedAt: page.updatedAt,
+        showDraft: true,
+        showPublish: true,
+        externalError: error,
+      }}
+      session={editorSession}
+      blocks={blocks}
+      theme={theme}
+      previewSlug={page.tenant?.slug}
+      formId="editor-tenant-page-form"
+      collapsedBlockIds={collapsedBlockIds}
+      onToggleCollapse={toggleBlockCollapsed}
+      onMove={(index, dir) => moveBlockTo(index, index + dir)}
+      onRemove={removeBlock}
+      showRevisions
+      pageId={page.id}
+      onRevisionRestored={() => void editorSession.loadDraftIntoEditor()}
+    >
         <form id="editor-tenant-page-form" onSubmit={handleSubmit} className="space-y-6 min-w-0">
+        <PageTemplatesBar onApply={(next) => setBlocks(next)} />
+        <ReusableSectionsPanel
+          tenantId={tenantId}
+          selectedBlocks={blocks.filter((b) => editorSession.selectedBlockId === b.id)}
+          onInsert={(sectionBlocks) => {
+            const footer = blocks[blocks.length - 1]!;
+            const beforeFooter = blocks.slice(0, -1);
+            setBlocks([...beforeFooter, ...sectionBlocks, footer]);
+          }}
+        />
         <PageThemePanel
           theme={theme}
           open={globalAppearanceOpen}
@@ -879,6 +871,24 @@ export default function EditarPaginaTenantPage() {
                         tenantId={tenantId}
                       />
                     )}
+                    {(EXTENDED_BLOCK_TYPES as readonly string[]).includes(block.type) ? (
+                      <FootballBlockModuleEditor
+                        block={block}
+                        tenantSlug={page.tenant?.slug}
+                        update={(key, value) => updateBlockConfigValue(index, key, value)}
+                      />
+                    ) : null}
+                    {block.type !== "header" && block.type !== "footer" ? (
+                      <BlockStylePanel
+                        block={block}
+                        index={index}
+                        theme={theme}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                        viewport={blockStyleViewport}
+                        onViewportChange={setBlockStyleViewport}
+                      />
+                    ) : null}
                     <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                       <summary className="cursor-pointer px-3 py-2 font-medium">Aparência do Módulo</summary>
                       <div className="border-t border-border px-3 py-3 grid gap-3 sm:grid-cols-2">
@@ -1533,131 +1543,10 @@ export default function EditarPaginaTenantPage() {
                       </div>
                     )}
                     {block.type === "patrocinadores" && (
-                      <div className="space-y-3 sm:col-span-2">
-                        <details className="rounded-lg border border-border bg-muted/20">
-                          <summary className="cursor-pointer px-3 py-2 font-medium">Patrocinadores</summary>
-                          <div className="border-t border-border px-3 py-3 space-y-3">
-                            <p className="text-xs text-muted-foreground">
-                              Adicione os logos e links dos patrocinadores. Na página, os logos aparecem em grid com efeito grayscale que vira colorido no hover.
-                            </p>
-                            <div className="space-y-2">
-                              <MediaPicker
-                                label="Logo do título (opcional - substitui o texto do título)"
-                                sizeKey="patrocinadores"
-                                uploadFolderHint="patrocinadores"
-                                value={(block.config?.patrocinadoresTitleLogo as string) ?? ""}
-                                onChange={(url) => updateBlockConfigValue(index, "patrocinadoresTitleLogo", url)}
-                                placeholder="Escolher logo para o título"
-                              />
-                            </div>
-                            {((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? []).map((item, pi) => (
-                              <div key={item.id ?? pi} className="rounded-lg border border-border p-3 space-y-2">
-                                <div className="flex items-start gap-2">
-                                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted border border-border">
-                                    {item.logoUrl ? (
-                                      <img src={getPublicImageUrl(item.logoUrl)} alt="" className="h-full w-full object-contain p-1" />
-                                    ) : (
-                                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                                        <Plus className="h-6 w-6" />
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0 space-y-2">
-                                    <MediaPicker
-                                      label="Logo"
-                                      sizeKey="patrocinadores"
-                                      uploadFolderHint="patrocinadores"
-                                      value={item.logoUrl ?? ""}
-                                      onChange={(url) => {
-                                        const arr = [...((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? [])];
-                                        if (!arr[pi]) arr[pi] = { logoUrl: "" };
-                                        arr[pi] = { ...arr[pi], logoUrl: url };
-                                        updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
-                                      }}
-                                      placeholder="Logo do patrocinador"
-                                    />
-                                    <Input
-                                      placeholder="Nome (opcional)"
-                                      value={item.name ?? ""}
-                                      onChange={(e) => {
-                                        const arr = [...((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? [])];
-                                        if (!arr[pi]) arr[pi] = {};
-                                        arr[pi] = { ...arr[pi], name: e.target.value };
-                                        updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
-                                      }}
-                                    />
-                                    <Input
-                                      placeholder="Link (site do patrocinador — opcional)"
-                                      value={item.link ?? ""}
-                                      onChange={(e) => {
-                                        const arr = [...((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? [])];
-                                        if (!arr[pi]) arr[pi] = {};
-                                        arr[pi] = { ...arr[pi], link: e.target.value };
-                                        updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
-                                      }}
-                                    />
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="shrink-0 text-destructive"
-                                    onClick={() => {
-                                      const arr = ((block.config?.patrocinadoresManualItems as Array<unknown>) ?? []).filter((_, j) => j !== pi);
-                                      updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const arr = [...((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? []), { id: `p-${Date.now()}`, name: "", logoUrl: "", link: "" }];
-                                updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
-                              }}
-                            >
-                              <Plus className="h-4 w-4 mr-1" /> Adicionar patrocinador
-                            </Button>
-                            <div className="grid gap-2 sm:grid-cols-2 pt-2 border-t border-border">
-                              <div className="space-y-2">
-                                <Label>Espaço no topo</Label>
-                                <Select
-                                  value={(block.config?.patrocinadoresPaddingTop as string) ?? "compact"}
-                                  onValueChange={(v) => updateBlockConfigValue(index, "patrocinadoresPaddingTop", v)}
-                                >
-                                  <SelectTrigger><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="minimal">Mínimo</SelectItem>
-                                    <SelectItem value="compact">Compacto</SelectItem>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="large">Grande</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Espaço embaixo</Label>
-                                <Select
-                                  value={(block.config?.patrocinadoresPaddingBottom as string) ?? "compact"}
-                                  onValueChange={(v) => updateBlockConfigValue(index, "patrocinadoresPaddingBottom", v)}
-                                >
-                                  <SelectTrigger><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="minimal">Mínimo</SelectItem>
-                                    <SelectItem value="compact">Compacto</SelectItem>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="large">Grande</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          </div>
-                        </details>
-                      </div>
+                      <PatrocinadoresModuleEditor
+                        block={block}
+                        updateBlockConfigValue={(key, value) => updateBlockConfigValue(index, key, value)}
+                      />
                     )}
                     {block.type === "times_categorias" && (
                       <div className="space-y-3 sm:col-span-2">
@@ -3292,32 +3181,20 @@ export default function EditarPaginaTenantPage() {
                           )}
                           {block.type !== "global_presence" && BLOCK_TYPES_WITH_BODY.includes(block.type as HomeBlockType) && (
                             <>
-                              <div className="space-y-2">
+                              <div className="space-y-2 sm:col-span-2">
                                 <Label>Corpo (PT)</Label>
-                                <Input
-                                  placeholder="Texto da seção em PT"
+                                <RichTextEditor
                                   value={(block.config?.bodyPt as string) ?? ""}
-                                  onChange={(e) =>
-                                    updateBlockConfig(
-                                      index,
-                                      "bodyPt",
-                                      e.target.value,
-                                    )
-                                  }
+                                  onChange={(html) => updateBlockConfig(index, "bodyPt", html)}
+                                  placeholder="Texto da seção em PT"
                                 />
                               </div>
-                              <div className="space-y-2">
+                              <div className="space-y-2 sm:col-span-2">
                                 <Label>Body (EN)</Label>
-                                <Input
-                                  placeholder="Section body (EN)"
+                                <RichTextEditor
                                   value={(block.config?.bodyEn as string) ?? ""}
-                                  onChange={(e) =>
-                                    updateBlockConfig(
-                                      index,
-                                      "bodyEn",
-                                      e.target.value,
-                                    )
-                                  }
+                                  onChange={(html) => updateBlockConfig(index, "bodyEn", html)}
+                                  placeholder="Section body (EN)"
                                 />
                               </div>
                             </>
@@ -3357,7 +3234,6 @@ export default function EditarPaginaTenantPage() {
           </CardContent>
         </Card>
         </form>
-      </div>
-    </div>
+    </PageBuilderEditorLayout>
   );
 }

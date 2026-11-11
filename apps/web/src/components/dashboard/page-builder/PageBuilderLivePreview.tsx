@@ -62,7 +62,14 @@ export function PageBuilderLivePreview({
               role={onSelectBlock ? "button" : undefined}
               tabIndex={onSelectBlock ? 0 : undefined}
             >
-              <BlockRenderer block={block} slug={slug} lang={lang} page={page} pathBase={`/portfolio/${slug}`} />
+              <BlockRenderer
+                block={block}
+                slug={slug}
+                lang={lang}
+                page={page}
+                pathBase={`/portfolio/${slug}`}
+                previewViewport={viewport}
+              />
             </div>
           ))}
         </div>

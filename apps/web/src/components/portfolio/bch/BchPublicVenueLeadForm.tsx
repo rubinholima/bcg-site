@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { BchVenueLang } from "@/lib/bch-public-venue-content";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Button } from "@/components/ui/button";
+import { publicClientFetch, toPublicClientApiPath } from "@/lib/public-client-api";
 
 export function BchPublicVenueLeadForm({ lang }: { lang: BchVenueLang }) {
   const pt = lang === "pt";
@@ -16,7 +17,7 @@ export function BchPublicVenueLeadForm({ lang }: { lang: BchVenueLang }) {
     const data = Object.fromEntries(formData.entries()) as Record<string, string>;
     setStatus("sending");
     try {
-      const res = await fetch("/api/public/lead", {
+      const res = await publicClientFetch(toPublicClientApiPath("/api/public/lead"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

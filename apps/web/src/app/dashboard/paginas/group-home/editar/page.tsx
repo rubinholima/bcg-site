@@ -65,7 +65,26 @@ import {
 import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, HeaderLinksEditor, NoticiasModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import {
+  FontFamilyField,
+  PageThemePanel,
+  HeroModuleEditor,
+  HinoModuleEditor,
+  HeaderLinksEditor,
+  NoticiasModuleEditor,
+  ImprensaDisplayModeFields,
+  ImprensaModuleEditor,
+  normalizeBlocks,
+  sanitizeBlocksForSave,
+  usePageEditorSession,
+  PageBuilderEditorLayout,
+  PageTemplatesBar,
+  BlockStylePanel,
+  FootballBlockModuleEditor,
+  PatrocinadoresModuleEditor,
+} from "@/components/dashboard/page-builder";
+import type { PreviewViewport } from "@/components/dashboard/page-builder/usePageEditorSession";
+import { EXTENDED_BLOCK_TYPES } from "@/lib/page-builder/registry-bridge";
 import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -193,8 +212,32 @@ export default function EditarGroupHomePage() {
   const [overlayOpacityDraft, setOverlayOpacityDraft] = useState<string | null>(null);
   const [tenantKinds, setTenantKinds] = useState<TenantKind[]>([]);
   const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
+  const [blockStyleViewport, setBlockStyleViewport] = useState<PreviewViewport>("desktop");
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
+
+  const editorSession = usePageEditorSession({
+    page,
+    setPage,
+    storageKey: "page-builder-group-home",
+    blocks,
+    onSavePublish: async () => {
+      if (!page) return;
+      const payloadBlocks = sanitizeBlocksForSave(blocks);
+      const res = await authFetch("/api/group", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          homeContent: { theme: page.content.theme, blocks: payloadBlocks },
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string; message?: string })?.error ?? (data as { message?: string })?.message ?? "Erro ao salvar");
+      }
+    },
+  });
   const resolvedModuleCategory = resolveModuleCategoryFromFilter(moduleTypeFilter, { tenantKinds });
   const resolvedModuleLabel = resolveModuleFilterLabel(moduleTypeFilter, { tenantKinds });
   const theme = (page?.content?.theme ?? {}) as PageTheme;
@@ -401,32 +444,30 @@ export default function EditarGroupHomePage() {
     : "/bcg-logo.png";
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageBuilderChrome
-        title={`Home do Grupo — ${tenantName}`}
-        subtitle="Módulos, aparência global e textos PT/EN."
-        previewHref="/"
-        previewLabel="Ver site"
-        saving={saving}
-        success={success}
-        error={error}
-        formId="editor-group-home-form"
-        subjectLogo={{ src: groupLogoSrc, alt: tenantName }}
-      />
-
-      {/* Alertas em destaque abaixo da barra */}
-      {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400">
-          Página salva com sucesso.
-        </div>
-      )}
-
+    <PageBuilderEditorLayout
+      chrome={{
+        title: `Home do Grupo — ${tenantName}`,
+        subtitle: "Módulos, aparência global e textos PT/EN.",
+        previewHref: "/",
+        previewLabel: "Ver site",
+        subjectLogo: { src: groupLogoSrc, alt: tenantName },
+        editorialStatus: "published",
+        showDraft: false,
+        showPublish: true,
+        externalError: error ?? editorSession.editorError,
+      }}
+      session={editorSession}
+      blocks={blocks}
+      theme={theme}
+      previewSlug="group"
+      formId="editor-group-home-form"
+      collapsedBlockIds={collapsedBlockIds}
+      onToggleCollapse={toggleBlockCollapsed}
+      onMove={(from, dir) => moveBlockTo(from, from + dir)}
+      onRemove={removeBlock}
+    >
       <form id="editor-group-home-form" onSubmit={handleSubmit} className="space-y-6">
+        <PageTemplatesBar onApply={(next) => setBlocks(next)} />
         <PageThemePanel
           theme={theme}
           open={globalAppearanceOpen}
@@ -629,6 +670,30 @@ export default function EditarGroupHomePage() {
                         updateBlockConfigValue={updateBlockConfigValue}
                       />
                     )}
+                    {(EXTENDED_BLOCK_TYPES as readonly string[]).includes(block.type) ? (
+                      <FootballBlockModuleEditor
+                        block={block}
+                        tenantSlug={page?.tenant?.slug}
+                        update={(key, value) => updateBlockConfigValue(index, key, value)}
+                      />
+                    ) : null}
+                    {block.type === "patrocinadores" ? (
+                      <PatrocinadoresModuleEditor
+                        block={block}
+                        update={(key, value) => updateBlockConfigValue(index, key, value)}
+                      />
+                    ) : null}
+                    {block.type !== "header" && block.type !== "footer" ? (
+                      <BlockStylePanel
+                        block={block}
+                        index={index}
+                        theme={theme}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                        viewport={blockStyleViewport}
+                        onViewportChange={setBlockStyleViewport}
+                      />
+                    ) : null}
                     <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                       <summary className="cursor-pointer px-3 py-2 font-medium">Aparência do Módulo</summary>
                       <div className="border-t border-border px-3 py-3 grid gap-3 sm:grid-cols-2">
@@ -2395,6 +2460,6 @@ export default function EditarGroupHomePage() {
           </CardContent>
         </Card>
       </form>
-    </div>
+    </PageBuilderEditorLayout>
   );
 }

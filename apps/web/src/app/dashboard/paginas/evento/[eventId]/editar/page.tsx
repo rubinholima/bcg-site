@@ -70,7 +70,27 @@ import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
 import { authFetch } from "@/lib/authFetch";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, HeaderLinksEditor, NoticiasModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import type { Page, PageContent } from "@/types/page";
+import {
+  FontFamilyField,
+  PageThemePanel,
+  HeroModuleEditor,
+  HinoModuleEditor,
+  HeaderLinksEditor,
+  NoticiasModuleEditor,
+  ImprensaDisplayModeFields,
+  ImprensaModuleEditor,
+  normalizeBlocks,
+  sanitizeBlocksForSave,
+  usePageEditorSession,
+  PageBuilderEditorLayout,
+  PageTemplatesBar,
+  BlockStylePanel,
+  FootballBlockModuleEditor,
+  PatrocinadoresModuleEditor,
+} from "@/components/dashboard/page-builder";
+import type { PreviewViewport } from "@/components/dashboard/page-builder/usePageEditorSession";
+import { EXTENDED_BLOCK_TYPES } from "@/lib/page-builder/registry-bridge";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
@@ -213,8 +233,54 @@ export default function EditarEventoPage() {
   const [overlayOpacityDraft, setOverlayOpacityDraft] = useState<string | null>(null);
   const [tenantKinds, setTenantKinds] = useState<TenantKind[]>([]);
   const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
+  const [blockStyleViewport, setBlockStyleViewport] = useState<PreviewViewport>("desktop");
 
   const blocks = normalizeBlocks(event?.content?.blocks ?? []);
+
+  const editorPage: Page | null = event
+    ? {
+        id: event.id,
+        tenantId: event.tenantId ?? "",
+        slug: event.slug,
+        title: event.name,
+        content: event.content as PageContent,
+        createdAt: "",
+        updatedAt: "",
+      }
+    : null;
+
+  const setEditorPage: React.Dispatch<React.SetStateAction<Page | null>> = (action) => {
+    setEvent((prev) => {
+      if (!prev) return null;
+      const current: Page = {
+        id: prev.id,
+        tenantId: prev.tenantId ?? "",
+        slug: prev.slug,
+        title: prev.name,
+        content: prev.content as PageContent,
+        createdAt: "",
+        updatedAt: "",
+      };
+      const nextPage = typeof action === "function" ? action(current) : action;
+      if (!nextPage) return null;
+      return { ...prev, content: nextPage.content };
+    });
+  };
+
+  const editorSession = usePageEditorSession({
+    page: editorPage,
+    setPage: setEditorPage,
+    storageKey: `page-builder-event-${eventId}`,
+    blocks,
+    onSavePublish: async () => {
+      if (!event) return;
+      const payloadBlocks = sanitizeBlocksForSave(blocks);
+      await api.patch(`/events/${eventId}`, {
+        content: { theme: event.content.theme, blocks: payloadBlocks },
+      });
+    },
+  });
+
   const competitionFormatForGuide = useMemo(
     () => (event?.competitionFormat != null ? parseCompetitionFormat(event.competitionFormat) : null),
     [event?.competitionFormat],
@@ -392,37 +458,33 @@ export default function EditarEventoPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageBuilderChrome
-        title={event.name}
-        subtitle="Landing do evento — módulos, aparência e textos PT/EN."
-        backHref="/dashboard/paginas#eventos"
-        previewHref={event.status === "published" ? `/eventos/${event.slug}` : undefined}
-        previewLabel="Ver landing"
-        saving={saving}
-        success={success}
-        error={error}
-        formId="editor-evento-form"
-        subjectLogo={
-          event.logoUrl?.trim()
-            ? { src: getPublicImageUrl(event.logoUrl) || event.logoUrl.trim(), alt: event.name }
-            : null
-        }
-      />
-
-      {/* Alertas em destaque abaixo da barra */}
-      {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400">
-          Página salva com sucesso.
-        </div>
-      )}
-
+    <PageBuilderEditorLayout
+      chrome={{
+        title: event.name,
+        subtitle: "Landing do evento — módulos, aparência e textos PT/EN.",
+        backHref: "/dashboard/paginas#eventos",
+        previewHref: event.status === "published" ? `/eventos/${event.slug}` : undefined,
+        previewLabel: "Ver landing",
+        subjectLogo: event.logoUrl?.trim()
+          ? { src: getPublicImageUrl(event.logoUrl) || event.logoUrl.trim(), alt: event.name }
+          : null,
+        editorialStatus: event.status === "published" ? "published" : "draft",
+        showDraft: false,
+        showPublish: true,
+        externalError: error ?? editorSession.editorError,
+      }}
+      session={editorSession}
+      blocks={blocks}
+      theme={theme}
+      previewSlug={event.slug}
+      formId="editor-evento-form"
+      collapsedBlockIds={collapsedBlockIds}
+      onToggleCollapse={toggleBlockCollapsed}
+      onMove={(from, dir) => moveBlockTo(from, from + dir)}
+      onRemove={removeBlock}
+    >
       <form id="editor-evento-form" onSubmit={handleSubmit} className="space-y-6">
+        <PageTemplatesBar onApply={(next) => setBlocks(next)} />
         <PageThemePanel
           theme={theme}
           open={globalAppearanceOpen}
@@ -653,6 +715,30 @@ export default function EditarEventoPage() {
                         updateBlockConfigValue={updateBlockConfigValue}
                       />
                     )}
+                    {(EXTENDED_BLOCK_TYPES as readonly string[]).includes(block.type) ? (
+                      <FootballBlockModuleEditor
+                        block={block}
+                        tenantSlug={event.slug}
+                        update={(key, value) => updateBlockConfigValue(index, key, value)}
+                      />
+                    ) : null}
+                    {block.type === "patrocinadores" ? (
+                      <PatrocinadoresModuleEditor
+                        block={block}
+                        update={(key, value) => updateBlockConfigValue(index, key, value)}
+                      />
+                    ) : null}
+                    {block.type !== "header" && block.type !== "footer" ? (
+                      <BlockStylePanel
+                        block={block}
+                        index={index}
+                        theme={theme}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                        viewport={blockStyleViewport}
+                        onViewportChange={setBlockStyleViewport}
+                      />
+                    ) : null}
                     <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                       <summary className="cursor-pointer px-3 py-2 font-medium">Aparência do Módulo</summary>
                       <div className="border-t border-border px-3 py-3 grid gap-3 sm:grid-cols-2">
@@ -2457,6 +2543,6 @@ export default function EditarEventoPage() {
           </CardContent>
         </Card>
       </form>
-    </div>
+    </PageBuilderEditorLayout>
   );
 }

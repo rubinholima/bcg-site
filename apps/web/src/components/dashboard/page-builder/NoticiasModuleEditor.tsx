@@ -130,6 +130,22 @@ export function NoticiasModuleEditor({
                 </strong>
               </p>
               <div className="space-y-2">
+                <Label>Filtro por palavra (categoria/título)</Label>
+                <Input
+                  placeholder="Ex.: base, feminino…"
+                  value={(block.config?.noticiasCategoryFilter as string) ?? ""}
+                  onChange={(e) => updateBlockConfigValue("noticiasCategoryFilter", e.target.value)}
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={block.config?.noticiasFeaturedOnly === true}
+                  onChange={(e) => updateBlockConfigValue("noticiasFeaturedOnly", e.target.checked)}
+                />
+                Destacar apenas a notícia principal
+              </label>
+              <div className="space-y-2">
                 <Label>Ordem dos cards</Label>
                 <Select
                   value={orderMode}
