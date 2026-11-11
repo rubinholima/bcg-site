@@ -1,3 +1,5 @@
+import { toPublicClientApiPath } from "@/lib/public-client-api";
+
 /**
  * Resolução de URLs de mídia (S3 → o que o browser carrega)
  *
@@ -162,7 +164,7 @@ export function getPublicImageUrl(url: string | undefined | null): string {
     const mediaKey =
       mediaKeyFromStoredUrl(sanitized) ?? extractPublicMediaKey(sanitized);
     if (mediaKey) {
-      return `/api/public/media-asset?key=${encodeURIComponent(mediaKey)}`;
+      return toPublicClientApiPath(`/api/public/media-asset?key=${encodeURIComponent(mediaKey)}`);
     }
   }
 
@@ -199,7 +201,7 @@ export function resolvePublicMediaUrlForDisplay(url: string | undefined | null):
   const k = mediaKeyFromStoredUrl(t);
   if (k) {
     if (useDevSameOriginMediaProxy()) {
-      return `/api/public/media-asset?key=${encodeURIComponent(k)}`;
+      return toPublicClientApiPath(`/api/public/media-asset?key=${encodeURIComponent(k)}`);
     }
     const origin = mediaOrigin();
     return `${origin.replace(/\/$/, "")}/${k}`;
@@ -220,7 +222,7 @@ export function resolveMediaUrlWithProxyFallback(raw: string | undefined | null)
   const k = urlToMediaKey(t);
   const kl = k.toLowerCase();
   if ((kl.startsWith("logos/") || kl.startsWith("media/")) && k) {
-    return `/api/public/media-asset?key=${encodeURIComponent(k)}`;
+    return toPublicClientApiPath(`/api/public/media-asset?key=${encodeURIComponent(k)}`);
   }
   return "";
 }

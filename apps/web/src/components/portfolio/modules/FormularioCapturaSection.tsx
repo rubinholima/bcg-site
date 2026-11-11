@@ -7,9 +7,11 @@ import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Button } from "@/components/ui/button";
+import { publicClientFetch, toPublicClientApiPath } from "@/lib/public-client-api";
 
 export function FormularioCapturaSection({
   block,
+  slug,
   lang,
   fullWidth,
   titleAlign = "left",
@@ -17,35 +19,56 @@ export function FormularioCapturaSection({
   showTitle = true,
 }: {
   block: HomeContentBlock;
+  slug: string;
   lang: "pt" | "en";
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
   inSection?: boolean;
   showTitle?: boolean;
 }) {
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error" | "validation">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const title = (lang === "pt"
     ? (block.config?.formularioCapturaTitlePt as string)
     : (block.config?.formularioCapturaTitleEn as string)) || (lang === "pt" ? "Entre em contato" : "Get in touch");
-  const endpoint = (block.config?.formularioCapturaEndpoint as string)?.trim() || "/api/public/lead";
+  const configuredEndpoint = (block.config?.formularioCapturaEndpoint as string)?.trim();
+  const defaultEndpoint = toPublicClientApiPath(`/api/public/tenants/${encodeURIComponent(slug)}/site-lead`);
+  const endpoint = configuredEndpoint || defaultEndpoint;
   const containerClass = moduleSectionContainerClass({ fullWidth });
+  const formId = `fc-form-${block.id}`;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries()) as Record<string, string>;
+    const name = data.name?.trim();
+    const email = data.email?.trim();
+    const message = data.message?.trim();
+    if (!name || !email || !message) {
+      setStatus("validation");
+      setErrorMessage(lang === "pt" ? "Preencha nome, e-mail e mensagem." : "Fill in name, email and message.");
+      return;
+    }
     setStatus("sending");
+    setErrorMessage(null);
     try {
-      const res = await fetch(endpoint.startsWith("http") ? endpoint : `${typeof window !== "undefined" ? window.location.origin : ""}${endpoint}`, {
+      const url = endpoint.startsWith("http") ? endpoint : toPublicClientApiPath(endpoint.startsWith("/") ? endpoint : `/api/public/lead`);
+      const res = await publicClientFetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, _slug: block.id }),
+        body: JSON.stringify({ ...data, tenantSlug: slug, blockId: block.id }),
       });
-      if (res.ok) setStatus("success");
-      else setStatus("error");
+      const json = (await res.json().catch(() => ({}))) as { ok?: boolean; id?: string; error?: string };
+      if (res.ok && (json.ok === true || typeof json.id === "string")) {
+        setStatus("success");
+      } else {
+        setStatus("error");
+        setErrorMessage(json.error || (lang === "pt" ? "Não foi possível enviar. Tente novamente." : "Could not send. Try again."));
+      }
     } catch {
       setStatus("error");
+      setErrorMessage(lang === "pt" ? "Erro de rede. Tente novamente." : "Network error. Try again.");
     }
   };
 
@@ -74,13 +97,18 @@ export function FormularioCapturaSection({
               {lang === "pt" ? "Mensagem enviada com sucesso! Entraremos em contato em breve." : "Message sent successfully! We'll get back to you soon."}
             </p>
           ) : (
-            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <form id={formId} onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
+              {status === "validation" || status === "error" ? (
+                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200" role="alert">
+                  {errorMessage}
+                </p>
+              ) : null}
               <div>
-                <label htmlFor="fc-name" className="mb-1 block text-sm text-zinc-400">
+                <label htmlFor={`${formId}-name`} className="mb-1 block text-sm text-zinc-400">
                   {lang === "pt" ? "Nome" : "Name"}
                 </label>
                 <input
-                  id="fc-name"
+                  id={`${formId}-name`}
                   name="name"
                   required
                   className="w-full rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-3 text-white placeholder-zinc-500"
@@ -88,11 +116,11 @@ export function FormularioCapturaSection({
                 />
               </div>
               <div>
-                <label htmlFor="fc-email" className="mb-1 block text-sm text-zinc-400">
+                <label htmlFor={`${formId}-email`} className="mb-1 block text-sm text-zinc-400">
                   Email
                 </label>
                 <input
-                  id="fc-email"
+                  id={`${formId}-email`}
                   name="email"
                   type="email"
                   required
@@ -101,11 +129,11 @@ export function FormularioCapturaSection({
                 />
               </div>
               <div>
-                <label htmlFor="fc-phone" className="mb-1 block text-sm text-zinc-400">
+                <label htmlFor={`${formId}-phone`} className="mb-1 block text-sm text-zinc-400">
                   {lang === "pt" ? "Telefone" : "Phone"}
                 </label>
                 <input
-                  id="fc-phone"
+                  id={`${formId}-phone`}
                   name="phone"
                   type="tel"
                   className="w-full rounded-lg border border-white/10 bg-zinc-900/80 px-4 py-3 text-white placeholder-zinc-500"
@@ -113,11 +141,11 @@ export function FormularioCapturaSection({
                 />
               </div>
               <div>
-                <label htmlFor="fc-message" className="mb-1 block text-sm text-zinc-400">
+                <label htmlFor={`${formId}-message`} className="mb-1 block text-sm text-zinc-400">
                   {lang === "pt" ? "Mensagem" : "Message"}
                 </label>
                 <textarea
-                  id="fc-message"
+                  id={`${formId}-message`}
                   name="message"
                   rows={4}
                   required

@@ -197,6 +197,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@bcg/page-builder-core':
+        specifier: workspace:*
+        version: link:../../packages/page-builder-core
       '@bcg/player-dossier-print':
         specifier: workspace:*
         version: link:../../packages/player-dossier-print
@@ -320,6 +323,8 @@ importers:
         version: 5.9.3
 
   packages/cup360-access: {}
+
+  packages/page-builder-core: {}
 
   packages/player-dossier-print:
     devDependencies:

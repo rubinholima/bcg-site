@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildBostonCityHallPageContent } from './boston-city-hall-page-default';
 import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
@@ -25,6 +26,9 @@ export type PageResponseDto = {
   slug: string;
   title: string | null;
   content: PageContentDto;
+  draftContent?: PageContentDto | null;
+  hasUnpublishedDraft?: boolean;
+  publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   tenant?: {
@@ -54,6 +58,9 @@ function isClubKind(kindName: string | null): boolean {
 export type UpdatePageDto = {
   title?: string;
   content?: PageContentDto;
+  /** save_draft grava em draftContent; publish atualiza conteúdo público. */
+  editorialAction?: 'save_draft' | 'publish';
+  createdBy?: string;
 };
 
 @Injectable()
@@ -311,10 +318,37 @@ export class PagesService {
   }
 
   async update(id: string, dto: UpdatePageDto): Promise<PageResponseDto> {
-    await this.findOne(id);
-    const data: { title?: string | null; content?: object } = {};
+    const existing = await this.prisma.page.findUnique({
+      where: { id },
+      include: { tenant: { select: { id: true, name: true, slug: true } } },
+    });
+    if (!existing) {
+      throw new NotFoundException(`Página com ID "${id}" não encontrada`);
+    }
+    const data: Prisma.PageUpdateInput = {};
     if (dto.title !== undefined) data.title = dto.title?.trim() || null;
-    if (dto.content !== undefined) data.content = dto.content as object;
+
+    const action = dto.editorialAction ?? 'publish';
+    if (dto.content !== undefined) {
+      if (action === 'save_draft') {
+        data.draftContent = dto.content as object;
+        data.hasUnpublishedDraft = true;
+      } else {
+        data.content = dto.content as object;
+        data.hasUnpublishedDraft = false;
+        data.draftContent = Prisma.DbNull;
+        data.publishedAt = new Date();
+        await this.prisma.pageContentRevision.create({
+          data: {
+            pageId: id,
+            content: dto.content as object,
+            createdBy: dto.createdBy?.trim() || null,
+            label: 'publish',
+          },
+        });
+      }
+    }
+
     const row = await this.prisma.page.update({
       where: { id },
       data,
@@ -326,6 +360,9 @@ export class PagesService {
       slug: row.slug,
       title: row.title,
       content: (row.content as PageContentDto) ?? { blocks: [] },
+      draftContent: (row.draftContent as PageContentDto) ?? null,
+      hasUnpublishedDraft: row.hasUnpublishedDraft,
+      publishedAt: row.publishedAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
       tenant: row.tenant ?? undefined,

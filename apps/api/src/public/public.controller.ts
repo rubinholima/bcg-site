@@ -537,6 +537,22 @@ export class PublicController {
     return this.publicService.getTenantBySlug(slug);
   }
 
+  @Post('tenants/:slug/site-lead')
+  async createPublicSiteLead(
+    @Param('slug') slug: string,
+    @Body()
+    body: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      message?: string;
+      blockId?: string;
+      tenantSlug?: string;
+    },
+  ) {
+    return this.publicService.createPublicSiteLead(slug, body);
+  }
+
   /**
    * GET /public/workmail-web-url?slug=...
    * Retorna a URL do cliente web WorkMail (tela de login do usuário) para o tenant.

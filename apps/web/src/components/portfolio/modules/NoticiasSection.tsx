@@ -6,6 +6,7 @@ import type { NoticiasItem } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { publicClientFetch, toPublicClientApiPath } from "@/lib/public-client-api";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { SmartImage } from "@/components/common/SmartImage";
@@ -88,7 +89,7 @@ const PADDING_CLASSES = {
 
 async function fetchRssFeed(rssUrl: string, max: number): Promise<NoticiasItem[]> {
   const params = new URLSearchParams({ rssUrl, max: String(max) });
-  const res = await fetch(`/api/public/noticias-feed?${params}`, { cache: "no-store" });
+  const res = await publicClientFetch(toPublicClientApiPath(`/api/public/noticias-feed?${params}`));
   if (!res.ok) return [];
   const data = await res.json();
   if (Array.isArray(data)) return data;

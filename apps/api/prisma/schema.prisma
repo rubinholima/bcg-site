@@ -137,6 +137,7 @@ model Tenant {
   updatedAt               DateTime @updatedAt
   workmailAccounts        WorkMailAccount[]
   pages                   Page[]
+  publicSiteLeads         PublicSiteLead[]
   publicDomains           PublicDomain[]
   legacyPublicDomains     LegacyPublicDomain[]
   players                 Player[]
@@ -1448,11 +1449,40 @@ model Page {
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   slug       String   @default("main") // ex.: main, sobre
   title      String?  // Título para o dashboard
-  content    Json     // { blocks: [{ id, type, sortOrder, config }] }
+  content    Json     // { blocks: [{ id, type, sortOrder, config }] } — publicado
+  draftContent Json?
+  hasUnpublishedDraft Boolean @default(false)
+  publishedAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   tenantMainPublicFor Tenant[] @relation("TenantMainPublicPage")
+  revisions  PageContentRevision[]
   @@unique([tenantId, slug])
+}
+
+model PageContentRevision {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  content   Json
+  createdAt DateTime @default(now())
+  createdBy String?
+  label     String?
+  @@index([pageId, createdAt])
+}
+
+model PublicSiteLead {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String?
+  message   String   @db.Text
+  blockId   String?
+  source    String   @default("formulario_captura")
+  createdAt DateTime @default(now())
+  @@index([tenantId, createdAt])
 }
 
 /// Domínio público customizado (CUP360) — hostname canônico por tenant; provisionamento AWS opcional.

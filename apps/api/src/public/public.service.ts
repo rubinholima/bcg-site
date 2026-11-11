@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { PortfolioItemDto } from './dto/portfolio-item.dto';
 import type { FixtureDto } from './dto/fixture.dto';
@@ -808,6 +808,50 @@ export class PublicService {
       );
 
     return this.enrichFixturesWithVisitingLogosAsync(out);
+  }
+
+  async createPublicSiteLead(
+    slug: string,
+    body: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      message?: string;
+      blockId?: string;
+    },
+  ): Promise<{ ok: true; id: string }> {
+    const name = body.name?.trim();
+    const email = body.email?.trim();
+    const message = body.message?.trim();
+    if (!name || !email || !message) {
+      throw new BadRequestException('Nome, email e mensagem são obrigatórios');
+    }
+    const slugNorm = slug.trim();
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { slug: { equals: slugNorm, mode: 'insensitive' } },
+      select: { id: true },
+    });
+    if (!tenant) {
+      throw new NotFoundException('Empresa não encontrada');
+    }
+    const since = new Date(Date.now() - 60 * 60 * 1000);
+    const recent = await this.prisma.publicSiteLead.count({
+      where: { tenantId: tenant.id, email, createdAt: { gte: since } },
+    });
+    if (recent >= 5) {
+      throw new BadRequestException('Muitas tentativas. Aguarde e tente novamente.');
+    }
+    const row = await this.prisma.publicSiteLead.create({
+      data: {
+        tenantId: tenant.id,
+        name,
+        email,
+        phone: body.phone?.trim() || null,
+        message,
+        blockId: body.blockId?.trim() || null,
+      },
+    });
+    return { ok: true, id: row.id };
   }
 
   async getPortfolio(): Promise<PortfolioItemDto[]> {

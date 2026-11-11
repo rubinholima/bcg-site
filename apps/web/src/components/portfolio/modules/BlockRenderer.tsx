@@ -47,6 +47,12 @@ import { NumerosSection } from "@/components/portfolio/modules/NumerosSection";
 import { ComoFuncionaSection } from "@/components/portfolio/modules/ComoFuncionaSection";
 import { FaqSection } from "@/components/portfolio/modules/FaqSection";
 import { FormularioCapturaSection } from "@/components/portfolio/modules/FormularioCapturaSection";
+import { CalendarioSection } from "@/components/portfolio/modules/CalendarioSection";
+import { WhatSection } from "@/components/portfolio/modules/marketing/WhatSection";
+import { HowSection } from "@/components/portfolio/modules/marketing/HowSection";
+import { CtaSection } from "@/components/portfolio/modules/marketing/CtaSection";
+import { PortfolioGridSection } from "@/components/portfolio/modules/marketing/PortfolioGridSection";
+import { GlobalPresenceSection } from "@/components/home/GlobalPresenceSection";
 import { EventosSection } from "@/components/portfolio/modules/EventosSection";
 import { BchUpcomingEventsSection } from "@/components/portfolio/modules/BchUpcomingEventsSection";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
@@ -366,6 +372,67 @@ export function BlockRenderer({
     );
   }
 
+  if (block.type === "what") {
+    return (
+      <WhatSection block={block} lang={lang} page={page} fullWidth={fullWidth} titleAlign={titleAlign} />
+    );
+  }
+
+  if (block.type === "how") {
+    return <HowSection block={block} lang={lang} page={page} fullWidth={fullWidth} titleAlign={titleAlign} />;
+  }
+
+  if (block.type === "cta") {
+    return <CtaSection block={block} lang={lang} page={page} fullWidth={fullWidth} />;
+  }
+
+  if (block.type === "clubs") {
+    return (
+      <PortfolioGridSection
+        block={block}
+        lang={lang}
+        mode="clubs"
+        pathBase={resolvedPathBase}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+      />
+    );
+  }
+
+  if (block.type === "companies") {
+    return (
+      <PortfolioGridSection
+        block={block}
+        lang={lang}
+        mode="companies"
+        pathBase={resolvedPathBase}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+      />
+    );
+  }
+
+  if (block.type === "global_presence") {
+    return (
+      <AnimateInView key={block.id}>
+        <GlobalPresenceSection block={block} lang={lang} />
+      </AnimateInView>
+    );
+  }
+
+  if (block.type === "calendario") {
+    return (
+      <CalendarioSection
+        block={block}
+        slug={slug}
+        lang={lang}
+        pathBase={resolvedPathBase}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+      />
+    );
+  }
+
   if (block.type === "logo_carousel") {
     return <LogoCarouselSection key={block.id} block={block} lang={lang} pathBase={resolvedPathBase} currentTenantSlug={slug} />;
   }
@@ -550,6 +617,7 @@ export function BlockRenderer({
       <FormularioCapturaSection
         key={block.id}
         block={block}
+        slug={slug}
         lang={lang}
         fullWidth={fullWidth}
         titleAlign={titleAlign}

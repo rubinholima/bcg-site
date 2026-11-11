@@ -20,6 +20,7 @@ export interface FixtureItem {
 }
 
 import { buildBackendUrl } from "@/lib/apiProxy";
+import { publicClientFetch, toPublicClientApiPath } from "@/lib/public-client-api";
 
 export type FixturesFetchContext = "tenant" | "event";
 
@@ -41,11 +42,13 @@ export async function fetchFixtures(
       ? `/public/events/${encodeURIComponent(slug)}/fixtures`
       : `/public/tenants/${encodeURIComponent(slug)}/fixtures${standingsQs}`;
   const url = isClient
-    ? context === "event"
-      ? `/api/public/events/${encodeURIComponent(slug)}/fixtures`
-      : `/api/public/tenants/${encodeURIComponent(slug)}/fixtures${standingsQs}`
+    ? toPublicClientApiPath(
+        context === "event"
+          ? `/api/public/events/${encodeURIComponent(slug)}/fixtures`
+          : `/api/public/tenants/${encodeURIComponent(slug)}/fixtures${standingsQs}`,
+      )
     : buildBackendUrl(path);
-  const res = await fetch(url, { cache: "no-store" });
+  const res = isClient ? await publicClientFetch(url) : await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data) ? data : [];
