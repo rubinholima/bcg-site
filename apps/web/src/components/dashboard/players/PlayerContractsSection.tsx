@@ -127,6 +127,9 @@ export function PlayerContractsSection({
     if (row.source === "rh" && canAccessRh) {
       return "/dashboard/adm/rh";
     }
+    if (row.source === "athlete" && row.athleteContractId) {
+      return `#athlete-contract-${row.athleteContractId}`;
+    }
     return null;
   };
 
@@ -159,6 +162,7 @@ export function PlayerContractsSection({
   const actionSourceLabel = (row: PlayerContractRow) => {
     if (row.source === "juridico") return "Jurídico";
     if (row.source === "rh") return "RH";
+    if (row.source === "athlete") return row.isLegacyImport ? "Legado" : "Contrato";
     return null;
   };
 

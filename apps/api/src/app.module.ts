@@ -19,6 +19,7 @@ import { PublicModule } from './public/public.module';
 import { MediaModule } from './media/media.module';
 import { VaultModule } from './vault/vault.module';
 import { CadastrosModule } from './cadastros/cadastros.module';
+import { AthleteContractsModule } from './athlete-contracts/athlete-contracts.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { PsychologistsModule } from './psychologists/psychologists.module';
@@ -91,6 +92,7 @@ import { PublicDomainModule } from './public-domain/public-domain.module';
     MediaModule,
     VaultModule,
     CadastrosModule,
+    AthleteContractsModule,
     IntegrationsModule,
     ConsultationsModule,
     PsychologistsModule,

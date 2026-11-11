@@ -161,6 +161,11 @@ model Tenant {
   employmentSalaryRevisions   EmploymentSalaryRevision[]
   contractTemplates       ContractTemplate[]
   employmentContracts     EmploymentContract[]
+  athleteContractTypes    AthleteContractType[]
+  athleteContracts        AthleteContract[]
+  athleteEvaluations      AthleteEvaluation[]
+  athleteFederativeProcesses AthleteFederativeProcess[]
+  athleteProfessionalizations AthleteProfessionalizationCase[]
   assetCategories         AssetCategory[]
   assets                  Asset[]
   infrastructureRacks     InfrastructureRack[]
@@ -1851,6 +1856,11 @@ model Player {
   medicalDepartures          PlayerMedicalDeparture[]
   medicalEncounters          MedicalEncounter[]
   playerNegotiations         PlayerNegotiation[]
+  athleteEvaluations         AthleteEvaluation[]
+  athleteFederativeProcesses AthleteFederativeProcess[]
+  athleteContracts           AthleteContract[]
+  athleteContractAttachments AthleteContractAttachment[]
+  athleteProfessionalizations AthleteProfessionalizationCase[]
   analysisEvents             AnalysisEvent[] @relation("AnalysisEventPlayer")
   analysisEventsRelated      AnalysisEvent[] @relation("AnalysisEventRelatedPlayer")
   analysisClipPlayers        AnalysisClipPlayer[]
@@ -2147,6 +2157,7 @@ model LegalDocument {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   compensationItems EmploymentCompensationItem[]
+  athleteContracts  AthleteContract[]
   @@index([playerId])
   @@index([status])
   @@index([adobeAgreementId])
@@ -2924,10 +2935,234 @@ model EmploymentContract {
   metadata             Json?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
+  athleteContracts     AthleteContract[]
   @@index([tenantId])
   @@index([employmentId])
   @@index([templateId])
   @@index([status])
+}
+
+// ========== Gestão contratual e federativa do atleta (PROMPT 038) ==========
+
+model AthleteContractType {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code        String
+  name        String
+  description String?  @db.Text
+  active      Boolean  @default(true)
+  category    String?
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  contracts   AthleteContract[]
+  @@unique([tenantId, code])
+  @@index([tenantId, active])
+}
+
+model AthleteContract {
+  id                     String   @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId               String
+  player                 Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  contractTypeId         String?
+  contractType           AthleteContractType? @relation(fields: [contractTypeId], references: [id], onDelete: SetNull)
+  status                 String   @default("DRAFT")
+  startDate              DateTime? @db.Date
+  endDate                DateTime? @db.Date
+  terminationDate        DateTime? @db.Date
+  clubName               String?
+  originClubName         String?
+  destinationClubName    String?
+  responsibleUserId      String?
+  responsibleDepartment  String?
+  notes                  String?  @db.Text
+  financialTerms         Json?
+  signatureStatus        String?
+  createdSource          String   @default("native")
+  isLegacyImport         Boolean  @default(false)
+  legacySourceLabel      String?
+  legalDocumentId        String?
+  legalDocument          LegalDocument? @relation(fields: [legalDocumentId], references: [id], onDelete: SetNull)
+  employmentContractId   String?
+  employmentContract     EmploymentContract? @relation(fields: [employmentContractId], references: [id], onDelete: SetNull)
+  federativeProcessId    String?
+  federativeProcess      AthleteFederativeProcess? @relation(fields: [federativeProcessId], references: [id], onDelete: SetNull)
+  alertConfig            Json?
+  createdByUserId        String?
+  updatedByUserId        String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  parties                AthleteContractParty[]
+  participations         AthleteContractParticipation[]
+  signatures             AthleteContractSignature[]
+  attachments            AthleteContractAttachment[]
+  financeLinks           AthleteContractFinanceLink[]
+  auditLogs              AthleteContractAuditLog[]
+  @@index([tenantId, playerId])
+  @@index([tenantId, status])
+  @@index([playerId, status])
+  @@index([contractTypeId])
+  @@index([endDate])
+  @@index([legalDocumentId])
+  @@index([employmentContractId])
+}
+
+model AthleteContractParty {
+  id              String   @id @default(cuid())
+  contractId      String
+  contract        AthleteContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  partyType       String
+  partyName       String
+  roleLabel       String?
+  percentage      Decimal? @db.Decimal(7, 4)
+  amount          Decimal? @db.Decimal(14, 2)
+  currency        String?  @default("BRL")
+  notes           String?  @db.Text
+  referenceId     String?
+  @@index([contractId])
+}
+
+model AthleteContractParticipation {
+  id                String   @id @default(cuid())
+  contractId        String
+  contract          AthleteContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  participationType String
+  partyName         String?
+  percentage        Decimal? @db.Decimal(7, 4)
+  amount            Decimal? @db.Decimal(14, 2)
+  notes             String?  @db.Text
+  @@index([contractId])
+}
+
+model AthleteContractSignature {
+  id                   String    @id @default(cuid())
+  contractId           String
+  contract             AthleteContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  provider             String?
+  envelopeReferenceId  String?
+  athleteStatus        String?
+  guardianStatus       String?
+  clubStatus           String?
+  otherPartiesStatus   String?
+  overallStatus        String    @default("NOT_REQUIRED")
+  sentAt               DateTime?
+  completedAt          DateTime?
+  manualDocumentKey    String?
+  notes                String?   @db.Text
+  @@index([contractId])
+}
+
+model AthleteContractAttachment {
+  id              String   @id @default(cuid())
+  contractId      String?
+  contract        AthleteContract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  category        String
+  documentType    String?
+  description     String?  @db.Text
+  fileKey         String
+  fileUrl         String?
+  legalDocumentId String?
+  issueDate       DateTime? @db.Date
+  expirationDate  DateTime? @db.Date
+  versionLabel    String?
+  uploadedByUserId String?
+  uploadedAt      DateTime @default(now())
+  @@index([playerId, category])
+  @@index([contractId])
+}
+
+model AthleteContractFinanceLink {
+  id              String   @id @default(cuid())
+  contractId      String
+  contract        AthleteContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  linkType        String
+  referenceId     String?
+  description     String?  @db.Text
+  amount          Decimal? @db.Decimal(14, 2)
+  status          String?
+  @@index([contractId])
+}
+
+model AthleteContractAuditLog {
+  id           String   @id @default(cuid())
+  contractId   String
+  contract     AthleteContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  at           DateTime @default(now())
+  actorUserId  String?
+  actorEmail   String?
+  changeType   String
+  after        Json?
+  @@index([contractId, at])
+}
+
+model AthleteEvaluation {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId            String
+  player              Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  status              String    @default("EM_AVALIACAO")
+  evaluationStartedAt DateTime?
+  evaluationEndedAt   DateTime?
+  decision            String?
+  decisionAt          DateTime?
+  responsibleUserId   String?
+  responsibleEmail    String?
+  notes               String?   @db.Text
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  @@index([tenantId, playerId])
+  @@index([playerId, status])
+}
+
+model AthleteFederativeProcess {
+  id                    String    @id @default(cuid())
+  tenantId              String
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId              String
+  player                Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  status                String    @default("PENDENTE")
+  documentsCheckedAt    DateTime?
+  registrationStatus    String?
+  federationFeeAmount   Decimal?  @db.Decimal(14, 2)
+  transferFeeAmount     Decimal?  @db.Decimal(14, 2)
+  feeCurrency           String?   @default("BRL")
+  externalProcessNotes  String?   @db.Text
+  completedAt           DateTime?
+  responsibleUserId     String?
+  responsibleEmail      String?
+  notes                 String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  contracts             AthleteContract[]
+  @@index([tenantId, playerId])
+  @@index([playerId, status])
+}
+
+model AthleteProfessionalizationCase {
+  id                   String    @id @default(cuid())
+  tenantId             String
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId             String
+  player               Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  status               String    @default("PENDENTE")
+  effectiveDate        DateTime? @db.Date
+  employmentId         String?
+  employmentContractId String?
+  salarySnapshot       Json?
+  requiredDocuments    Json?
+  responsibleUserId    String?
+  responsibleEmail     String?
+  notes                String?   @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  @@index([tenantId, playerId])
+  @@index([playerId, status])
 }
 
 // ========== Patrimônio (empresa + clube; clube tem kit: camisa, calção, meião) ==========

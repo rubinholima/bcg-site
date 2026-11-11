@@ -7,7 +7,7 @@ export interface PlayerEconomicRight {
 
 export interface PlayerContractRow {
   id: string;
-  source: "juridico" | "rh" | "beatscode";
+  source: "juridico" | "rh" | "beatscode" | "athlete";
   displayId: string;
   startDate: string | null;
   endDate: string | null;
@@ -20,6 +20,8 @@ export interface PlayerContractRow {
   rhEmploymentId?: string;
   fileUrl?: string | null;
   beatscodeContractId?: number;
+  athleteContractId?: string;
+  isLegacyImport?: boolean;
 }
 
 export interface PlayerContractsOverview {

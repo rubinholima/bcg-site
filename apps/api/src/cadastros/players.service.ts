@@ -43,6 +43,7 @@ import {
   isLoanedSportsSituation,
 } from '../common/sports-situation.util';
 import { normalizeRegistrationProfile } from '../common/registration-profile-normalize.util';
+import { AthleteContractsService } from '../athlete-contracts/athlete-contracts.service';
 
 @Injectable()
 export class PlayersService {
@@ -54,6 +55,7 @@ export class PlayersService {
     private readonly agendaBirthdays: FootballAgendaBirthdaysService,
     private readonly agenda: FutebolAgendaService,
     private readonly socialPedagogyCases: SocialPedagogyCasesService,
+    private readonly athleteContracts: AthleteContractsService,
   ) {}
 
   private assertTenantAccess(allowedTenantIds: string[] | null | undefined, tenantId: string): void {
@@ -693,7 +695,9 @@ export class PlayersService {
       };
     });
 
-    const contracts = [...beatscodeRows, ...juridicoRows, ...rhRows].sort((a, b) => {
+    const athleteRows = await this.athleteContracts.mapAthleteContractsToOverviewRows(playerId);
+
+    const contracts = [...beatscodeRows, ...juridicoRows, ...rhRows, ...athleteRows].sort((a, b) => {
       const da = a.startDate ? new Date(a.startDate).getTime() : 0;
       const db = b.startDate ? new Date(b.startDate).getTime() : 0;
       return db - da;

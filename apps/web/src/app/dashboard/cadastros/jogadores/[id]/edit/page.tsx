@@ -524,6 +524,7 @@ export default function EditJogadorPage() {
           <CardContent className="space-y-4">
             <PlayerRegistrationSections
               playerId={player.id}
+              tenantId={player.tenantId}
               name={player.name}
               category={player.category}
               photoUrl={player.photoUrl}

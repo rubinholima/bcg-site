@@ -45,7 +45,7 @@ import { BRAZIL_BANK_SUGGESTIONS, normalizeBankName } from "@/lib/brazil-banks";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { ExpandableSection, FormGrid, RequiredMark, SectionDivider } from "./ExpandableSection";
 import { PlayerDocumentsSection } from "./PlayerDocumentsSection";
-import { PlayerContractsSection } from "./PlayerContractsSection";
+import { PlayerAthleteContractHub } from "./PlayerAthleteContractHub";
 import { PlayerCategoryHistorySection } from "./PlayerCategoryHistorySection";
 import { PlayerLoanSection } from "./PlayerLoanSection";
 import { PlayerTravelTab } from "./PlayerTravelTab";
@@ -86,6 +86,7 @@ interface PlayerRegistrationSectionsProps {
   canAccessLogistica?: boolean;
   canAccessJuridico?: boolean;
   canAccessRh?: boolean;
+  tenantId?: string;
   tenantName?: string | null;
   responsibleUserName?: string;
 }
@@ -146,6 +147,7 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
     canAccessLogistica = false,
     canAccessJuridico = false,
     canAccessRh = false,
+    tenantId,
     tenantName,
     responsibleUserName = "Sistema",
   } = props;
@@ -1222,13 +1224,14 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
         onProfileChange={onProfileChange}
       />
 
-      <PlayerContractsSection
+      <PlayerAthleteContractHub
         playerId={playerId}
+        tenantId={tenantId ?? ""}
         tenantName={tenantName}
         profile={profile}
         onProfileChange={onProfileChange}
-        canAccessJuridico={canAccessJuridico}
-        canAccessRh={canAccessRh}
+        canAccessJuridico={canAccessJuridico ?? false}
+        canAccessRh={canAccessRh ?? false}
       />
 
       <PlayerLoanSection profile={profile} tenantName={tenantName} onProfileChange={onProfileChange} />

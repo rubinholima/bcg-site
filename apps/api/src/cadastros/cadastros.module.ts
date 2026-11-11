@@ -31,6 +31,7 @@ import { FutebolAgendaModule } from '../futebol-agenda/futebol-agenda.module';
 import { AssistenciaSocialModule } from '../assistencia-social/assistencia-social.module';
 import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
 import { FutebolRelatoriosModule } from '../futebol-relatorios/futebol-relatorios.module';
+import { AthleteContractsModule } from '../athlete-contracts/athlete-contracts.module';
 
 @Module({
   controllers: [
@@ -70,6 +71,7 @@ import { FutebolRelatoriosModule } from '../futebol-relatorios/futebol-relatorio
     FmfScraperModule,
     FutebolRelatoriosModule,
     AssistenciaSocialModule,
+    AthleteContractsModule,
   ],
   exports: [
     ChampionshipsService,
