@@ -138,9 +138,15 @@ export class PayrollClosingController {
 
   @Post(':id/handoff-finance')
   @RequireRh('rh_payroll_manage')
-  handoffFinance(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+  handoffFinance(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { paymentDueDate?: string },
+  ) {
     return getRhAllowedTenants(this.scope, req).then((allowed) =>
-      this.service.handoffFinance(id, allowed, getRhActor(this.scope, req)),
+      this.service.handoffFinance(id, allowed, getRhActor(this.scope, req), {
+        paymentDueDate: body?.paymentDueDate,
+      }),
     );
   }
 

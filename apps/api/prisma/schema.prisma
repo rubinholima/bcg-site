@@ -251,6 +251,14 @@ model Tenant {
   pressCredentialRequests TenantPressCredentialRequest[]
   userTenants           UserTenant[]
   financeiroLancamentos FinanceiroLancamento[]
+  financeAccounts       FinanceAccount[]
+  financeCategories     FinanceCategory[]
+  financePaymentMethods FinancePaymentMethod[]
+  supplierPaymentDestinations SupplierPaymentDestination[]
+  financeExternalLinks  FinanceExternalLink[]
+  financePaymentDelegations FinancePaymentDelegation[]
+  financeAuditEvents    FinanceAuditEvent[]
+  financeTransferLegs   FinanceTransferLeg[]
   customers             Customer[]
   registrationInvites   RegistrationInvite[]
   scouts                Scout[]
@@ -403,6 +411,41 @@ model FinanceiroLancamento {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  /// manual_cup360 | cup360_module | omie
+  recordOrigin String?
+  /// operating_expense | operating_income | internal_transfer
+  transactionKind String @default("operating_expense")
+  transferPairId String?
+  financeAccountId String?
+  financeAccount   FinanceAccount? @relation("LancamentoPlannedAccount", fields: [financeAccountId], references: [id], onDelete: SetNull)
+  financeAccountSettledId String?
+  financeAccountSettled   FinanceAccount? @relation("LancamentoSettledAccount", fields: [financeAccountSettledId], references: [id], onDelete: SetNull)
+  financeCategoryId String?
+  financeCategory   FinanceCategory? @relation(fields: [financeCategoryId], references: [id], onDelete: SetNull)
+  financePaymentMethodId String?
+  financePaymentMethod   FinancePaymentMethod? @relation(fields: [financePaymentMethodId], references: [id], onDelete: SetNull)
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  documentType String?
+  documentNumber String?
+  issueDate DateTime? @db.Date
+  competenceDate DateTime? @db.Date
+  scheduledPaymentDate DateTime? @db.Date
+  originalAmount Decimal? @db.Decimal(14, 2)
+  interestAmount Decimal? @db.Decimal(14, 2)
+  penaltyAmount Decimal? @db.Decimal(14, 2)
+  discountAmount Decimal? @db.Decimal(14, 2)
+  abatementAmount Decimal? @db.Decimal(14, 2)
+  otherAdjustmentAmount Decimal? @db.Decimal(14, 2)
+  settlementAmount Decimal? @db.Decimal(14, 2)
+  boletoBarcode String?
+  boletoDigitableLine String?
+  boletoDocumentId String?
+  approvedAt DateTime?
+  approvedByUserId String?
+  paymentAuthorizedAt DateTime?
+  paymentAuthorizedByUserId String?
+
   @@unique([tenantId, sourceModule, sourceType, sourceId])
   @@index([tenantId])
   @@index([tenantId, tipo])
@@ -411,7 +454,166 @@ model FinanceiroLancamento {
   @@index([supplierId])
   @@index([customerId])
   @@index([tenantId, ownershipKind])
+  @@index([tenantId, recordOrigin])
+  @@index([tenantId, financeAccountId])
+  @@index([tenantId, financeCategoryId])
+  @@index([tenantId, transactionKind])
+  @@index([employeeId])
   playerNegotiationInstallment PlayerNegotiationInstallment?
+  financeAuditEvents FinanceAuditEvent[]
+  financeExternalLinks FinanceExternalLink[]
+}
+
+// ========== CUP360 Finance Operational (Phase 1) ==========
+
+model FinanceAccount {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name          String
+  /// BANK | CASH | CREDIT_CARD | OMIE_OPERATIONAL | OTHER
+  accountType   String
+  institution   String?
+  agency        String?
+  accountRef    String?
+  externalRef   String?
+  currency      String   @default("BRL")
+  active        Boolean  @default(true)
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  plannedLancamentos FinanceiroLancamento[] @relation("LancamentoPlannedAccount")
+  settledLancamentos FinanceiroLancamento[] @relation("LancamentoSettledAccount")
+  transferLegsSource FinanceTransferLeg[] @relation("TransferSourceAccount")
+  transferLegsDest   FinanceTransferLeg[] @relation("TransferDestAccount")
+  @@index([tenantId, active])
+  @@index([tenantId, accountType])
+}
+
+model FinanceCategory {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      FinanceCategory? @relation("FinanceCategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    FinanceCategory[] @relation("FinanceCategoryTree")
+  name        String
+  code        String?
+  description String?  @db.Text
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lancamentos FinanceiroLancamento[]
+  @@index([tenantId, active])
+  @@index([tenantId, parentId])
+}
+
+model FinancePaymentMethod {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  /// PIX | BANK_TRANSFER | BOLETO | CASH | CREDIT_CARD | PAYROLL_DEDUCTION | CHECK | OTHER
+  semanticKey String?
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lancamentos FinanceiroLancamento[]
+  @@index([tenantId, active])
+}
+
+model SupplierPaymentDestination {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  label       String?
+  /// BANK | PIX
+  destType    String
+  bankName    String?
+  bankAgency  String?
+  bankAccount String?
+  bankAccountType String?
+  pixKeyType  String?
+  pixKey      String?
+  holderName  String?
+  holderTaxId String?
+  active      Boolean  @default(true)
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([tenantId, supplierId])
+  @@index([tenantId, active])
+}
+
+model FinanceExternalLink {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider         String
+  externalObjectType String
+  externalId       String
+  financeiroLancamentoId String?
+  financeiroLancamento   FinanceiroLancamento? @relation(fields: [financeiroLancamentoId], references: [id], onDelete: SetNull)
+  metadata         Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  @@unique([tenantId, provider, externalObjectType, externalId])
+  @@index([tenantId, financeiroLancamentoId])
+}
+
+model FinancePaymentDelegation {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  grantedByUserId String
+  grantedToUserId String
+  capability    String
+  validFrom     DateTime @default(now())
+  validUntil    DateTime?
+  revokedAt     DateTime?
+  revokedByUserId String?
+  reason        String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@index([tenantId, grantedToUserId, capability])
+  @@index([tenantId, validUntil])
+}
+
+model FinanceAuditEvent {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  financeiroLancamentoId String?
+  financeiroLancamento   FinanceiroLancamento? @relation(fields: [financeiroLancamentoId], references: [id], onDelete: SetNull)
+  eventType     String
+  actorUserId   String?
+  actorName     String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  @@index([tenantId, createdAt])
+  @@index([financeiroLancamentoId])
+}
+
+/// Foundation para transferências internas (dois lados; excluir de P&L operacional).
+model FinanceTransferLeg {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  transferGroupId String
+  sourceAccountId String
+  sourceAccount   FinanceAccount @relation("TransferSourceAccount", fields: [sourceAccountId], references: [id], onDelete: Restrict)
+  destAccountId   String
+  destAccount     FinanceAccount @relation("TransferDestAccount", fields: [destAccountId], references: [id], onDelete: Restrict)
+  amount          Decimal  @db.Decimal(14, 2)
+  transferDate    DateTime @db.Date
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  @@index([tenantId, transferGroupId])
 }
 
 // ========== CUP360 Payment Core (provider-independent) ==========
@@ -2499,6 +2701,7 @@ model Supplier {
   quoteInvites   PurchaseQuoteInvite[]
   documents      SupplierDocument[]
   financeiroLancamentos FinanceiroLancamento[]
+  paymentDestinations SupplierPaymentDestination[]
   bchEventStaffAssignments     BchEventStaffAssignment[]
   bchEventServiceCommitments BchEventServiceCommitment[]
   bchEventTeamMembers          BchEventTeamMember[]
@@ -2958,6 +3161,8 @@ model RhPayrollClosing {
   responsibleUserId  String?
   responsibleName    String?
   financeLancamentoId String?
+  /// Data operacional de pagamento/vencimento da folha (não é a competência referenceMonth).
+  paymentDueDate     DateTime? @db.Date
   notes              String?  @db.Text
   metadata           Json?
   createdAt          DateTime @default(now())
@@ -3623,6 +3828,7 @@ model Employee {
   rhEpiDeliveries  RhEpiDelivery[]
   rhPayslipIndividuals RhPayslipIndividual[]
   rhPayslipPageAssignments RhPayslipPageAssignment[]
+  financeiroLancamentos FinanceiroLancamento[]
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, type])

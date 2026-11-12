@@ -129,10 +129,16 @@ const emptyForm = {
 
 export interface FinanceiroLancamentosPanelProps {
   tenantId: string;
+  defaultTipo?: Modo;
+  onMutate?: () => void;
 }
 
-export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPanelProps) {
-  const [modo, setModo] = useState<Modo>("pagar");
+export function FinanceiroLancamentosPanel({
+  tenantId,
+  defaultTipo,
+  onMutate,
+}: FinanceiroLancamentosPanelProps) {
+  const [modo, setModo] = useState<Modo>(defaultTipo ?? "pagar");
   const [statusFiltro, setStatusFiltro] = useState<string>("todos");
   const [vencDe, setVencDe] = useState("");
   const [vencAte, setVencAte] = useState("");

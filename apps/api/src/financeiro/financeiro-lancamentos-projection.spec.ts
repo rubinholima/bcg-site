@@ -21,7 +21,8 @@ describe('FinanceiroLancamentosService.createOrGetProjection', () => {
         findFirst: jest.fn().mockResolvedValue(existingRow),
       },
     };
-    const service = new FinanceiroLancamentosService(prisma as never);
+    const audit = { log: jest.fn() };
+    const service = new FinanceiroLancamentosService(prisma as never, audit as never);
     jest.spyOn(service, 'create');
 
     const result = await service.createOrGetProjection({
@@ -51,10 +52,41 @@ describe('FinanceiroLancamentosService.createOrGetProjection', () => {
           .mockResolvedValueOnce(existingRow),
       },
     };
-    const service = new FinanceiroLancamentosService(prisma as never);
+    const audit = { log: jest.fn() };
+    const service = new FinanceiroLancamentosService(prisma as never, audit as never);
     jest.spyOn(service, 'create').mockRejectedValue(
       new BadRequestException('Já existe lançamento financeiro para esta origem.'),
     );
+
+    const result = await service.createOrGetProjection({
+      tenantId: 't1',
+      tipo: 'receber',
+      status: 'pago',
+      ownershipKind: 'projection',
+      sourceModule: 'bch_ticketing',
+      sourceType: 'event_ticket_order',
+      sourceId: 'order-1',
+      valor: 100,
+      dueDate: new Date().toISOString(),
+      descricao: 'Test',
+    });
+
+    expect(result.created).toBe(false);
+    expect(result.lancamento.id).toBe('lanc-1');
+  });
+
+  it('após race P2002, retorna existente', async () => {
+    const prisma = {
+      financeiroLancamento: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(existingRow),
+      },
+    };
+    const audit = { log: jest.fn() };
+    const service = new FinanceiroLancamentosService(prisma as never, audit as never);
+    jest.spyOn(service, 'create').mockRejectedValue({ code: 'P2002' });
 
     const result = await service.createOrGetProjection({
       tenantId: 't1',

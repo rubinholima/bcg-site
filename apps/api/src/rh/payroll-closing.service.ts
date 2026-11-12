@@ -11,6 +11,10 @@ import { RhAuditService } from './rh-audit.service';
 import { RhAthleteMovementService } from './rh-athlete-movement.service';
 import { enrichPayrollSnapshotWithResponsibility } from './rh-athlete-payroll-snapshot.util';
 import type { RhActor } from './rh-request.util';
+import {
+  composeSnapshotFinancialTotal,
+  sumPayrollClosingFinancialTotal,
+} from './payroll-finance-projection.util';
 
 @Injectable()
 export class PayrollClosingService {
@@ -282,12 +286,52 @@ export class PayrollClosingService {
     return this.findOne(id, allowed);
   }
 
-  async handoffFinance(id: string, allowed: string[] | null, actor: RhActor) {
+  async handoffFinance(
+    id: string,
+    allowed: string[] | null,
+    actor: RhActor,
+    opts?: { paymentDueDate?: string },
+  ) {
     const closing = await this.findOne(id, allowed);
-    const total = closing.adjustments.reduce(
-      (acc, adj) => acc + (adj.amount ? Number(adj.amount) : 0),
-      0,
-    );
+
+    if (closing.financeLancamentoId) {
+      const existing = await this.financeiro.findProjectionBySource(
+        closing.tenantId,
+        'rh_payroll',
+        'payroll_closing',
+        closing.id,
+      );
+      if (existing) {
+        return this.findOne(id, allowed);
+      }
+    }
+
+    if (!closing.employeeSnapshots.length) {
+      throw new BadRequestException(
+        'Não é possível enviar ao Financeiro sem snapshots de colaboradores no fechamento.',
+      );
+    }
+
+    const total = sumPayrollClosingFinancialTotal(closing.employeeSnapshots, closing.adjustments);
+    if (!Number.isFinite(total) || total <= 0) {
+      throw new BadRequestException(
+        'Total financeiro da folha inválido. Revise snapshots e ajustes antes do envio ao Financeiro.',
+      );
+    }
+
+    let paymentDueDate: Date | null = null;
+    const closingWithDue = closing as typeof closing & { paymentDueDate?: Date | null };
+    if (opts?.paymentDueDate?.trim()) {
+      paymentDueDate = new Date(opts.paymentDueDate.trim());
+    } else if (closingWithDue.paymentDueDate) {
+      paymentDueDate = new Date(closingWithDue.paymentDueDate);
+    }
+    if (!paymentDueDate || Number.isNaN(paymentDueDate.getTime())) {
+      throw new BadRequestException(
+        'Informe a data de pagamento/vencimento da folha (paymentDueDate) antes do envio ao Financeiro.',
+      );
+    }
+
     const { lancamento } = await this.financeiro.createOrGetProjection({
       tenantId: closing.tenantId,
       tipo: 'pagar',
@@ -296,15 +340,21 @@ export class PayrollClosingService {
       sourceModule: 'rh_payroll',
       sourceType: 'payroll_closing',
       sourceId: closing.id,
-      valor: total > 0 ? total : 0.01,
-      dueDate: closing.referenceMonth.toISOString(),
+      valor: Math.round(total * 100) / 100,
+      dueDate: paymentDueDate.toISOString(),
       descricao: `Folha ${closing.referenceMonth.toISOString().slice(0, 7)}`,
+      recordOrigin: 'cup360_module',
     });
     await this.prisma.rhPayrollClosing.update({
       where: { id },
       data: {
         financeLancamentoId: lancamento.id as string,
         status: PAYROLL_STATUS.SENT_FINANCE,
+        ...(opts?.paymentDueDate?.trim()
+          ? { paymentDueDate }
+          : closingWithDue.paymentDueDate
+            ? {}
+            : { paymentDueDate }),
       },
     });
     await this.audit.log({
@@ -426,15 +476,8 @@ export class PayrollClosingService {
     const snapshot = closing.employeeSnapshots.find((s) => s.id === snapshotId);
     if (!snapshot) throw new NotFoundException('Snapshot do colaborador não encontrado.');
     const adjustments = closing.adjustments.filter((a) => a.employmentId === snapshot.employmentId);
+    const composition = composeSnapshotFinancialTotal(snapshot, adjustments);
     const snap = (snapshot.snapshot ?? {}) as Record<string, unknown>;
-    const salaryBase = Number(snap.salaryBase ?? 0);
-    const ourPayrollAmount = Number(
-      (snap.athleteMovement as { ourPayrollAmount?: number } | undefined)?.ourPayrollAmount ?? salaryBase,
-    );
-    const items = (snap.compensationItems as Array<{ type?: string; amount?: number | string }> | undefined) ?? [];
-    const benefitsTotal = items.reduce((acc, item) => acc + Number(item.amount ?? 0), 0);
-    const adjustmentsTotal = adjustments.reduce((acc, adj) => acc + (adj.amount ? Number(adj.amount) : 0), 0);
-    const estimatedTotal = ourPayrollAmount + benefitsTotal + adjustmentsTotal;
     return {
       closingId,
       snapshotId,
@@ -442,13 +485,7 @@ export class PayrollClosingService {
       employeeId: snapshot.employeeId,
       snapshot: snap,
       adjustments,
-      composition: {
-        salaryBase,
-        benefitsTotal,
-        ourPayrollAmount,
-        adjustmentsTotal,
-        estimatedTotal,
-      },
+      composition,
     };
   }
 }

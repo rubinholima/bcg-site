@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import type { FinanceiroLancamento, Prisma } from '@prisma/client';
+import { FinanceAuditService } from './finance-audit.service';
 import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -38,11 +39,30 @@ export type CreateFinanceiroLancamentoInput = CreateFinanceiroLancamentoDto & {
   sourceId?: string;
   currency?: string;
   createdByUserId?: string | null;
+  recordOrigin?: string | null;
+  transactionKind?: string;
+  financeAccountId?: string | null;
+  financeCategoryId?: string | null;
+  financePaymentMethodId?: string | null;
+  employeeId?: string | null;
+  documentType?: string | null;
+  documentNumber?: string | null;
+  issueDate?: string | null;
+  competenceDate?: string | null;
+  scheduledPaymentDate?: string | null;
+  originalAmount?: number | null;
+  boletoBarcode?: string | null;
+  boletoDigitableLine?: string | null;
+  boletoDocumentId?: string | null;
+  actorName?: string | null;
 };
 
 @Injectable()
 export class FinanceiroLancamentosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: FinanceAuditService,
+  ) {}
 
   private async resolveCadastroLink(
     tenantId: string,
@@ -233,7 +253,8 @@ export class FinanceiroLancamentosService {
       });
       return { lancamento, created: true as const };
     } catch (e) {
-      if (e instanceof BadRequestException) {
+      const prismaCode = (e as { code?: string })?.code;
+      if (e instanceof BadRequestException || prismaCode === 'P2002') {
         const again = await this.findProjectionBySource(
           dto.tenantId,
           dto.sourceModule,
@@ -281,6 +302,12 @@ export class FinanceiroLancamentosService {
       contraparte: dto.contraparte,
     });
 
+    const transactionKind =
+      dto.transactionKind ??
+      (dto.tipo === 'receber' ? 'operating_income' : 'operating_expense');
+    const recordOrigin = dto.recordOrigin ?? (ownershipKind === 'projection' ? 'cup360_module' : 'manual_cup360');
+    const originalAmount = dto.originalAmount != null ? dto.originalAmount : dto.valor;
+
     const row = await this.prisma.financeiroLancamento.create({
       data: {
         tenantId: dto.tenantId,
@@ -303,9 +330,65 @@ export class FinanceiroLancamentosService {
         notas: cadastroUpper(dto.notas),
         createdByUserId: dto.createdByUserId ?? null,
         updatedByUserId: dto.createdByUserId ?? null,
+        recordOrigin,
+        transactionKind,
+        financeAccountId: dto.financeAccountId ?? null,
+        financeCategoryId: dto.financeCategoryId ?? null,
+        financePaymentMethodId: dto.financePaymentMethodId ?? null,
+        employeeId: dto.employeeId ?? null,
+        documentType: dto.documentType?.trim() || null,
+        documentNumber: dto.documentNumber?.trim() || null,
+        issueDate: dto.issueDate ? new Date(dto.issueDate) : null,
+        competenceDate: dto.competenceDate ? new Date(dto.competenceDate) : null,
+        scheduledPaymentDate: dto.scheduledPaymentDate ? new Date(dto.scheduledPaymentDate) : null,
+        originalAmount,
+        boletoBarcode: dto.boletoBarcode?.trim() || null,
+        boletoDigitableLine: dto.boletoDigitableLine?.trim() || null,
+        boletoDocumentId: dto.boletoDocumentId?.trim() || null,
       },
     });
+    await this.audit.log({
+      tenantId: dto.tenantId,
+      financeiroLancamentoId: row.id,
+      eventType: 'entry_created',
+      actorUserId: dto.createdByUserId ?? null,
+      actorName: dto.actorName ?? null,
+      metadata: { recordOrigin, ownershipKind, sourceModule, sourceType, sourceId },
+    });
     return serialize(row);
+  }
+
+  async createManualOperational(
+    dto: CreateFinanceiroLancamentoInput,
+    actor: { userId?: string | null; name?: string | null },
+  ) {
+    return this.create({
+      ...dto,
+      originalAmount: dto.originalAmount ?? dto.valor,
+      ownershipKind: 'native',
+      sourceModule: 'financeiro',
+      sourceType: 'manual_operational',
+      sourceId: undefined,
+      recordOrigin: 'manual_cup360',
+      createdByUserId: actor.userId ?? null,
+      actorName: actor.name ?? null,
+    });
+  }
+
+  async approvePayment(id: string, tenantId: string, actorUserId?: string | null) {
+    const row = await this.prisma.financeiroLancamento.findFirst({ where: { id, tenantId } });
+    if (!row) throw new NotFoundException('Lançamento não encontrado');
+    const updated = await this.prisma.financeiroLancamento.update({
+      where: { id },
+      data: { approvedAt: new Date(), approvedByUserId: actorUserId ?? null },
+    });
+    await this.audit.log({
+      tenantId,
+      financeiroLancamentoId: id,
+      eventType: 'approved',
+      actorUserId: actorUserId ?? null,
+    });
+    return serialize(updated);
   }
 
   async update(id: string, dto: UpdateFinanceiroLancamentoDto, actorUserId?: string | null) {

@@ -1,6 +1,7 @@
 import { SetMetadata } from '@nestjs/common';
 import type { ProcurementCapability } from '../compras/procurement-access.util';
 import type { RhCapability } from '../rh/rh-access.util';
+import type { FinanceCapability } from '../financeiro/finance-access.util';
 
 export const REQUIRED_MODULE_KEY = 'requiredModule';
 export const TEAM_REPORT_READ_KEY = 'teamReportRead';
@@ -8,6 +9,7 @@ export const SEASON_HIGHLIGHTS_ACCESS_KEY = 'seasonHighlightsAccess';
 export const UNIFORM_KIT_ACCESS_KEY = 'uniformKitAccess';
 export const PROCUREMENT_CAPABILITY_KEY = 'procurementCapability';
 export const RH_CAPABILITY_KEY = 'rhCapability';
+export const FINANCE_CAPABILITY_KEY = 'financeCapability';
 
 export type UniformKitAccessMode = 'logistics_read' | 'manage';
 
@@ -30,3 +32,7 @@ export const RequireProcurement = (capability: ProcurementCapability) =>
 
 /** Capacidade granular de RH — use com RhCapabilityGuard. */
 export const RequireRh = (capability: RhCapability) => SetMetadata(RH_CAPABILITY_KEY, capability);
+
+/** Capacidade granular de Financeiro — use com FinanceCapabilityGuard. */
+export const RequireFinance = (capability: FinanceCapability) =>
+  SetMetadata(FINANCE_CAPABILITY_KEY, capability);

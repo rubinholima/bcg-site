@@ -1,14 +1,17 @@
-import { Controller, Get, Patch, Body, Query, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { BadRequestException, Controller, ForbiddenException, Get, Patch, Body, Query, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
+import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { SuperAdminGuard } from '../auth/super-admin.guard';
 import { IntegrationsService } from './integrations.service';
 import { OmieService } from './omie/omie.service';
+import { TenantAccessService } from '../auth/tenant-access.service';
 
 @Controller('settings/integrations')
 export class IntegrationsController {
   constructor(
     private readonly integrationsService: IntegrationsService,
     private readonly omieService: OmieService,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
 
   /**
@@ -18,10 +21,24 @@ export class IntegrationsController {
    */
   @Get('omie/status')
   @UseGuards(JwtAuthGuard)
-  async getOmieStatus(@Query('tenantId') tenantId?: string) {
+  async getOmieStatus(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId?: string,
+  ) {
     const tid = tenantId?.trim();
     if (tid) {
+      const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+      const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+      try {
+        this.tenantAccess.assertCanAccessTenant(allowed, tid);
+      } catch {
+        throw new ForbiddenException('Sem acesso à empresa solicitada.');
+      }
       return this.omieService.getStatusForTenant(tid);
+    }
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    if (role !== 'super_admin') {
+      throw new BadRequestException('tenantId é obrigatório para consultar status Omie da empresa.');
     }
     return this.omieService.getStatus();
   }

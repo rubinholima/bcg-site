@@ -19,7 +19,8 @@ describe('Finance projection idempotency — rh_payroll', () => {
         findFirst: jest.fn().mockResolvedValue(existingRow),
       },
     };
-    const service = new FinanceiroLancamentosService(prisma as never);
+    const audit = { log: jest.fn() };
+    const service = new FinanceiroLancamentosService(prisma as never, audit as never);
     jest.spyOn(service, 'create');
 
     const result = await service.createOrGetProjection({

@@ -15,14 +15,16 @@ import type { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
-import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { FinanceiroLancamentosService } from './financeiro-lancamentos.service';
 import { CreateFinanceiroLancamentoDto } from './dto/create-financeiro-lancamento.dto';
 import { UpdateFinanceiroLancamentoDto } from './dto/update-financeiro-lancamento.dto';
+import { CreateOperationalLancamentoDto } from './dto/create-operational-lancamento.dto';
+import { FinanceCapabilityGuard } from './finance-capability.guard';
+import { RequireFinance, RequireModule } from '../auth/require-module.decorator';
 
 @Controller('financeiro/lancamentos')
-@UseGuards(JwtAuthGuard, DashboardRolesGuard)
+@UseGuards(JwtAuthGuard, DashboardRolesGuard, FinanceCapabilityGuard)
 export class FinanceiroLancamentosController {
   constructor(
     private readonly service: FinanceiroLancamentosService,
@@ -92,7 +94,8 @@ export class FinanceiroLancamentosController {
 
   @Post()
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('adm_financeiro')
+  @RequireModule(['adm_financeiro', 'finance_create'])
+  @RequireFinance('finance_create')
   async create(
     @Req() req: Request & { user: CognitoJwtPayload },
     @Body() dto: CreateFinanceiroLancamentoDto,
@@ -100,6 +103,40 @@ export class FinanceiroLancamentosController {
     await this.requireTenantScope(req, dto.tenantId);
     const userId = await this.actorUserId(req);
     return this.service.create({ ...dto, createdByUserId: userId });
+  }
+
+  @Post('operacional')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule(['adm_financeiro', 'finance_create'])
+  @RequireFinance('finance_create')
+  async createOperational(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() dto: CreateOperationalLancamentoDto,
+  ) {
+    await this.requireTenantScope(req, dto.tenantId);
+    const userId = await this.actorUserId(req);
+    return this.service.createManualOperational(
+      {
+        ...dto,
+        originalAmount: dto.originalAmount ?? dto.valor,
+        valor: dto.valor,
+      },
+      { userId, name: req.user.email ?? null },
+    );
+  }
+
+  @Post(':id/aprovar')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule(['adm_financeiro', 'finance_approve'])
+  @RequireFinance('finance_approve')
+  async approve(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Query('tenantId') tenantId: string,
+  ) {
+    const tid = await this.requireTenantScope(req, tenantId);
+    const userId = await this.actorUserId(req);
+    return this.service.approvePayment(id, tid, userId);
   }
 
   @Patch(':id')

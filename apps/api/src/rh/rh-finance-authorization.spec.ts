@@ -17,8 +17,11 @@ describe('RH → Financeiro handoff authorization', () => {
       tenantId: 't1',
       referenceMonth: new Date('2026-11-01'),
       status: 'RH_APPROVED',
-      adjustments: [{ amount: 100 }],
-      employeeSnapshots: [],
+      adjustments: [],
+      employeeSnapshots: [
+        { employmentId: 'emp-1', snapshot: { salaryBase: 100, compensationItems: [] } },
+      ],
+      paymentDueDate: null,
       accountingPackage: null,
       accountingHistory: [],
       statusHistory: [],
@@ -42,7 +45,12 @@ describe('RH → Financeiro handoff authorization', () => {
     const service = new PayrollClosingService(prisma as never, financeiro as never, audit as never, {} as never);
     jest.spyOn(service, 'findOne').mockResolvedValue(closing as never);
 
-    await service.handoffFinance('close-1', ['t1'], { userId: 'u1', name: 'RH' });
+    await service.handoffFinance(
+      'close-1',
+      ['t1'],
+      { userId: 'u1', name: 'RH' },
+      { paymentDueDate: '2026-12-05' },
+    );
 
     expect(financeiro.createOrGetProjection).toHaveBeenCalledTimes(1);
     const dto = financeiro.createOrGetProjection.mock.calls[0][0];
