@@ -47,9 +47,15 @@ export class PerformanceAnalysisController {
   }
 
   @Get('tags')
-  async listTags(@Req() req: AuthedRequest, @Query('tenantId') tenantId: string) {
+  async listTags(
+    @Req() req: AuthedRequest,
+    @Query('tenantId') tenantId: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
     if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório.');
-    return this.service.listTags(tenantId.trim(), await this.allowed(req));
+    return this.service.listTags(tenantId.trim(), await this.allowed(req), {
+      includeInactive: includeInactive === '1' || includeInactive === 'true',
+    });
   }
 
   @Get('sessions')
@@ -343,12 +349,28 @@ export class PerformanceAnalysisController {
       requiresFieldLocation?: boolean;
       stateBehavior?: string;
       active?: boolean;
+      description?: string;
     },
   ) {
     if (!body?.tenantId?.trim() || !body.label?.trim()) {
       throw new BadRequestException('tenantId e label são obrigatórios.');
     }
     return this.service.upsertTagDefinition(body.tenantId.trim(), body, await this.allowed(req));
+  }
+
+  @Post('tags/reorder')
+  async reorderTags(
+    @Req() req: AuthedRequest,
+    @Body() body: { tenantId: string; orderedIds: string[] },
+  ) {
+    if (!body?.tenantId?.trim() || !Array.isArray(body.orderedIds)) {
+      throw new BadRequestException('tenantId e orderedIds são obrigatórios.');
+    }
+    return this.service.reorderTagDefinitions(
+      body.tenantId.trim(),
+      body.orderedIds,
+      await this.allowed(req),
+    );
   }
 
   @Get('clips')
@@ -827,6 +849,24 @@ export class PerformanceAnalysisController {
       >[1],
       await this.allowed(req),
     );
+  }
+
+  @Patch('video-annotations/:id')
+  async updateVideoAnnotation(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.updateVideoAnnotation(
+      id,
+      body as Parameters<PerformanceAnalysisService['updateVideoAnnotation']>[1],
+      await this.allowed(req),
+    );
+  }
+
+  @Get('events/:eventId/video-annotation')
+  async getEventAnnotation(@Req() req: AuthedRequest, @Param('eventId') eventId: string) {
+    return this.service.getVideoAnnotationByEvent(eventId, await this.allowed(req));
   }
 
   @Delete('video-annotations/:id')

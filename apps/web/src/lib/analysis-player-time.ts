@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import type { YoutubePlayerHandle } from "@/lib/youtube-iframe-player";
 
 export type VideoTimeCapabilities = {
   canReadCurrentTime: boolean;
@@ -13,6 +14,7 @@ export type VideoTimeCapabilities = {
 export function getVideoTimeCapabilities(
   hasHtml5: boolean,
   hasYoutubeEmbed: boolean,
+  youtubeReady = false,
 ): VideoTimeCapabilities {
   if (hasHtml5) {
     return {
@@ -27,12 +29,14 @@ export function getVideoTimeCapabilities(
   if (hasYoutubeEmbed) {
     return {
       source: "youtube",
-      canReadCurrentTime: false,
-      canSeek: false,
-      canPlayPause: false,
-      canPlaybackRate: false,
+      canReadCurrentTime: youtubeReady,
+      canSeek: youtubeReady,
+      canPlayPause: youtubeReady,
+      canPlaybackRate: youtubeReady,
       canFullscreen: true,
-      unavailableReason: "Tempo do YouTube não integrado neste modo — use relógio de partida ou HTML5.",
+      unavailableReason: youtubeReady
+        ? undefined
+        : "Inicializando player YouTube…",
     };
   }
   return {
@@ -44,6 +48,11 @@ export function getVideoTimeCapabilities(
     canFullscreen: false,
     unavailableReason: "Sem fonte de vídeo.",
   };
+}
+
+export function readYoutubeTimeMs(player: YoutubePlayerHandle | null): number | null {
+  if (!player) return null;
+  return player.getCurrentTimeMs();
 }
 
 export function readHtml5TimeMs(videoRef: RefObject<HTMLVideoElement | null>, videoSyncOffsetMs: number): number | null {

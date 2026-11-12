@@ -29,7 +29,10 @@ import {
   getVideoTimeCapabilities,
   isEditableTarget,
   readHtml5TimeMs,
+  readYoutubeTimeMs,
 } from "@/lib/analysis-player-time";
+import { labelOutcome, labelQualifier, parseStringList } from "@/lib/analysis-tag-labels";
+import { createYoutubePlayer, extractYoutubeVideoId, type YoutubePlayerHandle } from "@/lib/youtube-iframe-player";
 import {
   DEFAULT_POSSESSION_SHORTCUTS,
   isFocusProtectedTarget,
@@ -41,8 +44,8 @@ import {
   type AnalysisTagDefinition,
   type TeamMetrics,
   parseTagOutcomes,
-  youtubeEmbedUrl,
 } from "@/lib/performance-analysis-types";
+import { AnalysisTacticalDrawDialog } from "./AnalysisTacticalDrawDialog";
 import { AnalysisPitchMap } from "./AnalysisPitchMap";
 import {
   AnalysisVideoTelestrationCanvas,
@@ -86,6 +89,7 @@ type PendingCapture = {
   needsPlayer: boolean;
   needsField: boolean;
   needsOutcome: boolean;
+  needsQualifier: boolean;
 };
 
 const PERIOD_LABELS: Record<string, string> = {
@@ -145,7 +149,15 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
   const [showSidePanel, setShowSidePanel] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [pendingCapture, setPendingCapture] = useState<PendingCapture | null>(null);
+  const [selectedQualifier, setSelectedQualifier] = useState("");
+  const [selectedOutcome, setSelectedOutcome] = useState("");
+  const [drawOpen, setDrawOpen] = useState(false);
+  const [drawEvent, setDrawEvent] = useState<AnalysisEventRow | null>(null);
+  const [eventAnnotationIds, setEventAnnotationIds] = useState<Record<string, string>>({});
+  const [youtubePlayer, setYoutubePlayer] = useState<YoutubePlayerHandle | null>(null);
+  const [youtubeReady, setYoutubeReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const youtubeContainerRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const lastPlayerRef = useRef("");
 
@@ -228,9 +240,34 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
   }, [opponentRoster, opponentSearch]);
 
   const activeVideo = detail?.videoSources.find((v) => v.id === videoSourceId);
-  const embed = youtubeEmbedUrl(activeVideo?.externalUrl);
+  const youtubeVideoId = extractYoutubeVideoId(activeVideo?.externalUrl);
   const streamPath = activeVideo?.streamUrl ? `/api${activeVideo.streamUrl}` : null;
-  const videoCaps = getVideoTimeCapabilities(Boolean(streamPath), Boolean(embed));
+  const videoCaps = getVideoTimeCapabilities(Boolean(streamPath), Boolean(youtubeVideoId), youtubeReady);
+
+  useEffect(() => {
+    if (!youtubeVideoId || !youtubeContainerRef.current) {
+      setYoutubePlayer(null);
+      setYoutubeReady(false);
+      return;
+    }
+    let handle: YoutubePlayerHandle | null = null;
+    const el = youtubeContainerRef.current;
+    void createYoutubePlayer(el, youtubeVideoId, clock?.videoSyncOffsetMs ?? 0)
+      .then((h) => {
+        handle = h;
+        setYoutubePlayer(h);
+        setYoutubeReady(true);
+      })
+      .catch(() => {
+        setYoutubePlayer(null);
+        setYoutubeReady(false);
+      });
+    return () => {
+      handle?.destroy();
+      setYoutubePlayer(null);
+      setYoutubeReady(false);
+    };
+  }, [youtubeVideoId, activeVideo?.id, clock?.videoSyncOffsetMs]);
 
   const ourTeamLabel = "Nosso time";
   const opponentTeamLabel = "Adversário";
@@ -243,17 +280,21 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
     setClock(data.liveClock);
   }
 
-  function captureVideoMs(): number {
+  function captureVideoMs(): number | null {
+    const fromYt = readYoutubeTimeMs(youtubePlayer);
+    if (fromYt != null) return fromYt;
     const fromVideo = readHtml5TimeMs(videoRef, clock?.videoSyncOffsetMs ?? 0);
     if (fromVideo != null) return fromVideo;
-    return clock?.videoSyncOffsetMs ?? 0;
+    return null;
   }
 
   function stampNow() {
+    const vid = captureVideoMs();
     return {
-      startMs: captureVideoMs(),
+      startMs: vid ?? clock?.videoSyncOffsetMs ?? 0,
       matchClockSeconds: clock?.effectiveClockSeconds ?? 0,
       matchPeriod: clock?.period ?? "1T",
+      videoTimeUnknown: vid == null && !youtubeVideoId && !streamPath,
     };
   }
 
@@ -261,7 +302,9 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
     if (!clock) return;
     const stamp = stampNow();
     const outcomes = parseTagOutcomes(tag.outcomes);
+    const qualifiers = parseStringList(tag.qualifiers);
     const needsOutcome = outcomes.length > 1;
+    const needsQualifier = qualifiers.length > 1;
     const needsPlayer = Boolean(tag.requiresPlayer);
     const needsField = Boolean((tag as { requiresFieldLocation?: boolean }).requiresFieldLocation);
 
@@ -273,7 +316,7 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
         tagDefinitionId: tag.id,
         teamSide: side,
         outcome: needsOutcome ? null : outcomes[0] ?? "neutro",
-        startMs: stamp.startMs,
+        startMs: stamp.startMs ?? 0,
         matchPeriod: stamp.matchPeriod,
         matchClockSeconds: stamp.matchClockSeconds,
         videoSourceId: activeVideo?.id ?? null,
@@ -291,10 +334,13 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
       needsPlayer,
       needsField,
       needsOutcome,
+      needsQualifier,
     };
+    setSelectedQualifier("");
+    setSelectedOutcome("");
     setPendingCapture(pending);
 
-    if (!needsPlayer && !needsField && !needsOutcome) {
+  if (!needsPlayer && !needsField && !needsOutcome && !needsQualifier) {
       setPendingCapture(null);
     }
     window.setTimeout(() => void reloadEvents(), 600);
@@ -303,7 +349,8 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
   async function finishPendingCapture(outcome?: string) {
     if (!pendingCapture) return;
     const patch: Record<string, unknown> = {};
-    if (outcome) patch.outcome = outcome;
+    if (outcome || selectedOutcome) patch.outcome = outcome ?? selectedOutcome;
+    if (selectedQualifier) patch.eventQualifier = selectedQualifier;
     if (teamSide === "proprio" && selectedPlayerId) {
       patch.playerId = selectedPlayerId;
     }
@@ -354,10 +401,25 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
   }
 
   function togglePlayPause() {
+    if (youtubePlayer && videoCaps.canPlayPause) {
+      const st = youtubePlayer.getPlayerState();
+      if (st === "playing") youtubePlayer.pause();
+      else youtubePlayer.play();
+      return;
+    }
     const el = videoRef.current;
     if (!el) return;
     if (el.paused) void el.play();
     else el.pause();
+  }
+
+  function seekVideoMs(ms: number) {
+    if (youtubePlayer && videoCaps.canSeek) {
+      youtubePlayer.seekToMs(ms);
+      return;
+    }
+    const el = videoRef.current;
+    if (el) el.currentTime = ms / 1000;
   }
 
   function toggleExpanded() {
@@ -372,13 +434,32 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
   const tagsByGroup = useMemo(() => {
     const groups = new Map<string, AnalysisTagDefinition[]>();
     for (const t of detail?.tags ?? []) {
-      const g = (t as { tagGroup?: string }).tagGroup || t.category || "Geral";
+      const g = t.tagGroup || t.category || "Geral";
       const list = groups.get(g) ?? [];
       list.push(t);
       groups.set(g, list);
     }
+    for (const [, list] of groups) list.sort((a, b) => a.sortOrder - b.sortOrder);
     return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [detail?.tags]);
+
+  const activePossession = useMemo(() => {
+    const keys = {
+      state_posse_proprio: ourTeamLabel,
+      state_posse_adversario: opponentTeamLabel,
+      state_bola_fora: "Bola fora",
+    } as const;
+    const open = [...events]
+      .reverse()
+      .find((e) => e.tagDefinition?.key && e.tagDefinition.key in keys && e.endMs == null);
+    if (!open?.tagDefinition?.key) return null;
+    const label = keys[open.tagDefinition.key as keyof typeof keys];
+    const elapsedSec =
+      open.matchClockSeconds != null && clock?.effectiveClockSeconds != null
+        ? Math.max(0, clock.effectiveClockSeconds - open.matchClockSeconds)
+        : null;
+    return { label, elapsedSec, eventId: open.id };
+  }, [events, clock?.effectiveClockSeconds, ourTeamLabel, opponentTeamLabel]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -442,6 +523,14 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
               ? ` · Posse ${possession.ourPossessionPct}%`
               : ""}
           </p>
+          {activePossession ? (
+            <p className="text-xs font-medium text-violet-300">
+              Estado: {activePossession.label}
+              {activePossession.elapsedSec != null
+                ? ` · ${formatClockDisplay(activePossession.elapsedSec)}`
+                : ""}
+            </p>
+          ) : null}
         </div>
         <Button type="button" size="sm" variant="outline" onClick={toggleExpanded}>
           {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -492,8 +581,8 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
             expanded ? "min-h-[55vh]" : "aspect-video max-h-[62vh] min-h-[280px]",
           )}
         >
-          {embed ? (
-            <iframe title="Vídeo" src={embed} className="h-full w-full" allowFullScreen />
+          {youtubeVideoId ? (
+            <div ref={youtubeContainerRef} className="h-full w-full" />
           ) : streamPath ? (
             <>
               {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
@@ -517,9 +606,9 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
           )}
         </div>
 
-        {streamPath ? (
+        {streamPath || youtubeVideoId ? (
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" size="sm" variant="secondary" onClick={togglePlayPause}>
+            <Button type="button" size="sm" variant="secondary" onClick={togglePlayPause} disabled={!videoCaps.canPlayPause}>
               <Play className="mr-1 h-3 w-3" />
               Play / Pause
             </Button>
@@ -527,10 +616,11 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
               type="button"
               size="sm"
               variant="outline"
+              disabled={!videoCaps.canSeek}
               onClick={() => {
-                const el = videoRef.current;
-                if (!el) return;
-                el.currentTime = Math.max(0, el.currentTime - 5);
+                const cur = captureVideoMs();
+                if (cur == null) return;
+                seekVideoMs(Math.max(0, cur - 5000));
               }}
             >
               −5s
@@ -539,38 +629,57 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
               type="button"
               size="sm"
               variant="outline"
+              disabled={!videoCaps.canSeek}
               onClick={() => {
-                const el = videoRef.current;
-                if (!el) return;
-                el.currentTime = el.currentTime + 5;
+                const cur = captureVideoMs();
+                if (cur == null) return;
+                seekVideoMs(cur + 5000);
               }}
             >
               +5s
             </Button>
-            <NativeSelectPlaybackRate
-              value={playbackRate}
-              onChange={(rate) => {
-                const el = videoRef.current;
-                if (el) el.playbackRate = rate;
-                setPlaybackRate(rate);
-              }}
-            />
+            {streamPath ? (
+              <NativeSelectPlaybackRate
+                value={playbackRate}
+                onChange={(rate) => {
+                  const el = videoRef.current;
+                  if (el) el.playbackRate = rate;
+                  setPlaybackRate(rate);
+                }}
+              />
+            ) : null}
             <span className="text-xs text-muted-foreground tabular-nums">
               Vídeo:{" "}
-              {videoCaps.canReadCurrentTime
-                ? formatClockDisplay(Math.floor(captureVideoMs() / 1000))
-                : videoCaps.unavailableReason ?? "—"}
+              {(() => {
+                const v = captureVideoMs();
+                return v != null
+                  ? formatClockDisplay(Math.floor(v / 1000))
+                  : videoCaps.unavailableReason ?? "Sem tempo de vídeo";
+              })()}
             </span>
-            {activeVideo?.id ? (
-              <AnalysisVideoTelestrationToolbar
-                sessionId={sessionId}
-                videoSourceId={activeVideo.id}
-                videoRef={videoRef}
-                toolActive={drawToolActive}
-                setToolActive={setDrawToolActive}
-                strokes={drawStrokes}
-                setStrokes={setDrawStrokes}
-              />
+            {streamPath && activeVideo?.id ? (
+              <>
+                <AnalysisVideoTelestrationToolbar
+                  sessionId={sessionId}
+                  videoSourceId={activeVideo.id}
+                  videoRef={videoRef}
+                  toolActive={drawToolActive}
+                  setToolActive={setDrawToolActive}
+                  strokes={drawStrokes}
+                  setStrokes={setDrawStrokes}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setDrawEvent(null);
+                    setDrawOpen(true);
+                  }}
+                >
+                  Desenho tático
+                </Button>
+              </>
             ) : null}
           </div>
         ) : null}
@@ -591,16 +700,52 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
           {pendingCapture.needsOutcome ? (
             <div className="mt-2 flex flex-wrap gap-2">
               {parseTagOutcomes(pendingCapture.tag.outcomes).map((o) => (
-                <Button key={o} size="sm" type="button" onClick={() => void finishPendingCapture(o)}>
-                  {OUTCOME_LABEL[o] ?? o}
+                <Button
+                  key={o}
+                  size="sm"
+                  type="button"
+                  variant={selectedOutcome === o ? "default" : "outline"}
+                  onClick={() => setSelectedOutcome(o)}
+                >
+                  {labelOutcome(o)}
                 </Button>
               ))}
             </div>
-          ) : (
+          ) : null}
+          {pendingCapture.needsQualifier ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {parseStringList(pendingCapture.tag.qualifiers).map((q) => (
+                <Button
+                  key={q}
+                  size="sm"
+                  type="button"
+                  variant={selectedQualifier === q ? "default" : "outline"}
+                  onClick={() => setSelectedQualifier(q)}
+                >
+                  {labelQualifier(q)}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+          {(pendingCapture.needsOutcome || pendingCapture.needsQualifier) &&
+          !(pendingCapture.needsPlayer || pendingCapture.needsField) ? (
+            <Button
+              className="mt-2"
+              size="sm"
+              type="button"
+              disabled={
+                (pendingCapture.needsOutcome && !selectedOutcome) ||
+                (pendingCapture.needsQualifier && !selectedQualifier)
+              }
+              onClick={() => void finishPendingCapture(selectedOutcome || "neutro")}
+            >
+              Concluir
+            </Button>
+          ) : !pendingCapture.needsOutcome && !pendingCapture.needsQualifier ? (
             <Button className="mt-2" size="sm" type="button" onClick={() => void finishPendingCapture()}>
               Concluir
             </Button>
-          )}
+          ) : null}
         </div>
       ) : null}
 
@@ -703,6 +848,7 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
                     size="sm"
                     variant="outline"
                     className="h-auto min-h-[44px] flex-col py-2 text-xs"
+                    style={tag.color ? { borderColor: tag.color } : undefined}
                     onClick={() => void captureTagStamp(tag, teamSide)}
                   >
                     <span>{tag.label}</span>
@@ -787,16 +933,50 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
             </p>
             <ul className="divide-y divide-border">
               {[...events].reverse().slice(0, 40).map((ev) => (
-                <li key={ev.id} className="px-3 py-2 text-xs">
+                <li key={ev.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
                   <span className="font-medium">
                     {ev.matchClockSeconds != null ? formatClockDisplay(ev.matchClockSeconds) : "—"} ·{" "}
                     {ev.tagDefinition?.label}
+                    {eventAnnotationIds[ev.id] ? " · ✎" : ""}
                   </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2"
+                    onClick={() => {
+                      seekVideoMs(ev.startMs);
+                      setDrawEvent(ev);
+                      setDrawOpen(true);
+                    }}
+                  >
+                    Desenhar jogada
+                  </Button>
                 </li>
               ))}
             </ul>
           </div>
         </div>
+      ) : null}
+
+      {activeVideo?.id ? (
+        <AnalysisTacticalDrawDialog
+          open={drawOpen}
+          onOpenChange={setDrawOpen}
+          sessionId={sessionId}
+          videoSourceId={activeVideo.id}
+          startMs={drawEvent?.startMs ?? captureVideoMs() ?? 0}
+          analysisEventId={drawEvent?.id ?? null}
+          annotationId={drawEvent ? eventAnnotationIds[drawEvent.id] : null}
+          onSaved={async () => {
+            if (drawEvent) {
+              const { data } = await api.get(`/performance-analysis/events/${drawEvent.id}/video-annotation`);
+              if (data && typeof data === "object" && "id" in data) {
+                setEventAnnotationIds((m) => ({ ...m, [drawEvent.id]: String((data as { id: string }).id) }));
+              }
+            }
+          }}
+        />
       ) : null}
 
       <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>

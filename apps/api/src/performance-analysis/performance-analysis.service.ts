@@ -18,6 +18,7 @@ import {
   type PossessionTransitionTarget,
 } from './possession-state.util';
 import { computePossessionDurationMetrics } from './performance-analysis-possession-metrics.util';
+import { detectShortcutConflicts } from './analysis-tag-shortcut.util';
 import {
   computePlayerMetrics,
   computeTeamMetrics,
@@ -118,13 +119,44 @@ export class PerformanceAnalysisService {
     return status;
   }
 
-  async listTags(tenantId: string, allowedTenantIds: string[] | null) {
+  async listTags(
+    tenantId: string,
+    allowedTenantIds: string[] | null,
+    opts?: { includeInactive?: boolean },
+  ) {
     this.access.assertTenant(allowedTenantIds, tenantId);
     await this.ensureDefaultTags(tenantId);
     return this.prisma.analysisTagDefinition.findMany({
-      where: { tenantId, active: true },
+      where: { tenantId, ...(opts?.includeInactive ? {} : { active: true }) },
       orderBy: [{ sortOrder: 'asc' }, { label: 'asc' }],
     });
+  }
+
+  async reorderTagDefinitions(
+    tenantId: string,
+    orderedIds: string[],
+    allowedTenantIds: string[] | null,
+  ) {
+    this.access.assertTenant(allowedTenantIds, tenantId);
+    if (!orderedIds.length) return { ok: true, updated: 0 };
+    const rows = await this.prisma.analysisTagDefinition.findMany({
+      where: { tenantId, id: { in: orderedIds } },
+      select: { id: true },
+    });
+    const valid = new Set(rows.map((r) => r.id));
+    let updated = 0;
+    await this.prisma.$transaction(
+      orderedIds
+        .filter((id) => valid.has(id))
+        .map((id, index) =>
+          this.prisma.analysisTagDefinition.update({
+            where: { id },
+            data: { sortOrder: (index + 1) * 10 },
+          }),
+        ),
+    );
+    updated = orderedIds.filter((id) => valid.has(id)).length;
+    return { ok: true, updated };
   }
 
   async listSessions(
@@ -366,6 +398,7 @@ export class PerformanceAnalysisService {
       analysisClass?: string | null;
       liveCaptureStamp?: boolean | null;
       opponentPlayerId?: string | null;
+      eventQualifier?: string | null;
     },
     allowedTenantIds: string[] | null,
   ) {
@@ -452,6 +485,7 @@ export class PerformanceAnalysisService {
         opponentPlayerId: dto.opponentPlayerId?.trim() || null,
         teamSide: dto.teamSide?.trim() || null,
         outcome: dto.outcome?.trim() || null,
+        eventQualifier: dto.eventQualifier?.trim() || null,
         startMs: dto.startMs,
         endMs: dto.endMs ?? null,
         matchPeriod: dto.matchPeriod?.trim() || null,
@@ -575,6 +609,9 @@ export class PerformanceAnalysisService {
           : {}),
         ...(dto.teamSide !== undefined ? { teamSide: dto.teamSide?.trim() || null } : {}),
         ...(dto.outcome !== undefined ? { outcome: dto.outcome?.trim() || null } : {}),
+        ...(dto.eventQualifier !== undefined
+          ? { eventQualifier: dto.eventQualifier?.trim() || null }
+          : {}),
         ...(dto.startMs !== undefined ? { startMs: dto.startMs } : {}),
         ...(dto.endMs !== undefined ? { endMs: dto.endMs ?? null } : {}),
         ...(dto.notes !== undefined ? { notes: dto.notes?.trim() || null } : {}),
@@ -1017,6 +1054,7 @@ export class PerformanceAnalysisService {
       id?: string;
       key?: string;
       label: string;
+      description?: string | null;
       category?: string | null;
       tagGroup?: string | null;
       sortOrder?: number;
@@ -1036,6 +1074,20 @@ export class PerformanceAnalysisService {
     this.access.assertTenant(allowedTenantIds, tenantId);
     const key = body.key?.trim() || body.id;
     if (!key && !body.id) throw new BadRequestException('key ou id é obrigatório.');
+
+    const allTags = await this.prisma.analysisTagDefinition.findMany({
+      where: { tenantId },
+      select: { id: true, shortcutKey: true },
+    });
+    const conflicts = detectShortcutConflicts(allTags, {
+      id: body.id,
+      shortcutKey: body.shortcutKey ?? null,
+    });
+    if (conflicts.length > 0) {
+      throw new BadRequestException(
+        `Atalho "${conflicts[0]}" já está em uso ou é reservado.`,
+      );
+    }
 
     if (body.id) {
       const row = await this.prisma.analysisTagDefinition.findFirst({
@@ -1058,6 +1110,7 @@ export class PerformanceAnalysisService {
         where: { id: row.id },
         data: {
           label: body.label.trim(),
+          description: body.description?.trim() || null,
           category: body.category?.trim() || null,
           tagGroup: body.tagGroup?.trim() || null,
           sortOrder: body.sortOrder ?? row.sortOrder,
@@ -1087,6 +1140,7 @@ export class PerformanceAnalysisService {
         tenantId,
         key: tagKey,
         label: body.label.trim(),
+        description: body.description?.trim() || null,
         category: body.category?.trim() || null,
         tagGroup: body.tagGroup?.trim() || null,
         sortOrder: body.sortOrder ?? 500,
@@ -1432,6 +1486,10 @@ export class PerformanceAnalysisService {
       endMs?: number | null;
       label?: string | null;
       strokes: unknown;
+      vectorJson?: unknown;
+      analysisEventId?: string | null;
+      analysisClipId?: string | null;
+      schemaVersion?: number;
       authorUserId?: string | null;
     },
     allowedTenantIds: string[] | null,
@@ -1442,21 +1500,73 @@ export class PerformanceAnalysisService {
       session.id,
       session.tenantId,
     );
-    if (!Array.isArray(dto.strokes) && typeof dto.strokes !== 'object') {
+    if (!Array.isArray(dto.strokes) && typeof dto.strokes !== 'object' && !dto.vectorJson) {
       throw new BadRequestException('Desenho inválido.');
+    }
+    if (dto.analysisEventId) {
+      const ev = await this.prisma.analysisEvent.findFirst({
+        where: { id: dto.analysisEventId, analysisSessionId: session.id, tenantId: session.tenantId },
+      });
+      if (!ev) throw new BadRequestException('Evento inválido para anotação.');
+    }
+    if (dto.analysisClipId) {
+      const clip = await this.prisma.analysisClip.findFirst({
+        where: { id: dto.analysisClipId, analysisSessionId: session.id, tenantId: session.tenantId },
+      });
+      if (!clip) throw new BadRequestException('Clip inválido para anotação.');
     }
     return this.prisma.analysisVideoAnnotation.create({
       data: {
         tenantId: session.tenantId,
         analysisSessionId: session.id,
         videoSourceId: dto.videoSourceId,
+        analysisEventId: dto.analysisEventId?.trim() || null,
+        analysisClipId: dto.analysisClipId?.trim() || null,
         startMs: dto.startMs,
         endMs: dto.endMs ?? null,
         label: dto.label?.trim() || null,
-        strokes: dto.strokes as object,
+        strokes: (dto.strokes ?? []) as object,
+        vectorJson: dto.vectorJson ? (dto.vectorJson as object) : undefined,
+        schemaVersion: dto.schemaVersion ?? 1,
         authorUserId: dto.authorUserId ?? null,
       },
     });
+  }
+
+  async updateVideoAnnotation(
+    id: string,
+    dto: {
+      label?: string | null;
+      strokes?: unknown;
+      vectorJson?: unknown;
+      endMs?: number | null;
+      schemaVersion?: number;
+    },
+    allowedTenantIds: string[] | null,
+  ) {
+    const row = await this.prisma.analysisVideoAnnotation.findUnique({ where: { id } });
+    if (!row) throw new NotFoundException('Anotação não encontrada.');
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    return this.prisma.analysisVideoAnnotation.update({
+      where: { id },
+      data: {
+        ...(dto.label !== undefined ? { label: dto.label?.trim() || null } : {}),
+        ...(dto.strokes !== undefined ? { strokes: dto.strokes as object } : {}),
+        ...(dto.vectorJson !== undefined ? { vectorJson: dto.vectorJson as object } : {}),
+        ...(dto.endMs !== undefined ? { endMs: dto.endMs ?? null } : {}),
+        ...(dto.schemaVersion !== undefined ? { schemaVersion: dto.schemaVersion } : {}),
+      },
+    });
+  }
+
+  async getVideoAnnotationByEvent(eventId: string, allowedTenantIds: string[] | null) {
+    const row = await this.prisma.analysisVideoAnnotation.findFirst({
+      where: { analysisEventId: eventId },
+      orderBy: { updatedAt: 'desc' },
+    });
+    if (!row) return null;
+    this.access.assertTenant(allowedTenantIds, row.tenantId);
+    return row;
   }
 
   async deleteVideoAnnotation(id: string, allowedTenantIds: string[] | null) {

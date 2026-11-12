@@ -4,6 +4,7 @@ import path from "path";
 const monorepoRoot = path.join(__dirname, "..", "..");
 
 const nextConfig: NextConfig = {
+  /** Build de produção usa webpack (`next build --webpack`) — Turbopack falha com `next/font` multi-weight (ex.: Playfair). */
   reactCompiler: true,
   outputFileTracingRoot: monorepoRoot,
   turbopack: {

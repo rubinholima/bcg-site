@@ -7167,6 +7167,7 @@ model AnalysisTagDefinition {
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   key        String
   label      String
+  description String? @db.Text
   category   String?
   tagGroup   String?
   active     Boolean  @default(true)
@@ -7207,6 +7208,7 @@ model AnalysisEvent {
   relatedPlayer      Player?  @relation("AnalysisEventRelatedPlayer", fields: [relatedPlayerId], references: [id], onDelete: SetNull)
   teamSide           String?
   outcome            String?
+  eventQualifier     String?
   startMs            Int
   endMs              Int?
   matchPeriod        String?
