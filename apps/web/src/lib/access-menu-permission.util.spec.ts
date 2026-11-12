@@ -10,11 +10,15 @@ import {
 describe("access-menu-permission.util", () => {
   const labelMap = buildAuthorizationSlugLabelMap();
 
-  it("storageSlugFromTreeLeaf prioriza moduleSlug (valor persistido inalterado)", () => {
-    expect(storageSlugFromTreeLeaf("futebol__atletas", "futebol_jogadores")).toBe(
-      "futebol_jogadores",
-    );
+  it("storageSlugFromTreeLeaf usa slug granular quando folha tem __ ou /", () => {
+    expect(
+      storageSlugFromTreeLeaf(
+        "saude/saude_relatorios__saude_rel_lista_atletas",
+        "relatorios_saude",
+      ),
+    ).toBe("saude/saude_relatorios__saude_rel_lista_atletas");
     expect(storageSlugFromTreeLeaf("dashboard", undefined)).toBe("dashboard");
+    expect(storageSlugFromTreeLeaf("agenda", "agenda")).toBe("agenda");
   });
 
   it("mapeia slugs canônicos do menu para rótulos humanos", () => {

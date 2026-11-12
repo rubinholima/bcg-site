@@ -9,9 +9,16 @@ import { FisioterapiaController } from './fisioterapia.controller';
 import { FisioterapiaService } from './fisioterapia.service';
 import { PhysioTryoutClearanceService } from './physio-tryout-clearance.service';
 import { PhysioPlayerAvailabilityService } from '../common/physio-player-availability.service';
+import { SaudeNotificationsModule } from '../saude/saude-notifications.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, ModulesModule, forwardRef(() => TryoutWorkflowModule)],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    ModulesModule,
+    SaudeNotificationsModule,
+    forwardRef(() => TryoutWorkflowModule),
+  ],
   controllers: [FisioterapiaController],
   providers: [
     FisioterapiaService,

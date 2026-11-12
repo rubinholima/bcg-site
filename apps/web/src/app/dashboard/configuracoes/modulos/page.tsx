@@ -35,6 +35,7 @@ import {
   type MenuDepartmentGroup,
 } from "@/lib/dashboard-menu.config";
 import { AccessPermissionTree } from "@/components/dashboard/access/AccessPermissionTree";
+import { storageSlugFromTreeLeaf } from "@/lib/access-menu-permission.util";
 import {
   applyAdditivePreset,
   buildMatrixExportPayload,
@@ -136,7 +137,10 @@ function permissionEnabled(
   moduleSlug?: string,
 ): boolean {
   if (map.get(accessSlug)) return true;
-  if (moduleSlug && moduleSlug !== accessSlug && map.get(moduleSlug)) return true;
+  if (moduleSlug && moduleSlug === accessSlug && map.get(moduleSlug)) return true;
+  if (moduleSlug && moduleSlug !== accessSlug && !accessSlug.includes("__") && !accessSlug.includes("/")) {
+    if (map.get(moduleSlug)) return true;
+  }
   return false;
 }
 
@@ -690,14 +694,24 @@ export default function ModulosPage() {
 
   const isAccessEnabled = useCallback(
     (accessSlug: string, moduleSlug?: string) => {
+      const storageSlug = storageSlugFromTreeLeaf(accessSlug, moduleSlug);
       if (accessMode === "role") {
-        return permissionEnabled(rolePermissionsMap, accessSlug, moduleSlug);
+        return (
+          permissionEnabled(rolePermissionsMap, accessSlug, moduleSlug) ||
+          (storageSlug !== accessSlug && Boolean(rolePermissionsMap.get(storageSlug)))
+        );
       }
       if (userCustomAccess) {
-        return (
-          Boolean(userPermissions[accessSlug]) ||
-          Boolean(moduleSlug && moduleSlug !== accessSlug && userPermissions[moduleSlug])
-        );
+        if (userPermissions[storageSlug] || userPermissions[accessSlug]) return true;
+        if (
+          moduleSlug &&
+          moduleSlug !== accessSlug &&
+          !accessSlug.includes("__") &&
+          !accessSlug.includes("/")
+        ) {
+          return Boolean(userPermissions[moduleSlug]);
+        }
+        return false;
       }
       const userRole = selectedUserRole;
       const mod = mergedModuleState.find((m) => m.slug === accessSlug);
@@ -719,7 +733,8 @@ export default function ModulosPage() {
     opts?: { moduleSlug?: string; accessGroup?: string },
   ) => {
     if (opts?.accessGroup) return;
-    if (opts?.moduleSlug && opts.moduleSlug !== accessSlug) {
+    if (opts?.moduleSlug && opts.moduleSlug !== accessSlug) return;
+    if (opts?.moduleSlug) {
       handleModuleToggle(opts.moduleSlug, selectedRole, value);
     }
   };
@@ -729,18 +744,16 @@ export default function ModulosPage() {
     value: boolean,
     opts?: { moduleSlug?: string; accessGroup?: string },
   ) => {
+    const storageSlug = storageSlugFromTreeLeaf(accessSlug, opts?.moduleSlug);
     if (accessMode === "role") {
-      handleModuleToggle(accessSlug, selectedRole, value);
-      syncModuleSlugPermission(accessSlug, value, opts);
+      handleModuleToggle(storageSlug, selectedRole, value);
+      syncModuleSlugPermission(storageSlug, value, opts);
       return;
     }
-    setUserPermissions((prev) => {
-      const next = { ...prev, [accessSlug]: value };
-      if (opts?.moduleSlug && opts.moduleSlug !== accessSlug && !opts?.accessGroup) {
-        next[opts.moduleSlug] = value;
-      }
-      return next;
-    });
+    setUserPermissions((prev) => ({
+      ...prev,
+      [storageSlug]: value,
+    }));
     setUserCustomAccess(true);
     setUserDirty(true);
     setSaveBanner(null);

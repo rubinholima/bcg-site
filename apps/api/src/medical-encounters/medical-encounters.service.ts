@@ -23,6 +23,8 @@ import {
   type MedicalPrescriptionIssuanceEntry,
 } from './medical-encounter.constants';
 import { appendMedicalEditLog } from './medical-encounter-audit.util';
+import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
+import { HealthAttendanceFisiologiaNotifyService } from '../saude/health-attendance-fisiologia-notify.service';
 
 const encounterInclude = {
   player: {
@@ -66,6 +68,7 @@ export class MedicalEncountersService {
     private readonly timeline: MedicalTimelineService,
     private readonly operational: MedicalPlayerOperationalService,
     private readonly s3: S3Service,
+    private readonly fisiologiaNotify: HealthAttendanceFisiologiaNotifyService,
   ) {}
 
   private assertTenant(allowed: string[] | null, tenantId: string) {
@@ -575,6 +578,30 @@ export class MedicalEncountersService {
     });
     if (status !== 'cancelled') {
       await this.operational.syncPlayerOperationalStatus(dto.playerId);
+      const restricao =
+        created.restrictTraining || created.restrictMatch
+          ? [
+              created.restrictTraining ? 'Treino restrito' : null,
+              created.restrictMatch ? 'Jogo restrito' : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          : null;
+      void this.fisiologiaNotify
+        .notifyNewAttendance({
+          tenantId: created.tenantId,
+          tenantName: created.tenant.name,
+          playerName: getPlayerListDisplayName(created.player),
+          category: created.category,
+          attendedAt: created.occurredAt,
+          areaLabel: 'Departamento médico',
+          availabilityNote:
+            restricao ??
+            created.diagnosis?.trim() ??
+            created.chiefComplaint?.trim() ??
+            null,
+        })
+        .catch(() => undefined);
     }
     return created;
   }

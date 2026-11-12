@@ -20,6 +20,7 @@ import {
   UpdateNursingSessionDto,
 } from './dto/enfermaria.dto';
 import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
+import { HealthAttendanceFisiologiaNotifyService } from '../saude/health-attendance-fisiologia-notify.service';
 
 const sessionInclude = {
   sessionDiagnoses: {
@@ -51,6 +52,7 @@ export class EnfermariaService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stockMovements: StockMovementsService,
+    private readonly fisiologiaNotify: HealthAttendanceFisiologiaNotifyService,
   ) {}
 
   async onModuleInit() {
@@ -429,6 +431,21 @@ export class EnfermariaService implements OnModuleInit {
         treatmentLabel: t.treatmentLabel ?? 'Medicamento',
       })),
     );
+
+    void this.fisiologiaNotify
+      .notifyNewAttendance({
+        tenantId: dto.tenantId,
+        tenantName: session.tenant.name,
+        playerName: getPlayerListDisplayName(player),
+        category: session.category,
+        attendedAt,
+        areaLabel: 'Enfermaria',
+        availabilityNote:
+          dto.exemptFromTraining === true
+            ? 'Dispensado do treino (enfermaria)'
+            : dto.symptoms?.trim() || null,
+      })
+      .catch(() => undefined);
 
     return this.findSession(session.id, allowed);
   }

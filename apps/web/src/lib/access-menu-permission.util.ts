@@ -12,8 +12,13 @@ export function storageSlugFromTreeLeaf(
   accessSlug: string,
   moduleSlug?: string,
 ): string {
-  if (moduleSlug?.trim()) return moduleSlug.trim();
-  return accessSlug;
+  const access = accessSlug.trim();
+  const mod = moduleSlug?.trim() ?? "";
+  if (!mod) return access;
+  if (access === mod) return mod;
+  /** Folhas com slug próprio no menu (path__item) — não colapsar no moduleSlug compartilhado. */
+  if (access.includes("__") || access.includes("/")) return access;
+  return mod;
 }
 
 export function collectModuleStorageSlugs(node: MenuAccessTreeNode): string[] {

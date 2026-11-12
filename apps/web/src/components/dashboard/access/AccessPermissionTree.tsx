@@ -193,7 +193,7 @@ function AccessTreeNodeRow({
           <span className="text-sm font-medium text-foreground block">{node.label}</span>
           {groupLabel ? (
             <span className="text-xs text-muted-foreground block mt-0.5">
-              Grupo: {groupLabel} (libera/bloqueia junto)
+              Grupo: {groupLabel}
             </span>
           ) : modLabel && modLabel !== node.label && showTechnicalHints !== false ? (
             <span className="text-xs text-muted-foreground block mt-0.5">API: {modLabel}</span>

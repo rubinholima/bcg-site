@@ -53,6 +53,7 @@ import {
 } from '../common/sports-situation.util';
 import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
 import { PhysioPlayerAvailabilityService } from '../common/physio-player-availability.service';
+import { HealthAttendanceFisiologiaNotifyService } from '../saude/health-attendance-fisiologia-notify.service';
 
 type EvolutionNote = {
   at: string;
@@ -108,6 +109,7 @@ export class FisioterapiaService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly playerAvailability: PhysioPlayerAvailabilityService,
+    private readonly fisiologiaNotify: HealthAttendanceFisiologiaNotifyService,
   ) {}
 
   async onModuleInit() {
@@ -624,6 +626,20 @@ export class FisioterapiaService implements OnModuleInit {
     });
 
     await this.syncPlayerInjuryStatus(dto.playerId);
+    void this.fisiologiaNotify
+      .notifyNewAttendance({
+        tenantId: dto.tenantId,
+        tenantName: created.tenant.name,
+        playerName: getPlayerListDisplayName(created.player),
+        category: created.category,
+        attendedAt: new Date(),
+        areaLabel: 'Fisioterapia',
+        availabilityNote:
+          dto.needsTransition === true
+            ? 'Atleta em transição / fisioterapia — verificar disponibilidade'
+            : dto.symptoms?.trim() || created.diagnosisLabel || null,
+      })
+      .catch(() => undefined);
     return created;
   }
 
