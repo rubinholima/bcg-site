@@ -27,7 +27,11 @@ WHERE NOT EXISTS (SELECT 1 FROM "Module" m WHERE m."slug" = v.slug);
 
 -- Quem já tem adm_compras recebe capacidades operacionais (exceto aprovar — continua financeiro/diretoria)
 INSERT INTO "ModuleRole" ("id", "moduleId", "role", "canAccess")
-SELECT gen_random_uuid()::text, m.id, mr.role, true
+SELECT DISTINCT ON (m.id, mr.role)
+  gen_random_uuid()::text,
+  m.id,
+  mr.role,
+  true
 FROM "Module" m
 JOIN "Module" adm ON adm."slug" = 'adm_compras'
 JOIN "ModuleRole" mr ON mr."moduleId" = adm.id AND mr."canAccess" = true
@@ -42,26 +46,37 @@ WHERE m."slug" IN (
 )
 AND NOT EXISTS (
   SELECT 1 FROM "ModuleRole" x WHERE x."moduleId" = m.id AND x."role" = mr.role
-);
+)
+ORDER BY m.id, mr.role;
 
 -- group_fornecedores → ver/gerir fornecedores
 INSERT INTO "ModuleRole" ("id", "moduleId", "role", "canAccess")
-SELECT gen_random_uuid()::text, m.id, mr.role, true
+SELECT DISTINCT ON (m.id, mr.role)
+  gen_random_uuid()::text,
+  m.id,
+  mr.role,
+  true
 FROM "Module" m
 JOIN "Module" gf ON gf."slug" = 'group_fornecedores'
 JOIN "ModuleRole" mr ON mr."moduleId" = gf.id AND mr."canAccess" = true
 WHERE m."slug" IN ('compras_fornecedores_ver', 'compras_fornecedores_gerir')
 AND NOT EXISTS (
   SELECT 1 FROM "ModuleRole" x WHERE x."moduleId" = m.id AND x."role" = mr.role
-);
+)
+ORDER BY m.id, mr.role;
 
 -- Aprovação: financeiro e diretoria
 INSERT INTO "ModuleRole" ("id", "moduleId", "role", "canAccess")
-SELECT gen_random_uuid()::text, m.id, mr.role, true
+SELECT DISTINCT ON (m.id, mr.role)
+  gen_random_uuid()::text,
+  m.id,
+  mr.role,
+  true
 FROM "Module" m
 JOIN "Module" src ON src."slug" IN ('adm_financeiro', 'diretoria')
 JOIN "ModuleRole" mr ON mr."moduleId" = src.id AND mr."canAccess" = true
 WHERE m."slug" = 'compras_cotacao_aprovar'
 AND NOT EXISTS (
   SELECT 1 FROM "ModuleRole" x WHERE x."moduleId" = m.id AND x."role" = mr.role
-);
+)
+ORDER BY m.id, mr.role;
