@@ -104,6 +104,18 @@ export class FinanceInstallmentService {
     return created.map((r) => ({ ...r, valor: moneyToNumber(r.valor) }));
   }
 
+  async listByGroup(tenantId: string, groupId: string) {
+    const rows = await this.prisma.financeiroLancamento.findMany({
+      where: { tenantId, installmentGroupId: groupId },
+      orderBy: { installmentNumber: 'asc' },
+    });
+    return rows.map((r) => ({
+      ...r,
+      valor: moneyToNumber(r.valor),
+      amountSettledTotal: moneyToNumber(r.amountSettledTotal ?? 0),
+    }));
+  }
+
   async updateInstallmentDueDate(
     tenantId: string,
     lancamentoId: string,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -18,12 +18,36 @@ export function FinanceAllocationEditor({
   documentTotal,
   categories,
   onChange,
+  simpleCategoryId,
 }: {
   documentTotal: number;
   categories: Cat[];
   onChange: (rows: AllocationRow[]) => void;
+  /** Quando só uma categoria principal está selecionada, sugere linha única. */
+  simpleCategoryId?: string;
 }) {
   const [rows, setRows] = useState<AllocationRow[]>([{ amount: documentTotal }]);
+
+  useEffect(() => {
+    if (simpleCategoryId && rows.length === 1 && !rows[0].financeCategoryId) {
+      const copy = [{ financeCategoryId: simpleCategoryId, amount: documentTotal }];
+      setRows(copy);
+      onChange(copy);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync só na categoria simples
+  }, [simpleCategoryId, documentTotal]);
+
+  useEffect(() => {
+    if (rows.length === 1) {
+      const only = rows[0];
+      if (Math.abs((only.amount ?? 0) - documentTotal) > 0.009) {
+        const copy = [{ ...only, amount: documentTotal }];
+        setRows(copy);
+        onChange(copy);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentTotal]);
 
   const classified = useMemo(
     () => rows.reduce((s, r) => s + (Number.isFinite(r.amount) ? r.amount : 0), 0),

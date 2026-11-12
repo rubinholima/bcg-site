@@ -203,6 +203,17 @@ export class FinanceCatalogController {
     return this.supplierPayments.create(tid, supplierId, body as never);
   }
 
+  @Get('delegacoes/todas')
+  @RequireModule(['adm_financeiro', 'finance_approve'])
+  @RequireFinance('finance_approve')
+  async listAllDelegations(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    const tid = await this.requireTenantScope(req, tenantId);
+    return this.delegations.listAll(tid);
+  }
+
   @Get('delegacoes')
   @RequireModule(['adm_financeiro', 'finance_approve'])
   @RequireFinance('finance_approve')

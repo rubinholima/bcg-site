@@ -18,6 +18,8 @@ function serialize(l: FinanceiroLancamento) {
   return {
     ...l,
     valor: decimalToNumber(l.valor),
+    originalAmount: l.originalAmount != null ? decimalToNumber(l.originalAmount) : null,
+    amountSettledTotal: decimalToNumber(l.amountSettledTotal ?? 0),
   };
 }
 
@@ -118,7 +120,14 @@ export class FinanceiroLancamentosService {
     const tipo = opts.tipo?.trim();
     if (tipo === 'pagar' || tipo === 'receber') where.tipo = tipo;
     const status = opts.status?.trim();
-    if (status === 'pendente' || status === 'pago' || status === 'cancelado') where.status = status;
+    if (
+      status === 'pendente' ||
+      status === 'pago' ||
+      status === 'cancelado' ||
+      status === 'parcial'
+    ) {
+      where.status = status;
+    }
     const de = opts.vencimentoDe?.trim();
     const ate = opts.vencimentoAte?.trim();
     if (de || ate) {

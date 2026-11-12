@@ -2,6 +2,7 @@
 
 import { formatDateDayMonYear } from "@/lib/format-date";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Loader2,
@@ -63,6 +64,9 @@ export interface FinanceiroLancamentoRow {
   notas: string | null;
   createdAt: string;
   updatedAt: string;
+  financeAccountId?: string | null;
+  originalAmount?: number | null;
+  amountSettledTotal?: number;
 }
 
 interface ResumoLancamentos {
@@ -160,6 +164,7 @@ export function FinanceiroLancamentosPanel({
   const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
   const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([]);
   const [financeAccounts, setFinanceAccounts] = useState<Array<{ id: string; name: string }>>([]);
+  const [paymentMethods, setPaymentMethods] = useState<Array<{ id: string; name: string }>>([]);
   const [settleOpen, setSettleOpen] = useState(false);
   const [settleRow, setSettleRow] = useState<FinanceiroLancamentoRow | null>(null);
 
@@ -175,6 +180,12 @@ export function FinanceiroLancamentosPanel({
       .get<Array<{ id: string; name: string }>>(`/financeiro/contas?tenantId=${encodeURIComponent(tenantId)}&activeOnly=true`)
       .then(({ data }) => setFinanceAccounts(Array.isArray(data) ? data : []))
       .catch(() => setFinanceAccounts([]));
+    api
+      .get<Array<{ id: string; name: string }>>(
+        `/financeiro/formas-pagamento?tenantId=${encodeURIComponent(tenantId)}&activeOnly=true`,
+      )
+      .then(({ data }) => setPaymentMethods(Array.isArray(data) ? data : []))
+      .catch(() => setPaymentMethods([]));
   }, [tenantId]);
 
   useEffect(() => {
@@ -434,7 +445,12 @@ export function FinanceiroLancamentosPanel({
                             <span className="line-clamp-2">{row.contraparte?.trim() || "—"}</span>
                           </TableCell>
                           <TableCell className="text-sm text-foreground max-w-[260px]">
-                            <span className="line-clamp-2">{row.descricao}</span>
+                            <Link
+                              href={`/dashboard/adm/financeiro/lancamentos/${row.id}`}
+                              className="line-clamp-2 text-primary underline-offset-2 hover:underline"
+                            >
+                              {row.descricao}
+                            </Link>
                             {(row.referencia || row.categoria) && (
                               <span className="block text-xs text-muted-foreground mt-0.5">
                                 {[row.categoria, row.referencia].filter(Boolean).join(" · ")}
@@ -631,9 +647,17 @@ export function FinanceiroLancamentosPanel({
           onOpenChange={setSettleOpen}
           tenantId={tenantId}
           lancamentoId={settleRow.id}
-          plannedAccountId={null}
-          remainingBalance={settleRow.valor}
+          plannedAccountId={settleRow.financeAccountId}
+          plannedAccountName={
+            financeAccounts.find((a) => a.id === settleRow.financeAccountId)?.name ?? null
+          }
+          originalAmount={settleRow.originalAmount ?? settleRow.valor}
+          remainingBalance={Math.max(
+            0,
+            (settleRow.originalAmount ?? settleRow.valor) - (settleRow.amountSettledTotal ?? 0),
+          )}
           accounts={financeAccounts}
+          paymentMethods={paymentMethods}
           onDone={() => void load()}
         />
       ) : null}

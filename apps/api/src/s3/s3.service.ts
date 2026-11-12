@@ -76,6 +76,8 @@ export const ANALYSIS_PRIVATE_PREFIX = 'private/analysis/';
 export const RH_PONTO_PRIVATE_PREFIX = 'private/rh_ponto/';
 /** Contracheques RH — privado (lote e individual) */
 export const RH_PAYSLIP_PRIVATE_PREFIX = 'private/rh_payslip/';
+/** Documentos e comprovantes financeiros — privado */
+export const FINANCE_PRIVATE_PREFIX = 'private/finance/';
 /** Staging interno (import Beatscode — manifest + PDFs antes de copiar para legal/). */
 const BEATSCODE_STAGING_PREFIX = 'beatscode-staging/';
 
@@ -107,8 +109,37 @@ export class S3Service {
       safeKey.startsWith(BEATSCODE_STAGING_PREFIX) ||
       safeKey.startsWith(ANALYSIS_PRIVATE_PREFIX) ||
       safeKey.startsWith(RH_PONTO_PRIVATE_PREFIX) ||
-      safeKey.startsWith(RH_PAYSLIP_PRIVATE_PREFIX)
+      safeKey.startsWith(RH_PAYSLIP_PRIVATE_PREFIX) ||
+      safeKey.startsWith(FINANCE_PRIVATE_PREFIX)
     );
+  }
+
+  async uploadFinancePrivateFile(
+    buffer: Buffer,
+    tenantId: string,
+    filename: string,
+    contentType?: string,
+  ): Promise<{ key: string }> {
+    const safeTenant = tenantId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
+    const key = `${FINANCE_PRIVATE_PREFIX}${safeTenant}/${randomUUID()}-${safeName}`;
+    const mime =
+      contentType?.trim() ||
+      (safeName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream');
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: mime,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(`Falha ao enviar arquivo financeiro: ${message}`);
+    }
+    return { key };
   }
 
   /** PDF espelho de ponto — armazenamento privado. */

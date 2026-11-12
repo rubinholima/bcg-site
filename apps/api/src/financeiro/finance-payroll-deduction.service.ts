@@ -11,6 +11,12 @@ export class FinancePayrollDeductionService {
     private readonly audit: FinanceAuditService,
   ) {}
 
+  async getLinkForLancamento(tenantId: string, lancamentoId: string) {
+    return this.prisma.financePayrollDeductionLink.findFirst({
+      where: { tenantId, financeiroLancamentoId: lancamentoId },
+    });
+  }
+
   async scheduleForReceivable(
     tenantId: string,
     lancamentoId: string,

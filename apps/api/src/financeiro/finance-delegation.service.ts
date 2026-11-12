@@ -5,6 +5,14 @@ import { PrismaService } from '../prisma/prisma.service';
 export class FinanceDelegationService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async listAll(tenantId: string) {
+    return this.prisma.financePaymentDelegation.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+  }
+
   async listActive(tenantId: string, capability?: string) {
     const now = new Date();
     return this.prisma.financePaymentDelegation.findMany({

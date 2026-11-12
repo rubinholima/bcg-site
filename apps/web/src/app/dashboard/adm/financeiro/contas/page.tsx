@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,7 +112,12 @@ export default function FinanceiroContasPage() {
                 className="flex flex-col gap-1 rounded-md border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <span className="font-medium text-foreground">{r.name}</span>
+                  <Link
+                    href={`/dashboard/adm/financeiro/contas/${r.id}`}
+                    className="font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    {r.name}
+                  </Link>
                   <span className="text-xs text-muted-foreground ml-2">{r.accountType}</span>
                 </div>
                 <span className="text-xs text-muted-foreground">

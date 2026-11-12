@@ -9,8 +9,11 @@ import {
   Query,
   Req,
   Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
@@ -27,6 +30,7 @@ import { FinanceReconciliationService } from './finance-reconciliation.service';
 import { FinanceCardStatementService } from './finance-card-statement.service';
 import { FinancePayrollDeductionService } from './finance-payroll-deduction.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
 
 @Controller('financeiro')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard, FinanceCapabilityGuard)
@@ -42,6 +46,7 @@ export class FinancePhase2Controller {
     private readonly cardStatements: FinanceCardStatementService,
     private readonly payrollDeduction: FinancePayrollDeductionService,
     private readonly prisma: PrismaService,
+    private readonly s3: S3Service,
   ) {}
 
   private async requireTenant(
@@ -115,10 +120,21 @@ export class FinancePhase2Controller {
     @Query('tenantId') tenantId: string,
     @Query('financeAccountId') financeAccountId: string,
     @Query('tipo') tipo?: string,
+    @Query('vencimentoDe') vencimentoDe?: string,
+    @Query('vencimentoAte') vencimentoAte?: string,
+    @Query('busca') busca?: string,
+    @Query('supplierId') supplierId?: string,
+    @Query('status') status?: string,
   ) {
     const tid = await this.requireTenant(req, tenantId);
     const t = tipo === 'receber' ? 'receber' : 'pagar';
-    return this.settlements.pendingByPlannedAccount(tid, financeAccountId, t);
+    return this.settlements.pendingByPlannedAccount(tid, financeAccountId, t, {
+      vencimentoDe,
+      vencimentoAte,
+      busca,
+      supplierId,
+      status,
+    });
   }
 
   @Post('lancamentos/:id/rateio')
@@ -338,6 +354,180 @@ export class FinancePhase2Controller {
       amount: Number(body.amount),
       paidAt: String(body.paidAt ?? new Date().toISOString()),
       notes: body.notes ? String(body.notes) : undefined,
+    });
+  }
+
+  @Get('colaboradores')
+  @RequireModule(['adm_financeiro', 'finance_view'])
+  @RequireFinance('finance_view')
+  async searchEmployees(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+    @Query('q') q?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    const search = q?.trim();
+    const rows = await this.prisma.employee.findMany({
+      where: {
+        tenantId: tid,
+        employments: { some: { status: 'ativo' } },
+        ...(search
+          ? {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { code: { contains: search, mode: 'insensitive' } },
+                { cpf: { contains: search } },
+              ],
+            }
+          : {}),
+      },
+      take: 30,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        employments: {
+          where: { status: 'ativo' },
+          take: 1,
+          select: { id: true },
+        },
+      },
+    });
+    return rows.map((e) => ({
+      employeeId: e.id,
+      name: e.name,
+      code: e.code,
+      employmentId: e.employments[0]?.id ?? null,
+    }));
+  }
+
+  @Get('parcelas/grupo/:groupId')
+  @RequireModule(['adm_financeiro', 'finance_view'])
+  @RequireFinance('finance_view')
+  async listInstallmentGroup(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('groupId') groupId: string,
+    @Query('tenantId') tenantId: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    return this.installments.listByGroup(tid, groupId);
+  }
+
+  @Get('lancamentos/:id/desconto-folha')
+  @RequireModule(['adm_financeiro', 'finance_view'])
+  @RequireFinance('finance_view')
+  async payrollLink(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Query('tenantId') tenantId: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    return this.payrollDeduction.getLinkForLancamento(tid, id);
+  }
+
+  @Post('arquivos/privado')
+  @RequireModule(['adm_financeiro', 'finance_edit'])
+  @RequireFinance('finance_edit')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  async uploadPrivateFinanceFile(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype?: string } | undefined,
+    @Body('tenantId') tenantId?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    if (!file?.buffer) throw new BadRequestException('Envie um arquivo (campo "file").');
+    const mime = file.mimetype ?? 'application/octet-stream';
+    if (
+      !mime.startsWith('image/') &&
+      mime !== 'application/pdf' &&
+      mime !== 'application/octet-stream'
+    ) {
+      throw new BadRequestException('Formato não permitido. Use PDF ou imagem.');
+    }
+    const { key } = await this.s3.uploadFinancePrivateFile(
+      file.buffer,
+      tid,
+      file.originalname || 'arquivo',
+      mime,
+    );
+    return {
+      fileKey: key,
+      fileName: file.originalname || 'arquivo',
+      mimeType: mime,
+    };
+  }
+
+  @Post('baixas/:settlementId/comprovante')
+  @RequireModule(['adm_financeiro', 'finance_pay'])
+  @RequireFinance('finance_pay')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  async attachSettlementProof(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('settlementId') settlementId: string,
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype?: string } | undefined,
+    @Body('tenantId') tenantId?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    const actor = await this.actor(req);
+    if (!file?.buffer) throw new BadRequestException('Envie o comprovante (campo "file").');
+    const { key } = await this.s3.uploadFinancePrivateFile(
+      file.buffer,
+      tid,
+      file.originalname || 'comprovante',
+      file.mimetype,
+    );
+    return this.documents.attachSettlementProof(
+      tid,
+      settlementId,
+      { fileKey: key, fileName: file.originalname || 'comprovante', mimeType: file.mimetype },
+      actor.userId,
+    );
+  }
+
+  @Post('documentos/:documentId/substituir')
+  @RequireModule(['adm_financeiro', 'finance_edit'])
+  @RequireFinance('finance_edit')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  async replaceDocument(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('documentId') documentId: string,
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype?: string } | undefined,
+    @Body('tenantId') tenantId?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    const actor = await this.actor(req);
+    if (!file?.buffer) throw new BadRequestException('Envie o novo arquivo (campo "file").');
+    const { key } = await this.s3.uploadFinancePrivateFile(
+      file.buffer,
+      tid,
+      file.originalname || 'boleto',
+      file.mimetype,
+    );
+    return this.documents.replaceBoleto(
+      tid,
+      documentId,
+      { fileKey: key, fileName: file.originalname || 'boleto', mimeType: file.mimetype },
+      actor.userId,
+    );
+  }
+
+  @Get('cartoes/faturas')
+  @RequireModule(['adm_financeiro', 'finance_view'])
+  @RequireFinance('finance_view')
+  async listCardStatements(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+    @Query('financeAccountId') financeAccountId?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    return this.prisma.financeCardStatement.findMany({
+      where: {
+        tenantId: tid,
+        ...(financeAccountId?.trim() ? { financeAccountId: financeAccountId.trim() } : {}),
+      },
+      orderBy: { periodEnd: 'desc' },
+      take: 50,
     });
   }
 }

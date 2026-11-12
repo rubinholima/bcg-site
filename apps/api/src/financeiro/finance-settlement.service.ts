@@ -260,23 +260,61 @@ export class FinanceSettlementService {
     const rows = await this.prisma.financeSettlement.findMany({
       where: { tenantId, financeiroLancamentoId: lancamentoId },
       orderBy: { settledAt: 'asc' },
+      include: {
+        proofs: { select: { id: true, fileName: true, uploadedAt: true } },
+        financePaymentMethod: { select: { id: true, name: true } },
+        actualFinanceAccount: { select: { id: true, name: true } },
+        plannedFinanceAccount: { select: { id: true, name: true } },
+      },
     });
-    return rows.map((r) => this.serializeSettlement(r));
+    return rows.map((r) => ({
+      ...this.serializeSettlement(r),
+      proofs: r.proofs,
+      paymentMethodName: r.financePaymentMethod?.name ?? null,
+      actualAccountName: r.actualFinanceAccount?.name ?? null,
+      plannedAccountName: r.plannedFinanceAccount?.name ?? null,
+    }));
   }
 
   async pendingByPlannedAccount(
     tenantId: string,
     financeAccountId: string,
     tipo: 'pagar' | 'receber',
+    filters?: {
+      vencimentoDe?: string;
+      vencimentoAte?: string;
+      busca?: string;
+      supplierId?: string;
+      status?: string;
+    },
   ) {
+    const where: Prisma.FinanceiroLancamentoWhereInput = {
+      tenantId,
+      tipo,
+      financeAccountId,
+      status: { in: ['pendente', 'parcial'] },
+      transactionKind: { not: 'internal_transfer' },
+    };
+    const st = filters?.status?.trim();
+    if (st === 'pendente' || st === 'parcial') where.status = st;
+    const de = filters?.vencimentoDe?.trim();
+    const ate = filters?.vencimentoAte?.trim();
+    if (de || ate) {
+      where.dueDate = {};
+      if (de) (where.dueDate as Prisma.DateTimeFilter).gte = new Date(`${de}T00:00:00.000Z`);
+      if (ate) (where.dueDate as Prisma.DateTimeFilter).lte = new Date(`${ate}T23:59:59.999Z`);
+    }
+    const q = filters?.busca?.trim();
+    if (q) {
+      where.OR = [
+        { contraparte: { contains: q, mode: 'insensitive' } },
+        { descricao: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+    if (filters?.supplierId?.trim()) where.supplierId = filters.supplierId.trim();
+
     const rows = await this.prisma.financeiroLancamento.findMany({
-      where: {
-        tenantId,
-        tipo,
-        financeAccountId,
-        status: { in: ['pendente', 'parcial'] },
-        transactionKind: { not: 'internal_transfer' },
-      },
+      where,
       orderBy: { dueDate: 'asc' },
       take: 500,
     });
