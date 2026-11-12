@@ -18,7 +18,12 @@ describe('payroll tenant isolation', () => {
         }),
       },
     };
-    const service = new PayrollClosingService(prisma as never, {} as never, {} as never);
+    const service = new PayrollClosingService(
+      prisma as never,
+      {} as never,
+      {} as never,
+      { enrichSalaryForSnapshot: jest.fn() } as never,
+    );
     await expect(service.findOne('p1', ['tenant-a'])).rejects.toThrow(ForbiddenException);
   });
 });

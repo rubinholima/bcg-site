@@ -189,6 +189,21 @@ model Tenant {
   rhTimeClockBatches      RhTimeClockBatch[]
   rhTimeClockBatchEmployees RhTimeClockBatchEmployee[]
   rhAuditLogs             RhAuditLog[]
+  rhAthletePayrollImpacts RhAthletePayrollImpact[]
+  rhAthleteHrPendingActions RhAthleteHrPendingAction[]
+  rhAthleteSalaryResponsibilities RhAthleteSalaryResponsibility[]
+  rhAthleteSalaryResponsibilityHistories RhAthleteSalaryResponsibilityHistory[]
+  rhAthleteMovementNotificationDedups RhAthleteMovementNotificationDedup[]
+  rhEpiCatalogItems       RhEpiCatalogItem[]
+  rhEpiRequirementGroups  RhEpiRequirementGroup[]
+  rhEpiRequirementItems   RhEpiRequirementItem[]
+  rhEpiDeliveries         RhEpiDelivery[]
+  rhEpiAcknowledgements   RhEpiAcknowledgement[]
+  rhPayslipBatches        RhPayslipBatch[]
+  rhPayslipPageAssignments RhPayslipPageAssignment[]
+  rhPayslipIndividuals    RhPayslipIndividual[]
+  rhPayslipAcknowledgements RhPayslipAcknowledgement[]
+  rhPayrollDocuments      RhPayrollDocument[]
   athleteContractTypes    AthleteContractType[]
   athleteContracts        AthleteContract[]
   athleteEvaluations      AthleteEvaluation[]
@@ -1915,6 +1930,8 @@ model Player {
   medicalDepartures          PlayerMedicalDeparture[]
   medicalEncounters          MedicalEncounter[]
   playerNegotiations         PlayerNegotiation[]
+  rhAthletePayrollImpacts    RhAthletePayrollImpact[]
+  rhAthleteHrPendingActions  RhAthleteHrPendingAction[]
   athleteEvaluations         AthleteEvaluation[]
   athleteFederativeProcesses AthleteFederativeProcess[]
   athleteContracts           AthleteContract[]
@@ -1967,6 +1984,9 @@ model PlayerNegotiation {
   installments             PlayerNegotiationInstallment[]
   documents                PlayerNegotiationDocument[]
   auditLogs                PlayerNegotiationAuditLog[]
+  rhAthletePayrollImpacts  RhAthletePayrollImpact[]
+  rhAthleteHrPendingActions RhAthleteHrPendingAction[]
+  rhAthleteSalaryResponsibilities RhAthleteSalaryResponsibility[]
   @@index([tenantId, status])
   @@index([tenantId, negotiationType])
   @@index([playerId, status])
@@ -2947,6 +2967,7 @@ model RhPayrollClosing {
   adjustments        RhPayrollAdjustment[]
   accountingPackage  RhPayrollAccountingPackage?
   accountingHistory  RhPayrollAccountingPackageHistory[]
+  documents          RhPayrollDocument[]
   @@unique([tenantId, referenceMonth])
   @@index([tenantId, status])
 }
@@ -3161,6 +3182,302 @@ model RhAuditLog {
   @@index([entityType, entityId])
 }
 
+/// Impacto de negociação de atleta na folha RH (snapshot histórico).
+model RhAthletePayrollImpact {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId            String
+  player              Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  employeeId          String?
+  employee            Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  employmentId        String?
+  playerNegotiationId String
+  playerNegotiation   PlayerNegotiation @relation(fields: [playerNegotiationId], references: [id], onDelete: Cascade)
+  impactType          String
+  status              String   @default("ativo")
+  contractualSalary   Decimal? @db.Decimal(14, 2)
+  ourPercentage       Decimal? @db.Decimal(6, 2)
+  otherPercentage     Decimal? @db.Decimal(6, 2)
+  ourPayrollAmount    Decimal? @db.Decimal(14, 2)
+  effectiveFrom       DateTime? @db.Date
+  effectiveUntil      DateTime? @db.Date
+  metadata            Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  @@index([tenantId, playerId])
+  @@index([playerNegotiationId])
+  @@index([employmentId])
+}
+
+/// Ação pendente do RH após movimentação de atleta.
+model RhAthleteHrPendingAction {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId            String
+  player              Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  employeeId          String?
+  employee            Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  employmentId        String?
+  playerNegotiationId String?
+  playerNegotiation   PlayerNegotiation? @relation(fields: [playerNegotiationId], references: [id], onDelete: SetNull)
+  actionType          String
+  status              String   @default("pendente")
+  title               String
+  notes               String?  @db.Text
+  dueAt               DateTime?
+  acknowledgedAt      DateTime?
+  acknowledgedByUserId String?
+  acknowledgedByName   String?
+  metadata            Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  @@index([tenantId, status])
+  @@index([employeeId])
+  @@index([playerNegotiationId])
+}
+
+/// Responsabilidade salarial em empréstimo (separada de direitos econômicos).
+model RhAthleteSalaryResponsibility {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employmentId        String
+  employment          Employment @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+  playerNegotiationId String?
+  playerNegotiation   PlayerNegotiation? @relation(fields: [playerNegotiationId], references: [id], onDelete: SetNull)
+  mode                String
+  ourPercentage       Decimal? @db.Decimal(6, 2)
+  otherPercentage     Decimal? @db.Decimal(6, 2)
+  effectiveFrom       DateTime @db.Date
+  effectiveUntil      DateTime? @db.Date
+  notes               String?  @db.Text
+  documentRef         String?
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  history             RhAthleteSalaryResponsibilityHistory[]
+  @@index([tenantId, employmentId])
+  @@index([playerNegotiationId])
+}
+
+model RhAthleteSalaryResponsibilityHistory {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  responsibilityId String
+  responsibility   RhAthleteSalaryResponsibility @relation(fields: [responsibilityId], references: [id], onDelete: Cascade)
+  action           String
+  snapshot         Json
+  actorUserId      String?
+  actorName        String?
+  createdAt        DateTime @default(now())
+  @@index([responsibilityId])
+  @@index([tenantId, createdAt])
+}
+
+model RhAthleteMovementNotificationDedup {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  dedupKey            String
+  playerNegotiationId String?
+  notifiedAt          DateTime @default(now())
+  @@unique([tenantId, dedupKey])
+}
+
+model RhEpiCatalogItem {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code            String
+  name            String
+  description     String?  @db.Text
+  category        String?
+  unit            String?
+  active          Boolean  @default(true)
+  validityNotes   String?  @db.Text
+  replacementInfo String?  @db.Text
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  requirementItems RhEpiRequirementItem[]
+  deliveries      RhEpiDelivery[]
+  @@unique([tenantId, code])
+  @@index([tenantId, active])
+}
+
+model RhEpiRequirementGroup {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  scopeType    String
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  jobRoleId    String?
+  jobRole      JobRole? @relation(fields: [jobRoleId], references: [id], onDelete: SetNull)
+  workCategory String?
+  effectiveFrom DateTime @db.Date
+  effectiveTo   DateTime? @db.Date
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  items        RhEpiRequirementItem[]
+  @@index([tenantId, active])
+}
+
+model RhEpiRequirementItem {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  groupId      String
+  group        RhEpiRequirementGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  catalogItemId String
+  catalogItem  RhEpiCatalogItem @relation(fields: [catalogItemId], references: [id], onDelete: Restrict)
+  quantity     Decimal? @db.Decimal(12, 4)
+  required     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  @@index([groupId])
+}
+
+model RhEpiDelivery {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employmentId    String?
+  employment      Employment? @relation(fields: [employmentId], references: [id], onDelete: SetNull)
+  catalogItemId   String
+  catalogItem     RhEpiCatalogItem @relation(fields: [catalogItemId], references: [id], onDelete: Restrict)
+  quantity        Decimal  @db.Decimal(12, 4)
+  deliveryDate    DateTime @db.Date
+  status          String   @default("ENTREGUE")
+  deliveredByUserId String?
+  deliveredByName String?
+  conditionNotes  String?  @db.Text
+  expectedReturnAt DateTime? @db.Date
+  notes           String?  @db.Text
+  receiptFileKey  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  acknowledgements RhEpiAcknowledgement[]
+  @@index([tenantId, employeeId])
+  @@index([catalogItemId])
+}
+
+model RhEpiAcknowledgement {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deliveryId      String
+  delivery        RhEpiDelivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  status          String   @default("pendente")
+  acknowledgedAt  DateTime?
+  method          String?
+  signedFileKey   String?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([deliveryId])
+}
+
+model RhPayslipBatch {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  referenceMonth   DateTime @db.Date
+  bulkFileKey      String
+  bulkFileName     String
+  pageCount        Int?
+  status           String   @default("PENDENTE_DE_SEPARACAO")
+  uploadedByUserId String?
+  uploadedByName   String?
+  uploadedAt       DateTime @default(now())
+  notes            String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  pageAssignments  RhPayslipPageAssignment[]
+  individuals      RhPayslipIndividual[]
+  @@index([tenantId, referenceMonth])
+  @@index([tenantId, status])
+}
+
+model RhPayslipPageAssignment {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batchId      String
+  batch        RhPayslipBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employmentId String?
+  pageFrom     Int
+  pageTo       Int
+  reviewed     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  individual   RhPayslipIndividual?
+  @@index([batchId])
+  @@index([employeeId])
+}
+
+model RhPayslipIndividual {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batchId         String
+  batch           RhPayslipBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  assignmentId    String?  @unique
+  assignment      RhPayslipPageAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employmentId    String?
+  employment      Employment? @relation(fields: [employmentId], references: [id], onDelete: SetNull)
+  referenceMonth  DateTime @db.Date
+  extractedFileKey String?
+  status          String   @default("SEPARADO")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  acknowledgements RhPayslipAcknowledgement[]
+  @@index([tenantId, employeeId])
+  @@index([batchId, status])
+}
+
+model RhPayslipAcknowledgement {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payslipId       String
+  payslip         RhPayslipIndividual @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+  employeeId      String
+  status          String   @default("CIENCIA_PENDENTE")
+  acknowledgedAt  DateTime?
+  method          String?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([payslipId])
+}
+
+model RhPayrollDocument {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payrollClosingId String
+  payrollClosing   RhPayrollClosing @relation(fields: [payrollClosingId], references: [id], onDelete: Cascade)
+  documentType     String
+  fileKey          String
+  fileName         String
+  uploadedByUserId String?
+  uploadedByName   String?
+  createdAt        DateTime @default(now())
+  @@index([payrollClosingId])
+}
+
 /// Departamento destino/origem em movimentações manuais de estoque (relatórios ADM).
 model InventoryDepartment {
   id        String   @id @default(cuid())
@@ -3209,6 +3526,7 @@ model Department {
   jobRoles   JobRole[]
   employments Employment[]
   rhHiringRequests RhHiringRequest[]
+  rhEpiRequirementGroups RhEpiRequirementGroup[]
   @@index([tenantId])
 }
 
@@ -3239,6 +3557,7 @@ model JobRole {
   moduleDefaults JobRoleModuleDefault[]
   platformUsers  User[] @relation("UserPlatformFunction")
   rhHiringRequests RhHiringRequest[]
+  rhEpiRequirementGroups RhEpiRequirementGroup[]
   @@index([tenantId])
   @@index([departmentId])
   @@index([forFootball])
@@ -3299,6 +3618,11 @@ model Employee {
   bchEventTeamMembers      BchEventTeamMember[]
   rhHiringRequests RhHiringRequest[]
   payrollSnapshots RhPayrollEmployeeSnapshot[]
+  rhAthleteHrPendingActions RhAthleteHrPendingAction[]
+  rhAthletePayrollImpacts RhAthletePayrollImpact[]
+  rhEpiDeliveries  RhEpiDelivery[]
+  rhPayslipIndividuals RhPayslipIndividual[]
+  rhPayslipPageAssignments RhPayslipPageAssignment[]
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, type])
@@ -3340,6 +3664,9 @@ model Employment {
   workRegimeAssignments RhEmploymentWorkRegime[]
   timeOccurrences       RhTimeOccurrence[]
   timeBankMovements     RhTimeBankMovement[]
+  rhAthleteSalaryResponsibilities RhAthleteSalaryResponsibility[]
+  rhEpiDeliveries       RhEpiDelivery[]
+  rhPayslipIndividuals  RhPayslipIndividual[]
   @@index([tenantId])
   @@index([employeeId])
   @@index([status])

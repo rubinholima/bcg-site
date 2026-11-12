@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -127,6 +129,93 @@ export class PayrollClosingController {
   handoffFinance(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     return getRhAllowedTenants(this.scope, req).then((allowed) =>
       this.service.handoffFinance(id, allowed, getRhActor(this.scope, req)),
+    );
+  }
+
+  @Get(':id/finance-status')
+  @RequireRh('rh_payroll_view')
+  financeStatus(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) => this.service.getFinanceStatus(id, allowed));
+  }
+
+  @Get(':id/occurrences')
+  @RequireRh('rh_payroll_view')
+  occurrences(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) => this.service.listOccurrencesForMonth(id, allowed));
+  }
+
+  @Get(':id/documents')
+  @RequireRh('rh_private_docs_view')
+  documents(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) => this.service.listDocuments(id, allowed));
+  }
+
+  @Patch(':id/adjustments/:adjustmentId')
+  @RequireRh('rh_payroll_manage')
+  patchAdjustment(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Param('adjustmentId') adjustmentId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.updateAdjustment(id, adjustmentId, body as never, allowed, getRhActor(this.scope, req)),
+    );
+  }
+
+  @Delete(':id/adjustments/:adjustmentId')
+  @RequireRh('rh_payroll_manage')
+  deleteAdjustment(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Param('adjustmentId') adjustmentId: string,
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.deleteAdjustment(id, adjustmentId, allowed),
+    );
+  }
+
+  @Post(':id/accounting/prepare')
+  @RequireRh('rh_payroll_manage')
+  prepareAccounting(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.prepareAccountingSend(id, allowed, getRhActor(this.scope, req)),
+    );
+  }
+
+  @Post(':id/accounting/request-correction')
+  @RequireRh('rh_payroll_manage')
+  requestCorrection(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { notes?: string },
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.requestAccountingCorrection(id, allowed, getRhActor(this.scope, req), body.notes),
+    );
+  }
+
+  @Post(':id/accounting/approve-return')
+  @RequireRh('rh_payroll_manage')
+  approveReturn(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { notes?: string },
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.approveAccountingReturn(id, allowed, getRhActor(this.scope, req), body.notes),
+    );
+  }
+
+  @Post(':id/accounting/resend')
+  @RequireRh('rh_payroll_manage')
+  resendAccounting(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { recipient?: string; notes?: string },
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.resendAccounting(id, allowed, getRhActor(this.scope, req), body),
     );
   }
 }

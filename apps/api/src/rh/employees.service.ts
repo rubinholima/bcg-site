@@ -85,7 +85,9 @@ export class EmployeesService {
 
   async getUnifiedProfile(id: string, allowedTenantIds: string[] | null = null) {
     const employee = await this.findOne(id, allowedTenantIds);
-    const [documents, hiringRequests, athleteContracts] = await Promise.all([
+    const activeEmployment = employee.employments?.find((e) => e.status === 'ativo');
+    const [documents, hiringRequests, athleteContracts, timeBank, occurrences, payrollSnapshots, payslips, epiSummary, athleteImpacts, pendingActions] =
+      await Promise.all([
       this.prisma.employeeDocument.findMany({
         where: { employeeId: id },
         orderBy: { createdAt: 'desc' },
@@ -120,7 +122,66 @@ export class EmployeesService {
             },
           })
         : Promise.resolve([]),
+      activeEmployment
+        ? this.prisma.rhTimeBankMovement.findMany({
+            where: { employmentId: activeEmployment.id },
+            orderBy: { movementDate: 'desc' },
+            take: 20,
+          })
+        : Promise.resolve([]),
+      activeEmployment
+        ? this.prisma.rhTimeOccurrence.findMany({
+            where: { employmentId: activeEmployment.id },
+            orderBy: { occurrenceDate: 'desc' },
+            take: 20,
+          })
+        : Promise.resolve([]),
+      this.prisma.rhPayrollEmployeeSnapshot.findMany({
+        where: { employeeId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+        include: { payrollClosing: { select: { referenceMonth: true, status: true } } },
+      }),
+      this.prisma.rhPayslipIndividual.findMany({
+        where: { employeeId: id },
+        orderBy: { referenceMonth: 'desc' },
+        take: 12,
+      }),
+      this.prisma.rhEpiDelivery.findMany({
+        where: { employeeId: id },
+        include: { catalogItem: true },
+        orderBy: { deliveryDate: 'desc' },
+        take: 20,
+      }),
+      employee.playerId
+        ? this.prisma.rhAthletePayrollImpact.findMany({
+            where: { playerId: employee.playerId, tenantId: employee.tenantId },
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+          })
+        : Promise.resolve([]),
+      this.prisma.rhAthleteHrPendingAction.findMany({
+        where: { employeeId: id, status: 'pendente' },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
     ]);
+    const workRegime = activeEmployment
+      ? await this.prisma.rhEmploymentWorkRegime.findFirst({
+          where: { employmentId: activeEmployment.id },
+          orderBy: { effectiveFrom: 'desc' },
+          include: { workRegime: true },
+        })
+      : null;
+    let timeBankBalance = 0;
+    if (activeEmployment) {
+      const allMovements = await this.prisma.rhTimeBankMovement.findMany({
+        where: { employmentId: activeEmployment.id },
+        orderBy: { movementDate: 'asc' },
+      });
+      const { deriveTimeBankBalanceHours } = await import('./time-bank.util');
+      timeBankBalance = deriveTimeBankBalanceHours(allMovements);
+    }
     return {
       employee,
       documents,
@@ -128,6 +189,14 @@ export class EmployeesService {
       employments: employee.employments,
       hiringRequests,
       athleteContracts,
+      workRegime,
+      timeBank: { balanceHours: timeBankBalance, movements: timeBank },
+      occurrences,
+      payrollSnapshots,
+      payslips,
+      epiDeliveries: epiSummary,
+      athletePayrollImpacts: athleteImpacts,
+      athletePendingActions: pendingActions,
     };
   }
 

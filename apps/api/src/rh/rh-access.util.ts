@@ -19,7 +19,15 @@ export type RhCapability =
   | 'rh_time_bank_view'
   | 'rh_time_bank_manage'
   | 'rh_work_regime_manage'
-  | 'rh_time_clock_docs';
+  | 'rh_time_clock_docs'
+  | 'rh_athlete_payroll'
+  | 'rh_epi_catalog'
+  | 'rh_epi_manage'
+  | 'rh_epi_view'
+  | 'rh_epi_delivery'
+  | 'rh_payslip_batch'
+  | 'rh_payslip_individual'
+  | 'rh_payslip_ack';
 
 const CAPABILITY_MODULES: Record<RhCapability, string[]> = {
   rh_view: ['adm_rh', 'rh_view'],
@@ -43,6 +51,14 @@ const CAPABILITY_MODULES: Record<RhCapability, string[]> = {
   rh_time_bank_manage: ['adm_rh', 'rh_time_bank_manage'],
   rh_work_regime_manage: ['adm_rh', 'rh_work_regime_manage', 'rh_time_manage'],
   rh_time_clock_docs: ['adm_rh', 'rh_time_clock_docs', 'rh_time_manage'],
+  rh_athlete_payroll: ['adm_rh', 'rh_athlete_payroll', 'rh_payroll_manage'],
+  rh_epi_catalog: ['adm_rh', 'rh_epi_catalog', 'rh_epi_manage'],
+  rh_epi_manage: ['adm_rh', 'rh_epi_manage'],
+  rh_epi_view: ['adm_rh', 'rh_epi_view', 'rh_epi_manage'],
+  rh_epi_delivery: ['adm_rh', 'rh_epi_delivery', 'rh_epi_manage'],
+  rh_payslip_batch: ['adm_rh', 'rh_payslip_batch', 'rh_payroll_manage'],
+  rh_payslip_individual: ['adm_rh', 'rh_payslip_individual', 'rh_payslip_batch'],
+  rh_payslip_ack: ['adm_rh', 'rh_payslip_ack', 'rh_payslip_individual'],
 };
 
 /** adm_rh concede todas as capacidades granulares de RH. */
@@ -68,6 +84,14 @@ const ADM_RH_IMPLIES: RhCapability[] = [
   'rh_time_bank_manage',
   'rh_work_regime_manage',
   'rh_time_clock_docs',
+  'rh_athlete_payroll',
+  'rh_epi_catalog',
+  'rh_epi_manage',
+  'rh_epi_view',
+  'rh_epi_delivery',
+  'rh_payslip_batch',
+  'rh_payslip_individual',
+  'rh_payslip_ack',
 ];
 
 export function hasRhCapability(

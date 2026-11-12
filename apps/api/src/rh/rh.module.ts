@@ -44,6 +44,12 @@ import { TimeRhController } from './time-rh.controller';
 import { TimeRhService } from './time-rh.service';
 import { BenefitCatalogController } from './benefit-catalog.controller';
 import { BenefitCatalogService } from './benefit-catalog.service';
+import { RhAthleteMovementService } from './rh-athlete-movement.service';
+import { RhAthleteMovementController } from './rh-athlete-movement.controller';
+import { RhEpiService } from './rh-epi.service';
+import { RhEpiController } from './rh-epi.controller';
+import { RhPayslipService } from './rh-payslip.service';
+import { RhPayslipController } from './rh-payslip.controller';
 
 @Module({
   imports: [AuthModule, ModulesModule, ContractsModule, S3Module, HelloSignModule, FinanceiroModule],
@@ -66,6 +72,9 @@ import { BenefitCatalogService } from './benefit-catalog.service';
     PayrollClosingController,
     TimeRhController,
     BenefitCatalogController,
+    RhAthleteMovementController,
+    RhEpiController,
+    RhPayslipController,
   ],
   providers: [
     ModuleAccessGuard,
@@ -90,6 +99,9 @@ import { BenefitCatalogService } from './benefit-catalog.service';
     PayrollClosingService,
     TimeRhService,
     BenefitCatalogService,
+    RhAthleteMovementService,
+    RhEpiService,
+    RhPayslipService,
   ],
   exports: [
     DepartmentsService,
@@ -103,6 +115,9 @@ import { BenefitCatalogService } from './benefit-catalog.service';
     EmploymentSalaryRevisionsService,
     RhScopeService,
     RhAccessService,
+    RhAthleteMovementService,
+    RhEpiService,
+    RhPayslipService,
   ],
 })
 export class RhModule {}

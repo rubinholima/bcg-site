@@ -8,6 +8,8 @@ import {
 } from './payroll-workflow.constants';
 import { applyRhTenantFilter, assertRhTenantAccess } from './rh-scope.util';
 import { RhAuditService } from './rh-audit.service';
+import { RhAthleteMovementService } from './rh-athlete-movement.service';
+import { enrichPayrollSnapshotWithResponsibility } from './rh-athlete-payroll-snapshot.util';
 import type { RhActor } from './rh-request.util';
 
 @Injectable()
@@ -16,6 +18,7 @@ export class PayrollClosingService {
     private readonly prisma: PrismaService,
     private readonly financeiro: FinanceiroLancamentosService,
     private readonly audit: RhAuditService,
+    private readonly athleteMovement: RhAthleteMovementService,
   ) {}
 
   async findAll(filters: { tenantId?: string; status?: string }, allowed: string[] | null) {
@@ -93,7 +96,7 @@ export class PayrollClosingService {
     });
     await this.prisma.$transaction(async (tx) => {
       for (const emp of employments) {
-        const snapshot = {
+        let snapshot: Record<string, unknown> = {
           employee: emp.employee,
           jobRole: emp.jobRole,
           department: emp.department,
@@ -103,6 +106,21 @@ export class PayrollClosingService {
           salaryRevision: emp.salaryRevisions[0] ?? null,
           capturedAt: new Date().toISOString(),
         };
+        const salaryBase = emp.salaryBase ?? 0;
+        const responsibility = await this.athleteMovement.enrichSalaryForSnapshot(
+          emp.id,
+          closing.referenceMonth,
+          salaryBase,
+        );
+        if (responsibility) {
+          snapshot = enrichPayrollSnapshotWithResponsibility(snapshot, {
+            contractualSalary: salaryBase,
+            mode: responsibility.mode,
+            ourPercentage: responsibility.ourPercentage,
+            otherPercentage: responsibility.otherPercentage,
+            impactType: 'loan',
+          });
+        }
         await tx.rhPayrollEmployeeSnapshot.upsert({
           where: {
             payrollClosingId_employmentId: {
@@ -115,9 +133,9 @@ export class PayrollClosingService {
             payrollClosingId: id,
             employmentId: emp.id,
             employeeId: emp.employeeId,
-            snapshot,
+            snapshot: snapshot as Prisma.InputJsonValue,
           },
-          update: { snapshot },
+          update: { snapshot: snapshot as Prisma.InputJsonValue },
         });
       }
     });
@@ -299,5 +317,107 @@ export class PayrollClosingService {
       metadata: { financeLancamentoId: lancamento.id },
     });
     return this.findOne(id, allowed);
+  }
+
+  async listOccurrencesForMonth(id: string, allowed: string[] | null) {
+    const closing = await this.findOne(id, allowed);
+    const monthStart = new Date(closing.referenceMonth);
+    const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+    return this.prisma.rhTimeOccurrence.findMany({
+      where: {
+        tenantId: closing.tenantId,
+        occurrenceDate: { gte: monthStart, lte: monthEnd },
+      },
+      orderBy: { occurrenceDate: 'asc' },
+      take: 500,
+    });
+  }
+
+  async listDocuments(id: string, allowed: string[] | null) {
+    const closing = await this.findOne(id, allowed);
+    return this.prisma.rhPayrollDocument.findMany({
+      where: { payrollClosingId: id, tenantId: closing.tenantId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getFinanceStatus(id: string, allowed: string[] | null) {
+    const closing = await this.findOne(id, allowed);
+    if (!closing.financeLancamentoId) {
+      return { linked: false as const, status: null, id: null };
+    }
+    const lanc = await this.prisma.financeiroLancamento.findFirst({
+      where: { id: closing.financeLancamentoId, tenantId: closing.tenantId },
+      select: { id: true, status: true, valor: true, dueDate: true },
+    });
+    return {
+      linked: true as const,
+      id: lanc?.id ?? closing.financeLancamentoId,
+      status: lanc?.status ?? null,
+      valor: lanc?.valor != null ? Number(lanc.valor) : null,
+      dueDate: lanc?.dueDate ?? null,
+    };
+  }
+
+  async updateAdjustment(
+    closingId: string,
+    adjustmentId: string,
+    dto: Partial<{
+      adjustmentType: string;
+      amount: number;
+      hours: number;
+      days: number;
+      quantity: number;
+      reason: string;
+      notes: string;
+    }>,
+    allowed: string[] | null,
+    actor: RhActor,
+  ) {
+    const closing = await this.findOne(closingId, allowed);
+    const adj = await this.prisma.rhPayrollAdjustment.findFirst({
+      where: { id: adjustmentId, payrollClosingId: closingId, tenantId: closing.tenantId },
+    });
+    if (!adj) throw new NotFoundException('Ajuste não encontrado.');
+    return this.prisma.rhPayrollAdjustment.update({
+      where: { id: adjustmentId },
+      data: {
+        adjustmentType: dto.adjustmentType?.trim() ?? adj.adjustmentType,
+        amount: dto.amount != null ? new Prisma.Decimal(dto.amount) : adj.amount,
+        hours: dto.hours != null ? new Prisma.Decimal(dto.hours) : adj.hours,
+        days: dto.days != null ? new Prisma.Decimal(dto.days) : adj.days,
+        quantity: dto.quantity != null ? new Prisma.Decimal(dto.quantity) : adj.quantity,
+        reason: dto.reason !== undefined ? dto.reason : adj.reason,
+        notes: dto.notes !== undefined ? dto.notes : adj.notes,
+      },
+    });
+  }
+
+  async deleteAdjustment(closingId: string, adjustmentId: string, allowed: string[] | null) {
+    const closing = await this.findOne(closingId, allowed);
+    const adj = await this.prisma.rhPayrollAdjustment.findFirst({
+      where: { id: adjustmentId, payrollClosingId: closingId, tenantId: closing.tenantId },
+    });
+    if (!adj) throw new NotFoundException('Ajuste não encontrado.');
+    await this.prisma.rhPayrollAdjustment.delete({ where: { id: adjustmentId } });
+    return { ok: true };
+  }
+
+  async prepareAccountingSend(id: string, allowed: string[] | null, actor: RhActor) {
+    await this.transition(id, PAYROLL_STATUS.READY_ACCOUNTING, allowed, actor);
+    return this.findOne(id, allowed);
+  }
+
+  async requestAccountingCorrection(id: string, allowed: string[] | null, actor: RhActor, notes?: string) {
+    return this.transition(id, PAYROLL_STATUS.CORRECTION, allowed, actor, notes);
+  }
+
+  async approveAccountingReturn(id: string, allowed: string[] | null, actor: RhActor, notes?: string) {
+    await this.transition(id, PAYROLL_STATUS.RH_APPROVED, allowed, actor, notes);
+    return this.findOne(id, allowed);
+  }
+
+  async resendAccounting(id: string, allowed: string[] | null, actor: RhActor, dto: { recipient?: string; notes?: string }) {
+    return this.sendAccountingPackage(id, dto, allowed, actor);
   }
 }

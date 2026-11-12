@@ -18,6 +18,7 @@ import {
   type NegotiationStatus,
 } from './player-negotiation.constants';
 import { PlayerNegotiationIntegrationService } from './player-negotiation-integration.service';
+import { RhAthleteMovementService } from '../rh/rh-athlete-movement.service';
 import {
   AddNegotiationDocumentDto,
   CreateInstallmentFinanceiroDto,
@@ -85,6 +86,7 @@ export class PlayerNegotiationsService {
     private readonly integration: PlayerNegotiationIntegrationService,
     private readonly financeiro: FinanceiroLancamentosService,
     private readonly s3: S3Service,
+    private readonly rhAthleteMovement: RhAthleteMovementService,
   ) {}
 
   private assertTenant(allowed: string[] | null, tenantId: string) {
@@ -245,6 +247,7 @@ export class PlayerNegotiationsService {
     if (status === 'effective') {
       await this.applyEffectiveInternal(row.id, player.tenant?.name ?? 'Clube', editor);
     }
+    await this.rhAthleteMovement.handleNegotiationUpsert(row).catch(() => undefined);
 
     return this.findOne(row.id, allowed);
   }
@@ -323,6 +326,8 @@ export class PlayerNegotiationsService {
     if (nextStatus === 'effective' && prevStatus !== 'effective') {
       await this.applyEffectiveInternal(id, existing.tenant.name, editor);
     }
+    const refreshed = await this.prisma.playerNegotiation.findUnique({ where: { id } });
+    if (refreshed) await this.rhAthleteMovement.handleNegotiationUpsert(refreshed).catch(() => undefined);
 
     return this.findOne(id, allowed);
   }
@@ -348,6 +353,8 @@ export class PlayerNegotiationsService {
       details: { toStatus: 'effective', manual: true },
     });
     await this.applyEffectiveInternal(id, row.tenant.name, editor);
+    const refreshed = await this.prisma.playerNegotiation.findUnique({ where: { id } });
+    if (refreshed) await this.rhAthleteMovement.handleNegotiationUpsert(refreshed).catch(() => undefined);
     return this.findOne(id, allowed);
   }
 

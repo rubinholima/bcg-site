@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -112,6 +115,55 @@ export class TimeRhController {
     if (!employmentId?.trim()) throw new BadRequestException('employmentId é obrigatório.');
     return getRhAllowedTenants(this.scope, req).then((allowed) =>
       this.service.getTimeBankBalance(employmentId.trim(), allowed),
+    );
+  }
+
+  @Post('time-bank/movements')
+  @RequireRh('rh_time_bank_manage')
+  timeBankMovement(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body()
+    body: {
+      employmentId: string;
+      movementType: 'CREDIT' | 'DEBIT';
+      movementDate: string;
+      hours: number;
+      reason?: string;
+      origin?: string;
+    },
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.createTimeBankMovement(body, allowed, getRhActor(this.scope, req)),
+    );
+  }
+
+  @Patch('occurrences/:id')
+  @RequireRh('rh_time_manage')
+  patchOccurrence(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.updateOccurrence(id, body as never, allowed),
+    );
+  }
+
+  @Delete('occurrences/:id')
+  @RequireRh('rh_time_manage')
+  deleteOccurrence(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) => this.service.deleteOccurrence(id, allowed));
+  }
+
+  @Post('clock-batches/:id/employees')
+  @RequireRh('rh_time_clock_docs')
+  linkClockEmployees(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { links: Array<{ employmentId?: string; employeeId?: string; notes?: string }> },
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.linkClockBatchEmployees(id, body.links ?? [], allowed),
     );
   }
 

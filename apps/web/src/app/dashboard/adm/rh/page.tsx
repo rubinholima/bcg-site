@@ -24,6 +24,7 @@ import { RhDashboardKpis } from "./components/RhDashboardKpis";
 import { HiringRequestsPanel } from "./components/HiringRequestsPanel";
 import { PayrollClosingsPanel } from "./components/PayrollClosingsPanel";
 import { TimeControlPanel } from "./components/TimeControlPanel";
+import { PayslipsPanel } from "./components/PayslipsPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -68,11 +69,13 @@ type TabId =
   | "aprovacoes"
   | "contratacoes"
   | "folha"
+  | "contracheques"
   | "controle-ponto";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "colaboradores", label: "Colaboradores", icon: UserCircle },
   { id: "folha", label: "Folha de Pagamento", icon: FileText },
+  { id: "contracheques", label: "Contracheques", icon: FileText },
   { id: "controle-ponto", label: "Controle de Ponto", icon: Calendar },
   { id: "contratacoes", label: "Contratações", icon: UserPlus },
   { id: "aprovacoes", label: "Aprovações", icon: ClipboardCheck },
@@ -464,6 +467,8 @@ export default function AdmRHPage() {
           )}
 
           {activeTab === "folha" && <PayrollClosingsPanel tenantId={tenantId} />}
+
+          {activeTab === "contracheques" && <PayslipsPanel tenantId={tenantId} />}
 
           {activeTab === "controle-ponto" && <TimeControlPanel tenantId={tenantId} />}
 

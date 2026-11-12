@@ -201,6 +201,103 @@ export class TimeRhService {
     });
   }
 
+  async updateOccurrence(
+    id: string,
+    dto: Partial<{
+      occurrenceType: string;
+      occurrenceDate: string;
+      hours: number;
+      days: number;
+      reason: string;
+      notes: string;
+      treatment: string;
+    }>,
+    allowed: string[] | null,
+  ) {
+    const row = await this.prisma.rhTimeOccurrence.findUnique({ where: { id } });
+    if (!row) throw new NotFoundException('Ocorrência não encontrada.');
+    assertRhTenantAccess(allowed, row.tenantId);
+    return this.prisma.rhTimeOccurrence.update({
+      where: { id },
+      data: {
+        occurrenceType: dto.occurrenceType?.trim() ?? row.occurrenceType,
+        occurrenceDate: dto.occurrenceDate ? new Date(dto.occurrenceDate) : row.occurrenceDate,
+        hours: dto.hours != null ? new Prisma.Decimal(dto.hours) : row.hours,
+        days: dto.days != null ? new Prisma.Decimal(dto.days) : row.days,
+        reason: dto.reason !== undefined ? dto.reason : row.reason,
+        notes: dto.notes !== undefined ? dto.notes : row.notes,
+        treatment: dto.treatment !== undefined ? dto.treatment : row.treatment,
+      },
+    });
+  }
+
+  async deleteOccurrence(id: string, allowed: string[] | null) {
+    const row = await this.prisma.rhTimeOccurrence.findUnique({ where: { id } });
+    if (!row) throw new NotFoundException('Ocorrência não encontrada.');
+    assertRhTenantAccess(allowed, row.tenantId);
+    await this.prisma.rhTimeOccurrence.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  async createTimeBankMovement(
+    dto: {
+      employmentId: string;
+      movementType: 'CREDIT' | 'DEBIT';
+      movementDate: string;
+      hours: number;
+      reason?: string;
+      origin?: string;
+    },
+    allowed: string[] | null,
+    actor: RhActor,
+  ) {
+    const employment = await this.prisma.employment.findUnique({ where: { id: dto.employmentId } });
+    if (!employment) throw new NotFoundException('Vínculo não encontrado.');
+    assertRhTenantAccess(allowed, employment.tenantId);
+    return this.prisma.rhTimeBankMovement.create({
+      data: {
+        tenantId: employment.tenantId,
+        employmentId: dto.employmentId,
+        movementType: dto.movementType,
+        movementDate: new Date(dto.movementDate),
+        hours: new Prisma.Decimal(dto.hours),
+        origin: dto.origin ?? 'ajuste_manual',
+        reason: dto.reason ?? null,
+        createdByUserId: actor.userId,
+        createdByName: actor.name,
+        approvedAt: new Date(),
+      },
+    });
+  }
+
+  async linkClockBatchEmployees(
+    batchId: string,
+    links: Array<{ employmentId?: string; employeeId?: string; notes?: string }>,
+    allowed: string[] | null,
+  ) {
+    const batch = await this.prisma.rhTimeClockBatch.findUnique({ where: { id: batchId } });
+    if (!batch) throw new NotFoundException('Lote não encontrado.');
+    assertRhTenantAccess(allowed, batch.tenantId);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.rhTimeClockBatchEmployee.deleteMany({ where: { batchId } });
+      for (const link of links) {
+        await tx.rhTimeClockBatchEmployee.create({
+          data: {
+            tenantId: batch.tenantId,
+            batchId,
+            employmentId: link.employmentId ?? null,
+            employeeId: link.employeeId ?? null,
+            notes: link.notes ?? null,
+          },
+        });
+      }
+    });
+    return this.prisma.rhTimeClockBatch.findUnique({
+      where: { id: batchId },
+      include: { employees: true },
+    });
+  }
+
   async listTimeClockBatches(tenantId: string | undefined, allowed: string[] | null) {
     const where: Prisma.RhTimeClockBatchWhereInput = {};
     applyRhTenantFilter(where, allowed, tenantId);

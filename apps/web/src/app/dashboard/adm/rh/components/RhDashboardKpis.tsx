@@ -13,6 +13,13 @@ export type RhDashboardKpiData = {
   medicalPending: number;
   legalPending: number;
   accountingPending: number;
+  payrollPreparing?: number;
+  payrollAwaitingAccounting?: number;
+  payrollAwaitingFinance?: number;
+  athleteLoanImpact?: number;
+  payslipsToSplit?: number;
+  payslipsAwaitingAck?: number;
+  epiPending?: number;
 };
 
 type Props = {
@@ -68,6 +75,23 @@ export function RhDashboardKpis({ tenantId, onFilterHiring }: Props) {
       <button type="button" className="text-left" onClick={() => onFilterHiring?.("contabilidade")}>
         <KpiCard label="Contabilidade" value={String(data.accountingPending)} />
       </button>
+      <Link href="/dashboard/adm/rh?tab=folha">
+        <KpiCard label="Folhas em preparação" value={String(data.payrollPreparing ?? 0)} />
+      </Link>
+      <Link href="/dashboard/adm/rh?tab=folha">
+        <KpiCard label="Folha — Contabilidade" value={String(data.payrollAwaitingAccounting ?? 0)} />
+      </Link>
+      <Link href="/dashboard/adm/rh?tab=folha">
+        <KpiCard label="Folha — Financeiro" value={String(data.payrollAwaitingFinance ?? 0)} />
+      </Link>
+      <Link href="/dashboard/adm/rh?tab=contracheques">
+        <KpiCard label="Contracheques p/ separar" value={String(data.payslipsToSplit ?? 0)} />
+      </Link>
+      <Link href="/dashboard/adm/rh?tab=contracheques">
+        <KpiCard label="Ciências pendentes" value={String(data.payslipsAwaitingAck ?? 0)} />
+      </Link>
+      <KpiCard label="EPI pendente" value={String(data.epiPending ?? 0)} />
+      <KpiCard label="Empréstimos — RH" value={String(data.athleteLoanImpact ?? 0)} />
     </div>
   );
 }

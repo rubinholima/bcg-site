@@ -5,12 +5,13 @@ import { ModulesModule } from '../modules/modules.module';
 import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { S3Module } from '../s3/s3.module';
+import { RhModule } from '../rh/rh.module';
 import { PlayerNegotiationIntegrationService } from './player-negotiation-integration.service';
 import { PlayerNegotiationsController } from './player-negotiations.controller';
 import { PlayerNegotiationsService } from './player-negotiations.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule, ModulesModule, FinanceiroModule, S3Module],
+  imports: [PrismaModule, AuthModule, ModulesModule, FinanceiroModule, S3Module, RhModule],
   controllers: [PlayerNegotiationsController],
   providers: [
     ModuleAccessGuard,

@@ -74,6 +74,8 @@ const LEGAL_PREFIX = 'legal/';
 export const ANALYSIS_PRIVATE_PREFIX = 'private/analysis/';
 /** Espelhos de ponto RH — privado */
 export const RH_PONTO_PRIVATE_PREFIX = 'private/rh_ponto/';
+/** Contracheques RH — privado (lote e individual) */
+export const RH_PAYSLIP_PRIVATE_PREFIX = 'private/rh_payslip/';
 /** Staging interno (import Beatscode — manifest + PDFs antes de copiar para legal/). */
 const BEATSCODE_STAGING_PREFIX = 'beatscode-staging/';
 
@@ -104,7 +106,8 @@ export class S3Service {
       safeKey.startsWith(LEGAL_PREFIX) ||
       safeKey.startsWith(BEATSCODE_STAGING_PREFIX) ||
       safeKey.startsWith(ANALYSIS_PRIVATE_PREFIX) ||
-      safeKey.startsWith(RH_PONTO_PRIVATE_PREFIX)
+      safeKey.startsWith(RH_PONTO_PRIVATE_PREFIX) ||
+      safeKey.startsWith(RH_PAYSLIP_PRIVATE_PREFIX)
     );
   }
 
@@ -129,6 +132,42 @@ export class S3Service {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(`Falha ao enviar espelho de ponto: ${message}`);
     }
+    return { key };
+  }
+
+  async uploadRhPayslipBulkPdf(
+    buffer: Buffer,
+    tenantId: string,
+    filename: string,
+  ): Promise<{ key: string }> {
+    const safeTenant = tenantId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const key = `${RH_PAYSLIP_PRIVATE_PREFIX}bulk/${safeTenant}/${randomUUID()}-${filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: 'application/pdf',
+      }),
+    );
+    return { key };
+  }
+
+  async uploadRhPayslipIndividualPdf(
+    buffer: Buffer,
+    tenantId: string,
+    filename: string,
+  ): Promise<{ key: string }> {
+    const safeTenant = tenantId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const key = `${RH_PAYSLIP_PRIVATE_PREFIX}individual/${safeTenant}/${randomUUID()}-${filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: 'application/pdf',
+      }),
+    );
     return { key };
   }
 

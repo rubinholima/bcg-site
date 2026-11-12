@@ -39,6 +39,14 @@ type UnifiedProfile = {
     clubName?: string | null;
     employmentContractId?: string | null;
   }>;
+  workRegime?: { workRegime?: { name?: string }; effectiveFrom?: string } | null;
+  timeBank?: { balanceHours?: number; movements?: Array<{ movementType: string; hours: number | string; movementDate: string }> };
+  occurrences?: Array<{ occurrenceType: string; occurrenceDate: string; hours?: number | string | null }>;
+  payrollSnapshots?: Array<{ payrollClosing?: { referenceMonth?: string; status?: string } }>;
+  payslips?: Array<{ referenceMonth: string; status: string }>;
+  epiDeliveries?: Array<{ catalogItem?: { name?: string }; deliveryDate: string; status: string }>;
+  athletePayrollImpacts?: Array<{ impactType: string; status: string; ourPayrollAmount?: number | string | null }>;
+  athletePendingActions?: Array<{ title: string; status: string }>;
 };
 
 export default function RhColaboradorUnifiedPage() {
@@ -156,6 +164,89 @@ export default function RhColaboradorUnifiedPage() {
               <CardContent className="text-sm space-y-2">
                 {data.athleteContracts!.map((c) => (
                   <AthleteContractReadOnly key={c.id} contract={c} />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Jornada e ponto</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+              <p>
+                Jornada atual:{" "}
+                {data.workRegime?.workRegime?.name
+                  ? `${data.workRegime.workRegime.name} (desde ${formatDateDayMonYear(data.workRegime.effectiveFrom ?? "")})`
+                  : "—"}
+              </p>
+              <p>Banco de horas: {data.timeBank?.balanceHours != null ? `${data.timeBank.balanceHours} h` : "—"}</p>
+              {(data.occurrences ?? []).slice(0, 5).map((o, i) => (
+                <p key={i} className="text-muted-foreground">
+                  {o.occurrenceType} — {formatDateDayMonYear(o.occurrenceDate)}
+                </p>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Folha e holerites</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-1">
+              {(data.payrollSnapshots ?? []).length === 0 && (data.payslips ?? []).length === 0 ? (
+                <p className="text-muted-foreground">Sem competências recentes.</p>
+              ) : (
+                <>
+                  {(data.payrollSnapshots ?? []).map((p, i) => (
+                    <p key={`snap-${i}`}>
+                      Folha {p.payrollClosing?.referenceMonth ? formatDateDayMonYear(p.payrollClosing.referenceMonth) : "—"} —{" "}
+                      {p.payrollClosing?.status ?? ""}
+                    </p>
+                  ))}
+                  {(data.payslips ?? []).map((p, i) => (
+                    <p key={`pay-${i}`}>
+                      Holerite {formatDateDayMonYear(p.referenceMonth)} — {p.status.replace(/_/g, " ")}
+                    </p>
+                  ))}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">EPI</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-1">
+              {(data.epiDeliveries ?? []).length === 0 ? (
+                <p className="text-muted-foreground">Sem entregas registradas.</p>
+              ) : (
+                data.epiDeliveries!.map((d, i) => (
+                  <p key={i}>
+                    {d.catalogItem?.name ?? "Item"} — {formatDateDayMonYear(d.deliveryDate)} — {d.status}
+                  </p>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          {(data.athletePayrollImpacts?.length ?? 0) > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Impacto folha (atleta)</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-1">
+                {data.athletePayrollImpacts!.map((imp, i) => (
+                  <p key={i}>
+                    {imp.impactType} — {imp.status}
+                    {imp.ourPayrollAmount != null ? ` · Nossa parte: ${imp.ourPayrollAmount}` : ""}
+                  </p>
+                ))}
+                {(data.athletePendingActions ?? []).map((a, i) => (
+                  <p key={`act-${i}`} className="text-amber-400">
+                    Pendência: {a.title}
+                  </p>
                 ))}
               </CardContent>
             </Card>
