@@ -9,8 +9,15 @@ import { PerformanceAnalysisAccessService } from './performance-analysis-access.
 import {
   ANALYSIS_EVENT_CLASSES,
   ANALYSIS_SESSION_STATUSES,
+  ALL_DEFAULT_ANALYSIS_TAG_SEEDS,
   DEFAULT_ANALYSIS_TAGS,
 } from './performance-analysis.constants';
+import {
+  POSSESSION_STATE_KEYS,
+  planPossessionTransition,
+  type PossessionTransitionTarget,
+} from './possession-state.util';
+import { computePossessionDurationMetrics } from './performance-analysis-possession-metrics.util';
 import {
   computePlayerMetrics,
   computeTeamMetrics,
@@ -66,7 +73,7 @@ export class PerformanceAnalysisService {
       select: { key: true },
     });
     const have = new Set(existing.map((r) => r.key));
-    const missing = DEFAULT_ANALYSIS_TAGS.filter((t) => !have.has(t.key));
+    const missing = ALL_DEFAULT_ANALYSIS_TAG_SEEDS.filter((t) => !have.has(t.key));
     if (missing.length > 0) {
       await this.prisma.analysisTagDefinition.createMany({
         data: missing.map((t) => ({
@@ -74,11 +81,17 @@ export class PerformanceAnalysisService {
           key: t.key,
           label: t.label,
           category: t.category,
+          tagGroup: t.tagGroup ?? null,
           sortOrder: t.sortOrder,
           outcomes: t.outcomes,
+          qualifiers: t.qualifiers ?? undefined,
+          color: t.color ?? null,
           active: true,
           shortcutKey: t.shortcutKey ?? null,
           requiresPlayer: t.requiresPlayer ?? false,
+          requiresRelatedPlayer: t.requiresRelatedPlayer ?? false,
+          requiresFieldLocation: t.requiresFieldLocation ?? false,
+          stateBehavior: t.stateBehavior ?? null,
           autoClipEnabled: t.autoClipEnabled ?? false,
           autoClipPreMs: t.autoClipPreMs ?? 8000,
           autoClipPostMs: t.autoClipPostMs ?? 4000,
@@ -189,6 +202,7 @@ export class PerformanceAnalysisService {
       opponentProfileId?: string | null;
       preMatchVersionId?: string | null;
       authorUserId?: string | null;
+      status?: string | null;
     },
     allowedTenantIds: string[] | null,
   ) {
@@ -204,12 +218,20 @@ export class PerformanceAnalysisService {
     if (input.preMatchVersionId?.trim()) {
       await this.access.loadPreMatchVersion(input.preMatchVersionId.trim(), allowedTenantIds);
     }
+    let status = 'preparation';
+    const statusIn = input.status?.trim().toLowerCase();
+    if (statusIn === 'review' && kind === 'MATCH') {
+      status = 'review';
+    } else if (statusIn && (ANALYSIS_SESSION_STATUSES as readonly string[]).includes(statusIn)) {
+      status = statusIn;
+    }
+
     return this.prisma.analysisSession.create({
       data: {
         tenantId: input.tenantId,
         kind,
         title: input.title.trim(),
-        status: 'preparation',
+        status,
         category: input.category?.trim() || null,
         season: input.season ?? null,
         fmfMatchReportId: input.fmfMatchReportId?.trim() || null,
@@ -342,18 +364,30 @@ export class PerformanceAnalysisService {
       clientEventKey?: string | null;
       authorUserId?: string | null;
       analysisClass?: string | null;
+      liveCaptureStamp?: boolean | null;
+      opponentPlayerId?: string | null;
     },
     allowedTenantIds: string[] | null,
   ) {
     const session = await this.access.loadSession(sessionId, allowedTenantIds);
-    this.assertSessionMutable(this.normalizeStatus(session.status));
+    this.assertSessionMutable(this.normalizeStatus(session.status), dto.source === 'LIVE');
     const tag = await this.access.assertTagInTenant(dto.tagDefinitionId, session.tenantId);
-    if (tag.requiresPlayer && !dto.playerId?.trim()) {
+    const liveStamp = Boolean(dto.liveCaptureStamp);
+    if (tag.requiresPlayer && !dto.playerId?.trim() && !liveStamp) {
       throw new BadRequestException('Selecione o atleta para esta ação.');
     }
     if (dto.playerId) await this.access.assertPlayerInTenant(dto.playerId, session.tenantId);
     if (dto.relatedPlayerId) {
       await this.access.assertPlayerInTenant(dto.relatedPlayerId, session.tenantId);
+    }
+    if (dto.opponentPlayerId?.trim()) {
+      const opp = await this.prisma.analysisOpponentPlayer.findFirst({
+        where: { id: dto.opponentPlayerId.trim(), tenantId: session.tenantId },
+      });
+      if (!opp) throw new BadRequestException('Jogador adversário inválido para este tenant.');
+      if (dto.playerId?.trim()) {
+        throw new BadRequestException('Use apenas jogador do elenco ou adversário, não ambos.');
+      }
     }
     if (dto.videoSourceId) {
       await this.access.assertVideoSourceInSession(
@@ -385,8 +419,10 @@ export class PerformanceAnalysisService {
       }
     }
     const source = dto.source?.trim() || 'MANUAL';
-    if (source === 'LIVE' && !fieldZoneKey && dto.fieldX == null) {
-      throw new BadRequestException('Selecione a zona do campo (grade 3×3).');
+    if (source === 'LIVE' && !liveStamp && !fieldZoneKey && dto.fieldX == null) {
+      if (tag.requiresFieldLocation) {
+        throw new BadRequestException('Selecione a zona do campo (grade 3×3).');
+      }
     }
     let fieldX = dto.fieldX ?? null;
     let fieldY = dto.fieldY ?? null;
@@ -413,6 +449,7 @@ export class PerformanceAnalysisService {
         tagDefinitionId: dto.tagDefinitionId,
         playerId: dto.playerId?.trim() || null,
         relatedPlayerId: dto.relatedPlayerId?.trim() || null,
+        opponentPlayerId: dto.opponentPlayerId?.trim() || null,
         teamSide: dto.teamSide?.trim() || null,
         outcome: dto.outcome?.trim() || null,
         startMs: dto.startMs,
@@ -514,11 +551,29 @@ export class PerformanceAnalysisService {
         throw new BadRequestException('Classificação de análise inválida.');
       }
     }
+    let fieldZoneKey = dto.fieldZoneKey?.trim() || undefined;
+    if (fieldZoneKey && !isValidPitchZoneKey(fieldZoneKey)) {
+      throw new BadRequestException('Zona de campo inválida.');
+    }
+    let fieldX = dto.fieldX;
+    let fieldY = dto.fieldY;
+    if (fieldZoneKey) {
+      const c = pitchZoneCentroid(fieldZoneKey as AnalysisPitchZoneKey);
+      fieldX = c.x;
+      fieldY = c.y;
+    }
     return this.prisma.analysisEvent.update({
       where: { id: eventId },
       data: {
         ...(dto.tagDefinitionId ? { tagDefinitionId: dto.tagDefinitionId } : {}),
         ...(dto.playerId !== undefined ? { playerId: dto.playerId?.trim() || null } : {}),
+        ...(dto.relatedPlayerId !== undefined
+          ? { relatedPlayerId: dto.relatedPlayerId?.trim() || null }
+          : {}),
+        ...(dto.opponentPlayerId !== undefined
+          ? { opponentPlayerId: dto.opponentPlayerId?.trim() || null }
+          : {}),
+        ...(dto.teamSide !== undefined ? { teamSide: dto.teamSide?.trim() || null } : {}),
         ...(dto.outcome !== undefined ? { outcome: dto.outcome?.trim() || null } : {}),
         ...(dto.startMs !== undefined ? { startMs: dto.startMs } : {}),
         ...(dto.endMs !== undefined ? { endMs: dto.endMs ?? null } : {}),
@@ -527,8 +582,9 @@ export class PerformanceAnalysisService {
         ...(dto.matchClockSeconds !== undefined
           ? { matchClockSeconds: dto.matchClockSeconds ?? null }
           : {}),
-        ...(dto.fieldX !== undefined ? { fieldX: dto.fieldX ?? null } : {}),
-        ...(dto.fieldY !== undefined ? { fieldY: dto.fieldY ?? null } : {}),
+        ...(dto.fieldX !== undefined || fieldZoneKey ? { fieldX: fieldX ?? null } : {}),
+        ...(dto.fieldY !== undefined || fieldZoneKey ? { fieldY: fieldY ?? null } : {}),
+        ...(fieldZoneKey !== undefined ? { fieldZoneKey: fieldZoneKey || null } : {}),
         ...(dto.analysisClass !== undefined
           ? { analysisClass: dto.analysisClass?.trim().toLowerCase() || null }
           : {}),
@@ -834,16 +890,268 @@ export class PerformanceAnalysisService {
         : [];
     const nameById = new Map(players.map((p) => [p.id, p.name]));
     const bySide = computeTeamMetricsBySide(tagged);
+    const possession = computePossessionDurationMetrics(
+      events.map((e) => ({
+        tagKey: e.tagDefinition.key,
+        startMs: e.startMs,
+        endMs: e.endMs,
+      })),
+      bySide.all.possessionMarks,
+    );
     return {
       team: bySide.all,
       teamProprio: bySide.proprio,
       teamAdversario: bySide.adversario,
+      possession,
       zoneHeat: buildZoneHeatCounts(events),
       players: playerMetrics.map((p) => ({
         ...p,
         playerName: nameById.get(p.playerId) ?? null,
       })),
     };
+  }
+
+  async transitionPossessionState(
+    sessionId: string,
+    input: {
+      target: PossessionTransitionTarget;
+      startMs: number;
+      matchPeriod?: string | null;
+      matchClockSeconds?: number | null;
+      videoSourceId?: string | null;
+      clientEventKey?: string | null;
+      authorUserId?: string | null;
+    },
+    allowedTenantIds: string[] | null,
+  ) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    this.assertSessionMutable(this.normalizeStatus(session.status), true);
+    await this.ensureDefaultTags(session.tenantId);
+
+    const tagKey = POSSESSION_STATE_KEYS[input.target];
+    const tags = await this.prisma.analysisTagDefinition.findMany({
+      where: {
+        tenantId: session.tenantId,
+        key: {
+          in: [
+            POSSESSION_STATE_KEYS.our,
+            POSSESSION_STATE_KEYS.opponent,
+            POSSESSION_STATE_KEYS.out,
+          ],
+        },
+      },
+    });
+    const targetTag = tags.find((t) => t.key === tagKey);
+    if (!targetTag) {
+      throw new BadRequestException('Tags de posse não configuradas para este tenant.');
+    }
+
+    const stateRows = await this.prisma.analysisEvent.findMany({
+      where: {
+        analysisSessionId: session.id,
+        tenantId: session.tenantId,
+        tagDefinition: {
+          key: {
+            in: [
+              POSSESSION_STATE_KEYS.our,
+              POSSESSION_STATE_KEYS.opponent,
+              POSSESSION_STATE_KEYS.out,
+            ],
+          },
+        },
+      },
+      include: { tagDefinition: { select: { key: true } } },
+      orderBy: { startMs: 'asc' },
+    });
+
+    const openIntervals = stateRows.map((e) => ({
+      eventId: e.id,
+      tagKey: e.tagDefinition.key,
+      startMs: e.startMs,
+      endMs: e.endMs,
+    }));
+
+    const plan = planPossessionTransition(openIntervals, input.target, input.startMs, tagKey);
+
+    if (input.clientEventKey?.trim()) {
+      const dup = await this.prisma.analysisEvent.findFirst({
+        where: { analysisSessionId: session.id, clientEventKey: input.clientEventKey.trim() },
+      });
+      if (dup) return { ok: true, event: dup, skipped: true };
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      for (const id of plan.closeIds) {
+        await tx.analysisEvent.update({
+          where: { id },
+          data: { endMs: input.startMs },
+        });
+      }
+      if (!plan.createNew) {
+        return { ok: true, created: false, closedCount: plan.closeIds.length };
+      }
+      const event = await tx.analysisEvent.create({
+        data: {
+          tenantId: session.tenantId,
+          analysisSessionId: session.id,
+          videoSourceId: input.videoSourceId?.trim() || null,
+          tagDefinitionId: targetTag.id,
+          startMs: input.startMs,
+          endMs: null,
+          matchPeriod: input.matchPeriod?.trim() || null,
+          matchClockSeconds: input.matchClockSeconds ?? null,
+          source: 'LIVE',
+          clientEventKey: input.clientEventKey?.trim() || null,
+          authorUserId: input.authorUserId ?? null,
+          teamSide: input.target === 'our' ? 'proprio' : input.target === 'opponent' ? 'adversario' : null,
+        },
+        include: { tagDefinition: { select: { key: true, label: true } } },
+      });
+      return { ok: true, created: true, event, closedCount: plan.closeIds.length };
+    });
+  }
+
+  async upsertTagDefinition(
+    tenantId: string,
+    body: {
+      id?: string;
+      key?: string;
+      label: string;
+      category?: string | null;
+      tagGroup?: string | null;
+      sortOrder?: number;
+      outcomes?: string[];
+      qualifiers?: string[];
+      color?: string | null;
+      icon?: string | null;
+      shortcutKey?: string | null;
+      requiresPlayer?: boolean;
+      requiresRelatedPlayer?: boolean;
+      requiresFieldLocation?: boolean;
+      stateBehavior?: string | null;
+      active?: boolean;
+    },
+    allowedTenantIds: string[] | null,
+  ) {
+    this.access.assertTenant(allowedTenantIds, tenantId);
+    const key = body.key?.trim() || body.id;
+    if (!key && !body.id) throw new BadRequestException('key ou id é obrigatório.');
+
+    if (body.id) {
+      const row = await this.prisma.analysisTagDefinition.findFirst({
+        where: { id: body.id, tenantId },
+      });
+      if (!row) throw new NotFoundException('Tag não encontrada.');
+      const refs = await this.prisma.analysisEvent.count({
+        where: { tagDefinitionId: row.id },
+      });
+      if (body.active === false && refs > 0) {
+        return this.prisma.analysisTagDefinition.update({
+          where: { id: row.id },
+          data: {
+            active: false,
+            archivedAt: new Date(),
+          },
+        });
+      }
+      return this.prisma.analysisTagDefinition.update({
+        where: { id: row.id },
+        data: {
+          label: body.label.trim(),
+          category: body.category?.trim() || null,
+          tagGroup: body.tagGroup?.trim() || null,
+          sortOrder: body.sortOrder ?? row.sortOrder,
+          outcomes: body.outcomes ?? undefined,
+          qualifiers: body.qualifiers ?? undefined,
+          color: body.color ?? null,
+          icon: body.icon ?? null,
+          shortcutKey: body.shortcutKey?.trim() || null,
+          requiresPlayer: body.requiresPlayer ?? row.requiresPlayer,
+          requiresRelatedPlayer: body.requiresRelatedPlayer ?? row.requiresRelatedPlayer,
+          requiresFieldLocation: body.requiresFieldLocation ?? row.requiresFieldLocation,
+          stateBehavior: body.stateBehavior?.trim() || null,
+          active: body.active ?? row.active,
+        },
+      });
+    }
+
+    const tagKey = body.key!.trim();
+    const existing = await this.prisma.analysisTagDefinition.findFirst({
+      where: { tenantId, key: tagKey },
+    });
+    if (existing) {
+      return this.upsertTagDefinition(tenantId, { ...body, id: existing.id }, allowedTenantIds);
+    }
+    return this.prisma.analysisTagDefinition.create({
+      data: {
+        tenantId,
+        key: tagKey,
+        label: body.label.trim(),
+        category: body.category?.trim() || null,
+        tagGroup: body.tagGroup?.trim() || null,
+        sortOrder: body.sortOrder ?? 500,
+        outcomes: body.outcomes ?? [],
+        qualifiers: body.qualifiers ?? undefined,
+        color: body.color ?? null,
+        icon: body.icon ?? null,
+        shortcutKey: body.shortcutKey?.trim() || null,
+        requiresPlayer: body.requiresPlayer ?? false,
+        requiresRelatedPlayer: body.requiresRelatedPlayer ?? false,
+        requiresFieldLocation: body.requiresFieldLocation ?? false,
+        stateBehavior: body.stateBehavior?.trim() || null,
+        active: body.active ?? true,
+      },
+    });
+  }
+
+  async listClipsForTenant(
+    tenantId: string,
+    allowedTenantIds: string[] | null,
+    filters?: { playerId?: string; sessionId?: string; period?: string },
+    limit = 80,
+  ) {
+    this.access.assertTenant(allowedTenantIds, tenantId);
+    const where: Record<string, unknown> = { tenantId };
+    if (filters?.sessionId) where.analysisSessionId = filters.sessionId;
+    const clips = await this.prisma.analysisClip.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        analysisSession: { select: { id: true, title: true, kind: true, status: true, category: true } },
+        players: { include: { player: { select: { id: true, name: true } } } },
+      },
+    });
+    let list = clips;
+    if (filters?.playerId) {
+      list = list.filter((c) => c.players.some((p) => p.playerId === filters.playerId));
+    }
+    return list;
+  }
+
+  async getSessionOpponentRoster(sessionId: string, allowedTenantIds: string[] | null) {
+    const session = await this.access.loadSession(sessionId, allowedTenantIds);
+    if (!session.opponentProfileId) {
+      return { players: [] as Array<{ id: string; name: string; jerseyNumber: number | null }> };
+    }
+    const lineup = await this.prisma.analysisOpponentLineup.findFirst({
+      where: { opponentProfileId: session.opponentProfileId, isPrimary: true },
+      include: {
+        entries: {
+          include: { opponentPlayer: { select: { id: true, name: true, shirtNumber: true } } },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+    const players =
+      lineup?.entries
+        .filter((e) => e.opponentPlayer)
+        .map((e) => ({
+          id: e.opponentPlayer!.id,
+          name: e.opponentPlayer!.name,
+          jerseyNumber: e.opponentPlayer!.shirtNumber,
+        })) ?? [];
+    return { players };
   }
 
   async listClips(sessionId: string, allowedTenantIds: string[] | null) {

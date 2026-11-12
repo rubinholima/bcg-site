@@ -7168,14 +7168,23 @@ model AnalysisTagDefinition {
   key        String
   label      String
   category   String?
+  tagGroup   String?
   active     Boolean  @default(true)
   sortOrder  Int      @default(0)
   outcomes         Json?
+  qualifiers       Json?
+  color            String?
+  icon             String?
   shortcutKey      String?
   requiresPlayer   Boolean  @default(false)
+  requiresRelatedPlayer Boolean @default(false)
+  requiresFieldLocation Boolean @default(false)
+  /// possession_our | possession_opponent | ball_out | duration_interval | point
+  stateBehavior    String?
   autoClipEnabled  Boolean  @default(false)
   autoClipPreMs    Int      @default(8000)
   autoClipPostMs   Int      @default(4000)
+  archivedAt       DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   events           AnalysisEvent[]
@@ -7238,15 +7247,22 @@ model AnalysisVideoAnnotation {
   analysisSession   AnalysisSession @relation(fields: [analysisSessionId], references: [id], onDelete: Cascade)
   videoSourceId     String
   videoSource       AnalysisVideoSource @relation(fields: [videoSourceId], references: [id], onDelete: Cascade)
+  analysisEventId   String?
+  analysisClipId    String?
   startMs           Int
   endMs             Int?
   label             String?
   strokes           Json
+  /// Vetor versionado (setas, marcadores) — strokes preserva freehand legado
+  vectorJson        Json?
+  schemaVersion     Int      @default(1)
   authorUserId      String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   @@index([tenantId, analysisSessionId])
   @@index([videoSourceId, startMs])
+  @@index([analysisEventId])
+  @@index([analysisClipId])
 }
 
 model AnalysisClip {

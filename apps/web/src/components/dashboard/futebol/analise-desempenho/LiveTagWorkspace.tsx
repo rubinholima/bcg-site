@@ -1,13 +1,40 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Pause, Play, RotateCcw } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Pause,
+  Play,
+  RotateCcw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { KpiCard } from "@/components/dashboard/cup360/KpiCard";
 import { api } from "@/lib/api";
 import { analysisEventQueue } from "@/lib/analysis-event-queue";
+import {
+  getVideoTimeCapabilities,
+  isEditableTarget,
+  readHtml5TimeMs,
+} from "@/lib/analysis-player-time";
+import {
+  DEFAULT_POSSESSION_SHORTCUTS,
+  isFocusProtectedTarget,
+  shouldIgnoreKeyRepeat,
+} from "@/lib/live-tag-shortcuts";
 import {
   type AnalysisEventRow,
   type AnalysisSessionDetail,
@@ -24,6 +51,7 @@ import {
 } from "./AnalysisVideoTelestrationLayer";
 import {
   labelPitchZone,
+  resolvePitchZoneFromXY,
   type AnalysisPitchZoneKey,
 } from "@/lib/analysis-pitch-zones";
 import { cn } from "@/lib/utils";
@@ -35,6 +63,8 @@ type RosterPlayer = {
   position: string | null;
 };
 
+type OpponentPlayer = { id: string; name: string; jerseyNumber: number | null };
+
 type LiveClockDto = {
   running: boolean;
   period: string;
@@ -44,6 +74,18 @@ type LiveClockDto = {
   scoreHome: number | null;
   scoreAway: number | null;
   videoSyncOffsetMs: number;
+};
+
+type PendingCapture = {
+  clientEventKey: string;
+  serverEventId?: string;
+  tag: AnalysisTagDefinition;
+  stampedStartMs: number;
+  stampedMatchClock: number;
+  teamSide: "proprio" | "adversario";
+  needsPlayer: boolean;
+  needsField: boolean;
+  needsOutcome: boolean;
 };
 
 const PERIOD_LABELS: Record<string, string> = {
@@ -77,43 +119,62 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
   const [detail, setDetail] = useState<AnalysisSessionDetail | null>(null);
   const [clock, setClock] = useState<LiveClockDto | null>(null);
   const [roster, setRoster] = useState<RosterPlayer[]>([]);
+  const [opponentRoster, setOpponentRoster] = useState<OpponentPlayer[]>([]);
   const [events, setEvents] = useState<AnalysisEventRow[]>([]);
   const [metrics, setMetrics] = useState<TeamMetrics | null>(null);
+  const [possession, setPossession] = useState<{
+    ourPossessionMs: number;
+    opponentPossessionMs: number;
+    ballOutMs: number;
+    ourPossessionPct: number | null;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [playerSearch, setPlayerSearch] = useState("");
-  const [selectedTag, setSelectedTag] = useState<AnalysisTagDefinition | null>(null);
-  const [tagStep, setTagStep] = useState<"idle" | "side" | "player" | "zone" | "outcome">("idle");
+  const [opponentSearch, setOpponentSearch] = useState("");
   const [teamSide, setTeamSide] = useState<"proprio" | "adversario">("proprio");
   const [selectedPlayerId, setSelectedPlayerId] = useState("");
-  const [adversaryLabel, setAdversaryLabel] = useState("");
+  const [selectedOpponentPlayerId, setSelectedOpponentPlayerId] = useState("");
   const [selectedZone, setSelectedZone] = useState<AnalysisPitchZoneKey | null>(null);
+  const [fieldXY, setFieldXY] = useState<{ x: number; y: number } | null>(null);
   const [videoSourceId, setVideoSourceId] = useState("");
   const [drawToolActive, setDrawToolActive] = useState(false);
   const [drawStrokes, setDrawStrokes] = useState<AnalysisVideoStroke[]>([]);
   const [resetOpen, setResetOpen] = useState(false);
   const [queueTick, setQueueTick] = useState(0);
+  const [expanded, setExpanded] = useState(false);
+  const [showSidePanel, setShowSidePanel] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [pendingCapture, setPendingCapture] = useState<PendingCapture | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
   const lastPlayerRef = useRef("");
 
   const reloadEvents = useCallback(async () => {
     const [{ data: evs }, { data: m }] = await Promise.all([
       api.get<AnalysisEventRow[]>(`/performance-analysis/sessions/${sessionId}/events`),
-      api.get<{ team: TeamMetrics }>(`/performance-analysis/sessions/${sessionId}/metrics`),
+      api.get<{ team: TeamMetrics; possession?: typeof possession }>(
+        `/performance-analysis/sessions/${sessionId}/metrics`,
+      ),
     ]);
     setEvents(Array.isArray(evs) ? evs : []);
     setMetrics(m.team);
+    if (m.possession) setPossession(m.possession);
   }, [sessionId]);
 
   const reloadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [{ data: sess }, { data: ros }] = await Promise.all([
+      const [{ data: sess }, { data: ros }, { data: opp }] = await Promise.all([
         api.get<AnalysisSessionDetail>(`/performance-analysis/sessions/${sessionId}`),
         api.get<{ players: RosterPlayer[] }>(`/performance-analysis/sessions/${sessionId}/roster`),
+        api.get<{ players: OpponentPlayer[] }>(
+          `/performance-analysis/sessions/${sessionId}/opponent-roster`,
+        ),
       ]);
       setDetail(sess);
       setClock(sess.session.liveClock as LiveClockDto);
       setRoster(ros.players ?? []);
+      setOpponentRoster(opp.players ?? []);
       if (sess.videoSources[0]?.id) setVideoSourceId(sess.videoSources[0].id);
       await reloadEvents();
     } finally {
@@ -127,12 +188,12 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
 
   useEffect(() => {
     const unsub = analysisEventQueue.subscribe(() => setQueueTick((n) => n + 1));
-    const unbind = analysisEventQueue.bindSession(sessionId);
+    const unbind = analysisEventQueue.bindSession(sessionId, tenantId);
     return () => {
       unsub();
       unbind();
     };
-  }, [sessionId]);
+  }, [sessionId, tenantId]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -154,15 +215,25 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
     const q = playerSearch.trim().toLowerCase();
     if (!q) return roster;
     return roster.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        String(p.jerseyNumber ?? "").includes(q),
+      (p) => p.name.toLowerCase().includes(q) || String(p.jerseyNumber ?? "").includes(q),
     );
   }, [roster, playerSearch]);
+
+  const filteredOpponent = useMemo(() => {
+    const q = opponentSearch.trim().toLowerCase();
+    if (!q) return opponentRoster;
+    return opponentRoster.filter(
+      (p) => p.name.toLowerCase().includes(q) || String(p.jerseyNumber ?? "").includes(q),
+    );
+  }, [opponentRoster, opponentSearch]);
 
   const activeVideo = detail?.videoSources.find((v) => v.id === videoSourceId);
   const embed = youtubeEmbedUrl(activeVideo?.externalUrl);
   const streamPath = activeVideo?.streamUrl ? `/api${activeVideo.streamUrl}` : null;
+  const videoCaps = getVideoTimeCapabilities(Boolean(streamPath), Boolean(embed));
+
+  const ourTeamLabel = "Nosso time";
+  const opponentTeamLabel = "Adversário";
 
   async function clockCmd(body: Record<string, unknown>) {
     const { data } = await api.patch<{ liveClock: LiveClockDto }>(
@@ -172,59 +243,161 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
     setClock(data.liveClock);
   }
 
-  function videoMsNow(): number {
-    const el = videoRef.current;
-    if (!el) return 0;
-    return Math.round(el.currentTime * 1000) + (clock?.videoSyncOffsetMs ?? 0);
+  function captureVideoMs(): number {
+    const fromVideo = readHtml5TimeMs(videoRef, clock?.videoSyncOffsetMs ?? 0);
+    if (fromVideo != null) return fromVideo;
+    return clock?.videoSyncOffsetMs ?? 0;
   }
 
-  function resetTagFlow() {
-    setSelectedTag(null);
-    setTagStep("idle");
-    setSelectedZone(null);
-    setAdversaryLabel("");
-  }
-
-  async function commitTag(outcome: string) {
-    if (!selectedTag || !clock || !selectedZone) return;
-    const requiresPlayer = Boolean(selectedTag.requiresPlayer);
-    const playerId = selectedPlayerId || (requiresPlayer ? "" : "");
-    if (requiresPlayer && teamSide === "proprio" && !playerId) return;
-    if (requiresPlayer && teamSide === "adversario" && !playerId && !adversaryLabel.trim()) return;
-
-    const payload = {
-      tagDefinitionId: selectedTag.id,
-      playerId: teamSide === "proprio" ? playerId || null : playerId || null,
-      teamSide,
-      outcome: outcome || null,
-      startMs: videoMsNow(),
-      matchPeriod: clock.period,
-      matchClockSeconds: clock.effectiveClockSeconds,
-      videoSourceId: activeVideo?.id ?? null,
-      fieldZoneKey: selectedZone,
-      notes:
-        teamSide === "adversario" && adversaryLabel.trim() && !playerId
-          ? `Adversário: ${adversaryLabel.trim()}`
-          : null,
+  function stampNow() {
+    return {
+      startMs: captureVideoMs(),
+      matchClockSeconds: clock?.effectiveClockSeconds ?? 0,
+      matchPeriod: clock?.period ?? "1T",
     };
-
-    analysisEventQueue.enqueue(payload);
-    if (playerId) lastPlayerRef.current = playerId;
-    resetTagFlow();
-    void reloadEvents();
   }
 
-  async function undoLast() {
-    await api.post(`/performance-analysis/sessions/${sessionId}/events/undo`, {});
+  async function captureTagStamp(tag: AnalysisTagDefinition, side: "proprio" | "adversario") {
+    if (!clock) return;
+    const stamp = stampNow();
+    const outcomes = parseTagOutcomes(tag.outcomes);
+    const needsOutcome = outcomes.length > 1;
+    const needsPlayer = Boolean(tag.requiresPlayer);
+    const needsField = Boolean((tag as { requiresFieldLocation?: boolean }).requiresFieldLocation);
+
+    const clientEventKey = analysisEventQueue.enqueue({
+      tenantId,
+      sessionId,
+      capturedAtMs: Date.now(),
+      payload: {
+        tagDefinitionId: tag.id,
+        teamSide: side,
+        outcome: needsOutcome ? null : outcomes[0] ?? "neutro",
+        startMs: stamp.startMs,
+        matchPeriod: stamp.matchPeriod,
+        matchClockSeconds: stamp.matchClockSeconds,
+        videoSourceId: activeVideo?.id ?? null,
+        liveCaptureStamp: true,
+        source: "LIVE",
+      },
+    });
+
+    const pending: PendingCapture = {
+      clientEventKey,
+      tag,
+      stampedStartMs: stamp.startMs,
+      stampedMatchClock: stamp.matchClockSeconds,
+      teamSide: side,
+      needsPlayer,
+      needsField,
+      needsOutcome,
+    };
+    setPendingCapture(pending);
+
+    if (!needsPlayer && !needsField && !needsOutcome) {
+      setPendingCapture(null);
+    }
+    window.setTimeout(() => void reloadEvents(), 600);
+  }
+
+  async function finishPendingCapture(outcome?: string) {
+    if (!pendingCapture) return;
+    const patch: Record<string, unknown> = {};
+    if (outcome) patch.outcome = outcome;
+    if (teamSide === "proprio" && selectedPlayerId) {
+      patch.playerId = selectedPlayerId;
+    }
+    if (teamSide === "adversario" && selectedOpponentPlayerId) {
+      patch.opponentPlayerId = selectedOpponentPlayerId;
+    }
+    if (selectedZone) {
+      patch.fieldZoneKey = selectedZone;
+    } else if (fieldXY) {
+      patch.fieldX = fieldXY.x;
+      patch.fieldY = fieldXY.y;
+      patch.fieldZoneKey = resolvePitchZoneFromXY(fieldXY.x, fieldXY.y);
+    }
+
+    const item = analysisEventQueue.getSnapshot().find((q) => q.clientEventKey === pendingCapture.clientEventKey);
+    if (item?.serverEventId) {
+      await api.patch(`/performance-analysis/events/${item.serverEventId}`, patch);
+    } else {
+      analysisEventQueue.patchPayload(pendingCapture.clientEventKey, patch);
+    }
+    if (selectedPlayerId) lastPlayerRef.current = selectedPlayerId;
+    setPendingCapture(null);
+    setSelectedZone(null);
+    setFieldXY(null);
     await reloadEvents();
   }
 
+  async function transitionPossession(target: "our" | "opponent" | "out") {
+    if (!clock) return;
+    const stamp = stampNow();
+    await api.post(`/performance-analysis/sessions/${sessionId}/possession-transition`, {
+      target,
+      startMs: stamp.startMs,
+      matchPeriod: stamp.matchPeriod,
+      matchClockSeconds: stamp.matchClockSeconds,
+      videoSourceId: activeVideo?.id ?? null,
+      clientEventKey: `pos-${target}-${stamp.startMs}`,
+    });
+    await reloadEvents();
+  }
+
+  async function undoLast() {
+    const q = await analysisEventQueue.undoQueuedOrSynced(sessionId);
+    if (q === "none") {
+      await api.post(`/performance-analysis/sessions/${sessionId}/events/undo`, {});
+    }
+    await reloadEvents();
+  }
+
+  function togglePlayPause() {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) void el.play();
+    else el.pause();
+  }
+
+  function toggleExpanded() {
+    setExpanded((v) => !v);
+    if (!expanded && workspaceRef.current?.requestFullscreen) {
+      void workspaceRef.current.requestFullscreen().catch(() => undefined);
+    } else if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => undefined);
+    }
+  }
+
+  const tagsByGroup = useMemo(() => {
+    const groups = new Map<string, AnalysisTagDefinition[]>();
+    for (const t of detail?.tags ?? []) {
+      const g = (t as { tagGroup?: string }).tagGroup || t.category || "Geral";
+      const list = groups.get(g) ?? [];
+      list.push(t);
+      groups.set(g, list);
+    }
+    return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [detail?.tags]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (isFocusProtectedTarget(e.target) || isEditableTarget(e.target)) return;
+      if (e.key === " " && videoCaps.canPlayPause) {
+        e.preventDefault();
+        togglePlayPause();
+        return;
+      }
+      if (shouldIgnoreKeyRepeat(e)) return;
       if (e.ctrlKey && e.key.toLowerCase() === "z") {
         e.preventDefault();
         void undoLast();
+        return;
+      }
+      const posKey = e.key as keyof typeof DEFAULT_POSSESSION_SHORTCUTS;
+      if (DEFAULT_POSSESSION_SHORTCUTS[posKey]) {
+        e.preventDefault();
+        void transitionPossession(DEFAULT_POSSESSION_SHORTCUTS[posKey]);
         return;
       }
       if (!detail?.tags) return;
@@ -232,32 +405,15 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
       const tag = detail.tags.find((t) => t.shortcutKey === key);
       if (tag) {
         e.preventDefault();
-        setSelectedTag(tag);
-        setTagStep("side");
-        setSelectedZone(null);
-        if (!tag.requiresPlayer && lastPlayerRef.current) {
-          setSelectedPlayerId(lastPlayerRef.current);
-        }
-      }
-      if (selectedTag && tagStep === "player" && /^\d$/.test(key)) {
-        const num = Number(key);
-        const byNum = filteredRoster.find((p) => p.jerseyNumber === num);
-        if (byNum) {
-          e.preventDefault();
-          setSelectedPlayerId(byNum.id);
-          setTagStep("zone");
-        }
+        void captureTagStamp(tag, teamSide);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [detail?.tags, filteredRoster, selectedTag, sessionId]);
+  }, [detail?.tags, teamSide, clock, videoCaps.canPlayPause]);
 
-  const queue = analysisEventQueue.getSnapshot();
-  const pendingCount =
-    queueTick >= 0
-      ? queue.filter((q) => q.status === "pending" || q.status === "syncing").length
-      : 0;
+  const queue = analysisEventQueue.getForSession(sessionId);
+  const pendingCount = queueTick >= 0 ? queue.filter((q) => q.status === "pending" || q.status === "syncing").length : 0;
   const failed = queue.filter((q) => q.status === "failed");
 
   if (loading && !detail) {
@@ -269,42 +425,28 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
   }
 
   return (
-    <div className="flex min-h-0 flex-col gap-3">
+    <div
+      ref={workspaceRef}
+      className={cn(
+        "flex min-h-0 flex-col gap-3",
+        expanded && "fixed inset-0 z-50 bg-background p-3",
+      )}
+    >
       <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{detail?.session.title}</p>
           <p className="text-xs text-muted-foreground">
             {PERIOD_LABELS[clock?.period ?? "1T"] ?? clock?.period} · {clock?.display ?? "0:00"}
             {pendingCount > 0 ? ` · ${pendingCount} pendente(s)` : ""}
+            {possession?.ourPossessionPct != null
+              ? ` · Posse ${possession.ourPossessionPct}%`
+              : ""}
           </p>
         </div>
-        <div className="flex items-center gap-1 text-lg font-mono tabular-nums">
-          <Input
-            className="h-8 w-12 px-1 text-center text-foreground"
-            type="number"
-            value={clock?.scoreHome ?? ""}
-            onChange={(e) =>
-              void clockCmd({
-                action: "set_score",
-                scoreHome: e.target.value === "" ? null : Number(e.target.value),
-                scoreAway: clock?.scoreAway ?? null,
-              })
-            }
-          />
-          <span className="text-muted-foreground">×</span>
-          <Input
-            className="h-8 w-12 px-1 text-center text-foreground"
-            type="number"
-            value={clock?.scoreAway ?? ""}
-            onChange={(e) =>
-              void clockCmd({
-                action: "set_score",
-                scoreHome: clock?.scoreHome ?? null,
-                scoreAway: e.target.value === "" ? null : Number(e.target.value),
-              })
-            }
-          />
-        </div>
+        <Button type="button" size="sm" variant="outline" onClick={toggleExpanded}>
+          {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          {expanded ? "Sair" : "Expandir"}
+        </Button>
         {mode === "live" ? (
           <>
             {!clock?.running ? (
@@ -337,226 +479,298 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
             {PERIOD_LABELS[p]}
           </Button>
         ))}
-        <Input
-          type="number"
-          min={0}
-          className="h-8 w-24 text-foreground"
-          placeholder="Relógio (s)"
-          onBlur={(e) => {
-            const v = Number(e.target.value);
-            if (Number.isFinite(v)) void clockCmd({ action: "set_clock", clockSeconds: v });
-          }}
-        />
+        <Button size="sm" variant="outline" type="button" onClick={() => setShowSidePanel((v) => !v)}>
+          {showSidePanel ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          Métricas / timeline
+        </Button>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[1fr_360px]">
-        <div className="space-y-3">
-          <div className="grid gap-3 lg:grid-cols-2">
-            <div className="space-y-2">
-              <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-black">
-                {embed ? (
-                  <iframe title="Vídeo" src={embed} className="h-full w-full" />
-                ) : streamPath ? (
-                  <>
-                    {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                    <video ref={videoRef} src={streamPath} controls className="h-full w-full" />
-                    <AnalysisVideoTelestrationCanvas
-                      videoRef={videoRef}
-                      toolActive={drawToolActive}
-                      strokes={drawStrokes}
-                      setStrokes={setDrawStrokes}
-                    />
-                  </>
-                ) : (
-                  <div className="flex h-full items-center justify-center p-4 text-center text-xs text-muted-foreground">
-                    Live Tag funciona sem vídeo. Adicione fonte depois se necessário.
-                  </div>
-                )}
-              </div>
-              {streamPath && activeVideo?.id ? (
-                <AnalysisVideoTelestrationToolbar
-                  sessionId={sessionId}
-                  videoSourceId={activeVideo.id}
-                  videoRef={videoRef}
-                  toolActive={drawToolActive}
-                  setToolActive={setDrawToolActive}
-                  strokes={drawStrokes}
-                  setStrokes={setDrawStrokes}
-                />
-              ) : null}
+      <div className="space-y-2">
+        <div
+          className={cn(
+            "relative w-full overflow-hidden rounded-lg border border-border bg-black",
+            expanded ? "min-h-[55vh]" : "aspect-video max-h-[62vh] min-h-[280px]",
+          )}
+        >
+          {embed ? (
+            <iframe title="Vídeo" src={embed} className="h-full w-full" allowFullScreen />
+          ) : streamPath ? (
+            <>
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              <video
+                ref={videoRef}
+                src={streamPath}
+                className="h-full w-full"
+                onRateChange={(e) => setPlaybackRate(e.currentTarget.playbackRate)}
+              />
+              <AnalysisVideoTelestrationCanvas
+                videoRef={videoRef}
+                toolActive={drawToolActive}
+                strokes={drawStrokes}
+                setStrokes={setDrawStrokes}
+              />
+            </>
+          ) : (
+            <div className="flex h-full min-h-[200px] items-center justify-center p-4 text-center text-xs text-muted-foreground">
+              Live Tag funciona sem vídeo. Use o relógio de partida para marcar tempo.
             </div>
-            <AnalysisPitchMap
-              points={events
-                .filter((e) => e.fieldX != null && e.fieldY != null)
-                .slice(-12)
-                .map((e) => ({
-                  eventId: e.id,
-                  x: e.fieldX!,
-                  y: e.fieldY!,
-                  fieldZoneKey: (e as { fieldZoneKey?: string }).fieldZoneKey,
-                  label: e.tagDefinition?.label,
-                }))}
-              selectedZone={selectedZone}
-              onPickZone={(zone) => {
-                setSelectedZone(zone);
-                if (selectedTag && tagStep === "zone") setTagStep("outcome");
+          )}
+        </div>
+
+        {streamPath ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant="secondary" onClick={togglePlayPause}>
+              <Play className="mr-1 h-3 w-3" />
+              Play / Pause
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const el = videoRef.current;
+                if (!el) return;
+                el.currentTime = Math.max(0, el.currentTime - 5);
               }}
-              showZoneLabels={tagStep === "zone" || Boolean(selectedZone)}
+            >
+              −5s
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const el = videoRef.current;
+                if (!el) return;
+                el.currentTime = el.currentTime + 5;
+              }}
+            >
+              +5s
+            </Button>
+            <NativeSelectPlaybackRate
+              value={playbackRate}
+              onChange={(rate) => {
+                const el = videoRef.current;
+                if (el) el.playbackRate = rate;
+                setPlaybackRate(rate);
+              }}
             />
+            <span className="text-xs text-muted-foreground tabular-nums">
+              Vídeo:{" "}
+              {videoCaps.canReadCurrentTime
+                ? formatClockDisplay(Math.floor(captureVideoMs() / 1000))
+                : videoCaps.unavailableReason ?? "—"}
+            </span>
+            {activeVideo?.id ? (
+              <AnalysisVideoTelestrationToolbar
+                sessionId={sessionId}
+                videoSourceId={activeVideo.id}
+                videoRef={videoRef}
+                toolActive={drawToolActive}
+                setToolActive={setDrawToolActive}
+                strokes={drawStrokes}
+                setStrokes={setDrawStrokes}
+              />
+            ) : null}
           </div>
+        ) : null}
+      </div>
+
+      {pendingCapture ? (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+          <p className="font-medium">
+            Completar: {pendingCapture.tag.label} ·{" "}
+            {formatClockDisplay(pendingCapture.stampedMatchClock)}
+          </p>
+          {pendingCapture.needsPlayer ? (
+            <p className="text-xs text-muted-foreground">Selecione o jogador abaixo.</p>
+          ) : null}
+          {pendingCapture.needsField ? (
+            <p className="text-xs text-muted-foreground">Selecione o campo abaixo.</p>
+          ) : null}
+          {pendingCapture.needsOutcome ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {parseTagOutcomes(pendingCapture.tag.outcomes).map((o) => (
+                <Button key={o} size="sm" type="button" onClick={() => void finishPendingCapture(o)}>
+                  {OUTCOME_LABEL[o] ?? o}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <Button className="mt-2" size="sm" type="button" onClick={() => void finishPendingCapture()}>
+              Concluir
+            </Button>
+          )}
+        </div>
+      ) : null}
+
+      <div className="grid gap-3 lg:grid-cols-3">
+        <section className="rounded-lg border border-border p-3 space-y-2 min-h-[220px]">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Jogadores</p>
+          <div className="flex gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant={teamSide === "proprio" ? "default" : "outline"}
+              className="flex-1"
+              onClick={() => setTeamSide("proprio")}
+            >
+              {ourTeamLabel}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={teamSide === "adversario" ? "default" : "outline"}
+              className="flex-1"
+              onClick={() => setTeamSide("adversario")}
+            >
+              {opponentTeamLabel}
+            </Button>
+          </div>
+          {teamSide === "proprio" ? (
+            <>
+              <Input
+                placeholder="Buscar ou nº…"
+                value={playerSearch}
+                onChange={(e) => setPlayerSearch(e.target.value)}
+                className="text-foreground h-9"
+              />
+              <div className="max-h-44 overflow-y-auto grid grid-cols-2 gap-1">
+                {filteredRoster.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={cn(
+                      "rounded border px-2 py-2 text-left text-xs min-h-[44px]",
+                      selectedPlayerId === p.id ? "border-primary bg-primary/10" : "border-border",
+                    )}
+                    onClick={() => {
+                      setSelectedPlayerId(p.id);
+                      if (pendingCapture?.needsPlayer && !pendingCapture.needsOutcome) void finishPendingCapture();
+                    }}
+                  >
+                    <span className="font-bold text-amber-400">{p.jerseyNumber ?? "—"}</span> {p.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <Input
+                placeholder="Buscar adversário…"
+                value={opponentSearch}
+                onChange={(e) => setOpponentSearch(e.target.value)}
+                className="text-foreground h-9"
+              />
+              <div className="max-h-44 overflow-y-auto grid grid-cols-2 gap-1">
+                {filteredOpponent.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={cn(
+                      "rounded border px-2 py-2 text-left text-xs min-h-[44px]",
+                      selectedOpponentPlayerId === p.id ? "border-primary bg-primary/10" : "border-border",
+                    )}
+                    onClick={() => {
+                      setSelectedOpponentPlayerId(p.id);
+                      if (pendingCapture?.needsPlayer && !pendingCapture.needsOutcome) void finishPendingCapture();
+                    }}
+                  >
+                    <span className="font-bold text-amber-400">{p.jerseyNumber ?? "—"}</span> {p.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <Button type="button" size="sm" variant="ghost" className="w-full" onClick={() => {
+            setSelectedPlayerId("");
+            setSelectedOpponentPlayerId("");
+          }}>
+            Limpar seleção
+          </Button>
+        </section>
+
+        <section className="rounded-lg border border-border p-3 space-y-2 min-h-[220px] max-h-[360px] overflow-y-auto">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Ações / tags</p>
+          {tagsByGroup.map(([group, tags]) => (
+            <div key={group} className="space-y-1">
+              <p className="text-[10px] text-muted-foreground">{group}</p>
+              <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+                {tags.map((tag) => (
+                  <Button
+                    key={tag.id}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-auto min-h-[44px] flex-col py-2 text-xs"
+                    onClick={() => void captureTagStamp(tag, teamSide)}
+                  >
+                    <span>{tag.label}</span>
+                    {tag.shortcutKey ? (
+                      <span className="text-[10px] opacity-70">{tag.shortcutKey.toUpperCase()}</span>
+                    ) : null}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="flex flex-wrap gap-1 pt-2 border-t border-border">
+            <Button type="button" size="sm" onClick={() => void transitionPossession("our")}>
+              1 · {ourTeamLabel}
+            </Button>
+            <Button type="button" size="sm" variant="secondary" onClick={() => void transitionPossession("opponent")}>
+              2 · {opponentTeamLabel}
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => void transitionPossession("out")}>
+              3 · Bola parada
+            </Button>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-border p-3 space-y-2 min-h-[220px]">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Campo</p>
+          <AnalysisPitchMap
+            className="max-w-none w-full"
+            points={events
+              .filter((e) => e.fieldX != null && e.fieldY != null)
+              .slice(-8)
+              .map((e) => ({
+                eventId: e.id,
+                x: e.fieldX!,
+                y: e.fieldY!,
+                fieldZoneKey: e.fieldZoneKey,
+                label: e.tagDefinition?.label,
+              }))}
+            selectedZone={selectedZone}
+            onPickZone={(zone) => {
+              setSelectedZone(zone);
+              setFieldXY(null);
+              if (pendingCapture?.needsField && !pendingCapture.needsOutcome) void finishPendingCapture();
+            }}
+            onPick={(x, y) => {
+              setFieldXY({ x, y });
+              setSelectedZone(resolvePitchZoneFromXY(x, y));
+              if (pendingCapture?.needsField && !pendingCapture.needsOutcome) void finishPendingCapture();
+            }}
+            showZoneLabels
+          />
           {selectedZone ? (
             <p className="text-xs text-muted-foreground">Zona: {labelPitchZone(selectedZone)}</p>
           ) : null}
+        </section>
+      </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-            {detail?.tags.map((tag) => (
-              <Button
-                key={tag.id}
-                type="button"
-                size="sm"
-                variant={selectedTag?.id === tag.id ? "default" : "outline"}
-                className="h-auto min-h-[44px] flex-col py-2"
-                onClick={() => {
-                  setSelectedTag(tag);
-                  setTagStep("side");
-                  setSelectedZone(null);
-                }}
-              >
-                <span>{tag.label}</span>
-                {tag.shortcutKey ? (
-                  <span className="text-[10px] opacity-70">{tag.shortcutKey.toUpperCase()}</span>
-                ) : null}
-              </Button>
-            ))}
-          </div>
-
-          {selectedTag ? (
-            <div className="rounded-lg border border-border p-3 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium">{selectedTag.label}</p>
-                <Button type="button" size="sm" variant="ghost" onClick={resetTagFlow}>
-                  Cancelar
-                </Button>
-              </div>
-              {tagStep === "side" ? (
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={teamSide === "proprio" ? "default" : "outline"}
-                    onClick={() => {
-                      setTeamSide("proprio");
-                      setTagStep(selectedTag.requiresPlayer ? "player" : "zone");
-                    }}
-                  >
-                    Nosso time
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={teamSide === "adversario" ? "default" : "outline"}
-                    onClick={() => {
-                      setTeamSide("adversario");
-                      setTagStep(selectedTag.requiresPlayer ? "player" : "zone");
-                    }}
-                  >
-                    Adversário
-                  </Button>
-                </div>
-              ) : null}
-
-              {tagStep === "player" || tagStep === "zone" || tagStep === "outcome" ? (
-                <>
-                  {selectedTag.requiresPlayer && tagStep === "player" ? (
-                    <>
-                      {teamSide === "adversario" ? (
-                        <Input
-                          placeholder="Atleta adversário (nome ou nº)"
-                          value={adversaryLabel}
-                          onChange={(e) => setAdversaryLabel(e.target.value)}
-                          className="text-foreground"
-                        />
-                      ) : null}
-                      <Input
-                        placeholder="Buscar atleta ou número…"
-                        value={playerSearch}
-                        onChange={(e) => setPlayerSearch(e.target.value)}
-                        className="text-foreground"
-                      />
-                      <div className="max-h-40 overflow-y-auto grid grid-cols-2 gap-1 sm:grid-cols-3">
-                        {filteredRoster.map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            className={cn(
-                              "rounded border px-2 py-2 text-left text-xs",
-                              selectedPlayerId === p.id ? "border-primary bg-primary/10" : "border-border",
-                            )}
-                            onClick={() => {
-                              setSelectedPlayerId(p.id);
-                              setTagStep("zone");
-                            }}
-                          >
-                            <span className="font-bold text-amber-400">{p.jerseyNumber ?? "—"}</span>{" "}
-                            {p.name}
-                          </button>
-                        ))}
-                      </div>
-                      {teamSide === "adversario" ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setTagStep("zone")}
-                        >
-                          Continuar sem elenco
-                        </Button>
-                      ) : null}
-                    </>
-                  ) : null}
-
-                  {tagStep === "zone" ? (
-                    <p className="text-sm text-amber-200/90">Selecione a zona no plano de campo (3×3).</p>
-                  ) : null}
-
-                  {tagStep === "outcome" && selectedZone ? (
-                    <div className="flex flex-wrap gap-2">
-                      {parseTagOutcomes(selectedTag.outcomes).length <= 1 ? (
-                        <Button type="button" size="sm" onClick={() => void commitTag("neutro")}>
-                          Salvar ação
-                        </Button>
-                      ) : (
-                        parseTagOutcomes(selectedTag.outcomes).map((o) => (
-                          <Button key={o} type="button" size="sm" onClick={() => void commitTag(o)}>
-                            {OUTCOME_LABEL[o] ?? o}
-                          </Button>
-                        ))
-                      )}
-                    </div>
-                  ) : null}
-                </>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="flex min-h-0 flex-col gap-3">
+      {showSidePanel ? (
+        <div className="grid gap-3 lg:grid-cols-[1fr_280px]">
           {metrics ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <KpiCard label="Passes" value={`${metrics.passSuccess}/${metrics.passAttempts}`} />
-              <KpiCard
-                label="Precisão"
-                value={metrics.passAccuracyPct != null ? `${metrics.passAccuracyPct}%` : "—"}
-              />
               <KpiCard label="Finalizações" value={metrics.shots} />
               <KpiCard label="Gols" value={metrics.goals ?? 0} />
-              <KpiCard label="Faltas" value={metrics.fouls ?? 0} />
-              <KpiCard label="Cartões" value={`${metrics.yellowCards ?? 0}/${metrics.redCards ?? 0}`} />
             </div>
           ) : null}
-
           {failed.length > 0 ? (
-            <div className="rounded border border-destructive/40 bg-destructive/10 p-2 text-xs">
+            <div className="rounded border border-destructive/40 bg-destructive/10 p-2 text-xs lg:col-span-2">
               {failed.map((f) => (
                 <div key={f.clientEventKey} className="flex items-center justify-between gap-2 py-1">
                   <span className="truncate">{f.error}</span>
@@ -567,47 +781,23 @@ export function LiveTagWorkspace({ sessionId, tenantId, mode }: Props) {
               ))}
             </div>
           ) : null}
-
-          <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
+          <div className="max-h-48 overflow-y-auto rounded-lg border border-border lg:col-span-2">
             <p className="sticky top-0 border-b border-border bg-background px-3 py-2 text-xs font-medium uppercase text-muted-foreground">
               Timeline
             </p>
             <ul className="divide-y divide-border">
-              {[...events].reverse().slice(0, 50).map((ev) => (
+              {[...events].reverse().slice(0, 40).map((ev) => (
                 <li key={ev.id} className="px-3 py-2 text-xs">
-                  <div className="flex justify-between gap-2">
-                    <span className="font-medium">
-                      {ev.matchClockSeconds != null ? formatClockDisplay(ev.matchClockSeconds) : "—"} ·{" "}
-                      {ev.tagDefinition?.label}
-                    </span>
-                    <span className="text-muted-foreground">{ev.source}</span>
-                  </div>
-                  <p className="text-muted-foreground">
-                    {[ev.player?.name, ev.outcome ? OUTCOME_LABEL[ev.outcome] ?? ev.outcome : null]
-                      .filter(Boolean)
-                      .join(" · ") || "—"}
-                  </p>
-                  {mode === "review" ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="mt-1 h-7 px-2"
-                      onClick={() => {
-                        if (streamPath && videoRef.current && ev.startMs != null) {
-                          videoRef.current.currentTime = ev.startMs / 1000;
-                        }
-                      }}
-                    >
-                      Ir ao vídeo
-                    </Button>
-                  ) : null}
+                  <span className="font-medium">
+                    {ev.matchClockSeconds != null ? formatClockDisplay(ev.matchClockSeconds) : "—"} ·{" "}
+                    {ev.tagDefinition?.label}
+                  </span>
                 </li>
               ))}
             </ul>
           </div>
         </div>
-      </div>
+      ) : null}
 
       <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
         <AlertDialogContent>
@@ -635,4 +825,26 @@ function formatClockDisplay(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function NativeSelectPlaybackRate({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (rate: number) => void;
+}) {
+  return (
+    <select
+      className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+    >
+      {[0.5, 0.75, 1, 1.25, 1.5, 2].map((r) => (
+        <option key={r} value={r}>
+          {r}×
+        </option>
+      ))}
+    </select>
+  );
 }

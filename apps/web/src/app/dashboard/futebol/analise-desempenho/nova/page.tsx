@@ -32,6 +32,9 @@ export default function NovaAnaliseDesempenhoPage() {
   const [videoType, setVideoType] = useState("YOUTUBE");
   const [externalUrl, setExternalUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [postMatch, setPostMatch] = useState(false);
+  const [opponentProfileId, setOpponentProfileId] = useState("");
+  const [opponentProfiles, setOpponentProfiles] = useState<Array<{ id: string; opponentName: string }>>([]);
   const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
 
   useEffect(() => {
@@ -50,6 +53,10 @@ export default function NovaAnaliseDesempenhoPage() {
       .get<CoachTrainingSession[]>(`/futebol-treinadores/training-sessions?${params}`)
       .then(({ data }) => setTrainings(Array.isArray(data) ? data : []))
       .catch(() => setTrainings([]));
+    api
+      .get<Array<{ id: string; opponentName: string }>>(`/performance-analysis/opponent-profiles?tenantId=${tenantId}`)
+      .then(({ data }) => setOpponentProfiles(Array.isArray(data) ? data : []))
+      .catch(() => setOpponentProfiles([]));
   }, [tenantId, category]);
 
   async function handleCreate() {
@@ -59,13 +66,23 @@ export default function NovaAnaliseDesempenhoPage() {
     }
     setSaving(true);
     try {
+      if (kind === "OPPONENT" && !opponentProfileId) {
+        setFeedback({
+          title: "Perfil adversário",
+          message: "Selecione um perfil de adversário ou crie um em Adversário antes.",
+        });
+        setSaving(false);
+        return;
+      }
       const { data: session } = await api.post<{ id: string }>("/performance-analysis/sessions", {
         tenantId,
-        kind,
+        kind: postMatch ? "MATCH" : kind,
+        status: postMatch ? "review" : undefined,
         title: title.trim(),
         category: sessionCategory || null,
         fmfMatchReportId: kind === "MATCH" && fmfMatchReportId ? fmfMatchReportId : null,
         trainingSessionId: kind === "TRAINING" && trainingSessionId ? trainingSessionId : null,
+        opponentProfileId: kind === "OPPONENT" ? opponentProfileId : null,
       });
       if (videoTitle.trim()) {
         await api.post(`/performance-analysis/sessions/${session.id}/video-sources`, {
@@ -75,7 +92,13 @@ export default function NovaAnaliseDesempenhoPage() {
           externalUrl: videoType !== "UPLOAD" ? externalUrl.trim() : undefined,
         });
       }
-      router.push(`${ANALISE_DESEMPENHO_BASE}/sessoes/${session.id}${qs ? `?${qs}` : ""}`);
+      if (kind === "OPPONENT" && opponentProfileId) {
+        router.push(`${ANALISE_DESEMPENHO_BASE}/adversarios/${opponentProfileId}${qs ? `?${qs}` : ""}`);
+      } else if (postMatch) {
+        router.push(`${ANALISE_DESEMPENHO_BASE}/sessoes?status=review${qs ? `&${qs.replace(/^\?/, "")}` : ""}`);
+      } else {
+        router.push(`${ANALISE_DESEMPENHO_BASE}/sessoes/${session.id}${qs ? `?${qs}` : ""}`);
+      }
     } catch (err) {
       setFeedback({
         title: "Erro",
@@ -120,6 +143,30 @@ export default function NovaAnaliseDesempenhoPage() {
                 })),
             ]}
           />
+        ) : null}
+
+        {kind === "OPPONENT" ? (
+          <NativeSelectField
+            value={opponentProfileId}
+            onChange={(e) => setOpponentProfileId(e.target.value)}
+            placeholder="Perfil do adversário"
+            options={[
+              { value: "", label: "Selecione…" },
+              ...opponentProfiles.map((p) => ({ value: p.id, label: p.opponentName })),
+            ]}
+          />
+        ) : null}
+
+        {kind === "MATCH" ? (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={postMatch}
+              onChange={(e) => setPostMatch(e.target.checked)}
+              className="h-4 w-4"
+            />
+            Análise pós-jogo (MATCH em revisão)
+          </label>
         ) : null}
 
         {kind === "TRAINING" ? (

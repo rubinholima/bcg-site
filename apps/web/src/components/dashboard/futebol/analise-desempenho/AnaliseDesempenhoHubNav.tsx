@@ -7,14 +7,10 @@ import { ANALISE_DESEMPENHO_BASE, useAnaliseDesempenhoQuery } from "./AnaliseDes
 
 const ITEMS = [
   { href: "", label: "Visão geral" },
-  { href: "/sessoes", label: "Partidas" },
-  { href: "/campeonato", label: "Campeonato" },
-  { href: "/sessoes?status=live", label: "Ao vivo" },
+  { href: "/sessoes?hub=nossa", label: "Nossa equipe" },
+  { href: "/adversarios", label: "Adversário" },
   { href: "/sessoes?status=review", label: "Pós-jogo" },
-  { href: "/treinos", label: "Treinos" },
-  { href: "/adversarios", label: "Adversários" },
-  { href: "/pre-jogo", label: "Pré-jogo" },
-  { href: "/materiais", label: "Clips / materiais" },
+  { href: "/materiais", label: "Clipes e materiais" },
 ] as const;
 
 export function AnaliseDesempenhoHubNav() {
@@ -33,7 +29,10 @@ export function AnaliseDesempenhoHubNav() {
         if (k) params.set(k, v ?? "");
       }
     }
-    if (path === "/sessoes" && !extraQuery) params.delete("status");
+    if (path === "/sessoes" && !extraQuery) {
+      params.delete("status");
+      params.delete("hub");
+    }
     const q = params.toString();
     return `${base}${path}${q ? `?${q}` : ""}`;
   }
@@ -43,8 +42,9 @@ export function AnaliseDesempenhoHubNav() {
       {ITEMS.map((item) => {
         const href = hrefFor(item.href);
         const pathOnly = item.href.split("?")[0];
-        const wantStatus =
-          item.href.includes("status=live") ? "live" : item.href.includes("status=review") ? "review" : null;
+        const wantStatus = item.href.includes("status=review") ? "review" : null;
+        const wantHub = item.href.includes("hub=nossa") ? "nossa" : null;
+        const hub = searchParams.get("hub");
         const active =
           item.href === ""
             ? pathname === base || pathname === `${base}/`
@@ -52,8 +52,12 @@ export function AnaliseDesempenhoHubNav() {
               (pathOnly === "/sessoes"
                 ? wantStatus
                   ? sessionStatus === wantStatus
-                  : !sessionStatus || (sessionStatus !== "live" && sessionStatus !== "review")
-                : true);
+                  : wantHub
+                    ? hub === "nossa"
+                    : !sessionStatus && !hub
+                : pathOnly === "/adversarios"
+                  ? pathname.startsWith(`${base}/adversarios`)
+                  : true);
         return (
           <Link
             key={item.href || "home"}

@@ -26,6 +26,7 @@ export default function AnaliseDesempenhoSessoesPage() {
   const { tenantId, qs } = useAnaliseDesempenhoQuery();
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get("status");
+  const hub = searchParams.get("hub");
   const [sessions, setSessions] = useState<AnalysisSessionListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const suffix = qs ? `?${qs}` : "";
@@ -37,10 +38,18 @@ export default function AnaliseDesempenhoSessoesPage() {
     if (statusFilter?.trim()) params.set("status", statusFilter.trim());
     api
       .get<AnalysisSessionListItem[]>(`/performance-analysis/sessions?${params}`)
-      .then(({ data }) => setSessions(Array.isArray(data) ? data : []))
+      .then(({ data }) => {
+        let list = Array.isArray(data) ? data : [];
+        if (statusFilter === "review") {
+          list = list.filter((s) => s.kind === "MATCH" && (s.status === "review" || s.status === "completed"));
+        } else if (hub === "nossa") {
+          list = list.filter((s) => s.kind === "MATCH" || s.kind === "TRAINING");
+        }
+        setSessions(list);
+      })
       .catch(() => setSessions([]))
       .finally(() => setLoading(false));
-  }, [tenantId, statusFilter]);
+  }, [tenantId, statusFilter, hub]);
 
   return (
     <AnaliseDesempenhoShell title="Sessões de análise">

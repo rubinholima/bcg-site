@@ -22,11 +22,18 @@ export type AnalysisTagDefinition = {
   key: string;
   label: string;
   category: string;
+  tagGroup?: string | null;
   outcomes: string[] | unknown;
+  qualifiers?: string[] | unknown;
   sortOrder: number;
   active: boolean;
   shortcutKey?: string | null;
   requiresPlayer?: boolean;
+  requiresRelatedPlayer?: boolean;
+  requiresFieldLocation?: boolean;
+  stateBehavior?: string | null;
+  color?: string | null;
+  icon?: string | null;
   autoClipEnabled?: boolean;
 };
 

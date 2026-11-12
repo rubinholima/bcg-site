@@ -97,6 +97,8 @@ export class PerformanceAnalysisController {
       fmfMatchReportId?: string;
       travelLogisticsId?: string;
       trainingSessionId?: string;
+      opponentProfileId?: string;
+      status?: string;
     },
   ) {
     if (!body?.tenantId?.trim() || !body.title?.trim()) {
@@ -288,6 +290,83 @@ export class PerformanceAnalysisController {
   @Get('sessions/:sessionId/roster')
   async roster(@Req() req: AuthedRequest, @Param('sessionId') sessionId: string) {
     return this.service.getSessionRoster(sessionId, await this.allowed(req));
+  }
+
+  @Get('sessions/:sessionId/opponent-roster')
+  async opponentRoster(@Req() req: AuthedRequest, @Param('sessionId') sessionId: string) {
+    return this.service.getSessionOpponentRoster(sessionId, await this.allowed(req));
+  }
+
+  @Post('sessions/:sessionId/possession-transition')
+  async possessionTransition(
+    @Req() req: AuthedRequest,
+    @Param('sessionId') sessionId: string,
+    @Body()
+    body: {
+      target: 'our' | 'opponent' | 'out';
+      startMs: number;
+      matchPeriod?: string;
+      matchClockSeconds?: number;
+      videoSourceId?: string;
+      clientEventKey?: string;
+    },
+  ) {
+    if (!body?.target || body.startMs == null) {
+      throw new BadRequestException('target e startMs são obrigatórios.');
+    }
+    return this.service.transitionPossessionState(
+      sessionId,
+      { ...body, authorUserId: this.userId(req) },
+      await this.allowed(req),
+    );
+  }
+
+  @Post('tags')
+  async upsertTag(
+    @Req() req: AuthedRequest,
+    @Body()
+    body: {
+      tenantId: string;
+      id?: string;
+      key?: string;
+      label: string;
+      category?: string;
+      tagGroup?: string;
+      sortOrder?: number;
+      outcomes?: string[];
+      qualifiers?: string[];
+      color?: string;
+      icon?: string;
+      shortcutKey?: string;
+      requiresPlayer?: boolean;
+      requiresRelatedPlayer?: boolean;
+      requiresFieldLocation?: boolean;
+      stateBehavior?: string;
+      active?: boolean;
+    },
+  ) {
+    if (!body?.tenantId?.trim() || !body.label?.trim()) {
+      throw new BadRequestException('tenantId e label são obrigatórios.');
+    }
+    return this.service.upsertTagDefinition(body.tenantId.trim(), body, await this.allowed(req));
+  }
+
+  @Get('clips')
+  async listTenantClips(
+    @Req() req: AuthedRequest,
+    @Query('tenantId') tenantId: string,
+    @Query('sessionId') sessionId?: string,
+    @Query('playerId') playerId?: string,
+    @Query('limit') limitRaw?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório.');
+    const limit = limitRaw?.trim() ? Number(limitRaw) : 80;
+    return this.service.listClipsForTenant(
+      tenantId.trim(),
+      await this.allowed(req),
+      { sessionId, playerId },
+      Number.isFinite(limit) ? limit : 80,
+    );
   }
 
   @Post('sessions/:sessionId/events/undo')
