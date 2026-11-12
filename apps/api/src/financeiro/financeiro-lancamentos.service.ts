@@ -206,13 +206,30 @@ export class FinanceiroLancamentosService {
       vencimentoDe?: string;
       vencimentoAte?: string;
       busca?: string;
+      page?: number;
+      pageSize?: number;
     },
   ) {
     const where = this.buildListWhere(tenantId, opts);
-    const rows = await this.prisma.financeiroLancamento.findMany({
-      where,
-      orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }],
-    });
+    const page = Math.max(1, opts.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, opts.pageSize ?? 50));
+    const [total, rows] = await Promise.all([
+      this.prisma.financeiroLancamento.count({ where }),
+      this.prisma.financeiroLancamento.findMany({
+        where,
+        orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+  if (opts.page != null || opts.pageSize != null) {
+      return {
+        items: rows.map(serialize),
+        total,
+        page,
+        pageSize,
+      };
+    }
     return rows.map(serialize);
   }
 

@@ -79,6 +79,27 @@ export default function FinanceiroLancamentoDetailPage() {
 
   const plannedName = lanc?.financeAccountId ? accountNames[lanc.financeAccountId] : null;
 
+  async function downloadProof(proofId: string, fileName: string) {
+    if (!tenantId) return;
+    try {
+      const base = typeof window !== "undefined" ? window.location.origin : "";
+      const url = `${base}/api/financeiro/comprovantes/${proofId}/download?tenantId=${encodeURIComponent(tenantId)}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Falha no download");
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      setFeedback({
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível baixar o comprovante.",
+      });
+    }
+  }
+
   const load = useCallback(async () => {
     if (!tenantId || !id) return;
     setLoading(true);
@@ -298,8 +319,22 @@ export default function FinanceiroLancamentoDetailPage() {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {s.paymentMethodName ?? "—"} · {s.actualAccountName ?? "—"}
-                  {s.proofs?.length ? ` · ${s.proofs.length} comprovante(s)` : ""}
                 </p>
+                {s.proofs?.length ? (
+                  <ul className="mt-1 space-y-1">
+                    {s.proofs.map((p) => (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          className="text-xs text-primary underline underline-offset-2"
+                          onClick={() => void downloadProof(p.id, p.fileName)}
+                        >
+                          Baixar {p.fileName}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </div>
             ))
           )}

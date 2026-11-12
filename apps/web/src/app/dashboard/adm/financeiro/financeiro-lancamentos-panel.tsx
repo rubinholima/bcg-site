@@ -153,6 +153,9 @@ export function FinanceiroLancamentosPanel({
   const [buscaDebounced, setBuscaDebounced] = useState("");
 
   const [list, setList] = useState<FinanceiroLancamentoRow[]>([]);
+  const [listTotal, setListTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
   const [resumo, setResumo] = useState<ResumoLancamentos | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -193,6 +196,10 @@ export function FinanceiroLancamentosPanel({
     return () => window.clearTimeout(t);
   }, [buscaInput]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [modo, statusFiltro, vencDe, vencAte, buscaDebounced]);
+
   const queryString = useMemo(() => {
     if (!tenantId) return "";
     const p = new URLSearchParams({ tenantId, tipo: modo });
@@ -200,8 +207,10 @@ export function FinanceiroLancamentosPanel({
     if (vencDe) p.set("vencimentoDe", vencDe);
     if (vencAte) p.set("vencimentoAte", vencAte);
     if (buscaDebounced) p.set("busca", buscaDebounced);
+    p.set("page", String(page));
+    p.set("pageSize", String(pageSize));
     return p.toString();
-  }, [tenantId, modo, statusFiltro, vencDe, vencAte, buscaDebounced]);
+  }, [tenantId, modo, statusFiltro, vencDe, vencAte, buscaDebounced, page, pageSize]);
 
   const load = useCallback(async () => {
     if (!tenantId || !queryString) return;
@@ -209,10 +218,19 @@ export function FinanceiroLancamentosPanel({
     setErr(null);
     try {
       const [rList, rResumo] = await Promise.all([
-        api.get<FinanceiroLancamentoRow[]>(`/financeiro/lancamentos?${queryString}`),
+        api.get<FinanceiroLancamentoRow[] | { items: FinanceiroLancamentoRow[]; total: number }>(
+          `/financeiro/lancamentos?${queryString}`,
+        ),
         api.get<ResumoLancamentos>(`/financeiro/lancamentos/resumo?tenantId=${tenantId}&tipo=${modo}`),
       ]);
-      setList(Array.isArray(rList.data) ? rList.data : []);
+      const payload = rList.data;
+      if (payload && typeof payload === "object" && "items" in payload && Array.isArray(payload.items)) {
+        setList(payload.items);
+        setListTotal(payload.total ?? payload.items.length);
+      } else {
+        setList(Array.isArray(payload) ? payload : []);
+        setListTotal(Array.isArray(payload) ? payload.length : 0);
+      }
       setResumo(rResumo.data ?? null);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Erro ao carregar lançamentos.");
@@ -497,6 +515,33 @@ export function FinanceiroLancamentosPanel({
                   )}
                 </TableBody>
               </Table>
+              {listTotal > pageSize ? (
+                <div className="mt-3 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {listTotal} registro(s) · página {page} de {Math.max(1, Math.ceil(listTotal / pageSize))}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={page <= 1 || loading}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={page >= Math.ceil(listTotal / pageSize) || loading}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
         </CardContent>

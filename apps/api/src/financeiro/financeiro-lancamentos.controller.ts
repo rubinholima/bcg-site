@@ -72,6 +72,8 @@ export class FinanceiroLancamentosController {
     @Query('vencimentoDe') vencimentoDe?: string,
     @Query('vencimentoAte') vencimentoAte?: string,
     @Query('busca') busca?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
   ) {
     const tid = await this.requireTenantScope(req, tenantId);
     return this.service.findAll(tid, {
@@ -80,6 +82,8 @@ export class FinanceiroLancamentosController {
       vencimentoDe: vencimentoDe?.trim(),
       vencimentoAte: vencimentoAte?.trim(),
       busca: busca?.trim(),
+      page: page ? parseInt(page, 10) : undefined,
+      pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
     });
   }
 

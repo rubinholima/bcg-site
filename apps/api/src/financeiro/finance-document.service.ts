@@ -121,6 +121,15 @@ export class FinanceDocumentService {
     return { stream: body, fileName: doc.fileName, mimeType: doc.mimeType ?? contentType };
   }
 
+  async downloadSettlementProofStream(tenantId: string, proofId: string) {
+    const proof = await this.prisma.financeSettlementProof.findFirst({
+      where: { id: proofId, tenantId },
+    });
+    if (!proof?.fileKey) throw new NotFoundException('Comprovante não encontrado.');
+    const { body, contentType } = await this.s3.getObject(proof.fileKey);
+    return { stream: body, fileName: proof.fileName, mimeType: proof.mimeType ?? contentType };
+  }
+
   async attachSettlementProof(
     tenantId: string,
     settlementId: string,

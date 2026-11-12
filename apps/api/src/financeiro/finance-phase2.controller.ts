@@ -259,6 +259,25 @@ export class FinancePhase2Controller {
     return this.documents.list(tid, id);
   }
 
+  @Get('comprovantes/:proofId/download')
+  @RequireModule(['adm_financeiro', 'finance_view'])
+  @RequireFinance('finance_view')
+  async downloadSettlementProof(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('proofId') proofId: string,
+    @Query('tenantId') tenantId: string,
+    @Res() res: Response,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    const { stream, fileName, mimeType } = await this.documents.downloadSettlementProofStream(
+      tid,
+      proofId,
+    );
+    res.setHeader('Content-Type', mimeType ?? 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    stream.pipe(res);
+  }
+
   @Get('documentos/:documentId/download')
   @RequireModule(['adm_financeiro', 'finance_view'])
   @RequireFinance('finance_view')

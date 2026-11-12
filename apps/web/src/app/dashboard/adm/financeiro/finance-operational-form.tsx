@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { FinanceAllocationEditor, type AllocationRow } from "./finance-allocation-editor";
 import { FinanceInstallmentSection } from "./finance-installment-section";
 import { FinanceEmployeePicker, type FinanceEmployeeOption } from "./finance-employee-picker";
+import { FinanceCustomerPicker, type FinanceCustomerOption } from "./finance-customer-picker";
 import { FinancePrivateFileUpload, type FinanceUploadedFile } from "./finance-private-file-upload";
 import { extractFinanceError } from "./finance-api-helpers";
 
@@ -51,7 +52,7 @@ export function FinanceOperationalForm({
   const [financeCategoryId, setFinanceCategoryId] = useState("");
   const [financePaymentMethodId, setFinancePaymentMethodId] = useState("");
   const [supplierId, setSupplierId] = useState("");
-  const [customerId, setCustomerId] = useState("");
+  const [customer, setCustomer] = useState<FinanceCustomerOption | null>(null);
   const [contraparte, setContraparte] = useState("");
   const [notas, setNotas] = useState("");
   const [boletoDigitableLine, setBoletoDigitableLine] = useState("");
@@ -91,7 +92,7 @@ export function FinanceOperationalForm({
       financeCategoryId: financeCategoryId || undefined,
       financePaymentMethodId: financePaymentMethodId || undefined,
       supplierId: tipo === "pagar" && supplierId ? supplierId : undefined,
-      customerId: tipo === "receber" && customerId ? customerId : undefined,
+      customerId: tipo === "receber" && customer?.id ? customer.id : undefined,
       contraparte: contraparte.trim() || undefined,
       documentType: documentType || undefined,
       documentNumber: documentNumber.trim() || undefined,
@@ -273,9 +274,8 @@ export function FinanceOperationalForm({
                 />
               </div>
             ) : (
-              <div>
-                <Label htmlFor="customerId">Cliente (ID opcional)</Label>
-                <Input id="customerId" value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="text-foreground" />
+              <div className="sm:col-span-2">
+                <FinanceCustomerPicker tenantId={tenantId} value={customer} onChange={setCustomer} />
               </div>
             )}
             {tipo === "receber" && isPayrollDeduction ? (

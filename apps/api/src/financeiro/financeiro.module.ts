@@ -26,6 +26,8 @@ import { FinanceReconciliationService } from './finance-reconciliation.service';
 import { FinanceCardStatementService } from './finance-card-statement.service';
 import { FinancePayrollDeductionService } from './finance-payroll-deduction.service';
 import { FinancePhase2Controller } from './finance-phase2.controller';
+import { FinanceReportController } from './finance-report.controller';
+import { FinanceReportService } from './finance-report.service';
 import { S3Module } from '../s3/s3.module';
 
 @Module({
@@ -35,6 +37,7 @@ import { S3Module } from '../s3/s3.module';
     FinanceiroLancamentosController,
     FinanceCatalogController,
     FinancePhase2Controller,
+    FinanceReportController,
     CustomersController,
   ],
   providers: [
@@ -57,6 +60,7 @@ import { S3Module } from '../s3/s3.module';
     FinanceReconciliationService,
     FinanceCardStatementService,
     FinancePayrollDeductionService,
+    FinanceReportService,
   ],
   exports: [
     CustomersService,
