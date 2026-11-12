@@ -92,6 +92,7 @@ import { CaptacaoFieldMode } from "@/components/dashboard/futebol/CaptacaoFieldM
 import { CaptacaoReportDetailDialog } from "@/components/dashboard/futebol/CaptacaoReportDetailDialog";
 import { CaptacaoCtEvaluationPanel } from "@/components/dashboard/futebol/CaptacaoCtEvaluationPanel";
 import { CaptacaoGerenteQueue } from "@/components/dashboard/futebol/CaptacaoGerenteQueue";
+import { CaptacaoProspectPhotoFields } from "@/components/dashboard/futebol/CaptacaoProspectPhotoFields";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/scout-geolocation";
 
 const CaptacaoScoutMap = dynamic(
@@ -186,6 +187,8 @@ export function CaptacaoHub() {
     notes: "",
   });
   const [prospectForm, setProspectForm] = useState({ ...EMPTY_PROSPECT });
+  const [prospectFacePhoto, setProspectFacePhoto] = useState<File | null>(null);
+  const [prospectBodyPhoto, setProspectBodyPhoto] = useState<File | null>(null);
   const [reportForm, setReportForm] = useState({
     prospectId: "",
     scoutId: "",
@@ -413,15 +416,33 @@ export function CaptacaoHub() {
   async function handleCreateProspect(e: React.FormEvent) {
     e.preventDefault();
     if (!effectiveTenantId) return;
+    if (!prospectFacePhoto || !prospectBodyPhoto) {
+      setFeedback({
+        open: true,
+        title: "Fotos obrigatórias",
+        message: "Envie a foto de rosto e a foto de corpo inteiro do atleta.",
+        variant: "warning",
+      });
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      await api.post("/captacao/prospects", {
+      const { data: created } = await api.post<{ id: string }>("/captacao/prospects", {
         tenantId: effectiveTenantId,
         ...prospectForm,
         scoutId: prospectForm.scoutId || undefined,
       });
+      const uploadPhoto = async (kind: "face" | "full_body", photo: File) => {
+        const fd = new FormData();
+        fd.append("file", photo);
+        await api.postForm(`/captacao/prospects/${created.id}/photos/${kind}`, fd);
+      };
+      await uploadPhoto("face", prospectFacePhoto);
+      await uploadPhoto("full_body", prospectBodyPhoto);
       setProspectForm({ ...EMPTY_PROSPECT });
+      setProspectFacePhoto(null);
+      setProspectBodyPhoto(null);
       setTab("pipeline");
       await loadAll();
       setFeedback({
@@ -1363,6 +1384,13 @@ export function CaptacaoHub() {
               <Card>
                 <CardContent className="pt-6">
                   <form onSubmit={handleCreateProspect} className="grid gap-4 sm:grid-cols-2">
+                    <CaptacaoProspectPhotoFields
+                      className="sm:col-span-2"
+                      faceFile={prospectFacePhoto}
+                      fullBodyFile={prospectBodyPhoto}
+                      onFaceChange={setProspectFacePhoto}
+                      onFullBodyChange={setProspectBodyPhoto}
+                    />
                     <div className="sm:col-span-2">
                       <Label>Nome completo *</Label>
                       <Input
