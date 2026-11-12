@@ -33,12 +33,17 @@ import { FinanceImportBatchService } from './import/finance-import-batch.service
 import { FinanceImportSimulationService } from './import/finance-import-simulation.service';
 import { FinanceImportExecutionService } from './import/finance-import-execution.service';
 import { FinanceImportReviewService } from './import/finance-import-review.service';
+import { FinanceOmieSyncController } from './omie/finance-omie-sync.controller';
+import { FinanceOmieConnectionService } from './omie/finance-omie-connection.service';
+import { FinanceOmieSyncService } from './omie/finance-omie-sync.service';
+import { FinanceOmieReconciliationService } from './omie/finance-omie-reconciliation.service';
 import { S3Module } from '../s3/s3.module';
 
 @Module({
   imports: [AuthModule, ModulesModule, IntegrationsModule, S3Module],
   controllers: [
     FinanceiroOmieController,
+    FinanceOmieSyncController,
     FinanceiroLancamentosController,
     FinanceCatalogController,
     FinancePhase2Controller,
@@ -71,6 +76,9 @@ import { S3Module } from '../s3/s3.module';
     FinanceImportSimulationService,
     FinanceImportExecutionService,
     FinanceImportReviewService,
+    FinanceOmieConnectionService,
+    FinanceOmieSyncService,
+    FinanceOmieReconciliationService,
   ],
   exports: [
     CustomersService,

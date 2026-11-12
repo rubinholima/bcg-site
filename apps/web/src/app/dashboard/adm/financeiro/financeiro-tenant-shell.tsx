@@ -40,6 +40,7 @@ const NAV = [
   { href: "/dashboard/adm/financeiro/relatorios", label: "Relatórios" },
   { href: "/dashboard/adm/financeiro/importacoes", label: "Importações" },
   { href: "/dashboard/adm/financeiro/omie", label: "Integrações / Omie" },
+  { href: "/dashboard/adm/financeiro/omie/reconciliacao", label: "Reconciliação Omie" },
 ];
 
 export function FinanceiroTenantShell({ children }: { children: React.ReactNode }) {

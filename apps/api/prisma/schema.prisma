@@ -270,6 +270,11 @@ model Tenant {
   financeImportBatches FinanceImportBatch[]
   financeImportStagingRows FinanceImportStagingRow[]
   financeImportBatchMappings FinanceImportBatchMapping[]
+  financeOmieSyncState FinanceOmieTenantSyncState?
+  financeOmieSyncBatches FinanceOmieSyncBatch[]
+  financeOmieMirrorRecords FinanceOmieMirrorRecord[]
+  financeOmieReconciliationDecisions FinanceOmieReconciliationDecision[]
+  financeOmieEntityMappings FinanceOmieEntityMapping[]
   customers             Customer[]
   registrationInvites   RegistrationInvite[]
   scouts                Scout[]
@@ -967,6 +972,116 @@ model FinanceImportBatchMapping {
   updatedAt             DateTime @updatedAt
   @@unique([batchId, mappingKind, sourceValueNormalized])
   @@index([tenantId, batchId])
+}
+
+// ========== CUP360 Finance Omie read-sync & reconciliation (mirror — não é segundo ledger) ==========
+
+model FinanceOmieTenantSyncState {
+  tenantId              String   @id
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lastSuccessfulSyncAt  DateTime?
+  lastSyncAttemptAt     DateTime?
+  lastSyncStatus        String?
+  lastSyncError         String?  @db.Text
+  lastSyncBatchId       String?
+  updatedAt             DateTime @updatedAt
+}
+
+model FinanceOmieSyncBatch {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// PENDING | RUNNING | COMPLETED | COMPLETED_WITH_WARNINGS | FAILED
+  status            String   @default("PENDING")
+  /// ap | ar | both
+  syncType          String
+  dateFrom          DateTime? @db.Date
+  dateTo            DateTime? @db.Date
+  startedAt         DateTime @default(now())
+  completedAt       DateTime?
+  startedByUserId   String?
+  startedByName     String?
+  pagesProcessed    Int      @default(0)
+  recordsRead       Int      @default(0)
+  recordsNew        Int      @default(0)
+  recordsUpdated    Int      @default(0)
+  recordsLinked     Int      @default(0)
+  possibleMatches   Int      @default(0)
+  conflicts         Int      @default(0)
+  errors            Int      @default(0)
+  errorSummary      String?  @db.Text
+  warnings          Json?
+  createdAt         DateTime @default(now())
+  mirrors           FinanceOmieMirrorRecord[]
+  @@index([tenantId, startedAt])
+  @@index([tenantId, status])
+}
+
+model FinanceOmieMirrorRecord {
+  id                      String   @id @default(cuid())
+  tenantId                String
+  tenant                  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  syncBatchId             String?
+  syncBatch               FinanceOmieSyncBatch? @relation(fields: [syncBatchId], references: [id], onDelete: SetNull)
+  /// pagar | receber
+  tituloTipo              String
+  omieExternalId          String
+  omieLancamentoId        Int?
+  omieIntegracaoCode      String?
+  normalizedData          Json
+  snapshotHash            String?
+  snapshotSanitized       Json?
+  /// UNMATCHED | POSSIBLE_MATCH | LINKED | MATCHED | DIFFERENCE | KEEP_SEPARATE
+  omieReconciliationState String   @default("UNMATCHED")
+  /// CONFIRMED_IDENTITY | STRONG_CANDIDATE | POSSIBLE_MATCH | NO_MATCH | CONFLICT
+  matchLevel              String   @default("NO_MATCH")
+  matchReason             String?  @db.Text
+  financeiroLancamentoId  String?
+  supplierOmieId          Int?
+  customerOmieId          Int?
+  lastSyncedAt            DateTime @default(now())
+  changeDetectedAt        DateTime?
+  changeSummary           Json?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  @@unique([tenantId, omieExternalId])
+  @@index([tenantId, tituloTipo, omieReconciliationState])
+  @@index([tenantId, financeiroLancamentoId])
+  @@index([tenantId, matchLevel])
+}
+
+model FinanceOmieReconciliationDecision {
+  id                     String   @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  mirrorRecordId         String
+  financeiroLancamentoId String?
+  /// LINK | KEEP_SEPARATE | REVIEW_LATER
+  decision               String
+  reason                 String?  @db.Text
+  actorUserId            String?
+  actorName              String?
+  createdAt              DateTime @default(now())
+  @@index([tenantId, mirrorRecordId])
+  @@index([tenantId, decision])
+}
+
+model FinanceOmieEntityMapping {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// supplier | customer | account | category | payment_method
+  mappingKind String
+  omieKey     String
+  omieLabel   String?
+  targetType  String?
+  targetId    String?
+  confirmed   Boolean  @default(false)
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@unique([tenantId, mappingKind, omieKey])
+  @@index([tenantId, mappingKind])
 }
 
 // ========== CUP360 Payment Core (provider-independent) ==========

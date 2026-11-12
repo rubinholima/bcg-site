@@ -16,7 +16,10 @@ export type FinanceCapability =
   | 'finance_import_view'
   | 'finance_import_create'
   | 'finance_import_approve'
-  | 'finance_import_execute';
+  | 'finance_import_execute'
+  | 'finance_omie_view'
+  | 'finance_omie_sync'
+  | 'finance_omie_reconcile';
 
 const CAPABILITY_MODULES: Record<FinanceCapability, string[]> = {
   finance_view: ['adm_financeiro', 'finance_view', 'finance_create', 'finance_edit'],
@@ -37,6 +40,9 @@ const CAPABILITY_MODULES: Record<FinanceCapability, string[]> = {
   finance_import_create: ['adm_financeiro', 'finance_import_create', 'finance_import_approve'],
   finance_import_approve: ['adm_financeiro', 'finance_import_approve', 'finance_import_execute'],
   finance_import_execute: ['adm_financeiro', 'finance_import_execute'],
+  finance_omie_view: ['adm_financeiro', 'finance_omie_view', 'finance_omie_sync', 'finance_omie_reconcile'],
+  finance_omie_sync: ['adm_financeiro', 'finance_omie_sync'],
+  finance_omie_reconcile: ['adm_financeiro', 'finance_omie_reconcile'],
 };
 
 const ADM_FINANCE_IMPLIES: FinanceCapability[] = [
@@ -58,6 +64,9 @@ const ADM_FINANCE_IMPLIES: FinanceCapability[] = [
   'finance_import_create',
   'finance_import_approve',
   'finance_import_execute',
+  'finance_omie_view',
+  'finance_omie_sync',
+  'finance_omie_reconcile',
 ];
 
 export function hasFinanceCapability(
