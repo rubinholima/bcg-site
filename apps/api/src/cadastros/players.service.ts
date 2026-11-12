@@ -28,6 +28,7 @@ import { FootballAgendaBirthdaysService } from '../futebol-agenda/football-agend
 import { FutebolAgendaService } from '../futebol-agenda/futebol-agenda.service';
 import { validatePlayerContacts, parseRegistrationProfile } from '../assistencia-social/social-pedagogy.util';
 import { SocialPedagogyCasesService } from '../assistencia-social/social-pedagogy-cases.service';
+import { resolveRegistrationDocumentMeta } from './player-registration-document.util';
 import {
   buildPlayerMatchAvailabilityInput,
   getPlayerMatchAvailability,
@@ -956,8 +957,6 @@ export class PlayersService {
     allowedTenantIds: string[] | null = null,
   ) {
     await this.findOne(playerId, allowedTenantIds);
-    if (!name?.trim()) throw new BadRequestException('Nome do documento é obrigatório');
-    if (!documentType?.trim()) throw new BadRequestException('Tipo do documento é obrigatório');
 
     const lower = file.originalname?.toLowerCase() ?? '';
     const allowed =
@@ -979,16 +978,16 @@ export class PlayersService {
       file.mimetype,
     );
 
+    const meta = resolveRegistrationDocumentMeta(
+      file.originalname || 'documento.pdf',
+      name,
+      documentType,
+    );
     const doc = {
       id: randomUUID(),
-      name: name.trim(),
-      documentType: documentType.trim(),
-      documentCategory:
-        documentType.trim() === 'exame_fisio' ||
-        documentType.trim() === 'laudo' ||
-        documentType.trim() === 'exame'
-          ? ('medico' as const)
-          : ('outro' as const),
+      name: meta.name,
+      documentType: meta.documentType,
+      documentCategory: meta.documentCategory,
       fileKey: uploaded.key,
       fileUrl: uploaded.url,
       uploadedAt: new Date().toISOString(),

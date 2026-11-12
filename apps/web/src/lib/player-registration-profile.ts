@@ -219,6 +219,13 @@ export function normalizeDocumentsProfile(
   return Array.isArray(documents) ? documents : [];
 }
 
+export function basenameFromFilename(filename: string): string {
+  const base = filename.split(/[/\\]/).pop() ?? filename;
+  const dot = base.lastIndexOf(".");
+  if (dot <= 0) return base.trim() || "Documento";
+  return base.slice(0, dot).trim() || "Documento";
+}
+
 export function normalizeEconomicRights(
   profile: PlayerRegistrationProfile,
   tenantName?: string | null,

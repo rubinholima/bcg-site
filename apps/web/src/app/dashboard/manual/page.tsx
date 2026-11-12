@@ -387,9 +387,10 @@ export default function ManualPage() {
                 (ex.: <em>são paulo</em> → <em>São Paulo</em>) para facilitar filtros e relatórios.
               </p>
               <p>
-                <strong>Documentos:</strong> informe o <strong>nome</strong> do arquivo e escolha o{" "}
-                <strong>tipo</strong>; o nome não muda ao trocar o tipo. Use{" "}
-                <em>Outros (tipo livre)</em> para tipos que não estão na lista.
+                <strong>Documentos:</strong> selecione um ou vários arquivos já nomeados no
+                computador — o <strong>nome do arquivo</strong> vira o nome na ficha. O{" "}
+                <strong>tipo</strong> é opcional (o sistema infere pelo nome); use o seletor só
+                quando quiser forçar um tipo da lista.
               </p>
               <p>
                 <strong>Conta bancária / PIX:</strong> nomes como Nubank, NU ou Nu Pagamentos são
