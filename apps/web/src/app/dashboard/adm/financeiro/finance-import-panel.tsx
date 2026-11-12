@@ -125,6 +125,20 @@ export function FinanceImportPanel({ tenantId }: { tenantId: string }) {
     }
   }
 
+  async function approveBatch() {
+    if (!selectedId) return;
+    setLoading(true);
+    try {
+      await api.post(`/financeiro/importacoes/${selectedId}/aprovar?tenantId=${encodeURIComponent(tenantId)}`);
+      await loadDetail(selectedId);
+      setFeedback({ title: "Lote aprovado", message: "Aprovação registrada. Execução canônica continua bloqueada nesta fase." });
+    } catch (e) {
+      setFeedback({ title: "Aprovação bloqueada", message: e instanceof Error ? e.message : "Resolva mapeamentos e simule antes." });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function simulate() {
     if (!selectedId) return;
     setLoading(true);
@@ -214,6 +228,14 @@ export function FinanceImportPanel({ tenantId }: { tenantId: string }) {
               <Button type="button" size="sm" variant="secondary" disabled={loading} onClick={() => void simulate()}>
                 <Play className="mr-1 h-4 w-4" />
                 Simular importação
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={loading || batch?.status !== "READY_FOR_REVIEW"}
+                onClick={() => void approveBatch()}
+              >
+                Aprovar lote
               </Button>
             </div>
           ) : null}
