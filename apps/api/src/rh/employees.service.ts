@@ -14,6 +14,7 @@ import {
 } from './employee-player-link';
 import { employeeDocumentationCreate, employeeDocumentationPatch } from './employee-documentation.util';
 import { employeeVisibleInRhListFilter } from './rh-employee-visibility.util';
+import { applyRhTenantFilter, assertRhTenantAccess } from './rh-scope.util';
 
 const employeeInclude = {
   tenant: { select: { id: true, name: true, slug: true, logoUrl: true } },
@@ -21,22 +22,38 @@ const employeeInclude = {
   dependents: { orderBy: { birthDate: 'asc' as const } },
 } as const;
 
+export type RhDuplicateWarning = {
+  code: 'cpf_duplicate' | 'player_link_duplicate';
+  message: string;
+  employeeId?: string;
+};
+
 @Injectable()
 export class EmployeesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId?: string, type?: string, search?: string) {
+  async findAll(
+    tenantId?: string,
+    type?: string,
+    search?: string,
+    allowedTenantIds: string[] | null = null,
+  ) {
     const where: Prisma.EmployeeWhereInput = {
       ...employeeVisibleInRhListFilter,
     };
-    if (tenantId) where.tenantId = tenantId;
+    applyRhTenantFilter(where, allowedTenantIds, tenantId);
     if (type?.trim()) where.type = type.trim();
     if (search?.trim()) {
-      where.OR = [
-        { name: { contains: search.trim(), mode: 'insensitive' as const } },
-        { email: { contains: search.trim(), mode: 'insensitive' as const } },
-        { cpf: { contains: search.trim(), mode: 'insensitive' as const } },
-        { code: { contains: search.trim(), mode: 'insensitive' as const } },
+      where.AND = [
+        ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
+        {
+          OR: [
+            { name: { contains: search.trim(), mode: 'insensitive' as const } },
+            { email: { contains: search.trim(), mode: 'insensitive' as const } },
+            { cpf: { contains: search.trim(), mode: 'insensitive' as const } },
+            { code: { contains: search.trim(), mode: 'insensitive' as const } },
+          ],
+        },
       ];
     }
     return this.prisma.employee.findMany({
@@ -46,7 +63,7 @@ export class EmployeesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, allowedTenantIds: string[] | null = null) {
     const emp = await this.prisma.employee.findUnique({
       where: { id },
       include: {
@@ -55,27 +72,110 @@ export class EmployeesService {
           include: {
             jobRole: { select: { id: true, name: true, type: true } },
             department: { select: { id: true, name: true } },
+            tenant: { select: { id: true, name: true, slug: true } },
           },
           orderBy: { startDate: 'desc' },
         },
       },
     });
     if (!emp) throw new NotFoundException('Colaborador não encontrado');
+    assertRhTenantAccess(allowedTenantIds, emp.tenantId);
     return emp;
   }
 
-  async findByPlayerId(playerId: string) {
+  async getUnifiedProfile(id: string, allowedTenantIds: string[] | null = null) {
+    const employee = await this.findOne(id, allowedTenantIds);
+    const [documents, hiringRequests] = await Promise.all([
+      this.prisma.employeeDocument.findMany({
+        where: { employeeId: id },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.rhHiringRequest.findMany({
+        where: {
+          OR: [
+            { employeeId: id },
+            ...(employee.cpf
+              ? [{ candidateCpf: { equals: employee.cpf, mode: 'insensitive' as const } }]
+              : []),
+          ],
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 25,
+        include: {
+          statusHistory: { orderBy: { createdAt: 'desc' }, take: 10 },
+        },
+      }),
+    ]);
+    return {
+      employee,
+      documents,
+      dependents: employee.dependents,
+      employments: employee.employments,
+      hiringRequests,
+    };
+  }
+
+  async findByPlayerId(playerId: string, allowedTenantIds: string[] | null = null) {
     const emp = await this.prisma.employee.findFirst({
       where: { playerId },
       include: employeeInclude,
     });
     if (!emp) throw new NotFoundException('Colaborador RH não encontrado para este atleta');
+    assertRhTenantAccess(allowedTenantIds, emp.tenantId);
     return emp;
   }
 
-  async create(dto: CreateEmployeeDto) {
+  private async duplicateWarnings(
+    tenantId: string,
+    cpf?: string | null,
+    playerId?: string | null,
+    excludeEmployeeId?: string,
+  ): Promise<RhDuplicateWarning[]> {
+    const warnings: RhDuplicateWarning[] = [];
+    const cpfNorm = cpf?.trim();
+    if (cpfNorm) {
+      const dup = await this.prisma.employee.findFirst({
+        where: {
+          tenantId,
+          cpf: { equals: cpfNorm, mode: 'insensitive' },
+          ...(excludeEmployeeId ? { NOT: { id: excludeEmployeeId } } : {}),
+        },
+        select: { id: true, name: true, code: true },
+      });
+      if (dup) {
+        warnings.push({
+          code: 'cpf_duplicate',
+          message: `Já existe colaborador com este CPF (${dup.name}${dup.code ? ` — ${dup.code}` : ''}).`,
+          employeeId: dup.id,
+        });
+      }
+    }
+    const pid = playerId?.trim();
+    if (pid) {
+      const dupP = await this.prisma.employee.findFirst({
+        where: {
+          playerId: pid,
+          ...(excludeEmployeeId ? { NOT: { id: excludeEmployeeId } } : {}),
+        },
+        select: { id: true, name: true },
+      });
+      if (dupP) {
+        warnings.push({
+          code: 'player_link_duplicate',
+          message: `Este atleta já está vinculado ao colaborador ${dupP.name}.`,
+          employeeId: dupP.id,
+        });
+      }
+    }
+    return warnings;
+  }
+
+  async create(dto: CreateEmployeeDto, allowedTenantIds: string[] | null = null) {
+    assertRhTenantAccess(allowedTenantIds, dto.tenantId);
     const tenant = await this.prisma.tenant.findUnique({ where: { id: dto.tenantId } });
     if (!tenant) throw new NotFoundException('Tenant não encontrado');
+
+    const duplicateWarnings = await this.duplicateWarnings(dto.tenantId, dto.cpf, dto.playerId);
 
     const code = await generateEmployeeCode(this.prisma, dto.tenantId);
     const employee = await this.prisma.employee.create({
@@ -99,14 +199,19 @@ export class EmployeesService {
 
     if (dto.playerId?.trim()) {
       await syncPlayerFromEmployee(this.prisma, employee, dto.playerId.trim());
-      return this.findOne(employee.id);
+      const saved = await this.findOne(employee.id, allowedTenantIds);
+      return { ...saved, duplicateWarnings };
     }
 
-    return employee;
+    return { ...employee, duplicateWarnings };
   }
 
-  async update(id: string, dto: UpdateEmployeeDto) {
-    const existing = await this.findOne(id);
+  async update(
+    id: string,
+    dto: UpdateEmployeeDto,
+    allowedTenantIds: string[] | null = null,
+  ) {
+    const existing = await this.findOne(id, allowedTenantIds);
     const updated = await this.prisma.employee.update({
       where: { id },
       data: {
@@ -133,7 +238,7 @@ export class EmployeesService {
       } else {
         await syncLinkedIdentityBidirectional(this.prisma, id);
       }
-      return this.findOne(id);
+      return this.findOne(id, allowedTenantIds);
     }
 
     if (existing.playerId) {
@@ -143,40 +248,40 @@ export class EmployeesService {
     return updated;
   }
 
-  async linkPlayer(id: string, playerId: string) {
-    const employee = await this.findOne(id);
+  async linkPlayer(id: string, playerId: string, allowedTenantIds: string[] | null = null) {
+    const employee = await this.findOne(id, allowedTenantIds);
     await syncPlayerFromEmployee(this.prisma, employee, playerId);
-    return this.findOne(id);
+    return this.findOne(id, allowedTenantIds);
   }
 
-  async createPlayer(id: string) {
-    const employee = await this.findOne(id);
-    const player = await createPlayerFromEmployee(this.prisma, employee);
-    return { employee: await this.findOne(id), player };
+  async createPlayer(id: string, allowedTenantIds: string[] | null = null) {
+    await this.findOne(id, allowedTenantIds);
+    const player = await createPlayerFromEmployee(this.prisma, await this.findOne(id, allowedTenantIds));
+    return { employee: await this.findOne(id, allowedTenantIds), player };
   }
 
-  async unlinkPlayer(id: string) {
-    await this.findOne(id);
+  async unlinkPlayer(id: string, allowedTenantIds: string[] | null = null) {
+    await this.findOne(id, allowedTenantIds);
     await unlinkPlayerFromEmployee(this.prisma, id);
-    return this.findOne(id);
+    return this.findOne(id, allowedTenantIds);
   }
 
-  async createFromPlayer(playerId: string) {
+  async createFromPlayer(playerId: string, allowedTenantIds: string[] | null = null) {
     const employee = await createEmployeeFromPlayer(this.prisma, playerId);
-    return this.findOne(employee.id);
+    return this.findOne(employee.id, allowedTenantIds);
   }
 
-  async syncIdentity(id: string) {
-    const emp = await this.findOne(id);
+  async syncIdentity(id: string, allowedTenantIds: string[] | null = null) {
+    const emp = await this.findOne(id, allowedTenantIds);
     if (!emp.playerId) {
       throw new BadRequestException('Colaborador não possui atleta vinculado');
     }
     await syncLinkedIdentityBidirectional(this.prisma, id);
-    return this.findOne(id);
+    return this.findOne(id, allowedTenantIds);
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, allowedTenantIds: string[] | null = null) {
+    await this.findOne(id, allowedTenantIds);
     await this.prisma.employee.delete({ where: { id } });
   }
 }

@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
+import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
@@ -9,26 +10,45 @@ import {
   SyncEmployeeDependentsDto,
   UpdateEmployeeDependentDto,
 } from './dto/employee-dependent.dto';
+import { RhScopeService } from './rh-scope.service';
+import { getRhAllowedTenants } from './rh-request.util';
 
 @Controller('rh/employees/:employeeId/dependents')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('adm_rh')
 export class EmployeeDependentsController {
-  constructor(private readonly service: EmployeeDependentsService) {}
+  constructor(
+    private readonly service: EmployeeDependentsService,
+    private readonly scope: RhScopeService,
+  ) {}
 
   @Get()
-  findAll(@Param('employeeId') employeeId: string) {
-    return this.service.findByEmployee(employeeId);
+  async findAll(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('employeeId') employeeId: string,
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.findByEmployee(employeeId, allowed);
   }
 
   @Post()
-  create(@Param('employeeId') employeeId: string, @Body() dto: CreateEmployeeDependentDto) {
-    return this.service.create(employeeId, dto);
+  async create(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('employeeId') employeeId: string,
+    @Body() dto: CreateEmployeeDependentDto,
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.create(employeeId, dto, allowed);
   }
 
   @Post('sync')
-  sync(@Param('employeeId') employeeId: string, @Body() dto: SyncEmployeeDependentsDto) {
-    return this.service.sync(employeeId, dto);
+  async sync(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('employeeId') employeeId: string,
+    @Body() dto: SyncEmployeeDependentsDto,
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.sync(employeeId, dto, allowed);
   }
 }
 
@@ -36,15 +56,24 @@ export class EmployeeDependentsController {
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('adm_rh')
 export class EmployeeDependentItemController {
-  constructor(private readonly service: EmployeeDependentsService) {}
+  constructor(
+    private readonly service: EmployeeDependentsService,
+    private readonly scope: RhScopeService,
+  ) {}
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateEmployeeDependentDto) {
-    return this.service.update(id, dto);
+  async update(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: UpdateEmployeeDependentDto,
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.update(id, dto, allowed);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  async remove(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.remove(id, allowed);
   }
 }

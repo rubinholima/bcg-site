@@ -18,7 +18,10 @@ import {
   FileText,
   Calendar,
   ClipboardCheck,
+  UserPlus,
 } from "lucide-react";
+import { RhDashboardKpis } from "./components/RhDashboardKpis";
+import { HiringRequestsPanel } from "./components/HiringRequestsPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -54,10 +57,11 @@ import { FuncionariosGroupedList } from "@/components/dashboard/rh/FuncionariosG
 import { rhRecordTenantId } from "@/lib/rh-tenant";
 import { RegistrationApprovalsPanel } from "./components/RegistrationApprovalsPanel";
 
-type TabId = "departamentos" | "cargos" | "colaboradores" | "vinculos" | "ferias" | "aprovacoes";
+type TabId = "departamentos" | "cargos" | "colaboradores" | "vinculos" | "ferias" | "aprovacoes" | "contratacoes";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "colaboradores", label: "Colaboradores", icon: UserCircle },
+  { id: "contratacoes", label: "Contratações", icon: UserPlus },
   { id: "aprovacoes", label: "Aprovações", icon: ClipboardCheck },
   { id: "departamentos", label: "Departamentos", icon: Building2 },
   { id: "cargos", label: "Cargos", icon: Briefcase },
@@ -92,6 +96,7 @@ export default function AdmRHPage() {
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [leaveEdit, setLeaveEdit] = useState<LeavePeriodRow | null>(null);
 
+  const [hiringStatusFilter, setHiringStatusFilter] = useState("");
   const [deleteKind, setDeleteKind] = useState<"department" | "jobRole" | "employee" | "employment" | "leavePeriod" | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -178,6 +183,7 @@ export default function AdmRHPage() {
     if (activeTab === "colaboradores") loads.push(loadEmployees());
     if (activeTab === "vinculos") loads.push(loadEmployments());
     if (activeTab === "ferias") loads.push(loadLeavePeriods());
+    if (activeTab === "contratacoes") loads.push(Promise.resolve());
     Promise.all(loads).finally(() => setLoading(false));
   }, [activeTab, tenantId, canAccessModule, loadDepartments, loadJobRoles, loadEmployees, loadEmployments, loadLeavePeriods]);
 
@@ -252,6 +258,14 @@ export default function AdmRHPage() {
           </select>
         </CardContent>
       </Card>
+
+      <RhDashboardKpis
+        tenantId={tenantId}
+        onFilterHiring={(status) => {
+          setHiringStatusFilter(status);
+          setActiveTab("contratacoes");
+        }}
+      />
 
       <div className="flex flex-wrap gap-2 border-b pb-2">
         {TABS.map(({ id, label, icon: Icon }) => (
@@ -432,6 +446,17 @@ export default function AdmRHPage() {
                     />
                   </>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "contratacoes" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Contratações</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <HiringRequestsPanel tenantId={tenantId} statusFilter={hiringStatusFilter || undefined} />
               </CardContent>
             </Card>
           )}

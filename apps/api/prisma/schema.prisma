@@ -105,6 +105,11 @@ model Tenant {
   id                      String   @id @default(cuid())
   name                    String
   tradeName               String?  // Nome fantasia para exibição pública e relatórios
+  legalName               String?  // Razão social (contratos / folha)
+  taxId                   String?  // CNPJ ou identificador fiscal
+  taxIdType               String?  // CNPJ | CPF | OUTRO
+  legalAddress            String?  @db.Text
+  legalStatus             String?  // situacao cadastral resumida
   slug                    String   @unique
   kindId                  String
   kind                    TenantKind @relation(fields: [kindId], references: [id])
@@ -163,6 +168,12 @@ model Tenant {
   employmentSalaryRevisions   EmploymentSalaryRevision[]
   contractTemplates       ContractTemplate[]
   employmentContracts     EmploymentContract[]
+  rhHiringRequests        RhHiringRequest[]
+  rhHiringStatusHistories RhHiringStatusHistory[]
+  rhHiringMedicalExams    RhHiringMedicalExam[]
+  rhHiringAccountingHandoffs RhHiringAccountingHandoff[]
+  rhHiringLegalHandoffs   RhHiringLegalHandoff[]
+  rhAuditLogs             RhAuditLog[]
   athleteContractTypes    AthleteContractType[]
   athleteContracts        AthleteContract[]
   athleteEvaluations      AthleteEvaluation[]
@@ -1861,6 +1872,7 @@ model Player {
   socialPedagogyCases  SocialPedagogyCase[]
   socialPedagogyDocuments SocialPedagogyDocument[]
   rhEmployee           Employee?
+  rhHiringRequests     RhHiringRequest[]
   registrationInvites  RegistrationInvite[]
   agendaParticipations FootballAgendaEntryParticipant[]
   travelParticipations TravelParticipant[]
@@ -2741,6 +2753,121 @@ model ProcurementAuditLog {
   @@index([entityType, entityId])
 }
 
+/// Solicitação de contratação — fluxo CLT/PJ (CUP360 RH Phase A).
+model RhHiringRequest {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  candidateName      String
+  candidateCpf       String?
+  candidateEmail     String?
+  candidatePhone     String?
+  contractType       String   // CLT | PJ | estagio
+  status             String   @default("rascunho")
+  jobRoleId          String?
+  jobRole            JobRole? @relation(fields: [jobRoleId], references: [id], onDelete: SetNull)
+  departmentId       String?
+  department         Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  playerId           String?
+  player             Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  employeeId         String?
+  employee           Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  employmentId       String?
+  employment         Employment? @relation(fields: [employmentId], references: [id], onDelete: SetNull)
+  proposedSalary     Decimal? @db.Decimal(12, 2)
+  proposedStartDate  DateTime?
+  notes              String?  @db.Text
+  requestedByUserId  String?
+  requestedByName    String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  statusHistory      RhHiringStatusHistory[]
+  medicalExam        RhHiringMedicalExam?
+  accountingHandoff  RhHiringAccountingHandoff?
+  legalHandoff       RhHiringLegalHandoff?
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([employeeId])
+  @@index([playerId])
+}
+
+model RhHiringStatusHistory {
+  id               String          @id @default(cuid())
+  tenantId         String
+  tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hiringRequestId  String
+  hiringRequest    RhHiringRequest @relation(fields: [hiringRequestId], references: [id], onDelete: Cascade)
+  fromStatus       String?
+  toStatus         String
+  notes            String?         @db.Text
+  actorUserId      String?
+  actorName        String?
+  createdAt        DateTime        @default(now())
+  @@index([hiringRequestId])
+  @@index([tenantId, createdAt])
+}
+
+model RhHiringMedicalExam {
+  id              String          @id @default(cuid())
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hiringRequestId String          @unique
+  hiringRequest   RhHiringRequest @relation(fields: [hiringRequestId], references: [id], onDelete: Cascade)
+  scheduledAt     DateTime?
+  completedAt     DateTime?
+  result          String?         // apto | inapto | pendente
+  fileKey         String?
+  notes           String?         @db.Text
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  @@index([tenantId])
+}
+
+model RhHiringAccountingHandoff {
+  id              String          @id @default(cuid())
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hiringRequestId String          @unique
+  hiringRequest   RhHiringRequest @relation(fields: [hiringRequestId], references: [id], onDelete: Cascade)
+  status          String          @default("pendente")
+  completedAt     DateTime?
+  notes           String?         @db.Text
+  metadata        Json?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  @@index([tenantId])
+}
+
+model RhHiringLegalHandoff {
+  id              String          @id @default(cuid())
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hiringRequestId String          @unique
+  hiringRequest   RhHiringRequest @relation(fields: [hiringRequestId], references: [id], onDelete: Cascade)
+  status          String          @default("pendente")
+  completedAt     DateTime?
+  notes           String?         @db.Text
+  metadata        Json?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  @@index([tenantId])
+}
+
+model RhAuditLog {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  entityType   String
+  entityId     String
+  action       String
+  actorUserId  String?
+  actorName    String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  @@index([tenantId, createdAt])
+  @@index([entityType, entityId])
+}
+
 /// Departamento destino/origem em movimentações manuais de estoque (relatórios ADM).
 model InventoryDepartment {
   id        String   @id @default(cuid())
@@ -2788,6 +2915,7 @@ model Department {
   updatedAt  DateTime @updatedAt
   jobRoles   JobRole[]
   employments Employment[]
+  rhHiringRequests RhHiringRequest[]
   @@index([tenantId])
 }
 
@@ -2817,6 +2945,7 @@ model JobRole {
   technicalStaff TechnicalStaff[]
   moduleDefaults JobRoleModuleDefault[]
   platformUsers  User[] @relation("UserPlatformFunction")
+  rhHiringRequests RhHiringRequest[]
   @@index([tenantId])
   @@index([departmentId])
   @@index([forFootball])
@@ -2875,6 +3004,7 @@ model Employee {
   registrationInvites RegistrationInvite[]
   bchEventStaffAssignments BchEventStaffAssignment[]
   bchEventTeamMembers      BchEventTeamMember[]
+  rhHiringRequests RhHiringRequest[]
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, type])
@@ -2910,6 +3040,7 @@ model Employment {
   contracts             EmploymentContract[]
   compensationItems     EmploymentCompensationItem[]
   salaryRevisions       EmploymentSalaryRevision[]
+  rhHiringRequests      RhHiringRequest[]
   @@index([tenantId])
   @@index([employeeId])
   @@index([status])

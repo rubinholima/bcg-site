@@ -28,6 +28,14 @@ import { EmploymentCompensationController } from './employment-compensation.cont
 import { EmploymentCompensationService } from './employment-compensation.service';
 import { EmploymentSalaryRevisionsController } from './employment-salary-revisions.controller';
 import { EmploymentSalaryRevisionsService } from './employment-salary-revisions.service';
+import { RhScopeService } from './rh-scope.service';
+import { RhAccessService } from './rh-access.service';
+import { RhCapabilityGuard } from './rh-capability.guard';
+import { RhAuditService } from './rh-audit.service';
+import { HiringRequestsController } from './hiring-requests.controller';
+import { HiringRequestsService } from './hiring-requests.service';
+import { RhDashboardController } from './rh-dashboard.controller';
+import { RhDashboardService } from './rh-dashboard.service';
 
 @Module({
   imports: [AuthModule, ModulesModule, ContractsModule, S3Module, HelloSignModule],
@@ -45,9 +53,15 @@ import { EmploymentSalaryRevisionsService } from './employment-salary-revisions.
     JuridicoPersonsController,
     EmploymentCompensationController,
     EmploymentSalaryRevisionsController,
+    HiringRequestsController,
+    RhDashboardController,
   ],
   providers: [
     ModuleAccessGuard,
+    RhCapabilityGuard,
+    RhScopeService,
+    RhAccessService,
+    RhAuditService,
     DepartmentsService,
     JobRolesService,
     EmployeesService,
@@ -59,6 +73,8 @@ import { EmploymentSalaryRevisionsService } from './employment-salary-revisions.
     JuridicoPersonsService,
     EmploymentCompensationService,
     EmploymentSalaryRevisionsService,
+    HiringRequestsService,
+    RhDashboardService,
   ],
   exports: [
     DepartmentsService,
@@ -70,6 +86,8 @@ import { EmploymentSalaryRevisionsService } from './employment-salary-revisions.
     LeavePeriodsService,
     EmploymentCompensationService,
     EmploymentSalaryRevisionsService,
+    RhScopeService,
+    RhAccessService,
   ],
 })
 export class RhModule {}

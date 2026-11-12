@@ -6,21 +6,22 @@ import {
   UpdateEmployeeDependentDto,
 } from './dto/employee-dependent.dto';
 import { normalizeDependentName } from './employee-documentation.util';
+import { assertRhTenantAccess } from './rh-scope.util';
 
 @Injectable()
 export class EmployeeDependentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByEmployee(employeeId: string) {
-    await this.ensureEmployee(employeeId);
+  async findByEmployee(employeeId: string, allowedTenantIds: string[] | null = null) {
+    await this.ensureEmployee(employeeId, allowedTenantIds);
     return this.prisma.employeeDependent.findMany({
       where: { employeeId },
       orderBy: { birthDate: 'asc' },
     });
   }
 
-  async create(employeeId: string, dto: CreateEmployeeDependentDto) {
-    await this.ensureEmployee(employeeId);
+  async create(employeeId: string, dto: CreateEmployeeDependentDto, allowedTenantIds: string[] | null = null) {
+    await this.ensureEmployee(employeeId, allowedTenantIds);
     return this.prisma.employeeDependent.create({
       data: {
         employeeId,
@@ -33,8 +34,8 @@ export class EmployeeDependentsService {
     });
   }
 
-  async update(id: string, dto: UpdateEmployeeDependentDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateEmployeeDependentDto, allowedTenantIds: string[] | null = null) {
+    await this.findOne(id, allowedTenantIds);
     return this.prisma.employeeDependent.update({
       where: { id },
       data: {
@@ -53,14 +54,14 @@ export class EmployeeDependentsService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, allowedTenantIds: string[] | null = null) {
+    await this.findOne(id, allowedTenantIds);
     await this.prisma.employeeDependent.delete({ where: { id } });
   }
 
   /** Substitui todos os dependentes do colaborador (sync no save do formulário). */
-  async sync(employeeId: string, dto: SyncEmployeeDependentsDto) {
-    await this.ensureEmployee(employeeId);
+  async sync(employeeId: string, dto: SyncEmployeeDependentsDto, allowedTenantIds: string[] | null = null) {
+    await this.ensureEmployee(employeeId, allowedTenantIds);
     await this.prisma.employeeDependent.deleteMany({ where: { employeeId } });
     if (!dto.dependents?.length) return [];
 
@@ -81,15 +82,20 @@ export class EmployeeDependentsService {
     return created;
   }
 
-  private async findOne(id: string) {
-    const dep = await this.prisma.employeeDependent.findUnique({ where: { id } });
+  private async findOne(id: string, allowedTenantIds: string[] | null = null) {
+    const dep = await this.prisma.employeeDependent.findUnique({
+      where: { id },
+      include: { employee: { select: { tenantId: true } } },
+    });
     if (!dep) throw new NotFoundException('Dependente não encontrado');
+    assertRhTenantAccess(allowedTenantIds, dep.employee.tenantId);
     return dep;
   }
 
-  private async ensureEmployee(employeeId: string) {
+  private async ensureEmployee(employeeId: string, allowedTenantIds: string[] | null = null) {
     const employee = await this.prisma.employee.findUnique({ where: { id: employeeId } });
     if (!employee) throw new NotFoundException('Colaborador não encontrado');
+    assertRhTenantAccess(allowedTenantIds, employee.tenantId);
     return employee;
   }
 }

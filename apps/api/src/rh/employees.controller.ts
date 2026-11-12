@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
+import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
@@ -7,90 +8,132 @@ import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { LinkPlayerDto } from './dto/link-player.dto';
+import { RhScopeService } from './rh-scope.service';
+import { getRhAllowedTenants } from './rh-request.util';
 
 @Controller('rh/employees')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class EmployeesController {
-  constructor(private readonly service: EmployeesService) {}
+  constructor(
+    private readonly service: EmployeesService,
+    private readonly scope: RhScopeService,
+  ) {}
 
   @Get()
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  findAll(
+  async findAll(
+    @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId?: string,
     @Query('type') type?: string,
     @Query('search') search?: string,
   ) {
-    return this.service.findAll(tenantId, type, search);
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.findAll(tenantId, type, search, allowed);
   }
 
   @Get('by-player/:playerId')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  findByPlayer(@Param('playerId') playerId: string) {
-    return this.service.findByPlayerId(playerId);
+  async findByPlayer(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('playerId') playerId: string,
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.findByPlayerId(playerId, allowed);
   }
 
   @Post('from-player/:playerId')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  createFromPlayer(@Param('playerId') playerId: string) {
-    return this.service.createFromPlayer(playerId);
+  async createFromPlayer(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('playerId') playerId: string,
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.createFromPlayer(playerId, allowed);
+  }
+
+  @Get(':id/unified-profile')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('adm_rh')
+  async unifiedProfile(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.getUnifiedProfile(id, allowed);
   }
 
   @Get(':id')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  async findOne(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.findOne(id, allowed);
   }
 
   @Post()
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  create(@Body() dto: CreateEmployeeDto) {
-    return this.service.create(dto);
+  async create(@Req() req: Request & { user: CognitoJwtPayload }, @Body() dto: CreateEmployeeDto) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.create(dto, allowed);
   }
 
   @Post(':id/sync-identity')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  syncIdentity(@Param('id') id: string) {
-    return this.service.syncIdentity(id);
+  async syncIdentity(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.syncIdentity(id, allowed);
   }
 
   @Post(':id/link-player')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  linkPlayer(@Param('id') id: string, @Body() dto: LinkPlayerDto) {
-    return this.service.linkPlayer(id, dto.playerId);
+  async linkPlayer(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: LinkPlayerDto,
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.linkPlayer(id, dto.playerId, allowed);
   }
 
   @Post(':id/create-player')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  createPlayer(@Param('id') id: string) {
-    return this.service.createPlayer(id);
+  async createPlayer(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.createPlayer(id, allowed);
   }
 
   @Post(':id/unlink-player')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  unlinkPlayer(@Param('id') id: string) {
-    return this.service.unlinkPlayer(id);
+  async unlinkPlayer(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.unlinkPlayer(id, allowed);
   }
 
   @Patch(':id')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  update(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
-    return this.service.update(id, dto);
+  async update(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: UpdateEmployeeDto,
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.update(id, dto, allowed);
   }
 
   @Delete(':id')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  async remove(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.remove(id, allowed);
   }
 }

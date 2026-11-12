@@ -1,25 +1,35 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmploymentDto } from './dto/create-employment.dto';
 import { UpdateEmploymentDto } from './dto/update-employment.dto';
+import { TransferEmployerDto } from './dto/transfer-employer.dto';
 import { employeeVisibleInRhListFilter } from './rh-employee-visibility.util';
 import { mergeBankDataJson, normalizeHolderCpf } from './employment-compensation.util';
 import { EmploymentSalaryRevisionsService } from './employment-salary-revisions.service';
+import { applyRhTenantFilter, assertRhTenantAccess } from './rh-scope.util';
+import { RhAuditService } from './rh-audit.service';
+import type { RhActor } from './rh-request.util';
 
 @Injectable()
 export class EmploymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly salaryRevisions: EmploymentSalaryRevisionsService,
+    private readonly audit: RhAuditService,
   ) {}
 
-  async findAll(tenantId?: string, employeeId?: string, status?: string) {
+  async findAll(
+    tenantId?: string,
+    employeeId?: string,
+    status?: string,
+    allowedTenantIds: string[] | null = null,
+  ) {
     const where: Prisma.EmploymentWhereInput = {
       employee: employeeVisibleInRhListFilter,
     };
-    if (tenantId) where.tenantId = tenantId;
+    applyRhTenantFilter(where, allowedTenantIds, tenantId);
     if (employeeId) where.employeeId = employeeId;
     if (status?.trim()) where.status = status.trim();
     return this.prisma.employment.findMany({
@@ -34,7 +44,7 @@ export class EmploymentsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, allowedTenantIds: string[] | null = null) {
     const emp = await this.prisma.employment.findUnique({
       where: { id },
       include: {
@@ -48,14 +58,17 @@ export class EmploymentsService {
       },
     });
     if (!emp) throw new NotFoundException('Vínculo não encontrado');
+    assertRhTenantAccess(allowedTenantIds, emp.tenantId);
     return emp;
   }
 
-  async create(dto: CreateEmploymentDto) {
+  async create(dto: CreateEmploymentDto, allowedTenantIds: string[] | null = null) {
+    assertRhTenantAccess(allowedTenantIds, dto.tenantId);
     const tenant = await this.prisma.tenant.findUnique({ where: { id: dto.tenantId } });
     if (!tenant) throw new NotFoundException('Tenant não encontrado');
     const employee = await this.prisma.employee.findUnique({ where: { id: dto.employeeId } });
     if (!employee) throw new NotFoundException('Colaborador não encontrado');
+    assertRhTenantAccess(allowedTenantIds, employee.tenantId);
     const jobRole = await this.prisma.jobRole.findUnique({ where: { id: dto.jobRoleId } });
     if (!jobRole) throw new NotFoundException('Cargo não encontrado');
     if (dto.departmentId) {
@@ -100,8 +113,13 @@ export class EmploymentsService {
     return created;
   }
 
-  async update(id: string, dto: UpdateEmploymentDto) {
-    await this.findOne(id);
+  async update(
+    id: string,
+    dto: UpdateEmploymentDto,
+    allowedTenantIds: string[] | null = null,
+    actor?: RhActor,
+  ) {
+    const current = await this.findOne(id, allowedTenantIds);
     const data: Record<string, unknown> = {};
     if (dto.jobRoleId != null) data.jobRoleId = dto.jobRoleId;
     if (dto.departmentId !== undefined) data.departmentId = dto.departmentId ?? null;
@@ -110,8 +128,7 @@ export class EmploymentsService {
     if (dto.endDate !== undefined) data.endDate = dto.endDate ? new Date(dto.endDate) : null;
     if (dto.salaryBase !== undefined) data.salaryBase = dto.salaryBase ?? null;
     if (dto.bankData !== undefined) {
-      const current = await this.prisma.employment.findUnique({ where: { id }, select: { bankData: true } });
-      data.bankData = this.normalizeBankDataInput(dto.bankData, current?.bankData);
+      data.bankData = this.normalizeBankDataInput(dto.bankData, current.bankData);
     }
     if (dto.status != null) data.status = dto.status;
     if (dto.notes !== undefined) data.notes = cadastroUpper(dto.notes);
@@ -120,7 +137,8 @@ export class EmploymentsService {
     if (dto.terminationType !== undefined) data.terminationType = cadastroUpper(dto.terminationType);
     if (dto.terminationNotes !== undefined) data.terminationNotes = cadastroUpper(dto.terminationNotes);
     if (dto.terminationChecklist !== undefined) data.terminationChecklist = dto.terminationChecklist ?? null;
-    return this.prisma.employment.update({
+
+    const updated = await this.prisma.employment.update({
       where: { id },
       data,
       include: {
@@ -130,10 +148,89 @@ export class EmploymentsService {
         department: { select: { id: true, name: true } },
       },
     });
+
+    if (dto.bankData !== undefined && actor) {
+      await this.audit.log({
+        tenantId: current.tenantId,
+        entityType: 'employment',
+        entityId: id,
+        action: 'bank_data_update',
+        actorUserId: actor.userId,
+        actorName: actor.name,
+      });
+    }
+
+    return updated;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async transferEmployer(
+    employmentId: string,
+    dto: TransferEmployerDto,
+    allowedTenantIds: string[] | null = null,
+    actor?: RhActor,
+  ) {
+    const existing = await this.findOne(employmentId, allowedTenantIds);
+    assertRhTenantAccess(allowedTenantIds, dto.newTenantId);
+    if (existing.tenantId === dto.newTenantId) {
+      throw new BadRequestException('O colaborador já está nesta empresa.');
+    }
+
+    const transferDate = new Date(dto.transferDate);
+    const jobRoleId = dto.jobRoleId ?? existing.jobRoleId;
+    const departmentId = dto.departmentId !== undefined ? dto.departmentId : existing.departmentId;
+    const contractType = dto.contractType ?? existing.contractType;
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      await tx.employment.update({
+        where: { id: employmentId },
+        data: {
+          status: 'desligado',
+          endDate: transferDate,
+          notes: cadastroUpper(dto.notes) ?? existing.notes,
+        },
+      });
+
+      return tx.employment.create({
+        data: {
+          tenantId: dto.newTenantId,
+          employeeId: existing.employeeId,
+          jobRoleId,
+          departmentId: departmentId ?? null,
+          contractType: cadastroUpperRequired(contractType),
+          startDate: transferDate,
+          salaryBase: existing.salaryBase,
+          bankData: existing.bankData ?? Prisma.JsonNull,
+          status: 'ativo',
+          notes: cadastroUpper(dto.notes),
+          athleteData: existing.athleteData ?? Prisma.JsonNull,
+          admissionChecklist: existing.admissionChecklist ?? Prisma.JsonNull,
+        },
+        include: {
+          tenant: { select: { id: true, name: true, slug: true } },
+          employee: { select: { id: true, name: true, type: true } },
+          jobRole: { select: { id: true, name: true, type: true } },
+          department: { select: { id: true, name: true } },
+        },
+      });
+    });
+
+    if (actor) {
+      await this.audit.log({
+        tenantId: dto.newTenantId,
+        entityType: 'employment',
+        entityId: result.id,
+        action: 'transfer_employer',
+        actorUserId: actor.userId,
+        actorName: actor.name,
+        metadata: { fromEmploymentId: employmentId, fromTenantId: existing.tenantId },
+      });
+    }
+
+    return result;
+  }
+
+  async remove(id: string, allowedTenantIds: string[] | null = null) {
+    await this.findOne(id, allowedTenantIds);
     await this.prisma.employment.delete({ where: { id } });
   }
 

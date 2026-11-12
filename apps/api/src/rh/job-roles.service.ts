@@ -1,16 +1,40 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJobRoleDto } from './dto/create-job-role.dto';
 import { UpdateJobRoleDto } from './dto/update-job-role.dto';
+import { assertRhTenantAccess } from './rh-scope.util';
 
 @Injectable()
 export class JobRolesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId?: string, type?: string, forFootball?: boolean) {
-    const where: Record<string, unknown> = {};
-    if (tenantId) where.tenantId = tenantId;
+  private applyJobRoleTenantFilter(
+    where: Prisma.JobRoleWhereInput,
+    allowedTenantIds: string[] | null | undefined,
+    requestedTenantId?: string,
+  ): void {
+    if (allowedTenantIds === null || allowedTenantIds === undefined) {
+      if (requestedTenantId) where.tenantId = requestedTenantId;
+      return;
+    }
+    if (requestedTenantId) {
+      assertRhTenantAccess(allowedTenantIds, requestedTenantId);
+      where.tenantId = requestedTenantId;
+      return;
+    }
+    where.OR = [{ tenantId: null }, { tenantId: { in: allowedTenantIds } }];
+  }
+
+  async findAll(
+    tenantId?: string,
+    type?: string,
+    forFootball?: boolean,
+    allowedTenantIds: string[] | null = null,
+  ) {
+    const where: Prisma.JobRoleWhereInput = {};
+    this.applyJobRoleTenantFilter(where, allowedTenantIds, tenantId);
     if (type?.trim()) where.type = type.trim();
     if (forFootball === true) where.forFootball = true;
     if (forFootball === false) where.forFootball = false;
@@ -24,7 +48,7 @@ export class JobRolesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, allowedTenantIds: string[] | null = null) {
     const role = await this.prisma.jobRole.findUnique({
       where: { id },
       include: {
@@ -33,10 +57,12 @@ export class JobRolesService {
       },
     });
     if (!role) throw new NotFoundException('Cargo não encontrado');
+    if (role.tenantId) assertRhTenantAccess(allowedTenantIds, role.tenantId);
     return role;
   }
 
-  async create(dto: CreateJobRoleDto) {
+  async create(dto: CreateJobRoleDto, allowedTenantIds: string[] | null = null) {
+    assertRhTenantAccess(allowedTenantIds, dto.tenantId);
     const tenant = await this.prisma.tenant.findUnique({ where: { id: dto.tenantId } });
     if (!tenant) throw new NotFoundException('Tenant não encontrado');
     if (dto.departmentId) {
@@ -59,8 +85,8 @@ export class JobRolesService {
     });
   }
 
-  async update(id: string, dto: UpdateJobRoleDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateJobRoleDto, allowedTenantIds: string[] | null = null) {
+    await this.findOne(id, allowedTenantIds);
     return this.prisma.jobRole.update({
       where: { id },
       data: {
@@ -77,8 +103,8 @@ export class JobRolesService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, allowedTenantIds: string[] | null = null) {
+    await this.findOne(id, allowedTenantIds);
     await this.prisma.jobRole.delete({ where: { id } });
   }
 }

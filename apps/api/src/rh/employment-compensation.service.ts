@@ -15,12 +15,18 @@ import {
   CreateEmploymentCompensationItemDto,
   UpdateEmploymentCompensationItemDto,
 } from './dto/employment-compensation.dto';
+import { assertRhTenantAccess } from './rh-scope.util';
+import { RhAuditService } from './rh-audit.service';
+import type { RhActor } from './rh-request.util';
 
 @Injectable()
 export class EmploymentCompensationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: RhAuditService,
+  ) {}
 
-  private async getEmployment(employmentId: string) {
+  private async getEmployment(employmentId: string, allowedTenantIds: string[] | null = null) {
     const employment = await this.prisma.employment.findUnique({
       where: { id: employmentId },
       include: {
@@ -29,15 +35,21 @@ export class EmploymentCompensationService {
       },
     });
     if (!employment) throw new NotFoundException('Vínculo não encontrado');
+    assertRhTenantAccess(allowedTenantIds, employment.tenantId);
     return employment;
   }
 
-  async findByEmployment(employmentId: string) {
-    const employment = await this.getEmployment(employmentId);
+  async findByEmployment(employmentId: string, allowedTenantIds: string[] | null = null) {
+    const employment = await this.getEmployment(employmentId, allowedTenantIds);
     return employment.compensationItems;
   }
 
-  async create(employmentId: string, dto: CreateEmploymentCompensationItemDto) {
+  async create(
+    employmentId: string,
+    dto: CreateEmploymentCompensationItemDto,
+    allowedTenantIds: string[] | null = null,
+    actor?: RhActor,
+  ) {
     if (!isCompensationKind(dto.kind)) {
       throw new BadRequestException('Tipo de benefício inválido.');
     }
@@ -46,7 +58,7 @@ export class EmploymentCompensationService {
       throw new BadRequestException('Informe um valor maior que zero.');
     }
 
-    const employment = await this.getEmployment(employmentId);
+    const employment = await this.getEmployment(employmentId, allowedTenantIds);
     const effectiveFrom = startOfDay(new Date(dto.effectiveFrom));
     const effectiveTo = dto.effectiveTo ? startOfDay(new Date(dto.effectiveTo)) : null;
     if (effectiveTo && effectiveTo < effectiveFrom) {
@@ -64,7 +76,7 @@ export class EmploymentCompensationService {
       await this.assertLegalDocument(dto.legalDocumentId, employment.tenantId, employment.employee.playerId);
     }
 
-    return this.prisma.employmentCompensationItem.create({
+    const item = await this.prisma.employmentCompensationItem.create({
       data: {
         tenantId: employment.tenantId,
         employmentId,
@@ -76,14 +88,28 @@ export class EmploymentCompensationService {
         notes: dto.notes?.trim() || null,
       },
     });
+
+    if (actor) {
+      await this.audit.log({
+        tenantId: employment.tenantId,
+        entityType: 'employment_compensation',
+        entityId: item.id,
+        action: 'create',
+        actorUserId: actor.userId,
+        actorName: actor.name,
+      });
+    }
+
+    return item;
   }
 
-  async update(id: string, dto: UpdateEmploymentCompensationItemDto) {
+  async update(id: string, dto: UpdateEmploymentCompensationItemDto, allowedTenantIds: string[] | null = null) {
     const existing = await this.prisma.employmentCompensationItem.findUnique({
       where: { id },
       include: { employment: { include: { employee: { select: { playerId: true } }, compensationItems: true } } },
     });
     if (!existing) throw new NotFoundException('Registro não encontrado');
+    assertRhTenantAccess(allowedTenantIds, existing.tenantId);
 
     const effectiveFrom = dto.effectiveFrom
       ? startOfDay(new Date(dto.effectiveFrom))
@@ -127,9 +153,10 @@ export class EmploymentCompensationService {
     });
   }
 
-  async close(id: string, dto: CloseEmploymentCompensationItemDto) {
+  async close(id: string, dto: CloseEmploymentCompensationItemDto, allowedTenantIds: string[] | null = null) {
     const existing = await this.prisma.employmentCompensationItem.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Registro não encontrado');
+    assertRhTenantAccess(allowedTenantIds, existing.tenantId);
     const effectiveTo = startOfDay(new Date(dto.effectiveTo));
     if (effectiveTo < startOfDay(existing.effectiveFrom)) {
       throw new BadRequestException('Data fim inválida.');
@@ -140,9 +167,10 @@ export class EmploymentCompensationService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, allowedTenantIds: string[] | null = null) {
     const existing = await this.prisma.employmentCompensationItem.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Registro não encontrado');
+    assertRhTenantAccess(allowedTenantIds, existing.tenantId);
     await this.prisma.employmentCompensationItem.delete({ where: { id } });
     return { ok: true };
   }
