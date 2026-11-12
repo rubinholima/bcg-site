@@ -507,7 +507,8 @@ export default function ManualPage() {
                 <div>
                   <p className="font-semibold text-foreground">1 · Captação</p>
                   <p className="text-muted-foreground">
-                    Prospect com dados mínimos de scouting. Não é atleta do clube ainda.
+                    Prospect com dados mínimos de scouting — no cadastro guiado, foto de rosto e
+                    corpo inteiro no primeiro passo. Não é atleta do clube ainda.
                   </p>
                 </div>
                 <div>

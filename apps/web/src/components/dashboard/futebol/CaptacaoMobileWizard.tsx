@@ -14,6 +14,7 @@ import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { FootballPositionSelect } from "@/components/dashboard/players/FootballPositionSelect";
 import { CaptacaoRatingPicker } from "@/components/dashboard/futebol/CaptacaoRatingPicker";
 import { CaptacaoProgressSteps } from "@/components/dashboard/futebol/CaptacaoProgressSteps";
+import { CaptacaoProspectPhotoFields } from "@/components/dashboard/futebol/CaptacaoProspectPhotoFields";
 import { api } from "@/lib/api";
 import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
@@ -66,6 +67,8 @@ export function CaptacaoMobileWizard() {
     ...EMPTY_CAPTACAO_MOBILE_FORM,
     tenantId: initialTenantId,
   });
+  const [facePhotoFile, setFacePhotoFile] = useState<File | null>(null);
+  const [fullBodyPhotoFile, setFullBodyPhotoFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{
     open: boolean;
@@ -108,6 +111,8 @@ export function CaptacaoMobileWizard() {
   function validateStep(): string | null {
     switch (step) {
       case "cadastro":
+        if (!facePhotoFile) return "Envie a foto de rosto do atleta.";
+        if (!fullBodyPhotoFile) return "Envie a foto de corpo inteiro.";
         if (!form.tenantId) return "Selecione o clube.";
         if (!form.name.trim()) return "Informe o nome completo.";
         if (!form.birthDate) return "Informe a data de nascimento.";
@@ -217,6 +222,14 @@ export function CaptacaoMobileWizard() {
         stage: form.flowPath === "integracao_direta" ? "prioridade" : "tryout",
       });
 
+      const uploadProspectPhoto = async (kind: "face" | "full_body", photo: File) => {
+        const fd = new FormData();
+        fd.append("file", photo);
+        await api.postForm(`/captacao/prospects/${prospect.id}/photos/${kind}`, fd);
+      };
+      await uploadProspectPhoto("face", facePhotoFile!);
+      await uploadProspectPhoto("full_body", fullBodyPhotoFile!);
+
       const { data: reportResult } = await api.post<{
         schedulerNotification?: { whatsappUrl?: string | null };
       }>("/captacao/reports", {
@@ -296,6 +309,13 @@ export function CaptacaoMobileWizard() {
             <CardContent className="p-4 md:p-6">
         {step === "cadastro" ? (
           <div className={formGrid3}>
+            <CaptacaoProspectPhotoFields
+              className={spanFull}
+              faceFile={facePhotoFile}
+              fullBodyFile={fullBodyPhotoFile}
+              onFaceChange={setFacePhotoFile}
+              onFullBodyChange={setFullBodyPhotoFile}
+            />
             <div className={cn("grid gap-2", spanFull)}>
               <Label>Clube *</Label>
               <NativeSelect

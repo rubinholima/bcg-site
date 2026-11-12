@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
+import Image from "next/image";
+import { getPublicImageUrl } from "@/lib/media-url";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPositionLabel } from "@/lib/football-positions";
 import { buildCaptacaoSchedulerWhatsAppUrl } from "@/lib/captacao-scheduler";
@@ -299,7 +301,33 @@ export function CaptacaoProspectProfile() {
       ) : null}
 
       <Card>
-        <CardHeader>
+        <CardHeader className="space-y-4">
+          {(prospect.facePhotoUrl || prospect.fullBodyPhotoUrl) && (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+              {prospect.facePhotoUrl ? (
+                <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                  <Image
+                    src={getPublicImageUrl(prospect.facePhotoUrl)}
+                    alt={`Rosto — ${prospect.name}`}
+                    fill
+                    className="object-cover"
+                    sizes="128px"
+                  />
+                </div>
+              ) : null}
+              {prospect.fullBodyPhotoUrl ? (
+                <div className="relative h-48 w-full max-w-xs overflow-hidden rounded-lg border border-border bg-muted sm:h-56 sm:flex-1 sm:max-w-sm">
+                  <Image
+                    src={getPublicImageUrl(prospect.fullBodyPhotoUrl)}
+                    alt={`Corpo inteiro — ${prospect.name}`}
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 640px) 100vw, 320px"
+                  />
+                </div>
+              ) : null}
+            </div>
+          )}
           <CardTitle className="text-xl">{prospect.name}</CardTitle>
           <div className="flex flex-wrap gap-2 pt-1">
             <span className={`rounded border px-2 py-0.5 text-xs ${stageBadgeClass(prospect.stage)}`}>

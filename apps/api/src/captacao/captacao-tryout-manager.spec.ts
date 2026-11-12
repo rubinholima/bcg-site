@@ -24,6 +24,7 @@ describe('CaptacaoService — decisão gerência Try Out', () => {
     {} as never,
     tryoutWorkflow as never,
     tenantAccess as never,
+    {} as never,
   );
 
   beforeEach(() => {

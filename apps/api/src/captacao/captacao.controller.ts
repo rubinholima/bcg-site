@@ -8,8 +8,12 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
@@ -157,6 +161,21 @@ export class CaptacaoController {
   @RequireModule('futebol_captacao')
   createProspect(@Body() dto: CreateProspectDto) {
     return this.service.createProspect(dto);
+  }
+
+  @Post('prospects/:id/photos/:kind')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('futebol_captacao')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 8 * 1024 * 1024 } }))
+  uploadProspectPhoto(
+    @Param('id') id: string,
+    @Param('kind') kind: string,
+    @UploadedFile() file?: { buffer: Buffer; mimetype?: string; originalname?: string },
+  ) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Envie o arquivo no campo "file".');
+    }
+    return this.service.uploadProspectPhoto(id, kind, file);
   }
 
   @Patch('prospects/:id')

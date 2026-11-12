@@ -4,13 +4,21 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { ModulesModule } from '../modules/modules.module';
 import { FisioterapiaModule } from '../fisioterapia/fisioterapia.module';
 import { TryoutWorkflowModule } from '../tryout-workflow/tryout-workflow.module';
+import { S3Module } from '../s3/s3.module';
 import { MailService } from '../common/mail.service';
 import { CaptacaoController } from './captacao.controller';
 import { CaptacaoService } from './captacao.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 
 @Module({
-  imports: [PrismaModule, AuthModule, ModulesModule, FisioterapiaModule, TryoutWorkflowModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    ModulesModule,
+    FisioterapiaModule,
+    TryoutWorkflowModule,
+    S3Module,
+  ],
   controllers: [CaptacaoController],
   providers: [CaptacaoService, ModuleAccessGuard, MailService],
   exports: [CaptacaoService],

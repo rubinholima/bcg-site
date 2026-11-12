@@ -46,6 +46,9 @@ import { PhysioTryoutClearanceService } from '../fisioterapia/physio-tryout-clea
 import { TryoutWorkflowService } from '../tryout-workflow/tryout-workflow.service';
 import { isProspectInTryoutWorkflow } from '../tryout-workflow/tryout-workflow.constants';
 import { TenantAccessService } from '../auth/tenant-access.service';
+import { S3Service } from '../s3/s3.service';
+
+const SCOUTING_PROSPECT_PHOTO_KINDS = ['face', 'full_body'] as const;
 
 const ACTIVE_STAGES = [
   'identificado',
@@ -94,6 +97,7 @@ export class CaptacaoService {
     private readonly physioTryoutClearance: PhysioTryoutClearanceService,
     private readonly tryoutWorkflow: TryoutWorkflowService,
     private readonly tenantAccess: TenantAccessService,
+    private readonly s3: S3Service,
   ) {}
 
   private normalizeEvaluationOutcome(value?: string | null): ScoutingEvaluationOutcome {
@@ -823,6 +827,42 @@ export class CaptacaoService {
     }
 
     return prospect;
+  }
+
+  async uploadProspectPhoto(
+    prospectId: string,
+    kind: string,
+    file: { buffer: Buffer; mimetype?: string; originalname?: string },
+  ) {
+    if (
+      !SCOUTING_PROSPECT_PHOTO_KINDS.includes(
+        kind as (typeof SCOUTING_PROSPECT_PHOTO_KINDS)[number],
+      )
+    ) {
+      throw new BadRequestException('Tipo de foto inválido (face ou full_body).');
+    }
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Envie o arquivo no campo "file".');
+    }
+    const prospect = await this.findProspect(prospectId);
+    const mime = file.mimetype?.trim() || 'image/jpeg';
+    if (!mime.startsWith('image/')) {
+      throw new BadRequestException('Envie uma imagem (JPG, PNG ou WEBP).');
+    }
+    const uploaded = await this.s3.uploadMedia(
+      file.buffer,
+      mime,
+      'captacao_prospects',
+      `${prospect.tenantId}_${prospectId}`,
+    );
+    const updated = await this.prisma.scoutingProspect.update({
+      where: { id: prospectId },
+      data:
+        kind === 'face'
+          ? { facePhotoUrl: uploaded.url }
+          : { fullBodyPhotoUrl: uploaded.url },
+    });
+    return this.attachPhysioClearanceStatus(enrichProspectDisplay(updated));
   }
 
   async updateProspect(id: string, dto: UpdateProspectDto) {

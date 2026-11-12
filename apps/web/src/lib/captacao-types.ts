@@ -281,6 +281,8 @@ export interface ScoutingProspect {
   scout?: { id: string; name: string; phone?: string | null; email?: string | null } | null;
   playerId?: string | null;
   player?: { id: string; name: string; photoUrl?: string | null } | null;
+  facePhotoUrl?: string | null;
+  fullBodyPhotoUrl?: string | null;
   supervisorApprovedAt?: string | null;
   supervisorApprovedBy?: string | null;
   supervisorNotes?: string | null;

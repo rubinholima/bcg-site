@@ -5344,6 +5344,10 @@ model ScoutingProspect {
   documentNumber             String?
   duplicateCreationConfirmedAt DateTime?
   duplicateLinkedProspectId  String?
+  /** Foto de rosto — cadastro pipeline captação */
+  facePhotoUrl       String?
+  /** Foto corpo inteiro — perfil do observado */
+  fullBodyPhotoUrl   String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   reports           ScoutingReport[]
