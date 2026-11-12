@@ -24,6 +24,8 @@ import {
 import { FinanceImportSimulationService } from './finance-import-simulation.service';
 import type { FinanceImportSimulationSummary } from './finance-import.types';
 import { classifyPossibleDuplicate, detectExactFileReprocess } from './finance-import-duplicate.util';
+import { batchReadiness } from './finance-import-readiness.util';
+import type { MappingRowLike } from './finance-import-readiness.util';
 
 @Injectable()
 export class FinanceImportBatchService {
@@ -150,6 +152,15 @@ export class FinanceImportBatchService {
       else if (row.validationStatus === 'conflict') conflict++;
       else invalid++;
 
+      const duplicateFlagReason =
+        duplicateState === 'exact_file_reprocess'
+          ? 'Duplicidade confirmada: fingerprint já vinculado a importação anterior.'
+          : duplicateState === 'exact_in_batch'
+            ? 'Duplicidade confirmada: mesma fingerprint repetida no lote.'
+            : duplicateState === 'possible_duplicate_cup360'
+              ? 'Possível duplicidade com lançamento CUP360 (revisão obrigatória).'
+              : null;
+
       stagingData.push({
         batchId,
         tenantId,
@@ -162,6 +173,7 @@ export class FinanceImportBatchService {
         warnings: row.warnings as Prisma.InputJsonValue,
         errors: row.errors as Prisma.InputJsonValue,
         duplicateState,
+        duplicateFlagReason,
         sourceRowFingerprint: row.fingerprint,
         proposedMappings: {
           tenantCandidates: tenantByTax.get(String(row.semantic.companyTaxIdNormalized ?? '')) ?? [],
@@ -291,11 +303,33 @@ export class FinanceImportBatchService {
 
   async getBatchDetail(tenantId: string, batchId: string) {
     const batch = await this.requireBatch(tenantId, batchId);
-    const mappings = await this.prisma.financeImportBatchMapping.findMany({
-      where: { batchId },
-      orderBy: [{ mappingKind: 'asc' }, { sourceValue: 'asc' }],
+    const [mappings, rows] = await Promise.all([
+      this.prisma.financeImportBatchMapping.findMany({
+        where: { batchId },
+        orderBy: [{ mappingKind: 'asc' }, { sourceValue: 'asc' }],
+      }),
+      this.prisma.financeImportStagingRow.findMany({
+        where: { batchId, tenantId },
+        select: {
+          id: true,
+          validationStatus: true,
+          rowClassification: true,
+          duplicateState: true,
+          duplicateDecision: true,
+          rowDecision: true,
+          normalizedValues: true,
+          possibleDuplicateLancamentoId: true,
+        },
+      }),
+    ]);
+    const readiness = batchReadiness({
+      mappings: mappings as MappingRowLike[],
+      rows: rows as never,
+      simulationStale: batch.simulationStale,
+      simulationSummary: batch.simulationSummary,
+      controlTotalsMismatch: Boolean((batch.controlTotals as { mismatch?: boolean } | null)?.mismatch),
     });
-    return { batch, mappings };
+    return { batch, mappings, readiness };
   }
 
   async listStagingRows(
@@ -340,11 +374,13 @@ export class FinanceImportBatchService {
     actorName: string | null,
   ) {
     await this.requireBatch(tenantId, batchId);
+    let mappingChanged = false;
     for (const u of updates) {
       const row = await this.prisma.financeImportBatchMapping.findFirst({
         where: { id: u.id, batchId, tenantId },
       });
       if (!row) continue;
+      mappingChanged = true;
       await this.prisma.financeImportBatchMapping.update({
         where: { id: row.id },
         data: {
@@ -353,6 +389,20 @@ export class FinanceImportBatchService {
           targetId: u.targetId ?? row.targetId,
           confirmed: u.confirmed ?? row.confirmed,
           notes: u.notes ?? row.notes,
+        },
+      });
+    }
+    if (mappingChanged) {
+      const batch = await this.prisma.financeImportBatch.findFirst({ where: { id: batchId } });
+      await this.prisma.financeImportBatch.update({
+        where: { id: batchId },
+        data: {
+          mappingVersion: (batch?.mappingVersion ?? 0) + 1,
+          simulationStale: true,
+          status:
+            batch?.status === 'APPROVED' || batch?.status === 'READY_FOR_REVIEW'
+              ? 'MAPPING_REQUIRED'
+              : batch?.status,
         },
       });
     }
@@ -377,22 +427,50 @@ export class FinanceImportBatchService {
       (m) => m.action !== 'ignore' && (!m.confirmed || !m.targetId),
     ).length;
 
+    const batch = await this.prisma.financeImportBatch.findFirst({ where: { id: batchId } });
+    const nextSimVersion = (batch?.simulationVersion ?? 0) + 1;
+    const mappingVersion = batch?.mappingVersion ?? 0;
+
     const summary = this.simulation.simulate(
       rows.map((r) => ({
+        id: r.id,
         rowClassification: r.rowClassification,
         validationStatus: r.validationStatus,
         duplicateState: r.duplicateState,
+        duplicateDecision: r.duplicateDecision,
+        rowDecision: r.rowDecision,
+        normalizedValues: r.normalizedValues,
+        possibleDuplicateLancamentoId: r.possibleDuplicateLancamentoId,
       })),
       unresolved,
+      mappingVersion,
+      nextSimVersion,
+      mappings as MappingRowLike[],
     );
 
-    const status = unresolved > 0 ? 'MAPPING_REQUIRED' : 'READY_FOR_REVIEW';
+    const readiness = batchReadiness({
+      mappings: mappings as MappingRowLike[],
+      rows: rows as never,
+      simulationStale: false,
+      simulationSummary: summary,
+      controlTotalsMismatch: summary.controlTotals?.mismatch ?? false,
+    });
+
+    const status = readiness.readyForImport
+      ? 'READY_FOR_REVIEW'
+      : unresolved > 0
+        ? 'MAPPING_REQUIRED'
+        : 'READY_FOR_REVIEW';
+
     await this.prisma.financeImportBatch.update({
       where: { id: batchId },
       data: {
         status,
         lastSimulationAt: new Date(),
         simulationSummary: summary as unknown as Prisma.InputJsonValue,
+        simulationVersion: nextSimVersion,
+        simulationStale: false,
+        controlTotals: (summary.controlTotals ?? null) as Prisma.InputJsonValue,
       },
     });
 
@@ -421,8 +499,22 @@ export class FinanceImportBatchService {
       throw new BadRequestException('Há mapeamentos pendentes. Resolva antes de aprovar.');
     }
 
-    if (!batch.simulationSummary) {
-      throw new BadRequestException('Execute a simulação antes de aprovar.');
+    if (!batch.simulationSummary || batch.simulationStale) {
+      throw new BadRequestException('Execute a simulação antes de aprovar (simulação ausente ou desatualizada).');
+    }
+
+  const rows = await this.prisma.financeImportStagingRow.findMany({ where: { tenantId, batchId } });
+    const readiness = batchReadiness({
+      mappings: mappings as MappingRowLike[],
+      rows: rows as never,
+      simulationStale: batch.simulationStale,
+      simulationSummary: batch.simulationSummary,
+      controlTotalsMismatch: Boolean((batch.controlTotals as { mismatch?: boolean } | null)?.mismatch),
+    });
+    if (!readiness.readyForImport && readiness.blockingReasons.length) {
+      throw new BadRequestException(
+        `Lote não está pronto: ${readiness.blockingReasons.join(', ')}`,
+      );
     }
 
     await this.prisma.financeImportBatch.update({

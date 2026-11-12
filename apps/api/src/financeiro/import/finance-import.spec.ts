@@ -147,6 +147,8 @@ describe('finance-import simulation', () => {
         { rowClassification: 'INTERNAL_TRANSFER', validationStatus: 'valid', duplicateState: 'none' },
       ],
       0,
+      0,
+      1,
     );
     expect(summary.obligationsWouldCreate).toBe(1);
     expect(summary.transfersWouldCreate).toBe(1);
@@ -157,7 +159,14 @@ describe('finance-import execution foundation', () => {
   it('bloqueia execução canônica', async () => {
     const prisma = {
       financeImportBatch: {
-        findFirst: jest.fn().mockResolvedValue({ id: 'b1', status: 'APPROVED' }),
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'b1',
+          status: 'APPROVED',
+          executionApprovedAt: new Date(),
+          simulationStale: false,
+          originalFilename: 'test.xlsx',
+          sourceType: 'xlsx_unknown',
+        }),
       },
     };
     const audit = { log: jest.fn() };

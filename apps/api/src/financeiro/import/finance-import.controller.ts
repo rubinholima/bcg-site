@@ -22,6 +22,8 @@ import { TenantAccessService } from '../../auth/tenant-access.service';
 import { FinanceCapabilityGuard } from '../finance-capability.guard';
 import { FinanceImportBatchService } from './finance-import-batch.service';
 import { FinanceImportExecutionService } from './finance-import-execution.service';
+import { FinanceImportReviewService } from './finance-import-review.service';
+import { pivotSafetyLockActive } from './finance-import-pivot-safety.util';
 
 @Controller('financeiro/importacoes')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard, FinanceCapabilityGuard)
@@ -30,6 +32,7 @@ export class FinanceImportController {
   constructor(
     private readonly batches: FinanceImportBatchService,
     private readonly execution: FinanceImportExecutionService,
+    private readonly review: FinanceImportReviewService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
@@ -98,6 +101,50 @@ export class FinanceImportController {
     return this.batches.getBatchDetail(tid, batchId);
   }
 
+  @Get(':batchId/mapeamentos-bulk')
+  @RequireFinance('finance_import_view')
+  async bulkMappings(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('batchId') batchId: string,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    return this.review.getBulkMappings(tid, batchId);
+  }
+
+  @Get(':batchId/duplicidades')
+  @RequireFinance('finance_import_view')
+  async duplicates(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('batchId') batchId: string,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    return this.review.listPossibleDuplicates(tid, batchId);
+  }
+
+  @Get(':batchId/conflitos')
+  @RequireFinance('finance_import_view')
+  async conflicts(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('batchId') batchId: string,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    return this.review.listConflicts(tid, batchId);
+  }
+
+  @Get(':batchId/resultados')
+  @RequireFinance('finance_import_view')
+  async results(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('batchId') batchId: string,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    return this.review.getExecutionResults(tid, batchId);
+  }
+
   @Get(':batchId/linhas')
   @RequireFinance('finance_import_view')
   async rows(
@@ -133,6 +180,43 @@ export class FinanceImportController {
     return this.batches.updateMappings(tid, batchId, updates as never, actor.userId, actor.name);
   }
 
+  @Patch(':batchId/linhas-decisoes')
+  @RequireFinance('finance_import_create')
+  async rowDecisions(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('batchId') batchId: string,
+    @Body()
+    body: {
+      tenantId: string;
+      updates: Array<{ stagingRowId: string; rowDecision: string; reason?: string }>;
+    },
+  ) {
+    const tid = await this.requireTenant(req, body.tenantId);
+    const actor = await this.actor(req);
+    return this.review.updateRowDecisions(tid, batchId, body.updates ?? [], actor.userId, actor.name);
+  }
+
+  @Patch(':batchId/duplicidades-decisoes')
+  @RequireFinance('finance_import_approve')
+  async duplicateDecisions(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('batchId') batchId: string,
+    @Body()
+    body: {
+      tenantId: string;
+      updates: Array<{
+        stagingRowId: string;
+        duplicateDecision: 'LINK_AND_SKIP' | 'IMPORT_SEPARATELY' | 'KEEP_FOR_REVIEW';
+        reason?: string;
+        linkLancamentoId?: string;
+      }>;
+    },
+  ) {
+    const tid = await this.requireTenant(req, body.tenantId);
+    const actor = await this.actor(req);
+    return this.review.updateDuplicateDecisions(tid, batchId, body.updates ?? [], actor.userId, actor.name);
+  }
+
   @Post(':batchId/simular')
   @RequireFinance('finance_import_create')
   async simulate(
@@ -157,6 +241,18 @@ export class FinanceImportController {
     return this.batches.approve(tid, batchId, actor.userId, actor.name);
   }
 
+  @Post(':batchId/aprovar-execucao')
+  @RequireFinance('finance_import_execute')
+  async approveExecution(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('batchId') batchId: string,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    const tid = await this.requireTenant(req, tenantId);
+    const actor = await this.actor(req);
+    return this.review.approveExecution(tid, batchId, actor.userId, actor.name);
+  }
+
   @Post(':batchId/executar')
   @RequireFinance('finance_import_execute')
   async execute(
@@ -166,8 +262,12 @@ export class FinanceImportController {
   ) {
     const tid = await this.requireTenant(req, tenantId);
     const actor = await this.actor(req);
+    const detail = await this.batches.getBatchDetail(tid, batchId);
+    const pivotLocked = pivotSafetyLockActive(detail.batch);
+    const allowCanonical =
+      !pivotLocked && process.env.FINANCE_IMPORT_ALLOW_CANONICAL_WRITE === '1';
     return this.execution.executeBatch(tid, batchId, {
-      allowCanonicalWrite: false,
+      allowCanonicalWrite: allowCanonical,
       actorUserId: actor.userId,
       actorName: actor.name,
     });

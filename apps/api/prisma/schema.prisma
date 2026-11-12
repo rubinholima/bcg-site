@@ -884,6 +884,16 @@ model FinanceImportBatch {
   cancelledAt        DateTime?
   lastSimulationAt   DateTime?
   simulationSummary  Json?
+  mappingVersion     Int      @default(0)
+  simulationVersion  Int      @default(0)
+  simulationStale    Boolean  @default(false)
+  executionLockAt    DateTime?
+  executionLockByUserId String?
+  executionApprovedAt DateTime?
+  executionApprovedByUserId String?
+  executionApprovedByName String?
+  executionResult    Json?
+  controlTotals      Json?
   failureReason      String?  @db.Text
   notes              String?  @db.Text
   createdAt          DateTime @default(now())
@@ -917,6 +927,14 @@ model FinanceImportStagingRow {
   possibleDuplicateLancamentoId String?
   importedFinanceiroLancamentoId String?
   sourceRowFingerprint   String?
+  rowDecision            String?
+  rowDecisionReason      String?
+  duplicateDecision      String?
+  duplicateDecisionReason String?
+  duplicateFlagReason    String?
+  /// pending | imported | linked | skipped | failed
+  executionStatus        String   @default("pending")
+  executionError         String?  @db.Text
   importedAt             DateTime?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
@@ -924,6 +942,7 @@ model FinanceImportStagingRow {
   @@index([tenantId, batchId])
   @@index([tenantId, validationStatus])
   @@index([tenantId, rowClassification])
+  @@index([tenantId, batchId, executionStatus])
   @@index([sourceRowFingerprint])
 }
 
@@ -943,6 +962,7 @@ model FinanceImportBatchMapping {
   targetId              String?
   confirmed             Boolean  @default(false)
   notes                 String?  @db.Text
+  metadata              Json?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   @@unique([batchId, mappingKind, sourceValueNormalized])

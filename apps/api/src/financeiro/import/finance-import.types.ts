@@ -47,11 +47,41 @@ export type FinanceImportSemanticRow = {
 };
 
 export type FinanceImportSimulationSummary = {
+  simulationVersion: number;
+  mappingVersion: number;
   obligationsWouldCreate: number;
   settlementsWouldCreate: number;
+  directDebitsWouldCreate: number;
   transfersWouldCreate: number;
+  reconciledWouldCreate: number;
+  notReconciledWouldCreate: number;
   skippedDuplicates: number;
+  linkedExisting: number;
+  excludedRows: number;
   unresolvedMappings: number;
   blockedRows: number;
+  conflictRows: number;
+  warningsCount: number;
   rowsByClassification: Record<string, number>;
+  controlTotals?: {
+    sourceOriginalTotal: number;
+    sourceInterestTotal: number;
+    sourcePenaltyTotal: number;
+    sourcePaidTotal: number;
+    projectedPaidTotal: number;
+    mismatch: boolean;
+    mismatchDelta: number;
+  };
+};
+
+export type FinanceImportRowDecision = 'READY' | 'SKIP' | 'REVIEW';
+export type FinanceImportDuplicateDecision = 'LINK_AND_SKIP' | 'IMPORT_SEPARATELY' | 'KEEP_FOR_REVIEW';
+
+export type FinanceImportExecutionResult = {
+  imported: number;
+  linked: number;
+  skipped: number;
+  failed: number;
+  pending: number;
+  errors: Array<{ stagingRowId: string; message: string }>;
 };

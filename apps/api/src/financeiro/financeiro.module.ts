@@ -32,6 +32,7 @@ import { FinanceImportController } from './import/finance-import.controller';
 import { FinanceImportBatchService } from './import/finance-import-batch.service';
 import { FinanceImportSimulationService } from './import/finance-import-simulation.service';
 import { FinanceImportExecutionService } from './import/finance-import-execution.service';
+import { FinanceImportReviewService } from './import/finance-import-review.service';
 import { S3Module } from '../s3/s3.module';
 
 @Module({
@@ -69,6 +70,7 @@ import { S3Module } from '../s3/s3.module';
     FinanceImportBatchService,
     FinanceImportSimulationService,
     FinanceImportExecutionService,
+    FinanceImportReviewService,
   ],
   exports: [
     CustomersService,
