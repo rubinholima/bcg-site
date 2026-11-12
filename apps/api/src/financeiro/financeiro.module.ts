@@ -28,6 +28,10 @@ import { FinancePayrollDeductionService } from './finance-payroll-deduction.serv
 import { FinancePhase2Controller } from './finance-phase2.controller';
 import { FinanceReportController } from './finance-report.controller';
 import { FinanceReportService } from './finance-report.service';
+import { FinanceImportController } from './import/finance-import.controller';
+import { FinanceImportBatchService } from './import/finance-import-batch.service';
+import { FinanceImportSimulationService } from './import/finance-import-simulation.service';
+import { FinanceImportExecutionService } from './import/finance-import-execution.service';
 import { S3Module } from '../s3/s3.module';
 
 @Module({
@@ -38,6 +42,7 @@ import { S3Module } from '../s3/s3.module';
     FinanceCatalogController,
     FinancePhase2Controller,
     FinanceReportController,
+    FinanceImportController,
     CustomersController,
   ],
   providers: [
@@ -61,6 +66,9 @@ import { S3Module } from '../s3/s3.module';
     FinanceCardStatementService,
     FinancePayrollDeductionService,
     FinanceReportService,
+    FinanceImportBatchService,
+    FinanceImportSimulationService,
+    FinanceImportExecutionService,
   ],
   exports: [
     CustomersService,

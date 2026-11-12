@@ -12,7 +12,11 @@ export type FinanceCapability =
   | 'finance_bank_data_view'
   | 'finance_bank_data_manage'
   | 'finance_reports_view'
-  | 'finance_reports_export';
+  | 'finance_reports_export'
+  | 'finance_import_view'
+  | 'finance_import_create'
+  | 'finance_import_approve'
+  | 'finance_import_execute';
 
 const CAPABILITY_MODULES: Record<FinanceCapability, string[]> = {
   finance_view: ['adm_financeiro', 'finance_view', 'finance_create', 'finance_edit'],
@@ -29,6 +33,10 @@ const CAPABILITY_MODULES: Record<FinanceCapability, string[]> = {
   finance_bank_data_manage: ['adm_financeiro', 'finance_bank_data_manage'],
   finance_reports_view: ['adm_financeiro', 'finance_reports_view', 'finance_reports_export'],
   finance_reports_export: ['adm_financeiro', 'finance_reports_export'],
+  finance_import_view: ['adm_financeiro', 'finance_import_view', 'finance_import_create'],
+  finance_import_create: ['adm_financeiro', 'finance_import_create', 'finance_import_approve'],
+  finance_import_approve: ['adm_financeiro', 'finance_import_approve', 'finance_import_execute'],
+  finance_import_execute: ['adm_financeiro', 'finance_import_execute'],
 };
 
 const ADM_FINANCE_IMPLIES: FinanceCapability[] = [
@@ -46,6 +54,10 @@ const ADM_FINANCE_IMPLIES: FinanceCapability[] = [
   'finance_bank_data_manage',
   'finance_reports_view',
   'finance_reports_export',
+  'finance_import_view',
+  'finance_import_create',
+  'finance_import_approve',
+  'finance_import_execute',
 ];
 
 export function hasFinanceCapability(

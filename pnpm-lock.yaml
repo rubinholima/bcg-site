@@ -112,6 +112,9 @@ importers:
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.2.0

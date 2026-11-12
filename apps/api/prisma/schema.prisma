@@ -267,6 +267,9 @@ model Tenant {
   financePayrollDeductionLinks FinancePayrollDeductionLink[]
   financeInternalTransfers FinanceInternalTransfer[]
   financeCardStatements FinanceCardStatement[]
+  financeImportBatches FinanceImportBatch[]
+  financeImportStagingRows FinanceImportStagingRow[]
+  financeImportBatchMappings FinanceImportBatchMapping[]
   customers             Customer[]
   registrationInvites   RegistrationInvite[]
   scouts                Scout[]
@@ -851,6 +854,99 @@ model FinanceCardStatementPayment {
   notes         String?  @db.Text
   createdAt     DateTime @default(now())
   @@index([statementId])
+}
+
+// ========== CUP360 Finance Historical Import (staging — not a second ledger) ==========
+
+model FinanceImportBatch {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sourceType         String
+  originalFilename   String
+  fileHash           String
+  fileKey            String?
+  mimeType           String?
+  /// UPLOADED | ANALYZED | MAPPING_REQUIRED | READY_FOR_REVIEW | APPROVED | IMPORTING | IMPORTED | FAILED | CANCELLED
+  status             String   @default("UPLOADED")
+  uploadedByUserId   String?
+  uploadedByName     String?
+  uploadedAt         DateTime @default(now())
+  totalRows          Int      @default(0)
+  validRows          Int      @default(0)
+  warningRows        Int      @default(0)
+  conflictRows       Int      @default(0)
+  invalidRows        Int      @default(0)
+  approvedByUserId   String?
+  approvedByName     String?
+  approvedAt         DateTime?
+  importedAt         DateTime?
+  cancelledAt        DateTime?
+  lastSimulationAt   DateTime?
+  simulationSummary  Json?
+  failureReason      String?  @db.Text
+  notes              String?  @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  stagingRows        FinanceImportStagingRow[]
+  mappings           FinanceImportBatchMapping[]
+  @@unique([tenantId, fileHash])
+  @@index([tenantId, status])
+  @@index([tenantId, uploadedAt])
+}
+
+model FinanceImportStagingRow {
+  id                     String   @id @default(cuid())
+  batchId                String
+  batch                  FinanceImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  tenantId               String
+  tenant                 Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sheetName              String
+  sourceRowNumber        Int
+  rawValues              Json
+  normalizedValues       Json?
+  proposedMappings       Json?
+  /// PAYABLE_SETTLEMENT | DIRECT_DEBIT | INTERNAL_TRANSFER | OTHER_REVIEW
+  rowClassification      String?
+  /// valid | warning | conflict | invalid
+  validationStatus       String   @default("valid")
+  warnings               Json?
+  errors                 Json?
+  /// none | exact_in_batch | exact_file_reprocess | possible_duplicate_cup360
+  duplicateState         String   @default("none")
+  possibleDuplicateLancamentoId String?
+  importedFinanceiroLancamentoId String?
+  sourceRowFingerprint   String?
+  importedAt             DateTime?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  @@unique([batchId, sheetName, sourceRowNumber])
+  @@index([tenantId, batchId])
+  @@index([tenantId, validationStatus])
+  @@index([tenantId, rowClassification])
+  @@index([sourceRowFingerprint])
+}
+
+model FinanceImportBatchMapping {
+  id                    String   @id @default(cuid())
+  batchId               String
+  batch                 FinanceImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  tenantId              String
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// company | finance_account | category | subcategory | counterparty | payment_method | document_type
+  mappingKind           String
+  sourceValue           String
+  sourceValueNormalized String
+  /// map_existing | propose_create | ignore | review_required
+  action                String   @default("review_required")
+  targetType            String?
+  targetId              String?
+  confirmed             Boolean  @default(false)
+  notes                 String?  @db.Text
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  @@unique([batchId, mappingKind, sourceValueNormalized])
+  @@index([tenantId, batchId])
 }
 
 // ========== CUP360 Payment Core (provider-independent) ==========

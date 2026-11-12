@@ -38,6 +38,7 @@ const NAV = [
   { href: "/dashboard/adm/financeiro/categorias", label: "Categorias" },
   { href: "/dashboard/adm/financeiro/fornecedores", label: "Fornecedores" },
   { href: "/dashboard/adm/financeiro/relatorios", label: "Relatórios" },
+  { href: "/dashboard/adm/financeiro/importacoes", label: "Importações" },
   { href: "/dashboard/adm/financeiro/omie", label: "Integrações / Omie" },
 ];
 
