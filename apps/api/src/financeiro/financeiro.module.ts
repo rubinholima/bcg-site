@@ -17,13 +17,24 @@ import { FinanceAccessService } from './finance-access.service';
 import { FinanceCapabilityGuard } from './finance-capability.guard';
 import { FinanceAuditService } from './finance-audit.service';
 import { FinanceDelegationService } from './finance-delegation.service';
+import { FinanceSettlementService } from './finance-settlement.service';
+import { FinanceAllocationService } from './finance-allocation.service';
+import { FinanceInstallmentService } from './finance-installment.service';
+import { FinanceTransferService } from './finance-transfer.service';
+import { FinanceDocumentService } from './finance-document.service';
+import { FinanceReconciliationService } from './finance-reconciliation.service';
+import { FinanceCardStatementService } from './finance-card-statement.service';
+import { FinancePayrollDeductionService } from './finance-payroll-deduction.service';
+import { FinancePhase2Controller } from './finance-phase2.controller';
+import { S3Module } from '../s3/s3.module';
 
 @Module({
-  imports: [AuthModule, ModulesModule, IntegrationsModule],
+  imports: [AuthModule, ModulesModule, IntegrationsModule, S3Module],
   controllers: [
     FinanceiroOmieController,
     FinanceiroLancamentosController,
     FinanceCatalogController,
+    FinancePhase2Controller,
     CustomersController,
   ],
   providers: [
@@ -38,6 +49,14 @@ import { FinanceDelegationService } from './finance-delegation.service';
     FinanceAccessService,
     FinanceAuditService,
     FinanceDelegationService,
+    FinanceSettlementService,
+    FinanceAllocationService,
+    FinanceInstallmentService,
+    FinanceTransferService,
+    FinanceDocumentService,
+    FinanceReconciliationService,
+    FinanceCardStatementService,
+    FinancePayrollDeductionService,
   ],
   exports: [
     CustomersService,

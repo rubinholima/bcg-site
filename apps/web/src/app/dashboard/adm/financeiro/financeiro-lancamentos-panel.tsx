@@ -41,9 +41,10 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { FinanceSettlementDialog } from "./finance-settlement-dialog";
 
 type Modo = "receber" | "pagar";
-type StatusTitulo = "pendente" | "pago" | "cancelado";
+type StatusTitulo = "pendente" | "parcial" | "pago" | "cancelado";
 
 export interface FinanceiroLancamentoRow {
   id: string;
@@ -98,7 +99,7 @@ function startOfTodayLocal(): Date {
 }
 
 function isVencido(row: FinanceiroLancamentoRow): boolean {
-  if (row.status !== "pendente") return false;
+  if (row.status !== "pendente" && row.status !== "parcial") return false;
   const due = new Date(row.dueDate);
   return due < startOfTodayLocal();
 }
@@ -109,6 +110,8 @@ function statusLabel(s: StatusTitulo): string {
       return "Pago / recebido";
     case "cancelado":
       return "Cancelado";
+    case "parcial":
+      return "Parcial";
     default:
       return "Pendente";
   }
@@ -156,6 +159,9 @@ export function FinanceiroLancamentosPanel({
   const [form, setForm] = useState(emptyForm);
   const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
   const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([]);
+  const [financeAccounts, setFinanceAccounts] = useState<Array<{ id: string; name: string }>>([]);
+  const [settleOpen, setSettleOpen] = useState(false);
+  const [settleRow, setSettleRow] = useState<FinanceiroLancamentoRow | null>(null);
 
   useEffect(() => {
     if (!tenantId) return;
@@ -165,6 +171,10 @@ export function FinanceiroLancamentosPanel({
     api.get<Array<{ id: string; name: string }>>(`/financeiro/customers?tenantId=${encodeURIComponent(tenantId)}`)
       .then(({ data }) => setCustomers(Array.isArray(data) ? data : []))
       .catch(() => setCustomers([]));
+    api
+      .get<Array<{ id: string; name: string }>>(`/financeiro/contas?tenantId=${encodeURIComponent(tenantId)}&activeOnly=true`)
+      .then(({ data }) => setFinanceAccounts(Array.isArray(data) ? data : []))
+      .catch(() => setFinanceAccounts([]));
   }, [tenantId]);
 
   useEffect(() => {
@@ -274,14 +284,9 @@ export function FinanceiroLancamentosPanel({
     }
   }
 
-  async function handleMarcarPago(row: FinanceiroLancamentoRow) {
-    if (!confirm("Confirmar baixa deste título como pago/recebido?")) return;
-    try {
-      await api.patch(`/financeiro/lancamentos/${row.id}`, { status: "pago" });
-      await load();
-    } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Erro ao atualizar.");
-    }
+  function openSettlement(row: FinanceiroLancamentoRow) {
+    setSettleRow(row);
+    setSettleOpen(true);
   }
 
   async function handleDelete(row: FinanceiroLancamentoRow) {
@@ -443,14 +448,14 @@ export function FinanceiroLancamentosPanel({
                           </TableCell>
                           <TableCell className="text-right print:hidden">
                             <div className="flex justify-end gap-1 flex-wrap">
-                              {row.status === "pendente" && (
+                              {(row.status === "pendente" || row.status === "parcial") && (
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="icon"
                                   className="h-8 w-8"
-                                  title="Marcar pago / recebido"
-                                  onClick={() => void handleMarcarPago(row)}
+                                  title="Registrar baixa"
+                                  onClick={() => openSettlement(row)}
                                 >
                                   <CheckCircle2 className="h-4 w-4" />
                                 </Button>
@@ -619,6 +624,19 @@ export function FinanceiroLancamentosPanel({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {settleRow ? (
+        <FinanceSettlementDialog
+          open={settleOpen}
+          onOpenChange={setSettleOpen}
+          tenantId={tenantId}
+          lancamentoId={settleRow.id}
+          plannedAccountId={null}
+          remainingBalance={settleRow.valor}
+          accounts={financeAccounts}
+          onDone={() => void load()}
+        />
+      ) : null}
     </div>
   );
 }

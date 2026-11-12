@@ -31,6 +31,7 @@ const NAV = [
   { href: "/dashboard/adm/financeiro/pagar", label: "Contas a Pagar" },
   { href: "/dashboard/adm/financeiro/receber", label: "Contas a Receber" },
   { href: "/dashboard/adm/financeiro/contas", label: "Contas Financeiras" },
+  { href: "/dashboard/adm/financeiro/contas/fila", label: "Fila por conta" },
   { href: "/dashboard/adm/financeiro/categorias", label: "Categorias" },
   { href: "/dashboard/adm/financeiro/fornecedores", label: "Fornecedores" },
   { href: "/dashboard/adm/financeiro/relatorios", label: "Relatórios" },
