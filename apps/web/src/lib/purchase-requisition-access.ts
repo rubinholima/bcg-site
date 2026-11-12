@@ -5,10 +5,10 @@ export function canAccessPurchaseRequisitions(
   return canAccessModule("requisicoes") || canAccessModule("futebol_logistica");
 }
 
+/** Gerente de futebol (ex.: Odair) — supervisor só solicita, não aprova. */
 const GERENTE_APPROVER_ROLES = new Set([
   "gerente",
   "gestor",
-  "supervisor",
   "company_admin",
   "super_admin",
 ]);

@@ -200,7 +200,11 @@ export function PurchaseRequisitionWorkflowPanel({
   const openDetail = async (id: string) => {
     setDetailLoading(true);
     try {
-      const { data } = await api.get<PurchaseRequisitionWorkflowRow>(`/compras/workflow/requisitions/${id}`);
+      const detailPath =
+        mode === "requester"
+          ? `/requisicoes/${id}`
+          : `/compras/workflow/requisitions/${id}`;
+      const { data } = await api.get<PurchaseRequisitionWorkflowRow>(detailPath);
       setSelected(data);
       setSignEmail(cadastroEmail(data.requesterEmail));
       setStatusDraft(data.status);

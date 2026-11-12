@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -20,7 +21,11 @@ import { ProcurementCapabilityGuard } from './procurement-capability.guard';
 import { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { requestActor } from '../common/request-actor';
 import { PurchaseWorkflowService } from './purchase-workflow.service';
-import { PURCHASE_REQUISITION_REQUESTER_MODULES } from './purchase-requisition-access.util';
+import {
+  PURCHASE_REQUISITION_REQUESTER_MODULES,
+  assertPurchaseRequisitionApprovalAccess,
+} from './purchase-requisition-access.util';
+import { ProcurementAccessService } from './procurement-access.service';
 import { PurchaseQuoteInviteService } from './purchase-quote-invite.service';
 import { WorkflowNotifyService } from './workflow-notify.service';
 
@@ -33,6 +38,7 @@ export class PurchaseWorkflowController {
     private readonly workflow: PurchaseWorkflowService,
     private readonly quoteInvites: PurchaseQuoteInviteService,
     private readonly notify: WorkflowNotifyService,
+    private readonly procurementAccess: ProcurementAccessService,
   ) {}
 
   @Post('manual-quotations')
@@ -115,7 +121,14 @@ export class PurchaseWorkflowController {
   }
 
   @Get('inbox-counts')
-  @RequireModule(['adm_compras', 'adm_financeiro', 'diretoria', 'adm_ti'])
+  @RequireModule([
+    'adm_compras',
+    'adm_financeiro',
+    'diretoria',
+    'adm_ti',
+    'futebol_logistica',
+    'requisicoes',
+  ])
   inboxCounts(@Query('tenantId') tenantId?: string) {
     return this.notify.getInboxCounts(tenantId);
   }
@@ -138,7 +151,14 @@ export class PurchaseWorkflowController {
   }
 
   @Get('requisitions/:id')
-  @RequireModule(['adm_compras', 'adm_financeiro', 'diretoria', 'requisicoes', 'adm_ti'])
+  @RequireModule([
+    'adm_compras',
+    'adm_financeiro',
+    'diretoria',
+    'requisicoes',
+    'adm_ti',
+    ...PURCHASE_REQUISITION_REQUESTER_MODULES,
+  ])
   getRequisition(@Param('id') id: string) {
     return this.workflow.findRequisition(id);
   }
@@ -285,25 +305,37 @@ export class PurchaseWorkflowController {
 
   @Post('requisitions/:id/approve')
   @RequireModule(['adm_financeiro', 'diretoria', 'futebol_logistica', 'requisicoes'])
-  @RequireProcurement('approve_quotation')
-  approve(
+  async approve(
     @Param('id') id: string,
     @Body('role') role: 'gerente' | 'financeiro' | 'diretoria',
     @Body('notes') notes: string | undefined,
     @Req() req: AuthedRequest,
   ) {
+    const platformRole = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const slugs = await this.procurementAccess.getSlugs(req.user);
+    assertPurchaseRequisitionApprovalAccess({
+      approvalStep: role,
+      platformRole,
+      moduleSlugs: slugs,
+    });
     return this.workflow.approve(id, role, requestActor(req.user), notes);
   }
 
   @Post('requisitions/:id/reject')
   @RequireModule(['adm_financeiro', 'diretoria', 'futebol_logistica', 'requisicoes'])
-  @RequireProcurement('approve_quotation')
-  reject(
+  async reject(
     @Param('id') id: string,
     @Body('role') role: 'gerente' | 'financeiro' | 'diretoria',
     @Body('reason') reason: string,
     @Req() req: AuthedRequest,
   ) {
+    const platformRole = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const slugs = await this.procurementAccess.getSlugs(req.user);
+    assertPurchaseRequisitionApprovalAccess({
+      approvalStep: role,
+      platformRole,
+      moduleSlugs: slugs,
+    });
     return this.workflow.reject(id, role, requestActor(req.user), reason);
   }
 
@@ -416,5 +448,14 @@ export class MyRequisitionsController {
   @Post(':id/submit')
   submit(@Param('id') id: string, @Req() req: AuthedRequest) {
     return this.workflow.submitRequisition(id, req.user.sub);
+  }
+
+  @Get(':id')
+  async getMine(@Param('id') id: string, @Req() req: AuthedRequest) {
+    const row = await this.workflow.findRequisition(id);
+    if (row.requestedByUserId && row.requestedByUserId !== req.user.sub) {
+      throw new ForbiddenException('Você não pode abrir esta requisição.');
+    }
+    return row;
   }
 }

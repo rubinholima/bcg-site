@@ -23,6 +23,7 @@ const CAPABILITY_MODULES: Record<ProcurementCapability, string[]> = {
     'adm_financeiro',
     'diretoria',
     'requisicoes',
+    'futebol_logistica',
     'compras_cotacoes_ver',
     'compras_cotacoes_gerir',
   ],

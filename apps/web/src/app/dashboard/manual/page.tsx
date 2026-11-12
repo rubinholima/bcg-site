@@ -317,10 +317,11 @@ export default function ManualPage() {
               financeiro → diretoria (se acima do limite) → ordem de compra → recebimento → assinatura.
             </p>
             <p>
-              Logística e demais solicitantes abrem em Futebol → Logística → Requisições de compra (ou
-              Início → Requisições). Compras registra cotações; o gerente aprova em Futebol → Aprovar
-              compras; depois Financeiro e, se necessário, Diretoria; Compras conclui OP, recebimento e
-              assinatura.
+              Supervisores e logística abrem em Início → Requisições (ou atalho na Logística) e devem
+              usar <strong>Enviar para Compras</strong> (status <em>Enviada</em>). Compras vê a fila em
+              Administrativo → Compras → aba Requisições. Após cotações, Compras envia para aprovação do
+              gerente (Odair) em Futebol → Aprovações de compra; depois Financeiro e, se acima do limite,
+              Diretoria; Compras conclui OP, recebimento e assinatura.
             </p>
             <p>
               <strong>Módulos envolvidos:</strong> Requisições, Compras, Financeiro, Diretoria e TI
