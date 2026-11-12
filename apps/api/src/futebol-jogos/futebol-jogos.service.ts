@@ -39,6 +39,19 @@ import {
   CoachMatchStatsService,
   type UpsertMatchStatOverrideInput,
 } from '../coach-match-stats/coach-match-stats.service';
+import { FmfScraperService, type FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
+import {
+  isFmfSyncTenantSlug,
+  parseTenantCategoryKeys,
+} from '../fmf-scraper/fmf-sync-tenants.config';
+import {
+  loadFmfPresetExtensionMap,
+  mergeFmfPresetMaps,
+} from '../fmf-scraper/fmf-preset-registry.util';
+import {
+  buildFmfUpcomingListItems,
+  resolveFmfFixtureGameFromStore,
+} from './fmf-upcoming-list.util';
 
 function categoryMatches(
   travelCategory: string | null | undefined,
@@ -49,14 +62,14 @@ function categoryMatches(
   return travelMatchesCategoryFilter({ category: travelCategory ?? null, categories }, filter);
 }
 
-function parseGameKey(raw: string): { prefix: 'fmf' | 'travel'; id: string } {
+function parseGameKey(raw: string): { prefix: 'fmf' | 'travel' | 'fmf-fixture'; id: string } {
   const decoded = decodeURIComponent(raw.trim());
   const idx = decoded.indexOf(':');
   if (idx <= 0) throw new BadRequestException('Identificador de jogo inválido');
   const prefix = decoded.slice(0, idx);
   const id = decoded.slice(idx + 1).trim();
   if (!id) throw new BadRequestException('Identificador de jogo inválido');
-  if (prefix !== 'fmf' && prefix !== 'travel') {
+  if (prefix !== 'fmf' && prefix !== 'travel' && prefix !== 'fmf-fixture') {
     throw new BadRequestException('Identificador de jogo inválido');
   }
   return { prefix, id };
@@ -168,6 +181,7 @@ export class FutebolJogosService {
     private readonly prisma: PrismaService,
     private readonly relatorios: FutebolRelatoriosService,
     private readonly matchStats: CoachMatchStatsService,
+    private readonly fmfScraper: FmfScraperService,
   ) {}
 
   private async tenantAliases(tenantId: string, name: string): Promise<string[]> {
@@ -184,7 +198,7 @@ export class FutebolJogosService {
   private async loadBaseData(tenantId: string, categoryFilter: string) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { id: true, name: true, slug: true, tradeName: true },
+      select: { id: true, name: true, slug: true, tradeName: true, categories: true },
     });
     if (!tenant) throw new NotFoundException('Clube não encontrado');
 
@@ -265,6 +279,40 @@ export class FutebolJogosService {
     };
   }
 
+  private async mergeFmfScheduledUpcoming(input: {
+    tenant: { slug: string; name: string; categories: unknown };
+    aliases: string[];
+    travels: Awaited<ReturnType<FutebolJogosService['loadBaseData']>>['travels'];
+    categoryFilter: string;
+    season: number;
+    now: Date;
+    coachByTravel: Map<string, string>;
+    existing: FutebolGameListItem[];
+  }): Promise<FutebolGameListItem[]> {
+    if (!isFmfSyncTenantSlug(input.tenant.slug)) return [];
+    try {
+      const store = (await this.fmfScraper.getStatus()) as FmfScraperStore;
+      if (!store.updatedAt) return [];
+      const extensions = await loadFmfPresetExtensionMap(this.prisma);
+      const presetMap = mergeFmfPresetMaps(extensions);
+      return buildFmfUpcomingListItems({
+        store,
+        tenantName: input.tenant.name,
+        aliases: input.aliases,
+        tenantCategoryKeys: parseTenantCategoryKeys(input.tenant.categories),
+        presetMap,
+        travels: input.travels,
+        categoryFilter: input.categoryFilter,
+        season: input.season,
+        now: input.now,
+        coachByTravel: input.coachByTravel,
+        existing: input.existing,
+      });
+    } catch {
+      return [];
+    }
+  }
+
   private completedToListItem(
     g: CoachCompletedGame,
     coachByFmf: Map<string, string>,
@@ -319,7 +367,7 @@ export class FutebolJogosService {
     const categoryFilter = filters.category?.trim() ?? '';
     const statusFilter = filters.status?.trim() || null;
 
-    const { tenant, now, travels, completedGames, coachByFmf, coachByTravel } =
+    const { tenant, aliases, now, travels, completedGames, coachByFmf, coachByTravel } =
       await this.loadBaseData(tenantId, categoryFilter);
 
     const travelById = new Map(travels.map((t) => [t.id, t]));
@@ -377,8 +425,19 @@ export class FutebolJogosService {
         );
       });
 
+    const fmfUpcoming = await this.mergeFmfScheduledUpcoming({
+      tenant,
+      aliases,
+      travels,
+      categoryFilter,
+      season,
+      now,
+      coachByTravel,
+      existing: [...upcoming, ...completed],
+    });
+
     let games = dedupeGameListItems(
-      [...upcoming, ...completed].sort(
+      [...upcoming, ...fmfUpcoming, ...completed].sort(
         (a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime(),
       ),
     );
@@ -405,12 +464,36 @@ export class FutebolJogosService {
     if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
 
     const { prefix, id } = parseGameKey(gameKeyRaw);
-    const { tenant, completedGames, travels } = await this.loadBaseData(tenantId, '');
+    const { tenant, completedGames, travels, aliases } = await this.loadBaseData(tenantId, '');
 
     let completed: CoachCompletedGame | null = null;
     let listItem: FutebolGameListItem | null = null;
 
-    if (prefix === 'fmf') {
+    if (prefix === 'fmf-fixture') {
+      const travelExternalId = decodeURIComponent(id);
+      const store = (await this.fmfScraper.getStatus()) as FmfScraperStore;
+      const extensions = await loadFmfPresetExtensionMap(this.prisma);
+      const presetMap = mergeFmfPresetMaps(extensions);
+      const coachReports = await this.prisma.coachMatchReport.findMany({
+        where: { tenantId },
+        select: { id: true, travelLogisticsId: true },
+      });
+      const coachByTravel = new Map(
+        coachReports.filter((r) => r.travelLogisticsId).map((r) => [r.travelLogisticsId!, r.id]),
+      );
+      const resolved = resolveFmfFixtureGameFromStore(
+        store,
+        tenant.name,
+        aliases,
+        parseTenantCategoryKeys(tenant.categories),
+        presetMap,
+        travels,
+        travelExternalId,
+        coachByTravel,
+      );
+      if (!resolved) throw new NotFoundException('Jogo não encontrado');
+      listItem = resolved.listItem;
+    } else if (prefix === 'fmf') {
       completed = completedGames.find((g) => g.fmfMatchReportId === id) ?? null;
       if (!completed) {
         const report = await this.prisma.fmfMatchReport.findFirst({
