@@ -119,6 +119,10 @@ export function PayslipsOperationalPanel({ tenantId, initialSubTab }: Props) {
     }
   };
 
+  const openPdf = (id: string) => {
+    window.open(`/api/rh/payslips/individuals/${id}/download`, "_blank", "noopener,noreferrer");
+  };
+
   if (!tenantId) {
     return <p className="text-muted-foreground text-sm py-6">Selecione um clube/empresa no filtro.</p>;
   }
@@ -235,6 +239,13 @@ export function PayslipsOperationalPanel({ tenantId, initialSubTab }: Props) {
                   {row.status === "APROVADO" && (
                     <Button size="sm" className="min-h-[44px]" type="button" onClick={() => transition(row.id, "DISPONIBILIZADO")}>
                       Disponibilizar
+                    </Button>
+                  )}
+                  {["EM_CONFERENCIA", "APROVADO", "DISPONIBILIZADO", "CIENCIA_PENDENTE", "CIENCIA_REALIZADA"].includes(
+                    row.status,
+                  ) && (
+                    <Button size="sm" variant="outline" className="min-h-[44px]" type="button" onClick={() => openPdf(row.id)}>
+                      Visualizar PDF
                     </Button>
                   )}
                   {tab === "ciencias" && (

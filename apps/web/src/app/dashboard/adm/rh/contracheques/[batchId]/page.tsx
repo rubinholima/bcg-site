@@ -111,6 +111,19 @@ export default function ContrachequeBatchPage() {
     }
   };
 
+  const transitionIndividual = async (id: string, toStatus: string) => {
+    try {
+      await api.post(`/rh/payslips/individuals/${id}/transition`, { toStatus });
+      await load();
+    } catch {
+      setFeedback({ open: true, title: "Erro", message: "Transição não permitida." });
+    }
+  };
+
+  const openPdf = (id: string) => {
+    window.open(`/api/rh/payslips/individuals/${id}/download`, "_blank", "noopener,noreferrer");
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -195,6 +208,7 @@ export default function ContrachequeBatchPage() {
             <TableRow>
               <TableHead>Colaborador</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="min-w-[14rem]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -202,6 +216,23 @@ export default function ContrachequeBatchPage() {
               <TableRow key={i.id}>
                 <TableCell>{i.employee?.name ?? "—"}</TableCell>
                 <TableCell>{PAYSLIP_STATUS_LABELS[i.status] ?? i.status}</TableCell>
+                <TableCell className="flex flex-wrap gap-1">
+                  {i.status === "EM_CONFERENCIA" && (
+                    <Button type="button" size="sm" className="min-h-[44px]" onClick={() => transitionIndividual(i.id, "APROVADO")}>
+                      Aprovar
+                    </Button>
+                  )}
+                  {i.status === "APROVADO" && (
+                    <Button type="button" size="sm" className="min-h-[44px]" onClick={() => transitionIndividual(i.id, "DISPONIBILIZADO")}>
+                      Disponibilizar
+                    </Button>
+                  )}
+                  {["EM_CONFERENCIA", "APROVADO", "DISPONIBILIZADO", "CIENCIA_PENDENTE", "CIENCIA_REALIZADA"].includes(i.status) && (
+                    <Button type="button" size="sm" variant="outline" className="min-h-[44px]" onClick={() => openPdf(i.id)}>
+                      PDF
+                    </Button>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
