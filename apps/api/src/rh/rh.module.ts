@@ -5,6 +5,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { ContractsModule } from '../contracts/contracts.module';
 import { HelloSignModule } from '../hello-sign/hello-sign.module';
 import { S3Module } from '../s3/s3.module';
+import { FinanceiroModule } from '../financeiro/financeiro.module';
 import { DepartmentsController } from './departments.controller';
 import { DepartmentsService } from './departments.service';
 import { JobRolesController } from './job-roles.controller';
@@ -36,9 +37,16 @@ import { HiringRequestsController } from './hiring-requests.controller';
 import { HiringRequestsService } from './hiring-requests.service';
 import { RhDashboardController } from './rh-dashboard.controller';
 import { RhDashboardService } from './rh-dashboard.service';
+import { RhNotificationService } from './rh-notification.service';
+import { PayrollClosingController } from './payroll-closing.controller';
+import { PayrollClosingService } from './payroll-closing.service';
+import { TimeRhController } from './time-rh.controller';
+import { TimeRhService } from './time-rh.service';
+import { BenefitCatalogController } from './benefit-catalog.controller';
+import { BenefitCatalogService } from './benefit-catalog.service';
 
 @Module({
-  imports: [AuthModule, ModulesModule, ContractsModule, S3Module, HelloSignModule],
+  imports: [AuthModule, ModulesModule, ContractsModule, S3Module, HelloSignModule, FinanceiroModule],
   controllers: [
     DepartmentsController,
     JobRolesController,
@@ -55,6 +63,9 @@ import { RhDashboardService } from './rh-dashboard.service';
     EmploymentSalaryRevisionsController,
     HiringRequestsController,
     RhDashboardController,
+    PayrollClosingController,
+    TimeRhController,
+    BenefitCatalogController,
   ],
   providers: [
     ModuleAccessGuard,
@@ -62,6 +73,7 @@ import { RhDashboardService } from './rh-dashboard.service';
     RhScopeService,
     RhAccessService,
     RhAuditService,
+    RhNotificationService,
     DepartmentsService,
     JobRolesService,
     EmployeesService,
@@ -75,6 +87,9 @@ import { RhDashboardService } from './rh-dashboard.service';
     EmploymentSalaryRevisionsService,
     HiringRequestsService,
     RhDashboardService,
+    PayrollClosingService,
+    TimeRhService,
+    BenefitCatalogService,
   ],
   exports: [
     DepartmentsService,

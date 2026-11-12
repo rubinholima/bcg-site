@@ -14,6 +14,7 @@ export const COMPENSATION_KIND_LABELS: Record<CompensationKind, string> = {
   IMAGE_RIGHTS: 'Direito de Imagem',
 };
 
-export function isCompensationKind(value: string): value is CompensationKind {
-  return (COMPENSATION_KINDS as readonly string[]).includes(value);
+export function isCompensationKind(value: string): boolean {
+  const v = value.trim().toUpperCase();
+  return (COMPENSATION_KINDS as readonly string[]).includes(v) || v.length > 0;
 }

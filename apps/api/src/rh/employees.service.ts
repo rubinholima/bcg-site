@@ -85,7 +85,7 @@ export class EmployeesService {
 
   async getUnifiedProfile(id: string, allowedTenantIds: string[] | null = null) {
     const employee = await this.findOne(id, allowedTenantIds);
-    const [documents, hiringRequests] = await Promise.all([
+    const [documents, hiringRequests, athleteContracts] = await Promise.all([
       this.prisma.employeeDocument.findMany({
         where: { employeeId: id },
         orderBy: { createdAt: 'desc' },
@@ -105,6 +105,21 @@ export class EmployeesService {
           statusHistory: { orderBy: { createdAt: 'desc' }, take: 10 },
         },
       }),
+      employee.playerId
+        ? this.prisma.athleteContract.findMany({
+            where: { playerId: employee.playerId, tenantId: employee.tenantId },
+            orderBy: { updatedAt: 'desc' },
+            take: 10,
+            select: {
+              id: true,
+              status: true,
+              startDate: true,
+              endDate: true,
+              clubName: true,
+              employmentContractId: true,
+            },
+          })
+        : Promise.resolve([]),
     ]);
     return {
       employee,
@@ -112,6 +127,7 @@ export class EmployeesService {
       dependents: employee.dependents,
       employments: employee.employments,
       hiringRequests,
+      athleteContracts,
     };
   }
 

@@ -94,7 +94,7 @@ export function compensationAmountAtDate<T extends DatedAmountItem>(
 
 export function assertNoOverlapSameKind(
   items: DatedAmountItem[],
-  kind: CompensationKind,
+  kind: string,
   effectiveFrom: Date,
   effectiveTo: Date | null | undefined,
   excludeId?: string,

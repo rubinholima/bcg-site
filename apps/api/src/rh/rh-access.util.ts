@@ -10,7 +10,16 @@ export type RhCapability =
   | 'rh_private_docs_view'
   | 'rh_private_docs_manage'
   | 'rh_contracts_view'
-  | 'rh_contracts_manage';
+  | 'rh_contracts_manage'
+  | 'rh_payroll_view'
+  | 'rh_payroll_manage'
+  | 'rh_payroll_sensitive'
+  | 'rh_time_view'
+  | 'rh_time_manage'
+  | 'rh_time_bank_view'
+  | 'rh_time_bank_manage'
+  | 'rh_work_regime_manage'
+  | 'rh_time_clock_docs';
 
 const CAPABILITY_MODULES: Record<RhCapability, string[]> = {
   rh_view: ['adm_rh', 'rh_view'],
@@ -25,6 +34,15 @@ const CAPABILITY_MODULES: Record<RhCapability, string[]> = {
   rh_private_docs_manage: ['adm_rh', 'rh_private_docs_manage'],
   rh_contracts_view: ['adm_rh', 'rh_contracts_view', 'rh_contracts_manage'],
   rh_contracts_manage: ['adm_rh', 'rh_contracts_manage'],
+  rh_payroll_view: ['adm_rh', 'rh_payroll_view', 'rh_payroll_manage'],
+  rh_payroll_manage: ['adm_rh', 'rh_payroll_manage'],
+  rh_payroll_sensitive: ['adm_rh', 'rh_payroll_sensitive', 'rh_payroll_manage'],
+  rh_time_view: ['adm_rh', 'rh_time_view', 'rh_time_manage'],
+  rh_time_manage: ['adm_rh', 'rh_time_manage'],
+  rh_time_bank_view: ['adm_rh', 'rh_time_bank_view', 'rh_time_bank_manage'],
+  rh_time_bank_manage: ['adm_rh', 'rh_time_bank_manage'],
+  rh_work_regime_manage: ['adm_rh', 'rh_work_regime_manage', 'rh_time_manage'],
+  rh_time_clock_docs: ['adm_rh', 'rh_time_clock_docs', 'rh_time_manage'],
 };
 
 /** adm_rh concede todas as capacidades granulares de RH. */
@@ -41,6 +59,15 @@ const ADM_RH_IMPLIES: RhCapability[] = [
   'rh_private_docs_manage',
   'rh_contracts_view',
   'rh_contracts_manage',
+  'rh_payroll_view',
+  'rh_payroll_manage',
+  'rh_payroll_sensitive',
+  'rh_time_view',
+  'rh_time_manage',
+  'rh_time_bank_view',
+  'rh_time_bank_manage',
+  'rh_work_regime_manage',
+  'rh_time_clock_docs',
 ];
 
 export function hasRhCapability(

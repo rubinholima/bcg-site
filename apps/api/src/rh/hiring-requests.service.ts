@@ -24,6 +24,8 @@ const includeFull = {
   medicalExam: true,
   accountingHandoff: true,
   legalHandoff: true,
+  documentChecklist: { orderBy: { sortOrder: 'asc' as const } },
+  accountingHandoffHistory: { orderBy: { createdAt: 'desc' as const }, take: 20 },
   employee: { select: { id: true, name: true, code: true } },
   employment: { select: { id: true, status: true, contractType: true } },
 } as const;
@@ -200,7 +202,10 @@ export class HiringRequestsService {
           update: {},
         });
       }
-      if (to === HIRING_STATUS.ACCOUNTING) {
+      if (
+        to === HIRING_STATUS.SENT_ACCOUNTING ||
+        to === HIRING_STATUS.READY_ACCOUNTING
+      ) {
         await tx.rhHiringAccountingHandoff.upsert({
           where: { hiringRequestId: id },
           create: { tenantId: existing.tenantId, hiringRequestId: id },
@@ -219,6 +224,252 @@ export class HiringRequestsService {
       metadata: { from: existing.status, to },
     });
 
+    return this.findOne(id, allowedTenantIds);
+  }
+
+  async listChecklist(id: string, allowedTenantIds: string[] | null) {
+    await this.findOne(id, allowedTenantIds);
+    return this.prisma.rhHiringDocumentChecklistItem.findMany({
+      where: { hiringRequestId: id },
+      orderBy: { sortOrder: 'asc' },
+    });
+  }
+
+  async upsertChecklistItem(
+    id: string,
+    body: {
+      documentType: string;
+      label: string;
+      required?: boolean;
+      status?: string;
+      employeeDocumentId?: string | null;
+      notes?: string | null;
+      sortOrder?: number;
+    },
+    allowedTenantIds: string[] | null,
+  ) {
+    const row = await this.findOne(id, allowedTenantIds);
+    const existing = await this.prisma.rhHiringDocumentChecklistItem.findFirst({
+      where: { hiringRequestId: id, documentType: body.documentType.trim() },
+    });
+    if (existing) {
+      return this.prisma.rhHiringDocumentChecklistItem.update({
+        where: { id: existing.id },
+        data: {
+          label: body.label.trim(),
+          required: body.required ?? existing.required,
+          status: body.status?.trim() ?? existing.status,
+          employeeDocumentId: body.employeeDocumentId ?? existing.employeeDocumentId,
+          notes: body.notes ?? existing.notes,
+          sortOrder: body.sortOrder ?? existing.sortOrder,
+        },
+      });
+    }
+    return this.prisma.rhHiringDocumentChecklistItem.create({
+      data: {
+        tenantId: row.tenantId,
+        hiringRequestId: id,
+        documentType: body.documentType.trim(),
+        label: body.label.trim(),
+        required: body.required ?? true,
+        status: body.status?.trim() || 'pendente',
+        employeeDocumentId: body.employeeDocumentId ?? null,
+        notes: body.notes ?? null,
+        sortOrder: body.sortOrder ?? 0,
+      },
+    });
+  }
+
+  async prepareAccountingHandoff(
+    id: string,
+    allowedTenantIds: string[] | null,
+    actor: RhActor,
+  ) {
+    const row = await this.findOne(id, allowedTenantIds);
+    const checklist = await this.listChecklist(id, allowedTenantIds);
+    return {
+      hiring: row,
+      checklist,
+      documentsSelected: checklist
+        .filter((c) => c.status === 'recebido' && c.employeeDocumentId)
+        .map((c) => c.employeeDocumentId),
+    };
+  }
+
+  async sendAccountingHandoff(
+    id: string,
+    dto: { recipient?: string; notes?: string; documentIds?: string[] },
+    allowedTenantIds: string[] | null,
+    actor: RhActor,
+  ) {
+    const row = await this.findOne(id, allowedTenantIds);
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.rhHiringAccountingHandoff.upsert({
+        where: { hiringRequestId: id },
+        create: {
+          tenantId: row.tenantId,
+          hiringRequestId: id,
+          status: 'enviado',
+          completedAt: null,
+          notes: dto.notes ?? null,
+        },
+        update: { status: 'enviado', notes: dto.notes ?? null },
+      });
+      await tx.rhHiringAccountingHandoffHistory.create({
+        data: {
+          tenantId: row.tenantId,
+          hiringRequestId: id,
+          action: 'envio',
+          sentByUserId: actor.userId,
+          sentByName: actor.name,
+          sentAt: now,
+          recipient: dto.recipient?.trim() || null,
+          notes: dto.notes ?? null,
+          documentIds: dto.documentIds ?? [],
+        },
+      });
+      if (row.status !== HIRING_STATUS.SENT_ACCOUNTING) {
+        await tx.rhHiringRequest.update({
+          where: { id },
+          data: { status: HIRING_STATUS.SENT_ACCOUNTING },
+        });
+      }
+    });
+    return this.findOne(id, allowedTenantIds);
+  }
+
+  async returnAccountingHandoff(
+    id: string,
+    dto: {
+      notes?: string;
+      correctionRequired?: boolean;
+      status?: string;
+    },
+    allowedTenantIds: string[] | null,
+    actor: RhActor,
+  ) {
+    const row = await this.findOne(id, allowedTenantIds);
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.rhHiringAccountingHandoff.update({
+        where: { hiringRequestId: id },
+        data: {
+          status: dto.correctionRequired ? 'correcao' : 'retorno_recebido',
+          completedAt: dto.correctionRequired ? null : now,
+          notes: dto.notes ?? undefined,
+        },
+      });
+      await tx.rhHiringAccountingHandoffHistory.create({
+        data: {
+          tenantId: row.tenantId,
+          hiringRequestId: id,
+          action: 'retorno',
+          receivedByUserId: actor.userId,
+          receivedByName: actor.name,
+          receivedAt: now,
+          notes: dto.notes ?? null,
+          status: dto.status ?? (dto.correctionRequired ? 'correcao' : 'ok'),
+          correctionRequired: dto.correctionRequired ?? false,
+        },
+      });
+      const next = dto.correctionRequired
+        ? HIRING_STATUS.CORRECTION_REQUESTED
+        : HIRING_STATUS.ACCOUNTING_RETURN;
+      await tx.rhHiringRequest.update({ where: { id }, data: { status: next } });
+    });
+    return this.findOne(id, allowedTenantIds);
+  }
+
+  async forwardLegal(
+    id: string,
+    dto: { noTemplate?: boolean; notes?: string },
+    allowedTenantIds: string[] | null,
+    actor: RhActor,
+  ) {
+    const row = await this.findOne(id, allowedTenantIds);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.rhHiringLegalHandoff.upsert({
+        where: { hiringRequestId: id },
+        create: {
+          tenantId: row.tenantId,
+          hiringRequestId: id,
+          status: 'encaminhado',
+          notes: dto.notes ?? null,
+          metadata: {
+            noTemplate: dto.noTemplate === true,
+            label:
+              dto.noTemplate === true
+                ? 'Contrato sem modelo — elaboração necessária'
+                : 'Encaminhado ao Jurídico',
+          },
+        },
+        update: {
+          status: 'encaminhado',
+          notes: dto.notes ?? undefined,
+          metadata: {
+            noTemplate: dto.noTemplate === true,
+            label:
+              dto.noTemplate === true
+                ? 'Contrato sem modelo — elaboração necessária'
+                : 'Encaminhado ao Jurídico',
+          },
+        },
+      });
+      await tx.rhHiringRequest.update({
+        where: { id },
+        data: { status: HIRING_STATUS.LEGAL_FORWARDED },
+      });
+    });
+    return this.findOne(id, allowedTenantIds);
+  }
+
+  async activateEmployment(
+    id: string,
+    dto: { confirmDuplicate?: boolean },
+    allowedTenantIds: string[] | null,
+    actor: RhActor,
+  ) {
+    const row = await this.findOne(id, allowedTenantIds);
+    if (row.employmentId) {
+      return this.findOne(id, allowedTenantIds);
+    }
+    if (!row.employeeId || !row.jobRoleId) {
+      throw new BadRequestException('Vincule colaborador e cargo antes de ativar o vínculo.');
+    }
+  const active = await this.prisma.employment.findFirst({
+      where: { employeeId: row.employeeId, tenantId: row.tenantId, status: 'ativo' },
+    });
+    if (active && !dto.confirmDuplicate) {
+      throw new BadRequestException(
+        'Já existe vínculo ativo para este colaborador. Envie confirmDuplicate=true para prosseguir.',
+      );
+    }
+    const employment = await this.prisma.employment.create({
+      data: {
+        tenantId: row.tenantId,
+        employeeId: row.employeeId,
+        jobRoleId: row.jobRoleId,
+        departmentId: row.departmentId,
+        contractType: row.contractType,
+        startDate: row.proposedStartDate ?? new Date(),
+        salaryBase: row.proposedSalary ? Number(row.proposedSalary) : null,
+        status: 'ativo',
+      },
+    });
+    await this.prisma.rhHiringRequest.update({
+      where: { id },
+      data: { employmentId: employment.id, status: HIRING_STATUS.COMPLETED },
+    });
+    await this.logAudit({
+      tenantId: row.tenantId,
+      entityType: 'rh_hiring_request',
+      entityId: id,
+      action: 'activate_employment',
+      actorUserId: actor.userId,
+      actorName: actor.name,
+      metadata: { employmentId: employment.id },
+    });
     return this.findOne(id, allowedTenantIds);
   }
 

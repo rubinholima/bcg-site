@@ -31,6 +31,14 @@ type UnifiedProfile = {
   };
   documents: Array<{ id: string; documentType: string; createdAt: string }>;
   hiringRequests: Array<{ id: string; status: string; contractType: string }>;
+  athleteContracts?: Array<{
+    id: string;
+    status: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    clubName?: string | null;
+    employmentContractId?: string | null;
+  }>;
 };
 
 export default function RhColaboradorUnifiedPage() {
@@ -140,6 +148,19 @@ export default function RhColaboradorUnifiedPage() {
             </CardContent>
           </Card>
 
+          {(data.athleteContracts?.length ?? 0) > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Contrato de atleta (leitura)</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-2">
+                {data.athleteContracts!.map((c) => (
+                  <AthleteContractReadOnly key={c.id} contract={c} />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Contratações</CardTitle>
@@ -161,3 +182,30 @@ export default function RhColaboradorUnifiedPage() {
     </div>
   );
 }
+
+function AthleteContractReadOnly({
+  contract: c,
+}: {
+  contract: {
+    id: string;
+    status: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    clubName?: string | null;
+    employmentContractId?: string | null;
+  };
+}) {
+  return (
+    <div className="border border-border rounded-md p-3">
+      <p className="font-medium">
+        {c.clubName ?? "Contrato"} — {c.status}
+      </p>
+      <p className="text-muted-foreground text-xs">
+        {c.startDate ? formatDateDayMonYear(c.startDate) : "—"} até{" "}
+        {c.endDate ? formatDateDayMonYear(c.endDate) : "—"}
+        {c.employmentContractId ? " · Vínculo RH ligado" : ""}
+      </p>
+    </div>
+  );
+}
+

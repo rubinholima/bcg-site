@@ -29,6 +29,11 @@ import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 interface FormData {
   name: string;
   tradeName: string;
+  legalName: string;
+  taxId: string;
+  taxIdType: string;
+  legalAddress: string;
+  legalStatus: string;
   slug: string;
   kindId: string;
   address?: string;
@@ -62,6 +67,11 @@ export default function EditEmpresaPage() {
   const [formData, setFormData] = useState<FormData>({
     name: "",
     tradeName: "",
+    legalName: "",
+    taxId: "",
+    taxIdType: "CNPJ",
+    legalAddress: "",
+    legalStatus: "",
     slug: "",
     kindId: "",
     omieAppKey: "",
@@ -80,6 +90,11 @@ export default function EditEmpresaPage() {
           setFormData({
             name: empresa.name,
             tradeName: empresa.tradeName ?? "",
+            legalName: empresa.legalName ?? "",
+            taxId: empresa.taxId ?? "",
+            taxIdType: empresa.taxIdType ?? "CNPJ",
+            legalAddress: empresa.legalAddress ?? "",
+            legalStatus: empresa.legalStatus ?? "",
             slug: empresa.slug,
             kindId: empresa.kindId || empresa.kind?.id || "",
             address: empresa.address ?? "",
@@ -293,6 +308,53 @@ export default function EditEmpresaPage() {
                 value={formData.tradeName}
                 onChange={handleChange}
                 placeholder="Ex: Boston City"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="legalName">Razão social</Label>
+                <Input
+                  id="legalName"
+                  name="legalName"
+                  value={formData.legalName}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="taxId">CNPJ / ID fiscal</Label>
+                <Input id="taxId" name="taxId" value={formData.taxId} onChange={handleChange} disabled={loading} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="taxIdType">Tipo do documento</Label>
+                <Input
+                  id="taxIdType"
+                  name="taxIdType"
+                  value={formData.taxIdType}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="legalStatus">Situação cadastral</Label>
+                <Input
+                  id="legalStatus"
+                  name="legalStatus"
+                  value={formData.legalStatus}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="legalAddress">Endereço jurídico</Label>
+              <Input
+                id="legalAddress"
+                name="legalAddress"
+                value={formData.legalAddress}
+                onChange={handleChange}
                 disabled={loading}
               />
             </div>

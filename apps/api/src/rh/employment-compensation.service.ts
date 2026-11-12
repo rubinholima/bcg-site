@@ -59,6 +59,15 @@ export class EmploymentCompensationService {
     }
 
     const employment = await this.getEmployment(employmentId, allowedTenantIds);
+    const kind = dto.kind.trim().toUpperCase();
+    let benefitCatalogId: string | null = null;
+    if (dto.benefitCatalogId) {
+      const catalog = await this.prisma.rhBenefitCatalog.findFirst({
+        where: { id: dto.benefitCatalogId, tenantId: employment.tenantId },
+      });
+      if (!catalog) throw new BadRequestException('Benefício do catálogo não encontrado.');
+      benefitCatalogId = catalog.id;
+    }
     const effectiveFrom = startOfDay(new Date(dto.effectiveFrom));
     const effectiveTo = dto.effectiveTo ? startOfDay(new Date(dto.effectiveTo)) : null;
     if (effectiveTo && effectiveTo < effectiveFrom) {
@@ -67,7 +76,7 @@ export class EmploymentCompensationService {
 
     assertNoOverlapSameKind(
       employment.compensationItems,
-      dto.kind,
+      kind,
       effectiveFrom,
       effectiveTo,
     );
@@ -80,7 +89,8 @@ export class EmploymentCompensationService {
       data: {
         tenantId: employment.tenantId,
         employmentId,
-        kind: dto.kind,
+        kind,
+        benefitCatalogId,
         amount,
         effectiveFrom,
         effectiveTo,

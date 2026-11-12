@@ -2,6 +2,11 @@ export class TenantResponseDto {
   id: string;
   name: string;
   tradeName: string | null;
+  legalName: string | null;
+  taxId: string | null;
+  taxIdType: string | null;
+  legalAddress: string | null;
+  legalStatus: string | null;
   slug: string;
   location: string | null;
   address: string | null;

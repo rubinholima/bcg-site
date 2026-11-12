@@ -1,11 +1,14 @@
 import { Type } from 'class-transformer';
-import { IsDateString, IsIn, IsNumber, IsOptional, IsString, Min, MinLength } from 'class-validator';
-import { COMPENSATION_KINDS } from '../employment-compensation.constants';
+import { IsDateString, IsNumber, IsOptional, IsString, Min, MinLength } from 'class-validator';
 
 export class CreateEmploymentCompensationItemDto {
   @IsString()
-  @IsIn([...COMPENSATION_KINDS])
+  @MinLength(1)
   kind!: string;
+
+  @IsOptional()
+  @IsString()
+  benefitCatalogId?: string;
 
   @Type(() => Number)
   @IsNumber()

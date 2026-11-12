@@ -9,6 +9,8 @@ import { ContractTemplatesService } from '../cadastros/contract-templates.servic
 import { HelloSignService } from '../hello-sign/hello-sign.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
+import { assertRhTenantAccess, applyRhTenantFilter } from './rh-scope.util';
+import { RhNotificationService } from './rh-notification.service';
 
 @Injectable()
 export class EmploymentContractsService {
@@ -19,10 +21,12 @@ export class EmploymentContractsService {
     private readonly s3: S3Service,
     private readonly templates: ContractTemplatesService,
     private readonly helloSign: HelloSignService,
+    private readonly notifications: RhNotificationService,
   ) {}
 
-  async findByEmployment(employmentId: string) {
-    await this.ensureEmployment(employmentId);
+  async findByEmployment(employmentId: string, allowedTenantIds: string[] | null = null) {
+    const employment = await this.ensureEmployment(employmentId, allowedTenantIds);
+    assertRhTenantAccess(allowedTenantIds, employment.tenantId);
     return this.prisma.employmentContract.findMany({
       where: { employmentId },
       orderBy: { createdAt: 'desc' },
@@ -32,15 +36,17 @@ export class EmploymentContractsService {
     });
   }
 
-  /** Lista global para Jurídico (filtro por clube, status ou tipo de modelo). */
-  async findAll(filters?: { tenantId?: string; status?: string; type?: string; employeeId?: string }) {
+  async findAll(
+    filters?: { tenantId?: string; status?: string; type?: string; employeeId?: string },
+    allowedTenantIds: string[] | null = null,
+  ) {
     const where: {
-      tenantId?: string;
+      tenantId?: string | { in: string[] };
       status?: string;
       template?: { type: string };
       employment?: { employeeId: string };
     } = {};
-    if (filters?.tenantId?.trim()) where.tenantId = filters.tenantId.trim();
+    applyRhTenantFilter(where, allowedTenantIds, filters?.tenantId);
     if (filters?.status?.trim()) where.status = filters.status.trim();
     if (filters?.type?.trim()) where.template = { type: filters.type.trim() };
     if (filters?.employeeId?.trim()) {
@@ -65,7 +71,25 @@ export class EmploymentContractsService {
     });
   }
 
-  async findOne(employmentId: string, id: string) {
+  async findOneById(id: string, allowedTenantIds: string[] | null = null) {
+    const row = await this.prisma.employmentContract.findUnique({
+      where: { id },
+      include: {
+        template: true,
+        employment: {
+          include: {
+            employee: { select: { id: true, name: true, email: true } },
+            tenant: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+    if (!row) throw new NotFoundException('Contrato não encontrado');
+    assertRhTenantAccess(allowedTenantIds, row.tenantId);
+    return row;
+  }
+
+  async findOne(employmentId: string, id: string, allowedTenantIds: string[] | null = null) {
     const row = await this.prisma.employmentContract.findFirst({
       where: { id, employmentId },
       include: {
@@ -79,11 +103,17 @@ export class EmploymentContractsService {
       },
     });
     if (!row) throw new NotFoundException('Contrato não encontrado');
+    assertRhTenantAccess(allowedTenantIds, row.tenantId);
     return row;
   }
 
-  async generate(employmentId: string, templateId: string, name?: string) {
-    const employment = await this.ensureEmployment(employmentId);
+  async generate(
+    employmentId: string,
+    templateId: string,
+    name?: string,
+    allowedTenantIds: string[] | null = null,
+  ) {
+    const employment = await this.ensureEmployment(employmentId, allowedTenantIds);
     const template = await this.templates.findOne(templateId);
 
     const filled = await this.templates.generateFilledPdf(templateId, employmentId);
@@ -121,8 +151,9 @@ export class EmploymentContractsService {
     signerEmail: string,
     signerName?: string,
     signaturePage?: number,
+    allowedTenantIds: string[] | null = null,
   ) {
-    const doc = await this.findOne(employmentId, id);
+    const doc = await this.findOne(employmentId, id, allowedTenantIds);
 
     if (doc.status !== 'draft' && doc.status !== 'cancelled') {
       throw new BadRequestException(`Contrato com status "${doc.status}" não pode ser enviado.`);
@@ -163,12 +194,20 @@ export class EmploymentContractsService {
       data: {
         status: 'pending_signature',
         helloSignRequestId: result.signatureRequestId,
+        signatureProviderStatus: 'awaiting_signature',
         signerEmail: cadastroEmail(signerEmail) ?? signerEmail.trim().toLowerCase(),
         signerName: cadastroUpper(signerName) ?? null,
         metadata: result.signingUrl
           ? { signingUrl: result.signingUrl }
           : ((doc.metadata as object) ?? {}),
       },
+    });
+
+    await this.notifications.notifyRhEvent({
+      tenantId: doc.tenantId,
+      title: 'Contrato enviado para assinatura',
+      message: `O contrato "${doc.name}" foi enviado para assinatura.`,
+      type: 'info',
     });
 
     return {
@@ -178,8 +217,8 @@ export class EmploymentContractsService {
     };
   }
 
-  async syncFromHelloSign(employmentId: string, id: string) {
-    const doc = await this.findOne(employmentId, id);
+  async syncFromHelloSign(employmentId: string, id: string, allowedTenantIds: string[] | null = null) {
+    const doc = await this.findOne(employmentId, id, allowedTenantIds);
 
     if (!doc.helloSignRequestId) {
       throw new BadRequestException('Contrato não foi enviado ao HelloSign.');
@@ -194,41 +233,69 @@ export class EmploymentContractsService {
       throw new BadRequestException(`Não foi possível consultar HelloSign: ${msg}`);
     }
 
-    const statusMap: Record<string, string> = {
-      awaiting_signature: 'pending_signature',
-      signed: 'signed',
-      complete: 'signed',
-      closed: 'signed',
-      declined: 'cancelled',
-      expired: 'expired',
-    };
-    const ourStatus = statusMap[status.toLowerCase?.() ?? ''] ?? 'pending_signature';
-
+    const providerSigned = ['signed', 'complete', 'closed'].includes(status.toLowerCase());
     let signedFileKey = doc.signedFileKey;
     let signedFileUrl = doc.signedFileUrl;
+    let signedFileArchiveError: string | null = doc.signedFileArchiveError ?? null;
+    let signedFileArchivedAt: Date | null = doc.signedFileArchivedAt ?? null;
+    let signatureCompletedAt: Date | null = doc.signatureCompletedAt ?? null;
+    let ourStatus = doc.status;
 
-    if (ourStatus === 'signed' && !doc.signedFileKey) {
-      try {
-        const signedBuffer = await this.helloSign.getSignedDocument(doc.helloSignRequestId);
-        const upload = await this.s3.uploadEmploymentContract(
-          signedBuffer,
-          employmentId,
-          `${doc.name} - Assinado.pdf`,
-        );
-        signedFileKey = upload.key;
-        signedFileUrl = upload.url;
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        this.logger.warn(`Falha ao baixar PDF assinado: ${msg}`);
+    if (providerSigned) {
+      signatureCompletedAt = signatureCompletedAt ?? new Date();
+      if (!doc.signedFileKey) {
+        try {
+          const signedBuffer = await this.helloSign.getSignedDocument(doc.helloSignRequestId);
+          const upload = await this.s3.uploadEmploymentContract(
+            signedBuffer,
+            employmentId,
+            `${doc.name} - Assinado.pdf`,
+          );
+          signedFileKey = upload.key;
+          signedFileUrl = upload.url;
+          signedFileArchivedAt = new Date();
+          signedFileArchiveError = null;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          signedFileArchiveError = msg;
+          this.logger.warn(`Falha ao arquivar PDF assinado: ${msg}`);
+          await this.notifications.notifyRhEvent({
+            tenantId: doc.tenantId,
+            title: 'Falha ao arquivar contrato assinado',
+            message: `Contrato "${doc.name}": ${msg}`,
+            type: 'danger',
+          });
+        }
       }
+      if (signedFileKey) {
+        ourStatus = 'signed';
+        await this.notifications.notifyRhEvent({
+          tenantId: doc.tenantId,
+          title: 'Contrato assinado e arquivado',
+          message: `O contrato "${doc.name}" foi assinado e arquivado com sucesso.`,
+          type: 'success',
+        });
+      } else {
+        ourStatus = 'pending_signature';
+      }
+    } else if (status.toLowerCase() === 'declined') {
+      ourStatus = 'cancelled';
+    } else if (status.toLowerCase() === 'expired') {
+      ourStatus = 'expired';
+    } else {
+      ourStatus = 'pending_signature';
     }
 
     return this.prisma.employmentContract.update({
       where: { id },
       data: {
         status: ourStatus,
+        signatureProviderStatus: status,
+        signatureCompletedAt,
         signedFileKey,
         signedFileUrl,
+        signedFileArchivedAt,
+        signedFileArchiveError,
       },
       include: {
         template: { select: { id: true, name: true, type: true } },
@@ -236,8 +303,13 @@ export class EmploymentContractsService {
     });
   }
 
-  async downloadBuffer(employmentId: string, id: string, signed = false) {
-    const doc = await this.findOne(employmentId, id);
+  async downloadBuffer(
+    employmentId: string,
+    id: string,
+    signed = false,
+    allowedTenantIds: string[] | null = null,
+  ) {
+    const doc = await this.findOne(employmentId, id, allowedTenantIds);
     const key = signed && doc.signedFileKey ? doc.signedFileKey : doc.fileKey;
     const buffer = await this.s3.getObjectBuffer(key);
     const filename =
@@ -249,8 +321,8 @@ export class EmploymentContractsService {
     return { buffer, filename: filename.replace(/[^a-zA-Z0-9\u00C0-\u024F\s._-]/g, '_') };
   }
 
-  async remove(employmentId: string, id: string) {
-    const doc = await this.findOne(employmentId, id);
+  async remove(employmentId: string, id: string, allowedTenantIds: string[] | null = null) {
+    const doc = await this.findOne(employmentId, id, allowedTenantIds);
     if (doc.status === 'pending_signature') {
       throw new BadRequestException('Cancele ou aguarde a assinatura antes de excluir.');
     }
@@ -264,7 +336,7 @@ export class EmploymentContractsService {
     return { ok: true };
   }
 
-  private async ensureEmployment(employmentId: string) {
+  private async ensureEmployment(employmentId: string, allowedTenantIds: string[] | null = null) {
     const employment = await this.prisma.employment.findUnique({
       where: { id: employmentId },
       include: {
@@ -275,6 +347,7 @@ export class EmploymentContractsService {
       },
     });
     if (!employment) throw new NotFoundException('Vínculo não encontrado');
+    assertRhTenantAccess(allowedTenantIds, employment.tenantId);
     return employment;
   }
 }

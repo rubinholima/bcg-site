@@ -10,7 +10,7 @@ describe('hiring-workflow', () => {
 
   it('transição sequencial CLT', () => {
     expect(canTransition('CLT', HIRING_STATUS.DRAFT, HIRING_STATUS.SUBMITTED)).toBe(true);
-    expect(canTransition('CLT', HIRING_STATUS.DRAFT, HIRING_STATUS.ADMITTED)).toBe(false);
-    expect(canTransition('CLT', HIRING_STATUS.HR_ANALYSIS, HIRING_STATUS.CANCELLED)).toBe(true);
+    expect(canTransition('CLT', HIRING_STATUS.DRAFT, HIRING_STATUS.COMPLETED)).toBe(false);
+    expect(canTransition('CLT', HIRING_STATUS.DOCS_REVIEW, HIRING_STATUS.CANCELLED)).toBe(true);
   });
 });

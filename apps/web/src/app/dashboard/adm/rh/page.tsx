@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { RhDashboardKpis } from "./components/RhDashboardKpis";
 import { HiringRequestsPanel } from "./components/HiringRequestsPanel";
+import { PayrollClosingsPanel } from "./components/PayrollClosingsPanel";
+import { TimeControlPanel } from "./components/TimeControlPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -57,10 +59,21 @@ import { FuncionariosGroupedList } from "@/components/dashboard/rh/FuncionariosG
 import { rhRecordTenantId } from "@/lib/rh-tenant";
 import { RegistrationApprovalsPanel } from "./components/RegistrationApprovalsPanel";
 
-type TabId = "departamentos" | "cargos" | "colaboradores" | "vinculos" | "ferias" | "aprovacoes" | "contratacoes";
+type TabId =
+  | "departamentos"
+  | "cargos"
+  | "colaboradores"
+  | "vinculos"
+  | "ferias"
+  | "aprovacoes"
+  | "contratacoes"
+  | "folha"
+  | "controle-ponto";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "colaboradores", label: "Colaboradores", icon: UserCircle },
+  { id: "folha", label: "Folha de Pagamento", icon: FileText },
+  { id: "controle-ponto", label: "Controle de Ponto", icon: Calendar },
   { id: "contratacoes", label: "Contratações", icon: UserPlus },
   { id: "aprovacoes", label: "Aprovações", icon: ClipboardCheck },
   { id: "departamentos", label: "Departamentos", icon: Building2 },
@@ -449,6 +462,10 @@ export default function AdmRHPage() {
               </CardContent>
             </Card>
           )}
+
+          {activeTab === "folha" && <PayrollClosingsPanel tenantId={tenantId} />}
+
+          {activeTab === "controle-ponto" && <TimeControlPanel tenantId={tenantId} />}
 
           {activeTab === "contratacoes" && (
             <Card>

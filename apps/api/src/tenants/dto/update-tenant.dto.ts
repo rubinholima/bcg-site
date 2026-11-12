@@ -13,6 +13,30 @@ export class UpdateTenantDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(255)
+  legalName?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  taxId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(16)
+  taxIdType?: string | null;
+
+  @IsString()
+  @IsOptional()
+  legalAddress?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(120)
+  legalStatus?: string | null;
+
+  @IsString()
+  @IsOptional()
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
     message: 'Slug deve conter apenas letras minúsculas, números e hífens',
   })

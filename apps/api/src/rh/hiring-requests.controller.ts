@@ -79,4 +79,81 @@ export class HiringRequestsController {
     const allowed = await getRhAllowedTenants(this.scope, req);
     return this.service.transition(id, dto, allowed, getRhActor(this.scope, req));
   }
+
+  @Get(':id/checklist')
+  @RequireRh('rh_hiring_view')
+  async checklist(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.listChecklist(id, allowed);
+  }
+
+  @Post(':id/checklist')
+  @RequireRh('rh_hiring_manage')
+  async upsertChecklist(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: {
+      documentType: string;
+      label: string;
+      required?: boolean;
+      status?: string;
+      employeeDocumentId?: string | null;
+      notes?: string | null;
+      sortOrder?: number;
+    },
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.upsertChecklistItem(id, body, allowed);
+  }
+
+  @Get(':id/accounting/prepare')
+  @RequireRh('rh_hiring_view')
+  async prepareAccounting(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.prepareAccountingHandoff(id, allowed, getRhActor(this.scope, req));
+  }
+
+  @Post(':id/accounting/send')
+  @RequireRh('rh_hiring_manage')
+  async sendAccounting(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { recipient?: string; notes?: string; documentIds?: string[] },
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.sendAccountingHandoff(id, body, allowed, getRhActor(this.scope, req));
+  }
+
+  @Post(':id/accounting/return')
+  @RequireRh('rh_hiring_manage')
+  async returnAccounting(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { notes?: string; correctionRequired?: boolean; status?: string },
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.returnAccountingHandoff(id, body, allowed, getRhActor(this.scope, req));
+  }
+
+  @Post(':id/forward-legal')
+  @RequireRh('rh_hiring_manage')
+  async forwardLegal(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { noTemplate?: boolean; notes?: string },
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.forwardLegal(id, body, allowed, getRhActor(this.scope, req));
+  }
+
+  @Post(':id/activate-employment')
+  @RequireRh('rh_hiring_manage')
+  async activateEmployment(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { confirmDuplicate?: boolean },
+  ) {
+    const allowed = await getRhAllowedTenants(this.scope, req);
+    return this.service.activateEmployment(id, body, allowed, getRhActor(this.scope, req));
+  }
 }

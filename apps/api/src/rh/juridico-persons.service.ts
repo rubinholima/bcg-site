@@ -1,18 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { applyRhTenantFilter } from './rh-scope.util';
 
 @Injectable()
 export class JuridicoPersonsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listPersonOptions(filters?: {
-    tenantId?: string;
-    category?: string;
-    search?: string;
-  }) {
+  async listPersonOptions(
+    filters?: {
+      tenantId?: string;
+      category?: string;
+      search?: string;
+    },
+    allowedTenantIds: string[] | null = null,
+  ) {
     const where: Prisma.EmployeeWhereInput = {};
-    if (filters?.tenantId) where.tenantId = filters.tenantId;
+    applyRhTenantFilter(where, allowedTenantIds, filters?.tenantId);
 
     if (filters?.category) {
       where.player = { category: filters.category };

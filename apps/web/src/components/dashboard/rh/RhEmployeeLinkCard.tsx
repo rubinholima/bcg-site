@@ -115,10 +115,10 @@ export function RhEmployeeLinkCard({ playerId }: RhEmployeeLinkCardProps) {
               Sincronizar
             </Button>
             <Link
-              href="/dashboard/adm/rh"
+              href={`/dashboard/adm/rh/colaboradores/${employee.id}`}
               className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted"
             >
-              Abrir RH
+              Abrir ficha RH
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </div>

@@ -43,6 +43,11 @@ function mapTenant(row: TenantWithKind): TenantResponseDto {
     id: row.id,
     name: row.name,
     tradeName: row.tradeName ?? null,
+    legalName: row.legalName ?? null,
+    taxId: row.taxId ?? null,
+    taxIdType: row.taxIdType ?? null,
+    legalAddress: row.legalAddress ?? null,
+    legalStatus: row.legalStatus ?? null,
     slug: row.slug,
     location: row.location ?? null,
     address: row.address ?? null,
@@ -181,6 +186,26 @@ export class TenantsService {
       if (dto.tradeName !== undefined) {
         updates.push(`"tradeName" = $${++idx}`);
         values.push(dto.tradeName?.trim() || null);
+      }
+      if (dto.legalName !== undefined) {
+        updates.push(`"legalName" = $${++idx}`);
+        values.push(dto.legalName?.trim() || null);
+      }
+      if (dto.taxId !== undefined) {
+        updates.push(`"taxId" = $${++idx}`);
+        values.push(dto.taxId?.trim() || null);
+      }
+      if (dto.taxIdType !== undefined) {
+        updates.push(`"taxIdType" = $${++idx}`);
+        values.push(dto.taxIdType?.trim() || null);
+      }
+      if (dto.legalAddress !== undefined) {
+        updates.push(`"legalAddress" = $${++idx}`);
+        values.push(dto.legalAddress?.trim() || null);
+      }
+      if (dto.legalStatus !== undefined) {
+        updates.push(`"legalStatus" = $${++idx}`);
+        values.push(dto.legalStatus?.trim() || null);
       }
       if (dto.slug !== undefined) {
         updates.push(`slug = $${++idx}`);

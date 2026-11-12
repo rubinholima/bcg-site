@@ -72,6 +72,8 @@ const LOGOS_CLUBES_ADV_PREFIX = 'logos/clubes-adv/';
 const LEGAL_PREFIX = 'legal/';
 /** Vídeos táticos privados — nunca expor URL pública nem tratar como media/ */
 export const ANALYSIS_PRIVATE_PREFIX = 'private/analysis/';
+/** Espelhos de ponto RH — privado */
+export const RH_PONTO_PRIVATE_PREFIX = 'private/rh_ponto/';
 /** Staging interno (import Beatscode — manifest + PDFs antes de copiar para legal/). */
 const BEATSCODE_STAGING_PREFIX = 'beatscode-staging/';
 
@@ -101,8 +103,33 @@ export class S3Service {
       safeKey.startsWith(LOGOS_PREFIX) ||
       safeKey.startsWith(LEGAL_PREFIX) ||
       safeKey.startsWith(BEATSCODE_STAGING_PREFIX) ||
-      safeKey.startsWith(ANALYSIS_PRIVATE_PREFIX)
+      safeKey.startsWith(ANALYSIS_PRIVATE_PREFIX) ||
+      safeKey.startsWith(RH_PONTO_PRIVATE_PREFIX)
     );
+  }
+
+  /** PDF espelho de ponto — armazenamento privado. */
+  async uploadRhTimeClockPdf(
+    buffer: Buffer,
+    tenantId: string,
+    filename: string,
+  ): Promise<{ key: string }> {
+    const safeTenant = tenantId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const key = `${RH_PONTO_PRIVATE_PREFIX}${safeTenant}/${randomUUID()}.pdf`;
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: 'application/pdf',
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(`Falha ao enviar espelho de ponto: ${message}`);
+    }
+    return { key };
   }
 
   /**

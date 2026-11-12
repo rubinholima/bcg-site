@@ -15,6 +15,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { hasRhCapability } from "@/lib/rh-capabilities";
 import { formatDateDayMonYear } from "@/lib/format-date";
+import { hiringStatusLabel } from "@/lib/rh-hiring-status";
 
 export type HiringRequestRow = {
   id: string;
@@ -24,20 +25,6 @@ export type HiringRequestRow = {
   proposedStartDate?: string | null;
   tenant?: { name?: string };
   updatedAt: string;
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  rascunho: "Rascunho",
-  enviado: "Enviado",
-  analise_rh: "Análise RH",
-  documentacao_pendente: "Documentação",
-  exame_agendado: "Exame",
-  exame_concluido: "Exame OK",
-  juridico: "Jurídico",
-  contabilidade: "Contabilidade",
-  contrato_pendente: "Contrato",
-  admitido: "Admitido",
-  cancelado: "Cancelado",
 };
 
 type Props = {
@@ -120,7 +107,7 @@ export function HiringRequestsPanel({ tenantId, statusFilter }: Props) {
               <TableRow key={r.id}>
                 <TableCell className="font-medium">{r.candidateName}</TableCell>
                 <TableCell>{r.contractType}</TableCell>
-                <TableCell>{STATUS_LABEL[r.status] ?? r.status}</TableCell>
+                <TableCell>{hiringStatusLabel(r.status)}</TableCell>
                 <TableCell>
                   {r.proposedStartDate ? formatDateDayMonYear(r.proposedStartDate) : "—"}
                 </TableCell>
