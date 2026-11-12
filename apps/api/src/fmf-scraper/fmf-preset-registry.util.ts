@@ -14,13 +14,37 @@ export const FMF_SCRAPER_PRESET_EXTENSIONS_KEY = 'fmf_scraper_preset_extensions'
  * Copa Inconfidência Sub-20: ProxJogos?d=35 (sem vínculo com d=6).
  */
 export const FMF_BUILTIN_PRESET_EXTENSIONS: Record<string, FmfScraperPreset> = {
+  sub14_inconfidencia: {
+    key: 'sub14_inconfidencia' as FmfScraperPresetKey,
+    fmfD: 39,
+    slug: 'trofeu-inconfidencia-sub14-2026',
+    name: 'Troféu Inconfidência Sub-14 2026',
+    fixtureCategory: 'sub14',
+    competitionLabelTemplate: 'TROFÉU INCONFIDÊNCIA - SUB 14 - {year}',
+  },
+  sub15_inconfidencia: {
+    key: 'sub15_inconfidencia' as FmfScraperPresetKey,
+    fmfD: 33,
+    slug: 'copa-inconfidencia-sub15-2026',
+    name: 'Copa Inconfidência Sub-15 2026',
+    fixtureCategory: 'sub15',
+    competitionLabelTemplate: 'TROFÉU INCONFIDÊNCIA - SUB 15 - {year}',
+  },
+  sub17_inconfidencia: {
+    key: 'sub17_inconfidencia' as FmfScraperPresetKey,
+    fmfD: 34,
+    slug: 'copa-inconfidencia-sub17-2026',
+    name: 'Copa Inconfidência Sub-17 2026',
+    fixtureCategory: 'sub17',
+    competitionLabelTemplate: 'TROFÉU INCONFIDÊNCIA - SUB 17 - {year}',
+  },
   sub20_inconfidencia: {
     key: 'sub20_inconfidencia' as FmfScraperPresetKey,
     fmfD: 35,
     slug: 'copa-inconfidencia-sub20-2026',
     name: 'Copa Inconfidência Sub-20 2026',
     fixtureCategory: 'sub20',
-    competitionLabelTemplate: 'COPA INCONFIDÊNCIA - SUB 20 - {year}',
+    competitionLabelTemplate: 'TROFÉU INCONFIDÊNCIA - SUB 20 - {year}',
   },
 };
 

@@ -1,10 +1,19 @@
 import {
+  extractOfficialCompetitionLabelFromHtml,
   inferOperationalCategoryFromCatalogEntry,
   inferOperationalCategoryFromProbedHtml,
   catalogEntryMatchesOperationalCategory,
 } from './fmf-competition-catalog.util';
 
 describe('fmf-competition-catalog util', () => {
+  it('extrai rótulo Troféu Inconfidência Sub 15 do HTML', () => {
+    expect(
+      extractOfficialCompetitionLabelFromHtml(
+        '<span>TROFÉU INCONFIDÊNCIA - SUB 15 - 2026</span>',
+      ),
+    ).toBe('TROFÉU INCONFIDÊNCIA - SUB 15 - 2026');
+  });
+
   it('infere sub17 a partir do categoryHint', () => {
     expect(
       inferOperationalCategoryFromCatalogEntry({

@@ -72,18 +72,22 @@ export function inferPresetFromCompetitionContext(
   const label = opts.officialLabel?.trim() ?? '';
   const fromLabel = inferCategoryFromCompetitionLabel(label);
   const isSecondDiv = /2\s*[ªA]?\s*DIV/i.test(label) || /2\s*[ªA]?\s*Div/i.test(opts.catalogEntry?.navLabel ?? '');
-  const navAndLabel = `${label} ${opts.catalogEntry?.navLabel ?? ''}`;
+  const navAndLabel = `${label} ${opts.catalogEntry?.navLabel ?? ''} ${opts.catalogEntry?.categoryHint ?? ''}`;
   const isInconfidencia = /inconfid[eê]ncia/i.test(navAndLabel);
 
-  let competitionKey = fromLabel ?? 'fmf_comp';
-  if (fromLabel?.startsWith('sub') && isInconfidencia) {
-    competitionKey = `${fromLabel}_inconfidencia`;
-  } else if (fromLabel?.startsWith('sub') && isSecondDiv) {
-    competitionKey = `${fromLabel}_2div`;
-  } else if (opts.catalogEntry?.categoryHint && /sub\s*(\d+)/i.test(opts.catalogEntry.categoryHint)) {
-    const num = opts.catalogEntry.categoryHint.match(/sub\s*(\d+)/i)![1]!;
-    competitionKey = isSecondDiv ? `sub${num}_2div` : `sub${num}`;
-  } else if (/m[óo]dulo\s*ii/i.test(label)) {
+  const subFromContext =
+    fromLabel ??
+    inferCategoryFromCompetitionLabel(navAndLabel) ??
+    (opts.catalogEntry?.categoryHint
+      ? inferCategoryFromCompetitionLabel(opts.catalogEntry.categoryHint)
+      : null);
+
+  let competitionKey = subFromContext ?? 'fmf_comp';
+  if (subFromContext?.startsWith('sub') && isInconfidencia) {
+    competitionKey = `${subFromContext}_inconfidencia`;
+  } else if (subFromContext?.startsWith('sub') && isSecondDiv) {
+    competitionKey = `${subFromContext}_2div`;
+  } else if (/m[óo]dulo\s*ii/i.test(label) || /m[óo]dulo\s*ii/i.test(navAndLabel)) {
     competitionKey = 'modulo_ii';
   }
 

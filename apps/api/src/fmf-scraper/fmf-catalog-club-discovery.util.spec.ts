@@ -57,6 +57,22 @@ describe('fmf-catalog-club-discovery', () => {
     expect(preset.fixtureCategory).toBe('sub20');
   });
 
+  it('infere preset sub15_inconfidencia mesmo sem rótulo oficial (Troféu / menu FMF)', () => {
+    const preset = inferPresetFromCompetitionContext(33, {
+      officialLabel: null,
+      catalogEntry: {
+        fmfD: 33,
+        navLabel: 'Copa Inconfidência - Sub 15',
+        categoryHint: 'Sub 15',
+        url: '',
+      },
+      season: 2026,
+    });
+    expect(preset.key).toBe('sub15_inconfidencia');
+    expect(preset.fixtureCategory).toBe('sub15');
+    expect(preset.fmfD).toBe(33);
+  });
+
   it('infere preset sub20_inconfidencia (Copa Inconfidência d=35)', () => {
     const preset = inferPresetFromCompetitionContext(35, {
       officialLabel: 'COPA INCONFIDÊNCIA - SUB 20 - 2026',
