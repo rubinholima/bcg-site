@@ -37,7 +37,7 @@ export type BuildFmfUpcomingListParams = {
   tenantName: string;
   aliases: string[];
   tenantCategoryKeys: string[];
-  presetMap: Record<string, { fixtureCategory: string }>;
+  presetMap: Record<string, { fixtureCategory: string; fmfD?: number }>;
   travels: TravelRow[];
   categoryFilter: string;
   season: number;
@@ -193,7 +193,7 @@ export function resolveFmfFixtureGameFromStore(
   tenantName: string,
   aliases: string[],
   tenantCategoryKeys: string[],
-  presetMap: Record<string, { fixtureCategory: string }>,
+  presetMap: Record<string, { fixtureCategory: string; fmfD?: number }>,
   travels: TravelRow[],
   travelExternalId: string,
   coachByTravel: Map<string, string>,

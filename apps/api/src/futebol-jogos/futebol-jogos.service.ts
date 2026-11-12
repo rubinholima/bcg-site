@@ -16,6 +16,7 @@ import {
 import {
   FMF_SYNC_TENANT_DEFAULTS,
   isFmfSyncTenantSlug,
+  parseTenantCategoryKeys,
 } from '../fmf-scraper/fmf-sync-tenants.config';
 import {
   buildCompletedGames,
@@ -40,10 +41,6 @@ import {
   type UpsertMatchStatOverrideInput,
 } from '../coach-match-stats/coach-match-stats.service';
 import { FmfScraperService, type FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
-import {
-  isFmfSyncTenantSlug,
-  parseTenantCategoryKeys,
-} from '../fmf-scraper/fmf-sync-tenants.config';
 import {
   loadFmfPresetExtensionMap,
   mergeFmfPresetMaps,
