@@ -42,6 +42,33 @@ export class RhPayslipController {
     return getRhAllowedTenants(this.scope, req).then((allowed) => this.service.listBatches(tenantId, allowed));
   }
 
+  @Get('batches/:id')
+  @RequireRh('rh_payslip_batch')
+  getBatch(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) => this.service.getBatch(id, allowed));
+  }
+
+  @Get('individuals')
+  @RequireRh('rh_payslip_individual')
+  listIndividuals(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('batchId') batchId?: string,
+    @Query('status') status?: string,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.listIndividuals({ batchId, status, tenantId }, allowed),
+    );
+  }
+
+  @Post('individuals/:id/acknowledge')
+  @RequireRh('rh_payslip_ack')
+  acknowledgeInternal(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.acknowledgeIndividualInternal(id, allowed, getRhActor(this.scope, req)),
+    );
+  }
+
   @Post('batches/upload')
   @RequireRh('rh_payslip_batch')
   @UseInterceptors(FileInterceptor('file'))

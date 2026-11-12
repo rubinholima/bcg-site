@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
+import { EmployeeTimeAndEpiSection } from "../../components/EmployeeTimeAndEpiSection";
+import { api as rhApi } from "@/lib/api";
 
 type UnifiedProfile = {
   employee: {
@@ -18,6 +20,7 @@ type UnifiedProfile = {
     cpf?: string | null;
     email?: string | null;
     type: string;
+    tenantId?: string;
     tenant?: { name?: string };
     player?: { name?: string; category?: string | null } | null;
     employments?: Array<{
@@ -55,16 +58,29 @@ export default function RhColaboradorUnifiedPage() {
   const { canAccessModule, loading: authLoading } = useAuth();
   const [data, setData] = useState<UnifiedProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [epiCatalog, setEpiCatalog] = useState<Array<{ id: string; name: string }>>([]);
 
-  useEffect(() => {
+  const loadProfile = useCallback(() => {
     if (!canAccessModule("adm_rh") || !id) return;
     setLoading(true);
     api
       .get<UnifiedProfile>(`/rh/employees/${id}/unified-profile`)
-      .then((res) => setData(res.data))
+      .then((res) => {
+        setData(res.data);
+        const tenantKey = res.data?.employee.tenantId;
+        if (tenantKey) {
+          rhApi
+            .get<Array<{ id: string; name: string }>>(`/rh/epi/catalog?tenantId=${encodeURIComponent(tenantKey)}`)
+            .then((cat) => setEpiCatalog(Array.isArray(cat.data) ? cat.data : []));
+        }
+      })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, [canAccessModule, id]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   if (authLoading) {
     return <p className="text-muted-foreground py-8 text-center">Carregando…</p>;
@@ -174,6 +190,16 @@ export default function RhColaboradorUnifiedPage() {
               <CardTitle className="text-base">Jornada e ponto</CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-2">
+              <EmployeeTimeAndEpiSection
+                employeeId={data.employee.id}
+                employmentId={data.employee.employments?.[0]?.id}
+                employments={(data.employee.employments ?? []).map((e) => ({
+                  value: e.id,
+                  label: `${e.jobRole?.name ?? "Vínculo"} · ${e.contractType}`,
+                }))}
+                catalog={epiCatalog}
+                onRefresh={loadProfile}
+              />
               <p>
                 Jornada atual:{" "}
                 {data.workRegime?.workRegime?.name

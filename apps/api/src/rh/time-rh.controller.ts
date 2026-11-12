@@ -118,6 +118,18 @@ export class TimeRhController {
     );
   }
 
+  @Get('time-bank/movements')
+  @RequireRh('rh_time_bank_view')
+  timeBankMovements(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId?: string,
+    @Query('employmentId') employmentId?: string,
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.listTimeBankMovements({ tenantId, employmentId }, allowed),
+    );
+  }
+
   @Post('time-bank/movements')
   @RequireRh('rh_time_bank_manage')
   timeBankMovement(
@@ -173,6 +185,12 @@ export class TimeRhController {
     return getRhAllowedTenants(this.scope, req).then((allowed) =>
       this.service.listTimeClockBatches(tenantId, allowed),
     );
+  }
+
+  @Get('clock-batches/:id')
+  @RequireRh('rh_time_clock_docs')
+  clockBatch(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) => this.service.getTimeClockBatch(id, allowed));
   }
 
   @Post('clock-batches/upload')

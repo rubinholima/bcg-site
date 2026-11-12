@@ -39,6 +39,60 @@ export class RhPayslipService {
     });
   }
 
+  async getBatch(batchId: string, allowed: string[] | null) {
+    const batch = await this.prisma.rhPayslipBatch.findUnique({
+      where: { id: batchId },
+      include: {
+        pageAssignments: {
+          include: {
+            employee: { select: { id: true, name: true, code: true } },
+          },
+        },
+        individuals: {
+          include: {
+            employee: { select: { id: true, name: true } },
+            acknowledgements: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        _count: { select: { individuals: true, pageAssignments: true } },
+      },
+    });
+    if (!batch) throw new NotFoundException('Lote não encontrado.');
+    assertRhTenantAccess(allowed, batch.tenantId);
+    return batch;
+  }
+
+  async listIndividuals(
+    filters: { batchId?: string; status?: string; tenantId?: string },
+    allowed: string[] | null,
+  ) {
+    const where: Prisma.RhPayslipIndividualWhereInput = {};
+    applyRhTenantFilter(where, allowed, filters.tenantId);
+    if (filters.batchId?.trim()) where.batchId = filters.batchId.trim();
+    if (filters.status?.trim()) where.status = filters.status.trim();
+    return this.prisma.rhPayslipIndividual.findMany({
+      where,
+      orderBy: [{ referenceMonth: 'desc' }, { createdAt: 'desc' }],
+      include: {
+        employee: { select: { id: true, name: true, code: true } },
+        acknowledgements: true,
+        batch: { select: { id: true, referenceMonth: true, status: true } },
+      },
+      take: 500,
+    });
+  }
+
+  async acknowledgeIndividualInternal(payslipId: string, allowed: string[] | null, actor: RhActor) {
+    const payslip = await this.prisma.rhPayslipIndividual.findUnique({ where: { id: payslipId } });
+    if (!payslip) throw new NotFoundException('Contracheque não encontrado.');
+    assertRhTenantAccess(allowed, payslip.tenantId);
+    if (payslip.status !== 'DISPONIBILIZADO' && payslip.status !== 'CIENCIA_PENDENTE') {
+      throw new BadRequestException('Contracheque não está aguardando ciência.');
+    }
+    return this.acknowledgePayslip(payslipId, payslip.employeeId, allowed, actor);
+  }
+
   async uploadBatch(
     dto: { tenantId: string; referenceMonth: string; notes?: string; fileName: string; buffer: Buffer },
     allowed: string[] | null,

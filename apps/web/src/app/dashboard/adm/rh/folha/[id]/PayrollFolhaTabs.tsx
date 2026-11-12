@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { PAYROLL_STATUS_LABELS } from "./payroll-labels";
 import { NativeSelect } from "@/components/ui/native-select";
+import { PayrollEmployeeDetailDialog } from "../../components/PayrollEmployeeDetailDialog";
 
 type PayrollDetail = {
   id: string;
@@ -19,10 +20,10 @@ type PayrollDetail = {
   status: string;
   responsibleName?: string | null;
   tenant?: { id?: string; name?: string };
-  employeeSnapshots?: Array<{ id: string; employeeId: string; snapshot: Record<string, unknown> }>;
+  employeeSnapshots?: Array<{ id: string; employeeId: string; employmentId?: string; snapshot: Record<string, unknown> }>;
   adjustments?: Array<{
     id: string;
-    employmentId: string;
+    employmentId?: string;
     adjustmentType: string;
     amount?: number | string | null;
     reason?: string | null;
@@ -76,6 +77,7 @@ export function PayrollFolhaTabs({ closingId }: Props) {
     amount: "",
     reason: "",
   });
+  const [detailSnapshot, setDetailSnapshot] = useState<{ id: string; name?: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -177,7 +179,11 @@ export function PayrollFolhaTabs({ closingId }: Props) {
                 <TableHead>Cargo</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Salário base</TableHead>
+                <TableHead>Benefícios</TableHead>
+                <TableHead>Ajustes</TableHead>
                 <TableHead>Folha (nossa parte)</TableHead>
+                <TableHead>Total est.</TableHead>
+                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -186,6 +192,13 @@ export function PayrollFolhaTabs({ closingId }: Props) {
                 const emp = snap.employee as { id?: string; name?: string } | undefined;
                 const job = snap.jobRole as { name?: string } | undefined;
                 const mov = snap.athleteMovement as { ourPayrollAmount?: number } | undefined;
+                const items = (snap.compensationItems as Array<{ amount?: number | string }> | undefined) ?? [];
+                const benefits = items.reduce((acc, item) => acc + Number(item.amount ?? 0), 0);
+                const adjSum = (detail.adjustments ?? [])
+                  .filter((a) => a.employmentId === s.employmentId)
+                  .reduce((acc, a) => acc + Number(a.amount ?? 0), 0);
+                const ourPart = mov?.ourPayrollAmount ?? Number(snap.salaryBase ?? 0);
+                const estimated = ourPart + benefits + adjSum;
                 return (
                   <TableRow key={s.id}>
                     <TableCell>
@@ -200,12 +213,27 @@ export function PayrollFolhaTabs({ closingId }: Props) {
                     <TableCell>{job?.name ?? "—"}</TableCell>
                     <TableCell>{String(snap.contractType ?? "—")}</TableCell>
                     <TableCell>{snap.salaryBase != null ? String(snap.salaryBase) : "—"}</TableCell>
+                    <TableCell>{benefits > 0 ? benefits.toFixed(2) : "—"}</TableCell>
+                    <TableCell>{adjSum !== 0 ? adjSum.toFixed(2) : "—"}</TableCell>
                     <TableCell>{mov?.ourPayrollAmount != null ? String(mov.ourPayrollAmount) : "—"}</TableCell>
+                    <TableCell>{estimated.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Button type="button" size="sm" variant="outline" className="min-h-[44px]" onClick={() => setDetailSnapshot({ id: s.id, name: emp?.name })}>
+                        Detalhe
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
+          <PayrollEmployeeDetailDialog
+            open={!!detailSnapshot}
+            onOpenChange={(o) => !o && setDetailSnapshot(null)}
+            closingId={closingId}
+            snapshotId={detailSnapshot?.id ?? ""}
+            employeeName={detailSnapshot?.name}
+          />
         </div>
       )}
 

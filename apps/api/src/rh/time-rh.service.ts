@@ -307,4 +307,40 @@ export class TimeRhService {
       include: { employees: true },
     });
   }
+
+  async getTimeClockBatch(batchId: string, allowed: string[] | null) {
+    const batch = await this.prisma.rhTimeClockBatch.findUnique({
+      where: { id: batchId },
+      include: { employees: true },
+    });
+    if (!batch) throw new NotFoundException('Lote de espelho não encontrado.');
+    assertRhTenantAccess(allowed, batch.tenantId);
+    return batch;
+  }
+
+  async listTimeBankMovements(
+    filters: { tenantId?: string; employmentId?: string },
+    allowed: string[] | null,
+  ) {
+    const where: Prisma.RhTimeBankMovementWhereInput = {};
+    applyRhTenantFilter(where, allowed, filters.tenantId);
+    if (filters.employmentId?.trim()) {
+      const employment = await this.prisma.employment.findUnique({ where: { id: filters.employmentId.trim() } });
+      if (!employment) throw new NotFoundException('Vínculo não encontrado.');
+      assertRhTenantAccess(allowed, employment.tenantId);
+      where.employmentId = employment.id;
+    }
+    const movementsAsc = await this.prisma.rhTimeBankMovement.findMany({
+      where,
+      orderBy: { movementDate: 'asc' },
+      take: 500,
+    });
+    const employmentId = filters.employmentId?.trim();
+  const movements = [...movementsAsc].reverse();
+    return {
+      employmentId: employmentId ?? null,
+      balanceHours: employmentId ? deriveTimeBankBalanceHours(movementsAsc) : null,
+      movements,
+    };
+  }
 }

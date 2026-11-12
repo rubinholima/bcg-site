@@ -47,6 +47,18 @@ export class PayrollClosingController {
     return getRhAllowedTenants(this.scope, req).then((allowed) => this.service.findOne(id, allowed));
   }
 
+  @Get(':id/snapshots/:snapshotId/composition')
+  @RequireRh('rh_payroll_view')
+  snapshotComposition(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Param('snapshotId') snapshotId: string,
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.getSnapshotComposition(id, snapshotId, allowed),
+    );
+  }
+
   @Post()
   @RequireRh('rh_payroll_manage')
   create(

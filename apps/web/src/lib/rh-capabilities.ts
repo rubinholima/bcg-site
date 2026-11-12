@@ -21,7 +21,14 @@ export type RhCapability =
   | "rh_time_bank_view"
   | "rh_time_bank_manage"
   | "rh_work_regime_manage"
-  | "rh_time_clock_docs";
+  | "rh_time_clock_docs"
+  | "rh_epi_view"
+  | "rh_epi_manage"
+  | "rh_epi_delivery"
+  | "rh_epi_catalog"
+  | "rh_payslip_batch"
+  | "rh_payslip_individual"
+  | "rh_payslip_ack";
 
 const GRANULAR_MODULES: Record<RhCapability, string[]> = {
   rh_view: ["rh_view"],
@@ -45,6 +52,13 @@ const GRANULAR_MODULES: Record<RhCapability, string[]> = {
   rh_time_bank_manage: ["rh_time_bank_manage"],
   rh_work_regime_manage: ["rh_work_regime_manage", "rh_time_manage"],
   rh_time_clock_docs: ["rh_time_clock_docs", "rh_time_manage"],
+  rh_epi_view: ["rh_epi_view", "rh_epi_manage"],
+  rh_epi_manage: ["rh_epi_manage"],
+  rh_epi_delivery: ["rh_epi_delivery", "rh_epi_manage"],
+  rh_epi_catalog: ["rh_epi_catalog", "rh_epi_manage"],
+  rh_payslip_batch: ["rh_payslip_batch", "rh_payroll_manage"],
+  rh_payslip_individual: ["rh_payslip_individual", "rh_payslip_batch"],
+  rh_payslip_ack: ["rh_payslip_ack", "rh_payslip_individual"],
 };
 
 export function hasRhCapability(

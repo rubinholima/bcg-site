@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
@@ -48,11 +48,29 @@ export class RhEpiController {
     );
   }
 
+  @Get('deliveries')
+  @RequireRh('rh_epi_view')
+  deliveries(@Req() req: Request & { user: CognitoJwtPayload }, @Query('tenantId') tenantId?: string) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) => this.service.listDeliveries(tenantId, allowed));
+  }
+
   @Post('deliveries')
   @RequireRh('rh_epi_delivery')
   delivery(@Req() req: Request & { user: CognitoJwtPayload }, @Body() body: Record<string, unknown>) {
     return getRhAllowedTenants(this.scope, req).then((allowed) =>
       this.service.createDelivery(body as never, allowed, getRhActor(this.scope, req)),
+    );
+  }
+
+  @Patch('deliveries/:id/status')
+  @RequireRh('rh_epi_manage')
+  patchDeliveryStatus(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() body: { status: string; notes?: string },
+  ) {
+    return getRhAllowedTenants(this.scope, req).then((allowed) =>
+      this.service.updateDeliveryStatus(id, body, allowed, getRhActor(this.scope, req)),
     );
   }
 

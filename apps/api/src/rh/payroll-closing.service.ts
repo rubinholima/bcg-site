@@ -420,4 +420,35 @@ export class PayrollClosingService {
   async resendAccounting(id: string, allowed: string[] | null, actor: RhActor, dto: { recipient?: string; notes?: string }) {
     return this.sendAccountingPackage(id, dto, allowed, actor);
   }
+
+  async getSnapshotComposition(closingId: string, snapshotId: string, allowed: string[] | null) {
+    const closing = await this.findOne(closingId, allowed);
+    const snapshot = closing.employeeSnapshots.find((s) => s.id === snapshotId);
+    if (!snapshot) throw new NotFoundException('Snapshot do colaborador não encontrado.');
+    const adjustments = closing.adjustments.filter((a) => a.employmentId === snapshot.employmentId);
+    const snap = (snapshot.snapshot ?? {}) as Record<string, unknown>;
+    const salaryBase = Number(snap.salaryBase ?? 0);
+    const ourPayrollAmount = Number(
+      (snap.athleteMovement as { ourPayrollAmount?: number } | undefined)?.ourPayrollAmount ?? salaryBase,
+    );
+    const items = (snap.compensationItems as Array<{ type?: string; amount?: number | string }> | undefined) ?? [];
+    const benefitsTotal = items.reduce((acc, item) => acc + Number(item.amount ?? 0), 0);
+    const adjustmentsTotal = adjustments.reduce((acc, adj) => acc + (adj.amount ? Number(adj.amount) : 0), 0);
+    const estimatedTotal = ourPayrollAmount + benefitsTotal + adjustmentsTotal;
+    return {
+      closingId,
+      snapshotId,
+      employmentId: snapshot.employmentId,
+      employeeId: snapshot.employeeId,
+      snapshot: snap,
+      adjustments,
+      composition: {
+        salaryBase,
+        benefitsTotal,
+        ourPayrollAmount,
+        adjustmentsTotal,
+        estimatedTotal,
+      },
+    };
+  }
 }

@@ -187,6 +187,49 @@ export class RhEpiService {
     return { ok: true };
   }
 
+  async listDeliveries(tenantId: string | undefined, allowed: string[] | null) {
+    const where: Prisma.RhEpiDeliveryWhereInput = {};
+    applyRhTenantFilter(where, allowed, tenantId);
+    return this.prisma.rhEpiDelivery.findMany({
+      where,
+      orderBy: { deliveryDate: 'desc' },
+      include: {
+        catalogItem: true,
+        employee: { select: { id: true, name: true, code: true } },
+        acknowledgements: true,
+      },
+      take: 300,
+    });
+  }
+
+  async updateDeliveryStatus(
+    deliveryId: string,
+    dto: { status: string; notes?: string },
+    allowed: string[] | null,
+    actor: RhActor,
+  ) {
+    const delivery = await this.prisma.rhEpiDelivery.findUnique({ where: { id: deliveryId } });
+    if (!delivery) throw new NotFoundException('Entrega não encontrada.');
+    assertRhTenantAccess(allowed, delivery.tenantId);
+    const updated = await this.prisma.rhEpiDelivery.update({
+      where: { id: deliveryId },
+      data: {
+        status: dto.status.trim(),
+        notes: dto.notes !== undefined ? dto.notes : delivery.notes,
+      },
+      include: { catalogItem: true, employee: { select: { id: true, name: true } } },
+    });
+    await this.audit.log({
+      tenantId: delivery.tenantId,
+      entityType: 'rh_epi_delivery',
+      entityId: deliveryId,
+      action: `status_${dto.status.trim()}`,
+      actorUserId: actor.userId,
+      actorName: actor.name,
+    });
+    return updated;
+  }
+
   async employeeEpiSummary(employeeId: string, allowed: string[] | null) {
     const employee = await this.prisma.employee.findUnique({
       where: { id: employeeId },

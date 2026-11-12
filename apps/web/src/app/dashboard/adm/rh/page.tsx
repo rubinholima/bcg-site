@@ -4,7 +4,7 @@ import { formatDateDayMonYear } from "@/lib/format-date";
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Users,
@@ -23,8 +23,10 @@ import {
 import { RhDashboardKpis } from "./components/RhDashboardKpis";
 import { HiringRequestsPanel } from "./components/HiringRequestsPanel";
 import { PayrollClosingsPanel } from "./components/PayrollClosingsPanel";
-import { TimeControlPanel } from "./components/TimeControlPanel";
-import { PayslipsPanel } from "./components/PayslipsPanel";
+import { TimeControlOperationalPanel } from "./components/TimeControlOperationalPanel";
+import { PayslipsOperationalPanel } from "./components/PayslipsOperationalPanel";
+import { EpiOperationalPanel } from "./components/EpiOperationalPanel";
+import { hasRhCapability } from "@/lib/rh-capabilities";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -70,13 +72,15 @@ type TabId =
   | "contratacoes"
   | "folha"
   | "contracheques"
-  | "controle-ponto";
+  | "controle-ponto"
+  | "epi";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "colaboradores", label: "Colaboradores", icon: UserCircle },
   { id: "folha", label: "Folha de Pagamento", icon: FileText },
   { id: "contracheques", label: "Contracheques", icon: FileText },
   { id: "controle-ponto", label: "Controle de Ponto", icon: Calendar },
+  { id: "epi", label: "EPI", icon: Briefcase },
   { id: "contratacoes", label: "Contratações", icon: UserPlus },
   { id: "aprovacoes", label: "Aprovações", icon: ClipboardCheck },
   { id: "departamentos", label: "Departamentos", icon: Building2 },
@@ -85,10 +89,20 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "ferias", label: "Férias", icon: Calendar },
 ];
 
+const TAB_CAPABILITY: Partial<Record<TabId, Parameters<typeof hasRhCapability>[1]>> = {
+  folha: "rh_payroll_view",
+  contracheques: "rh_payslip_batch",
+  "controle-ponto": "rh_time_view",
+  epi: "rh_epi_view",
+  contratacoes: "rh_hiring_view",
+};
+
 export default function AdmRHPage() {
   const router = useRouter();
-  const { canAccessModule, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const { canAccessModule, modules, role, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>("colaboradores");
+  const [payslipSubTab, setPayslipSubTab] = useState<"lotes" | "pendentes" | "individuais" | "ciencias">("lotes");
   const [tenantId, setTenantId] = useState("");
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,6 +205,21 @@ export default function AdmRHPage() {
   }, [canAccessModule, authLoading, loadTenants]);
 
   useEffect(() => {
+    const tab = searchParams.get("tab") as TabId | null;
+    if (tab && TABS.some((t) => t.id === tab)) setActiveTab(tab);
+    const sub = searchParams.get("sub");
+    if (sub === "ciencias" || sub === "lotes" || sub === "pendentes" || sub === "individuais") {
+      setPayslipSubTab(sub);
+    }
+  }, [searchParams]);
+
+  const visibleTabs = TABS.filter((t) => {
+    const cap = TAB_CAPABILITY[t.id];
+    if (!cap) return true;
+    return hasRhCapability(modules, cap, role);
+  });
+
+  useEffect(() => {
     if (!canAccessModule("adm_rh")) return;
     setLoading(true);
     const loads: Promise<void>[] = [];
@@ -281,10 +310,15 @@ export default function AdmRHPage() {
           setHiringStatusFilter(status);
           setActiveTab("contratacoes");
         }}
+        onFilterPayslips={(sub) => {
+          setActiveTab("contracheques");
+          setPayslipSubTab(sub === "ciencias" ? "ciencias" : "lotes");
+        }}
+        onFilterEpi={() => setActiveTab("epi")}
       />
 
       <div className="flex flex-wrap gap-2 border-b pb-2">
-        {TABS.map(({ id, label, icon: Icon }) => (
+        {visibleTabs.map(({ id, label, icon: Icon }) => (
           <Button
             key={id}
             variant={activeTab === id ? "default" : "ghost"}
@@ -468,9 +502,13 @@ export default function AdmRHPage() {
 
           {activeTab === "folha" && <PayrollClosingsPanel tenantId={tenantId} />}
 
-          {activeTab === "contracheques" && <PayslipsPanel tenantId={tenantId} />}
+          {activeTab === "contracheques" && (
+            <PayslipsOperationalPanel tenantId={tenantId} initialSubTab={payslipSubTab} />
+          )}
 
-          {activeTab === "controle-ponto" && <TimeControlPanel tenantId={tenantId} />}
+          {activeTab === "controle-ponto" && <TimeControlOperationalPanel tenantId={tenantId} />}
+
+          {activeTab === "epi" && <EpiOperationalPanel tenantId={tenantId} />}
 
           {activeTab === "contratacoes" && (
             <Card>
