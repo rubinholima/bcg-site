@@ -11,14 +11,14 @@ import { Prisma } from '@prisma/client';
 
 describe('finance-omie identity', () => {
   it('mesmo ID Omie gera mesma chave externa', () => {
-    const a = buildOmieExternalId('pagar', 12345, null);
-    const b = buildOmieExternalId('pagar', 12345, null);
+    const a = buildOmieExternalId('pagar', '12345', null);
+    const b = buildOmieExternalId('pagar', '12345', null);
     expect(a).toBe(b);
     expect(a).toBe('pagar:omie:12345');
   });
 
   it('external link usa codigo Omie', () => {
-    const link = financeExternalLinkIdForOmie('pagar', 99, null);
+    const link = financeExternalLinkIdForOmie('pagar', '99', null);
     expect(link).toEqual({ externalObjectType: 'conta_pagar', externalId: '99' });
   });
 
@@ -41,7 +41,8 @@ describe('finance-omie AP/AR normalize', () => {
       },
       'pagar',
     );
-    expect(n?.omieLancamentoId).toBe(42);
+    expect(n?.omieLancamentoId).toBe('42');
+    expect(n?.supplierOmieId).toBe('7');
     expect(n?.documentNumber).toBe('NF-1');
     expect(n?.originalAmount).toBe(1500.5);
   });
@@ -51,7 +52,7 @@ describe('finance-omie AP/AR normalize', () => {
       { codigo_lancamento_omie: 10, valor_documento: 200, data_vencimento: '01/02/2024' },
       'receber',
     );
-    expect(n?.omieLancamentoId).toBe(10);
+    expect(n?.omieLancamentoId).toBe('10');
     expect(n?.dueDate).toBe('2024-02-01');
   });
 
@@ -62,9 +63,9 @@ describe('finance-omie AP/AR normalize', () => {
 
 describe('finance-omie matching', () => {
   const normalized = {
-    omieLancamentoId: 1,
+    omieLancamentoId: '1',
     omieIntegracaoCode: null,
-    supplierOmieId: 1,
+    supplierOmieId: '1',
     customerOmieId: null,
     counterpartyName: 'Fornecedor',
     counterpartyTaxId: null,

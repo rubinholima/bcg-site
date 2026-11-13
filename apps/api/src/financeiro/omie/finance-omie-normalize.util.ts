@@ -1,5 +1,5 @@
 import type { FinanceOmieNormalizedTitulo, FinanceOmieTituloTipo } from './finance-omie.types';
-import { extractOmieLancamentoIdentity, parsePositiveIntUnknown } from './finance-omie-identity.util';
+import { extractOmieLancamentoIdentity, normalizeOmieExternalId } from './finance-omie-identity.util';
 
 function asText(v: unknown): string | null {
   if (v == null || v === '') return null;
@@ -35,17 +35,25 @@ export function normalizeOmieTitulo(
   row: Record<string, unknown>,
   tituloTipo: FinanceOmieTituloTipo,
 ): FinanceOmieNormalizedTitulo | null {
-  const { omieLancamentoId, omieIntegracaoCode } = extractOmieLancamentoIdentity(row);
+  const { omieLancamentoId, omieIntegracaoCode, identityWarning } = extractOmieLancamentoIdentity(row);
   if (!omieLancamentoId && !omieIntegracaoCode) return null;
 
-  const supplierOmieId = parsePositiveIntUnknown(row.codigo_cliente_fornecedor);
+  const counterpartyRaw = normalizeOmieExternalId(row.codigo_cliente_fornecedor);
+  const accountRaw = normalizeOmieExternalId(row.id_conta_corrente);
+  const identityWarnings: string[] = [];
+  if (identityWarning) identityWarnings.push(identityWarning);
+  if (counterpartyRaw.warning) identityWarnings.push(counterpartyRaw.warning);
+  if (accountRaw.warning) identityWarnings.push(accountRaw.warning);
+
+  const counterpartyOmieId = counterpartyRaw.value;
   const settlement = settlementFromRow(row, tituloTipo);
 
   return {
     omieLancamentoId,
     omieIntegracaoCode,
-    supplierOmieId: tituloTipo === 'pagar' ? supplierOmieId : null,
-    customerOmieId: tituloTipo === 'receber' ? supplierOmieId : null,
+    supplierOmieId: tituloTipo === 'pagar' ? counterpartyOmieId : null,
+    customerOmieId: tituloTipo === 'receber' ? counterpartyOmieId : null,
+    identityWarnings: identityWarnings.length ? identityWarnings : undefined,
     counterpartyName: asText(row.nome_cliente_fornecedor ?? row._nomeEnriquecidoOmie),
     counterpartyTaxId: asText(row._cnpjCpfCadastroOmie ?? row.cnpj_cpf),
     documentNumber: asText(row.numero_documento ?? row.numero_pedido),
@@ -61,7 +69,7 @@ export function normalizeOmieTitulo(
     statusOmie: asText(row.status_titulo),
     settlementDate: settlement.date,
     accountLabel: asText(row.nome_conta_corrente),
-    accountOmieId: parsePositiveIntUnknown(row.id_conta_corrente),
+    accountOmieId: accountRaw.value,
     paymentMethodLabel: asText(row.codigo_forma_pagamento ?? row.descricao_forma_pagamento),
     categoryLabel: asText(row.categoria ?? row.codigo_categoria),
     installment: asText(row.numero_parcela),

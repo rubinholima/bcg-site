@@ -1026,7 +1026,7 @@ model FinanceOmieMirrorRecord {
   /// pagar | receber
   tituloTipo              String
   omieExternalId          String
-  omieLancamentoId        Int?
+  omieLancamentoId        String?
   omieIntegracaoCode      String?
   normalizedData          Json
   snapshotHash            String?
@@ -1037,8 +1037,8 @@ model FinanceOmieMirrorRecord {
   matchLevel              String   @default("NO_MATCH")
   matchReason             String?  @db.Text
   financeiroLancamentoId  String?
-  supplierOmieId          Int?
-  customerOmieId          Int?
+  supplierOmieId          String?
+  customerOmieId          String?
   lastSyncedAt            DateTime @default(now())
   changeDetectedAt        DateTime?
   changeSummary           Json?

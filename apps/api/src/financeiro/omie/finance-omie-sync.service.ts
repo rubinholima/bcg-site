@@ -12,6 +12,12 @@ import {
 } from './finance-omie-identity.util';
 import { normalizeOmieTitulo } from './finance-omie-normalize.util';
 import { matchOmieMirrorToCup360, type Cup360LancamentoLike } from './finance-omie-matching.util';
+import {
+  createSyncProgressAcc,
+  fatalSyncBatchWarningsJson,
+  sanitizeOmieSyncErrorMessage,
+  type FinanceOmieSyncProgressAcc,
+} from './finance-omie-sync-batch.util';
 
 const MAX_PAGES_PER_RUN = 40;
 const PAGE_SIZE = 100;
@@ -91,6 +97,7 @@ export class FinanceOmieSyncService {
     });
 
     const warnings: string[] = [];
+    const acc = createSyncProgressAcc();
     let pagesProcessed = 0;
     let recordsRead = 0;
     let recordsNew = 0;
@@ -109,7 +116,7 @@ export class FinanceOmieSyncService {
 
     try {
       if (opts.syncType === 'ap' || opts.syncType === 'both') {
-        const r = await this.syncTituloTipo(tenantId, batch.id, 'pagar', 'ap', filtros);
+        const r = await this.syncTituloTipo(tenantId, batch.id, 'pagar', 'ap', filtros, acc);
         pagesProcessed += r.pages;
         recordsRead += r.read;
         recordsNew += r.created;
@@ -120,7 +127,7 @@ export class FinanceOmieSyncService {
         warnings.push(...r.warnings);
       }
       if (opts.syncType === 'ar' || opts.syncType === 'both') {
-        const r = await this.syncTituloTipo(tenantId, batch.id, 'receber', 'ar', filtros);
+        const r = await this.syncTituloTipo(tenantId, batch.id, 'receber', 'ar', filtros, acc);
         pagesProcessed += r.pages;
         recordsRead += r.read;
         recordsNew += r.created;
@@ -179,10 +186,22 @@ export class FinanceOmieSyncService {
 
       return this.prisma.financeOmieSyncBatch.findFirst({ where: { id: batch.id } });
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Falha na sincronização Omie';
+      const message = sanitizeOmieSyncErrorMessage(e);
       await this.prisma.financeOmieSyncBatch.update({
         where: { id: batch.id },
-        data: { status: 'FAILED', completedAt: new Date(), errorSummary: message },
+        data: {
+          status: 'FAILED',
+          completedAt: new Date(),
+          pagesProcessed: acc.pagesProcessed,
+          recordsRead: acc.recordsRead,
+          recordsNew: acc.recordsNew,
+          recordsUpdated: acc.recordsUpdated,
+          possibleMatches: acc.possibleMatches,
+          conflicts: acc.conflicts,
+          errors: acc.errors,
+          warnings: fatalSyncBatchWarningsJson(acc) as unknown as Prisma.InputJsonValue,
+          errorSummary: message,
+        },
       });
       await this.prisma.financeOmieTenantSyncState.upsert({
         where: { tenantId },
@@ -210,7 +229,9 @@ export class FinanceOmieSyncService {
     tituloTipo: 'pagar' | 'receber',
     kind: 'ap' | 'ar',
     filtros?: { dataMovimentoDe?: string; dataMovimentoAte?: string },
+    acc?: FinanceOmieSyncProgressAcc,
   ) {
+    if (acc) acc.failureStage = kind;
     const warnings: string[] = [];
     let pages = 0;
     let read = 0;
@@ -276,6 +297,10 @@ export class FinanceOmieSyncService {
             });
 
       pages++;
+      if (acc) {
+        acc.lastPage = pagina;
+        acc.pagesProcessed += 1;
+      }
       if (!list.ok) {
         warnings.push(list.message ?? 'Falha ao listar Omie');
         break;
@@ -284,10 +309,16 @@ export class FinanceOmieSyncService {
 
       for (const row of list.items) {
         read++;
+        if (acc) acc.recordsRead += 1;
         const normalized = normalizeOmieTitulo(row, tituloTipo);
         if (!normalized) {
           errors++;
+          if (acc) acc.errors += 1;
           continue;
+        }
+        if (normalized.identityWarnings?.length) {
+          warnings.push(...normalized.identityWarnings);
+          if (acc) acc.warnings.push(...normalized.identityWarnings);
         }
         const omieExternalId = buildOmieExternalId(
           tituloTipo,
@@ -296,6 +327,7 @@ export class FinanceOmieSyncService {
         );
         if (!omieExternalId) {
           errors++;
+          if (acc) acc.errors += 1;
           continue;
         }
 
@@ -344,8 +376,14 @@ export class FinanceOmieSyncService {
           linkedLancamentoId: existingMirror?.financeiroLancamentoId ?? existingLink?.financeiroLancamentoId ?? null,
         });
 
-        if (match.matchLevel === 'POSSIBLE_MATCH' || match.matchLevel === 'STRONG_CANDIDATE') possible++;
-        if (match.matchLevel === 'CONFLICT') conflicts++;
+        if (match.matchLevel === 'POSSIBLE_MATCH' || match.matchLevel === 'STRONG_CANDIDATE') {
+          possible++;
+          if (acc) acc.possibleMatches += 1;
+        }
+        if (match.matchLevel === 'CONFLICT') {
+          conflicts++;
+          if (acc) acc.conflicts += 1;
+        }
 
         const changeSummary =
           existingMirror && existingMirror.snapshotHash && existingMirror.snapshotHash !== hash
@@ -354,6 +392,7 @@ export class FinanceOmieSyncService {
 
         if (existingMirror) {
           updated++;
+          if (acc) acc.recordsUpdated += 1;
           await this.prisma.financeOmieMirrorRecord.update({
             where: { id: existingMirror.id },
             data: {
@@ -377,6 +416,7 @@ export class FinanceOmieSyncService {
           });
         } else {
           created++;
+          if (acc) acc.recordsNew += 1;
           await this.prisma.financeOmieMirrorRecord.create({
             data: {
               tenantId,

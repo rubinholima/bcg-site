@@ -27,10 +27,11 @@ export type FinanceOmieMatchLevel =
 export type FinanceOmieReconcileDecision = 'LINK' | 'KEEP_SEPARATE' | 'REVIEW_LATER';
 
 export type FinanceOmieNormalizedTitulo = {
-  omieLancamentoId: number | null;
+  omieLancamentoId: string | null;
   omieIntegracaoCode: string | null;
-  supplierOmieId: number | null;
-  customerOmieId: number | null;
+  supplierOmieId: string | null;
+  customerOmieId: string | null;
+  identityWarnings?: string[];
   counterpartyName: string | null;
   counterpartyTaxId: string | null;
   documentNumber: string | null;
@@ -46,7 +47,7 @@ export type FinanceOmieNormalizedTitulo = {
   statusOmie: string | null;
   settlementDate: string | null;
   accountLabel: string | null;
-  accountOmieId: number | null;
+  accountOmieId: string | null;
   paymentMethodLabel: string | null;
   categoryLabel: string | null;
   installment: string | null;

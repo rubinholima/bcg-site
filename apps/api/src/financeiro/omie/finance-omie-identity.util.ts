@@ -1,26 +1,29 @@
 import { createHash } from 'crypto';
 import type { FinanceOmieTituloTipo } from './finance-omie.types';
+import { normalizeOmieExternalId } from './finance-omie-external-id.util';
 
-export function parsePositiveIntUnknown(v: unknown): number | null {
-  if (v == null || v === '') return null;
-  const n = typeof v === 'number' ? v : parseInt(String(v).replace(/\D/g, ''), 10);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return n;
-}
+export { normalizeOmieExternalId, parsePositiveIntUnknown, OMIE_ID_UNSAFE_JS_INTEGER } from './finance-omie-external-id.util';
 
 export function extractOmieLancamentoIdentity(row: Record<string, unknown>): {
-  omieLancamentoId: number | null;
+  omieLancamentoId: string | null;
   omieIntegracaoCode: string | null;
+  identityWarning?: string;
 } {
-  let omie = parsePositiveIntUnknown(row.codigo_lancamento_omie) ?? parsePositiveIntUnknown(row.chave_lancamento);
+  const fromOmie = normalizeOmieExternalId(row.codigo_lancamento_omie);
+  const fromChave = normalizeOmieExternalId(row.chave_lancamento);
+  let omie = fromOmie.value ?? fromChave.value ?? null;
+  let identityWarning = fromOmie.warning ?? fromChave.warning;
+
   let integracao = row.codigo_lancamento_integracao
     ? String(row.codigo_lancamento_integracao).trim() || null
-  : null;
+    : null;
 
   for (const [key, val] of Object.entries(row)) {
     const kl = key.toLowerCase();
     if (omie == null && kl.includes('codigo_lancamento_omie') && !kl.includes('integracao')) {
-      omie = parsePositiveIntUnknown(val);
+      const r = normalizeOmieExternalId(val);
+      omie = r.value;
+      if (r.warning) identityWarning = r.warning;
     }
     if (integracao == null && kl === 'codigo_lancamento_integracao') {
       const s = String(val ?? '').trim();
@@ -28,16 +31,16 @@ export function extractOmieLancamentoIdentity(row: Record<string, unknown>): {
     }
   }
 
-  return { omieLancamentoId: omie, omieIntegracaoCode: integracao };
+  return { omieLancamentoId: omie, omieIntegracaoCode: integracao, identityWarning };
 }
 
 /** Identidade externa determinística — nunca usar valor/data como chave primária. */
 export function buildOmieExternalId(
   tituloTipo: FinanceOmieTituloTipo,
-  omieLancamentoId: number | null,
+  omieLancamentoId: string | null,
   omieIntegracaoCode: string | null,
 ): string | null {
-  if (omieLancamentoId && omieLancamentoId > 0) {
+  if (omieLancamentoId) {
     return `${tituloTipo}:omie:${omieLancamentoId}`;
   }
   if (omieIntegracaoCode) {
@@ -49,13 +52,13 @@ export function buildOmieExternalId(
 
 export function financeExternalLinkIdForOmie(
   tituloTipo: FinanceOmieTituloTipo,
-  omieLancamentoId: number | null,
+  omieLancamentoId: string | null,
   omieIntegracaoCode: string | null,
 ): { externalObjectType: string; externalId: string } | null {
-  if (omieLancamentoId && omieLancamentoId > 0) {
+  if (omieLancamentoId) {
     return {
       externalObjectType: tituloTipo === 'pagar' ? 'conta_pagar' : 'conta_receber',
-      externalId: String(omieLancamentoId),
+      externalId: omieLancamentoId,
     };
   }
   if (omieIntegracaoCode) {
